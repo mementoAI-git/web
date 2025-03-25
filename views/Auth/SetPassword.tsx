@@ -31,7 +31,7 @@ export function SetPassword() {
       <Passwordinput label="Password" name="password" />
       <Passwordinput label="Confirm Password" name="confirm_password" />
       <StrengthIndicator level={4} />
-      <Button title="Set new password" />
+      <Button title="Set new password" className="mt-3" />
     </form>
   )
 }

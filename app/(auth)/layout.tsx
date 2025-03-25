@@ -12,7 +12,7 @@ export default function AuthLayout({ children }: PropsWithChildren) {
           <span className="font-bold capitalize font-geist text-grey-200 text-base">Get Help</span>
         </button>
       </header>
-      <main className="py-20 max-w-[1440px]">
+      <main className="py-20 max-w-[1440px] mt-3">
         {children}
       </main>
     </div>

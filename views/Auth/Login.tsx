@@ -1,5 +1,6 @@
 import { Button } from "@/components/Buttons";
 import { Passwordinput, Textinput } from "@/components/Form";
+import Link from "next/link";
 
 export function Login() {
   return (
@@ -9,12 +10,12 @@ export function Login() {
 
       <div className="flex items-center justify-between text-sm font-inter">
         <div className="flex items-center gap-2">
-          <div className="w-4 aspect-square rounded-sm border border-[#D0D5DD]" />
+          <div className="w-4 aspect-square rounded-sm border cursor-pointer border-[#D0D5DD]" />
           <span>Remember for 30 days</span>
         </div>
-        <span className="text-primary font-bold">Reset password</span>
+        <Link href="/forget-password" className="text-primary font-bold cursor-pointer">Reset password</Link>
       </div>
-      <Button title="Login" />
+      <Button title="Login" className="mt-3" />
     </form>
   )
 }

@@ -6,13 +6,13 @@ export function Register() {
     <form className="flex flex-col gap-6">
       <Textinput label="Email" name="email" placeholder="johndoe@mail.com" />
       <Passwordinput label="Password" name="password" />
-      <Button title="Create account" />
+      <Button title="Create account" className="mt-3" />
 
-      <small className="font-inter text-sm leading-5 text-center text-grey-200">
+      <small className="font-inter px-3 text-sm leading-5 text-center text-grey-200">
         By clicking “Create account” you agree to the
         <span className="text-primary underline">Terms of Use</span> and
         <span className="text-primary underline"> Privacy Policy</span>
       </small>
-    </form>
+    </form >
   )
 }

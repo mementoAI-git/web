@@ -1,6 +1,7 @@
 import ArrowLeft from "@/public/icon/arrow-left.svg"
 import { PropsWithChildren } from "react"
 import AuthSocials from "./AuthSocials"
+import Link from "next/link"
 
 interface IAuthFormLayout extends PropsWithChildren {
   title: string
@@ -24,10 +25,10 @@ export function AuthFormLayout({
     <div className="flex flex-col justify-center w-full mx-auto bg-white max-w-[554px] p-10 gap-10 rounded-xl">
       {
         can_go_back &&
-        <div className="flex items-center gap-2 cursor-pointer">
+        <Link href="/login" className="flex items-center gap-2 cursor-pointer">
           <ArrowLeft />
           <span className="font-geist text-sm font-bold leading-5 underline text-grey-200">Back to Login</span>
-        </div>
+        </Link>
       }
 
       <div className="flex flex-col gap-4 text-center items-center justify-center">
