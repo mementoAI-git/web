@@ -7,6 +7,7 @@
   --color-success: #067A57;
   --color-grey-100: #0011661A;
   --color-grey-200: rgba(0, 9, 51, 0.65);
+  --color-grey-300: rgba(0, 13, 77, 0.45);
 
   --shadow-sm: 0px 1px 2px 0px rgba(16, 24, 40, 0.05);
   --shadow-btn: 0px 2px 4px -2px #00000014, 0px 4px 8px -2px #0000000A;
@@ -20,8 +21,7 @@
   --color-success: var(--color-success);
   --color-grey-200: var(--color-grey-200);
   --color-grey-100: var(--color-grey-100);
-
-  --shadow-btn: var(--shadow-btn);
+  --color-grey-300: var(--color-grey-300) --shadow-btn: var(--shadow-btn);
 
   --radius-lg: 8px;
 
@@ -35,5 +35,6 @@ body {
   color: var(--color-secondary);
   font-optical-sizing: auto;
   font-weight: 400;
+  font-size: 16px;
   font-family: var(--font-bricolage), var(--font-geist), var(--font-inter), sans-serif;
 }
