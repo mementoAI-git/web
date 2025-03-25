@@ -1,0 +1,23 @@
+import React from "react";
+import { SocialButton } from "@/components/Buttons"
+import GoogleIcon from "@/public/icon/google.svg"
+import AppleIcon from "@/public/icon/apple.svg"
+import FacebookIcon from "@/public/icon/facebook.svg"
+
+export default function AuthSocials() {
+  return (
+    <React.Fragment>
+      <div className="flex flex-col gap-4">
+        <SocialButton icon={<GoogleIcon />} title="Sign up with Google" />
+        <SocialButton icon={<FacebookIcon />} title="Sign up with Facebook" />
+        <SocialButton icon={<AppleIcon />} title="Sign up with Apple" />
+      </div>
+
+      <div className="flex justify-between items-center gap-6">
+        <div className="flex-1 border-t border-grey-100" />
+        <span className="font-geist text-sm text-grey-200">Or sign in with</span>
+        <div className="flex-1 border-t border-grey-100" />
+      </div>
+    </React.Fragment>
+  )
+}
