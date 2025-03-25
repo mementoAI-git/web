@@ -1,4 +1,5 @@
 import { Textinput } from "@/components/Form";
+import { Dateinput } from "@/components/Form/Dateinput";
 
 export function Profile() {
   return (
@@ -8,7 +9,7 @@ export function Profile() {
         <form className="space-y-6">
           <Textinput name="first_name" label="First name" placeholder="Enter first name" />
           <Textinput name="last_name" label="Last name" placeholder="Enter last name" />
-          <Textinput name="first_name" label="First name" placeholder="Enter first name" />
+          {/* <Dateinput name="dob" label="Date of birth" /> */}
           <Textinput name="first_name" label="First name" placeholder="Enter first name" />
         </form>
       </div>
