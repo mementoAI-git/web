@@ -42,7 +42,7 @@ function Step({ title, subtitle, status = "pending" }: IStep) {
 export function OnboardSideBar() {
   return (
     <React.Fragment>
-      <div className="space-y-20">
+      <div className="space-y-10">
         <div className="flex items-center justify-between">
           <span className="font-inter font-bold text-xl">Setup guide</span>
           <span className="font-inter text-sm leading-5 text-grey-200">1 of 4 completed</span>
