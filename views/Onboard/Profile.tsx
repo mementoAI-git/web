@@ -1,5 +1,6 @@
 import { Textinput } from "@/components/Form";
 import { Dateinput } from "@/components/Form/Dateinput";
+import { Selectinput } from "@/components/Form/Selectinput";
 
 export function Profile() {
   return (
@@ -10,7 +11,7 @@ export function Profile() {
           <Textinput name="first_name" label="First name" placeholder="Enter first name" />
           <Textinput name="last_name" label="Last name" placeholder="Enter last name" />
           <Dateinput name="dob" label="Date of birth" />
-          <Textinput name="first_name" label="First name" placeholder="Enter first name" />
+          <Selectinput name="country" label="Country of residence" placeholder="Select country" />
         </form>
       </div>
       <div className="flex items-end justify-between font-geist font-bold text-base">
