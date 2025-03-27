@@ -1,5 +1,6 @@
+import { ButtonHTMLAttributes } from "react"
 
-interface IButton {
+interface IButton extends ButtonHTMLAttributes<HTMLButtonElement> {
   title: string
   className?: string
 }
