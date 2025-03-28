@@ -9,6 +9,7 @@
   --color-grey-100: #0011661A;
   --color-grey-200: rgba(0, 9, 51, 0.65);
   --color-grey-300: rgba(0, 13, 77, 0.45);
+  --color-grey-400: rgba(243, 243, 243, 1);
 
   --shadow-sm: 0px 1px 2px 0px rgba(16, 24, 40, 0.05);
   --shadow-btn: 0px 2px 4px -2px #00000014, 0px 4px 8px -2px #0000000A;
@@ -25,6 +26,7 @@
   --color-grey-200: var(--color-grey-200);
   --color-grey-100: var(--color-grey-100);
   --color-grey-300: var(--color-grey-300);
+  --color-grey-400: var(--color-grey-400);
 
   --shadow-btn: var(--shadow-btn);
   --shadow-sm: var(--shadow-sm);
