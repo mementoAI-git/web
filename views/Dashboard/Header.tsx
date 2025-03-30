@@ -1,4 +1,4 @@
-import SearchIcon from "@/public/icon/dashboard/search.svg"
+import { Searchinput } from "@/components/Form";
 
 export function DashboardHeader() {
   return (
@@ -7,10 +7,7 @@ export function DashboardHeader() {
         <span className="fon font-bricolage font-medium text-4xl leading-11 tracking-[-2%] text-grey-900">My memories</span>
       </div>
       <div className="flex-1 h-10">
-        <div className="rounded-lg border h-full flex items-center gap-2 py-2 px-[14px] border-[rgba(208,213,221,1)]">
-          <SearchIcon />
-          <input placeholder="Search" className="outline-0 flex-1" />
-        </div>
+        <Searchinput />
       </div>
       <div className="gap-4 flex max-h-10 items-center shrink-0 font-inter">
         <div className="h-full rounded-full space-x-1 py-2 px-5 bg-grey-400 cursor-pointer">

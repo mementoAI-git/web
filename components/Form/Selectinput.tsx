@@ -22,7 +22,9 @@ export function Selectinput({ label, onChange, data = [], ...props }: ISelect) {
       <div>
         <div className="input-base flex items-center justify-between">
           <input placeholder="DD-MM-YYYY" {...props} className="flex-1 outline-0 placeholder:text-[#000D4D73]" />
-          <ChevronDownIcon />
+          <span className="text-[#000D4D73]">
+            <ChevronDownIcon />
+          </span>
         </div>
         {
           show &&

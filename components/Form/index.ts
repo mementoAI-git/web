@@ -1,2 +1,5 @@
 export * from "./Passwordinput"
 export * from "./TextInput"
+export * from "./SearchInput"
+export * from "./Dateinput"
+export * from "./Selectinput"
