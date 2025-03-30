@@ -1,0 +1,29 @@
+import SearchIcon from "@/public/icon/dashboard/search.svg"
+
+export function DashboardHeader() {
+  return (
+    <header className="flex items-center py-6 px-14 max-h-23 border-b border-grey-500 gap-6">
+      <div className="shrink-0">
+        <span className="fon font-bricolage font-medium text-4xl leading-11 tracking-[-2%] text-grey-900">My memories</span>
+      </div>
+      <div className="flex-1 h-10">
+        <div className="rounded-lg border h-full flex items-center gap-2 py-2 px-[14px] border-[rgba(208,213,221,1)]">
+          <SearchIcon />
+          <input placeholder="Search" className="outline-0 flex-1" />
+        </div>
+      </div>
+      <div className="gap-4 flex max-h-10 items-center shrink-0 font-inter">
+        <div className="h-full rounded-full space-x-1 py-2 px-5 bg-grey-400 cursor-pointer">
+          <span>✌🏾</span>
+          <span className="font-semibold text-grey-600">5</span>
+        </div>
+        <div className="border rounded-full h-full py-2 px-5 border-[rgba(199,201,200,1)] cursor-pointer">
+          <span className="font-semibold text-grey-600">Invite friends</span>
+        </div>
+        <div className="border rounded-full h-full py-2 px-5 border-[rgba(199,201,200,1)] cursor-pointer">
+          <span className="font-semibold text-grey-600">Help</span>
+        </div>
+      </div>
+    </header>
+  )
+}

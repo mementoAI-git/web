@@ -1,4 +1,4 @@
-import { DashboardSideBar } from "@/views/Dashboard";
+import { DashboardHeader, DashboardSideBar } from "@/views/Dashboard";
 import { PropsWithChildren } from "react";
 
 export default function DashboardLayout({ children }: PropsWithChildren) {
@@ -7,7 +7,10 @@ export default function DashboardLayout({ children }: PropsWithChildren) {
       <aside className="max-w-70 w-full group sidebar">
         <DashboardSideBar />
       </aside>
-      <main className="flex-1">{children}</main>
+      <main className="flex-1">
+        <DashboardHeader />
+        {children}
+      </main>
     </div>
   )
 }

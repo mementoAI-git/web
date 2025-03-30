@@ -1,4 +1,5 @@
 import HomeIcon from "@/public/icon/dashboard/home.svg"
+import DocsIcon from "@/public/icon/dashboard/doc.svg"
 import QuestionIcon from "@/public/icon/dashboard/question-octagon.svg"
 import DollarIcon from "@/public/icon/dashboard/dollar.svg"
 import SlideIcon from "@/public/icon/dashboard/slide.svg"
@@ -8,7 +9,7 @@ import TimeIcon from "@/public/icon/dashboard/time.svg"
 export const topNavigations = [
   { Icon: HomeIcon, title: "overview", link: "dashboard" },
   { Icon: CompassIcon, title: "explore", link: "explore" },
-  { Icon: HomeIcon, title: "my memories", link: "memories" },
+  { Icon: DocsIcon, title: "my memories", link: "memories" },
   { Icon: TimeIcon, title: "time capsule", link: "time-capsule" }
 ]
 
