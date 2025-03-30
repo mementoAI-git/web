@@ -6,7 +6,7 @@ import Dropdown from "@/components/Dropdown"
 
 export default function MemoriesTableHeader() {
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-1 flex-col gap-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className="font-inter font-semibold text-grey-900 text-xl leading-[30px]">My memories</span>
@@ -35,7 +35,7 @@ export default function MemoriesTableHeader() {
           <Dropdown title="Tags" />
           <Dropdown title="Type" />
         </div>
-        <div className="max-w-80">
+        <div className="max-w-80 flex-1">
           <Searchinput />
         </div>
       </div>

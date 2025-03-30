@@ -2,6 +2,7 @@ import BookIcon from "@/public/icon/dashboard/book.svg"
 import BookmarkIcon from "@/public/icon/dashboard/bookmark.svg"
 import { StatCard } from "../Dashboard"
 import MemoriesTableHeader from "./Header"
+import MemoriesList from "./List"
 
 export default function Memories() {
   return (
@@ -16,12 +17,9 @@ export default function Memories() {
           <StatCard icon={<BookmarkIcon />} subtitle="bookmarks" title="5" />
         </div>
       </div>
-      <div className="py-8 px-14 space-x-6">
-        <div>
-          <MemoriesTableHeader />
-        </div>
-        <div>
-        </div>
+      <div className="py-8 px-14 space-y-6">
+        <MemoriesTableHeader />
+        <MemoriesList />
       </div>
     </div>
   )

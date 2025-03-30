@@ -66,4 +66,14 @@ body {
   .input-base {
     @apply shadow-sm bg-white py-2 px-3 rounded-lg border border-grey-100 h-10 focus-within:border-primary focus-within:border-[1.5px]
   }
+
+  .mem-table thead th:first-child,
+  .mem-table tbody td:first-child {
+    @apply py-3 pl-6
+  }
+
+  .mem-table thead th:last-child,
+  .mem-table tbody td:last-child {
+    @apply pr-6
+  }
 }
