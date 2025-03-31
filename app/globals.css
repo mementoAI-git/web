@@ -76,4 +76,8 @@ body {
   .mem-table tbody td:last-child {
     @apply pr-6
   }
+
+  .mem-tags {
+    @apply rounded-full border py-0.5 px-2 text-xs capitalize font-medium font-inter text-center bg-[#FAFAFA] border-[#E9EAEB]
+  }
 }

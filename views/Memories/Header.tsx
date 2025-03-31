@@ -1,3 +1,5 @@
+"use client"
+
 import { Searchinput } from "@/components/Form"
 import GridIcon from "@/public/icon/dashboard/grid.svg"
 import ListIcon from "@/public/icon/dashboard/list.svg"
@@ -30,10 +32,20 @@ export default function MemoriesTableHeader() {
                 <span>filter: all</span>
               </div>
             }
+            onSelect={console.log}
+            items={[{ label: "All", value: "all" }]}
           />
           <div className="h-[25px] border-r border-grey-500" />
-          <Dropdown title="Tags" />
-          <Dropdown title="Type" />
+          <Dropdown
+            items={[{ label: "All", value: "all" }]}
+            title="Tags"
+            onSelect={console.log}
+          />
+          <Dropdown
+            items={[{ label: "All", value: "all" }]}
+            title="Type"
+            onSelect={console.log}
+          />
         </div>
         <div className="max-w-80 flex-1">
           <Searchinput />

@@ -1,7 +1,8 @@
 import VeriticalElipseIcon from "@/public/icon/vertical-ellipse.svg"
 import EditIcon from "@/public/icon/edit.svg"
+import ImageThumbnail from "@/components/ImageThumbnail"
 
-export default function MemoriesList() {
+export default function MemoriesTable() {
   return (
     <div className="border rounded-xl w-full h-fit bg-white border-[rgba(233,234,235,1)] shadow-sm shadow-[rgba(10,13,18,0.05)] mem-table">
       <table className="w-full h-full text-left">
@@ -14,19 +15,22 @@ export default function MemoriesList() {
         <tbody className="border-y border-inherit">
           <tr>
             <td>
-              <div className="flex items-center">
-                <div>
-                  <div className="relative ">
-                    <div className="w-[33.53px] absolute bg-red-50 z-30 top-0 left-0 aspect-square border rounded-[5.83px]"></div>
-                    <div className="w-[33.53px] absolute bg-red-200 z-20 top-0 left-0 aspect-square border rounded-[5.83px]"></div>
-                    <div className="w-[33.53px] absolute bg-red-400 z-10 top-0 left-0 aspect-square border rounded-[5.83px]"></div>
-                  </div>
+              <div className="flex items-center gap-2">
+                <div className="min-w-[33.53px] w-[46.87px] h-10">
+                  <ImageThumbnail size={33.53} />
                 </div>
                 <span className="text-[#050709] text-sm font-inter font-medium">My travel experiences 2024</span>
               </div>
             </td>
             <td className="text-[#535862] text-sm">Jan 18, 2025</td>
-            <td>Tags</td>
+            <td>
+              <div className="flex items-center gap-1">
+                <span className="mem-tags !bg-[#EFF8FF] !border-[#B2DDFF] !text-[#175CD3]">travel</span>
+                <span className="mem-tags !bg-[#EEF4FF] !border-[#C7D7FE] !text-[#3538CD]">family</span>
+                <span className="mem-tags !bg-[#EEF4FF] !border-[#C7D7FE] !text-[#3538CD]">life</span>
+                <span className="mem-tags">+4</span>
+              </div>
+            </td>
             <td className="w-fit">
               <div className="flex items-center gap-4 text-[#949494] justify-end">
                 <EditIcon />
