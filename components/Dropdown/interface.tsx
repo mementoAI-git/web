@@ -6,22 +6,23 @@ export interface IDropdownItem {
   startIcon?: React.ReactElement
 }
 
-export interface IDropdown {
+export interface IDropdownIcon extends IDropdownMenu {
+  icon: React.ReactElement
+}
+
+export interface IDropdownButton extends IDropdownMenu {
   title: React.ReactElement | string
-  ItemLayout?: React.FC<{ item: IDropdownItem | string }>
-  onSelect: (value: string) => void
-  items: (IDropdownItem | string)[]
 }
 
 export interface IDropdownMenu {
-  ItemLayout?: React.FC<{ item: IDropdownItem | string }>
+  ItemLayout?: React.FC<IDropdownOption>
   onSelect: (value: string) => void
-  items: (IDropdownItem | string)[]
+  items: IDropdownItem[]
   footerItem?: React.ReactElement
   className?: string
 }
 
 export interface IDropdownOption {
   onClick: (v: string) => void
-  item: IDropdownItem | string
+  item: IDropdownItem
 }

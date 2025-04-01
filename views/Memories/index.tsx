@@ -1,7 +1,7 @@
 import BookIcon from "@/public/icon/dashboard/book.svg"
 import BookmarkIcon from "@/public/icon/dashboard/bookmark.svg"
 import { StatCard } from "../Dashboard"
-import MemoriesTableHeader from "./Header"
+import MemoriesHeader from "./MemoryHeader"
 import MemoriesGrid from "./Grid"
 
 export default function Memories() {
@@ -18,7 +18,7 @@ export default function Memories() {
         </div>
       </div>
       <div className="py-8 px-14 space-y-6">
-        <MemoriesTableHeader />
+        <MemoriesHeader />
         <MemoriesGrid />
       </div>
     </div>

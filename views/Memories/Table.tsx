@@ -1,6 +1,36 @@
-import VeriticalElipseIcon from "@/public/icon/vertical-ellipse.svg"
 import EditIcon from "@/public/icon/edit.svg"
 import ImageThumbnail from "@/components/ImageThumbnail"
+import { MemoryItemActions } from "./MemoriesDropdown"
+
+function MemoriesTableRow() {
+  return (
+    <tr>
+      <td>
+        <div className="flex items-center gap-2">
+          <div className="min-w-[33.53px] w-[46.87px] h-10">
+            <ImageThumbnail size={33.53} />
+          </div>
+          <span className="text-[#050709] text-sm font-inter font-medium">My travel experiences 2024</span>
+        </div>
+      </td>
+      <td className="text-[#535862] text-sm">Jan 18, 2025</td>
+      <td>
+        <div className="flex items-center gap-1">
+          <span className="mem-tags !bg-[#EFF8FF] !border-[#B2DDFF] !text-[#175CD3]">travel</span>
+          <span className="mem-tags !bg-[#EEF4FF] !border-[#C7D7FE] !text-[#3538CD]">family</span>
+          <span className="mem-tags !bg-[#EEF4FF] !border-[#C7D7FE] !text-[#3538CD]">life</span>
+          <span className="mem-tags">+4</span>
+        </div>
+      </td>
+      <td className="w-fit">
+        <div className="flex items-center gap-4 text-[#949494] justify-end">
+          <EditIcon />
+          <MemoryItemActions />
+        </div>
+      </td>
+    </tr>
+  )
+}
 
 export default function MemoriesTable() {
   return (
@@ -13,31 +43,9 @@ export default function MemoriesTable() {
           <th />
         </thead>
         <tbody className="border-y border-inherit">
-          <tr>
-            <td>
-              <div className="flex items-center gap-2">
-                <div className="min-w-[33.53px] w-[46.87px] h-10">
-                  <ImageThumbnail size={33.53} />
-                </div>
-                <span className="text-[#050709] text-sm font-inter font-medium">My travel experiences 2024</span>
-              </div>
-            </td>
-            <td className="text-[#535862] text-sm">Jan 18, 2025</td>
-            <td>
-              <div className="flex items-center gap-1">
-                <span className="mem-tags !bg-[#EFF8FF] !border-[#B2DDFF] !text-[#175CD3]">travel</span>
-                <span className="mem-tags !bg-[#EEF4FF] !border-[#C7D7FE] !text-[#3538CD]">family</span>
-                <span className="mem-tags !bg-[#EEF4FF] !border-[#C7D7FE] !text-[#3538CD]">life</span>
-                <span className="mem-tags">+4</span>
-              </div>
-            </td>
-            <td className="w-fit">
-              <div className="flex items-center gap-4 text-[#949494] justify-end">
-                <EditIcon />
-                <VeriticalElipseIcon />
-              </div>
-            </td>
-          </tr>
+          <MemoriesTableRow />
+          <MemoriesTableRow />
+          <MemoriesTableRow />
         </tbody>
       </table>
       <div className="flex font-inter text-sm w-full text-[rgba(65,70,81,1)] border-[rgba(213,215,218,1)] py-3 px-6 justify-between items-center">

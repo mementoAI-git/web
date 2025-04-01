@@ -1,4 +1,4 @@
-import { Textinput } from "@/components/Form";
+import { Checkbox, Textinput } from "@/components/Form";
 import { Dateinput } from "@/components/Form/Dateinput";
 import { Selectinput } from "@/components/Form/Selectinput";
 
@@ -12,6 +12,7 @@ export function Profile() {
           <Textinput name="last_name" label="Last name" placeholder="Enter last name" />
           <Dateinput name="dob" label="Date of birth" />
           <Selectinput name="country" label="Country of residence" placeholder="Select country" />
+          <Checkbox className="" label="I’d like to receive email updates and newsletters." />
         </form>
       </div>
       <div className="flex items-end justify-between font-geist font-bold text-base">

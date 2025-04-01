@@ -4,7 +4,7 @@ import { Fragment, useRef } from "react"
 import { DefaultDropdownOption } from "./DropdownOptions"
 import { IDropdownMenu } from "./interface"
 
-export default function DropdowmMenu({ items, ItemLayout, onSelect, footerItem, className = "" }: IDropdownMenu) {
+export function DropdowmMenu({ items, ItemLayout, onSelect, footerItem, className = "" }: IDropdownMenu) {
   const ref = useRef<any>(null)
 
   return (
@@ -12,7 +12,7 @@ export default function DropdowmMenu({ items, ItemLayout, onSelect, footerItem, 
       {
         items.map((item, i) => (
           ItemLayout ?
-            <ItemLayout key={i} item={item} /> :
+            <ItemLayout key={i} item={item} onClick={onSelect} /> :
             <DefaultDropdownOption key={i} onClick={onSelect} item={item} />
         ))
       }

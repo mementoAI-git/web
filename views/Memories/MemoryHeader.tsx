@@ -1,12 +1,12 @@
 "use client"
 
+import { DropdownButton } from "@/components/Dropdown"
 import { Searchinput } from "@/components/Form"
 import GridIcon from "@/public/icon/dashboard/grid.svg"
 import ListIcon from "@/public/icon/dashboard/list.svg"
-import FilterIcon from "@/public/icon/filter.svg"
-import Dropdown from "@/components/Dropdown"
+import { MemoryListFilter } from "./MemoriesDropdown"
 
-export default function MemoriesTableHeader() {
+export default function MemoriesHeader() {
   return (
     <div className="flex flex-1 flex-col gap-3">
       <div className="flex items-center justify-between">
@@ -25,23 +25,14 @@ export default function MemoriesTableHeader() {
       </div>
       <div className="flex items-center justify-between">
         <div className="max-h-10 gap-4 flex items-center">
-          <Dropdown
-            title={
-              <div className="flex gap-1 items-center">
-                <FilterIcon />
-                <span>filter: all</span>
-              </div>
-            }
-            onSelect={console.log}
-            items={[{ label: "All", value: "all" }]}
-          />
+          <MemoryListFilter />
           <div className="h-[25px] border-r border-grey-500" />
-          <Dropdown
+          <DropdownButton
             items={[{ label: "All", value: "all" }]}
             title="Tags"
             onSelect={console.log}
           />
-          <Dropdown
+          <DropdownButton
             items={[{ label: "All", value: "all" }]}
             title="Type"
             onSelect={console.log}
