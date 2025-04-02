@@ -7,7 +7,7 @@ import CompassIcon from "@/public/icon/dashboard/compass.svg"
 import TimeIcon from "@/public/icon/dashboard/time.svg"
 
 export const topNavigations = [
-  { Icon: HomeIcon, title: "overview", link: "dashboard" },
+  { Icon: HomeIcon, title: "overview", link: "overview" },
   { Icon: CompassIcon, title: "explore", link: "explore" },
   { Icon: DocsIcon, title: "my memories", link: "memories" },
   { Icon: TimeIcon, title: "time capsule", link: "time-capsule" }

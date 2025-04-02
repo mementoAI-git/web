@@ -13,6 +13,8 @@
   --color-grey-400: rgba(243, 243, 243, 1);
   --color-grey-500: rgba(235, 235, 235, 1);
   --color-grey-600: rgba(60, 63, 62, 1);
+  --color-grey-700: rgba(249, 249, 249, 1);
+  --color-grey-800: rgba(148, 148, 148, 1);
   --color-grey-900: rgba(16, 24, 40, 1);
 
   --shadow-sm: 0px 1px 2px 0px rgba(16, 24, 40, 0.05);
@@ -32,6 +34,8 @@
   --color-grey-400: var(--color-grey-400);
   --color-grey-500: var(--color-grey-500);
   --color-grey-600: var(--color-grey-600);
+  --color-grey-700: var(--color-grey-700);
+  --color-grey-800: var(--color-grey-800);
   --color-grey-900: var(--color-grey-900);
 
   --shadow-btn: var(--shadow-btn);
@@ -79,5 +83,17 @@ body {
 
   .mem-tags {
     @apply rounded-full border py-0.5 px-2 text-xs capitalize font-medium font-inter text-center bg-[#FAFAFA] border-[#E9EAEB]
+  }
+
+  .modal-overlay {
+    @apply w-screen justify-center items-center backdrop-blur-[2px] h-screen fixed top-0 right-0 left-0 bottom-0
+  }
+
+  .modal-container {
+    @apply relative max-w-[618px] w-full bg-white rounded-2xl p-10
+  }
+
+  .modal-title {
+    @apply font-inter text-3xl font-semibold text-secondary leading-9
   }
 }

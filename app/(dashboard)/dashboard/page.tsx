@@ -1,6 +1,0 @@
-
-export default function DashboardPage() {
-  return (
-    <div>Hello this is the dasboard screen</div>
-  )
-}
