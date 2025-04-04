@@ -23,7 +23,6 @@ export default function AudioVisualizer({ recorder, color = "#3C3F3E" }: IAudioV
           //   gap={0}
           //   barColor={color}
           // /> 
-          //:
           <div /> :
           <svg width="15" height="10" viewBox="0 0 15 10" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M7.5 1V9M4.5 3V7M1.5 4V6M10.5 3V7M13.5 4V6" stroke="#3C3F3E" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
