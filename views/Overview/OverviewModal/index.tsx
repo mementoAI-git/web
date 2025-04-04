@@ -1,6 +1,7 @@
 import ModalLayout from "@/components/ModalLayout";
 import PromptInput from "../PromptInput";
 import UploadModal from "./UploadFile";
+import TagAndPermissions from "./TagAndPermissions";
 
 interface IPromptResponseModal {
   onClose: () => void
@@ -9,8 +10,9 @@ interface IPromptResponseModal {
 export default function PromptResponseModal({ open, onClose }: IPromptResponseModal) {
   return (
     <ModalLayout open={open} onClose={onClose}>
-      {/* <PromptInput /> */}
-      <UploadModal />
+      <PromptInput />
+      {/* <UploadModal /> */}
+      {/* <TagAndPermissions /> */}
     </ModalLayout>
   )
 }
