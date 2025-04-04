@@ -4,7 +4,7 @@ import { PropsWithChildren } from "react"
 
 interface IModalLayout extends PropsWithChildren {
   open: boolean
-  onClose: () => any
+  onClose: () => void
 }
 
 export default function ModalLayout({ open, children, onClose }: IModalLayout) {
