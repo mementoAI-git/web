@@ -7,7 +7,7 @@ import MemoriesGrid from "./Grid"
 export default function Memories() {
   return (
     <div className="w-full overflow-y-auto">
-      <div className="px-14 py-8 space-y-4">
+      <div className="py-8 space-y-4">
         <div className="flex items-center gap-2">
           <span className="text-xl font-inter leading-[30px] font-semibold">Stats</span>
           <div className="border-t border-[#EBEBEB] flex-1" />
@@ -17,7 +17,7 @@ export default function Memories() {
           <StatCard icon={<BookmarkIcon width={14} height={18} />} subtitle="bookmarks" title="5" />
         </div>
       </div>
-      <div className="py-8 px-14 space-y-6">
+      <div className="py-8 space-y-6">
         <MemoriesHeader />
         <MemoriesGrid />
       </div>

@@ -1,10 +1,26 @@
 import AletHexagonIcon from "@/public/icon/alert-hexagon.svg"
-import MicIcon from "@/public/icon/mic.svg"
-import StopRecIcon from "@/public/icon/stop-rec.svg"
-import PauseRecIcon from "@/public/icon/pause-rec.svg"
 import RecIndicator from "@/components/RecIndicator"
+import useRecorder from "@/hooks/use-recorder"
+import React, { useState } from "react"
+import { AudioRecButtons } from "./RecButtons"
+import AudioVisualizer from "@/components/AudioVisualizer"
+import { IRec } from "./VideoRec"
 
-export default function AudioRec() {
+export default function AudioRec({ stream, setStream }: IRec) {
+  const { start, stop, pause, resume, timer, recorder, recording } = useRecorder(stream)
+
+  const startRec = () => {
+    navigator.mediaDevices.getUserMedia({ audio: true })
+      .then(stream => {
+        if (stream) {
+          setStream(stream)
+          setTimeout(start, 1000)
+        }
+      })
+      .catch(error => {
+        console.error("Mic access denied or not available.", error);
+      })
+  }
   return (
     <div>
       <div className="flex items-center justify-center rounded-t-2xl py-1 bg-grey-400 text-grey-800">
@@ -16,29 +32,10 @@ export default function AudioRec() {
       <div className="w-full min-h-100 flex items-center rounded-b-2xl justify-center border border-t-0 border-grey-400">
         <div className="flex flex-col gap-3">
           <div className="flex items-center gap-2">
-            <RecIndicator />
-            <div className="w-8 aspect-square flex items-center justify-center rounded-full bg-grey-400">
-              <svg width="15" height="10" viewBox="0 0 15 10" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M7.5 1V9M4.5 3V7M1.5 4V6M10.5 3V7M13.5 4V6" stroke="#3C3F3E" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </div>
+            <RecIndicator counter={timer} recoding={recording} />
+            <AudioVisualizer recorder={recorder} />
           </div>
-          <button className="rounded-full cursor-pointer flex flex-1 justify-center items-center gap-2 bg-secondary text-white py-3 px-8">
-            <MicIcon width={12} />
-            <span className="font-inter text-sm font-semibold">Start</span>
-          </button>
-          <button className="rounded-full cursor-pointer flex flex-1 justify-center items-center gap-2 bg-[#F5FAFF] text-[#2E90FA] py-3 px-8">
-            <MicIcon width={12} />
-            <span className="font-inter text-sm font-semibold">Resume</span>
-          </button>
-          <button className="rounded-full cursor-pointer flex flex-1 justify-center items-center gap-2 bg-[#F5FAFF] text-[#2E90FA] py-3 px-8">
-            <PauseRecIcon width={12} />
-            <span className="font-inter text-sm font-semibold">Pause</span>
-          </button>
-          <button className="rounded-full cursor-pointer flex flex-1 justify-center items-center gap-2 bg-[#FEF3F2] text-[#F97066] py-3 px-8">
-            <StopRecIcon width={15} />
-            <span className="font-inter text-sm font-semibold">End</span>
-          </button>
+          <AudioRecButtons {...{ resume, stop, pause, timer, recording, start: startRec }} />
         </div>
       </div>
     </div>

@@ -82,7 +82,7 @@ body {
   }
 
   .mem-tags {
-    @apply rounded-full border py-0.5 px-2 text-xs capitalize font-medium font-inter text-center bg-[#FAFAFA] border-[#E9EAEB]
+    @apply rounded-full cursor-pointer border py-0.5 px-2 text-xs capitalize font-medium font-inter text-center bg-[#FAFAFA] border-[#E9EAEB]
   }
 
   .modal-overlay {
@@ -95,5 +95,13 @@ body {
 
   .modal-title {
     @apply font-inter text-3xl font-semibold text-secondary leading-9
+  }
+
+  .btn {
+    @apply cursor-pointer rounded-full disabled:bg-[#C7C9C8] bg-secondary py-2 px-5 text-white font-inter font-semibold
+  }
+
+  .btn-outline {
+    @apply cursor-pointer rounded-full border disabled:border-[#C7C9C8] border-secondary py-2 px-5 text-secondary disabled:text-[#C7C9C8] font-inter font-semibold
   }
 }

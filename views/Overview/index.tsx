@@ -14,9 +14,9 @@ import { useState } from "react";
 export default function Overview() {
   const [open, setOpen] = useState(false)
   return (
-    <div>
+    <div className="w-full">
       <PromptResponseModal open={open} onClose={() => setOpen(false)} />
-      <div className="flex items-stretch gap-3 p-8">
+      <div className="flex items-stretch gap-3 py-8">
         <div className="bg-grey-700 flex flex-1 justify-between flex-col rounded-2xl p-10">
           <textarea
             placeholder="What’s on your mind today? click below to start typing"
@@ -47,7 +47,7 @@ export default function Overview() {
         </div>
       </div>
 
-      <div className="p-8">
+      <div className="py-8">
         <span className="text-lg font-inter font-semibold text-grey-900">
           Today’s memory prompts
           <span className="text-grey-800"> 0/2</span>

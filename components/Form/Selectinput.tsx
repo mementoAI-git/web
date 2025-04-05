@@ -1,7 +1,8 @@
 "use client"
-import { useState } from "react"
+import { useRef, useState } from "react"
 import { ITexinput } from "./TextInput"
 import ChevronDownIcon from "@/public/icon/chevron-down.svg"
+import useClickAway from "@/hooks/use-clickaway"
 
 interface IOption {
   label: string
@@ -10,17 +11,34 @@ interface IOption {
 
 interface ISelect extends ITexinput {
   label: string
-  data?: (string | IOption)[]
+  value?: string
+  data?: IOption[]
 }
 
-export function Selectinput({ label, data = [], ...props }: ISelect) {
-  const [show] = useState(false)
+export function Selectinput({ label, onChange, data = [], ...props }: ISelect) {
+  const [value, setValue] = useState(props.value || "")
+  const [show, setShow] = useState(false)
+  const ref = useClickAway(() => setShow(false))
+  const valueLabelObj = useRef(data.reduce((acc, item) => {
+    acc[item.value] = item.label;
+    return acc
+  }, {} as Record<string, string>)).current
+
+  function handleOnSelect(value: string) {
+    setValue(value)
+    // onChange()
+  }
   return (
-    <div className="input-container">
+    <div ref={ref} className="input-container">
       <label className="input-label">{label}</label>
-      <div>
+      <div onClick={() => setShow(p => !p)}>
         <div className="input-base flex items-center justify-between">
-          <input placeholder="DD-MM-YYYY" {...props} className="flex-1 outline-0 placeholder:text-[#000D4D73]" />
+          <input
+            {...props}
+            value={valueLabelObj[value]}
+            contentEditable={false}
+            className="flex-1 outline-0 placeholder:text-[#000D4D73]"
+          />
           <span className="text-[#000D4D73]">
             <ChevronDownIcon />
           </span>
@@ -30,9 +48,12 @@ export function Selectinput({ label, data = [], ...props }: ISelect) {
           <div className="w-full p-2 rounded-lg max-h-50 overflow-x-hidden overflow-y-visible bg-white shadow-drop-down mt-1">
             {
               data.map((item, i) => (
-                <div key={i} className="flex justify-between items-center rounded w-full py-2 px-1 bg-transparent hover:bg-[#0015800A]">
-                  {typeof item === "string" ? item : item.label}
-                  <div className="w-2.5 aspect-square bg-primary outline-1 outline-primary outline-offset-3 rounded-full" />
+                <div onClick={() => handleOnSelect(item.value)} key={i} className="flex justify-between items-center rounded w-full py-2 px-1 bg-transparent hover:bg-[#0015800A] cursor-pointer">
+                  {item.label}
+                  {
+                    value === item.value &&
+                    <div className="w-2.5 aspect-square bg-primary outline-1 outline-primary outline-offset-3 rounded-full" />
+                  }
                 </div>
               ))
             }

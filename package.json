@@ -12,8 +12,9 @@
     "@svgr/webpack": "^8.1.0",
     "classnames": "^2.5.1",
     "next": "15.2.3",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-toastify": "^11.0.5",
     "tailwind-datepicker-react": "^1.4.3"
   },
   "devDependencies": {

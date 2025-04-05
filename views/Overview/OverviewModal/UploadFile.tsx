@@ -55,12 +55,8 @@ export default function UploadModal() {
           </div>
         </div>
         <div className="flex mt-6 gap-3 justify-end">
-          <button className="rounded-full border disabled:border-[#C7C9C8] border-secondary py-2 px-5 text-secondary disabled:text-[#C7C9C8] font-inter font-semibold">
-            Discard
-          </button>
-          <button disabled className="rounded-full disabled:bg-[#C7C9C8] bg-secondary py-2 px-5 text-white font-inter font-semibold">
-            Add to post
-          </button>
+          <button className="btn-outline">Discard</button>
+          <button disabled className="btn">Add to post</button>
         </div>
       </div>
     </div>
