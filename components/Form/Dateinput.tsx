@@ -2,7 +2,7 @@
 import { ITexinput } from "./TextInput"
 import CalendarIcon from "@/public/icon/calendar.svg"
 
-export function Dateinput({ label, onChange, ...props }: ITexinput) {
+export function Dateinput({ label, ...props }: ITexinput) {
   return (
     <div className="input-container">
       <label className="input-label">{label}</label>

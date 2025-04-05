@@ -21,7 +21,7 @@ export default function Toast({ closeToast, data, toastProps }: ToastContentProp
         <div>
           <div className="flex items-center justify-between">
             <span className="font-inter font-semibold text-xl">{data?.title}</span>
-            <div className="text-grey-300 size-6 flex items-center justify-center">
+            <div onClick={closeToast} className="text-grey-300 size-6 flex items-center justify-center">
               <TimesIcon />
             </div>
           </div>
