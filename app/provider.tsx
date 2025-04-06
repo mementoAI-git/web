@@ -1,26 +1,17 @@
+"use client"
+
+import { fetcher } from '@/api/fetcher';
 import { PropsWithChildren } from 'react';
-import { Slide, ToastContainer, toast } from 'react-toastify';
+import { Toaster } from 'sonner';
+import { SWRConfig } from 'swr';
 
 export default function Providers({ children }: PropsWithChildren) {
   return (
     <div>
-      {children}
-
-      <ToastContainer
-        position="bottom-center"
-        autoClose={5000}
-        limit={3}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick={false}
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme="light"
-        stacked
-        transition={Slide}
-      />
+      <SWRConfig value={{ fetcher }}>
+        {children}
+        <Toaster position="top-center" closeButton />
+      </SWRConfig>
     </div>
   )
 }

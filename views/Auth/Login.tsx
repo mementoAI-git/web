@@ -1,18 +1,64 @@
+"use client"
+
+import endpoint from "@/api/endpoint";
+import { postFetcher } from "@/api/fetcher";
 import { Button } from "@/components/Buttons";
 import { Checkbox, Passwordinput, Textinput } from "@/components/Form";
+import { toast } from 'sonner';
+import useForm from "@/hooks/use-form";
 import Link from "next/link";
+import useSWRMutation from "swr/mutation";
+import * as yup from "yup"
+
+const schema = yup.object().shape({
+  email: yup.string().required("Email is required").email("Invalid email address").trim(),
+  password: yup.string().required("Password is required"),
+  remember_for_30_days: yup.boolean().default(false)
+})
+const initial = {
+  email: "",
+  password: "",
+  remember_for_30_days: false
+}
 
 export function Login() {
+  const { trigger, isMutating } = useSWRMutation(endpoint.login, postFetcher)
+  const { handleSubmit, handleChange, values, errors } = useForm({
+    schema,
+    initial,
+    async onSubmit(payload) {
+      trigger(payload)
+    }
+  })
+
   return (
-    <form className="flex flex-col gap-6">
-      <Textinput label="Email" name="email" placeholder="johndoe@mail.com" />
-      <Passwordinput label="Password" name="password" />
+    <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+      <Textinput
+        label="Email"
+        name="email"
+        placeholder="johndoe@mail.com"
+        value={values.email}
+        error={errors.email}
+        onChange={handleChange}
+      />
+      <Passwordinput
+        label="Password"
+        name="password"
+        value={values.password}
+        error={errors.email}
+        onChange={handleChange}
+      />
 
       <div className="flex items-center justify-between text-sm font-inter">
-        <Checkbox label="Remember for 30 days" />
+        <Checkbox
+          label="Remember for 30 days"
+          name="remember_for_30_days"
+          checked={values.remember_for_30_days}
+          onChange={handleChange}
+        />
         <Link href="/forget-password" className="text-primary font-bold cursor-pointer">Reset password</Link>
       </div>
-      <Button title="Login" className="mt-3" />
+      <Button loading={isMutating} type="submit" title="Login" className="mt-3" />
     </form>
   )
 }

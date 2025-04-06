@@ -34,7 +34,7 @@ export function AuthFormLayout({
       <div className="flex flex-col gap-4 text-center items-center justify-center">
         {
           icon &&
-          <div className={`w-20 aspect-square bg-primary/5 rounded-full flex justify-center items-center ${icon_container_style}`}>
+          <div className={`w-20 aspect-square bg-primary/5 rounded-full flex justify-center text-[#5F48D9] items-center ${icon_container_style}`}>
             {icon}
           </div>
         }
