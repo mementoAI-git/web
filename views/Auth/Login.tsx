@@ -4,11 +4,11 @@ import endpoint from "@/api/endpoint";
 import { postFetcher } from "@/api/fetcher";
 import { Button } from "@/components/Buttons";
 import { Checkbox, Passwordinput, Textinput } from "@/components/Form";
-import { toast } from 'sonner';
 import useForm from "@/hooks/use-form";
 import Link from "next/link";
 import useSWRMutation from "swr/mutation";
 import * as yup from "yup"
+import { useRouter } from "next/navigation";
 
 const schema = yup.object().shape({
   email: yup.string().required("Email is required").email("Invalid email address").trim(),
@@ -22,12 +22,16 @@ const initial = {
 }
 
 export function Login() {
+  const router = useRouter()
   const { trigger, isMutating } = useSWRMutation(endpoint.login, postFetcher)
   const { handleSubmit, handleChange, values, errors } = useForm({
     schema,
     initial,
     async onSubmit(payload) {
-      trigger(payload)
+      const result = await trigger(payload)
+      if (result && result.data.requires_verification) {
+        router.push(`/verify-email?email=${payload.email}`)
+      }
     }
   })
 

@@ -30,6 +30,7 @@ export default function AuthSocials() {
         {
           providers.map(p => (
             <SocialButton
+              key={p.title}
               icon={p.icon}
               disabled={isMutating}
               onClick={() => handleBtnClick(p.title)}

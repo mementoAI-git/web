@@ -20,8 +20,10 @@ export function ForgetPassword() {
     schema,
     initial,
     async onSubmit(payload) {
-      await trigger(payload)
-      router.push(`/check-mail?email=${payload.email}`)
+      const result = await trigger(payload)
+      if (result) {
+        router.push(`/check-mail?email=${payload.email}`)
+      }
     }
   })
 

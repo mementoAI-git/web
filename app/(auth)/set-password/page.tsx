@@ -1,3 +1,5 @@
+"use client"
+
 import { AuthFormLayout, SetPassword } from "@/views/Auth";
 import LockIcon from "@/public/icon/lock.svg"
 import { useRouter, useSearchParams } from "next/navigation";

@@ -14,8 +14,9 @@ export default function StrengthIndicator({ level = 0 }) {
       <div className="flex gap-1 items-center">
         {
           stength_colors
-            .map(color => <div className="max-w-[73px] flex-1 h-[12px] rounded-3xl" style={{ backgroundColor: color }} />)
-            .slice(0, Math.min(stength_colors.length, level))
+            .slice(0, Math.min(stength_colors.length, level + 1))
+            .map((color, i) => <div key={i} className="max-w-[73px] flex-1 h-[12px] rounded-3xl" style={{ backgroundColor: color }} />)
+
         }
       </div>
     </div>

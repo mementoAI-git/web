@@ -8,6 +8,8 @@ import useSWRMutation from "swr/mutation"
 import * as yup from "yup"
 import endpoint from "@/api/endpoint";
 import { postFetcher } from "@/api/fetcher";
+import { useMemo } from "react";
+import { useRouter } from "next/navigation";
 
 const schema = yup.object().shape({
   password: yup.string().required("Password is required")
@@ -24,6 +26,7 @@ const schema = yup.object().shape({
 
 
 export function SetPassword({ token }: { token: string }) {
+  const router = useRouter()
   const initial = { confirm_password: "", password: "", token };
   const { trigger, isMutating } = useSWRMutation(endpoint.setPassword, postFetcher)
 
@@ -31,9 +34,32 @@ export function SetPassword({ token }: { token: string }) {
     schema,
     initial,
     async onSubmit(payload) {
-      await trigger(payload)
+      const result = await trigger(payload)
+      if (result) {
+        router.push("/login")
+      }
     }
   })
+  const level = useMemo(() => {
+    let strength = 0
+    if (/[A-Z]/.test(values.password)) {
+      strength += 1
+    }
+    if (/[a-z]/.test(values.password)) {
+      strength += 1
+    }
+    if (/[0-9]/.test(values.password)) {
+      strength += 1
+    }
+    if (/[!@#$%^&*(),.?":{}|<>]/.test(values.password)) {
+      strength += 1
+    }
+    if (values.password.length >= 8) {
+      strength += 1
+    }
+
+    return strength
+  }, [values.password])
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-6">
       <Passwordinput
@@ -50,7 +76,7 @@ export function SetPassword({ token }: { token: string }) {
         error={errors.confirm_password}
         onChange={handleChange}
       />
-      <StrengthIndicator level={4} />
+      <StrengthIndicator level={level} />
       <Button loading={isMutating} type="submit" title="Set new password" className="mt-3" />
     </form>
   )
