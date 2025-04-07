@@ -9,12 +9,14 @@ import Link from "next/link";
 import useSWRMutation from "swr/mutation";
 import * as yup from "yup"
 import { useRouter } from "next/navigation";
+import { useStore } from "@/hooks/use-store";
 
 const schema = yup.object().shape({
   email: yup.string().required("Email is required").email("Invalid email address").trim(),
   password: yup.string().required("Password is required"),
   remember_for_30_days: yup.boolean().default(false)
 })
+
 const initial = {
   email: "",
   password: "",
@@ -23,14 +25,22 @@ const initial = {
 
 export function Login() {
   const router = useRouter()
+  const { setAuth } = useStore()
   const { trigger, isMutating } = useSWRMutation(endpoint.login, postFetcher)
   const { handleSubmit, handleChange, values, errors } = useForm({
     schema,
     initial,
     async onSubmit(payload) {
-      const result = await trigger(payload)
-      if (result && result.data.requires_verification) {
-        router.push(`/verify-email?email=${payload.email}`)
+      try {
+        const result = await trigger(payload)
+        if (result.data) {
+          setAuth(result.data)
+          router.push("/overwiew")
+        }
+      } catch (err: any) {
+        if (err && err.data.requires_verification) {
+          router.push(`/verify-email?email=${payload.email}`)
+        }
       }
     }
   })

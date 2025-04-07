@@ -5,6 +5,7 @@ import { postFetcher } from "@/api/fetcher"
 import { Button } from "@/components/Buttons"
 import { Passwordinput, Textinput } from "@/components/Form"
 import useForm from "@/hooks/use-form"
+import { useRouter } from "next/navigation"
 import useSWRMutation from "swr/mutation"
 import * as yup from "yup"
 
@@ -21,12 +22,14 @@ const schema = yup.object().shape({
 const initial = { email: "", password: "" }
 
 export function Register() {
+  const router = useRouter()
   const { trigger, isMutating } = useSWRMutation(endpoint.register, postFetcher)
   const { handleSubmit, handleChange, values, errors } = useForm({
     schema,
     initial,
     async onSubmit(payload) {
       await trigger(payload)
+      router.push(`/verify-email?email=${payload.email}`)
     }
   })
   return (

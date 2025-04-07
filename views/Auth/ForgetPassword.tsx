@@ -15,7 +15,7 @@ const schema = yup.object().shape({
 const initial = { email: "" }
 export function ForgetPassword() {
   const router = useRouter()
-  const { trigger, isMutating } = useSWRMutation(endpoint.sendCode, postFetcher)
+  const { trigger, isMutating } = useSWRMutation(endpoint.sendLink, postFetcher)
   const { handleSubmit, handleChange, values, errors } = useForm({
     schema,
     initial,

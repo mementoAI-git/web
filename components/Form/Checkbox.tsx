@@ -5,7 +5,7 @@ export function Checkbox({ label, className, ...props }: ITexinput) {
   return (
     <label className={`flex items-center gap-2 font-inter ${className}`}>
       <input className="hidden peer" type="checkbox" {...props} />
-      <span className="w-4 flex items-center justify-center peer-checked:bg-[#7F56D9] peer-checked:border-0 aspect-square cursor-pointer border border-[#D0D5DD] rounded-sm transition">
+      <span className="w-4 flex items-center justify-center peer-checked:bg-[#7F56D9] peer-checked:border-0 peer-checked:text-white text-transparent aspect-square cursor-pointer border border-[#D0D5DD] rounded-sm transition">
         <CheckIcon width={10} height={8} />
       </span>
       {label && <span className="text-inherit">{label}</span>}
