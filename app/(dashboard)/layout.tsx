@@ -1,3 +1,5 @@
+"use client"
+
 import { DashboardHeader, DashboardSideBar } from "@/views/Dashboard";
 import { PropsWithChildren } from "react";
 

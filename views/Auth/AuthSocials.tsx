@@ -5,9 +5,8 @@ import { SocialButton } from "@/components/Buttons"
 import GoogleIcon from "@/public/icon/google.svg"
 import AppleIcon from "@/public/icon/apple.svg"
 import FacebookIcon from "@/public/icon/facebook.svg"
-import useSWRMutation from "swr/mutation";
 import endpoint from "@/api/endpoint";
-import { getFetcher } from "@/api/fetcher";
+import useFetcher from "@/hooks/use-fetcher";
 
 const providers = [
   { title: "google", desc: "Sign up with Google", icon: <GoogleIcon /> },
@@ -17,7 +16,7 @@ const providers = [
 
 export default function AuthSocials() {
   const [provider, setProvider] = useState("google")
-  const { trigger, isMutating } = useSWRMutation(`${endpoint.oauth}${provider}`, getFetcher)
+  const { trigger, isMutating } = useFetcher(`${endpoint.oauth}${provider}`, "get")
 
   const handleBtnClick = async (provider: string) => {
     setProvider(provider)

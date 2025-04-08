@@ -1,15 +1,14 @@
 "use client"
 
 import endpoint from "@/api/endpoint";
-import { postFetcher } from "@/api/fetcher";
 import { Button } from "@/components/Buttons";
 import { Checkbox, Passwordinput, Textinput } from "@/components/Form";
 import useForm from "@/hooks/use-form";
 import Link from "next/link";
-import useSWRMutation from "swr/mutation";
 import * as yup from "yup"
 import { useRouter } from "next/navigation";
-import { useStore } from "@/hooks/use-store";
+import { clearCache } from "@/utility";
+import useFetcher from "@/hooks/use-fetcher";
 
 const schema = yup.object().shape({
   email: yup.string().required("Email is required").email("Invalid email address").trim(),
@@ -25,8 +24,7 @@ const initial = {
 
 export function Login() {
   const router = useRouter()
-  const { setAuth } = useStore()
-  const { trigger, isMutating } = useSWRMutation(endpoint.login, postFetcher)
+  const { trigger, isMutating } = useFetcher(endpoint.login)
   const { handleSubmit, handleChange, values, errors } = useForm({
     schema,
     initial,
@@ -34,8 +32,8 @@ export function Login() {
       try {
         const result = await trigger(payload)
         if (result.data) {
-          setAuth(result.data)
-          router.push("/overwiew")
+          await clearCache()
+          router.push("/overview")
         }
       } catch (err: any) {
         if (err && err.data.requires_verification) {

@@ -1,3 +1,4 @@
+import { mutate } from "swr"
 
 export const hashEmail = (email: string) => {
   const [username, domain] = email.split("@")
@@ -5,6 +6,8 @@ export const hashEmail = (email: string) => {
 }
 
 export const openMailBox = (email: string) => {
+  "use client";
+
   let link = ""
   if (email.endsWith("gmail.com")) {
     link = "https://mail.google.com/mail/u/0/#inbox"
@@ -16,5 +19,10 @@ export const openMailBox = (email: string) => {
 
   window.open(link, "_blank")
   return link
-
 }
+
+export const clearCache = () => mutate(
+  () => true,
+  undefined,
+  { revalidate: false }
+)

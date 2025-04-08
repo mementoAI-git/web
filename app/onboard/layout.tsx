@@ -1,3 +1,5 @@
+"use client"
+
 import { PropsWithChildren } from "react";
 import Logo from "@/components/Logo";
 import { OnboardSideBar } from "@/views/Onboard";

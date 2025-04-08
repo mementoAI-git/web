@@ -5,9 +5,8 @@ import { Button } from "@/components/Buttons";
 import { Textinput } from "@/components/Form";
 import { useRouter } from "next/navigation";
 import useForm from "@/hooks/use-form"
-import useSWRMutation from "swr/mutation"
 import * as yup from "yup"
-import { postFetcher } from "@/api/fetcher";
+import useFetcher from "@/hooks/use-fetcher";
 
 const schema = yup.object().shape({
   email: yup.string().required("Email is required").email("Invalid email address").trim()
@@ -15,7 +14,7 @@ const schema = yup.object().shape({
 const initial = { email: "" }
 export function ForgetPassword() {
   const router = useRouter()
-  const { trigger, isMutating } = useSWRMutation(endpoint.sendLink, postFetcher)
+  const { trigger, isMutating } = useFetcher(endpoint.sendLink)
   const { handleSubmit, handleChange, values, errors } = useForm({
     schema,
     initial,

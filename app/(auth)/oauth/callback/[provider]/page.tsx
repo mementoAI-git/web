@@ -1,16 +1,16 @@
 "use client"
 
 import endpoint from "@/api/endpoint"
-import { postFetcher } from "@/api/fetcher"
+import useFetcher from "@/hooks/use-fetcher";
+import { AuthLoader } from "@/views/Auth";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
-import useSWRMutation from "swr/mutation"
 
 export default function Callback() {
   const router = useRouter()
   const params = useSearchParams()
   const { provider } = useParams<{ provider: string }>()
-  const { trigger } = useSWRMutation(`${endpoint.oauth}${provider}`, postFetcher)
+  const { trigger } = useFetcher(`${endpoint.oauth}${provider}`)
 
   useEffect(() => {
     if (params.has("code")) {
@@ -19,6 +19,6 @@ export default function Callback() {
     }
   }, [])
   return (
-    <div>Redirecting....</div>
+    <AuthLoader title="Redirecting...." />
   )
 }

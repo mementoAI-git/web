@@ -4,12 +4,11 @@ import { Button } from "@/components/Buttons";
 import { Passwordinput } from "@/components/Form";
 import StrengthIndicator from "./StrengthIndicator";
 import useForm from "@/hooks/use-form"
-import useSWRMutation from "swr/mutation"
 import * as yup from "yup"
 import endpoint from "@/api/endpoint";
-import { postFetcher } from "@/api/fetcher";
 import { useMemo } from "react";
 import { useRouter } from "next/navigation";
+import useFetcher from "@/hooks/use-fetcher";
 
 const schema = yup.object().shape({
   password: yup.string().required("Password is required")
@@ -23,12 +22,10 @@ const schema = yup.object().shape({
     .required("Please confirm password"),
 })
 
-
-
 export function SetPassword({ token }: { token: string }) {
   const router = useRouter()
   const initial = { confirm_password: "", password: "", token };
-  const { trigger, isMutating } = useSWRMutation(endpoint.setPassword, postFetcher)
+  const { trigger, isMutating } = useFetcher(endpoint.setPassword)
 
   const { handleSubmit, handleChange, values, errors } = useForm({
     schema,

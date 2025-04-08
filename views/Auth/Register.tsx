@@ -1,12 +1,11 @@
 "use client"
 
 import endpoint from "@/api/endpoint"
-import { postFetcher } from "@/api/fetcher"
 import { Button } from "@/components/Buttons"
 import { Passwordinput, Textinput } from "@/components/Form"
+import useFetcher from "@/hooks/use-fetcher"
 import useForm from "@/hooks/use-form"
 import { useRouter } from "next/navigation"
-import useSWRMutation from "swr/mutation"
 import * as yup from "yup"
 
 const schema = yup.object().shape({
@@ -23,7 +22,7 @@ const initial = { email: "", password: "" }
 
 export function Register() {
   const router = useRouter()
-  const { trigger, isMutating } = useSWRMutation(endpoint.register, postFetcher)
+  const { trigger, isMutating } = useFetcher(endpoint.register)
   const { handleSubmit, handleChange, values, errors } = useForm({
     schema,
     initial,

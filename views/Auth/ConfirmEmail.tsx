@@ -5,11 +5,10 @@ import { AuthLoader } from "./AuthLoader"
 import TimesIcon from "@/public/icon/times.svg"
 import CheckIcon from "@/public/icon/check.svg"
 import { Button } from "@/components/Buttons"
-import useSWRMutation from "swr/mutation"
 import endpoint from "@/api/endpoint"
-import { postFetcher } from "@/api/fetcher"
 import { useEffect } from "react"
 import { useRouter } from "next/navigation"
+import useFetcher from "@/hooks/use-fetcher"
 
 interface IConfirmEmail {
   token: string | null
@@ -18,8 +17,8 @@ interface IConfirmEmail {
 
 export function ConfirmEmail({ email, token }: IConfirmEmail) {
   const router = useRouter()
-  const { trigger, data, error } = useSWRMutation(endpoint.verifyEmail, postFetcher)
-  const { trigger: sendLink, isMutating: sending } = useSWRMutation(endpoint.sendLink, postFetcher)
+  const { trigger, data, error } = useFetcher(endpoint.verifyEmail)
+  const { trigger: sendLink, isMutating: sending } = useFetcher(endpoint.sendLink)
 
   const handleResendLink = () => {
     if (!email) {

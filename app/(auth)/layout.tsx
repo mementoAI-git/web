@@ -1,3 +1,5 @@
+"use client"
+
 import { PropsWithChildren } from "react";
 import CircleQuestionMarkIcon from "@/public/icon/circl-question-mark.svg"
 import Logo from "@/components/Logo";
