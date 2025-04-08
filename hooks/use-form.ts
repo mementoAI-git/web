@@ -17,10 +17,10 @@ export default function useForm<T extends Record<string, any>>({ initial, schema
 
   const validation = useMemo(() => schema, [schema])
 
-  const handleSetError = (err: ValidationError) => {
+  const handleSetError = (err: ValidationError, show = false) => {
     const validationErrors: Partial<Record<keyof typeof initial, string>> = {};
     err.inner.forEach((error) => {
-      if (error.path && touchedFields.includes(error.path)) {
+      if (error.path && (show || touchedFields.includes(error.path))) {
         validationErrors[error.path as keyof typeof initial] = error.message;
       }
     });
@@ -67,7 +67,7 @@ export default function useForm<T extends Record<string, any>>({ initial, schema
       setErrors({});
     } catch (err) {
       if (err instanceof ValidationError) {
-        handleSetError(err)
+        handleSetError(err, true)
       }
     }
   };

@@ -19,7 +19,7 @@ export function Button({ title, className, href = null, loading = false, ...prop
   return (
     <button {...props} disabled={loading} className={`bg-secondary ${props.disabled && "bg-grey-100"}  disabled:cursor-not-allowed cursor-pointer mt-2 h-12 w-full rounded-lg flex items-center gap-3 justify-center shadow-btn ${className}`}>
       <span className="text-white font-bold leading-6 text-center font-inter text-base">{title}</span>
-      {loading && <Spinner className="!size-4" />}
+      <Spinner loading={loading} className="!size-4" />
     </button>
   )
 }

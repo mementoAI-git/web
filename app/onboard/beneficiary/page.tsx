@@ -1,7 +1,7 @@
-import { AddBeneficiaries } from "@/views/Onboard/AddBeneficiaries";
+import { Beneficiaries } from "@/views/Onboard";
 
 export default function BeneficiaryPage() {
   return (
-    <AddBeneficiaries />
+    <Beneficiaries />
   )
 }

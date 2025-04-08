@@ -1,5 +1,5 @@
 @import "tailwindcss";
-@source "tailwind-datepicker-react/dist/**/*.js";
+@config "../tailwind.config.ts";
 
 :root {
   --color-primary: #5A00E8;

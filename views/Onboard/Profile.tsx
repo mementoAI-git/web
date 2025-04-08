@@ -8,13 +8,14 @@ import Spinner from "@/components/Spinner";
 import useFetcher from "@/hooks/use-fetcher";
 import useForm from "@/hooks/use-form";
 import countries from "@/utility/countries";
+import { useRouter } from "next/navigation";
 import * as yup from "yup"
 
 const schema = yup.object().shape({
   first_name: yup.string().required("Firstname is required").trim(),
   last_name: yup.string().required("Lastname is required").trim(),
-  dob: yup.string().required(),
-  country: yup.string().required(),
+  dob: yup.string().required("date of birth is required"),
+  country: yup.string().required().lowercase(),
   newsletter_subscriber: yup.boolean().default(false)
 })
 
@@ -27,22 +28,30 @@ const initial = {
 }
 
 export function Profile() {
+  const router = useRouter()
   const { trigger, isMutating } = useFetcher(endpoint.profile, "put")
   const { handleSubmit, handleChange, values, errors } = useForm({
     initial,
     schema,
     async onSubmit(p) {
-      trigger(p, {
+      const result = await trigger(p, {
         revalidate: false,
         populateCache(result, currentData) {
-          return {
-            ...currentData,
-            data: { ...currentData?.data, ...result?.data }
+          if (result?.data) {
+            return {
+              ...currentData,
+              data: { ...currentData?.data, ...result?.data }
+            }
           }
+          return currentData
         },
       })
+      if (result) {
+        router.push("/onboard/beneficiary")
+      }
     }
   })
+
   return (
     <form onSubmit={handleSubmit} className="max-w-[583px] flex flex-col gap-10 py-20 w-full">
       <div className="bg-surface flex flex-col p-10 gap-5 rounded-3xl">
@@ -65,6 +74,7 @@ export function Profile() {
             onChange={handleChange}
           />
           <Dateinput
+            id="onboard-profile-dob"
             name="dob"
             label="Date of birth"
             value={values.dob}
@@ -90,8 +100,8 @@ export function Profile() {
       </div>
       <div className="flex items-end justify-between font-geist font-bold text-base">
         <span className="underline text-grey-200 cursor-pointer">Go back</span>
-        <button className="rounded-lg text-white bg-secondary px-4 cursor-pointer h-12">
-          Continue {isMutating && <Spinner />}
+        <button className="rounded-lg text-white bg-secondary flex gap-2 items-center justify-center px-4 cursor-pointer h-12">
+          Continue <Spinner loading={isMutating} />
         </button>
       </div>
     </form>

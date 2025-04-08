@@ -29,10 +29,16 @@ export function Selectinput({ label, onChange, data = [], ...props }: ISelect) {
 
   function handleOnSelect(value: string) {
     setValue(value)
-    // onChange()
+    if (onChange) {
+      const event = {
+        target: { name: props.name, value }
+      };
+
+      onChange(event as any)
+    }
   }
   return (
-    <div ref={ref} className="input-container">
+    <div ref={ref} className={`input-container group ${props.error && "error"}`}>
       <label className="input-label">{label}</label>
       <div onClick={() => setShow(p => !p)}>
         <div className="input-base flex items-center justify-between">
@@ -63,6 +69,7 @@ export function Selectinput({ label, onChange, data = [], ...props }: ISelect) {
           </div>
         }
       </div>
+      {props.error && <small className="text-xs text-danger">{props.error}</small>}
     </div>
   )
 }

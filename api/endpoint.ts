@@ -11,4 +11,6 @@ export default {
   // user
   profile: "/users/profile",
 
+  // beneficiaries
+  beneficiaries: "/beneficiaries"
 }
