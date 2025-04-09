@@ -39,6 +39,35 @@ export const putFetcher: MutationFetcher = async (url, body) => handleRequest("p
 
 export const deleteFetcher: MutationFetcher = async (url, body) => handleRequest("delete", url, body);
 
+export const fileUploadFetcher = async (url: string, { arg }) => {
+  const { file, onProgress } = arg;
+  const formData = new FormData();
+  formData.append('file', file);
+
+  return axios.post(url, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+    onUploadProgress: (event) => {
+      const percent = Math.round((event.loaded * 100) / event.total);
+      onProgress(percent);
+    },
+  });
+};
+
+// implementaion sample
+
+// const [uploadProgress, setUploadProgress] = useState(0);
+
+// const { trigger, isMutating } = useSWRMutation('/api/upload', uploadFile);
+
+// const handleChange = async (e) => {
+//   const file = e.target.files[0];
+//   if (!file) return;
+
+//   await trigger({
+//     file,
+//     onProgress: setUploadProgress,
+//   });
+
 const handleRequest = async (method: string, url: string, body?: any) => {
   try {
     const res = await axios({
