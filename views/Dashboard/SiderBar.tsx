@@ -4,7 +4,7 @@ import Logo from "@/components/Logo";
 
 export function DashboardSideBar() {
   return (
-    <div className="h-full border-r border-grey-500">
+    <div className="h-full border-l border-r border-grey-500">
       <div className="h-full max-h-300 flex flex-col justify-between px-4 py-8">
         <div className="space-y-8">
           <Logo size={32} textClassName="!text-[24.24px]" />

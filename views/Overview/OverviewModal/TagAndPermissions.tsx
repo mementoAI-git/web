@@ -1,4 +1,5 @@
 import { Selectinput, Textinput } from "@/components/Form";
+import { usePrompt } from "@/hooks/use-prompt";
 import { useState } from "react";
 
 function Taginput() {
@@ -12,6 +13,7 @@ function Taginput() {
   const removeTag = (tag: string) => {
     setValue(p => p.filter(_p => _p !== tag))
   }
+
   return (
     <div>
       <label className="input-label">Tags</label>
@@ -56,6 +58,8 @@ function Taginput() {
 }
 
 export default function TagAndPermissions() {
+  const { navigations } = usePrompt()
+  if (navigations[0] !== "tag-permission") return
   return (
     <div>
       <h4 className="modal-title">One more thing...</h4>
