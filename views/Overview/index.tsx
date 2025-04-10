@@ -10,12 +10,13 @@ import PlanepaperIcon from "@/public/icon/plane-paper.svg"
 import DailyPrompt from "./DailyPrompt";
 import PromptResponseModal from "./OverviewModal";
 import { useState } from "react";
+import { usePrompt } from "@/hooks/use-prompt";
 
 export default function Overview() {
-  const [open, setOpen] = useState(false)
+  const { push } = usePrompt()
   return (
     <div className="w-full">
-      <PromptResponseModal open={open} onClose={() => setOpen(false)} />
+      <PromptResponseModal />
       <div className="flex items-stretch gap-3 py-8">
         <div className="bg-grey-700 flex flex-1 justify-between flex-col rounded-2xl p-10">
           <textarea
@@ -55,8 +56,8 @@ export default function Overview() {
         <div className="flex items-stretch gap-3 mt-2">
           <div className="flex-1">
             <div className="flex flex-wrap items-stretch gap-3">
-              <DailyPrompt onClick={() => setOpen(true)} />
-              <DailyPrompt onClick={() => setOpen(true)} />
+              <DailyPrompt onClick={() => push("prompt")} />
+              <DailyPrompt onClick={() => push("prompt")} />
             </div>
           </div>
 

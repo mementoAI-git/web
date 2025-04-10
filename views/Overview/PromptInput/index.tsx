@@ -3,17 +3,14 @@
 import TextIcon from "@/public/icon/text.svg"
 import VideoIcon from "@/public/icon/video.svg"
 import MicIcon from "@/public/icon/mic.svg"
-import PlusIcon from "@/public/icon/plus.svg"
 import { useMemo, useState } from "react"
 import AudioRec from "./AudioRec"
 import VideoRec from "./VideoRec"
 import TextArea from "./TextArea"
+import AddFileButton from "./AddFileButton"
+import { usePrompt } from "@/hooks/use-prompt"
 
 const inputTypes = { text: "text", video: "video", audio: "audio" }
-
-function RenderInput({ }) {
-
-}
 
 const renderIcons = {
   [inputTypes.text]: <TextIcon width={11} />,
@@ -22,6 +19,7 @@ const renderIcons = {
 };
 
 export default function PromptInput() {
+  const { navigations, push } = usePrompt()
   const [type, setType] = useState("text")
   const [text, setText] = useState("")
   const [audioStream, setAudioStream] = useState<MediaStream | null>(null)
@@ -43,6 +41,8 @@ export default function PromptInput() {
     [text, videoStream, audioStream]
   );
 
+
+  if (navigations[0] !== "prompt") return
   return (
     <div>
       <h4 className="modal-title">What is one of your earliest childhood memories</h4>
@@ -51,14 +51,12 @@ export default function PromptInput() {
           {renderInputComponent}
         </div>
         <div className="flex justify-between items-center mt-2">
-          <div className="w-10 cursor-pointer aspect-square rounded-full border border-[#EAECF0] flex items-center justify-center">
-            <PlusIcon width={12} height={12} />
-          </div>
+          <AddFileButton />
           {
             editMode ?
               <div className="space-x-2">
                 <button className="btn-outline !border-[#C7C9C8]">Cancel</button>
-                <button className="btn">Save</button>
+                <button onClick={() => push("tag-permission")} className="btn">Save</button>
               </div> :
               <div className="flex items-center gap-2">
                 {

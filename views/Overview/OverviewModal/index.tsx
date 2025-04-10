@@ -1,18 +1,18 @@
 import ModalLayout from "@/components/ModalLayout";
 import PromptInput from "../PromptInput";
-import UploadModal from "./UploadFile";
 import TagAndPermissions from "./TagAndPermissions";
+import UploadFiles from "../UploadFile";
+import { usePrompt } from "@/hooks/use-prompt";
+import SharePost from "./SharePost";
 
-interface IPromptResponseModal {
-  onClose: () => void
-  open: boolean
-}
-export default function PromptResponseModal({ open, onClose }: IPromptResponseModal) {
+export default function PromptResponseModal() {
+  const { navigations, back } = usePrompt()
   return (
-    <ModalLayout open={open} onClose={onClose}>
+    <ModalLayout open={navigations.length > 0} onClose={back}>
       <PromptInput />
-      {/* <UploadModal /> */}
-      {/* <TagAndPermissions /> */}
+      <UploadFiles />
+      <TagAndPermissions />
+      <SharePost />
     </ModalLayout>
   )
 }
