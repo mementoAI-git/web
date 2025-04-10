@@ -1,14 +1,21 @@
+import Image from "next/image"
+import questionIcon from "@/public/image/question.png"
+import quizIcon from "@/public/image/lighten.png"
 
 interface IDailyPrompt {
-  onClick?: () => void
+  onClick?: () => void,
+  type: string
 }
-export default function DailyPrompt({ onClick }: IDailyPrompt) {
+export default function DailyPrompt({ onClick, type }: IDailyPrompt) {
   return (
-    <div className="rounded-2xl h-72.5 max-w-[368.5px] w-1/2 flex-1 p-8 flex flex-col justify-between bg-grey-700">
-      <span className="inline-block w-fit py-1 px-3 rounded-full bg-grey-400 font-inter font-medium text-xs text-grey-800 uppercase">Question</span>
-      <div className="space-y-3">
-        <span className="block text-grey-900 font-inter font-semibold ">What is one of your earliest childhood memories?</span>
-        <button onClick={onClick} className="block rounded-full px-5 py-2 bg-secondary disabled:bg-grey-500 text-white disabled:text-grey-800 font-inter font-medium text-sm">Reply</button>
+    <div className="rounded-2xl h-72.5 max-w-[368.5px] w-1/2 flex-1 p-8 flex group flex-col justify-between bg-grey-700 cursor-pointer">
+      <Image className="size-16" src={type === "quiz" ? quizIcon : questionIcon} alt="" />
+      <div>
+        <span className="inline-block w-fit py-1 px-3 rounded-full bg-black/5 font-inter font-medium text-xs text-[#050709] uppercase mb-2">{type}</span>
+        <div className="space-y-3">
+          <span className="block text-grey-900 font-inter font-semibold ">What is one of your earliest childhood memories?</span>
+          <button onClick={onClick} className="group-hover:block hidden btn disabled:bg-grey-500 disabled:text-grey-800 font-medium text-sm transition-all">Reply</button>
+        </div>
       </div>
     </div>
   )
