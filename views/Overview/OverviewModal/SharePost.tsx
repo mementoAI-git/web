@@ -1,6 +1,10 @@
 import { usePrompt } from "@/hooks/use-prompt"
 import confetti from "@/public/image/confetti.png"
 import Image from "next/image";
+import facebook from "@/public/image/Facebook.png"
+import twitter from "@/public/image/twitter.png"
+import instagram from "@/public/image/instagram.png"
+import linkedin from "@/public/image/linkedin.png"
 
 export default function SharePost() {
   const { navigations } = usePrompt()
@@ -21,9 +25,13 @@ export default function SharePost() {
           </div>
         </div>
         <div className="flex justify-center items-center gap-11">
-          <div className="size-11 rounded-full bg-grey-500 flex items-center justify-center"></div>
-          <div className="size-11 rounded-full bg-grey-500 flex items-center justify-center"></div>
-          <div className="size-11 rounded-full bg-grey-500 flex items-center justify-center"></div>
+          {
+            [facebook, linkedin, twitter, instagram].map((img, i) => (
+              <div key={i} className="size-11 rounded-full bg-grey-500 flex items-center justify-center">
+                <Image className="size-5 object-contain" src={img} key={i} alt="social logos" />
+              </div>
+            ))
+          }
         </div>
       </div>
       <div className="flex gap-4">
