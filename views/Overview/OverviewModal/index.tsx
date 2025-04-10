@@ -3,6 +3,7 @@ import PromptInput from "../PromptInput";
 import TagAndPermissions from "./TagAndPermissions";
 import UploadFiles from "../UploadFile";
 import { usePrompt } from "@/hooks/use-prompt";
+import SharePost from "./SharePost";
 
 export default function PromptResponseModal() {
   const { navigations, back } = usePrompt()
@@ -11,6 +12,7 @@ export default function PromptResponseModal() {
       <PromptInput />
       <UploadFiles />
       <TagAndPermissions />
+      <SharePost />
     </ModalLayout>
   )
 }
