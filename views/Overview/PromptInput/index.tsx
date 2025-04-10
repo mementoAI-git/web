@@ -19,7 +19,7 @@ const renderIcons = {
 };
 
 export default function PromptInput() {
-  const { navigations } = usePrompt()
+  const { navigations, push } = usePrompt()
   const [type, setType] = useState("text")
   const [text, setText] = useState("")
   const [audioStream, setAudioStream] = useState<MediaStream | null>(null)
@@ -56,7 +56,7 @@ export default function PromptInput() {
             editMode ?
               <div className="space-x-2">
                 <button className="btn-outline !border-[#C7C9C8]">Cancel</button>
-                <button className="btn">Save</button>
+                <button onClick={() => push("tag-permission")} className="btn">Save</button>
               </div> :
               <div className="flex items-center gap-2">
                 {

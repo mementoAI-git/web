@@ -1,12 +1,16 @@
 import AddImageIcon from "@/public/icon/add-image.svg"
-import { ChangeEvent, ChangeEventHandler, useCallback, useEffect, useRef, useState } from "react"
+import { ChangeEvent, Dispatch, SetStateAction, useCallback, useEffect, useRef, useState } from "react"
 
-export default function FileUploadInput() {
+interface IFileUploadinput {
+  setFiles: Dispatch<SetStateAction<File[]>>
+}
+
+export default function FileUploadInput({ setFiles }: IFileUploadinput) {
   const ref = useRef<HTMLLabelElement>(null)
   const [height, setHeight] = useState(425)
 
   const handleUpload = useCallback((e: ChangeEvent<HTMLInputElement>) => {
-    console.log(e.target.files)
+    setFiles(p => [...p, e.target.files[0]])
   }, [])
 
   useEffect(() => {
@@ -32,9 +36,9 @@ export default function FileUploadInput() {
       </div>
       {
         height > 154 &&
-        <button className="btn !font-medium">
+        <span className="btn !font-medium">
           Browse files
-        </button>
+        </span>
       }
     </label>
   )

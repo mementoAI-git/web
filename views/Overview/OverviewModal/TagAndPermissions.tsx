@@ -58,7 +58,7 @@ function Taginput() {
 }
 
 export default function TagAndPermissions() {
-  const { navigations } = usePrompt()
+  const { navigations, push } = usePrompt()
   if (navigations[0] !== "tag-permission") return
   return (
     <div>
@@ -79,7 +79,7 @@ export default function TagAndPermissions() {
       </form>
       <div className="flex mt-6 gap-3 justify-end">
         <button className="btn-outline">Discard</button>
-        <button className="btn">Submit</button>
+        <button onClick={() => push("share")} className="btn">Submit</button>
       </div>
     </div>
   )
