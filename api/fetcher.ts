@@ -44,29 +44,32 @@ export const fileUploadFetcher = async (url: string, { arg }) => {
   const formData = new FormData();
   formData.append('file', file);
 
-  return axios.post(url, formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-    onUploadProgress: (event) => {
-      const percent = Math.round((event.loaded * 100) / event.total);
-      onProgress(percent);
-    },
-  });
+  try {
+    const res = await axios.post(url, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      onUploadProgress: (event) => {
+        const percent = Math.round((event.loaded * 100) / event.total);
+        onProgress(percent);
+      },
+    });
+
+    toast.success(res.data?.message || "Success", { className: "!text-success" });
+    return res.data;
+  } catch (error) {
+    let message = "Something went wrong";
+
+    if (Axios.isAxiosError(error)) {
+      const axiosError = error as AxiosError<IResponse>;
+      message = axiosError.response?.data?.message || axiosError.message;
+      toast.error(message, { className: "!text-danger" });
+
+      throw axiosError.response?.data || null
+    }
+    toast.error(message, { className: "!text-danger" });
+
+    throw { message };
+  }
 };
-
-// implementaion sample
-
-// const [uploadProgress, setUploadProgress] = useState(0);
-
-// const { trigger, isMutating } = useSWRMutation('/api/upload', uploadFile);
-
-// const handleChange = async (e) => {
-//   const file = e.target.files[0];
-//   if (!file) return;
-
-//   await trigger({
-//     file,
-//     onProgress: setUploadProgress,
-//   });
 
 const handleRequest = async (method: string, url: string, body?: any) => {
   try {

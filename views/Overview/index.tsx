@@ -15,12 +15,7 @@ export default function Overview() {
       <PromptResponseModal />
       <div className="flex items-stretch gap-3 py-8">
         <StartConversation />
-        <div className="max-w-[335px] w-full flex flex-col gap-5 flex-1 font-inter rounded-2xl p-10 border-grey-700 bg-[#FCFCFD] border">
-          <span className="text-grey-800 font-medium text-xs">✌🏽 MY WEEKLY STREAK</span>
-          <Streak />
-          <span className="text-grey-600 text-left">Great start so far! Keep going.</span>
-          <span className="text-center block text-primary font-medium text-xs cursor-pointer">See more stats</span>
-        </div>
+        <Streak />
       </div>
 
       <div className="py-8">

@@ -12,5 +12,9 @@ export default {
   profile: "/users/profile",
 
   // beneficiaries
-  beneficiaries: "/beneficiaries"
+  beneficiaries: "/beneficiaries",
+
+  // files
+  upload: "/files/upload",
+  files: "/files"
 }

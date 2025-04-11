@@ -1,6 +1,10 @@
 import FileIcon from "@/public/icon/file.svg"
 import BinIcon from "@/public/icon/bin.svg"
 import { formatFileSize, truncateFileName } from "@/utility"
+import useSWRMutation from "swr/mutation"
+import endpoint from "@/api/endpoint"
+import { fileUploadFetcher } from "@/api/fetcher"
+import { useEffect, useState } from "react"
 
 interface IFileUploadItem {
   file: File
@@ -14,8 +18,16 @@ const fileColors: Record<string, string> = {
 }
 
 export default function FileUploadItem({ file, onDelete }: IFileUploadItem) {
+  const [progress, setProgress] = useState(0);
+  const { trigger } = useSWRMutation(endpoint.upload, fileUploadFetcher)
+
   const ext = file.name.slice(file.name.lastIndexOf('.') + 1)
-  // TODO: initiate the file upload on monut
+
+  useEffect(() => {
+    if (file) {
+      trigger({ file, onProgress: setProgress })
+    }
+  }, [file])
   return (
     <div className="flex items-start rounded-lg gap-3 py-3 px-4 border border-grey-500">
       <div className="w-8 h-10 relative text-[#D5D7DA]">
@@ -40,9 +52,9 @@ export default function FileUploadItem({ file, onDelete }: IFileUploadItem) {
         </div>
         <div className="flex items-center gap-2">
           <div className="flex-1 rounded-full overflow-hidden w-full h-2 bg-grey-500">
-            <div className="w-[40%] rounded-full bg-[#314FDF] h-full" />
+            <div style={{ width: `${progress}%` }} className="rounded-full transition-all duration-300 bg-[#314FDF] h-full" />
           </div>
-          <span className="text-[#3C3F3E] font-medium text-sm font-inter">40%</span>
+          <span className="text-[#3C3F3E] font-medium text-sm font-inter">{progress}%</span>
         </div>
       </div>
     </div >
