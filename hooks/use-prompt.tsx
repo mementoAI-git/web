@@ -3,17 +3,13 @@
 import { createContext, useContext, useState, useCallback, useEffect, PropsWithChildren } from "react";
 
 export const initialStates: States = {
-  audioStream: null,
-  videoStream: null,
-  text: "",
+  edit_mode: false,
   type: "text",
   navigations: []
 }
 
 type States = {
-  audioStream: MediaStream | null
-  videoStream: MediaStream | null
-  text: string
+  edit_mode: boolean
   type: "text" | "video" | "audio"
   navigations: string[]
 };
@@ -22,6 +18,8 @@ interface IPromptContext extends States {
   set?: (key: keyof States, value: any) => void
   push?: (form: string) => void
   back?: (form?: string) => void
+  onSave?: () => void
+  onDiscard?: () => void
 }
 
 const store = createContext<IPromptContext>(initialStates)
@@ -59,6 +57,7 @@ export function PromtProvider({ children }: PropsWithChildren) {
       return { ...p, navigations: p.navigations.filter(n => n !== p.navigations[0]) }
     })
   }, [])
+
   return (
     <store.Provider value={{ ...state, set, push, back }}> {children} </store.Provider>
   )
