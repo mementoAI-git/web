@@ -19,7 +19,7 @@ const renderIcons = {
 };
 
 export default function PromptInput() {
-  const { type, set, navigations, push, edit_mode, onDiscard, onSave } = usePrompt()
+  const { type, set, navigations, edit_mode, onDiscard, onSave } = usePrompt()
 
   const renderInputComponent = useMemo(() => {
     switch (type) {

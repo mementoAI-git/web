@@ -3,7 +3,7 @@
 import VideoIcon from "@/public/icon/video.svg"
 import RecIndicator from "@/components/RecIndicator"
 import AletHexagonIcon from "@/public/icon/alert-hexagon.svg"
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import useRecorder from "@/hooks/use-recorder";
 import { VideoRecButtons } from "./RecButtons";
 import AudioVisualizer from "@/components/AudioVisualizer";
