@@ -16,7 +16,7 @@ interface ISelect extends ITexinput {
 }
 
 export function Selectinput({ label, onChange, data = [], ...props }: ISelect) {
-  const [value, setValue] = useState(props.value || "")
+  const [value, setValue] = useState(props.value)
   const [show, setShow] = useState(false)
   const ref = useClickAway(() => setShow(false))
 

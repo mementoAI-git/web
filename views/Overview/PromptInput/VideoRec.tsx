@@ -26,17 +26,18 @@ const constraints = {
 const fileType = 'video/webm'
 
 export default function VideoRec() {
-  const { data } = usePrompt()
+  const { data, push } = usePrompt()
   const [editMode, setEditMode] = useState(false)
   const [stream, setStream] = useState<MediaStream | null>(null)
   const ref = useRef<HTMLVideoElement>(null);
   const recorder = useRecorder(stream, setStream, fileType)
   const { isMutating, trigger } = useSWRMutation(endpoint.replyPrompt, fileUploadFetcher)
 
-  const handeleSave = () => {
+  const handeleSave = async () => {
     const blob = new Blob(recorder.chucks, { type: fileType })
     const file = new File([blob], 'recorded.webm', { type: fileType });
-    trigger({ file, prompt_id: data?.prompt })
+    await trigger({ file, prompt_id: data?.prompt })
+    push("tag-permission")
   }
 
   const handeleDiscard = () => {

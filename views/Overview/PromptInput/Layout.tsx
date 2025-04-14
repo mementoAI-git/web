@@ -49,7 +49,7 @@ export default function PromptInputLayout({ children, onDiscard, onSave, saving 
               <button disabled={saving || isMutating} onClick={onDiscard} className="btn-outline !border-[#C7C9C8]">Cancel</button>
               <button disabled={saving || isMutating} onClick={onSave} className="btn flex items-center gap-2">
                 Save
-                <Spinner loading={saving} />
+                <Spinner loading={saving} className="!size-4" />
               </button>
             </div> :
             <div className="flex items-center gap-2">

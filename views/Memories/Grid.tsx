@@ -9,7 +9,7 @@ export default function MemoriesGridItem() {
     <div className="w-[341.33px] h-[290px] rounded-2xl p-6 flex flex-col gap-4 bg-[#F9F9F9]">
       <div className="w-full flex justify-center items-center rounded-lg bg-[#F3F3F3] h-[138px]">
         <div className="w-[96px] h-[82.04px]">
-          <ImageThumbnail size={68.78} boxClassName="!border-[2px] rounded-[11.96px]" />
+          <ImageThumbnail size={68.78} boxClassName="!border-[2px] !rounded-[11.96px]" />
         </div>
       </div>
       <div className="flex flex-col gap-3">

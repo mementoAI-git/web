@@ -43,7 +43,7 @@ export const deleteFetcher: MutationFetcher = async (url, body) => handleRequest
 export const fileUploadFetcher = async (url: string, { arg }) => {
   const { file, onProgress, ...payload } = arg;
   const formData = new FormData();
-  formData.append('file', file);
+  formData.append('file', file, file.name);
   if (!isEmpty(payload)) {
     Object.entries(payload).forEach(([key, value]) => formData.append(key, String(value)))
   }

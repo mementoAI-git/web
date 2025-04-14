@@ -4,15 +4,16 @@ import { usePrompt } from "@/hooks/use-prompt";
 import useFetcher from "@/hooks/use-fetcher";
 import endpoint from "@/api/endpoint";
 import { isEmpty } from "@/utility";
+import ImageThumbnail from "@/components/ImageThumbnail";
 
 export default function TextArea() {
-  const { data, set } = usePrompt()
+  const { data, set, push } = usePrompt()
   const [text, setText] = useState(data?.body)
   const { isMutating, trigger } = useFetcher(endpoint.replyPrompt)
 
-  const handeleSave = () => {
+  const handeleSave = async () => {
     if (text === data?.body) return;
-    trigger(
+    await trigger(
       { text, prompt_id: data?.prompt },
       {
         revalidate: false,
@@ -25,6 +26,7 @@ export default function TextArea() {
         },
       }
     )
+    push("tag-permission")
   }
 
   const handeleDiscard = () => {
@@ -43,12 +45,30 @@ export default function TextArea() {
       onSave={handeleSave}
       saving={isMutating}
     >
-      <textarea
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        className="placeholder:text-[#C7C9C8] resize-none w-full outline-0 p-3 rounded-2xl bg-grey-700 text-xs font-inter min-h-[425px]"
-        placeholder="Tap to start typing..."
-      ></textarea>
+      <div className="flex flex-col gap-6 p-3 rounded-2xl bg-grey-700 text-xs font-inter min-h-[425px]">
+        {
+          !isEmpty(data?.attachments) &&
+          <div className="relative h-22.5 min-w-[110px] size-fit">
+            <ImageThumbnail
+              boxClassName="!rounded-[12px] !border-2 !size-[69px]"
+              images={data?.attachments}
+            />
+            {
+              data?.attachments.length > 3 &&
+              <div className="absolute z-40 top-0 right-0 bg-secondary border border-white text-[#C1FDC5] font-light text-xs font-inter rounded-full px-1.5 py-0.5">
+                +{data?.attachments.length} files
+              </div>
+            }
+          </div>
+        }
+
+        <textarea
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          className="placeholder:text-[#C7C9C8] resize-none size-full outline-0 flex-1"
+          placeholder="Tap to start typing..."
+        ></textarea>
+      </div>
     </PromptInputLayout>
   )
 }

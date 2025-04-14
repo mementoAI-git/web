@@ -6,14 +6,25 @@ import { AudioRecButtons } from "./RecButtons"
 import AudioVisualizer from "@/components/AudioVisualizer"
 import { toast } from 'sonner';
 import PromptInputLayout from "./Layout"
+import { fileUploadFetcher } from "@/api/fetcher"
+import endpoint from "@/api/endpoint"
+import useSWRMutation from "swr/mutation"
+import { usePrompt } from "@/hooks/use-prompt"
+
+const fileType = 'audio/webm'
 
 export default function AudioRec() {
+  const { data, push } = usePrompt()
   const [editMode, setEditMode] = useState(false)
   const [stream, setStream] = useState<MediaStream | null>(null)
-  const recorder = useRecorder(stream, setStream, "audio/webm")
+  const recorder = useRecorder(stream, setStream, fileType)
+  const { isMutating, trigger } = useSWRMutation(endpoint.replyPrompt, fileUploadFetcher)
 
-  const handeleSave = () => {
-    console.log("Handling saving audio")
+  const handeleSave = async () => {
+    const blob = new Blob(recorder.chucks, { type: fileType })
+    const file = new File([blob], 'recorded.webm', { type: fileType });
+    await trigger({ file, prompt_id: data?.prompt })
+    push("tag-permission")
   }
 
   const handeleDiscard = () => {
@@ -38,6 +49,7 @@ export default function AudioRec() {
       editMode={editMode}
       onDiscard={handeleDiscard}
       onSave={handeleSave}
+      saving={isMutating}
     >
       <div>
         <div className="flex items-center justify-center rounded-t-2xl py-1 bg-grey-400 text-grey-800">
