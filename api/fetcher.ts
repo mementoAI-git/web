@@ -3,6 +3,7 @@
 import Axios, { AxiosError } from "axios";
 import { IResponse, MutationFetcher } from "./interface";
 import { toast } from 'sonner';
+import { isEmpty } from "@/utility";
 
 const axios = Axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_BASE_URL,
@@ -40,16 +41,21 @@ export const putFetcher: MutationFetcher = async (url, body) => handleRequest("p
 export const deleteFetcher: MutationFetcher = async (url, body) => handleRequest("delete", url, body);
 
 export const fileUploadFetcher = async (url: string, { arg }) => {
-  const { file, onProgress } = arg;
+  const { file, onProgress, ...payload } = arg;
   const formData = new FormData();
   formData.append('file', file);
+  if (!isEmpty(payload)) {
+    Object.entries(payload).forEach(([key, value]) => formData.append(key, String(value)))
+  }
 
   try {
     const res = await axios.post(url, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
       onUploadProgress: (event) => {
-        const percent = Math.round((event.loaded * 100) / event.total);
-        onProgress(percent);
+        if (onProgress) {
+          const percent = Math.round((event.loaded * 100) / event.total);
+          onProgress(percent);
+        }
       },
     });
 

@@ -1,21 +1,17 @@
 "use client"
 
-import { createContext, useContext, useState, useCallback, useEffect, PropsWithChildren } from "react";
+import { createContext, useContext, useState, useCallback, PropsWithChildren, useMemo } from "react";
 
 export const initialStates: States = {
-  audioStream: null,
-  videoStream: null,
-  text: "",
   type: "text",
-  navigations: []
+  navigations: [],
+  data: null
 }
 
 type States = {
-  audioStream: MediaStream | null
-  videoStream: MediaStream | null
-  text: string
   type: "text" | "video" | "audio"
   navigations: string[]
+  data: any
 };
 
 interface IPromptContext extends States {
@@ -32,7 +28,7 @@ export function PromtProvider({ children }: PropsWithChildren) {
   const set = useCallback((key: keyof States, value: any) => {
     setState(s => ({
       ...s,
-      [key]: value
+      [key]: typeof value === "object" && s[key] !== null ? { ...s[key], ...value } : value
     }))
   }, [])
 
@@ -59,8 +55,13 @@ export function PromtProvider({ children }: PropsWithChildren) {
       return { ...p, navigations: p.navigations.filter(n => n !== p.navigations[0]) }
     })
   }, [])
+
+  const value = useMemo(() => ({
+    ...state, set, push, back
+  }), [state, set, push, back])
+
   return (
-    <store.Provider value={{ ...state, set, push, back }}> {children} </store.Provider>
+    <store.Provider value={value}> {children} </store.Provider>
   )
 }
 

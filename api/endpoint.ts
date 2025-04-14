@@ -16,5 +16,9 @@ export default {
 
   // files
   upload: "/files/upload",
-  files: "/files"
+  files: "/files",
+
+  // prompts
+  prompts: "/prompts",
+  replyPrompt: "/prompts/reply"
 }
