@@ -1,9 +1,27 @@
 "use client"
 
+import endpoint from "@/api/endpoint";
+import { useStore } from "@/hooks/use-store";
+import { isEmpty } from "@/utility";
 import { DashboardHeader, DashboardSideBar } from "@/views/Dashboard";
-import { PropsWithChildren } from "react";
+import { useRouter } from "next/navigation";
+import { PropsWithChildren, useEffect } from "react";
+import useSWR from "swr";
 
 export default function DashboardLayout({ children }: PropsWithChildren) {
+  // const { auth, setUser } = useStore()
+  // const router = useRouter()
+  // const { data } = useSWR(auth?.access_token ? endpoint.profile : null)
+
+  // useEffect(() => {
+  //   if (isEmpty(auth?.access_token)) {
+  //     return router.push("/login")
+  //   }
+  //   if (!isEmpty(data?.data)) {
+  //     setUser(data.data)
+  //   }
+
+  // }, [data?.data, auth])
   return (
     <div className="bg-white max-w-[1450px] mx-auto w-screen min-h-screen flex">
       <aside className="max-w-70 w-[20%] min-w-[250px] sidebar">

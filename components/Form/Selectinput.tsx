@@ -44,8 +44,7 @@ export function Selectinput({ label, onChange, data = [], ...props }: ISelect) {
         <div className="input-base flex items-center justify-between">
           <input
             {...props}
-            value={valueLabelObj[value]}
-            contentEditable={false}
+            readOnly
             className="flex-1 outline-0 placeholder:text-[#000D4D73]"
           />
           <span className="text-[#000D4D73]">

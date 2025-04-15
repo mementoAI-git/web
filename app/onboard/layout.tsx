@@ -12,7 +12,7 @@ export default function AuthLayout({ children }: PropsWithChildren) {
       </header>
       <div className="border-t border-grey-100" />
       <main className="h-full flex max-w-[1440px]">
-        <div className="flex-1 flex min-h-screen p-12 justify-center items-center">
+        <div className="flex-1 flex min-h-[950px] p-12 justify-center items-center">
           {children}
         </div>
         <aside className="max-w-[446px] px-4 py-8 flex flex-col justify-between flex-1 border-l border-grey-100">

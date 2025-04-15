@@ -100,10 +100,10 @@ body {
   }
 
   .btn {
-    @apply cursor-pointer rounded-full disabled:bg-[#C7C9C8] bg-secondary py-2 px-5 text-white font-inter font-semibold
+    @apply cursor-pointer rounded-full disabled:bg-[#C7C9C8] bg-secondary py-2 px-5 text-white font-inter font-semibold flex items-center justify-center gap-2
   }
 
   .btn-outline {
-    @apply cursor-pointer rounded-full border disabled:border-[#C7C9C8] border-secondary py-2 px-5 text-secondary disabled:text-[#C7C9C8] font-inter font-semibold
+    @apply cursor-pointer rounded-full border disabled:border-[#C7C9C8] border-secondary py-2 px-5 text-secondary disabled:text-[#C7C9C8] flex items-center justify-center gap-2 font-inter font-semibold
   }
 }

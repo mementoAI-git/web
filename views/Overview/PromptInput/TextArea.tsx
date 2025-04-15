@@ -48,14 +48,15 @@ export default function TextArea() {
       <div className="flex flex-col gap-6 p-3 rounded-2xl bg-grey-700 text-xs font-inter min-h-[425px]">
         {
           !isEmpty(data?.attachments) &&
-          <div className="relative h-22.5 min-w-[110px] size-fit">
+          <div className="relative size-fit">
             <ImageThumbnail
-              boxClassName="!rounded-[12px] !border-2 !size-[69px]"
+              boxClassName="!rounded-[12px] !border-2"
               images={data?.attachments}
+              size={69}
             />
             {
               data?.attachments.length > 3 &&
-              <div className="absolute z-40 top-0 right-0 bg-secondary border border-white text-[#C1FDC5] font-light text-xs font-inter rounded-full px-1.5 py-0.5">
+              <div className="absolute z-40 top-0 -right-10 bg-secondary border border-white text-[#C1FDC5] font-light text-xs font-inter rounded-full px-1.5 py-0.5">
                 +{data?.attachments.length} files
               </div>
             }

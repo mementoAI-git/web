@@ -38,7 +38,7 @@ export const postFetcher: MutationFetcher = async (url, body) => {
 
 export const putFetcher: MutationFetcher = async (url, body) => handleRequest("put", url, body);
 
-export const deleteFetcher: MutationFetcher = async (url, body) => handleRequest("delete", url, body);
+export const deleteFetcher: MutationFetcher = async (url, body) => handleRequest("delete", `${url}/${body.arg}`);
 
 export const fileUploadFetcher = async (url: string, { arg }) => {
   const { file, onProgress, ...payload } = arg;

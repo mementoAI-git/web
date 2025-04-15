@@ -3,8 +3,15 @@ import BookmarkIcon from "@/public/icon/dashboard/bookmark.svg"
 import { StatCard } from "../Dashboard"
 import MemoriesHeader from "./MemoryHeader"
 import MemoriesGrid from "./Grid"
+import useSWR from "swr"
+import endpoint from "@/api/endpoint"
+import { useState } from "react"
+import MemoriesTable from "./Table"
 
 export default function Memories() {
+  const [mode, setMode] = useState("list")
+  const { data } = useSWR(endpoint.memories)
+  console.log({ data })
   return (
     <div className="w-full overflow-y-auto">
       <div className="py-8 space-y-4">
@@ -18,8 +25,16 @@ export default function Memories() {
         </div>
       </div>
       <div className="py-8 space-y-6">
-        <MemoriesHeader />
-        <MemoriesGrid />
+        <MemoriesHeader
+          mode={mode}
+          onChangeMode={setMode}
+          count={data?.data?.totalDocs}
+        />
+        {
+          mode === "grid" ?
+            <MemoriesGrid data={data?.data} /> :
+            <MemoriesTable data={data?.data} />
+        }
       </div>
     </div>
   )

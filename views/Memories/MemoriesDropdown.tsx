@@ -22,7 +22,7 @@ export function MemoryItemActions() {
         </li>
       }
       onSelect={console.log}
-      className="!right-0 !left-full"
+      className="!right-0 !bottom-8"
     />
   )
 }

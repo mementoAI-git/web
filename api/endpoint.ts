@@ -20,5 +20,8 @@ export default {
 
   // prompts
   prompts: "/prompts",
-  replyPrompt: "/prompts/reply"
+  replyPrompt: "/prompts/reply",
+
+  // memories
+  memories: "/memories"
 }

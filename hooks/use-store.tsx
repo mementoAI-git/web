@@ -1,22 +1,22 @@
 "use client"
 
-import { createContext, PropsWithChildren, useCallback, useContext, useEffect, useState } from "react";
+import { IAuth, IUser } from "@/utility/interface";
+import { createContext, PropsWithChildren, use, useCallback, useContext, useEffect, useState } from "react";
 
-interface IAuth {
-  access_token: string
-  expires_at: string
-}
 
 interface IState {
   auth: IAuth | null
+  user: IUser | null
 }
 
 export const initialStates: IState = {
-  auth: null
+  auth: null,
+  user: null
 }
 
 interface StoreContext extends IState {
-  setAuth?: (value: IAuth) => any
+  setAuth?: (value: IAuth) => void
+  setUser?: (value: IUser) => void
 }
 
 const store = createContext<StoreContext>(initialStates)
@@ -29,6 +29,13 @@ export function StoreProvider({ children }: PropsWithChildren) {
     setState(p => ({ ...p, auth }))
   }, [])
 
+  const setUser = useCallback((user: IUser) => {
+    setState(p => ({
+      ...p,
+      user: p.user ? { ...p.user, ...user } : user
+    }))
+  }, [])
+
   useEffect(() => {
     const auth = localStorage.getItem("auth")
     if (auth) {
@@ -36,7 +43,7 @@ export function StoreProvider({ children }: PropsWithChildren) {
     }
   }, [])
   return (
-    <store.Provider value={{ ...state, setAuth }}>
+    <store.Provider value={{ ...state, setAuth, setUser }}>
       {children}
     </store.Provider>
   )
