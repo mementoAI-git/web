@@ -4,17 +4,20 @@ import useRecorder from "@/hooks/use-recorder"
 import React, { useState } from "react"
 import { AudioRecButtons } from "./RecButtons"
 import AudioVisualizer from "@/components/AudioVisualizer"
-import { IRec } from "./VideoRec"
+import { usePrompt } from "@/hooks/use-prompt"
 
-export default function AudioRec({ stream, setStream }: IRec) {
-  const { start, stop, pause, resume, timer, recorder, recording } = useRecorder(stream)
+export default function AudioRec() {
+  const [stream, setStream] = useState<MediaStream | null>(null)
+  const recorder = useRecorder(stream, setStream, "audio/webm")
+  const { set } = usePrompt()
 
   const startRec = () => {
     navigator.mediaDevices.getUserMedia({ audio: true })
       .then(stream => {
         if (stream) {
           setStream(stream)
-          setTimeout(start, 1000)
+          setTimeout(recorder.start, 2000)
+          set("edit_mode", true)
         }
       })
       .catch(error => {
@@ -30,12 +33,20 @@ export default function AudioRec({ stream, setStream }: IRec) {
         </div>
       </div>
       <div className="w-full min-h-100 flex items-center rounded-b-2xl justify-center border border-t-0 border-grey-400">
-        <div className="flex flex-col gap-3">
-          <div className="flex items-center gap-2">
-            <RecIndicator counter={timer} recoding={recording} />
-            <AudioVisualizer recorder={recorder} />
-          </div>
-          <AudioRecButtons {...{ resume, stop, pause, timer, recording, start: startRec }} />
+        <div>
+          {
+            recorder.url ?
+              <div>
+                <audio src={recorder.url} controls playsInline />
+              </div> :
+              <div className="flex self-center flex-col gap-3">
+                <div className="flex items-center gap-2">
+                  <RecIndicator counter={recorder.timer} recoding={recorder.recording} />
+                  <AudioVisualizer recorder={recorder.recorder} />
+                </div>
+                <AudioRecButtons {...{ ...recorder, start: startRec }} />
+              </div>
+          }
         </div>
       </div>
     </div>
