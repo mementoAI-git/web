@@ -1,21 +1,76 @@
+"use client"
+
+import endpoint from "@/api/endpoint";
 import { Button } from "@/components/Buttons";
-import { Passwordinput, Textinput } from "@/components/Form";
+import { Checkbox, Passwordinput, Textinput } from "@/components/Form";
+import useForm from "@/hooks/use-form";
 import Link from "next/link";
+import * as yup from "yup"
+import { useRouter } from "next/navigation";
+import { clearCache } from "@/utility";
+import useFetcher from "@/hooks/use-fetcher";
+
+const schema = yup.object().shape({
+  email: yup.string().required("Email is required").email("Invalid email address").trim(),
+  password: yup.string().required("Password is required"),
+  remember_for_30_days: yup.boolean().default(false)
+})
+
+const initial = {
+  email: "",
+  password: "",
+  remember_for_30_days: false
+}
 
 export function Login() {
+  const router = useRouter()
+  const { trigger, isMutating } = useFetcher(endpoint.login)
+  const { handleSubmit, handleChange, values, errors } = useForm({
+    schema,
+    initial,
+    async onSubmit(payload) {
+      try {
+        const result = await trigger(payload)
+        if (result.data) {
+          await clearCache()
+          router.push("/overview")
+        }
+      } catch (err: any) {
+        if (err && err.data.requires_verification) {
+          router.push(`/verify-email?email=${payload.email}`)
+        }
+      }
+    }
+  })
+
   return (
-    <form className="flex flex-col gap-6">
-      <Textinput label="Email" name="email" placeholder="johndoe@mail.com" />
-      <Passwordinput label="Password" name="password" />
+    <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+      <Textinput
+        label="Email"
+        name="email"
+        placeholder="johndoe@mail.com"
+        value={values.email}
+        error={errors.email}
+        onChange={handleChange}
+      />
+      <Passwordinput
+        label="Password"
+        name="password"
+        value={values.password}
+        error={errors.email}
+        onChange={handleChange}
+      />
 
       <div className="flex items-center justify-between text-sm font-inter">
-        <div className="flex items-center gap-2">
-          <div className="w-4 aspect-square rounded-sm border cursor-pointer border-[#D0D5DD]" />
-          <span>Remember for 30 days</span>
-        </div>
+        <Checkbox
+          label="Remember for 30 days"
+          name="remember_for_30_days"
+          checked={values.remember_for_30_days}
+          onChange={handleChange}
+        />
         <Link href="/forget-password" className="text-primary font-bold cursor-pointer">Reset password</Link>
       </div>
-      <Button title="Login" className="mt-3" />
+      <Button loading={isMutating} type="submit" title="Login" className="mt-3" />
     </form>
   )
 }

@@ -9,7 +9,7 @@ interface IAuthFormLayout extends PropsWithChildren {
   can_go_back?: boolean
   include_auth_socials?: boolean
   icon?: React.ReactElement | null
-  icon_container_style?: string
+  className?: string
 }
 
 export function AuthFormLayout({
@@ -19,10 +19,10 @@ export function AuthFormLayout({
   can_go_back = false,
   include_auth_socials = false,
   icon = null,
-  icon_container_style
+  className = ""
 }: IAuthFormLayout) {
   return (
-    <div className="flex flex-col justify-center w-full mx-auto bg-white max-w-[554px] p-10 gap-10 rounded-xl">
+    <div className={`flex flex-col justify-center w-full mx-auto bg-white max-w-[554px] p-10 gap-10 rounded-xl group ${className}`}>
       {
         can_go_back &&
         <Link href="/login" className="flex items-center gap-2 cursor-pointer">
@@ -34,7 +34,7 @@ export function AuthFormLayout({
       <div className="flex flex-col gap-4 text-center items-center justify-center">
         {
           icon &&
-          <div className={`w-20 aspect-square bg-primary/5 rounded-full flex justify-center items-center ${icon_container_style}`}>
+          <div className={`w-20 aspect-square bg-primary/5 text-[#5F48D9] group-[.error]:text-danger group-[.success]:text-success group-[.success]:bg-[#0ACC92]/5 group-[.error]:bg-danger/5 rounded-full flex justify-center  items-center`}>
             {icon}
           </div>
         }

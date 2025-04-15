@@ -1,5 +1,5 @@
 @import "tailwindcss";
-@source "tailwind-datepicker-react/dist/**/*.js";
+@config "../tailwind.config.ts";
 
 :root {
   --color-primary: #5A00E8;
@@ -7,9 +7,10 @@
   --color-surface: #F5F6FA;
   --color-surfaces-100: #067A57;
   --color-success: #067A57;
+  --color-danger: #F97066;
   --color-grey-100: #0011661A;
   --color-grey-200: rgba(0, 9, 51, 0.65);
-  --color-grey-300: rgba(0, 13, 77, 0.45);
+  --color-grey-300: #000d4d73;
   --color-grey-400: rgba(243, 243, 243, 1);
   --color-grey-500: rgba(235, 235, 235, 1);
   --color-grey-600: rgba(60, 63, 62, 1);
@@ -28,6 +29,7 @@
   --color-surface: var(--color-surface);
   --color-surface-100: var(--color-surface-100);
   --color-success: var(--color-success);
+  --color-danger: var(--color-danger);
   --color-grey-200: var(--color-grey-200);
   --color-grey-100: var(--color-grey-100);
   --color-grey-300: var(--color-grey-300);
@@ -68,7 +70,7 @@ body {
   }
 
   .input-base {
-    @apply shadow-sm bg-white py-2 px-3 rounded-lg border border-grey-100 h-10 focus-within:border-primary focus-within:border-[1.5px]
+    @apply shadow-sm bg-white py-2 px-3 rounded-lg border border-grey-100 h-10 focus-within:border-primary focus-within:border-[1.5px] group-[.error]:border-danger group-[.error]:border-[1.5px]
   }
 
   .mem-table thead th:first-child,

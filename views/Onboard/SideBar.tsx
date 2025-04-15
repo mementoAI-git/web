@@ -29,7 +29,7 @@ function Step({ title, subtitle, status = "pending" }: IStep) {
   return (
     <div className={`${!completed && "mb-7"} px-3 pt-3`}>
       <div className="flex items-center gap-3">
-        <div className={`${completed ? "bg-success" : "bg-transparent border border-dashed border-grey-300"} w-6 aspect-square rounded-full flex justify-center items-center`}>
+        <div className={`${completed ? "bg-success" : "bg-transparent border border-dashed border-grey-300"} w-6 aspect-square rounded-full flex text-white justify-center items-center`}>
           {completed && <CheckIcon width={10} height={7} />}
         </div>
         <span className="font-inter font-normal text-secondary">{title}</span>

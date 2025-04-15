@@ -1,3 +1,3 @@
 export * from "./Profile"
-export * from "./AddBeneficiaries"
+export * from "./Beneficiaries"
 export * from "./SideBar"
