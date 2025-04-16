@@ -11,7 +11,7 @@ import MemoriesTable from "./Table"
 export default function Memories() {
   const [mode, setMode] = useState("list")
   const { data } = useSWR(endpoint.memories)
-  console.log({ data })
+
   return (
     <div className="w-full overflow-y-auto">
       <div className="py-8 space-y-4">
