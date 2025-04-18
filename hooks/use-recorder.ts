@@ -1,80 +1,84 @@
-import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react"
+import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
 
-export default function useRecorder(stream: MediaStream | null, setStream: Dispatch<SetStateAction<MediaStream>>, type = "video/webm") {
-  const [timer, setTimer] = useState(0) // secs
-  const [url, setUrl] = useState<string | null>(null)
+export default function useRecorder(
+  stream: MediaStream | null,
+  setStream: Dispatch<SetStateAction<MediaStream>>,
+  type = "video/webm",
+) {
+  const [timer, setTimer] = useState(0); // secs
+  const [url, setUrl] = useState<string | null>(null);
   const [recording, setRecording] = useState(false);
-  const recorder = useRef<MediaRecorder | null>(null)
-  const timeId = useRef<NodeJS.Timeout | undefined>(undefined)
+  const recorder = useRef<MediaRecorder | null>(null);
+  const timeId = useRef<NodeJS.Timeout | undefined>(undefined);
   const chunks = useRef<Blob[]>([]);
 
   const start = () => {
     if (!recorder.current) return;
-    recorder.current.start(1000)
+    recorder.current.start(1000);
     chunks.current = [];
-  }
+  };
 
   const save = () => {
-    const blob = new Blob(chunks.current, { type })
-    setUrl(URL.createObjectURL(blob))
-  }
+    const blob = new Blob(chunks.current, { type });
+    setUrl(URL.createObjectURL(blob));
+  };
 
   const stop = () => {
     if (!recorder.current) return;
-    recorder.current.stop()
-    stream.getTracks().forEach(track => track.stop());
-  }
+    recorder.current.stop();
+    stream.getTracks().forEach((track) => track.stop());
+  };
 
   const pause = () => {
     if (!recorder.current || recorder.current.state !== "recording") return;
-    recorder.current.pause()
-  }
+    recorder.current.pause();
+  };
 
   const resume = () => {
     if (!recorder.current) return;
-    recorder.current.resume()
-  }
+    recorder.current.resume();
+  };
 
   useEffect(() => {
     if (stream) {
-      recorder.current = new MediaRecorder(stream, { mimeType: type })
+      recorder.current = new MediaRecorder(stream, { mimeType: type });
 
       recorder.current.onstart = () => {
         timeId.current = setInterval(() => {
-          setTimer(p => p + 1)
-        }, 1000)
-        setRecording(true)
-      }
+          setTimer((p) => p + 1);
+        }, 1000);
+        setRecording(true);
+      };
 
       recorder.current.onpause = () => {
         if (timeId.current) {
-          clearInterval(timeId.current)
+          clearInterval(timeId.current);
         }
-        setRecording(false)
-      }
+        setRecording(false);
+      };
 
       recorder.current.onresume = () => {
         timeId.current = setInterval(() => {
-          setTimer(p => p + 1)
-        }, 1000)
-        setRecording(true)
-      }
+          setTimer((p) => p + 1);
+        }, 1000);
+        setRecording(true);
+      };
 
       recorder.current.ondataavailable = (ev) => {
         if (ev.data.size > 0) {
-          chunks.current.push(ev.data)
+          chunks.current.push(ev.data);
         }
-      }
+      };
 
       recorder.current.onstop = () => {
         if (timeId.current) {
-          clearInterval(timeId.current)
+          clearInterval(timeId.current);
         }
-        setRecording(false)
-        save()
+        setRecording(false);
+        save();
       };
     }
-  }, [stream])
+  }, [stream]);
 
   return {
     recording,
@@ -86,6 +90,6 @@ export default function useRecorder(stream: MediaStream | null, setStream: Dispa
     resume,
     url,
     save,
-    timer
-  }
+    timer,
+  };
 }

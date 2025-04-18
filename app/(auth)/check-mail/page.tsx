@@ -1,23 +1,23 @@
-"use client"
+"use client";
 
 import { Button } from "@/components/Buttons";
 import { AuthFormLayout } from "@/views/Auth";
-import EvelopIcon from "@/public/icon/evelop.svg"
+import EvelopIcon from "@/public/icon/evelop.svg";
 import { useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { hashEmail, openMailBox } from "@/utility";
 
 export default function CheckMailPage() {
-  const params = useSearchParams()
-  const router = useRouter()
+  const params = useSearchParams();
+  const router = useRouter();
 
-  const email = params.get("email")
+  const email = params.get("email");
 
   useEffect(() => {
     if (!email) {
-      router.push('/forget-password')
+      router.push("/forget-password");
     }
-  }, [email])
+  }, [email]);
   return (
     <AuthFormLayout
       title="Check your inbox"
@@ -27,5 +27,5 @@ export default function CheckMailPage() {
     >
       <Button onClick={() => openMailBox(String(email))} title="Open Mailbox" />
     </AuthFormLayout>
-  )
+  );
 }

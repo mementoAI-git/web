@@ -3,16 +3,20 @@ import { Textinput } from "@/components/Form";
 import Spinner from "@/components/Spinner";
 import useFetcher from "@/hooks/use-fetcher";
 import useForm from "@/hooks/use-form";
-import * as yup from "yup"
+import * as yup from "yup";
 
 const schema = yup.object().shape({
-  email: yup.string().required("Email is required").email("Invalid email address").trim()
-})
+  email: yup
+    .string()
+    .required("Email is required")
+    .email("Invalid email address")
+    .trim(),
+});
 
-const initial = { email: "" }
+const initial = { email: "" };
 
 export default function AddBeneficiaries() {
-  const { trigger, isMutating } = useFetcher(endpoint.beneficiaries)
+  const { trigger, isMutating } = useFetcher(endpoint.beneficiaries);
   const { handleSubmit, handleChange, values, errors } = useForm({
     initial,
     schema,
@@ -23,19 +27,21 @@ export default function AddBeneficiaries() {
           if (result?.data) {
             return {
               ...currentData,
-              data: [...currentData.data, result?.data]
-            }
+              data: [...currentData.data, result?.data],
+            };
           }
-          return currentData
+          return currentData;
         },
-      })
+      });
     },
-  })
+  });
   return (
     <form onSubmit={handleSubmit} className="">
-      <label htmlFor="email" className="input-label">Email</label>
+      <label htmlFor="email" className="input-label">
+        Email
+      </label>
       <div className="flex flex-row gap-1">
-        <div className="flex-3 w-full">
+        <div className="w-full flex-3">
           <Textinput
             name="email"
             type="email"
@@ -47,11 +53,13 @@ export default function AddBeneficiaries() {
             error={errors.email}
           />
         </div>
-        <button className="cursor-pointer flex-1 shrink-0 min-w-[129px] px-4 h-[40px] rounded-lg text-center border border-primary/80 justify-center items-center flex gap-2">
-          <span className="text-center text-primary font-bold font-geist whitespace-nowrap">Send invite</span>
+        <button className="flex h-[40px] min-w-[129px] flex-1 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-lg border border-primary/80 px-4 text-center">
+          <span className="text-center font-geist font-bold whitespace-nowrap text-primary">
+            Send invite
+          </span>
           <Spinner loading={isMutating} className="!text-primary" />
         </button>
       </div>
     </form>
-  )
+  );
 }

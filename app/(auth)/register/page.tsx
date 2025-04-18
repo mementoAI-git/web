@@ -6,14 +6,17 @@ export default function RegisterPage() {
     <AuthFormLayout
       title="Create account"
       subtitle={
-        <span>Already have an account?
-          <Link href="/login" className="text-primary font-bold"> Sign in</Link>
+        <span>
+          Already have an account?
+          <Link href="/login" className="font-bold text-primary">
+            {" "}
+            Sign in
+          </Link>
         </span>
       }
       include_auth_socials
     >
       <Register />
     </AuthFormLayout>
-
-  )
+  );
 }

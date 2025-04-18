@@ -4,9 +4,9 @@ import Overview from "@/views/Overview";
 export default function OverviewPage() {
   return (
     <PromtProvider>
-      <div className="w-[93%] mx-auto">
+      <div className="mx-auto w-[93%]">
         <Overview />
       </div>
     </PromtProvider>
-  )
+  );
 }

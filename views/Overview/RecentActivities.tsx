@@ -1,11 +1,14 @@
-
 export default function RecentActivities() {
   return (
-    <div className="max-w-[335px] w-full bg-grey-700 rounded-2xl p-8">
+    <div className="w-full max-w-[335px] rounded-2xl bg-grey-700 p-8">
       <div className="flex items-center justify-between">
-        <span className="text-grey-800 font-inter font-medium text-xs">RECENT ACTIVITIES</span>
-        <span className="text-grey-600 cursor-pointer text-sm font-semibold">See all</span>
+        <span className="font-inter text-xs font-medium text-grey-800">
+          RECENT ACTIVITIES
+        </span>
+        <span className="cursor-pointer text-sm font-semibold text-grey-600">
+          See all
+        </span>
       </div>
     </div>
-  )
+  );
 }

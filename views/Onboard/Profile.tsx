@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import endpoint from "@/api/endpoint";
 import { Checkbox, Textinput } from "@/components/Form";
@@ -9,27 +9,27 @@ import useFetcher from "@/hooks/use-fetcher";
 import useForm from "@/hooks/use-form";
 import countries from "@/utility/countries";
 import { useRouter } from "next/navigation";
-import * as yup from "yup"
+import * as yup from "yup";
 
 const schema = yup.object().shape({
   first_name: yup.string().required("Firstname is required").trim(),
   last_name: yup.string().required("Lastname is required").trim(),
   dob: yup.string().required("date of birth is required"),
   country: yup.string().required().lowercase(),
-  newsletter_subscriber: yup.boolean().default(false)
-})
+  newsletter_subscriber: yup.boolean().default(false),
+});
 
 const initial = {
   first_name: "",
   last_name: "",
   dob: "",
   country: "",
-  newsletter_subscriber: false
-}
+  newsletter_subscriber: false,
+};
 
 export function Profile() {
-  const router = useRouter()
-  const { trigger, isMutating } = useFetcher(endpoint.profile, "put")
+  const router = useRouter();
+  const { trigger, isMutating } = useFetcher(endpoint.profile, "put");
   const { handleSubmit, handleChange, values, errors } = useForm({
     initial,
     schema,
@@ -40,22 +40,27 @@ export function Profile() {
           if (result?.data) {
             return {
               ...currentData,
-              data: { ...currentData?.data, ...result?.data }
-            }
+              data: { ...currentData?.data, ...result?.data },
+            };
           }
-          return currentData
+          return currentData;
         },
-      })
+      });
       if (result) {
-        router.push("/onboard/beneficiary")
+        router.push("/onboard/beneficiary");
       }
-    }
-  })
+    },
+  });
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-[583px] flex flex-col gap-10 py-20 w-full">
-      <div className="bg-surface flex flex-col p-10 gap-5 rounded-3xl">
-        <span className="font-bold text-[32px] leading-10 font-bricolage">Let’s get to know you better</span>
+    <form
+      onSubmit={handleSubmit}
+      className="flex w-full max-w-[583px] flex-col gap-10 py-20"
+    >
+      <div className="flex flex-col gap-5 rounded-3xl bg-surface p-10">
+        <span className="font-bricolage text-[32px] leading-10 font-bold">
+          Let’s get to know you better
+        </span>
         <div className="space-y-6">
           <Textinput
             name="first_name"
@@ -85,7 +90,7 @@ export function Profile() {
             name="country"
             label="Country of residence"
             placeholder="Select country"
-            data={countries.map(c => ({ label: c, value: c }))}
+            data={countries.map((c) => ({ label: c, value: c }))}
             value={values.country}
             error={errors.country}
             onChange={handleChange}
@@ -98,12 +103,12 @@ export function Profile() {
           />
         </div>
       </div>
-      <div className="flex items-end justify-between font-geist font-bold text-base">
-        <span className="underline text-grey-200 cursor-pointer">Go back</span>
-        <button className="rounded-lg text-white bg-secondary flex gap-2 items-center justify-center px-4 cursor-pointer h-12">
+      <div className="flex items-end justify-between font-geist text-base font-bold">
+        <span className="cursor-pointer text-grey-200 underline">Go back</span>
+        <button className="flex h-12 cursor-pointer items-center justify-center gap-2 rounded-lg bg-secondary px-4 text-white">
           Continue <Spinner loading={isMutating} />
         </button>
       </div>
     </form>
-  )
+  );
 }

@@ -6,13 +6,17 @@ export default function LoginPage() {
     <AuthFormLayout
       title="Welcome back"
       subtitle={
-        <span>New here?
-          <Link href="/register" className="text-primary font-bold"> Create an account</Link>
+        <span>
+          New here?
+          <Link href="/register" className="font-bold text-primary">
+            {" "}
+            Create an account
+          </Link>
         </span>
       }
       include_auth_socials
     >
       <Login />
     </AuthFormLayout>
-  )
+  );
 }

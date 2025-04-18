@@ -1,52 +1,59 @@
-"use client"
+"use client";
 
 import { IAuth, IUser } from "@/utility/interface";
-import { createContext, PropsWithChildren, use, useCallback, useContext, useEffect, useState } from "react";
-
+import {
+  createContext,
+  PropsWithChildren,
+  use,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 
 interface IState {
-  auth: IAuth | null
-  user: IUser | null
+  auth: IAuth | null;
+  user: IUser | null;
 }
 
 export const initialStates: IState = {
   auth: null,
-  user: null
-}
+  user: null,
+};
 
 interface StoreContext extends IState {
-  setAuth?: (value: IAuth) => void
-  setUser?: (value: IUser) => void
+  setAuth?: (value: IAuth) => void;
+  setUser?: (value: IUser) => void;
 }
 
-const store = createContext<StoreContext>(initialStates)
+const store = createContext<StoreContext>(initialStates);
 
 export function StoreProvider({ children }: PropsWithChildren) {
-  const [state, setState] = useState(initialStates)
+  const [state, setState] = useState(initialStates);
 
   const setAuth = useCallback((auth: IAuth) => {
-    localStorage.setItem("auth", JSON.stringify(auth))
-    setState(p => ({ ...p, auth }))
-  }, [])
+    localStorage.setItem("auth", JSON.stringify(auth));
+    setState((p) => ({ ...p, auth }));
+  }, []);
 
   const setUser = useCallback((user: IUser) => {
-    setState(p => ({
+    setState((p) => ({
       ...p,
-      user: p.user ? { ...p.user, ...user } : user
-    }))
-  }, [])
+      user: p.user ? { ...p.user, ...user } : user,
+    }));
+  }, []);
 
   useEffect(() => {
-    const auth = localStorage.getItem("auth")
+    const auth = localStorage.getItem("auth");
     if (auth) {
-      setState(p => ({ ...p, auth: JSON.parse(auth) }))
+      setState((p) => ({ ...p, auth: JSON.parse(auth) }));
     }
-  }, [])
+  }, []);
   return (
     <store.Provider value={{ ...state, setAuth, setUser }}>
       {children}
     </store.Provider>
-  )
+  );
 }
 
-export const useStore = () => useContext(store)
+export const useStore = () => useContext(store);

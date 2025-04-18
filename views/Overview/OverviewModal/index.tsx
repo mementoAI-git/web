@@ -6,7 +6,7 @@ import { usePrompt } from "@/hooks/use-prompt";
 import SharePost from "./SharePost";
 
 export default function PromptResponseModal() {
-  const { navigations, back, data, set } = usePrompt()
+  const { navigations, back, data, set } = usePrompt();
   return (
     <ModalLayout open={navigations.length > 0 && data} onClose={back}>
       <PromptInput />
@@ -14,5 +14,5 @@ export default function PromptResponseModal() {
       <TagAndPermissions />
       <SharePost />
     </ModalLayout>
-  )
+  );
 }

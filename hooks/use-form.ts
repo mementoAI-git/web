@@ -1,21 +1,27 @@
-"use client"
+"use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AnyObject, ObjectSchema, ValidationError } from "yup";
 
 interface IUseForm<T extends Record<string, any>> {
-  initial: T
-  schema: ObjectSchema<AnyObject, AnyObject, AnyObject, "">
-  onSubmit: (p: T) => void
+  initial: T;
+  schema: ObjectSchema<AnyObject, AnyObject, AnyObject, "">;
+  onSubmit: (p: T) => void;
 }
 
-export default function useForm<T extends Record<string, any>>({ initial, schema, onSubmit }: IUseForm<T>) {
-  const [values, setValues] = useState<typeof initial>(initial)
-  const [errors, setErrors] = useState<Partial<Record<keyof typeof initial, string>>>({});
-  const [isValid, setIsValid] = useState(false)
-  const [touchedFields, setTouchedfields] = useState<string[]>([])
+export default function useForm<T extends Record<string, any>>({
+  initial,
+  schema,
+  onSubmit,
+}: IUseForm<T>) {
+  const [values, setValues] = useState<typeof initial>(initial);
+  const [errors, setErrors] = useState<
+    Partial<Record<keyof typeof initial, string>>
+  >({});
+  const [isValid, setIsValid] = useState(false);
+  const [touchedFields, setTouchedfields] = useState<string[]>([]);
 
-  const validation = useMemo(() => schema, [schema])
+  const validation = useMemo(() => schema, [schema]);
 
   const handleSetError = (err: ValidationError, show = false) => {
     const validationErrors: Partial<Record<keyof typeof initial, string>> = {};
@@ -25,7 +31,7 @@ export default function useForm<T extends Record<string, any>>({ initial, schema
       }
     });
     setErrors(validationErrors);
-  }
+  };
 
   const validateForm = useCallback(async () => {
     if (!validation) return;
@@ -35,7 +41,7 @@ export default function useForm<T extends Record<string, any>>({ initial, schema
       setIsValid(true);
     } catch (err) {
       if (err instanceof ValidationError) {
-        handleSetError(err)
+        handleSetError(err);
         setIsValid(false);
       }
     }
@@ -43,31 +49,33 @@ export default function useForm<T extends Record<string, any>>({ initial, schema
 
   const handleValue = (name: string, value: any) => {
     if (!touchedFields.includes(name)) {
-      setTouchedfields(p => [...p, name])
+      setTouchedfields((p) => [...p, name]);
     }
-    setValues((p: any) => ({ ...p, [name]: value }))
-  }
+    setValues((p: any) => ({ ...p, [name]: value }));
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, type, checked, value } = e.target
+    const { name, type, checked, value } = e.target;
     const val = type === "checkbox" ? checked : value;
-    handleValue(name, val)
-  }
+    handleValue(name, val);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     try {
-      let payload = values
+      let payload = values;
       if (validation) {
-        payload = await validation.validate(values, { abortEarly: false }) as T;
+        payload = (await validation.validate(values, {
+          abortEarly: false,
+        })) as T;
       }
-      await onSubmit(payload)
+      await onSubmit(payload);
 
       setErrors({});
     } catch (err) {
       if (err instanceof ValidationError) {
-        handleSetError(err, true)
+        handleSetError(err, true);
       }
     }
   };
@@ -78,10 +86,11 @@ export default function useForm<T extends Record<string, any>>({ initial, schema
 
   return {
     handleValue,
-    values, setValues,
+    values,
+    setValues,
     errors,
     handleChange,
     handleSubmit,
-    isValid
-  }
+    isValid,
+  };
 }

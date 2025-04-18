@@ -1,11 +1,11 @@
-"use client"
+"use client";
 
 import Memories from "@/views/Memories";
 
 export default function MemoriesPage() {
   return (
-    <div className="w-[93%] mx-auto">
+    <div className="mx-auto w-[93%]">
       <Memories />
     </div>
-  )
+  );
 }

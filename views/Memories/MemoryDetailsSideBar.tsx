@@ -1,43 +1,54 @@
-"use client"
+"use client";
 
-import FolderIcon from "@/public/icon/folder.svg"
-import CalenderIcon from "@/public/icon/calendar-1.svg"
-import TextIcon from "@/public/icon/text.svg"
-import ClipIcon from "@/public/icon/clip.svg"
-import EditIcon from "@/public/icon/edit.svg"
-import TrashcanIcon from "@/public/icon/trash.svg"
-import LockIcon from "@/public/icon/lock-1.svg"
-import ChainIcon from "@/public/icon/chain.svg"
-import TagIcon from "@/public/icon/tag.svg"
-import ClockIcon from "@/public/icon/clock.svg"
-import AddBookmarkIcon from '@/public/icon/add-bookmark.svg'
+import FolderIcon from "@/public/icon/folder.svg";
+import CalenderIcon from "@/public/icon/calendar-1.svg";
+import TextIcon from "@/public/icon/text.svg";
+import ClipIcon from "@/public/icon/clip.svg";
+import EditIcon from "@/public/icon/edit.svg";
+import TrashcanIcon from "@/public/icon/trash.svg";
+import LockIcon from "@/public/icon/lock-1.svg";
+import ChainIcon from "@/public/icon/chain.svg";
+import TagIcon from "@/public/icon/tag.svg";
+import ClockIcon from "@/public/icon/clock.svg";
+import AddBookmarkIcon from "@/public/icon/add-bookmark.svg";
 
-import React from "react"
-import { useModal } from "@/hooks/use-modal"
+import React from "react";
+import { useModal } from "@/hooks/use-modal";
 
 interface IPropsItem {
-  title: string
-  subtitle?: string | React.ReactElement | null
-  icon: React.ReactElement
-  className?: string
-  onClick?: () => void
+  title: string;
+  subtitle?: string | React.ReactElement | null;
+  icon: React.ReactElement;
+  className?: string;
+  onClick?: () => void;
 }
 
-function PropsItem({ title, icon, subtitle = null, className, onClick }: IPropsItem) {
+function PropsItem({
+  title,
+  icon,
+  subtitle = null,
+  className,
+  onClick,
+}: IPropsItem) {
   return (
-    <li onClick={onClick || null} className={`text-grey-800 text-xs flex font-normal items-center capitalize gap-2 font-inter ${className}`}>
+    <li
+      onClick={onClick || null}
+      className={`flex items-center gap-2 font-inter text-xs font-normal text-grey-800 capitalize ${className}`}
+    >
       {icon}
       <span>{title} </span>
-      <strong className="text-sm text-grey-600 font-medium">{subtitle}</strong>
+      <strong className="text-sm font-medium text-grey-600">{subtitle}</strong>
     </li>
-  )
+  );
 }
 export default function MemoryDetailsSidebar() {
-  const { open } = useModal()
+  const { open } = useModal();
   return (
-    <div className="bg-[#FCFCFD] size-full p-6 space-y-3">
-      <div className="pb-14 border-b border-grey-500 space-y-4">
-        <span className="uppercase font-medium text-grey-800 font-inter text-xs block">properties</span>
+    <div className="size-full space-y-3 bg-[#FCFCFD] p-6">
+      <div className="space-y-4 border-b border-grey-500 pb-14">
+        <span className="block font-inter text-xs font-medium text-grey-800 uppercase">
+          properties
+        </span>
         <ul className="space-y-4">
           <PropsItem
             icon={<FolderIcon width={16} />}
@@ -61,8 +72,10 @@ export default function MemoryDetailsSidebar() {
           />
         </ul>
       </div>
-      <div className="pb-14 border-b border-grey-500 space-y-4">
-        <span className="uppercase font-medium text-grey-800 font-inter text-xs block">stats</span>
+      <div className="space-y-4 border-b border-grey-500 pb-14">
+        <span className="block font-inter text-xs font-medium text-grey-800 uppercase">
+          stats
+        </span>
         <ul className="space-y-4">
           <PropsItem
             icon={<TextIcon width={13} />}
@@ -81,38 +94,40 @@ export default function MemoryDetailsSidebar() {
           />
         </ul>
       </div>
-      <div className="pb-14 border-b border-grey-500 space-y-4">
-        <span className="uppercase font-medium text-grey-800 font-inter text-xs block">actions</span>
+      <div className="space-y-4 border-b border-grey-500 pb-14">
+        <span className="block font-inter text-xs font-medium text-grey-800 uppercase">
+          actions
+        </span>
         <ul className="space-y-4">
           <PropsItem
             icon={<EditIcon width={13} />}
             title="Edit this post"
-            className="!text-sm !text-grey-600 !font-medium cursor-pointer"
+            className="cursor-pointer !text-sm !font-medium !text-grey-600"
           />
           <PropsItem
             icon={<AddBookmarkIcon width={13} />}
             title="add to bookmark"
-            onClick={() => open("welcome")}
-            className="!text-sm !text-grey-600 !font-medium cursor-pointer"
+            onClick={() => open("file-preview")}
+            className="cursor-pointer !text-sm !font-medium !text-grey-600"
           />
           <PropsItem
             icon={<ChainIcon width={16} />}
             title="share story"
             onClick={() => open("share-post", { id: "" })}
-            className="!text-sm !text-grey-600 !font-medium cursor-pointer"
+            className="cursor-pointer !text-sm !font-medium !text-grey-600"
           />
           <PropsItem
             icon={<ClockIcon width={16} />}
             title="show edit history"
-            className="!text-sm !text-grey-600 !font-medium cursor-pointer"
+            className="cursor-pointer !text-sm !font-medium !text-grey-600"
           />
           <PropsItem
             icon={<TrashcanIcon width={16} />}
             title="delete"
-            className="!text-sm !text-danger !font-medium cursor-pointer"
+            className="cursor-pointer !text-sm !font-medium !text-danger"
           />
         </ul>
       </div>
     </div>
-  )
+  );
 }

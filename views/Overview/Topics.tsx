@@ -1,26 +1,32 @@
-import family from "@/public/image/family.png"
-import Image from "next/image"
+import family from "@/public/image/family.png";
+import Image from "next/image";
 
 function TopicItem() {
   return (
-    <div className="relative overflow-hidden p-4 flex-1 min-h-60 min-w-60  rounded-2xl bg-[#EEEEFF]">
-      <span className="font-bricolage text-[#101828] font-bold text-base">Family, friends and relationships.</span>
-      <Image className="absolute -bottom-2 right-0 size-[163px] object-contain" src={family} alt="" />
+    <div className="relative min-h-60 min-w-60 flex-1 overflow-hidden rounded-2xl bg-[#EEEEFF] p-4">
+      <span className="font-bricolage text-base font-bold text-[#101828]">
+        Family, friends and relationships.
+      </span>
+      <Image
+        className="absolute right-0 -bottom-2 size-[163px] object-contain"
+        src={family}
+        alt=""
+      />
     </div>
-  )
+  );
 }
 
 export default function Topics() {
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between text-grey-600 font-semibold text-lg font-inter">
+      <div className="flex items-center justify-between font-inter text-lg font-semibold text-grey-600">
         <span>Browse conversations by topics</span>
-        <span className="text-sm cursor-pointer">See all</span>
+        <span className="cursor-pointer text-sm">See all</span>
       </div>
       <div className="flex flex-wrap items-stretch gap-3">
         <TopicItem />
         <TopicItem />
       </div>
     </div>
-  )
+  );
 }

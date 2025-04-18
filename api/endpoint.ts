@@ -4,7 +4,7 @@ export default {
   register: "/auth/register",
   sendLink: "/auth/send-link",
   resendLink: "/auth/resend-link",
-  verifyEmail: '/auth/verify-email',
+  verifyEmail: "/auth/verify-email",
   oauth: "/auth/oauth/",
   setPassword: "/auth/set-password",
 
@@ -23,5 +23,5 @@ export default {
   replyPrompt: "/prompts/reply",
 
   // memories
-  memories: "/memories"
-}
+  memories: "/memories",
+};

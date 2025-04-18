@@ -1,43 +1,63 @@
-import { usePrompt } from "@/hooks/use-prompt"
-import confetti from "@/public/image/confetti.png"
+import { usePrompt } from "@/hooks/use-prompt";
+import confetti from "@/public/image/confetti.png";
 import Image from "next/image";
-import facebook from "@/public/image/Facebook.png"
-import twitter from "@/public/image/twitter.png"
-import instagram from "@/public/image/instagram.png"
-import linkedin from "@/public/image/linkedin.png"
+import facebook from "@/public/image/Facebook.png";
+import twitter from "@/public/image/twitter.png";
+import instagram from "@/public/image/instagram.png";
+import linkedin from "@/public/image/linkedin.png";
 
 export default function SharePost() {
-  const { navigations } = usePrompt()
+  const { navigations } = usePrompt();
   if (navigations[0] !== "share") return;
   return (
     <div className="space-y-6">
-      <Image className="mx-auto object-contain size-16" src={confetti} alt="confetti" />
-      <div className="flex flex-col justify-center text-center gap-3">
-        <span className="font-inter text-3xl font-semibold text-secondary">New Post added</span>
-        <span className="text-sm text-grey-600 text-center font-inter">You have saved a new entry to memento</span>
+      <Image
+        className="mx-auto size-16 object-contain"
+        src={confetti}
+        alt="confetti"
+      />
+      <div className="flex flex-col justify-center gap-3 text-center">
+        <span className="font-inter text-3xl font-semibold text-secondary">
+          New Post added
+        </span>
+        <span className="text-center font-inter text-sm text-grey-600">
+          You have saved a new entry to memento
+        </span>
       </div>
-      <div className="bg-[rgba(252,252,253,1)] space-y-4 border border-[rgba(249,249,249,1)] rounded-2xl p-4">
+      <div className="space-y-4 rounded-2xl border border-[rgba(249,249,249,1)] bg-[rgba(252,252,253,1)] p-4">
         <div>
-          <span className="text-sm text-grey-600 font-medium">Share link</span>
-          <div className="bg-white border rounded-lg border-[rgba(213,215,218,1)] h-10 w-full flex">
-            <span className="flex-1 px-3 flex h-full items-center border-r border-inherit text-grey-600">www.memento.io/post/73f9320d</span>
-            <span className="px-3.5 items-center flex cursor-pointer">Copy</span>
+          <span className="text-sm font-medium text-grey-600">Share link</span>
+          <div className="flex h-10 w-full rounded-lg border border-[rgba(213,215,218,1)] bg-white">
+            <span className="flex h-full flex-1 items-center border-r border-inherit px-3 text-grey-600">
+              www.memento.io/post/73f9320d
+            </span>
+            <span className="flex cursor-pointer items-center px-3.5">
+              Copy
+            </span>
           </div>
         </div>
-        <div className="flex justify-center items-center gap-11">
-          {
-            [facebook, linkedin, twitter, instagram].map((img, i) => (
-              <div key={i} className="size-11 rounded-full bg-grey-500 flex items-center justify-center">
-                <Image className="size-5 object-contain" src={img} key={i} alt="social logos" />
-              </div>
-            ))
-          }
+        <div className="flex items-center justify-center gap-11">
+          {[facebook, linkedin, twitter, instagram].map((img, i) => (
+            <div
+              key={i}
+              className="flex size-11 items-center justify-center rounded-full bg-grey-500"
+            >
+              <Image
+                className="size-5 object-contain"
+                src={img}
+                key={i}
+                alt="social logos"
+              />
+            </div>
+          ))}
         </div>
       </div>
       <div className="flex gap-4">
         <button className="btn flex-1">Add another entry</button>
-        <button className="btn flex-1 !text-secondary !bg-grey-400">Dismiss</button>
+        <button className="btn flex-1 !bg-grey-400 !text-secondary">
+          Dismiss
+        </button>
       </div>
     </div>
-  )
+  );
 }

@@ -1,8 +1,8 @@
-"use client"
+"use client";
 
 import Axios, { AxiosError } from "axios";
 import { IResponse, MutationFetcher } from "./interface";
-import { toast } from 'sonner';
+import { toast } from "sonner";
 import { isEmpty } from "@/utility";
 
 const axios = Axios.create({
@@ -13,44 +13,49 @@ const axios = Axios.create({
 });
 
 axios.interceptors.request.use((config) => {
-  const auth = localStorage.getItem("auth")
+  const auth = localStorage.getItem("auth");
 
   if (auth) {
-    const { access_token } = JSON.parse(auth)
+    const { access_token } = JSON.parse(auth);
     config.headers.Authorization = `Bearer ${access_token}`;
   }
 
   return config;
 });
 
-export const fetcher = (url: string) => handleRequest("get", url)
+export const fetcher = (url: string) => handleRequest("get", url);
 
-export const getFetcher: MutationFetcher = async (url, body) => handleRequest("get", url, body);
+export const getFetcher: MutationFetcher = async (url, body) =>
+  handleRequest("get", url, body);
 
 export const postFetcher: MutationFetcher = async (url, body) => {
-  const result = await handleRequest("post", url, body)
+  const result = await handleRequest("post", url, body);
 
   if (result?.data?.access_token) {
-    localStorage.setItem("auth", JSON.stringify(result?.data))
+    localStorage.setItem("auth", JSON.stringify(result?.data));
   }
-  return result
+  return result;
 };
 
-export const putFetcher: MutationFetcher = async (url, body) => handleRequest("put", url, body);
+export const putFetcher: MutationFetcher = async (url, body) =>
+  handleRequest("put", url, body);
 
-export const deleteFetcher: MutationFetcher = async (url, body) => handleRequest("delete", `${url}/${body.arg}`);
+export const deleteFetcher: MutationFetcher = async (url, body) =>
+  handleRequest("delete", `${url}/${body.arg}`);
 
 export const fileUploadFetcher = async (url: string, { arg }) => {
   const { file, onProgress, ...payload } = arg;
   const formData = new FormData();
-  formData.append('file', file, file.name);
+  formData.append("file", file, file.name);
   if (!isEmpty(payload)) {
-    Object.entries(payload).forEach(([key, value]) => formData.append(key, String(value)))
+    Object.entries(payload).forEach(([key, value]) =>
+      formData.append(key, String(value)),
+    );
   }
 
   try {
     const res = await axios.post(url, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
+      headers: { "Content-Type": "multipart/form-data" },
       onUploadProgress: (event) => {
         if (onProgress) {
           const percent = Math.round((event.loaded * 100) / event.total);
@@ -59,7 +64,9 @@ export const fileUploadFetcher = async (url: string, { arg }) => {
       },
     });
 
-    toast.success(res.data?.message || "Success", { className: "!text-success" });
+    toast.success(res.data?.message || "Success", {
+      className: "!text-success",
+    });
     return res.data;
   } catch (error) {
     let message = "Something went wrong";
@@ -69,7 +76,7 @@ export const fileUploadFetcher = async (url: string, { arg }) => {
       message = axiosError.response?.data?.message || axiosError.message;
       toast.error(message, { className: "!text-danger" });
 
-      throw axiosError.response?.data || null
+      throw axiosError.response?.data || null;
     }
     toast.error(message, { className: "!text-danger" });
 
@@ -88,7 +95,9 @@ const handleRequest = async (method: string, url: string, body?: any) => {
     });
 
     if (method !== "get") {
-      toast.success(res.data?.message || "Success", { className: "!text-success" });
+      toast.success(res.data?.message || "Success", {
+        className: "!text-success",
+      });
     }
     return res.data;
   } catch (error) {
@@ -102,7 +111,7 @@ const handleRequest = async (method: string, url: string, body?: any) => {
         toast.error(message, { className: "!text-danger" });
       }
 
-      throw axiosError.response?.data || null
+      throw axiosError.response?.data || null;
     }
 
     if (method !== "get") {

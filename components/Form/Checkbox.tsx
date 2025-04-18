@@ -1,14 +1,16 @@
 import { ITexinput } from "./TextInput";
-import CheckIcon from "@/public/icon/check.svg"
+import CheckIcon from "@/public/icon/check.svg";
 
 export function Checkbox({ label, className, ...props }: ITexinput) {
   return (
-    <label className={`flex items-center gap-2 font-inter shrink-0 ${className}`}>
-      <input className="hidden peer" type="checkbox" {...props} />
-      <span className="w-4 flex items-center justify-center peer-checked:bg-[#7F56D9] peer-checked:border-0 peer-checked:text-white text-transparent aspect-square cursor-pointer border border-[#D0D5DD] rounded-sm transition shrink-0">
+    <label
+      className={`flex shrink-0 items-center gap-2 font-inter ${className}`}
+    >
+      <input className="peer hidden" type="checkbox" {...props} />
+      <span className="flex aspect-square w-4 shrink-0 cursor-pointer items-center justify-center rounded-sm border border-[#D0D5DD] text-transparent transition peer-checked:border-0 peer-checked:bg-[#7F56D9] peer-checked:text-white">
         <CheckIcon width={10} height={8} />
       </span>
       {label && <span className="text-inherit">{label}</span>}
     </label>
-  )
+  );
 }
