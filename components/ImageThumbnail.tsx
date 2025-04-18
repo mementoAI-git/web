@@ -1,6 +1,3 @@
-import image1 from "@/public/image/image-1.jpeg";
-import image2 from "@/public/image/image-2.jpeg";
-import image3 from "@/public/image/image-3.jpeg";
 import { IFile } from "@/utility/interface";
 import Image from "next/image";
 interface IImageThumbnail {

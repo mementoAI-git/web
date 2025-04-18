@@ -5,8 +5,10 @@ import useFetcher from "@/hooks/use-fetcher";
 import endpoint from "@/api/endpoint";
 import { isEmpty } from "@/utility";
 import ImageThumbnail from "@/components/ImageThumbnail";
+import { useModal } from "@/hooks/use-modal";
 
 export default function TextArea() {
+  const { open } = useModal()
   const { data, set, push } = usePrompt();
   const [text, setText] = useState(data?.body);
   const { isMutating, trigger } = useFetcher(endpoint.replyPrompt);
@@ -47,7 +49,7 @@ export default function TextArea() {
     >
       <div className="flex min-h-[425px] flex-col gap-6 rounded-2xl bg-grey-700 p-3 font-inter text-xs">
         {!isEmpty(data?.attachments) && (
-          <div className="relative size-fit">
+          <div onClick={() => open("file-preview", data?.attachments)} className="relative size-fit">
             <ImageThumbnail
               boxClassName="!rounded-[12px] !border-2"
               images={data?.attachments}

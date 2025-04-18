@@ -1,8 +1,11 @@
+import { getDuration } from "@/utility";
+
 export default function RecIndicator({
   counter = 0,
   recoding = false,
   className = "",
 }) {
+  const { secs, mins, hrs } = getDuration(counter)
   return (
     <div
       className={`flex flex-1 gap-1 rounded-full bg-grey-400 px-2 py-1.5 text-grey-600 ${className}`}
@@ -16,9 +19,7 @@ export default function RecIndicator({
         </span>
       </div>
       <span className="font-inter text-sm font-medium">
-        {String(Math.floor(counter / 3600)).padStart(2, "0")}:
-        {String(Math.floor((counter % 3600) / 60)).padStart(2, "0")}:
-        {String(counter % 60).padStart(2, "0")}
+        {hrs}:{mins}:{secs}
       </span>
     </div>
   );

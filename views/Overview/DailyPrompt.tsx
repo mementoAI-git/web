@@ -27,15 +27,8 @@ export default function DailyPrompt({ type, title, _id }: IDailyPrompt) {
           {type}
         </span>
         <div className="space-y-3">
-          <span className="block font-inter font-semibold text-grey-900">
-            {title}
-          </span>
-          <button
-            onClick={handleReplyClick}
-            className="btn hidden text-sm font-medium transition-all duration-500 group-hover:block disabled:bg-grey-500 disabled:text-grey-800"
-          >
-            Reply
-          </button>
+          <span className="block text-grey-900 font-inter font-semibold ">{title}</span>
+          <button onClick={handleReplyClick} className="hidden group-hover:block cursor-pointer rounded-full bg-secondary py-2 px-5 text-white font-inter disabled:bg-grey-500 disabled:text-grey-800 font-medium text-sm transition-all duration-500">Reply</button>
         </div>
       </div>
     </div>

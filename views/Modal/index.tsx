@@ -8,7 +8,7 @@ export default function Modal() {
   if (!state) return null;
   return (
     <div
-      className={`modal-overlay z-50 bg-[rgba(94,94,94,0.5)] ${state ? "flex" : "hidden"} `}
+      className={`modal-overlay z-[100] bg-[rgba(94,94,94,0.5)] ${state ? "flex" : "hidden"} `}
     >
       {state.name === "share-post" ? (
         <SharePost data={state.props} />

@@ -63,3 +63,11 @@ export const formatFileSize = (size: number) => {
 
   return `${Math.floor(value)}${units[i]}`;
 };
+
+export const getDuration = (seconds: number = 0) => {
+  const secs = String(Math.floor(seconds % 60)).padStart(2, "0")
+  const mins = String(Math.floor((seconds % 3600) / 60)).padStart(2, "0")
+  const hrs = String(Math.floor(seconds / 3600)).padStart(2, "0")
+
+  return { secs, mins, hrs }
+}

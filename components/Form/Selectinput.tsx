@@ -21,14 +21,12 @@ export function Selectinput({ label, onChange, data = [], ...props }: ISelect) {
   const ref = useClickAway(() => setShow(false));
 
   const valueLabelObj = useMemo(() => {
-    return data.reduce(
-      (acc, item) => {
-        acc[item.value] = item.label;
-        return acc;
-      },
-      {} as Record<string, string>,
-    );
-  }, []);
+    return data.reduce((acc, item) => {
+      acc[item.value] = item.label;
+      return acc
+    }, {} as Record<string, string>)
+  }, [])
+  console.log(valueLabelObj)
 
   function handleOnSelect(value: string) {
     setValue(value);
