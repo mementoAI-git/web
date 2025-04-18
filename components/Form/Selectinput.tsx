@@ -26,6 +26,7 @@ export function Selectinput({ label, onChange, data = [], ...props }: ISelect) {
       return acc
     }, {} as Record<string, string>)
   }, [])
+  console.log(valueLabelObj)
 
   function handleOnSelect(value: string) {
     setValue(value)

@@ -8,6 +8,7 @@ import Spinner from "@/components/Spinner";
 import useFetcher from "@/hooks/use-fetcher";
 import endpoint from "@/api/endpoint";
 import { useEffect } from "react";
+import useSWR, { mutate } from "swr";
 
 interface IPromptInputLayout extends PropsWithChildren {
   editMode?: boolean
@@ -26,28 +27,30 @@ const renderIcons = {
 
 export default function PromptInputLayout({ children, onDiscard, onSave, saving = false, editMode = false }: IPromptInputLayout) {
   const { type, set, data } = usePrompt()
-  const { trigger, isMutating } = useFetcher(`${endpoint.replyPrompt}/${data?.prompt}`, "get")
+  const { isLoading, data: result, error } = useSWR(`${endpoint.replyPrompt}/${data?.prompt}`)
 
   useEffect(() => {
-    if (data?.prompt) {
-      trigger()
-        .then(result => set("data", result.data))
-        .catch(console.log)
+    if (result) {
+      set("data", result.data)
     }
-  }, [data?.prompt])
+    if (error) {
+      set("data", null)
+    }
+  }, [result, error])
+  console.log({ error })
 
   return (
     <div className="mt-5">
       <div className="w-full">
         {children}
       </div>
-      <div className={`flex justify-between items-center mt-2 ${isMutating && "opacity-40 !cursor-not-allowed "}`}>
+      <div className={`flex justify-between items-center mt-2 ${isLoading && "opacity-40 !cursor-not-allowed "}`}>
         <AddFileButton />
         {
           editMode ?
             <div className="flex items-center gap-2">
-              <button disabled={saving || isMutating} onClick={onDiscard} className="btn-outline !border-[#C7C9C8]">Cancel</button>
-              <button disabled={saving || isMutating} onClick={onSave} className="btn flex items-center gap-2">
+              <button disabled={saving || isLoading} onClick={onDiscard} className="btn-outline !border-[#C7C9C8]">Cancel</button>
+              <button disabled={saving || isLoading} onClick={onSave} className="btn flex items-center gap-2">
                 Save
                 <Spinner loading={saving} className="!size-4" />
               </button>
@@ -57,7 +60,7 @@ export default function PromptInputLayout({ children, onDiscard, onSave, saving 
                 Object.values(inputTypes).map(t => (
                   <button
                     key={t}
-                    disabled={saving || isMutating}
+                    disabled={saving || isLoading}
                     onClick={() => set("type", t)}
                     className={`bg-grey-500 w-10 cursor-pointer aspect-square rounded-full border border-[#344054] flex items-center justify-center text-[#344054] ${t === type ? "border" : "border-0"}`}
                   >

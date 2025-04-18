@@ -26,10 +26,15 @@ export function PromtProvider({ children }: PropsWithChildren) {
   const [state, setState] = useState(initialStates)
 
   const set = useCallback((key: keyof States, value: any) => {
-    setState(s => ({
-      ...s,
-      [key]: typeof value === "object" && s[key] !== null ? { ...s[key], ...value } : value
-    }))
+    console.log(key, value)
+    if (value === null) {
+      setState(p => ({ ...p, [key]: null }))
+    } else {
+      setState(s => ({
+        ...s,
+        [key]: (typeof value === "object" && s[key] !== null) ? { ...s[key], ...value } : value
+      }))
+    }
   }, [])
 
   const push = useCallback((form: string) => {
@@ -61,7 +66,7 @@ export function PromtProvider({ children }: PropsWithChildren) {
   }), [state, set, push, back])
 
   return (
-    <store.Provider value={value}> {children} </store.Provider>
+    <store.Provider value={{ ...state, set, push, back }}> {children} </store.Provider>
   )
 }
 

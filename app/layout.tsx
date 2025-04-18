@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 
 import { Bricolage_Grotesque, Geist, Inter } from "next/font/google";
 import "./globals.css";
-import Toast from "@/components/Toast";
 import Providers from "./provider";
 
 const bricolage = Bricolage_Grotesque({
