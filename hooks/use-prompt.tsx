@@ -1,25 +1,23 @@
 "use client"
 
-import { createContext, useContext, useState, useCallback, useEffect, PropsWithChildren } from "react";
+import { createContext, useContext, useState, useCallback, PropsWithChildren, useMemo } from "react";
 
 export const initialStates: States = {
-  edit_mode: false,
   type: "text",
-  navigations: []
+  navigations: [],
+  data: null
 }
 
 type States = {
-  edit_mode: boolean
   type: "text" | "video" | "audio"
   navigations: string[]
+  data: any
 };
 
 interface IPromptContext extends States {
   set?: (key: keyof States, value: any) => void
   push?: (form: string) => void
   back?: (form?: string) => void
-  onSave?: () => void
-  onDiscard?: () => void
 }
 
 const store = createContext<IPromptContext>(initialStates)
@@ -28,10 +26,15 @@ export function PromtProvider({ children }: PropsWithChildren) {
   const [state, setState] = useState(initialStates)
 
   const set = useCallback((key: keyof States, value: any) => {
-    setState(s => ({
-      ...s,
-      [key]: value
-    }))
+    console.log(key, value)
+    if (value === null) {
+      setState(p => ({ ...p, [key]: null }))
+    } else {
+      setState(s => ({
+        ...s,
+        [key]: (typeof value === "object" && s[key] !== null) ? { ...s[key], ...value } : value
+      }))
+    }
   }, [])
 
   const push = useCallback((form: string) => {
@@ -57,6 +60,10 @@ export function PromtProvider({ children }: PropsWithChildren) {
       return { ...p, navigations: p.navigations.filter(n => n !== p.navigations[0]) }
     })
   }, [])
+
+  const value = useMemo(() => ({
+    ...state, set, push, back
+  }), [state, set, push, back])
 
   return (
     <store.Provider value={{ ...state, set, push, back }}> {children} </store.Provider>

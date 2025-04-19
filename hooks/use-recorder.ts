@@ -11,8 +11,7 @@ export default function useRecorder(stream: MediaStream | null, setStream: Dispa
   const start = () => {
     if (!recorder.current) return;
     recorder.current.start(1000)
-    chunks.current = []
-    setRecording(true)
+    chunks.current = [];
   }
 
   const save = () => {
@@ -23,37 +22,43 @@ export default function useRecorder(stream: MediaStream | null, setStream: Dispa
   const stop = () => {
     if (!recorder.current) return;
     recorder.current.stop()
-    setRecording(false)
     stream.getTracks().forEach(track => track.stop());
   }
 
   const pause = () => {
     if (!recorder.current || recorder.current.state !== "recording") return;
     recorder.current.pause()
-    setRecording(false)
   }
 
   const resume = () => {
     if (!recorder.current) return;
     recorder.current.resume()
-    setRecording(true)
   }
-
-  useEffect(() => {
-    if (recording) {
-      timeId.current = setInterval(() => {
-        setTimer(p => p + 1)
-      }, 1000)
-    }
-
-    if (!recording && timeId.current) {
-      clearInterval(timeId.current)
-    }
-  }, [recording])
 
   useEffect(() => {
     if (stream) {
       recorder.current = new MediaRecorder(stream, { mimeType: type })
+
+      recorder.current.onstart = () => {
+        timeId.current = setInterval(() => {
+          setTimer(p => p + 1)
+        }, 1000)
+        setRecording(true)
+      }
+
+      recorder.current.onpause = () => {
+        if (timeId.current) {
+          clearInterval(timeId.current)
+        }
+        setRecording(false)
+      }
+
+      recorder.current.onresume = () => {
+        timeId.current = setInterval(() => {
+          setTimer(p => p + 1)
+        }, 1000)
+        setRecording(true)
+      }
 
       recorder.current.ondataavailable = (ev) => {
         if (ev.data.size > 0) {
@@ -62,9 +67,11 @@ export default function useRecorder(stream: MediaStream | null, setStream: Dispa
       }
 
       recorder.current.onstop = () => {
+        if (timeId.current) {
+          clearInterval(timeId.current)
+        }
+        setRecording(false)
         save()
-        setStream(null)
-        chunks.current = [];
       };
     }
   }, [stream])

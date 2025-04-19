@@ -1,16 +1,19 @@
 import AddImageIcon from "@/public/icon/add-image.svg"
-import { ChangeEvent, Dispatch, SetStateAction, useCallback, useEffect, useRef, useState } from "react"
+import { ChangeEvent, useCallback, useEffect, useRef, useState } from "react"
+import { v4 as uuidv4 } from 'uuid';
+import { IFileState } from ".";
 
 interface IFileUploadinput {
-  setFiles: Dispatch<SetStateAction<File[]>>
+  onUpload: (f: IFileState) => void
 }
 
-export default function FileUploadInput({ setFiles }: IFileUploadinput) {
+export default function FileUploadInput({ onUpload }: IFileUploadinput) {
   const ref = useRef<HTMLLabelElement>(null)
   const [height, setHeight] = useState(425)
 
   const handleUpload = useCallback((e: ChangeEvent<HTMLInputElement>) => {
-    setFiles(p => [...p, e.target.files[0]])
+    const file = e.target.files[0]
+    onUpload({ id: uuidv4(), file, progress: 0 })
   }, [])
 
   useEffect(() => {
@@ -26,6 +29,7 @@ export default function FileUploadInput({ setFiles }: IFileUploadinput) {
 
     return () => observer.disconnect()
   }, [])
+
   return (
     <label htmlFor="file-upload" ref={ref} className="flex-1 min-h-[154px] max-h-[425px] h-full p-3 bg-[#FCFCFD] rounded-2xl border border-dashed border-grey-500 flex justify-center items-center flex-col gap-6">
       <AddImageIcon width={20} />

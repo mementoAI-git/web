@@ -17,7 +17,7 @@ export default function VerifyMailPage() {
     if (!email) {
       router.push('/login')
     }
-  }, [email])
+  }, [email, router])
   return (
     <AuthFormLayout
       title="Verify your email"

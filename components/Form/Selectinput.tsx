@@ -16,7 +16,7 @@ interface ISelect extends ITexinput {
 }
 
 export function Selectinput({ label, onChange, data = [], ...props }: ISelect) {
-  const [value, setValue] = useState(props.value || "")
+  const [value, setValue] = useState(props.value)
   const [show, setShow] = useState(false)
   const ref = useClickAway(() => setShow(false))
 
@@ -25,7 +25,8 @@ export function Selectinput({ label, onChange, data = [], ...props }: ISelect) {
       acc[item.value] = item.label;
       return acc
     }, {} as Record<string, string>)
-  }, [])
+  }, [data])
+  console.log(valueLabelObj)
 
   function handleOnSelect(value: string) {
     setValue(value)
@@ -34,7 +35,7 @@ export function Selectinput({ label, onChange, data = [], ...props }: ISelect) {
         target: { name: props.name, value }
       };
 
-      onChange(event as any)
+      onChange(event)
     }
   }
   return (
@@ -44,8 +45,7 @@ export function Selectinput({ label, onChange, data = [], ...props }: ISelect) {
         <div className="input-base flex items-center justify-between">
           <input
             {...props}
-            value={valueLabelObj[value]}
-            contentEditable={false}
+            readOnly
             className="flex-1 outline-0 placeholder:text-[#000D4D73]"
           />
           <span className="text-[#000D4D73]">

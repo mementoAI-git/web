@@ -9,6 +9,7 @@ import * as yup from "yup"
 import { useRouter } from "next/navigation";
 import { clearCache } from "@/utility";
 import useFetcher from "@/hooks/use-fetcher";
+import { useStore } from "@/hooks/use-store";
 
 const schema = yup.object().shape({
   email: yup.string().required("Email is required").email("Invalid email address").trim(),
@@ -24,6 +25,7 @@ const initial = {
 
 export function Login() {
   const router = useRouter()
+  const { setAuth } = useStore()
   const { trigger, isMutating } = useFetcher(endpoint.login)
   const { handleSubmit, handleChange, values, errors } = useForm({
     schema,
@@ -32,6 +34,7 @@ export function Login() {
       try {
         const result = await trigger(payload)
         if (result.data) {
+          setAuth(result.data)
           await clearCache()
           router.push("/overview")
         }

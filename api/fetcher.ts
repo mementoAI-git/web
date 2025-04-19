@@ -3,6 +3,7 @@
 import Axios, { AxiosError } from "axios";
 import { IResponse, MutationFetcher } from "./interface";
 import { toast } from 'sonner';
+import { isEmpty } from "@/utility";
 
 const axios = Axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_BASE_URL,
@@ -37,36 +38,44 @@ export const postFetcher: MutationFetcher = async (url, body) => {
 
 export const putFetcher: MutationFetcher = async (url, body) => handleRequest("put", url, body);
 
-export const deleteFetcher: MutationFetcher = async (url, body) => handleRequest("delete", url, body);
+export const deleteFetcher: MutationFetcher = async (url, body) => handleRequest("delete", `${url}/${body.arg}`);
 
 export const fileUploadFetcher = async (url: string, { arg }) => {
-  const { file, onProgress } = arg;
+  const { file, onProgress, ...payload } = arg;
   const formData = new FormData();
-  formData.append('file', file);
+  formData.append('file', file, file.name);
+  if (!isEmpty(payload)) {
+    Object.entries(payload).forEach(([key, value]) => formData.append(key, String(value)))
+  }
 
-  return axios.post(url, formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-    onUploadProgress: (event) => {
-      const percent = Math.round((event.loaded * 100) / event.total);
-      onProgress(percent);
-    },
-  });
+  try {
+    const res = await axios.post(url, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      onUploadProgress: (event) => {
+        if (onProgress) {
+          const percent = Math.round((event.loaded * 100) / event.total);
+          onProgress(percent);
+        }
+      },
+    });
+
+    toast.success(res.data?.message || "Success", { className: "!text-success" });
+    return res.data;
+  } catch (error) {
+    let message = "Something went wrong";
+
+    if (Axios.isAxiosError(error)) {
+      const axiosError = error as AxiosError<IResponse>;
+      message = axiosError.response?.data?.message || axiosError.message;
+      toast.error(message, { className: "!text-danger" });
+
+      throw axiosError.response?.data || null
+    }
+    toast.error(message, { className: "!text-danger" });
+
+    throw { message };
+  }
 };
-
-// implementaion sample
-
-// const [uploadProgress, setUploadProgress] = useState(0);
-
-// const { trigger, isMutating } = useSWRMutation('/api/upload', uploadFile);
-
-// const handleChange = async (e) => {
-//   const file = e.target.files[0];
-//   if (!file) return;
-
-//   await trigger({
-//     file,
-//     onProgress: setUploadProgress,
-//   });
 
 const handleRequest = async (method: string, url: string, body?: any) => {
   try {

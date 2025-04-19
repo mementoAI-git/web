@@ -13,7 +13,7 @@ export default function SetPasswordPage() {
     if (!params.has("token")) {
       router.push("/forget-password")
     }
-  }, [])
+  }, [params, router])
   return (
     <AuthFormLayout
       title="Set new password"

@@ -32,7 +32,7 @@ const options = {
   }
 }
 
-export function Dateinput({ id, label, onChange, ...props }: ITexinput) {
+export function Dateinput({ label, onChange, ...props }: ITexinput) {
   const [show, setShow] = useState<boolean>(false)
   const [value, setValue] = useState(dayjs().toDate())
   const ref = useClickAway(() => setShow(false))
@@ -47,7 +47,7 @@ export function Dateinput({ id, label, onChange, ...props }: ITexinput) {
         }
       };
 
-      onChange(event as any)
+      onChange(event)
     }
 
   }
