@@ -4,7 +4,7 @@ import { ITexinput } from "./TextInput"
 import CalendarIcon from "@/public/icon/calendar.svg"
 import ChevronRightIcon from "@/public/icon/chevron-right.svg"
 import ChevronLeftIcon from "@/public/icon/chevron-left.svg"
-import React, { useState } from "react";
+import React, { ChangeEvent, useState } from "react";
 import Datepicker from "tailwind-datepicker-react"
 import dayjs from "dayjs"
 import useClickAway from "@/hooks/use-clickaway"
@@ -47,7 +47,7 @@ export function Dateinput({ label, onChange, ...props }: ITexinput) {
         }
       };
 
-      onChange(event)
+      onChange(event as ChangeEvent<HTMLInputElement>)
     }
 
   }

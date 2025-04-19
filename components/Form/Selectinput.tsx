@@ -1,5 +1,5 @@
 "use client"
-import { useMemo, useState } from "react"
+import { ChangeEvent, useMemo, useState } from "react"
 import { ITexinput } from "./TextInput"
 import ChevronDownIcon from "@/public/icon/chevron-down.svg"
 import useClickAway from "@/hooks/use-clickaway"
@@ -35,7 +35,7 @@ export function Selectinput({ label, onChange, data = [], ...props }: ISelect) {
         target: { name: props.name, value }
       };
 
-      onChange(event)
+      onChange(event as ChangeEvent<HTMLInputElement>)
     }
   }
   return (
