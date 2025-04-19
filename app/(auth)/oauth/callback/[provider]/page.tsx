@@ -22,7 +22,7 @@ export default function Callback() {
           router.replace("/overview")
         })
     }
-  }, [params, router, setAuth])
+  }, [params, router, trigger, setAuth])
   return (
     <AuthLoader title="Redirecting...." />
   )
