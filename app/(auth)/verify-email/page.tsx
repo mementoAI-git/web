@@ -1,13 +1,13 @@
-"use client"
+'use client';
 
 import { Button } from "@/components/Buttons";
-import { AuthFormLayout } from "@/views/Auth";
+import { AuthFormLayout, AuthLoader } from "@/views/Auth";
 import EvelopIcon from "@/public/icon/evelop.svg"
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import { hashEmail } from "@/utility";
 
-export default function VerifyMailPage() {
+function VerifyMail() {
   const params = useSearchParams()
   const router = useRouter()
 
@@ -27,5 +27,13 @@ export default function VerifyMailPage() {
     >
       <Button title="Open Mailbox" />
     </AuthFormLayout>
+  )
+}
+
+export default function VerifyMailPage() {
+  return (
+    <Suspense fallback={<AuthLoader title="Loading...." />}>
+      <VerifyMail />
+    </Suspense>
   )
 }

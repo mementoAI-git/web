@@ -3,9 +3,9 @@
 import { AuthFormLayout, SetPassword } from "@/views/Auth";
 import LockIcon from "@/public/icon/lock.svg"
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 
-export default function SetPasswordPage() {
+function Password() {
   const params = useSearchParams()
   const router = useRouter()
 
@@ -23,5 +23,14 @@ export default function SetPasswordPage() {
     >
       <SetPassword token={String(params.get("token"))} />
     </AuthFormLayout>
+  )
+}
+
+
+export default function SetPasswordPage() {
+  return (
+    <Suspense>
+      <Password />
+    </Suspense>
   )
 }
