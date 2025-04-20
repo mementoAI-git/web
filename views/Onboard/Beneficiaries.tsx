@@ -32,19 +32,9 @@ export function Beneficiaries() {
           </div>
         )}
       </div>
-      <div className="flex items-end justify-between font-geist text-base font-bold">
-        <span
-          onClick={() => router.back()}
-          className="cursor-pointer text-grey-200 underline"
-        >
-          Go back
-        </span>
-        <Link
-          href="/overview"
-          className="flex h-12 cursor-pointer items-center justify-center rounded-lg bg-secondary px-4 text-center text-white"
-        >
-          Continue
-        </Link>
+      <div className="flex items-end justify-between font-geist font-bold text-base">
+        <span onClick={() => router.back()} className="underline text-grey-200 cursor-pointer">Go back</span>
+        <Link prefetch={false} href="/overview" className="rounded-lg flex items-center justify-center text-center text-white bg-secondary px-4 cursor-pointer h-12">Continue</Link>
       </div>
     </div>
   );

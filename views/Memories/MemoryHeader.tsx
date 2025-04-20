@@ -12,11 +12,7 @@ interface IMemoriesHeader {
   count?: number;
 }
 
-export default function MemoriesHeader({
-  count = 0,
-  mode = "list",
-  onChangeMode,
-}) {
+export default function MemoriesHeader({ count = 0, mode = "list", onChangeMode }: IMemoriesHeader) {
   return (
     <div className="flex flex-1 flex-col gap-3">
       <div className="flex items-center justify-between">
@@ -29,19 +25,17 @@ export default function MemoriesHeader({
           </span>
         </div>
         <div className="flex items-center gap-3">
-          {["grid", "list"].map((m) => (
-            <div
-              key={m}
-              onClick={() => onChangeMode(m)}
-              className={`${mode === m ? "bg-[#EFF8FF] text-[#2E90FA]" : "text-[#3C3F3E]"} flex aspect-square w-10 cursor-pointer items-center justify-center rounded-full bg-surface-100 hover:bg-[#EFF8FF] hover:text-[#2E90FA]`}
-            >
-              {m === "list" ? <ListIcon /> : <GridIcon />}
-            </div>
-          ))}
-
-          {/* <div className=" flex items-center cursor-pointer justify-center rounded-full w-10 aspect-square bg-[#EFF8FF]">
-            <ListIcon />
-          </div> */}
+          {
+            ["grid", "list"].map(m => (
+              <div
+                key={m}
+                onClick={() => onChangeMode(m)}
+                className={`${mode === m ? "text-[#2E90FA] bg-[#EFF8FF]" : "text-[#3C3F3E]"}  hover:text-[#2E90FA] flex items-center cursor-pointer justify-center rounded-full w-10 aspect-square bg-surface-100 hover:bg-[#EFF8FF]`}
+              >
+                {m === "list" ? <ListIcon /> : <GridIcon />}
+              </div>
+            ))
+          }
         </div>
       </div>
       <div className="flex items-center justify-between">

@@ -21,18 +21,7 @@ export default function AddBeneficiaries() {
     initial,
     schema,
     async onSubmit(p) {
-      trigger(p, {
-        revalidate: false,
-        populateCache(result, currentData) {
-          if (result?.data) {
-            return {
-              ...currentData,
-              data: [...currentData.data, result?.data],
-            };
-          }
-          return currentData;
-        },
-      });
+      trigger(p)
     },
   });
   return (

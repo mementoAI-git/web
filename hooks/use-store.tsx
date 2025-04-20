@@ -1,25 +1,19 @@
 "use client";
 
 import { IAuth, IUser } from "@/utility/interface";
-import {
-  createContext,
-  PropsWithChildren,
-  use,
-  useCallback,
-  useContext,
-  useEffect,
-  useState,
-} from "react";
+import { createContext, PropsWithChildren, useCallback, useContext, useEffect, useState } from "react";
 
 interface IState {
-  auth: IAuth | null;
-  user: IUser | null;
+  auth: IAuth | null
+  user: IUser | null
+  hydrated: boolean
 }
 
 export const initialStates: IState = {
   auth: null,
   user: null,
-};
+  hydrated: false
+}
 
 interface StoreContext extends IState {
   setAuth?: (value: IAuth) => void;
@@ -46,7 +40,9 @@ export function StoreProvider({ children }: PropsWithChildren) {
   useEffect(() => {
     const auth = localStorage.getItem("auth");
     if (auth) {
-      setState((p) => ({ ...p, auth: JSON.parse(auth) }));
+      setState(p => ({ ...p, auth: JSON.parse(auth), hydrated: true }))
+    } else {
+      setState(p => ({ ...p, hydrated: true }))
     }
   }, []);
   return (

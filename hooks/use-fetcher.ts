@@ -1,10 +1,7 @@
-import {
-  deleteFetcher,
-  getFetcher,
-  postFetcher,
-  putFetcher,
-} from "@/api/fetcher";
+import endpoint from "@/api/endpoint";
+import { deleteFetcher, getFetcher, postFetcher, putFetcher } from "@/api/fetcher";
 import { IResponse } from "@/api/interface";
+import useSWR from "swr";
 import useSWRMutation, { SWRMutationConfiguration } from "swr/mutation";
 
 export default function useFetcher(
@@ -19,5 +16,9 @@ export default function useFetcher(
   } else if (method === "delete") {
     return useSWRMutation(url, deleteFetcher, options);
   }
-  return useSWRMutation(url, postFetcher, options);
+  return useSWRMutation(url, postFetcher, options)
+}
+
+export function useUser() {
+  return useSWR(endpoint.profile)
 }

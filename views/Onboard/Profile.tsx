@@ -5,11 +5,13 @@ import { Checkbox, Textinput } from "@/components/Form";
 import { Dateinput } from "@/components/Form/Dateinput";
 import { Selectinput } from "@/components/Form/Selectinput";
 import Spinner from "@/components/Spinner";
-import useFetcher from "@/hooks/use-fetcher";
+import useFetcher, { useUser } from "@/hooks/use-fetcher";
 import useForm from "@/hooks/use-form";
+import { isEmpty } from "@/utility";
 import countries from "@/utility/countries";
 import { useRouter } from "next/navigation";
-import * as yup from "yup";
+import { useEffect } from "react";
+import * as yup from "yup"
 
 const schema = yup.object().shape({
   first_name: yup.string().required("Firstname is required").trim(),
@@ -28,29 +30,25 @@ const initial = {
 };
 
 export function Profile() {
-  const router = useRouter();
-  const { trigger, isMutating } = useFetcher(endpoint.profile, "put");
-  const { handleSubmit, handleChange, values, errors } = useForm({
+  const router = useRouter()
+  const { data } = useUser()
+  const { trigger, isMutating } = useFetcher(endpoint.profile, "put")
+
+  const { handleSubmit, setValues, handleChange, values, errors } = useForm({
     initial,
     schema,
     async onSubmit(p) {
-      const result = await trigger(p, {
-        revalidate: false,
-        populateCache(result, currentData) {
-          if (result?.data) {
-            return {
-              ...currentData,
-              data: { ...currentData?.data, ...result?.data },
-            };
-          }
-          return currentData;
-        },
-      });
+      const result = await trigger(p)
       if (result) {
         router.push("/onboard/beneficiary");
       }
     },
   });
+
+  useEffect(() => {
+    if (isEmpty(data?.data)) return;
+    setValues(data?.data)
+  }, [data?.data])
 
   return (
     <form
