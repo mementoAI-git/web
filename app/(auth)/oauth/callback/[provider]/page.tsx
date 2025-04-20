@@ -21,6 +21,8 @@ export default function Callback() {
         router.replace("/overview");
       });
     }
-  }, []);
-  return <AuthLoader title="Redirecting...." />;
+  }, [params, router, trigger, setAuth])
+  return (
+    <AuthLoader title="Redirecting...." />
+  )
 }

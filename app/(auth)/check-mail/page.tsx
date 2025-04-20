@@ -17,7 +17,7 @@ export default function CheckMailPage() {
     if (!email) {
       router.push("/forget-password");
     }
-  }, [email]);
+  }, [email, router])
   return (
     <AuthFormLayout
       title="Check your inbox"

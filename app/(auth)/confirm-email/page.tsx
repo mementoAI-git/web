@@ -12,8 +12,6 @@ export default function ConfirmEmailPage() {
     if (!params.has("token")) {
       router.push("/login");
     }
-  }, []);
-  return (
-    <ConfirmEmail email={params.get("email")} token={params.get("token")} />
-  );
+  }, [params, router])
+  return <ConfirmEmail email={params.get("email")} token={params.get("token")} />
 }

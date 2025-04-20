@@ -1,13 +1,13 @@
 "use client";
 
-import { ITexinput } from "./TextInput";
-import CalendarIcon from "@/public/icon/calendar.svg";
-import ChevronRightIcon from "@/public/icon/chevron-right.svg";
-import ChevronLeftIcon from "@/public/icon/chevron-left.svg";
-import React, { useState } from "react";
-import Datepicker from "tailwind-datepicker-react";
-import dayjs from "dayjs";
-import useClickAway from "@/hooks/use-clickaway";
+import { ITexinput } from "./TextInput"
+import CalendarIcon from "@/public/icon/calendar.svg"
+import ChevronRightIcon from "@/public/icon/chevron-right.svg"
+import ChevronLeftIcon from "@/public/icon/chevron-left.svg"
+import React, { ChangeEvent, useState } from "react";
+import Datepicker from "tailwind-datepicker-react"
+import dayjs from "dayjs"
+import useClickAway from "@/hooks/use-clickaway"
 
 const options = {
   theme: {
@@ -58,7 +58,7 @@ export function Dateinput({ label, onChange, ...props }: ITexinput) {
         },
       };
 
-      onChange(event as any);
+      onChange(event as ChangeEvent<HTMLInputElement>)
     }
   };
   return (

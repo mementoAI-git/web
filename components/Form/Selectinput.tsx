@@ -1,8 +1,8 @@
-"use client";
-import { useMemo, useState } from "react";
-import { ITexinput } from "./TextInput";
-import ChevronDownIcon from "@/public/icon/chevron-down.svg";
-import useClickAway from "@/hooks/use-clickaway";
+"use client"
+import { ChangeEvent, useMemo, useState } from "react"
+import { ITexinput } from "./TextInput"
+import ChevronDownIcon from "@/public/icon/chevron-down.svg"
+import useClickAway from "@/hooks/use-clickaway"
 
 interface IOption {
   label: string;
@@ -25,7 +25,7 @@ export function Selectinput({ label, onChange, data = [], ...props }: ISelect) {
       acc[item.value] = item.label;
       return acc
     }, {} as Record<string, string>)
-  }, [])
+  }, [data])
   console.log(valueLabelObj)
 
   function handleOnSelect(value: string) {
@@ -35,7 +35,7 @@ export function Selectinput({ label, onChange, data = [], ...props }: ISelect) {
         target: { name: props.name, value },
       };
 
-      onChange(event as any);
+      onChange(event as ChangeEvent<HTMLInputElement>)
     }
   }
   return (

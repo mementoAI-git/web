@@ -1,15 +1,15 @@
-"use client";
+'use client';
 
 import { Button } from "@/components/Buttons";
-import { AuthFormLayout } from "@/views/Auth";
-import EvelopIcon from "@/public/icon/evelop.svg";
+import { AuthFormLayout, AuthLoader } from "@/views/Auth";
+import EvelopIcon from "@/public/icon/evelop.svg"
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import { hashEmail } from "@/utility";
 
-export default function VerifyMailPage() {
-  const params = useSearchParams();
-  const router = useRouter();
+function VerifyMail() {
+  const params = useSearchParams()
+  const router = useRouter()
 
   const email = params.get("email");
 
@@ -17,7 +17,7 @@ export default function VerifyMailPage() {
     if (!email) {
       router.push("/login");
     }
-  }, [email]);
+  }, [email, router])
   return (
     <AuthFormLayout
       title="Verify your email"
@@ -27,5 +27,13 @@ export default function VerifyMailPage() {
     >
       <Button title="Open Mailbox" />
     </AuthFormLayout>
-  );
+  )
+}
+
+export default function VerifyMailPage() {
+  return (
+    <Suspense fallback={<AuthLoader title="Loading...." />}>
+      <VerifyMail />
+    </Suspense>
+  )
 }
