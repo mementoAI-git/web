@@ -1,6 +1,8 @@
 import { Searchinput } from "@/components/Form";
+import { useUser } from "@/hooks/use-fetcher";
 
 export function DashboardHeader() {
+  const { data } = useUser()
   return (
     <div className="w-full border-b border-grey-500">
       <header className="flex items-center w-[93%] mx-auto py-6 max-h-23  gap-6">
@@ -13,7 +15,7 @@ export function DashboardHeader() {
         <div className="gap-4 flex max-h-10 items-center shrink-0 font-inter">
           <div className="h-full rounded-full space-x-1 py-2 px-5 bg-grey-400 cursor-pointer">
             <span>✌🏾</span>
-            <span className="font-semibold text-grey-600">5</span>
+            <span className="font-semibold text-grey-600">{data?.data?.streak}</span>
           </div>
           <div className="border rounded-full h-full py-2 px-5 border-[rgba(199,201,200,1)] cursor-pointer">
             <span className="font-semibold text-grey-600">Invite friends</span>

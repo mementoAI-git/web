@@ -10,6 +10,7 @@ export default {
 
   // user
   profile: "/users/profile",
+  updateStreak: "/users/update-streak",
 
   // beneficiaries
   beneficiaries: "/beneficiaries",

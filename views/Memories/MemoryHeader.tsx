@@ -12,7 +12,7 @@ interface IMemoriesHeader {
   count?: number
 }
 
-export default function MemoriesHeader({ count = 0, mode = "list", onChangeMode }) {
+export default function MemoriesHeader({ count = 0, mode = "list", onChangeMode }: IMemoriesHeader) {
   return (
     <div className="flex flex-1 flex-col gap-3">
       <div className="flex items-center justify-between">
@@ -32,10 +32,6 @@ export default function MemoriesHeader({ count = 0, mode = "list", onChangeMode 
               </div>
             ))
           }
-
-          {/* <div className=" flex items-center cursor-pointer justify-center rounded-full w-10 aspect-square bg-[#EFF8FF]">
-            <ListIcon />
-          </div> */}
         </div>
       </div>
       <div className="flex items-center justify-between">
