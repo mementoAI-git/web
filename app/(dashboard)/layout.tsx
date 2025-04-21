@@ -16,7 +16,7 @@ export default function DashboardLayout({ children }: PropsWithChildren) {
         <main className="flex-1 border-grey-500 border-r">
           <DashboardHeader />
           <div className="w-full">
-            <div className="w-[93%] mx-auto">
+            <div className="mx-auto">
               {children}
             </div>
           </div>

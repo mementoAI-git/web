@@ -65,6 +65,7 @@ export const formatFileSize = (size: number) => {
 };
 
 export const getDuration = (seconds: number = 0) => {
+  seconds = (seconds === Infinity || isNaN(seconds)) ? 0 : seconds
   const secs = String(Math.floor(seconds % 60)).padStart(2, "0")
   const mins = String(Math.floor((seconds % 3600) / 60)).padStart(2, "0")
   const hrs = String(Math.floor(seconds / 3600)).padStart(2, "0")

@@ -20,7 +20,7 @@ export function SharePost({ data }) {
           <div className="font-inter text-sm font-medium !text-grey-600">
             <span>Share link</span>
             <div className="flex items-center justify-between rounded-lg border border-grey-400 bg-grey-700 p-2">
-              <span className="font-normal">www.memento.io/post/73f9320d</span>
+              <span className="font-normal">www.memento.io/post/{data?.id}</span>
               <button className="flex cursor-pointer items-center justify-center gap-1 rounded-sm bg-secondary px-3 py-2 text-white">
                 <CopyIcon width={16} />
                 <span>Copy</span>

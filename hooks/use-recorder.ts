@@ -1,10 +1,6 @@
-import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
-export default function useRecorder(
-  stream: MediaStream | null,
-  setStream: Dispatch<SetStateAction<MediaStream>>,
-  type = "video/webm",
-) {
+export default function useRecorder(stream: MediaStream | null, type = "video/webm") {
   const [timer, setTimer] = useState(0); // secs
   const [url, setUrl] = useState<string | null>(null);
   const [recording, setRecording] = useState(false);

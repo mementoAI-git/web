@@ -9,8 +9,17 @@ import {
   DropdowmIcon,
   DropdownButton,
 } from "@/components/Dropdown";
+import { useModal } from "@/hooks/use-modal";
 
-export function MemoryItemActions() {
+export function MemoryItemActions({ id }: { id: string }) {
+  const { open } = useModal()
+
+  const handleSelect = (value: string) => {
+    if (value === "share-story") {
+      open("share-post", { id })
+    }
+  }
+
   return (
     <DropdowmIcon
       icon={<VeriticalElipseIcon />}
@@ -43,7 +52,7 @@ export function MemoryItemActions() {
           <span className="font-inter text-sm">Delete</span>
         </li>
       }
-      onSelect={console.log}
+      onSelect={handleSelect}
       className="!right-0 !bottom-8"
     />
   );

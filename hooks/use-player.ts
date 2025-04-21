@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 export default function usePlayer() {
-  const ref = useRef<HTMLAudioElement | null>(null);
+  const ref = useRef<HTMLAudioElement | HTMLVideoElement | null>(null);
   const [playing, setPlaying] = useState(false);
   const [canPlay, setCanPlay] = useState(false)
   const [progress, setProgress] = useState(0);
@@ -13,6 +13,7 @@ export default function usePlayer() {
       toast("Media source is missing or not supported", { className: "!text-danger" })
       return;
     }
+    if (!canPlay) return
 
     if (playing) {
       media.pause();
@@ -40,25 +41,36 @@ export default function usePlayer() {
   };
 
   useEffect(() => {
-    if (ref) {
-      ref.current.onloadstart = () => {
+    const media = ref.current
+    if (media) {
+      media.onloadstart = () => {
         setCanPlay(false)
       }
-      ref.current.onended = () => {
+      media.onended = () => {
+        media.pause();
+        media.currentTime = 0;
+
         setPlaying(false)
+        setProgress(0)
       }
 
-      ref.current.ontimeupdate = () => {
-        const media = ref.current;
+      media.ontimeupdate = () => {
         if (!media) return;
         const progressPercent = (media.currentTime / media.duration) * 100;
         setProgress(progressPercent);
       }
       ref.current.oncanplay = () => {
         setCanPlay(true)
-        console.log("Loading completed")
       }
     }
+    return () => {
+      if (media) {
+        media.onloadstart = null;
+        media.onended = null;
+        media.ontimeupdate = null;
+        media.oncanplay = null;
+      }
+    };
   }, [ref])
 
   return {

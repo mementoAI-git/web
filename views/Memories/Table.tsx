@@ -4,6 +4,13 @@ import { MemoryItemActions } from "./MemoriesDropdown";
 import { IMemory, IPagination } from "@/utility/interface";
 import dayjs from "dayjs";
 import { useRouter } from "next/navigation";
+import { TableRowSekeleton } from "./Skeleton";
+import { isEmpty } from "@/utility";
+import { tagColors } from "@/utility/constant";
+
+interface IMemoryTable {
+  data: IPagination<IMemory>
+}
 
 function MemoriesTableRow({ memory }: { memory: IMemory }) {
   const router = useRouter();
@@ -25,33 +32,30 @@ function MemoriesTableRow({ memory }: { memory: IMemory }) {
       </td>
       <td>
         <div className="flex items-center gap-1">
-          <span className="mem-tags !border-[#B2DDFF] !bg-[#EFF8FF] !text-[#175CD3]">
-            travel
-          </span>
-          <span className="mem-tags !border-[#C7D7FE] !bg-[#EEF4FF] !text-[#3538CD]">
-            family
-          </span>
-          <span className="mem-tags !border-[#C7D7FE] !bg-[#EEF4FF] !text-[#3538CD]">
-            life
-          </span>
-          <span className="mem-tags">+4</span>
+          {
+            memory.tags.slice(0, 3).map((tag, i) => (
+              <span key={i} className={`mem-tags ${tagColors[tag] || ""} `}>
+                {tag}
+              </span>
+            ))
+          }
+          {
+            memory.tags.length > 3 &&
+            <span className="mem-tags">+{memory.tags.length}</span>
+          }
         </div>
       </td>
       <td className="w-fit">
         <div className="flex items-center justify-end gap-4 text-[#949494]">
           <EditIcon />
-          <MemoryItemActions />
+          <MemoryItemActions id={memory._id} />
         </div>
       </td>
     </tr>
   );
 }
 
-export default function MemoriesTable({
-  data,
-}: {
-  data: IPagination<IMemory>;
-}) {
+export default function MemoriesTable({ data }: IMemoryTable) {
   return (
     <div className="mem-table h-fit w-full rounded-xl border border-[rgba(233,234,235,1)] bg-white shadow-sm shadow-[rgba(10,13,18,0.05)]">
       <table className="h-full w-full text-left">
@@ -59,12 +63,16 @@ export default function MemoriesTable({
           <tr>
             <th>Topic</th>
             <th>Date created</th>
-            <th>Tags</th>
+            <th className="min-w-32">Tags</th>
             <th />
           </tr>
         </thead>
         <tbody className="border-y border-inherit">
-          {data?.docs.map((m, i) => <MemoriesTableRow key={i} memory={m} />)}
+          {
+            isEmpty(data) ?
+              <TableRowSekeleton /> :
+              data?.docs.map((m, i) => <MemoriesTableRow key={i} memory={m} />)
+          }
         </tbody>
       </table>
       <div className="flex w-full items-center justify-between border-[rgba(213,215,218,1)] px-6 py-3 font-inter text-sm text-[rgba(65,70,81,1)]">

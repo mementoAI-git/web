@@ -14,6 +14,10 @@ import AddBookmarkIcon from "@/public/icon/add-bookmark.svg";
 
 import React from "react";
 import { useModal } from "@/hooks/use-modal";
+import { IMemory } from "@/utility/interface";
+import dayjs from "dayjs";
+import { isEmpty } from "@/utility";
+import { DetailsSideBarSkeleton } from "./Skeleton";
 
 interface IPropsItem {
   title: string;
@@ -41,8 +45,14 @@ function PropsItem({
     </li>
   );
 }
-export default function MemoryDetailsSidebar() {
+export default function MemoryDetailsSidebar({ memory }: { memory: IMemory }) {
   const { open } = useModal();
+
+  const handleOpenFiles = () => {
+    if (isEmpty(memory.attachments)) return;
+    open("file-preview", memory.attachments)
+  }
+  if (isEmpty(memory)) return <DetailsSideBarSkeleton />
   return (
     <div className="size-full space-y-3 bg-[#FCFCFD] p-6">
       <div className="space-y-4 border-b border-grey-500 pb-14">
@@ -58,7 +68,7 @@ export default function MemoryDetailsSidebar() {
           <PropsItem
             icon={<CalenderIcon width={13} />}
             title="created:"
-            subtitle="Jan 18, 2025"
+            subtitle={dayjs(memory.created_at).format("MMM DD, YYYY")}
           />
           <PropsItem
             icon={<CalenderIcon width={13} />}
@@ -68,7 +78,7 @@ export default function MemoryDetailsSidebar() {
           <PropsItem
             icon={<LockIcon width={13} />}
             title="permission level:"
-            subtitle="lvl 1"
+            subtitle={`lvl ${memory.level}`}
           />
         </ul>
       </div>
@@ -80,12 +90,12 @@ export default function MemoryDetailsSidebar() {
           <PropsItem
             icon={<TextIcon width={13} />}
             title="word count:"
-            subtitle={<span className="mem-tags">1456</span>}
+            subtitle={<span className="mem-tags">{memory.body.split(/\s+/).length}</span>}
           />
           <PropsItem
             icon={<ClipIcon width={13} />}
             title="attachment:"
-            subtitle={<span className="mem-tags">5</span>}
+            subtitle={<span className="mem-tags">{memory.attachments.length || 0}</span>}
           />
           <PropsItem
             icon={<TagIcon width={16} />}
@@ -107,13 +117,13 @@ export default function MemoryDetailsSidebar() {
           <PropsItem
             icon={<AddBookmarkIcon width={13} />}
             title="add to bookmark"
-            onClick={() => open("file-preview")}
+            onClick={handleOpenFiles}
             className="cursor-pointer !text-sm !font-medium !text-grey-600"
           />
           <PropsItem
             icon={<ChainIcon width={16} />}
             title="share story"
-            onClick={() => open("share-post", { id: "" })}
+            onClick={() => open("share-post", { id: memory._id })}
             className="cursor-pointer !text-sm !font-medium !text-grey-600"
           />
           <PropsItem

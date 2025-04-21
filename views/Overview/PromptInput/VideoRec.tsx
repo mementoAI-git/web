@@ -30,7 +30,7 @@ export default function VideoRec() {
   const [editMode, setEditMode] = useState(false);
   const [stream, setStream] = useState<MediaStream | null>(null);
   const ref = useRef<HTMLVideoElement>(null);
-  const recorder = useRecorder(stream, setStream, fileType);
+  const recorder = useRecorder(stream, fileType);
   const { isMutating, trigger } = useSWRMutation(
     endpoint.replyPrompt,
     fileUploadFetcher,

@@ -10,25 +10,40 @@ import PauseIcon from "@/public/icon/pause-rec.svg";
 import VolumeIcon from "@/public/icon/volume.svg";
 
 import { useModal } from "@/hooks/use-modal";
-import { useState } from "react";
+import { Ref, useState } from "react";
 import usePlayer from "@/hooks/use-player";
 import { getDuration } from "@/utility";
 
-function VideoPreview() {
+interface IFilePlayer {
+  src: string
+  alt?: string
+}
+
+function VideoPreview({ src, alt }: IFilePlayer) {
+  const { ref, media, togglePlay, canPlay, playing, progress } = usePlayer()
+
+  const current = getDuration(media?.currentTime || 0)
+  const end = getDuration(media?.duration || 0)
   return (
-    <div className="w-full max-w-250 max-h-120 mx-auto rounded-[9px] relative overflow-hidden">
-      <Image src={image2} className="size-full object-cover" alt="" />
+    <div className="w-[90%] max-h-120 mx-auto rounded-[9px] relative overflow-hidden">
+      <video ref={ref as Ref<HTMLVideoElement>} className="size-full object-cover" src={src} playsInline />
       <div className="absolute p-3 top-0 right-0 left-0 bottom-0 size-full flex items-end">
         <div className="w-full space-y-2">
-          <div className="text-white flex items-center gap-2">
-            <div className="cursor-pointer">
-              <PlaySolidIcon width={13} />
+          <div className={`${canPlay ? "text-white" : "text-white/45"} flex items-center gap-2`}>
+            <div onClick={togglePlay} className="cursor-pointer">
+              {
+                playing ?
+                  <PauseIcon width={13} /> :
+                  <PlaySolidIcon width={13} />
+              }
             </div>
-            <div className="flex-1 h-[9px] bg-white/20 rounded-full"></div>
+            <div className="flex-1 h-[9px] bg-white/20 rounded-full overflow-hidden">
+              <div style={{ width: `${progress}%` }} className="h-full rounded-full bg-white" />
+            </div>
           </div>
           <div className="flex items-center justify-between font-inter text-white font-semibold text-[13px]">
-            <span>0:00</span>
-            <span>8:24</span>
+            <span>{current.mins}:{current.secs}</span>
+            <span>{end.mins}:{end.secs}</span>
           </div>
         </div>
       </div>
@@ -36,20 +51,19 @@ function VideoPreview() {
   )
 }
 
-function AudioPreview({ src }: { src: string }) {
+function AudioPreview({ src, alt }: IFilePlayer) {
   const { ref, media, togglePlay, backward, forward, canPlay, playing, progress } = usePlayer()
   const current = getDuration(media?.currentTime)
   const end = getDuration(media?.duration || 0)
 
   return (
-    <div className="modal-container flex !min-h-126 !w-154.5">
+    <div className="modal-container !mx-auto flex !min-h-126 !w-154.5">
       <div className="flex flex-1 items-center justify-center rounded-2xl border border-[#F3F3F3] bg-[#FCFCFD]">
         <div className="w-62.5 space-y-6">
           <span className="block font-inter font-semibold text-secondary">
-            What is one of your earliest childhood memories.wav
+            {alt}
           </span>
-          <audio ref={ref} src={src} preload="auto">
-          </audio>
+          <audio ref={ref as Ref<HTMLAudioElement>} src={src} preload="auto" />
           <div className="space-y-2">
             <div className="h-1 w-full rounded-[1px] bg-[#DCC7FF]">
               <div style={{ width: `${progress}%` }} className="relative h-full bg-primary">
@@ -82,7 +96,7 @@ function AudioPreview({ src }: { src: string }) {
             </button>
             <div
               className="flex size-11 items-center justify-center rounded-full bg-grey-500"
-              onClick={() => backward()}
+              onClick={() => forward()}
             >
               <ForwardIcon width={24} />
             </div>
@@ -111,12 +125,12 @@ export default function FilePreview({ files }: { files: IFile[] }) {
       </div>
       {
         files.map((file, i) => (
-          <div key={i} className={`transition-opacity duration-1000 ease-in-out ${index === i ? 'opacity-100 block' : 'opacity-0 hidden'}`}>
+          <div key={i} className={`transition-opacity duration-1000 ease-in-out w-full ${index === i ? 'opacity-100 block' : 'opacity-0 hidden'}`}>
             {
               file.type.includes("video") ?
-                <VideoPreview /> :
+                <VideoPreview alt={file.name} src={file.url} /> :
                 file.type.includes("audio") ?
-                  <AudioPreview src={file.url} /> :
+                  <AudioPreview alt={file.name} src={file.url} /> :
                   <Image
                     src={file.url} alt=""
                     width={400}
