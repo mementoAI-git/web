@@ -48,7 +48,7 @@ function MemoriesTableRow({ memory }: { memory: IMemory }) {
       <td className="w-fit">
         <div className="flex items-center justify-end gap-4 text-[#949494]">
           <EditIcon />
-          <MemoryItemActions id={memory._id} />
+          <MemoryItemActions memory={memory} />
         </div>
       </td>
     </tr>

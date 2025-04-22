@@ -1,6 +1,4 @@
 import { IFile } from "@/utility/interface";
-import image1 from "@/public/image/image-3.jpeg";
-import image2 from "@/public/image/image-2.jpeg";
 import Image from "next/image";
 import BackwardIcon from "@/public/icon/15-sec-back.svg";
 import ForwardIcon from "@/public/icon/15-sec-forward.svg";
@@ -19,7 +17,7 @@ interface IFilePlayer {
   alt?: string
 }
 
-function VideoPreview({ src, alt }: IFilePlayer) {
+function VideoPreview({ src }: IFilePlayer) {
   const { ref, media, togglePlay, canPlay, playing, progress } = usePlayer()
 
   const current = getDuration(media?.currentTime || 0)
@@ -118,7 +116,7 @@ export default function FilePreview({ files }: { files: IFile[] }) {
 
   return (
     <div className="relative z-50 flex items-center justify-center flex-col min-w-[80%]">
-      <div onClick={() => close()} className="absolute cursor-pointer -top-9 -right-9 size-10 flex items-center justify-center text-white rounded-full bg-black/[32%]">
+      <div onClick={() => close("file-preview")} className="absolute cursor-pointer -top-9 -right-9 size-10 flex items-center justify-center text-white rounded-full bg-black/[32%]">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M2 2L22 22M22 2L2 22" stroke="#FCFCFD" strokeWidth="2.33333" strokeLinecap="round" />
         </svg>
@@ -131,12 +129,7 @@ export default function FilePreview({ files }: { files: IFile[] }) {
                 <VideoPreview alt={file.name} src={file.url} /> :
                 file.type.includes("audio") ?
                   <AudioPreview alt={file.name} src={file.url} /> :
-                  <Image
-                    src={file.url} alt=""
-                    width={400}
-                    height={400}
-                    className={`rounded-2xl max-w-200 max-h-200 border-[3px] border-grey-500`}
-                  />
+                  <img src={file.url} alt={file.name} className="rounded-2xl size-full mx-auto max-w-110 h-auto border-[3px] border-grey-500" />
             }
           </div>
         ))

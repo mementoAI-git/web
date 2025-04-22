@@ -23,10 +23,13 @@ axios.interceptors.request.use((config) => {
   return config;
 });
 
-export const fetcher = (url: string) => handleRequest("get", url);
+export const fetcher = (url: string) => {
+  return handleRequest("get", url);
+}
 
-export const getFetcher: MutationFetcher = async (url, body) =>
-  handleRequest("get", url, body);
+export const getFetcher: MutationFetcher = async (url, body) => {
+  return handleRequest("get", url, body);
+}
 
 export const postFetcher: MutationFetcher = async (url, body) => {
   const result = await handleRequest("post", url, body);
@@ -37,11 +40,13 @@ export const postFetcher: MutationFetcher = async (url, body) => {
   return result;
 };
 
-export const putFetcher: MutationFetcher = async (url, body) =>
-  handleRequest("put", url, body);
+export const putFetcher: MutationFetcher = async (url, body) => {
+  return handleRequest("put", url, body);
+}
 
-export const deleteFetcher: MutationFetcher = async (url, body) =>
-  handleRequest("delete", `${url}/${body.arg}`);
+export const deleteFetcher: MutationFetcher = async (url, body) => {
+  return handleRequest("delete", `${url}/${body.arg}`);
+}
 
 export const fileUploadFetcher = async (url: string, { arg }) => {
   const { file, onProgress, ...payload } = arg;

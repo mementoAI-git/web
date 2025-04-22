@@ -1,7 +1,9 @@
-import { AuthLoader } from "@/views/Auth";
+import Spinner from "@/components/Spinner";
 
 export default function Loading() {
   return (
-    <AuthLoader title="Loading...." />
+    <div className="size-full min-h-screen flex justify-center items-center">
+      <Spinner loading className="!size-30 !text-secondary" />
+    </div>
   )
 }

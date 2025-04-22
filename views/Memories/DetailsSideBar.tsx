@@ -87,11 +87,14 @@ export default function MemoryDetailsSidebar({ memory }: { memory: IMemory }) {
           stats
         </span>
         <ul className="space-y-4">
-          <PropsItem
-            icon={<TextIcon width={13} />}
-            title="word count:"
-            subtitle={<span className="mem-tags">{memory.body.split(/\s+/).length}</span>}
-          />
+          {
+            !isEmpty(memory?.body) &&
+            <PropsItem
+              icon={<TextIcon width={13} />}
+              title="word count:"
+              subtitle={<span className="mem-tags">{memory?.body.split(/\s+/).length}</span>}
+            />
+          }
           <PropsItem
             icon={<ClipIcon width={13} />}
             title="attachment:"
@@ -112,6 +115,7 @@ export default function MemoryDetailsSidebar({ memory }: { memory: IMemory }) {
           <PropsItem
             icon={<EditIcon width={13} />}
             title="Edit this post"
+            onClick={() => open("edit-memory", memory)}
             className="cursor-pointer !text-sm !font-medium !text-grey-600"
           />
           <PropsItem
@@ -123,7 +127,7 @@ export default function MemoryDetailsSidebar({ memory }: { memory: IMemory }) {
           <PropsItem
             icon={<ChainIcon width={16} />}
             title="share story"
-            onClick={() => open("share-post", { id: memory._id })}
+            onClick={() => open("share-post", memory._id)}
             className="cursor-pointer !text-sm !font-medium !text-grey-600"
           />
           <PropsItem

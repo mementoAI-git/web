@@ -1,7 +1,7 @@
 import Image from "next/image";
 import questionIcon from "@/public/image/question.png";
 import quizIcon from "@/public/image/lighten.png";
-import { usePrompt } from "@/hooks/use-prompt";
+import { useModal } from "@/hooks/use-modal";
 
 interface IDailyPrompt {
   type: string;
@@ -9,11 +9,16 @@ interface IDailyPrompt {
   _id: string;
 }
 export default function DailyPrompt({ type, title, _id }: IDailyPrompt) {
-  const { push, set } = usePrompt();
+  const { open } = useModal()
 
   const handleReplyClick = () => {
-    push("prompt");
-    set("data", { title, prompt: _id, type });
+    open(
+      "prompt",
+      {
+        memory: { title, prompt: _id, type },
+        type: "text"
+      }
+    )
   };
   return (
     <div className="group flex h-72.5 w-1/2 max-w-[368.5px] flex-1 cursor-pointer flex-col justify-between rounded-2xl bg-grey-700 p-8">

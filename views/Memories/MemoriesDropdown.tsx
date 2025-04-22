@@ -10,13 +10,17 @@ import {
   DropdownButton,
 } from "@/components/Dropdown";
 import { useModal } from "@/hooks/use-modal";
+import { IMemory } from "@/utility/interface";
 
-export function MemoryItemActions({ id }: { id: string }) {
+export function MemoryItemActions({ memory }: { memory: IMemory }) {
   const { open } = useModal()
 
   const handleSelect = (value: string) => {
     if (value === "share-story") {
-      open("share-post", { id })
+      open("share-post", memory?._id)
+    }
+    if (value === "edit-memory") {
+      open("edit-memory", memory)
     }
   }
 
@@ -26,7 +30,7 @@ export function MemoryItemActions({ id }: { id: string }) {
       items={[
         {
           label: "Edit story",
-          value: "edit-story",
+          value: "edit-memory",
           startIcon: <EditIcon width={16} size={16} />,
         },
         {

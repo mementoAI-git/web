@@ -6,10 +6,8 @@ import ClipIcon from "@/public/icon/clip.svg";
 import PlanepaperIcon from "@/public/icon/plane-paper.svg";
 import { useState } from "react";
 import useClickAway from "@/hooks/use-clickaway";
-import { usePrompt } from "@/hooks/use-prompt";
 
-export default function AddFileButton() {
-  const { push } = usePrompt();
+export default function AddFileButton({ onClick }) {
   const [show, setShow] = useState(false);
   const ref = useClickAway(() => setShow(false));
   return (
@@ -25,7 +23,7 @@ export default function AddFileButton() {
           ].map((f, i) => (
             <div
               key={i}
-              onClick={() => push("file-upload")}
+              onClick={onClick}
               className="flex size-8 cursor-pointer items-center justify-center p-2"
             >
               {f}

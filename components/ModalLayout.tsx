@@ -24,4 +24,10 @@ export default function ModalLayout({ open, children, onClose }: IModalLayout) {
   );
 }
 
-//
+export function ModalCloseBtn({ onClick }) {
+  return (
+    <div onClick={onClick} className="modal-close-btn">
+      <TimesIcon width={8.33} height={8.33} />
+    </div>
+  )
+}

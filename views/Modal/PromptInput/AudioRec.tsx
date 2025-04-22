@@ -5,16 +5,16 @@ import React, { useState } from "react";
 import { AudioRecButtons } from "./RecButtons";
 import AudioVisualizer from "@/components/AudioVisualizer";
 import { toast } from "sonner";
-import PromptInputLayout from "./Layout";
+import PromptLayout from "./Layout";
 import { fileUploadFetcher } from "@/api/fetcher";
 import endpoint from "@/api/endpoint";
 import useSWRMutation from "swr/mutation";
-import { usePrompt } from "@/hooks/use-prompt";
+import { useModal } from "@/hooks/use-modal";
 
 const fileType = "audio/webm";
 
-export default function AudioRec() {
-  const { data, push } = usePrompt();
+export default function AudioRec({ data }) {
+  const { push } = useModal()
   const [editMode, setEditMode] = useState(false);
   const [stream, setStream] = useState<MediaStream | null>(null);
   const recorder = useRecorder(stream, fileType);
@@ -23,14 +23,14 @@ export default function AudioRec() {
     fileUploadFetcher,
   );
 
-  const handeleSave = async () => {
+  const handleSave = async () => {
     const blob = new Blob(recorder.chucks, { type: fileType });
     const file = new File([blob], "recorded.webm", { type: fileType });
     await trigger({ file, prompt_id: data?.prompt });
-    push("tag-permission");
+    push("set-tag-permission", data);
   };
 
-  const handeleDiscard = () => {
+  const handleDiscard = () => {
     console.log("Handling discard audio");
   };
 
@@ -51,11 +51,13 @@ export default function AudioRec() {
       });
   };
   return (
-    <PromptInputLayout
+    <PromptLayout
       editMode={editMode}
-      onDiscard={handeleDiscard}
-      onSave={handeleSave}
+      onDiscard={handleDiscard}
+      onSave={handleSave}
       saving={isMutating}
+      type="audio"
+      memory={data}
     >
       <div>
         <div className="flex items-center justify-center rounded-t-2xl bg-grey-400 py-1 text-grey-800">
@@ -87,6 +89,6 @@ export default function AudioRec() {
           </div>
         </div>
       </div>
-    </PromptInputLayout>
+    </PromptLayout>
   );
 }

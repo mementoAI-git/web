@@ -11,20 +11,16 @@ import {
 
 export const initialStates: States = {
   type: "text",
-  navigations: [],
   data: null,
 };
 
 type States = {
   type: "text" | "video" | "audio";
-  navigations: string[];
   data: any;
 };
 
 interface IPromptContext extends States {
   set?: (key: keyof States, value: any) => void;
-  push?: (form: string) => void;
-  back?: (form?: string) => void;
 }
 
 const store = createContext<IPromptContext>(initialStates);
@@ -42,41 +38,9 @@ export function PromtProvider({ children }: PropsWithChildren) {
     }));
   }, []);
 
-  const push = useCallback((form: string) => {
-    setState((p) => {
-      if (p.navigations.includes(form)) {
-        return {
-          ...p,
-          navigations: [form, ...p.navigations.filter((n) => n !== form)],
-        };
-      }
-      return { ...p, navigations: [form, ...p.navigations] };
-    });
-  }, []);
-
-  const back = useCallback((form?: string) => {
-    setState((p) => {
-      if (form && p.navigations.includes(form)) {
-        return {
-          ...p,
-          navigations: p.navigations.filter((n) => n !== form),
-        };
-      }
-      return {
-        ...p,
-        navigations: p.navigations.filter((n) => n !== p.navigations[0]),
-      };
-    });
-  }, []);
-
   const value = useMemo(
-    () => ({
-      ...state,
-      set,
-      push,
-      back,
-    }),
-    [state, set, push, back],
+    () => ({ ...state, set }),
+    [state, set]
   );
 
   return <store.Provider value={value}> {children} </store.Provider>;

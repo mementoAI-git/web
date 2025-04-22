@@ -1,8 +1,11 @@
 import endpoint from "@/api/endpoint";
 import { Selectinput, Textinput } from "@/components/Form";
+import { ModalCloseBtn } from "@/components/ModalLayout";
 import Spinner from "@/components/Spinner";
 import useFetcher from "@/hooks/use-fetcher";
-import { usePrompt } from "@/hooks/use-prompt";
+import { useModal } from "@/hooks/use-modal";
+import { isEmpty } from "@/utility";
+import { IMemory } from "@/utility/interface";
 import { Dispatch, KeyboardEvent, SetStateAction, useState } from "react";
 
 interface ITaginput {
@@ -19,7 +22,6 @@ function Taginput({ values, setValue }: ITaginput) {
   };
 
   const onKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    console.log(e.key);
     if (e.key === "Enter" || e.key === ",") {
       e.preventDefault();
       const tag = input.trim();
@@ -90,27 +92,33 @@ function Taginput({ values, setValue }: ITaginput) {
   );
 }
 
-export default function TagAndPermissions() {
-  const { navigations, push, data } = usePrompt();
-  const [tags, setTag] = useState<string[]>(data?.tags || []);
-  const [level, setLevel] = useState(data?.level || "1");
-  const { trigger, isMutating } = useFetcher(endpoint.replyPrompt);
+export default function SetTagPermissions({ memory }: { memory: IMemory }) {
+  const { open, close } = useModal();
+  const [tags, setTag] = useState<string[]>(memory?.tags || []);
+  const [title, setTitle] = useState<string>(memory?.title || "");
+  const [level, setLevel] = useState(memory?.level || "1");
+  const { trigger, isMutating } = useFetcher(`${endpoint.memories}/${memory._id}`, "put");
 
   const handleSubmit = async () => {
-    await trigger({ level, tags, prompt_id: data?.prompt });
-    push("share");
+    await trigger({ level, title, status: "saved", tags });
+    open("share-post", memory?._id);
   };
 
-  if (navigations[0] !== "tag-permission") return;
   return (
-    <div>
+    <div className="modal-container">
+      <ModalCloseBtn onClick={() => close("set-tag-permission")} />
       <h4 className="modal-title">One more thing...</h4>
       <small className="font-inter text-sm text-grey-600">
         Choose a title and a tag for this entry, this allows Memento correctly
         categorize your contents.
       </small>
       <form className="flex flex-col gap-6">
-        <Textinput label="title" disabled value={data?.title} />
+        <Textinput
+          label="title"
+          onChange={e => setTitle(e.target.value)}
+          disabled={!isEmpty(memory.prompt)}
+          value={title}
+        />
         <Taginput values={tags} setValue={setTag} />
         <Selectinput
           label="Set permission level for this post"
@@ -120,7 +128,7 @@ export default function TagAndPermissions() {
             { label: "Level 2", value: "2" },
             { label: "Level 3", value: "3" },
           ]}
-          value={level}
+          value={String(level)}
           onChange={(e) => setLevel(e.target.value)}
         />
       </form>

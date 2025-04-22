@@ -2,21 +2,17 @@
 
 import Streak from "./Streak";
 import DailyPrompt from "./DailyPrompt";
-import PromptResponseModal from "./OverviewModal";
 import Topics from "./Topics";
 import StartConversation from "./StartConversation";
 import RecentActivities from "./RecentActivities";
 import useSWR from "swr";
 import endpoint from "@/api/endpoint";
-import { usePrompt } from "@/hooks/use-prompt";
 
 export default function Overview() {
-  const { navigations } = usePrompt();
   const { data, isLoading } = useSWR(endpoint.prompts);
 
   return (
     <div className="w-full">
-      {navigations.length > 0 && <PromptResponseModal />}
       <div className="flex items-stretch gap-3 py-8">
         <StartConversation />
         <Streak />
