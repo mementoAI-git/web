@@ -7,12 +7,14 @@ import { useRouter } from "next/navigation";
 import { TableRowSekeleton } from "./Skeleton";
 import { isEmpty } from "@/utility";
 import { tagColors } from "@/utility/constant";
+import { useModal } from "@/hooks/use-modal";
 
 interface IMemoryTable {
   data: IPagination<IMemory>
 }
 
 function MemoriesTableRow({ memory }: { memory: IMemory }) {
+  const { open } = useModal()
   const router = useRouter();
   return (
     <tr>
@@ -41,13 +43,15 @@ function MemoriesTableRow({ memory }: { memory: IMemory }) {
           }
           {
             memory.tags.length > 3 &&
-            <span className="mem-tags">+{memory.tags.length}</span>
+            <span className="mem-tags">+{memory.tags.length - 3}</span>
           }
         </div>
       </td>
       <td className="w-fit">
         <div className="flex items-center justify-end gap-4 text-[#949494]">
-          <EditIcon />
+          <div onClick={() => open("edit-memory", memory)}>
+            <EditIcon />
+          </div>
           <MemoryItemActions memory={memory} />
         </div>
       </td>

@@ -9,6 +9,7 @@ import useFetcher from "@/hooks/use-fetcher"
 import Spinner from "@/components/Spinner"
 import { useModal } from "@/hooks/use-modal"
 import { ModalCloseBtn } from "@/components/ModalLayout"
+import { toast } from "sonner"
 
 export interface IFileState {
   file: File
@@ -47,8 +48,11 @@ export default function UploadFiles({ id }: { id: string }) {
         setFiles(prev => prev.map(f => f.id === file.id ? { ...f, progress: p } : f))
       }
     })
-
-    setFiles(prev => prev.map(f => f.id === file.id ? { ...f, result: result.data[0] } : f))
+    if (!result.data[0]) {
+      toast.error("Upload unsuccessful")
+    } else {
+      setFiles(prev => prev.map(f => f.id === file.id ? { ...f, result: result.data[0] } : f))
+    }
   }, [])
 
   return (

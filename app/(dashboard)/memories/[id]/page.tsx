@@ -1,14 +1,23 @@
 "use client"
 
 import endpoint from "@/api/endpoint";
+import { isEmpty } from "@/utility";
 import MemoryDetails from "@/views/Memories/Details";
 import MemoryDetailsSidebar from "@/views/Memories/DetailsSideBar";
-import { use } from "react";
+import { useRouter } from "next/navigation";
+import { use, useEffect } from "react";
 import useSWR from "swr";
 
-export default function Memory({ params }) {
+export default function MemoryPage({ params }) {
   const { id } = use(params) as { id: string };
-  const { data } = useSWR(id ? `${endpoint.memories}/${id}` : null)
+  const router = useRouter()
+  const { data, error, isLoading } = useSWR(id ? `${endpoint.memories}/${id}` : null)
+
+  useEffect(() => {
+    if (error && isEmpty(data) && !isLoading) {
+      router.push("/memories")
+    }
+  }, [error, isLoading])
   return (
     <div className="flex">
       <div className="max-w-207 flex-1 py-6 px-6">

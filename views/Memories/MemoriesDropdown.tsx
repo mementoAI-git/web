@@ -22,6 +22,7 @@ export function MemoryItemActions({ memory }: { memory: IMemory }) {
     if (value === "edit-memory") {
       open("edit-memory", memory)
     }
+
   }
 
   return (
@@ -51,7 +52,10 @@ export function MemoryItemActions({ memory }: { memory: IMemory }) {
         },
       ]}
       footerItem={
-        <li className="flex cursor-pointer items-center gap-2.5 px-1 py-2 text-[#F97066]">
+        <li
+          onClick={() => open("delete-memory", memory._id)}
+          className="flex cursor-pointer items-center gap-2.5 px-1 py-2 text-[#F97066]"
+        >
           <TrashIcon width={16} size={16} />
           <span className="font-inter text-sm">Delete</span>
         </li>

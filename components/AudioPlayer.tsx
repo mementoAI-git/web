@@ -6,6 +6,8 @@ import PlayIcon from "@/public/icon/play.svg";
 import BackwardIcon from "@/public/icon/15-sec-back.svg";
 import ForwardIcon from "@/public/icon/15-sec-forward.svg";
 import usePlayer from "@/hooks/use-player";
+import Image from "next/image";
+import wave from "@/public/image/wave.png"
 
 export interface IMediaPlayer {
   src: string
@@ -18,7 +20,8 @@ export default function AudioPlayer({ src, alt }: IMediaPlayer) {
   const end = getDuration(media?.duration || 0)
 
   return (
-    <div className="flex flex-1 items-center justify-center rounded-2xl border border-[#F3F3F3] bg-[#FCFCFD]">
+    <div className="flex flex-col flex-1 items-center justify-between rounded-2xl border border-[#F3F3F3] bg-[#FCFCFD]">
+      <div />
       <div className="w-62.5 space-y-6">
         <span className="block font-inter font-semibold text-secondary">
           {alt}
@@ -67,6 +70,7 @@ export default function AudioPlayer({ src, alt }: IMediaPlayer) {
           </span>
         </div>
       </div>
+      <Image src={wave} height={79} className="w-full h-20 object-cover" alt="wave" />
     </div>
   )
 }

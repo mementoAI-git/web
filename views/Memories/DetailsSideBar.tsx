@@ -18,33 +18,8 @@ import { IMemory } from "@/utility/interface";
 import dayjs from "dayjs";
 import { isEmpty } from "@/utility";
 import { DetailsSideBarSkeleton } from "./Skeleton";
+import PropsItem from "@/components/PropsItem";
 
-interface IPropsItem {
-  title: string;
-  subtitle?: string | React.ReactElement | null;
-  icon: React.ReactElement;
-  className?: string;
-  onClick?: () => void;
-}
-
-function PropsItem({
-  title,
-  icon,
-  subtitle = null,
-  className,
-  onClick,
-}: IPropsItem) {
-  return (
-    <li
-      onClick={onClick || null}
-      className={`flex items-center gap-2 font-inter text-xs font-normal text-grey-800 capitalize ${className}`}
-    >
-      {icon}
-      <span>{title} </span>
-      <strong className="text-sm font-medium text-grey-600">{subtitle}</strong>
-    </li>
-  );
-}
 export default function MemoryDetailsSidebar({ memory }: { memory: IMemory }) {
   const { open } = useModal();
 
@@ -73,7 +48,7 @@ export default function MemoryDetailsSidebar({ memory }: { memory: IMemory }) {
           <PropsItem
             icon={<CalenderIcon width={13} />}
             title="last updated:"
-            subtitle="just now"
+            subtitle={dayjs(memory.updated_at).format("MMM DD, YYYY")}
           />
           <PropsItem
             icon={<LockIcon width={13} />}
@@ -103,7 +78,12 @@ export default function MemoryDetailsSidebar({ memory }: { memory: IMemory }) {
           <PropsItem
             icon={<TagIcon width={16} />}
             title="tags:"
-            subtitle="just now"
+            className="!items-start"
+            subtitle={
+              <div className="flex items-center gap-2 flex-wrap">
+                {memory.tags.map(t => <span key={t} className="mem-tags">{t}</span>)}
+              </div>
+            }
           />
         </ul>
       </div>
@@ -138,6 +118,7 @@ export default function MemoryDetailsSidebar({ memory }: { memory: IMemory }) {
           <PropsItem
             icon={<TrashcanIcon width={16} />}
             title="delete"
+            onClick={() => open("delete-memory", memory._id)}
             className="cursor-pointer !text-sm !font-medium !text-danger"
           />
         </ul>

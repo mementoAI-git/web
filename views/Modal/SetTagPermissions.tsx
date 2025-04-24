@@ -6,7 +6,7 @@ import useFetcher from "@/hooks/use-fetcher";
 import { useModal } from "@/hooks/use-modal";
 import { isEmpty } from "@/utility";
 import { IMemory } from "@/utility/interface";
-import { Dispatch, KeyboardEvent, SetStateAction, useState } from "react";
+import { Dispatch, KeyboardEvent, SetStateAction, useMemo, useState } from "react";
 
 interface ITaginput {
   values: string[];
@@ -100,9 +100,23 @@ export default function SetTagPermissions({ memory }: { memory: IMemory }) {
   const { trigger, isMutating } = useFetcher(`${endpoint.memories}/${memory._id}`, "put");
 
   const handleSubmit = async () => {
-    await trigger({ level, title, status: "saved", tags });
+    await trigger({ level, title, status: "save", tags });
     open("share-post", memory?._id);
   };
+
+  const handleDiscard = () => {
+    if (!memory) return;
+    setLevel(memory?.level)
+    setTitle(memory?.title)
+    setTag(memory?.tags)
+  }
+
+  const editMode = useMemo(() => {
+    if (memory) {
+      return memory?.tags !== tags || memory?.title !== title || memory?.level !== level
+    }
+    return false
+  }, [memory?.tags, memory?.title, memory?.level])
 
   return (
     <div className="modal-container">
@@ -133,8 +147,8 @@ export default function SetTagPermissions({ memory }: { memory: IMemory }) {
         />
       </form>
       <div className="mt-6 flex justify-end gap-3">
-        <button className="btn-outline">Discard</button>
-        <button onClick={handleSubmit} className="btn flex items-center gap-2">
+        <button onClick={handleDiscard} className="btn-outline">Discard</button>
+        <button disabled={editMode} onClick={handleSubmit} className="btn flex items-center gap-2">
           Submit
           <Spinner loading={isMutating} className="!size-4" />
         </button>

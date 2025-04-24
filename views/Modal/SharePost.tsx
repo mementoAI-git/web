@@ -1,14 +1,20 @@
+"use client"
+
 import { useModal } from "@/hooks/use-modal";
 import CopyIcon from "@/public/icon/copy.svg";
+import CircleCheckIcon from "@/public/icon/circle-check.svg";
 import Image from "next/image";
 import facebook from "@/public/image/Facebook.png";
 import twitter from "@/public/image/twitter.png";
 import instagram from "@/public/image/instagram.png";
 import linkedin from "@/public/image/linkedin.png";
 import { ModalCloseBtn } from "@/components/ModalLayout";
+import useCopy from "@/hooks/use-copy";
 
 export function SharePost({ id }) {
   const { close } = useModal();
+  const [copied, handleCopy] = useCopy()
+  const link = `${window.origin}/post/${id}`
   return (
     <div className="modal-container !max-w-120">
       <ModalCloseBtn onClick={() => close("share-post")} />
@@ -18,11 +24,22 @@ export function SharePost({ id }) {
           <div className="font-inter text-sm font-medium !text-grey-600">
             <span>Share link</span>
             <div className="relative flex items-center justify-between rounded-lg border border-grey-400 bg-grey-700 p-2">
-              <span className="font-normal truncate whitespace-nowrap">www.memento.io/post/{id}</span>
+              <span className="font-normal truncate whitespace-nowrap">
+                {link}
+              </span>
 
-              <button className="flex cursor-pointer items-center justify-center gap-1 rounded-sm bg-secondary px-3 py-2 text-white">
-                <CopyIcon width={16} />
-                <span>Copy</span>
+              <button
+                onClick={() => handleCopy(link, "Link copied successfully")}
+                className="flex cursor-pointer items-center justify-center gap-1 rounded-sm bg-secondary px-3 py-2 text-white"
+              >
+                {
+                  copied ?
+                    <CircleCheckIcon width={16} /> :
+                    <>
+                      <CopyIcon width={16} />
+                      <span>Copy</span>
+                    </>
+                }
               </button>
             </div>
           </div>
@@ -39,7 +56,7 @@ export function SharePost({ id }) {
             {[facebook, linkedin, twitter, instagram].map((img, i) => (
               <div
                 key={i}
-                className="flex size-17 items-center justify-center rounded-full border border-grey-400"
+                className="flex cursor-pointer size-17 items-center justify-center rounded-full border border-grey-400"
               >
                 <Image
                   className="size-8 object-contain"

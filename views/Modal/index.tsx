@@ -7,6 +7,7 @@ import { isEmpty } from "@/utility";
 import UploadFiles from "./UploadFile";
 import SetTagPermissions from "./SetTagPermissions";
 import PromptInput from "./PromptInput";
+import DeleteMemory from "./DeleteMemory";
 
 export default function Modal() {
   const { state } = useModal();
@@ -30,7 +31,9 @@ export default function Modal() {
                     <SetTagPermissions memory={modal.props} /> :
                     modal.name === "prompt" ?
                       <PromptInput data={modal.props} /> :
-                      null
+                      modal.name === "delete-memory" ?
+                        <DeleteMemory id={modal.props} /> :
+                        null
       }
     </div>
   );

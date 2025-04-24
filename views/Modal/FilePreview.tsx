@@ -11,7 +11,7 @@ interface IFilePlayer {
 
 function VideoPreview({ src }: IFilePlayer) {
   return (
-    <div className="w-[90%] relative max-h-120 mx-auto rounded-[9px] overflow-hidden">
+    <div className="w-[90%] relative h-120 mx-auto rounded-[9px] overflow-hidden">
       <div className="size-full top-0 right-0">
         <VideoPlayer src={src} />
       </div>
