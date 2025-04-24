@@ -1,18 +1,23 @@
-import { InputHTMLAttributes } from "react";
+import { InputHTMLAttributes, ReactNode } from "react";
 
 export interface ITexinput extends InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   error?: string | null;
+  end?: ReactNode
+  labelClassName?: string
 }
 
-export function Textinput({ label, error = null, ...props }: ITexinput) {
+export function Textinput({ label, end, labelClassName = "", error = null, ...props }: ITexinput) {
   return (
     <div className={`input-container group ${error ? "error" : ""}`}>
-      {label && <label className="input-label">{label}</label>}
-      <input
-        {...props}
-        className={`input-base outline-0 group-[.error]:!border-red-600 placeholder:text-[#000D4D73] focus:border-[1.5px] focus:border-primary ${props.className}`}
-      />
+      {label && <label className={`input-label ${labelClassName || ""}`}>{label}</label>}
+      <div className="input-base flex items-center justify-between">
+        <input
+          {...props}
+          className="flex-1 outline-0 placeholder:text-[#000D4D73]"
+        />
+        {end && <div>{end}</div>}
+      </div>
       {error && <small className="text-xs text-danger">{error}</small>}
     </div>
   );

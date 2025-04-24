@@ -11,6 +11,7 @@ export default {
   // user
   profile: "/users/profile",
   updateStreak: "/users/update-streak",
+  uploadPicture: "/users/upload-picture",
 
   // beneficiaries
   beneficiaries: "/beneficiaries",

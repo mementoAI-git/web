@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation";
 import { clearCache } from "@/utility";
 import useFetcher from "@/hooks/use-fetcher";
 import { useStore } from "@/hooks/use-store";
+import { toast } from "sonner";
 
 const schema = yup.object().shape({
   email: yup
@@ -38,6 +39,7 @@ export function Login() {
       try {
         const result = await trigger(payload);
         if (result.data) {
+          toast.success(result?.message)
           setAuth(result.data);
           await clearCache();
           router.push("/overview");

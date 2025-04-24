@@ -35,6 +35,15 @@ export default function useRecorder(stream: MediaStream | null, type = "video/we
     recorder.current.resume();
   };
 
+  const reset = () => {
+    stop()
+    setUrl(null)
+    setRecording(false)
+    chunks.current = []
+    setTimer(0)
+    clearInterval(timeId.current);
+  }
+
   useEffect(() => {
     if (stream) {
       recorder.current = new MediaRecorder(stream, { mimeType: type });
@@ -87,5 +96,6 @@ export default function useRecorder(stream: MediaStream | null, type = "video/we
     url,
     save,
     timer,
+    reset
   };
 }

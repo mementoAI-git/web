@@ -52,6 +52,7 @@ export const fileUploadFetcher = async (url: string, { arg }) => {
   const { file, onProgress, ...payload } = arg;
   const formData = new FormData();
   formData.append("file", file, file.name);
+
   if (!isEmpty(payload)) {
     Object.entries(payload).forEach(([key, value]) =>
       formData.append(key, String(value)),
@@ -69,9 +70,7 @@ export const fileUploadFetcher = async (url: string, { arg }) => {
       },
     });
 
-    toast.success(res.data?.message || "Success", {
-      className: "!text-success",
-    });
+    toast.success(res.data?.message || "Success");
     return res.data;
   } catch (error) {
     let message = "Something went wrong";
@@ -79,11 +78,11 @@ export const fileUploadFetcher = async (url: string, { arg }) => {
     if (Axios.isAxiosError(error)) {
       const axiosError = error as AxiosError<IResponse>;
       message = axiosError.response?.data?.message || axiosError.message;
-      toast.error(message, { className: "!text-danger" });
+      toast.error(message);
 
       throw axiosError.response?.data || null;
     }
-    toast.error(message, { className: "!text-danger" });
+    toast.error(message);
 
     throw { message };
   }
@@ -99,11 +98,6 @@ const handleRequest = async (method: string, url: string, body?: any) => {
       headers: { "Content-Type": "application/json" },
     });
 
-    if (method !== "get") {
-      toast.success(res.data?.message || "Success", {
-        className: "!text-success",
-      });
-    }
     return res.data;
   } catch (error) {
     let message = "Something went wrong";
@@ -113,14 +107,14 @@ const handleRequest = async (method: string, url: string, body?: any) => {
       message = axiosError.response?.data?.message || axiosError.message;
 
       if (method !== "get") {
-        toast.error(message, { className: "!text-danger" });
+        toast.error(message);
       }
 
       throw axiosError.response?.data || null;
     }
 
     if (method !== "get") {
-      toast.error(message, { className: "!text-danger" });
+      toast.error(message);
     }
     throw { message };
   }

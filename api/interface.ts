@@ -7,7 +7,8 @@ export type Fetcher = (
   input: RequestInfo | URL,
   init?: RequestInit,
 ) => Promise<IResponse>;
+
 export type MutationFetcher = (
   input: string,
-  body: { arg: any },
+  body: { arg: any }
 ) => Promise<IResponse>;

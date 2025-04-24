@@ -104,7 +104,7 @@ body {
   }
 
   .btn {
-    @apply flex cursor-pointer items-center justify-center gap-2 rounded-full bg-secondary px-5 py-2 font-inter font-semibold text-white disabled:bg-[#C7C9C8];
+    @apply flex cursor-pointer items-center justify-center gap-2 rounded-full bg-secondary px-5 py-2 font-inter font-semibold text-white disabled:bg-[#C7C9C8] disabled:cursor-not-allowed;
   }
 
   .btn-outline {

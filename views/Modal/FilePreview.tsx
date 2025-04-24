@@ -1,16 +1,8 @@
 import { IFile } from "@/utility/interface";
-import Image from "next/image";
-import BackwardIcon from "@/public/icon/15-sec-back.svg";
-import ForwardIcon from "@/public/icon/15-sec-forward.svg";
-import PlayIcon from "@/public/icon/play.svg";
-import PlaySolidIcon from "@/public/icon/play-solid.svg";
-import PauseIcon from "@/public/icon/pause-rec.svg";
-import VolumeIcon from "@/public/icon/volume.svg";
-
 import { useModal } from "@/hooks/use-modal";
-import { Ref, useState } from "react";
-import usePlayer from "@/hooks/use-player";
-import { getDuration } from "@/utility";
+import { useState } from "react";
+import VideoPlayer from "@/components/VideoPlayer";
+import AudioPlayer from "@/components/AudioPlayer";
 
 interface IFilePlayer {
   src: string
@@ -18,94 +10,19 @@ interface IFilePlayer {
 }
 
 function VideoPreview({ src }: IFilePlayer) {
-  const { ref, media, togglePlay, canPlay, playing, progress } = usePlayer()
-
-  const current = getDuration(media?.currentTime || 0)
-  const end = getDuration(media?.duration || 0)
   return (
-    <div className="w-[90%] max-h-120 mx-auto rounded-[9px] relative overflow-hidden">
-      <video ref={ref as Ref<HTMLVideoElement>} className="size-full object-cover" src={src} playsInline />
-      <div className="absolute p-3 top-0 right-0 left-0 bottom-0 size-full flex items-end">
-        <div className="w-full space-y-2">
-          <div className={`${canPlay ? "text-white" : "text-white/45"} flex items-center gap-2`}>
-            <div onClick={togglePlay} className="cursor-pointer">
-              {
-                playing ?
-                  <PauseIcon width={13} /> :
-                  <PlaySolidIcon width={13} />
-              }
-            </div>
-            <div className="flex-1 h-[9px] bg-white/20 rounded-full overflow-hidden">
-              <div style={{ width: `${progress}%` }} className="h-full rounded-full bg-white" />
-            </div>
-          </div>
-          <div className="flex items-center justify-between font-inter text-white font-semibold text-[13px]">
-            <span>{current.mins}:{current.secs}</span>
-            <span>{end.mins}:{end.secs}</span>
-          </div>
-        </div>
+    <div className="w-[90%] relative max-h-120 mx-auto rounded-[9px] overflow-hidden">
+      <div className="size-full top-0 right-0">
+        <VideoPlayer src={src} />
       </div>
     </div>
   )
 }
 
 function AudioPreview({ src, alt }: IFilePlayer) {
-  const { ref, media, togglePlay, backward, forward, canPlay, playing, progress } = usePlayer()
-  const current = getDuration(media?.currentTime)
-  const end = getDuration(media?.duration || 0)
-
   return (
     <div className="modal-container !mx-auto flex !min-h-126 !w-154.5">
-      <div className="flex flex-1 items-center justify-center rounded-2xl border border-[#F3F3F3] bg-[#FCFCFD]">
-        <div className="w-62.5 space-y-6">
-          <span className="block font-inter font-semibold text-secondary">
-            {alt}
-          </span>
-          <audio ref={ref as Ref<HTMLAudioElement>} src={src} preload="auto" />
-          <div className="space-y-2">
-            <div className="h-1 w-full rounded-[1px] bg-[#DCC7FF]">
-              <div style={{ width: `${progress}%` }} className="relative h-full bg-primary">
-                <div className="absolute top-1/2 -right-1 size-2 -translate-y-1/2 rounded-full bg-primary" />
-              </div>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="font-inter text-xs font-medium text-secondary">
-                {current.mins}:{current.secs}/<span className="font-normal text-grey-800">{end.mins}:{end.secs}</span>
-              </span>
-              <span>
-                <VolumeIcon width={10} />
-              </span>
-            </div>
-          </div>
-          <div className="flex w-full items-center justify-between">
-            <div
-              className="flex size-11 items-center justify-center rounded-full bg-grey-500 cursor-pointer"
-              onClick={() => backward()}
-            >
-              <BackwardIcon width={24} />
-            </div>
-            <button disabled={!canPlay} onClick={togglePlay} className="btn !px-8 !py-3">
-              {
-                playing ?
-                  <PauseIcon width={11} /> :
-                  <PlayIcon width={11} />
-              }
-              <span className="font-inter text-sm font-semibold">Play</span>
-            </button>
-            <div
-              className="flex size-11 items-center justify-center rounded-full bg-grey-500"
-              onClick={() => forward()}
-            >
-              <ForwardIcon width={24} />
-            </div>
-          </div>
-          <div>
-            <span className="mx-auto block text-center font-inter text-xs text-secondary">
-              Show transcription
-            </span>
-          </div>
-        </div>
-      </div>
+      <AudioPlayer {...{ src, alt }} />
     </div>
   );
 }

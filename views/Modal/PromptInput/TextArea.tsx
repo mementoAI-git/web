@@ -10,7 +10,8 @@ import PromptLayout from "./Layout";
 export default function TextArea({ data }) {
   const { open, push, close } = useModal()
   const [text, setText] = useState(data?.body);
-  const { data: result } = useSWR(`${endpoint.replyPrompt}/${data?.prompt}`)
+  console.log(data?.prompt)
+  const { data: result, isLoading } = useSWR(`${endpoint.replyPrompt}/${data?.prompt}`)
   const { trigger, isMutating: saving } = useFetcher(endpoint.replyPrompt)
 
   const memory = result?.data || data
@@ -47,6 +48,7 @@ export default function TextArea({ data }) {
       onDiscard={handleDiscard}
       onSave={handleSave}
       saving={saving}
+      loading={isLoading}
       type="text"
       memory={memory ? { ...data, ...memory } : data}
     >
@@ -68,6 +70,7 @@ export default function TextArea({ data }) {
 
         <textarea
           value={text}
+          disabled={isLoading}
           onChange={(e) => setText(e.target.value)}
           className="size-full flex-1 resize-none outline-0 placeholder:text-[#C7C9C8]"
           placeholder="Tap to start typing..."

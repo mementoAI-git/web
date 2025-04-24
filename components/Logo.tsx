@@ -13,7 +13,7 @@ export default function Logo({ size = 38, textClassName }: ILogo) {
         width={size}
         height={size}
         src={logo}
-        className="aspect-square object-cover"
+        className="aspect-square shrink-0 object-cover"
         alt="memento logo"
       />
       <span

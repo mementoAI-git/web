@@ -6,6 +6,7 @@ import { Passwordinput, Textinput } from "@/components/Form";
 import useFetcher from "@/hooks/use-fetcher";
 import useForm from "@/hooks/use-form";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import * as yup from "yup";
 
 const schema = yup.object().shape({
@@ -36,7 +37,10 @@ export function Register() {
     schema,
     initial,
     async onSubmit(payload) {
-      await trigger(payload);
+      const result = await trigger(payload);
+      if (result) {
+        toast.success(result?.message)
+      }
       router.push(`/verify-email?email=${payload.email}`);
     },
   });

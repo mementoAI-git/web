@@ -13,7 +13,16 @@ export default function Providers({ children }: PropsWithChildren) {
       <ModalProvider>
         <SWRConfig value={{ fetcher }}>
           {children}
-          <Toaster position="top-center" closeButton />
+          <Toaster
+            position="top-center"
+            closeButton
+            toastOptions={{
+              classNames: {
+                success: "!text-success",
+                error: "!text-danger"
+              }
+            }}
+          />
         </SWRConfig>
       </ModalProvider>
     </StoreProvider>

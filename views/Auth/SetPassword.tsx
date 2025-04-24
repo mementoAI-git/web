@@ -9,6 +9,7 @@ import endpoint from "@/api/endpoint";
 import { useMemo } from "react";
 import { useRouter } from "next/navigation";
 import useFetcher from "@/hooks/use-fetcher";
+import { toast } from "sonner";
 
 const schema = yup.object().shape({
   password: yup
@@ -39,6 +40,7 @@ export function SetPassword({ token }: { token: string }) {
     async onSubmit(payload) {
       const result = await trigger(payload);
       if (result) {
+        toast.success(result?.message)
         router.push("/login");
       }
     },

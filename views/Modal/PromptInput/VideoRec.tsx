@@ -13,6 +13,7 @@ import useSWRMutation from "swr/mutation";
 import endpoint from "@/api/endpoint";
 import { fileUploadFetcher } from "@/api/fetcher";
 import { useModal } from "@/hooks/use-modal";
+import VideoPlayer from "@/components/VideoPlayer";
 
 const constraints = {
   audio: {
@@ -44,7 +45,8 @@ export default function VideoRec({ data }) {
   };
 
   const handleDiscard = () => {
-    console.log("Handling discard video");
+    setStream(null)
+    recorder.reset()
   };
 
   const startRec = useCallback(() => {
@@ -72,6 +74,7 @@ export default function VideoRec({ data }) {
       onDiscard={handleDiscard}
       onSave={handleSave}
       saving={isMutating}
+      loading={!recorder.url && recorder.timer > 0}
       type="video"
       memory={data}
     >
@@ -90,16 +93,11 @@ export default function VideoRec({ data }) {
           autoPlay
           playsInline
           muted
-          className={`absolute top-0 right-0 z-0 size-full`}
+          className={`absolute invisible top-0 right-0 z-0 size-full`}
         />
         {recorder.url ? (
-          <div className="absolute top-0 right-0 size-full">
-            <video
-              src={recorder.url}
-              controls
-              playsInline
-              className="z-50 size-full"
-            />
+          <div className="absolute top-0 right-0 z-50 size-full">
+            <VideoPlayer src={recorder.url} />
           </div>
         ) : stream ? (
           <div className="absolute top-0 right-0 bottom-0 left-0 z-10 flex flex-col justify-between bg-transparent p-3">
