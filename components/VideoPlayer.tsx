@@ -12,8 +12,8 @@ export default function VideoPlayer({ src }: { src: string }) {
   return (
     <div className="size-full relative">
       <video ref={ref as Ref<HTMLVideoElement>} className="size-full object-cover" src={src} playsInline />
-      <div className="absolute bg-gradient-to-t from-5% to-95% from-black/20 to-transparent p-3 top-0 right-0 left-0 bottom-0 size-full flex items-end">
-        <div className="w-full space-y-2">
+      <div className="absolute top-0 right-0 left-0 bottom-0 size-full flex items-end">
+        <div className="w-full p-3 space-y-2 bg-gradient-to-t from-50% to-95% from-black/20 to-transparent">
           <div className={`${canPlay ? "text-white" : "text-white/45"} flex items-center gap-2`}>
             <div onClick={togglePlay} className="cursor-pointer">
               {

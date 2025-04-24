@@ -1,4 +1,3 @@
-import { usePrompt } from "@/hooks/use-prompt"
 import UploadInput from "./UploadInput"
 import { useCallback, useState } from "react"
 import UploadItem from "./UploadItem"

@@ -42,7 +42,7 @@ function MemoriesGridItem({ memory }: { memory: IMemory }) {
             <span className="py-0.5 px-1.5 border rounded-full bg-[#E9ECFC] border-[#D7DDF9] text-sm text-[#314FDF] font-inter">family</span> */}
           </div>
 
-          <MemoryItemActions />
+          <MemoryItemActions memory={memory} />
         </div>
       </div>
     </div>

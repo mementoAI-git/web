@@ -7,6 +7,14 @@ import PlanepaperIcon from "@/public/icon/plane-paper.svg";
 import { useState } from "react";
 import useClickAway from "@/hooks/use-clickaway";
 
+const icons = [
+  CameraIcon,
+  ImageIcon,
+  MicIcon,
+  ClipIcon,
+  PlanepaperIcon,
+]
+
 export default function AddFileButton({ onClick }) {
   const [show, setShow] = useState(false);
   const ref = useClickAway(() => setShow(false));
@@ -14,19 +22,13 @@ export default function AddFileButton({ onClick }) {
     <div ref={ref} className="relative">
       {show && (
         <div className="absolute -top-15 flex gap-1 rounded-xl bg-white p-2 text-[#344054] shadow-btn">
-          {[
-            <CameraIcon width={16} height={16} />,
-            <ImageIcon width={16} height={16} />,
-            <MicIcon width={16} height={16} />,
-            <ClipIcon width={16} height={16} />,
-            <PlanepaperIcon width={16} height={16} />,
-          ].map((f, i) => (
+          {icons.map((Icon, i) => (
             <div
               key={i}
               onClick={onClick}
               className="flex size-8 cursor-pointer items-center justify-center p-2"
             >
-              {f}
+              <Icon width={16} height={16} />
             </div>
           ))}
         </div>

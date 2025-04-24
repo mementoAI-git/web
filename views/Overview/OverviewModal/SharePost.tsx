@@ -1,4 +1,3 @@
-import { usePrompt } from "@/hooks/use-prompt";
 import confetti from "@/public/image/confetti.png";
 import Image from "next/image";
 import facebook from "@/public/image/Facebook.png";
@@ -7,8 +6,6 @@ import instagram from "@/public/image/instagram.png";
 import linkedin from "@/public/image/linkedin.png";
 
 export default function SharePost() {
-  const { navigations } = usePrompt();
-  if (navigations[0] !== "share") return;
   return (
     <div className="space-y-6">
       <Image

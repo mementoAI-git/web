@@ -19,6 +19,7 @@ export function Passwordinput({ label = "Password", ...props }: ITexinput) {
       }
       type={show ? "text" : "password"}
       placeholder=" • • • • • • •"
+      label={label}
       {...props}
     />
   );

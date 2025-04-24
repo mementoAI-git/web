@@ -11,6 +11,7 @@ export default function AudioVisualizer({
   recorder,
   color = "#3C3F3E",
 }: IAudioVisualizer) {
+  console.log(color)
   return (
     <div className="flex aspect-square w-8 items-center justify-center rounded-full bg-grey-400">
       {/* <svg width="15" height="10" viewBox="0 0 15 10" fill="none" xmlns="http://www.w3.org/2000/svg">
