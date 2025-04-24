@@ -52,15 +52,15 @@ export default function FileGallery({ files }: { files: IFile[] }) {
 
           if (file.type.includes("video")) {
             return (
-              <div className={`${size} max-w-1/2`}>
-                <VideoFile file={file} key={i} />
+              <div key={i} className={`${size} max-w-1/2`}>
+                <VideoFile file={file} />
               </div>
             )
           }
           if (file.type.includes("audio")) {
             return (
-              <div className={`${size} max-w-1/2`}>
-                <AudioFile file={file} key={i} />
+              <div key={i} className={`${size} max-w-1/2`}>
+                <AudioFile file={file} />
               </div>
             )
           }
