@@ -17,6 +17,11 @@ const nextConfig: NextConfig = {
         port: "5000",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "api-production-f037.up.railway.app",
+        pathname: "/**",
+      },
     ],
   },
 };
