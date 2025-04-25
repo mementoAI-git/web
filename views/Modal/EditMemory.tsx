@@ -17,7 +17,7 @@ export default function EditMemory({ memory }: { memory: IMemory }) {
   const handleContinueBtn = async () => {
     if (isMutating) return;
     if (text !== memory.body) {
-      await trigger({ text })
+      await trigger({ body: text })
     }
     push("set-tag-permission", memory)
   }
