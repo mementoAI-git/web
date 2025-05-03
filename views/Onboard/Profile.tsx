@@ -5,8 +5,9 @@ import { Checkbox, Textinput } from "@/components/Form";
 import { Dateinput } from "@/components/Form/Dateinput";
 import { Selectinput } from "@/components/Form/Selectinput";
 import Spinner from "@/components/Spinner";
-import useFetcher, { useUser } from "@/hooks/use-fetcher";
+import useFetcher from "@/hooks/use-fetcher";
 import useForm from "@/hooks/use-form";
+import { useStore } from "@/hooks/use-store";
 import { isEmpty } from "@/utility";
 import countries from "@/utility/countries";
 import { useRouter } from "next/navigation";
@@ -31,7 +32,7 @@ const initial = {
 
 export function Profile() {
   const router = useRouter()
-  const { data } = useUser()
+  const { user } = useStore()
   const { trigger, isMutating } = useFetcher(endpoint.profile, "put")
 
   const { handleSubmit, setValues, handleChange, values, errors } = useForm({
@@ -46,9 +47,9 @@ export function Profile() {
   });
 
   useEffect(() => {
-    if (isEmpty(data?.data)) return;
-    setValues(data?.data)
-  }, [data?.data])
+    if (isEmpty(user)) return;
+    setValues(user)
+  }, [user])
 
   return (
     <form

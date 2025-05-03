@@ -61,6 +61,10 @@ body {
 }
 
 @layer utilities {
+  .page-title {
+    @apply text-secondary font-medium font-bricolage text-4xl
+  }
+
   .input-container {
     @apply flex flex-col justify-start gap-1.5;
   }
@@ -81,6 +85,14 @@ body {
   .mem-table thead th:last-child,
   .mem-table tbody td:last-child {
     @apply pr-6;
+  }
+
+  .mem-table tbody tr {
+    @apply border-b border-[#E9EAEB]
+  }
+
+  .mem-table tbody tr:last-child {
+    @apply border-b-0
   }
 
   .mem-tags {

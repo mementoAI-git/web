@@ -25,6 +25,7 @@ export interface IUser {
   public_key: string;
   last_seen: string;
   streak: number;
+  picture_url?: string
   newsletter_subscriber: boolean;
 }
 

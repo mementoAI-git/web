@@ -7,7 +7,7 @@ import endpoint from "@/api/endpoint";
 import Spinner from "@/components/Spinner";
 import { mutate } from "swr";
 
-export default function ChangeImage({ image = image1 }) {
+export default function ChangeImage({ image }) {
   const { trigger, isMutating } = useSWRMutation(endpoint.uploadPicture, fileUploadFetcher)
 
   const handleUpload = useCallback(async (e: ChangeEvent<HTMLInputElement>) => {

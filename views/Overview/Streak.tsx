@@ -1,34 +1,33 @@
 import endpoint from "@/api/endpoint"
-import useFetcher, { useUser } from "@/hooks/use-fetcher"
+import useFetcher from "@/hooks/use-fetcher"
+import { useStore } from "@/hooks/use-store"
 import { isEmpty } from "@/utility"
 import dayjs from "dayjs"
 import { useEffect, useMemo } from "react"
+import { mutate } from "swr"
 
 export default function Streak() {
-  const { data, mutate } = useUser()
+  const { user } = useStore()
   const { trigger } = useFetcher(endpoint.updateStreak)
 
   const streak = useMemo(() => {
-    const end_index = dayjs(data?.data.last_seen).get("day")
+    const end_index = dayjs(user?.last_seen).get("day")
     return {
-      start_index: end_index - Math.max(data?.data?.streak, 0),
+      start_index: end_index - Math.max(user?.streak, 0),
       end_index
     }
-  }, [data?.data])
+  }, [user])
 
   useEffect(() => {
-    if (isEmpty(data?.data)) return;
-
-    if (!dayjs().isSame(data?.data.last_seen, "date")) {
+    if (isEmpty(user)) return;
+    if (!dayjs().isSame(user?.last_seen, "date")) {
       trigger()
         .then(res => {
-          if (res.data) {
-            mutate({ ...data, data: { ...data.data, ...res.data } })
-          }
+          if (res.data) mutate(endpoint.profile)
         })
         .catch(console.log)
     }
-  }, [data?.data, trigger, mutate])
+  }, [user, trigger, mutate])
   return (
     <div className="max-w-[335px] w-full flex flex-col gap-5 flex-1 font-inter rounded-2xl p-10 border-grey-700 bg-[#FCFCFD] border">
       <span className="text-grey-800 font-medium text-xs">✌🏽 MY WEEKLY STREAK</span>

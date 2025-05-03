@@ -16,10 +16,10 @@ export function DropdownButton({ title, ...props }: IDropdownButton) {
   }
 
   return (
-    <div ref={ref} className="relative">
+    <div ref={ref} className="relative shrink-0">
       <button
         onClick={() => setOpen((p) => !p)}
-        className="flex h-full cursor-pointer items-center justify-center gap-1 rounded-lg border border-grey-500 bg-white px-3.5 py-2.5 font-inter text-sm font-medium text-grey-600 capitalize shadow-sm"
+        className="flex h-full cursor-pointer shrink-0 items-center justify-center gap-1 rounded-lg border border-grey-500 bg-white px-3.5 py-2.5 font-inter text-sm font-medium text-grey-600 capitalize shadow-sm"
       >
         {title}
         <ChevronDown />

@@ -23,10 +23,6 @@ import PropsItem from "@/components/PropsItem";
 export default function MemoryDetailsSidebar({ memory }: { memory: IMemory }) {
   const { open } = useModal();
 
-  const handleOpenFiles = () => {
-    if (isEmpty(memory.attachments)) return;
-    open("file-preview", memory.attachments)
-  }
   if (isEmpty(memory)) return <DetailsSideBarSkeleton />
   return (
     <div className="size-full space-y-3 bg-[#FCFCFD] p-6">
@@ -101,7 +97,6 @@ export default function MemoryDetailsSidebar({ memory }: { memory: IMemory }) {
           <PropsItem
             icon={<AddBookmarkIcon width={13} />}
             title="add to bookmark"
-            onClick={handleOpenFiles}
             className="cursor-pointer !text-sm !font-medium !text-grey-600"
           />
           <PropsItem

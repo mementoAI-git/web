@@ -10,7 +10,8 @@ export const settingNavigations = [
   { title: "my profile", link: "/settings/profile" },
   { title: "security", link: "/settings/security" },
   { title: "notifications", link: "/settings/notifications" },
-  { title: "upgrade plane", link: "/settings/plane" },
+  { title: "beneficiaries", link: "/settings/beneficiaries" },
+  { title: "upgrade and plans", link: "/settings/plane" },
 ]
 
 export const topNavigations = [

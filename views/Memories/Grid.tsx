@@ -28,9 +28,9 @@ function MemoriesGridItem({ memory }: { memory: IMemory }) {
         <span className="truncate font-inter font-semibold whitespace-nowrap text-[#050709]">
           {memory.title}
         </span>
-        <div className="flex items-center justify-between text-[#949494]">
-          <div className="space-x-2">
-            {memory.tags.map((tag, i) => (
+        <div className="flex items-end justify-between text-[#949494]">
+          <div className="flex flex-wrap items-center gap-2">
+            {memory.tags.slice(0, 3).map((tag, i) => (
               <span
                 key={i}
                 className="rounded-full border border-[#D7DDF9] bg-[#E9ECFC] px-1.5 py-0.5 font-inter text-sm text-[#314FDF]"
@@ -38,8 +38,10 @@ function MemoriesGridItem({ memory }: { memory: IMemory }) {
                 {tag}
               </span>
             ))}
-            {/* <span className="py-0.5 px-1.5 border rounded-full bg-[#E9ECFC] border-[#D7DDF9] text-sm text-[#314FDF] font-inter">travel</span>
-            <span className="py-0.5 px-1.5 border rounded-full bg-[#E9ECFC] border-[#D7DDF9] text-sm text-[#314FDF] font-inter">family</span> */}
+            {
+              memory.tags.length > 3 &&
+              <span className="mem-tags">+{memory.tags.length - 3}</span>
+            }
           </div>
 
           <MemoryItemActions memory={memory} />
