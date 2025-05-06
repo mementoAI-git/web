@@ -18,7 +18,7 @@ export interface IFileState {
   id: string
 }
 
-export default function UploadFiles({ id }: { id: string }) {
+export default function UploadFiles({ data: id }) {
   const { close } = useModal()
   const [files, setFiles] = useState<IFileState[]>([])
   const { trigger: uploadFile } = useSWRMutation(endpoint.upload, fileUploadFetcher)

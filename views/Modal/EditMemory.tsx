@@ -9,7 +9,7 @@ import { isEmpty } from "@/utility";
 import { IMemory } from "@/utility/interface";
 import { useState } from "react";
 
-export default function EditMemory({ memory }: { memory: IMemory }) {
+export default function EditMemory({ data: memory }: { data: IMemory }) {
   const { push, close } = useModal()
   const [text, setText] = useState(memory.body);
   const { trigger, isMutating } = useFetcher(`${endpoint.memories}/${memory._id}`, "put")

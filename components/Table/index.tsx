@@ -12,7 +12,7 @@ interface ITable<T> {
   columns: IColumn[]
   onPrevPage?: () => void;
   onNextPage?: () => void;
-  renderRow?: (item: T) => React.ReactNode
+  renderRow?: (item: T, i: number) => React.ReactNode
 }
 
 export default function Table<T>({ data, columns, renderRow, onPrevPage, onNextPage, loading = false }: ITable<T>) {
@@ -28,7 +28,7 @@ export default function Table<T>({ data, columns, renderRow, onPrevPage, onNextP
           {
             loading || isEmpty(data) ?
               <TableRowSekeleton col={columns.length} /> :
-              data?.docs.map((row, i) => renderRow(row))
+              data?.docs?.map((row, i) => renderRow(row, i))
           }
         </tbody>
       </table>

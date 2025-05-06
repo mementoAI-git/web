@@ -24,8 +24,8 @@ export function DashboardSideBar() {
   }, [pathname])
 
   return (
-    <aside className={`flex items-stretch ${(!collapse && isEmpty(subNavs)) ? "min-w-[250px]" : ""}`}>
-      <div className={`group ${collapse ? "close w-fit min-w-[96px]" : "w-[20%] min-w-[250px]"} transition-all duration-500 ease-in-out overflow-x-hidden`}>
+    <aside className="flex items-stretch">
+      <div className={`group ${collapse ? "close w-fit min-w-[96px]" : "w-full max-w-[250px]"} transition-all duration-500 ease-in-out overflow-x-hidden`}>
         <div className="h-full border-r border-l border-grey-500">
           <div className="flex h-full max-h-300 flex-col justify-between group-[.close]:justify-start group-[.close]:gap-4 px-4 py-8">
             <div className="space-y-8">

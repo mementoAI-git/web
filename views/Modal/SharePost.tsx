@@ -11,7 +11,7 @@ import linkedin from "@/public/image/linkedin.png";
 import { ModalCloseBtn } from "@/components/ModalLayout";
 import useCopy from "@/hooks/use-copy";
 
-export function SharePost({ id }) {
+export function SharePost({ data: id }) {
   const { close } = useModal();
   const [copied, handleCopy] = useCopy()
   const link = `${window.origin}/post/${id}`

@@ -1,6 +1,6 @@
 import { IFile } from "@/utility/interface";
 import { useModal } from "@/hooks/use-modal";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import VideoPlayer from "@/components/VideoPlayer";
 import AudioPlayer from "@/components/AudioPlayer";
 
@@ -27,9 +27,27 @@ function AudioPreview({ src, alt }: IFilePlayer) {
   );
 }
 
-export default function FilePreview({ files }: { files: IFile[] }) {
+export default function FilePreview({ data: files }: { data: IFile[] }) {
   const [index, setIndex] = useState(0)
   const { close } = useModal();
+
+  const handleKeyDown = (event: KeyboardEvent) => {
+    const size = files.length - 1
+    if (["ArrowLeft", "ArrowUp"].includes(event.key)) {
+      setIndex(p => p <= 0 ? p : p - 1)
+    }
+    if (["ArrowRight", "ArrowDown"].includes(event.key)) {
+      setIndex(p => p >= size ? p : p + 1)
+    }
+  };
+
+  useEffect(() => {
+    window.addEventListener("keydown", handleKeyDown)
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [])
 
   return (
     <div className="relative z-50 flex items-center justify-center flex-col min-w-[80%]">

@@ -15,7 +15,7 @@ interface ISelect extends ITexinput {
   data?: IOption[];
 }
 
-export function Selectinput({ label, onChange, data = [], ...props }: ISelect) {
+export function Selectinput({ label, onChange, labelClassName = "", data = [], ...props }: ISelect) {
   const [value, setValue] = useState(props.value);
   const [show, setShow] = useState(false);
   const ref = useClickAway(() => setShow(false));
@@ -43,7 +43,7 @@ export function Selectinput({ label, onChange, data = [], ...props }: ISelect) {
       ref={ref}
       className={`input-container group ${props.error && "error"}`}
     >
-      <label className="input-label">{label}</label>
+      <label className={`input-label ${labelClassName}`}>{label}</label>
       <div onClick={() => setShow((p) => !p)}>
         <div className="input-base flex items-center justify-between">
           <input

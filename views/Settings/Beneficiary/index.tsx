@@ -1,7 +1,11 @@
+"use client"
+
 import Table from "@/components/Table";
 import Row from "./Row"
 import classNames from "classnames";
 import Header from "./Header";
+import useSWR from "swr";
+import endpoint from "@/api/endpoint";
 
 const mockdata = {
   docs: [1, 2, 3],
@@ -24,6 +28,7 @@ const columns = [
 ]
 
 export function Beneficiaries() {
+  const { data, isLoading } = useSWR(endpoint.beneficiaries)
   return (
     <div>
       <div className="space-y-3 py-8">
@@ -31,11 +36,12 @@ export function Beneficiaries() {
         <small className="text-base font-inter text-grey-600">Manage Beneficiaries and their access to your content</small>
       </div>
       <div className="py-8 space-y-6">
-        <Header />
+        <Header count={data?.data?.totalDocs} />
         <Table
-          data={mockdata}
+          data={data?.data}
           columns={columns}
-          renderRow={(r) => <Row key={r} />}
+          loading={isLoading}
+          renderRow={(r, i) => <Row beneficiary={r} key={i} />}
         />
       </div>
     </div>

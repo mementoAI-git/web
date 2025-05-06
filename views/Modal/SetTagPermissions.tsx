@@ -92,7 +92,7 @@ function Taginput({ values, setValue }: ITaginput) {
   );
 }
 
-export default function SetTagPermissions({ memory }: { memory: IMemory }) {
+export default function SetTagPermissions({ data: memory }: { data: IMemory }) {
   const { open, close } = useModal();
   const [tags, setTag] = useState<string[]>(memory?.tags || []);
   const [title, setTitle] = useState<string>(memory?.title || "");
