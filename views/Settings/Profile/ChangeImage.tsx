@@ -6,6 +6,7 @@ import { fileUploadFetcher } from "@/api/fetcher";
 import endpoint from "@/api/endpoint";
 import Spinner from "@/components/Spinner";
 import { mutate } from "swr";
+import { isEmpty } from "@/utility";
 
 export default function ChangeImage({ image }) {
   const { trigger, isMutating } = useSWRMutation(endpoint.uploadPicture, fileUploadFetcher)
@@ -19,7 +20,10 @@ export default function ChangeImage({ image }) {
     <div className="w-full rounded-2xl py-8 px-10 bg-grey-700 flex items-center gap-3">
       <input type="file" accept="image/*" hidden name="file" />
       <div className="relative overflow-hidden size-18 rounded-full bg-black/15">
-        <Image alt="" width={72} height={72} src={image} className="rounded-full size-full object-cover" />
+        {
+          !isEmpty(image) &&
+          <Image alt="" width={72} height={72} src={image} className="rounded-full size-full object-cover" />
+        }
         {
           isMutating &&
           <div className="absolute top-0 left-0 right-0 bg-black/15 size-full flex justify-center items-center">

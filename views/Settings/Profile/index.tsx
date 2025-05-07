@@ -5,6 +5,8 @@ import StatsCard from "./StatsCard";
 import BoltIcon from "@/public/icon/bolt.svg"
 import ChangeImage from "./ChangeImage";
 import { useStore } from "@/hooks/use-store";
+import UpdateTextinput from "./UpdateTextinput";
+import { isEmpty } from "@/utility";
 
 export function Profile() {
   const { user } = useStore()
@@ -32,11 +34,8 @@ export function Profile() {
 
       <div className="py-8 flex flex-col gap-6">
         <span className="text-[#000933A6]">Personal info</span>
-        <Textinput
-          label="Full name"
-          labelClassName="!text-grey-200 !font-normal"
-          value={user?.first_name}
-        />
+        <UpdateTextinput label="First name" name="first_name" />
+        <UpdateTextinput label="Last name" name="last_name" />
         <Textinput
           label="Email"
           value={user?.email}
@@ -48,10 +47,10 @@ export function Profile() {
           labelClassName="!text-grey-200 !font-normal"
           end={<span className="text-primary font-semibold font-inter text-sm cursor-pointer">Change</span>}
         />
-        <Textinput
+        <UpdateTextinput
           label="Phone number"
-          labelClassName="!text-grey-200 !font-normal"
-          end={<span className="text-primary font-semibold font-inter text-sm cursor-pointer">Add Phone Number</span>}
+          name="phone_number"
+          btnText={isEmpty(user?.phone_number) ? "Add Phone number" : "Chnage Phone number"}
         />
       </div>
     </div>

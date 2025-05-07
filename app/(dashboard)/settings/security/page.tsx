@@ -1,6 +1,11 @@
+import { Security } from "@/views/Settings";
 
-export default function Security() {
+export default function SecurityPage() {
   return (
-    <div>this is the Security screen</div>
+    <div className="px-9 py-8">
+      <div className="max-w-140">
+        <Security />
+      </div>
+    </div>
   )
 }
