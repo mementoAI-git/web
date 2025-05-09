@@ -50,7 +50,7 @@ export function Profile() {
         <UpdateTextinput
           label="Phone number"
           name="phone_number"
-          btnText={isEmpty(user?.phone_number) ? "Add Phone number" : "Chnage Phone number"}
+          btnText={isEmpty(user?.phone_number) ? "Add Phone number" : "Change Phone number"}
         />
       </div>
     </div>

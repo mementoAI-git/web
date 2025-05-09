@@ -57,6 +57,7 @@ export function AddBeneficiary() {
             inputClassName="!h-[50px]"
             value={values.email}
             error={errors.email}
+            placeholder="example@gmail.com"
             onChange={handleChange}
             labelClassName="!text-[rgba(0,9,51,0.65)] !text-xs !font-normal"
           />
@@ -65,6 +66,7 @@ export function AddBeneficiary() {
             name="name"
             value={values.name}
             error={errors.name}
+            placeholder="John Doe"
             onChange={handleChange}
             inputClassName="!h-[50px]"
             labelClassName="!text-[rgba(0,9,51,0.65)] !text-xs !font-normal"
@@ -74,6 +76,7 @@ export function AddBeneficiary() {
             value={values.relationship}
             error={errors.relationship}
             onChange={handleChange}
+            placeholder="Brother"
             label="Relationship(This person to you)"
             inputClassName="!h-[50px]"
             labelClassName="!text-[rgba(0,9,51,0.65)] !text-xs !font-normal"

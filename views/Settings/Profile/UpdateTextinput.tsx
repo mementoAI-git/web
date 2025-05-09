@@ -4,6 +4,7 @@ import Spinner from "@/components/Spinner";
 import useFetcher from "@/hooks/use-fetcher";
 import { useStore } from "@/hooks/use-store";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 interface IUpdateTextinput extends ITexinput {
   btnText?: string
@@ -14,9 +15,12 @@ export default function UpdateTextinput({ btnText = "Update", name, ...props }: 
   const { isMutating, trigger } = useFetcher(endpoint.profile, "put")
   const [value, setValue] = useState("")
 
-  const handleUpdate = () => {
+  const handleUpdate = async () => {
     if (value === user[name]) return;
-    trigger({ [name]: value })
+    const result = await trigger({ [name]: value })
+    if (result?.data) {
+      toast.success(result?.message)
+    }
   }
 
   useEffect(() => {
