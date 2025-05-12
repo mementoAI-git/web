@@ -2,23 +2,10 @@
 
 import Table from "@/components/Table";
 import Row from "./Row"
-import classNames from "classnames";
 import Header from "./Header";
 import useSWR from "swr";
 import endpoint from "@/api/endpoint";
 
-const mockdata = {
-  docs: [1, 2, 3],
-  hasPrevPage: false,
-  hasNextPage: true,
-  totalPages: 5,
-  limit: 2,
-  totalDocs: 100,
-  nextPage: 5,
-  prevPage: 3,
-  pagingCounter: 4,
-  page: 2
-}
 const columns = [
   { label: "recipient" },
   { label: "date added" },

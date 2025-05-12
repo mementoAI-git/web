@@ -12,6 +12,7 @@ export default {
   profile: "/users/profile",
   updateStreak: "/users/update-streak",
   uploadPicture: "/users/upload-picture",
+  changePassword: "/users/change-password",
 
   // beneficiaries
   beneficiaries: "/beneficiaries",

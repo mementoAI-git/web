@@ -98,6 +98,7 @@ const handleRequest = async (method: string, url: string, body?: any) => {
       headers: { "Content-Type": "application/json" },
     });
 
+    res.data.success = true
     return res.data;
   } catch (error) {
     let message = "Something went wrong";
@@ -110,12 +111,13 @@ const handleRequest = async (method: string, url: string, body?: any) => {
         toast.error(message);
       }
 
-      throw axiosError.response?.data || null;
+      axiosError.response.data.success = false
+      throw axiosError.response?.data || { success: false };
     }
 
     if (method !== "get") {
       toast.error(message);
     }
-    throw { message };
+    throw { message, success: false };
   }
 };

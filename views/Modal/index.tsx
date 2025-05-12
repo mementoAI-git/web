@@ -10,6 +10,7 @@ import PromptInput from "./PromptInput";
 import DeleteMemory from "./DeleteMemory";
 import { AddBeneficiary, DeleteBeneficiary } from "./Beneficiary";
 import { UpdateBeneficiary } from "./Beneficiary/Update";
+import Setup2FA from "./Setup2FA";
 
 
 const MODAL_COMPONENTS = {
@@ -23,7 +24,8 @@ const MODAL_COMPONENTS = {
   "delete-memory": DeleteMemory,
   "add-beneficiary": AddBeneficiary,
   "delete-beneficiary": DeleteBeneficiary,
-  "update-beneficiary": UpdateBeneficiary
+  "update-beneficiary": UpdateBeneficiary,
+  'setup2fa': Setup2FA
 }
 
 export default function Modal() {
