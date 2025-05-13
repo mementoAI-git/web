@@ -13,6 +13,9 @@ export default {
   updateStreak: "/users/update-streak",
   uploadPicture: "/users/upload-picture",
   changePassword: "/users/change-password",
+  setup2FA: "/users/2fa/setup",
+  verifyTOTP: "/users/2fa/verify",
+  disable2FA: "/users/2fa/disable",
 
   // beneficiaries
   beneficiaries: "/beneficiaries",

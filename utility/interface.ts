@@ -27,6 +27,10 @@ export interface IUser {
   streak: number;
   picture_url?: string
   newsletter_subscriber: boolean;
+  two_factor: {
+    secret: string
+    enabled: boolean
+  }
 }
 
 export interface IMemory {

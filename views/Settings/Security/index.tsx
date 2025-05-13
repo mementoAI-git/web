@@ -4,10 +4,10 @@ import { Button } from "@/components/Buttons";
 import { Passwordinput } from "@/components/Form";
 import useForm from "@/hooks/use-form";
 import * as yup from "yup";
-import { useModal } from "@/hooks/use-modal";
 import useFetcher from "@/hooks/use-fetcher";
 import endpoint from "@/api/endpoint";
 import { toast } from "sonner";
+import TwoFactorAuthenticator from "./2FA";
 
 const initial = {
   new_password: "",
@@ -35,7 +35,6 @@ const schema = yup.object().shape({
 });
 
 export function Security() {
-  const { open } = useModal()
   const { trigger, isMutating } = useFetcher(endpoint.changePassword);
   const { values, handleChange, handleSubmit, errors } = useForm({
     initial,
@@ -47,6 +46,7 @@ export function Security() {
       ]
     }
   })
+
   return (
     <div>
       <div className="space-y-3">
@@ -87,18 +87,7 @@ export function Security() {
           />
         </form>
 
-        <div className="text-[#000933A6] font-inter space-y-2">
-          <div className="flex items-center gap-3">
-            <span className="font-bold">2FA Verification</span>
-            <span className="bg-[#FF4A4A0D] border rounded-full border-[#C73A3A24] text-sm text-[#C73A3A] inline-block py-0.5 px-2.5">Not activated</span>
-          </div>
-          <span className="inline-block">
-            An extra layer to boost your Memento account Security. A verification code will be required in addition to your password each time you sign in.
-          </span>
-          <button onClick={() => open("setup2fa")} className="border-primary shadow-md cursor-pointer border rounded-lg px-3 py-1 text-sm text-primary font-bold max-w-32.5">
-            Setup 2FA
-          </button>
-        </div>
+        <TwoFactorAuthenticator />
       </div>
     </div>
   )
