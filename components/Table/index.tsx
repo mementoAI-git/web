@@ -10,12 +10,21 @@ interface ITable<T> {
   data: IPagination<T>
   loading?: boolean
   columns: IColumn[]
-  onPrevPage?: () => void;
-  onNextPage?: () => void;
+  onChangePage?: (page: number) => void;
+  loadingRow?: React.ReactNode;
   renderRow?: (item: T, i: number) => React.ReactNode
 }
 
-export default function Table<T>({ data, columns, renderRow, onPrevPage, onNextPage, loading = false }: ITable<T>) {
+export default function Table<T>({ data, columns, renderRow, onChangePage, loadingRow = null, loading = false }: ITable<T>) {
+  const handleOnNextPage = () => {
+    if (!data.hasNextPage) return;
+    onChangePage(data.nextPage)
+  }
+
+  const handleOnPrevPage = () => {
+    if (!data.hasPrevPage) return;
+    onChangePage(data.prevPage)
+  }
   return (
     <div className="mem-table h-fit w-full rounded-xl border border-[rgba(233,234,235,1)] bg-white shadow-sm shadow-[rgba(10,13,18,0.05)]">
       <table className="h-full w-full text-left">
@@ -27,16 +36,16 @@ export default function Table<T>({ data, columns, renderRow, onPrevPage, onNextP
         <tbody className="border-y border-inherit text-sm text-[#535862]">
           {
             loading || isEmpty(data) ?
-              <TableRowSekeleton col={columns.length} /> :
+              (loadingRow || <TableRowSekeleton col={columns.length} />) :
               data?.docs?.map((row, i) => renderRow(row, i))
           }
         </tbody>
       </table>
       <div className="flex w-full items-center justify-between border-[rgba(213,215,218,1)] px-6 py-3 font-inter text-sm text-[rgba(65,70,81,1)]">
         <button
-          disabled={data?.hasPrevPage}
-          onClick={onPrevPage}
-          className="flex max-h-9 cursor-pointer items-center justify-center rounded-lg border border-inherit bg-white px-3 py-2 font-semibold shadow-sm"
+          disabled={!data?.hasPrevPage}
+          onClick={handleOnPrevPage}
+          className="flex max-h-9 cursor-pointer disabled:cursor-not-allowed items-center justify-center rounded-lg border border-inherit bg-white px-3 py-2 font-semibold shadow-sm disabled:opacity-65"
         >
           Previous
         </button>
@@ -44,9 +53,9 @@ export default function Table<T>({ data, columns, renderRow, onPrevPage, onNextP
           Page {data?.page || 0} of {data?.totalPages || 1}
         </span>
         <button
-          disabled={data?.hasNextPage}
-          onClick={onNextPage}
-          className="flex max-h-9 cursor-pointer items-center justify-center rounded-lg border border-inherit bg-white px-3 py-2 font-semibold shadow-sm"
+          disabled={!data?.hasNextPage}
+          onClick={handleOnNextPage}
+          className="flex max-h-9 cursor-pointer disabled:cursor-not-allowed items-center justify-center rounded-lg border border-inherit bg-white px-3 py-2 font-semibold shadow-sm disabled:opacity-65"
         >
           Next
         </button>

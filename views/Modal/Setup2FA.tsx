@@ -13,8 +13,8 @@ const initial = { token: "" }
 const schema = yup.object().shape({
   token: yup
     .string()
-    .required("Email is required")
-    .length(6, "Invalid email address")
+    .required("Token is required")
+    .length(6, "Invalid token")
     .trim()
 });
 export default function Setup2FA({ data }) {

@@ -5,6 +5,7 @@ import Row from "./Row"
 import Header from "./Header";
 import useSWR from "swr";
 import endpoint from "@/api/endpoint";
+import { useState } from "react";
 
 const columns = [
   { label: "recipient" },
@@ -15,7 +16,8 @@ const columns = [
 ]
 
 export function Beneficiaries() {
-  const { data, isLoading } = useSWR(endpoint.beneficiaries)
+  const [page, setPage] = useState(1)
+  const { data, isLoading } = useSWR(`${endpoint.beneficiaries}?page=${page}`)
   return (
     <div>
       <div className="space-y-3 py-8">
@@ -29,6 +31,7 @@ export function Beneficiaries() {
           columns={columns}
           loading={isLoading}
           renderRow={(r, i) => <Row beneficiary={r} key={i} />}
+          onChangePage={setPage}
         />
       </div>
     </div>

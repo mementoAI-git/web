@@ -6,11 +6,20 @@ import MemoriesGrid from "./Grid";
 import useSWR from "swr";
 import endpoint from "@/api/endpoint";
 import { useState } from "react";
-import MemoriesTable from "./Table";
+import Table from "@/components/Table";
+import MemoriesTableRow from "./Row";
+import { TableRowSekeleton } from "./Skeleton";
+
+const columns = [
+  { label: "topic" },
+  { label: "Date created" },
+  { label: "Tags", className: "min-w-32" },
+  { label: "" }
+]
 
 export default function Memories() {
   const [mode, setMode] = useState("list");
-  const { data } = useSWR(endpoint.memories);
+  const { data, isLoading } = useSWR(endpoint.memories);
 
   return (
     <div className="w-full overflow-y-auto">
@@ -40,11 +49,17 @@ export default function Memories() {
           onChangeMode={setMode}
           count={data?.data?.totalDocs}
         />
-        {mode === "grid" ? (
-          <MemoriesGrid data={data?.data} />
-        ) : (
-          <MemoriesTable data={data?.data} />
-        )}
+        {
+          mode === "grid" ?
+            <MemoriesGrid data={data?.data} /> :
+            <Table
+              data={data?.data}
+              columns={columns}
+              loading={isLoading}
+              loadingRow={<TableRowSekeleton />}
+              renderRow={(r, i) => <MemoriesTableRow key={i} memory={r} />}
+            />
+        }
       </div>
     </div>
   );
