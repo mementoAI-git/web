@@ -8,11 +8,10 @@ import useSWR from "swr";
 import PromptLayout from "./Layout";
 
 export default function TextArea({ data }) {
-  const { open, push, close } = useModal()
+  const { open, push } = useModal()
   const [text, setText] = useState(data?.body);
-  console.log(data?.prompt)
-  const { data: result, isLoading } = useSWR(`${endpoint.replyPrompt}/${data?.prompt}`)
-  const { trigger, isMutating: saving } = useFetcher(endpoint.replyPrompt)
+  const { data: result, isLoading } = useSWR(data?.prompt ? `${endpoint.replyPrompt}/${data?.prompt}` : null)
+  const { trigger, isMutating: saving } = useFetcher(data?.prompt ? endpoint.replyPrompt : endpoint.memories)
 
   const memory = result?.data || data
 

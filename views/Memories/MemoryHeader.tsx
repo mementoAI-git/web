@@ -2,9 +2,13 @@
 
 import { DropdownButton } from "@/components/Dropdown";
 import { Searchinput } from "@/components/Form";
+
 import GridIcon from "@/public/icon/dashboard/grid.svg";
 import ListIcon from "@/public/icon/dashboard/list.svg";
+import PlusIcon from "@/public/icon/plus.svg"
+
 import { MemoryListFilter } from "./MemoriesDropdown";
+import { useModal } from "@/hooks/use-modal";
 
 interface IMemoriesHeader {
   mode?: string;
@@ -13,6 +17,7 @@ interface IMemoriesHeader {
 }
 
 export default function MemoriesHeader({ count = 0, mode = "list", onChangeMode }: IMemoriesHeader) {
+  const { open } = useModal()
   return (
     <div className="flex flex-1 flex-col gap-3">
       <div className="flex items-center justify-between">
@@ -47,14 +52,18 @@ export default function MemoriesHeader({ count = 0, mode = "list", onChangeMode 
             title="Tags"
             onSelect={console.log}
           />
-          <DropdownButton
+          {/* <DropdownButton
             items={[{ label: "All", value: "all" }]}
             title="Type"
             onSelect={console.log}
-          />
+          /> */}
         </div>
-        <div className="max-w-80 flex-1">
+        <div className="flex items-stretch max-h-10 gap-3">
           <Searchinput />
+          <button onClick={() => open("prompt", { memory: null, type: "text" })} className="flex items-center justify-center gap-1 bg-secondary rounded-lg w-46 text-white cursor-pointer">
+            <PlusIcon width={15} />
+            <span>Add Memory</span>
+          </button>
         </div>
       </div>
     </div>

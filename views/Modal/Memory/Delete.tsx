@@ -5,7 +5,7 @@ import useFetcher from "@/hooks/use-fetcher";
 import { useModal } from "@/hooks/use-modal";
 import BinIcon from "@/public/icon/bin.svg"
 
-export default function DeleteMemory({ data: id }) {
+export function DeleteMemory({ data: id }) {
   const { trigger, isMutating } = useFetcher(endpoint.memories, "delete")
   const { close } = useModal()
 

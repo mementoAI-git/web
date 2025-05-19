@@ -2,12 +2,11 @@ import { useModal } from "@/hooks/use-modal";
 import { SharePost } from "./SharePost";
 import Welcome from "./Welcome";
 import FilePreview from "./FilePreview";
-import EditMemory from "./EditMemory";
 import { isEmpty } from "@/utility";
 import UploadFiles from "./UploadFile";
 import SetTagPermissions from "./SetTagPermissions";
 import PromptInput from "./PromptInput";
-import DeleteMemory from "./DeleteMemory";
+import { DeleteMemory, UpdateMemory } from "./Memory";
 import { AddBeneficiary, DeleteBeneficiary } from "./Beneficiary";
 import { UpdateBeneficiary } from "./Beneficiary/Update";
 import Setup2FA from "./Setup2FA";
@@ -18,7 +17,7 @@ const MODAL_COMPONENTS = {
   "welcome": Welcome,
   "file-preview": FilePreview,
   'file-upload': UploadFiles,
-  "edit-memory": EditMemory,
+  "edit-memory": UpdateMemory,
   "set-tag-permission": SetTagPermissions,
   "prompt": PromptInput,
   "delete-memory": DeleteMemory,

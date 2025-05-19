@@ -10,6 +10,8 @@ import { fileUploadFetcher } from "@/api/fetcher";
 import endpoint from "@/api/endpoint";
 import useSWRMutation from "swr/mutation";
 import { useModal } from "@/hooks/use-modal";
+import AudioPlayer from "@/components/AudioPlayer";
+import { isEmpty } from "@/utility";
 
 const fileType = "audio/webm";
 
@@ -31,7 +33,10 @@ export default function AudioRec({ data }) {
   };
 
   const handleDiscard = () => {
-    console.log("Handling discard audio");
+    if (recorder.recording) {
+      recorder.stop()
+    }
+    recorder.reset()
   };
 
   const startRec = () => {
@@ -50,11 +55,13 @@ export default function AudioRec({ data }) {
         });
       });
   };
+  console.log(recorder.chucks)
   return (
     <PromptLayout
       editMode={editMode}
       onDiscard={handleDiscard}
       onSave={handleSave}
+      loading={recorder.recording || !isEmpty(recorder.chucks)}
       saving={isMutating}
       type="audio"
       memory={data}
@@ -68,26 +75,24 @@ export default function AudioRec({ data }) {
             </span>
           </div>
         </div>
-        <div className="flex min-h-100 w-full items-center justify-center rounded-b-2xl border border-t-0 border-grey-400">
-          <div>
-            {recorder.url ? (
+        {
+          recorder.url ?
+            <AudioPlayer src={recorder.url} className="min-h-100 rounded-b-2xl rounded-t-none" /> :
+            <div className="flex min-h-100 w-full items-center justify-center rounded-b-2xl border border-t-0 border-grey-400">
               <div>
-                <audio src={recorder.url} controls playsInline />
-              </div>
-            ) : (
-              <div className="flex flex-col gap-3 self-center">
-                <div className="flex items-center gap-2">
-                  <RecIndicator
-                    counter={recorder.timer}
-                    recoding={recorder.recording}
-                  />
-                  <AudioVisualizer recorder={recorder.recorder} />
+                <div className="flex flex-col gap-3 self-center">
+                  <div className="flex items-center gap-2">
+                    <RecIndicator
+                      counter={recorder.timer}
+                      recoding={recorder.recording}
+                    />
+                    <AudioVisualizer stream={stream} recorder={recorder.recorder} />
+                  </div>
+                  <AudioRecButtons {...{ ...recorder, start: startRec }} />
                 </div>
-                <AudioRecButtons {...{ ...recorder, start: startRec }} />
               </div>
-            )}
-          </div>
-        </div>
+            </div>
+        }
       </div>
     </PromptLayout>
   );

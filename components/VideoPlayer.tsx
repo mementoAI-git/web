@@ -2,14 +2,24 @@ import usePlayer from "@/hooks/use-player"
 import { getDuration } from "@/utility"
 import PlaySolidIcon from "@/public/icon/play-solid.svg";
 import PauseIcon from "@/public/icon/pause-rec.svg";
-import { Ref } from "react";
+import { Ref, useRef } from "react";
 import Spinner from "./Spinner";
 
 export default function VideoPlayer({ src }: { src: string }) {
-  const { ref, media, togglePlay, canPlay, playing, progress } = usePlayer()
-
+  const { ref, media, togglePlay, seek, canPlay, playing, progress } = usePlayer()
+  const progressBar = useRef(null)
   const current = getDuration(media?.currentTime || 0)
   const end = getDuration(media?.duration || 0)
+
+  const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!progressBar.current) return;
+
+    const rect = progressBar.current.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const width = rect.width;
+    const clickRatio = clickX / width;
+    seek(media?.duration * clickRatio);
+  };
   return (
     <div className="size-full relative">
       <video ref={ref as Ref<HTMLVideoElement>} className="size-full object-cover" src={src} playsInline />
@@ -25,7 +35,7 @@ export default function VideoPlayer({ src }: { src: string }) {
                       <PlaySolidIcon width={13} />
                   }
                 </div>
-                <div className="flex-1 h-[9px] bg-white/20 rounded-full overflow-hidden">
+                <div ref={progressBar} onClick={handleSeek} className="flex-1 h-[9px] bg-white/20 rounded-full overflow-hidden">
                   <div style={{ width: `${progress}%` }} className="h-full rounded-full bg-white" />
                 </div>
               </div>

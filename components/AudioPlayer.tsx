@@ -1,5 +1,5 @@
 import { getDuration } from "@/utility"
-import { Ref } from "react";
+import { Ref, useRef } from "react";
 import VolumeIcon from "@/public/icon/volume.svg";
 import PauseIcon from "@/public/icon/pause-rec.svg";
 import PlayIcon from "@/public/icon/play.svg";
@@ -12,15 +12,27 @@ import wave from "@/public/image/wave.png"
 export interface IMediaPlayer {
   src: string
   alt?: string
+  className?: string
 }
 
-export default function AudioPlayer({ src, alt }: IMediaPlayer) {
-  const { ref, media, togglePlay, backward, forward, canPlay, playing, progress } = usePlayer()
+export default function AudioPlayer({ src, className = "", alt }: IMediaPlayer) {
+  const { ref, media, togglePlay, backward, forward, seek, canPlay, playing, progress } = usePlayer()
+  const progressBar = useRef(null)
   const current = getDuration(media?.currentTime)
   const end = getDuration(media?.duration || 0)
 
+  const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!progressBar.current) return;
+
+    const rect = progressBar.current.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const width = rect.width;
+    const clickRatio = clickX / width;
+    seek(media?.duration * clickRatio);
+  };
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-between rounded-2xl border border-[#F3F3F3] bg-[#FCFCFD]">
+    <div className={`flex flex-col flex-1 items-center justify-between rounded-2xl border border-[#F3F3F3] bg-[#FCFCFD] ${className}`}>
       <div />
       <div className="w-62.5 space-y-6">
         <span className="block font-inter font-semibold text-secondary">
@@ -28,7 +40,7 @@ export default function AudioPlayer({ src, alt }: IMediaPlayer) {
         </span>
         <audio ref={ref as Ref<HTMLAudioElement>} src={src} preload="auto" />
         <div className="space-y-2">
-          <div className="h-1 w-full rounded-[1px] bg-[#DCC7FF]">
+          <div ref={progressBar} onClick={handleSeek} className="h-1 w-full rounded-[1px] bg-[#DCC7FF] cursor-pointer">
             <div style={{ width: `${progress}%` }} className="relative h-full bg-primary">
               <div className="absolute top-1/2 -right-1 size-2 -translate-y-1/2 rounded-full bg-primary" />
             </div>

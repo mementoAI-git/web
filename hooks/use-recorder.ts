@@ -1,3 +1,4 @@
+import { isEmpty } from "@/utility";
 import { useEffect, useRef, useState } from "react";
 
 export default function useRecorder(stream: MediaStream | null, type = "video/webm") {
@@ -15,8 +16,10 @@ export default function useRecorder(stream: MediaStream | null, type = "video/we
   };
 
   const save = () => {
+    if (isEmpty(chunks.current)) return;
     const blob = new Blob(chunks.current, { type });
     setUrl(URL.createObjectURL(blob));
+    chunks.current = []
   };
 
   const stop = () => {
@@ -39,7 +42,6 @@ export default function useRecorder(stream: MediaStream | null, type = "video/we
     stop()
     setUrl(null)
     setRecording(false)
-    chunks.current = []
     setTimer(0)
     clearInterval(timeId.current);
   }

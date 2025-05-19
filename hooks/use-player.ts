@@ -40,6 +40,13 @@ export default function usePlayer() {
     media.currentTime = Math.max(newTime, 0);
   };
 
+  const seek = (seconds: number) => {
+    const media = ref.current;
+    if (!media) return;
+
+    media.currentTime = Math.max(Math.min(seconds, media.duration), 0)
+  }
+
   useEffect(() => {
     const media = ref.current
     if (media) {
@@ -81,6 +88,7 @@ export default function usePlayer() {
     progress,
     backward,
     forward,
+    seek,
     canPlay
   }
 }
