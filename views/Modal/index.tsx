@@ -10,6 +10,7 @@ import { DeleteMemory, UpdateMemory } from "./Memory";
 import { AddBeneficiary, DeleteBeneficiary } from "./Beneficiary";
 import { UpdateBeneficiary } from "./Beneficiary/Update";
 import Setup2FA from "./Setup2FA";
+import ChatSettings from "./ChatSetting";
 
 
 const MODAL_COMPONENTS = {
@@ -24,7 +25,8 @@ const MODAL_COMPONENTS = {
   "add-beneficiary": AddBeneficiary,
   "delete-beneficiary": DeleteBeneficiary,
   "update-beneficiary": UpdateBeneficiary,
-  'setup2fa': Setup2FA
+  'setup2fa': Setup2FA,
+  'chat-settings': ChatSettings
 }
 
 export default function Modal() {

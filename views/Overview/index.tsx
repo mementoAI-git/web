@@ -13,9 +13,14 @@ export default function Overview() {
 
   return (
     <div className="w-full">
-      <div className="flex items-stretch gap-3 py-8">
-        <StartConversation />
-        <Streak />
+      <div className="py-8 space-y-3">
+        <div className="text-4xl text-secondary font-bricolage font-medium leading-11 capitalize">
+          Overview
+        </div>
+        <div className="flex items-stretch gap-3">
+          <StartConversation />
+          <Streak />
+        </div>
       </div>
 
       <div className="py-8">
