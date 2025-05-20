@@ -17,7 +17,7 @@ export default function MemoryPage({ params }) {
     if (error && isEmpty(data) && !isLoading) {
       router.push("/memories")
     }
-  }, [error, isLoading])
+  }, [error, data, router, isLoading])
   return (
     <div className="flex">
       <div className="flex-1 py-6 px-6">

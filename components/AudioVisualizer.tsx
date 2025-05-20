@@ -86,8 +86,8 @@ export default function AudioVisualizer({ stream = null, color = "#3C3F3E" }: IA
           levels.map((l, i) => (
             <div
               key={i}
-              style={{ height: `${l}%`, transition: "height 0.1s ease-in-out", }}
-              className="rounded-full w-0.5 min-h-1 max-h-3 min bg-[#3C3F3E]"
+              style={{ height: `${l}%`, transition: "height 0.1s ease-in-out", background: color }}
+              className="rounded-full w-0.5 min-h-1 max-h-3 min"
             />
           ))
         }
