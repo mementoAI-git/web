@@ -1,4 +1,4 @@
-import QIcon from "@/public/icon/Q.svg"
+import QIcon from "@/public/icon/q.svg"
 
 export default function RecentActivities() {
   return (
