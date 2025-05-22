@@ -6,9 +6,9 @@ import AddFileButton from "../AddFileButton";
 
 interface IFooterBtnGroup {
   disabled?: boolean
-  onDiscard: Function;
-  onSave: Function;
-  onAddFileBtnClick: Function;
+  onDiscard: () => void;
+  onSave: () => void;
+  onAddFileBtnClick: () => void;
   onTypeChange: (t: string) => void;
   type?: string
   saving?: boolean;

@@ -24,7 +24,7 @@ export function AudioRecorder({ onStart, onFinish }: IRecorder) {
           onStart(stream)
         }
       })
-      .catch((error) => {
+      .catch(() => {
         toast.error("Mic access denied or not available.", {
           className: "!text-danger",
         });

@@ -40,12 +40,12 @@ export function VideoRecorder({ onStart, onFinish }: IRecorder) {
           onStart(stream)
         }
       })
-      .catch((error) => {
+      .catch(() => {
         toast.error("Camera access denied or not available.", {
           className: "!text-danger",
         });
       });
-  }, []);
+  }, [onStart]);
 
   const stop = () => {
     recorder.stop()

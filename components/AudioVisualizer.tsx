@@ -77,7 +77,7 @@ export default function AudioVisualizer({ stream = null, color = "#3C3F3E" }: IA
         audioContextRef.current.close();
       }
     }
-  }, [stream])
+  }, [stream, setupAudio])
 
   return (
     <div className="flex aspect-square w-8 items-center justify-center rounded-full bg-grey-400">
