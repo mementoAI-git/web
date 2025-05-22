@@ -3,7 +3,7 @@ import { getDuration } from "@/utility"
 import PlaySolidIcon from "@/public/icon/play-solid.svg";
 import PauseIcon from "@/public/icon/pause-rec.svg";
 import { Ref, useRef } from "react";
-import Spinner from "./Spinner";
+import Spinner from "../Spinner";
 
 export default function VideoPlayer({ src }: { src: string }) {
   const { ref, media, togglePlay, seek, canPlay, playing, progress } = usePlayer()

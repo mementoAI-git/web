@@ -60,7 +60,7 @@ export default function MemoriesHeader({ count = 0, mode = "list", onChangeMode 
         </div>
         <div className="flex items-stretch max-h-10 gap-3">
           <Searchinput />
-          <button onClick={() => open("prompt", { memory: null, type: "text" })} className="flex items-center justify-center gap-1 bg-secondary rounded-lg w-46 text-white cursor-pointer">
+          <button onClick={() => open("create-memory")} className="flex items-center justify-center gap-1 bg-secondary rounded-lg w-46 text-white cursor-pointer">
             <PlusIcon width={15} />
             <span>Add Memory</span>
           </button>

@@ -10,6 +10,7 @@ import PromptLayout from "./Layout";
 export default function TextArea({ data }) {
   const { open, push } = useModal()
   const [text, setText] = useState(data?.body);
+  const [title, setTitle] = useState("");
   const { data: result, isLoading } = useSWR(data?.prompt ? `${endpoint.replyPrompt}/${data?.prompt}` : null)
   const { trigger, isMutating: saving } = useFetcher(data?.prompt ? endpoint.replyPrompt : endpoint.memories)
 
@@ -17,18 +18,13 @@ export default function TextArea({ data }) {
 
   const handleSave = async () => {
     if (text === data?.body) return;
-    await trigger(
-      { text, prompt_id: data?.prompt },
-      {
-        revalidate: false,
-        populateCache(result, currentData) {
-          if (result?.data) {
-            return { ...currentData, data: result.data };
-          }
-          return currentData;
-        },
-      },
-    );
+    const payload: any = { body: text }
+    if (isEmpty(data?.prompt)) {
+      payload.title = title
+    } else {
+      payload.prompt_id = data?.prompt_id
+    }
+    await trigger(payload);
     push("set-tag-permission", memory);
   };
 
@@ -51,6 +47,17 @@ export default function TextArea({ data }) {
       type="text"
       memory={memory ? { ...data, ...memory } : data}
     >
+      {
+        isEmpty(data?.title) &&
+        <div className="border-t border-[#0011661A] py-2 pr-10">
+          <input
+            placeholder="Enter title here"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            className="font-inter resize-none text-2xl w-full h-9 min-h-9 first-letter:capitalize outline-0 font-semibold"
+          />
+        </div>
+      }
       <div className="flex min-h-[425px] flex-col gap-6 rounded-2xl bg-grey-700 p-3 font-inter text-xs">
         {!isEmpty(memory?.attachments) && (
           <div onClick={() => open("file-preview", memory?.attachments)} className="relative size-fit">

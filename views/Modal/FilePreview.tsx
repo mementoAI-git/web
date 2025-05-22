@@ -1,8 +1,8 @@
 import { IFile } from "@/utility/interface";
 import { useModal } from "@/hooks/use-modal";
 import { useEffect, useState } from "react";
-import VideoPlayer from "@/components/VideoPlayer";
-import AudioPlayer from "@/components/AudioPlayer";
+import VideoPlayer from "@/components/Player/VideoPlayer";
+import AudioPlayer from "@/components/Player/AudioPlayer";
 
 interface IFilePlayer {
   src: string

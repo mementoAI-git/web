@@ -10,7 +10,7 @@ import { fileUploadFetcher } from "@/api/fetcher";
 import endpoint from "@/api/endpoint";
 import useSWRMutation from "swr/mutation";
 import { useModal } from "@/hooks/use-modal";
-import AudioPlayer from "@/components/AudioPlayer";
+import AudioPlayer from "@/components/Player/AudioPlayer";
 import { isEmpty } from "@/utility";
 
 const fileType = "audio/webm";
@@ -55,7 +55,7 @@ export default function AudioRec({ data }) {
         });
       });
   };
-  console.log(recorder.chucks)
+
   return (
     <PromptLayout
       editMode={editMode}

@@ -3,6 +3,7 @@ import { useModal } from "@/hooks/use-modal";
 import { PropsWithChildren, useMemo } from "react";
 import PromptInputFooter from "./Footer";
 import { IMemory } from "@/utility/interface";
+import { isEmpty } from "@/utility";
 
 interface IPromptInputLayout extends PropsWithChildren {
   type: string
@@ -21,7 +22,10 @@ export default function PromptLayout({ children, ...props }: IPromptInputLayout)
     <div className="modal-container">
       <ModalCloseBtn onClick={() => close("prompt")} />
       <div className="space-y-6">
-        <h4 className="modal-title">{props.memory?.title}</h4>
+        {
+          !isEmpty(props?.memory?.title) &&
+          <h4 className="modal-title">{props?.memory?.title}</h4>
+        }
         {children}
       </div>
       <PromptInputFooter {...props} />

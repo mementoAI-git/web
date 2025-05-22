@@ -28,9 +28,9 @@ const renderIcons = {
 
 export default function PromptInputFooter({ type = "text", memory, editMode, loading = false, saving = false, onDiscard, onSave }: IPromptInputFooter) {
   const { open } = useModal()
+
   const handleFileUploadBtn = () => {
-    if (isEmpty(memory?._id)) return;
-    open("file-upload", memory?._id)
+    open("file-upload", memory?._id || null)
   }
 
   return (

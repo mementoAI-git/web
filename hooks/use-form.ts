@@ -5,7 +5,7 @@ import { AnyObject, ObjectSchema, ValidationError } from "yup";
 
 interface IUseForm<T extends Record<string, any>> {
   initial: T;
-  schema: ObjectSchema<AnyObject, AnyObject, AnyObject, "">;
+  schema?: ObjectSchema<AnyObject, AnyObject, AnyObject, "">;
   onSubmit: (p: T) => void;
 }
 
@@ -54,14 +54,14 @@ export default function useForm<T extends Record<string, any>>({
     setValues((p: any) => ({ ...p, [name]: value }));
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<any>) => {
     const { name, type, checked, value } = e.target;
     const val = type === "checkbox" ? checked : value;
     handleValue(name, val);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
 
     try {
       let payload = values;

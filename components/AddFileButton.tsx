@@ -15,7 +15,7 @@ const icons = [
   PlanepaperIcon,
 ]
 
-export default function AddFileButton({ onClick }) {
+export default function AddFileButton({ onClick, disabled = false }) {
   const [show, setShow] = useState(false);
   const ref = useClickAway(() => setShow(false));
   return (
@@ -33,12 +33,13 @@ export default function AddFileButton({ onClick }) {
           ))}
         </div>
       )}
-      <div
+      <button
+        disabled={disabled}
         onClick={() => setShow((p) => !p)}
         className="flex aspect-square w-10 cursor-pointer items-center justify-center rounded-full border border-[#EAECF0]"
       >
         <PlusIcon width={12} height={12} />
-      </div>
+      </button>
     </div>
   );
 }

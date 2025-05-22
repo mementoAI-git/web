@@ -6,7 +6,7 @@ import { isEmpty } from "@/utility";
 import UploadFiles from "./UploadFile";
 import SetTagPermissions from "./SetTagPermissions";
 import PromptInput from "./PromptInput";
-import { DeleteMemory, UpdateMemory } from "./Memory";
+import { CreateMemory, DeleteMemory, UpdateMemory } from "./Memory";
 import { AddBeneficiary, DeleteBeneficiary } from "./Beneficiary";
 import { UpdateBeneficiary } from "./Beneficiary/Update";
 import Setup2FA from "./Setup2FA";
@@ -19,6 +19,7 @@ const MODAL_COMPONENTS = {
   "file-preview": FilePreview,
   'file-upload': UploadFiles,
   "edit-memory": UpdateMemory,
+  "create-memory": CreateMemory,
   "set-tag-permission": SetTagPermissions,
   "prompt": PromptInput,
   "delete-memory": DeleteMemory,

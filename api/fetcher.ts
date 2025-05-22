@@ -51,7 +51,9 @@ export const deleteFetcher: MutationFetcher = async (url, body) => {
 export const fileUploadFetcher = async (url: string, { arg }) => {
   const { file, onProgress, ...payload } = arg;
   const formData = new FormData();
-  formData.append("file", file, file.name);
+  if (file) {
+    formData.append("file", file, file.name);
+  }
 
   if (!isEmpty(payload)) {
     Object.entries(payload).forEach(([key, value]) =>
@@ -70,9 +72,11 @@ export const fileUploadFetcher = async (url: string, { arg }) => {
       },
     });
 
+    res.data.success = true
     toast.success(res.data?.message || "Success");
     return res.data;
   } catch (error) {
+    console.log(error)
     let message = "Something went wrong";
 
     if (Axios.isAxiosError(error)) {

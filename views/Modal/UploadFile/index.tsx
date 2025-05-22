@@ -23,7 +23,7 @@ export default function UploadFiles({ data: id }) {
   const [files, setFiles] = useState<IFileState[]>([])
   const { trigger: uploadFile } = useSWRMutation(endpoint.upload, fileUploadFetcher)
   const { trigger: deleteFile } = useFetcher(endpoint.files, "delete")
-  const { trigger: addToPost, isMutating: adding } = useFetcher(`${endpoint.memories}/${id}`, "put")
+  const { trigger: addToPost, isMutating: adding } = useFetcher(id ? `${endpoint.memories}/${id}` : null, "put")
 
   const handleDeleteFile = async (file: IFileState) => {
     if (!file.result.name) return
@@ -34,7 +34,14 @@ export default function UploadFiles({ data: id }) {
   const handleAddToPost = async () => {
     if (adding) return
     const attachments = files.map(f => f.result._id)
-    await addToPost({ attachments })
+    if (id) {
+      await addToPost({ attachments })
+    } else {
+      localStorage.setItem(
+        "memento:attachments",
+        JSON.stringify({ attachments })
+      )
+    }
     setFiles([])
     close("file-upload")
   }

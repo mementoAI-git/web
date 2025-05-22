@@ -13,7 +13,7 @@ import useSWRMutation from "swr/mutation";
 import endpoint from "@/api/endpoint";
 import { fileUploadFetcher } from "@/api/fetcher";
 import { useModal } from "@/hooks/use-modal";
-import VideoPlayer from "@/components/VideoPlayer";
+import VideoPlayer from "@/components/Player/VideoPlayer";
 
 const constraints = {
   audio: {
