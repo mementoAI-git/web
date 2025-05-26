@@ -1,6 +1,6 @@
 import useRecorder from "@/hooks/use-recorder";
 import AletHexagonIcon from "@/public/icon/alert-hexagon.svg";
-import { useState } from "react";
+import { forwardRef, useImperativeHandle, useRef, useState } from "react";
 import AudioPlayer from "../Player/AudioPlayer";
 import RecIndicator from "../RecIndicator";
 import AudioVisualizer from "../AudioVisualizer";
@@ -10,7 +10,7 @@ import { IRecorder } from "./interface";
 
 const fileType = "audio/webm";
 
-export function AudioRecorder({ onStart, onFinish }: IRecorder) {
+export const AudioRecorder = forwardRef(function ({ onStart, onFinish }: IRecorder, ref) {
   const [stream, setStream] = useState<MediaStream | null>(null);
   const recorder = useRecorder(stream, fileType);
 
@@ -20,8 +20,8 @@ export function AudioRecorder({ onStart, onFinish }: IRecorder) {
       .then((stream) => {
         if (stream) {
           setStream(stream);
-          setTimeout(recorder.start, 2000);
-          onStart(stream)
+          onStart(stream);
+          setTimeout(() => recorder.start(), 2000);
         }
       })
       .catch(() => {
@@ -33,13 +33,16 @@ export function AudioRecorder({ onStart, onFinish }: IRecorder) {
 
   const stop = () => {
     recorder.stop()
-    if (recorder.chucks) {
-      const blob = new Blob(recorder.chucks, { type: fileType });
+    if (recorder.chunks) {
+      const blob = new Blob(recorder.chunks, { type: fileType });
       const file = new File([blob], "recorded.webm", { type: fileType });
 
       onFinish(file)
     }
   }
+
+  useImperativeHandle(ref, () => ({ ...recorder, start, stop }));
+
   return (
     <div>
       <div className="flex items-center justify-center rounded-t-2xl bg-grey-400 py-1 text-grey-800">
@@ -70,4 +73,4 @@ export function AudioRecorder({ onStart, onFinish }: IRecorder) {
       }
     </div>
   )
-}
+})

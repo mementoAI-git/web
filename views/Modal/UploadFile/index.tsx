@@ -1,5 +1,7 @@
+"use clients";
+
 import UploadInput from "./UploadInput"
-import { useCallback, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import UploadItem from "./UploadItem"
 import { IFile } from "@/utility/interface"
 import useSWRMutation from "swr/mutation"
@@ -10,6 +12,8 @@ import Spinner from "@/components/Spinner"
 import { useModal } from "@/hooks/use-modal"
 import { ModalCloseBtn } from "@/components/ModalLayout"
 import { toast } from "sonner"
+import { storageKeys } from "@/utility/constant";
+import { isEmpty } from "@/utility";
 
 export interface IFileState {
   file: File
@@ -28,20 +32,29 @@ export default function UploadFiles({ data: id }) {
   const handleDeleteFile = async (file: IFileState) => {
     if (!file.result.name) return
     await deleteFile(file.result.name)
+
     setFiles(files => files.filter((f) => f.id !== file.id))
+    if (isEmpty(id)) {
+      localStorage.setItem(
+        storageKeys.attachments,
+        JSON.stringify({ files })
+      )
+    }
   }
 
   const handleAddToPost = async () => {
     if (adding) return
     const attachments = files.map(f => f.result._id)
-    if (id) {
-      await addToPost({ attachments })
-    } else {
+
+    if (isEmpty(id)) {
       localStorage.setItem(
-        "memento:attachments",
-        JSON.stringify({ attachments })
+        storageKeys.attachments,
+        JSON.stringify({ files })
       )
+    } else {
+      await addToPost({ attachments })
     }
+
     setFiles([])
     close("file-upload")
   }
@@ -59,6 +72,13 @@ export default function UploadFiles({ data: id }) {
       toast.error("Upload unsuccessful")
     } else {
       setFiles(prev => prev.map(f => f.id === file.id ? { ...f, result: result.data[0] } : f))
+    }
+  }, [])
+
+  useEffect(() => {
+    const attachments = localStorage.getItem(storageKeys.attachments)
+    if (attachments) {
+      setFiles(JSON.parse(attachments).files)
     }
   }, [])
 

@@ -1,6 +1,7 @@
 export interface IFile {
   url: string;
   name: string;
+  size: string | number
   type: string;
   _id: string;
 }

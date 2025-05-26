@@ -1,5 +1,5 @@
 import { isEmpty } from "@/utility";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 export default function useRecorder(stream: MediaStream | null, type = "video/webm") {
   const [timer, setTimer] = useState(0); // secs
@@ -46,51 +46,58 @@ export default function useRecorder(stream: MediaStream | null, type = "video/we
     clearInterval(timeId.current);
   }
 
+  const setUpRecorder = useCallback(() => {
+    if (!stream) return;
+    recorder.current = new MediaRecorder(stream, { mimeType: type });
+
+    recorder.current.onstart = () => {
+      timeId.current = setInterval(() => {
+        setTimer((p) => p + 1);
+      }, 1000);
+      setRecording(true);
+    };
+
+    recorder.current.onpause = () => {
+      if (timeId.current) {
+        clearInterval(timeId.current);
+      }
+      setRecording(false);
+    };
+
+    recorder.current.onresume = () => {
+      timeId.current = setInterval(() => {
+        setTimer((p) => p + 1);
+      }, 1000);
+      setRecording(true);
+    };
+
+    recorder.current.ondataavailable = (ev) => {
+      if (ev.data.size > 0) {
+        chunks.current.push(ev.data);
+      }
+    };
+
+    recorder.current.onstop = () => {
+      if (timeId.current) {
+        clearInterval(timeId.current);
+      }
+      setRecording(false);
+      save();
+    };
+  }, [stream])
+
   useEffect(() => {
-    if (stream) {
-      recorder.current = new MediaRecorder(stream, { mimeType: type });
+    setUpRecorder()
 
-      recorder.current.onstart = () => {
-        timeId.current = setInterval(() => {
-          setTimer((p) => p + 1);
-        }, 1000);
-        setRecording(true);
-      };
-
-      recorder.current.onpause = () => {
-        if (timeId.current) {
-          clearInterval(timeId.current);
-        }
-        setRecording(false);
-      };
-
-      recorder.current.onresume = () => {
-        timeId.current = setInterval(() => {
-          setTimer((p) => p + 1);
-        }, 1000);
-        setRecording(true);
-      };
-
-      recorder.current.ondataavailable = (ev) => {
-        if (ev.data.size > 0) {
-          chunks.current.push(ev.data);
-        }
-      };
-
-      recorder.current.onstop = () => {
-        if (timeId.current) {
-          clearInterval(timeId.current);
-        }
-        setRecording(false);
-        save();
-      };
+    return () => {
+      stop()
     }
   }, [stream]);
 
   return {
     recording,
     recorder: recorder.current,
-    chucks: chunks.current,
+    chunks: chunks.current,
     stop,
     start,
     pause,

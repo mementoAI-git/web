@@ -16,7 +16,9 @@ const fileColors: Record<string, string> = {
 }
 
 export default function FileUploadItem({ file, onDelete }: IFileUploadItem) {
-  const ext = file.file.name.slice(file.file.name.lastIndexOf('.') + 1)
+  const name = file.file?.name ?? file.result?.name ?? "unknown";
+  const size = file.file?.size ?? file.result?.size ?? 0;
+  const ext = name.slice(name.lastIndexOf('.') + 1)
 
   return (
     <div className="flex items-start rounded-lg gap-3 py-3 px-4 border border-grey-500">
@@ -30,7 +32,7 @@ export default function FileUploadItem({ file, onDelete }: IFileUploadItem) {
         <div>
           <div className="flex justify-between items-center">
             <span className="text-secondary font-medium font-inter text-sm">
-              {truncateFileName(file?.file.name)}
+              {truncateFileName(name)}
             </span>
             {
               file.result &&
@@ -40,7 +42,7 @@ export default function FileUploadItem({ file, onDelete }: IFileUploadItem) {
             }
           </div>
           <span className="text-grey-600 font-inter font-normal text-sm">
-            {formatFileSize(file?.file.size)}
+            {formatFileSize(Number(size))}
           </span>
         </div>
         <div className="flex items-center gap-2">

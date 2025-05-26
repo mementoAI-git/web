@@ -12,13 +12,7 @@ export default function DailyPrompt({ type, title, _id }: IDailyPrompt) {
   const { open } = useModal()
 
   const handleReplyClick = () => {
-    open(
-      "prompt",
-      {
-        memory: { title, prompt: _id, type },
-        type: "text"
-      }
-    )
+    open("prompt", { title, prompt: _id })
   };
   return (
     <div className="group flex h-72.5 w-1/2 max-w-[368.5px] flex-1 cursor-pointer flex-col justify-between rounded-2xl bg-grey-700 p-8">

@@ -1,5 +1,6 @@
 "use client";
 
+import { storageKeys } from "@/utility/constant";
 import { IAuth, IUser } from "@/utility/interface";
 import { createContext, PropsWithChildren, useCallback, useContext, useEffect, useState } from "react";
 
@@ -26,7 +27,7 @@ export function StoreProvider({ children }: PropsWithChildren) {
   const [state, setState] = useState(initialStates);
 
   const setAuth = useCallback((auth: IAuth) => {
-    localStorage.setItem("auth", JSON.stringify(auth));
+    localStorage.setItem(storageKeys.auth, JSON.stringify(auth));
     setState((p) => ({ ...p, auth }));
   }, []);
 
@@ -38,7 +39,7 @@ export function StoreProvider({ children }: PropsWithChildren) {
   }, []);
 
   useEffect(() => {
-    const auth = localStorage.getItem("auth");
+    const auth = localStorage.getItem(storageKeys.auth);
     if (auth) {
       setState(p => ({ ...p, auth: JSON.parse(auth), hydrated: true }))
     } else {

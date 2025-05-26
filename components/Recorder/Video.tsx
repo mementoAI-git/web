@@ -3,7 +3,7 @@
 import VideoIcon from "@/public/icon/video.svg";
 import RecIndicator from "@/components/RecIndicator";
 import AletHexagonIcon from "@/public/icon/alert-hexagon.svg";
-import { useCallback, useRef, useState } from "react";
+import { forwardRef, useCallback, useImperativeHandle, useRef, useState } from "react";
 import useRecorder from "@/hooks/use-recorder";
 import { VideoRecButtons } from "./RecButtons";
 import AudioVisualizer from "@/components/AudioVisualizer";
@@ -22,9 +22,9 @@ const constraints = {
 
 const fileType = "video/webm";
 
-export function VideoRecorder({ onStart, onFinish }: IRecorder) {
+export const VideoRecorder = forwardRef(function ({ onStart, onFinish }: IRecorder, ref) {
   const [stream, setStream] = useState<MediaStream | null>(null);
-  const ref = useRef<HTMLVideoElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const recorder = useRecorder(stream, fileType);
 
   const start = useCallback(() => {
@@ -32,8 +32,8 @@ export function VideoRecorder({ onStart, onFinish }: IRecorder) {
       .getUserMedia(constraints)
       .then((stream) => {
         if (stream) {
-          if (ref.current) {
-            ref.current.srcObject = stream;
+          if (videoRef.current) {
+            videoRef.current.srcObject = stream;
           }
           setStream(stream);
           setTimeout(recorder.start, 2000);
@@ -49,13 +49,15 @@ export function VideoRecorder({ onStart, onFinish }: IRecorder) {
 
   const stop = () => {
     recorder.stop()
-    if (recorder.chucks) {
-      const blob = new Blob(recorder.chucks, { type: fileType });
+    if (recorder.chunks) {
+      const blob = new Blob(recorder.chunks, { type: fileType });
       const file = new File([blob], "recorded.webm", { type: fileType });
 
       onFinish(file)
     }
   }
+
+  useImperativeHandle(ref, () => ({ ...recorder, start, stop }));
   return (
     <div>
       <div className="flex items-center justify-center rounded-t-2xl bg-grey-400 py-1 text-grey-800">
@@ -69,11 +71,11 @@ export function VideoRecorder({ onStart, onFinish }: IRecorder) {
 
       <div className="relative flex min-h-100 w-full items-center justify-center overflow-hidden rounded-b-2xl border border-t-0 border-grey-400">
         <video
-          ref={ref}
+          ref={videoRef}
           autoPlay
           playsInline
           muted
-          className={`absolute invisible top-0 right-0 z-0 size-full`}
+          className={`absolute  top-0 right-0 z-0 size-full`}
         />
         {recorder.url ? (
           <div className="absolute top-0 right-0 z-50 size-full">
@@ -130,4 +132,4 @@ export function VideoRecorder({ onStart, onFinish }: IRecorder) {
       </div>
     </div>
   );
-}
+})
