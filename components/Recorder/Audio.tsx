@@ -1,6 +1,6 @@
 import useRecorder from "@/hooks/use-recorder";
 import AletHexagonIcon from "@/public/icon/alert-hexagon.svg";
-import { forwardRef, useImperativeHandle, useRef, useState } from "react";
+import { forwardRef, useImperativeHandle, useState } from "react";
 import AudioPlayer from "../Player/AudioPlayer";
 import RecIndicator from "../RecIndicator";
 import AudioVisualizer from "../AudioVisualizer";
@@ -10,7 +10,7 @@ import { IRecorder } from "./interface";
 
 const fileType = "audio/webm";
 
-export const AudioRecorder = forwardRef(function ({ onStart, onFinish }: IRecorder, ref) {
+export const AudioRecorder = forwardRef(function AudioRec({ onStart, onFinish }: IRecorder, ref) {
   const [stream, setStream] = useState<MediaStream | null>(null);
   const recorder = useRecorder(stream, fileType);
 

@@ -54,7 +54,7 @@ export function CreateMemory() {
       if (attachments) {
         p.attachments = JSON.parse(attachments).files.map(f => f.result._id)
       }
-
+      console.log(p)
       const result = await trigger(p)
       if (result?.success) {
         open("set-tag-permission", result.data);

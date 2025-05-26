@@ -8,6 +8,7 @@ import { useModal } from "@/hooks/use-modal";
 import { isEmpty } from "@/utility";
 import { IMemory } from "@/utility/interface";
 import { useState } from "react";
+import { mutate } from "swr";
 
 export function UpdateMemory({ data: memory }: { data: IMemory }) {
   const { push, close } = useModal()
@@ -18,6 +19,7 @@ export function UpdateMemory({ data: memory }: { data: IMemory }) {
     if (isMutating) return;
     if (text !== memory.body) {
       await trigger({ body: text })
+      mutate(endpoint.memories)
     }
     push("set-tag-permission", memory)
   }

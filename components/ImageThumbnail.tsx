@@ -1,5 +1,8 @@
 import { IFile } from "@/utility/interface";
 import Image from "next/image";
+import QIcon from "@/public/icon/q.svg"
+import PlayIcon from "@/public/icon/play.svg"
+
 interface IImageThumbnail {
   size?: number;
   boxClassName?: string;
@@ -29,7 +32,15 @@ function ImageThumbnailItem({
       />
     );
   }
-  return <div className="size-full bg-grey-500" />;
+  return (
+    <div className="size-full justify-center items-center flex bg-grey-500">
+      {
+        type.includes('video') ?
+          <PlayIcon width={size * 0.6} height={size * 0.6} /> :
+          <QIcon width={size * 0.6} height={size * 0.6} />
+      }
+    </div>
+  );
 }
 
 export default function ImageThumbnail({
@@ -38,13 +49,13 @@ export default function ImageThumbnail({
   boxClassName = "",
 }: IImageThumbnail) {
   return (
-    <div style={{ width: size, height: size }} className="cursor-pointer">
+    <div style={{ width: size, height: size }} className={`${images.length <= 1 && "flex items-center justify-center"} cursor-pointer`}>
       {images.length === 1 ? (
-        <div>
+        <div className="flex items-center justify-center size-full overflow-hidden rounded-[5.83px]">
           <ImageThumbnailItem {...{ ...images[0], size }} />
         </div>
       ) : (
-        <div className="relative">
+        <div className="relative size-full">
           {images.slice(0, 3).map((img, i) => (
             <div
               key={i}

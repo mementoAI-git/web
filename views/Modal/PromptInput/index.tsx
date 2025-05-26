@@ -111,7 +111,7 @@ export default function PromptInput({ data }) {
         disabled={(["audio", "video"].includes(type) && recording) || isLoading}
         saving={isMutating}
         type={type}
-        editMode={editMode || values.body !== memory?.body}
+        editMode={editMode || (memory?.body && values.body !== memory?.body)}
       />
     </div>
   )

@@ -5,6 +5,8 @@ import dayjs from "dayjs";
 import { useRouter } from "next/navigation";
 import { tagColors } from "@/utility/constant";
 import { useModal } from "@/hooks/use-modal";
+import { isEmpty } from "@/utility";
+import Docsclip from "@/public/icon/docs-clip.svg"
 
 export default function MemoriesTableRow({ memory }) {
   const { open } = useModal()
@@ -13,8 +15,14 @@ export default function MemoriesTableRow({ memory }) {
     <tr>
       <td onClick={() => router.push(`/memories/${memory?._id}`)}>
         <div className="flex cursor-pointer items-center gap-2">
-          <div className="h-10 w-[46.87px] min-w-[33.53px]">
-            <ImageThumbnail images={memory?.attachments} size={33.53} />
+          <div className="h-10 flex items-center justify-center w-[46.87px] min-w-[33.53px]">
+            {
+              isEmpty(memory?.attachments) ?
+                <div className="size-[33.53px] rounded-[5.83px] justify-center items-center flex bg-grey-500">
+                  <Docsclip width={17} />
+                </div> :
+                <ImageThumbnail images={memory?.attachments} size={33.53} />
+            }
           </div>
           <span className="max-w-75 truncate font-inter text-sm font-medium whitespace-nowrap text-[#050709]">
             {" "}

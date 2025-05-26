@@ -7,6 +7,7 @@ import Spinner from "@/components/Spinner";
 import useFetcher from "@/hooks/use-fetcher";
 import endpoint from "@/api/endpoint";
 import { toast } from "sonner";
+import { mutate } from "swr";
 
 const initial = {
   email: "",
@@ -36,6 +37,7 @@ export function AddBeneficiary() {
       console.log(p)
       const result = await trigger(p)
       if (result?.data) {
+        mutate(endpoint.beneficiaries)
         toast.success(result?.message)
         close("add-beneficiary")
       }

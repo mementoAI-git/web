@@ -14,6 +14,7 @@ import { ModalCloseBtn } from "@/components/ModalLayout"
 import { toast } from "sonner"
 import { storageKeys } from "@/utility/constant";
 import { isEmpty } from "@/utility";
+import { mutate } from "swr";
 
 export interface IFileState {
   file: File
@@ -53,6 +54,7 @@ export default function UploadFiles({ data: id }) {
       )
     } else {
       await addToPost({ attachments })
+      mutate(endpoint.memories)
     }
 
     setFiles([])

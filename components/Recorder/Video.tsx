@@ -22,7 +22,7 @@ const constraints = {
 
 const fileType = "video/webm";
 
-export const VideoRecorder = forwardRef(function ({ onStart, onFinish }: IRecorder, ref) {
+export const VideoRecorder = forwardRef(function AudioRec({ onStart, onFinish }: IRecorder, ref) {
   const [stream, setStream] = useState<MediaStream | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const recorder = useRecorder(stream, fileType);
@@ -45,7 +45,7 @@ export const VideoRecorder = forwardRef(function ({ onStart, onFinish }: IRecord
           className: "!text-danger",
         });
       });
-  }, [onStart]);
+  }, [onStart, recorder.start]);
 
   const stop = () => {
     recorder.stop()

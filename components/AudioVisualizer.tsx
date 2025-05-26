@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 interface IAudioVisualizer {
   recorder: MediaRecorder | null;
@@ -16,7 +16,7 @@ export default function AudioVisualizer({ stream = null, color = "#3C3F3E" }: IA
   const sourceRef = useRef(null);
   const animationRef = useRef(null);
 
-  const setupAudio = () => {
+  const setupAudio = useCallback(() => {
     if (!stream) return;
     try {
       audioContextRef.current = new window.AudioContext();
@@ -62,7 +62,7 @@ export default function AudioVisualizer({ stream = null, color = "#3C3F3E" }: IA
     } catch (error) {
       console.error("Error setting up audio:", error);
     }
-  }
+  }, [stream])
 
   useEffect(() => {
     if (stream) {
