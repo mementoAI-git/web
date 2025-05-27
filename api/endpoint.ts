@@ -30,4 +30,7 @@ export default {
 
   // memories
   memories: "/memories",
+
+  // ai
+  ai: "/ai/prompt"
 };

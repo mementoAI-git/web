@@ -4,16 +4,17 @@ import Axios, { AxiosError } from "axios";
 import { IResponse, MutationFetcher } from "./interface";
 import { toast } from "sonner";
 import { isEmpty } from "@/utility";
+import { storageKeys } from "@/utility/constant";
+
+const baseURL = process.env.NEXT_PUBLIC_API_BASE_URL
 
 const axios = Axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_BASE_URL,
-  headers: {
-    "Content-Type": "application/json",
-  },
+  baseURL,
+  headers: { "Content-Type": "application/json" },
 });
 
 axios.interceptors.request.use((config) => {
-  const auth = localStorage.getItem("auth");
+  const auth = localStorage.getItem(storageKeys.auth);
 
   if (auth) {
     const { access_token } = JSON.parse(auth);
@@ -89,6 +90,33 @@ export const fileUploadFetcher = async (url: string, { arg }) => {
     toast.error(message);
 
     throw { message };
+  }
+};
+
+export const streamlineFetcher = async (url, { arg }) => {
+  const { onChunk, ...payload } = arg;
+  const auth = JSON.parse(localStorage.getItem(storageKeys.auth) || null);
+
+  const response = await fetch(`${baseURL}${url}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${auth?.access_token}`
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder("utf-8");
+  let is_done = false;
+
+  while (!is_done) {
+    const { value, done } = await reader.read();
+    console.log(value, done)
+    if (done) is_done = true;
+
+    const chunk = decoder.decode(value, { stream: true });
+    onChunk(chunk);
   }
 };
 
