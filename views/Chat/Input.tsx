@@ -1,7 +1,7 @@
 import MicIcon from "@/public/icon/mic.svg";
 import EmojiIcon from "@/public/icon/emoji.svg";
 import PlusIcon from "@/public/icon/plus.svg";
-import { useEffect, useRef } from "react";
+import { KeyboardEvent, useEffect, useRef } from "react";
 
 interface IChatInput {
   text: string
@@ -22,6 +22,14 @@ export default function ChatInput({ disabled = false, text = "", onChangeText, o
     }
   };
 
+  const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      const tag = text.trim();
+      onSend()
+    }
+  };
+
   useEffect(() => {
     if (ref.current) {
       ref.current.style.height = "auto";
@@ -34,6 +42,7 @@ export default function ChatInput({ disabled = false, text = "", onChangeText, o
         className="max-h-75 outline-none overflow-y-auto resize-none placeholder:text-grey-800 font-inter font-normal"
         value={text}
         ref={ref}
+        onKeyDown={handleKeyDown}
         onChange={handleChange}
         placeholder="What’s on your mind today? Click here to start typing, or click on the record button to say something. "
       ></textarea>
