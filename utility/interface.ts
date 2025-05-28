@@ -50,6 +50,13 @@ export interface IMemory {
   updated_at: string
 }
 
+export interface IMessage {
+  user: string
+  text: string
+  role: string // user, ai
+  created_at: string
+}
+
 export interface IPagination<T> {
   docs: T[];
   hasNextPage: boolean;

@@ -32,5 +32,6 @@ export default {
   memories: "/memories",
 
   // ai
-  ai: "/ai/prompt"
+  aiPrompt: "/ai/prompt",
+  aiPromptMessage: "/ai/prompt/messages"
 };
