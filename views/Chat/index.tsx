@@ -53,7 +53,7 @@ export default function Chat() {
       <div style={{ height: 'calc(100vh - 88px)' }} className="mx-auto overflow-x-hidden flex flex-col w-full max-w-220 flex-1">
         <div className="flex-1 overflow-y-auto px-4 py-6 pt-8  space-y-4 overflow-x-hidden flex flex-col gap-2 justify-end">
           <div />
-          {messages?.docs.map((m, i) => <Message key={i} text={m.text} isUser={m.role === "user"} />)}
+          {messages?.docs.map((m, i) => <Message key={i} {...m} />)}
           {
             aiMessage &&
             <TypeMessage
