@@ -94,7 +94,7 @@ export const fileUploadFetcher = async (url: string, { arg }) => {
 };
 
 export const streamlineFetcher = async (url, { arg }) => {
-  const { onChunk, ...payload } = arg;
+  const { onChunk, signal, ...payload } = arg;
   const auth = JSON.parse(localStorage.getItem(storageKeys.auth) || null);
 
   const response = await fetch(`${baseURL}${url}`, {
@@ -103,6 +103,7 @@ export const streamlineFetcher = async (url, { arg }) => {
       "Content-Type": "application/json",
       "Authorization": `Bearer ${auth?.access_token}`
     },
+    signal,
     body: JSON.stringify(payload),
   });
 
@@ -110,13 +111,17 @@ export const streamlineFetcher = async (url, { arg }) => {
   const decoder = new TextDecoder("utf-8");
   let is_done = false;
 
-  while (!is_done) {
-    const { value, done } = await reader.read();
-    console.log(value, done)
-    if (done) is_done = true;
+  if (response.ok) {
+    while (!is_done) {
+      const { value, done } = await reader.read();
+      if (done) is_done = true;
 
-    const chunk = decoder.decode(value, { stream: true });
-    onChunk(chunk);
+      const chunk = decoder.decode(value, { stream: true });
+      onChunk(chunk);
+    }
+  } else {
+    const data = await response.json()
+    toast.error(data?.message || "Something went wrong, try again")
   }
 };
 

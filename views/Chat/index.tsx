@@ -14,6 +14,7 @@ import useSWR from "swr";
 export default function Chat() {
   const [prompt, setPrompt] = useState("")
   const [aiMessage, setAiMessage] = useState("")
+  const [abortController, setAbortController] = useState(null);
   const [messages, setMessages] = useState<IPagination<Partial<IMessage>>>(null)
   const { trigger, isMutating } = useSWRMutation(endpoint.aiPrompt, streamlineFetcher)
   useSWR(endpoint.aiPromptMessage, fetcher, {
@@ -29,9 +30,12 @@ export default function Chat() {
     setMessages((p) => ({ ...p, docs: [...p.docs, { text: prompt, role: "user" }] }));
     setPrompt("")
     setAiMessage("");
+    const ctlr = new AbortController();
+    setAbortController(ctlr);
 
     await trigger({
       text: prompt,
+      signal: ctlr.signal,
       onChunk: (chunk: string) => {
         if (chunk.trim().startsWith("ERROR: ")) {
           return toast.error("Something went wrong, try again")
@@ -42,6 +46,14 @@ export default function Chat() {
       }
     })
   }
+
+  const handleStop = () => {
+    if (abortController) {
+      abortController.abort();
+      setAiMessage((prev) => prev + "...");
+      setAbortController(null);
+    }
+  };
 
   const handleOnFinishTyping = (text: string) => {
     setMessages((p) => ({ ...p, docs: [...p.docs, { text, role: "ai" }] }));
@@ -67,7 +79,8 @@ export default function Chat() {
             text={prompt}
             onChangeText={setPrompt}
             onSend={handleSend}
-            disabled={isMutating}
+            typing={isMutating}
+            onStop={handleStop}
           />
         </div>
       </div>
