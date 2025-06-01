@@ -6,7 +6,7 @@ import useClickAway from "@/hooks/use-clickaway";
 
 interface IEmojiPicker {
   className?: string
-  onSelect: (data: any) => void
+  onSelect: (data) => void
 }
 
 export default function EmojiPicker({ onSelect, className = "" }: IEmojiPicker) {
