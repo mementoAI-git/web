@@ -18,8 +18,7 @@ export default function Message({ created_at, text, role }: Partial<IMessage>) {
 }
 
 export function TypeMessage({ text, onFinish }) {
-  const [displayedText, setDisplayedText] = useState("");
-  const indexRef = useRef(0);
+  const [index, setIndex] = useState(0)
   const intervalRef = useRef(null);
   const done = useRef(false);
 
@@ -28,20 +27,23 @@ export function TypeMessage({ text, onFinish }) {
     done.current = false;
 
     intervalRef.current = setInterval(() => {
-      if (indexRef.current < text.length) {
-        setDisplayedText(prev => prev + text[indexRef.current]);
-        indexRef.current++;
-      } else {
-        clearInterval(intervalRef.current);
-        if (!done.current) {
-          done.current = true;
-          onFinish?.(text);
+      setIndex(prev => {
+        if (prev < text.length) {
+          return prev + 1
+        } else {
+          clearInterval(intervalRef.current);
+          if (!done.current) {
+            done.current = true;
+            onFinish?.(text);
+          }
+          return prev
         }
-      }
+      })
+
     }, 10);
 
     return () => clearInterval(intervalRef.current);
   }, [text]);
 
-  return <Message text={displayedText} />
+  return <Message text={text.slice(0, index)} />
 }

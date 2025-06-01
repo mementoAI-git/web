@@ -20,7 +20,7 @@ const constraints = {
   video: true,
 };
 
-const fileType = "video/webm";
+const fileType = "video/mp4";
 
 export const VideoRecorder = forwardRef(function AudioRec({ onStart, onFinish }: IRecorder, ref) {
   const [stream, setStream] = useState<MediaStream | null>(null);
@@ -51,7 +51,7 @@ export const VideoRecorder = forwardRef(function AudioRec({ onStart, onFinish }:
     recorder.stop()
     if (recorder.chunks) {
       const blob = new Blob(recorder.chunks, { type: fileType });
-      const file = new File([blob], "recorded.webm", { type: fileType });
+      const file = new File([blob], "recorded.mp4", { type: fileType });
 
       onFinish(file)
     }

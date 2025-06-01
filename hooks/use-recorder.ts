@@ -1,7 +1,7 @@
 import { isEmpty } from "@/utility";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-export default function useRecorder(stream: MediaStream | null, type = "video/webm") {
+export default function useRecorder(stream: MediaStream | null, type = "video/mp4") {
   const [timer, setTimer] = useState(0); // secs
   const [url, setUrl] = useState<string | null>(null);
   const [recording, setRecording] = useState(false);

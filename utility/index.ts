@@ -5,6 +5,15 @@ export const hashEmail = (email: string) => {
   return username.slice(0, 5) + "***@" + domain;
 };
 
+export const toBase64 = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = error => reject(error);
+  });
+};
+
 export const openMailBox = (email: string) => {
   "use client";
 

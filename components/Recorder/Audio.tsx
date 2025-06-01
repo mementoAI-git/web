@@ -8,7 +8,7 @@ import { AudioRecButtons } from "./RecButtons";
 import { toast } from "sonner";
 import { IRecorder } from "./interface";
 
-const fileType = "audio/webm";
+const fileType = "audio/mp3";
 
 export const AudioRecorder = forwardRef(function AudioRec({ onStart, onFinish }: IRecorder, ref) {
   const [stream, setStream] = useState<MediaStream | null>(null);
@@ -35,7 +35,7 @@ export const AudioRecorder = forwardRef(function AudioRec({ onStart, onFinish }:
     recorder.stop()
     if (recorder.chunks) {
       const blob = new Blob(recorder.chunks, { type: fileType });
-      const file = new File([blob], "recorded.webm", { type: fileType });
+      const file = new File([blob], "recorded.mp3", { type: fileType });
 
       onFinish(file)
     }
