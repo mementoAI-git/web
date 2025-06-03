@@ -51,6 +51,7 @@ export interface IMemory {
 }
 
 export interface IMessage {
+  _id?: string
   user: string
   text: string
   role: string // user, ai

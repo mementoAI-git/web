@@ -20,27 +20,25 @@ export default function Message({ created_at, text, role }: Partial<IMessage>) {
 export function TypeMessage({ text, onFinish }) {
   const [index, setIndex] = useState(0)
   const intervalRef = useRef(null);
-  const done = useRef(false);
 
   useEffect(() => {
     clearInterval(intervalRef.current);
-    done.current = false;
 
     intervalRef.current = setInterval(() => {
       setIndex(prev => {
         if (prev < text.length) {
           return prev + 1
         } else {
-          clearInterval(intervalRef.current);
-          if (!done.current) {
-            done.current = true;
-            onFinish?.(text);
-          }
           return prev
         }
       })
 
     }, 10);
+
+    if (index >= text.length) {
+      clearInterval(intervalRef.current);
+      onFinish(text);
+    }
 
     return () => clearInterval(intervalRef.current);
   }, [text]);

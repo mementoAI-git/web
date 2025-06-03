@@ -13,7 +13,7 @@ interface IChatInput {
   text: string
   typing?: boolean
   onChangeText: (str: string) => void;
-  onSend: () => void
+  onSend: (p: { attachments: string[] }) => void
   onStop: () => void
   disabled?: boolean
 }
@@ -61,13 +61,23 @@ export default function ChatInput({ typing = false, onStop, text = "", onChangeT
     onChangeText(newText);
   };
 
+  const handleSend = () => {
+    let attachments: string[] = []
+    if (!isEmpty(files)) {
+      attachments = files.filter(f => f.uploadedFile).map(f => f.uploadedFile._id)
+    }
+    onSend({ attachments })
+    setFiles([])
+  }
+
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter") {
       e.preventDefault();
       text.trim();
-      onSend()
+      handleSend()
     }
   };
+
   return (
     <div className=" w-full border border-primary rounded-2xl p-10 flex flex-col gap-8 h-fit min-h-46 bg-white z-50">
       {
@@ -94,7 +104,7 @@ export default function ChatInput({ typing = false, onStop, text = "", onChangeT
           {
             typing ?
               <button type="button" onClick={onStop} className="btn">Stop</button> :
-              <button type="button" onClick={onSend} className="btn">Send</button>
+              <button type="button" onClick={handleSend} className="btn">Send</button>
           }
         </div>
       </div>

@@ -8,6 +8,7 @@ import ForwardIcon from "@/public/icon/15-sec-forward.svg";
 import usePlayer from "@/hooks/use-player";
 import Image from "next/image";
 import wave from "@/public/image/wave.png"
+import Transcription from "./Transcription";
 
 export interface IMediaPlayer {
   src: string
@@ -76,11 +77,7 @@ export default function AudioPlayer({ src, className = "", alt }: IMediaPlayer) 
             <ForwardIcon width={24} />
           </div>
         </div>
-        <div>
-          <span className="mx-auto block text-center font-inter text-xs text-secondary">
-            Show transcription
-          </span>
-        </div>
+        <Transcription />
       </div>
       <Image src={wave} height={79} className="w-full h-20 object-cover" alt="wave" />
     </div>
