@@ -9,6 +9,7 @@ import { useState } from "react";
 import Table from "@/components/Table";
 import MemoriesTableRow from "./Row";
 import { TableRowSekeleton } from "./Skeleton";
+import { storageKeys } from "@/utility/constant";
 
 const columns = [
   { label: "topic" },
@@ -18,7 +19,7 @@ const columns = [
 ]
 
 export default function Memories() {
-  const [mode, setMode] = useState("list");
+  const [mode, setMode] = useState(localStorage.getItem(storageKeys.listmode) || "list");
   const { data, isLoading } = useSWR(endpoint.memories);
 
   return (

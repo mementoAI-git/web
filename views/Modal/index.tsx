@@ -11,6 +11,7 @@ import { AddBeneficiary, DeleteBeneficiary } from "./Beneficiary";
 import { UpdateBeneficiary } from "./Beneficiary/Update";
 import Setup2FA from "./Setup2FA";
 import ChatSettings from "./ChatSetting";
+import { SearchMemories } from "./Memory/Search";
 
 
 const MODAL_COMPONENTS = {
@@ -19,6 +20,7 @@ const MODAL_COMPONENTS = {
   "file-preview": FilePreview,
   'file-upload': UploadFiles,
   "edit-memory": UpdateMemory,
+  "search-memory": SearchMemories,
   "create-memory": CreateMemory,
   "set-tag-permission": SetTagPermissions,
   "prompt": PromptInput,

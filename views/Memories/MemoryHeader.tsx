@@ -9,6 +9,7 @@ import PlusIcon from "@/public/icon/plus.svg"
 
 import { MemoryListFilter } from "./MemoriesDropdown";
 import { useModal } from "@/hooks/use-modal";
+import { storageKeys } from "@/utility/constant";
 
 interface IMemoriesHeader {
   mode?: string;
@@ -18,6 +19,11 @@ interface IMemoriesHeader {
 
 export default function MemoriesHeader({ count = 0, mode = "list", onChangeMode }: IMemoriesHeader) {
   const { open } = useModal()
+
+  const handleChangeMode = (m: string) => {
+    localStorage.setItem(storageKeys.listmode, m)
+    onChangeMode(m)
+  }
   return (
     <div className="flex flex-1 flex-col gap-3">
       <div className="flex items-center justify-between">
@@ -34,7 +40,7 @@ export default function MemoriesHeader({ count = 0, mode = "list", onChangeMode 
             ["grid", "list"].map(m => (
               <div
                 key={m}
-                onClick={() => onChangeMode(m)}
+                onClick={() => handleChangeMode(m)}
                 className={`${mode === m ? "text-[#2E90FA] bg-[#EFF8FF]" : "text-[#3C3F3E]"}  hover:text-[#2E90FA] flex items-center cursor-pointer justify-center rounded-full w-10 aspect-square bg-surface-100 hover:bg-[#EFF8FF]`}
               >
                 {m === "list" ? <ListIcon /> : <GridIcon />}
@@ -59,7 +65,9 @@ export default function MemoriesHeader({ count = 0, mode = "list", onChangeMode 
           /> */}
         </div>
         <div className="flex items-stretch max-h-10 gap-3">
-          <Searchinput />
+          <div onClick={() => open("search-memory")}>
+            <Searchinput />
+          </div>
           <button onClick={() => open("create-memory")} className="flex items-center justify-center gap-1 bg-secondary rounded-lg w-46 text-white cursor-pointer">
             <PlusIcon width={15} />
             <span>Add Memory</span>
