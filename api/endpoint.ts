@@ -34,5 +34,8 @@ export default {
   // ai
   aiPrompt: "/ai/prompt",
   aiGreet: "/ai/prompt/greet",
-  aiPromptMessage: "/ai/prompt/messages"
+  aiPromptMessage: "/ai/prompt/messages",
+
+  // capsule
+  capsule: "/capsule"
 };

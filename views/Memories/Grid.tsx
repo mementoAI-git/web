@@ -9,15 +9,15 @@ import Link from "next/link";
 
 function MemoriesGridItem({ memory }: { memory: IMemory }) {
   return (
-    <Link href={`/memories/${memory?._id}`} className="flex h-[290px] w-[341.33px] flex-col gap-4 rounded-2xl bg-[#F9F9F9] p-6">
+    <div className="flex h-[290px] w-[341.33px] flex-col gap-4 rounded-2xl bg-[#F9F9F9] p-6">
       <div className="flex h-[138px] w-full items-center justify-center rounded-lg bg-[#F3F3F3]">
-        <div className="size-fit">
+        <Link href={`/memories/${memory?._id}`} className="size-fit">
           <ImageThumbnail
             images={memory?.attachments}
             size={68.78}
             boxClassName="!border-[2px] !rounded-[11.96px]"
           />
-        </div>
+        </Link>
       </div>
       <div className="flex flex-col gap-3">
         <div className="flex items-center gap-1">
@@ -26,9 +26,9 @@ function MemoriesGridItem({ memory }: { memory: IMemory }) {
             {dayjs(memory.created_at).format("MMM DD, YYYY")}
           </span>
         </div>
-        <span className="truncate cursor-pointer font-inter font-semibold whitespace-nowrap text-[#050709]">
+        <Link href={`/memories/${memory?._id}`} className="truncate cursor-pointer font-inter font-semibold whitespace-nowrap text-[#050709]">
           {memory.title}
-        </span>
+        </Link>
         <div className="flex items-end justify-between text-[#949494]">
           <div className="flex flex-wrap items-center gap-2">
             {memory.tags.slice(0, 3).map((tag, i) => (
@@ -48,7 +48,7 @@ function MemoriesGridItem({ memory }: { memory: IMemory }) {
           <MemoryItemActions memory={memory} />
         </div>
       </div>
-    </Link>
+    </div>
   );
 }
 

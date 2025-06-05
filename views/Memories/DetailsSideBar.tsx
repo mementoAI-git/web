@@ -1,5 +1,7 @@
 "use client";
 
+import React from "react";
+
 import FolderIcon from "@/public/icon/folder.svg";
 import CalenderIcon from "@/public/icon/calendar-1.svg";
 import TextIcon from "@/public/icon/text.svg";
@@ -12,7 +14,6 @@ import TagIcon from "@/public/icon/tag.svg";
 import ClockIcon from "@/public/icon/clock.svg";
 import AddBookmarkIcon from "@/public/icon/add-bookmark.svg";
 
-import React from "react";
 import { useModal } from "@/hooks/use-modal";
 import { IMemory } from "@/utility/interface";
 import dayjs from "dayjs";

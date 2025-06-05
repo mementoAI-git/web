@@ -70,3 +70,24 @@ export interface IPagination<T> {
   totalDocs: number;
   totalPages: number;
 }
+
+export interface IBeneficiary {
+  name: string
+  email: string
+  relationship: string
+  level: number
+  user: string
+}
+
+export interface ICapsule {
+  _id?: string
+  user: string
+  recipients: string[]
+  delivery_date: string
+  title: string
+  body: string
+  attachments: string[]
+  status: string // Scheduled draft success
+  created_at: string
+  updated_at: string
+}

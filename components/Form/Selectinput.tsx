@@ -1,5 +1,5 @@
 "use client"
-import { ChangeEvent, useMemo, useState } from "react"
+import { ChangeEvent, ReactNode, useMemo, useState } from "react"
 import { ITexinput } from "./TextInput"
 import ChevronDownIcon from "@/public/icon/chevron-down.svg"
 import useClickAway from "@/hooks/use-clickaway"
@@ -10,7 +10,7 @@ interface IOption {
 }
 
 interface ISelect extends ITexinput {
-  label: string;
+  label: string | ReactNode;
   value?: string;
   data?: IOption[];
 }
@@ -26,7 +26,6 @@ export function Selectinput({ label, onChange, labelClassName = "", data = [], .
       return acc
     }, {} as Record<string, string>)
   }, [data])
-  console.log(valueLabelObj)
 
   function handleOnSelect(value: string) {
     setValue(value);
@@ -41,7 +40,7 @@ export function Selectinput({ label, onChange, labelClassName = "", data = [], .
   return (
     <div
       ref={ref}
-      className={`input-container group ${props.error && "error"}`}
+      className={`input-container relative group ${props.error && "error"}`}
     >
       <label className={`input-label ${labelClassName}`}>{label}</label>
       <div onClick={() => setShow((p) => !p)}>
@@ -56,7 +55,7 @@ export function Selectinput({ label, onChange, labelClassName = "", data = [], .
           </span>
         </div>
         {show && (
-          <div className="mt-1 max-h-50 w-full overflow-x-hidden overflow-y-visible rounded-lg bg-white p-2 shadow-drop-down">
+          <div className="absolute mt-1 max-h-50 w-full overflow-x-hidden overflow-y-visible rounded-lg bg-white p-2 shadow-drop-down">
             {data.map((item, i) => (
               <div
                 onClick={() => handleOnSelect(item.value)}

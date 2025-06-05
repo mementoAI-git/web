@@ -1,7 +1,7 @@
 import { InputHTMLAttributes, ReactNode } from "react";
 
 export interface ITexinput extends InputHTMLAttributes<HTMLInputElement> {
-  label?: string;
+  label?: string | ReactNode;
   error?: string | null;
   end?: ReactNode
   labelClassName?: string

@@ -12,6 +12,9 @@ import { UpdateBeneficiary } from "./Beneficiary/Update";
 import Setup2FA from "./Setup2FA";
 import ChatSettings from "./ChatSetting";
 import { SearchMemories } from "./Memory/Search";
+import CreateCapsule from "./Capsule/Create";
+import SelectBeneficiary from "./SelectBeneficiary";
+import { DeleteCapsule } from "./Capsule/Delete";
 
 
 const MODAL_COMPONENTS = {
@@ -28,8 +31,11 @@ const MODAL_COMPONENTS = {
   "add-beneficiary": AddBeneficiary,
   "delete-beneficiary": DeleteBeneficiary,
   "update-beneficiary": UpdateBeneficiary,
+  "select-beneficiary": SelectBeneficiary,
   'setup2fa': Setup2FA,
-  'chat-settings': ChatSettings
+  'chat-settings': ChatSettings,
+  "create-capsule": CreateCapsule,
+  "delete-capsule": DeleteCapsule,
 }
 
 export default function Modal() {
