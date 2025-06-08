@@ -26,6 +26,7 @@ export function Selectinput({ label, onChange, labelClassName = "", data = [], .
       return acc
     }, {} as Record<string, string>)
   }, [data])
+  console.log(valueLabelObj)
 
   function handleOnSelect(value: string) {
     setValue(value);
