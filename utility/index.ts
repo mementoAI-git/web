@@ -30,8 +30,7 @@ export const openMailBox = (email: string) => {
   return link;
 };
 
-export const clearCache = () =>
-  mutate(() => true, undefined, { revalidate: false });
+export const clearCache = () => mutate(() => true, undefined, { revalidate: false });
 
 export const isEmpty = (mixedVar: any) => {
   let undef;

@@ -1,12 +1,16 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Dispatch, SetStateAction, useCallback, useEffect, useMemo, useState } from "react";
 import { AnyObject, ObjectSchema, ValidationError } from "yup";
 
+interface IHelper<T> {
+  setValues: Dispatch<SetStateAction<T>>;
+  setErrors: Dispatch<SetStateAction<Partial<Record<keyof T, string>>>>
+}
 interface IUseForm<T extends Record<string, any>> {
   initial: T;
   schema?: ObjectSchema<AnyObject, AnyObject, AnyObject, "">;
-  onSubmit: (p: T) => void;
+  onSubmit: (p: T, helpers?: IHelper<T>) => void;
 }
 
 export default function useForm<T extends Record<string, any>>({
@@ -70,7 +74,7 @@ export default function useForm<T extends Record<string, any>>({
           abortEarly: false,
         })) as T;
       }
-      await onSubmit(payload);
+      await onSubmit(payload, { setValues, setErrors });
 
       setErrors({});
     } catch (err) {

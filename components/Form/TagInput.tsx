@@ -47,7 +47,7 @@ export default function Taginput({ values, setValue, label, ...props }: ITaginpu
             ))}
           </div>
           <input
-            placeholder={isEmpty(values) && props.placeholder}
+            placeholder={isEmpty(values) ? props.placeholder : ""}
             className="w-full flex-1 outline-0 placeholder:text-[#000D4D73]"
             onKeyDown={onKeyDown}
             value={input}

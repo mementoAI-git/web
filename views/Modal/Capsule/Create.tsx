@@ -17,7 +17,7 @@ const schema = yup.object().shape({
   delivery_date: yup.string().required("Delivery date is required"),
   title: yup.string().required("Title is required"),
   body: yup.string().required("Body is required"),
-  status: yup.string().default("saved").required("Title is required"),
+  // status: yup.string().default("saved").required("Title is required"),
   recipients: yup.array().min(1, "At least one recipients is required")
 });
 
@@ -34,14 +34,15 @@ export default function CreateCapsule() {
   const [show, setShow] = useState(false);
   const { trigger, isMutating } = useFetcher(endpoint.capsule)
 
-  const onSubmit = async (p) => {
+  const onSubmit = async (p, { setValues }) => {
     const result = await trigger(p)
     if (result?.success) {
       toast.success(result?.message)
+      setValues(initial)
+      close("create-capsule")
     }
   }
   const { values, errors, handleSubmit, handleChange, handleValue } = useForm({ initial, schema, onSubmit })
-
   if (show) return (
     <SelectBeneficiary
       handleClose={() => setShow(false)}
@@ -56,6 +57,7 @@ export default function CreateCapsule() {
         <form onSubmit={handleSubmit} className="space-y-6">
           <Taginput
             values={values.recipients}
+            placeholder="Enter recipients email address"
             label={
               <div className="flex items-center text-xs justify-between mb-2">
                 <span className="text-[#667085] font-normal font-inter">To (recipients):</span>
@@ -90,13 +92,15 @@ export default function CreateCapsule() {
             {errors.title && <small className="text-xs text-danger">{errors.title}</small>}
           </div>
           <div>
-            <textarea
-              placeholder="Enter text here"
-              name="body"
-              onChange={handleChange}
-              value={values.body}
-              className="bg-grey-700 min-h-34 rounded-2xl p-3 w-full resize-none outline-0 focus:border-2 focus:border-primary border border-grey-100"
-            ></textarea>
+            <div className="bg-grey-700 h-fit w-full rounded-2xl p-3 focus-within:border-2 focus-within:border-primary border border-grey-100">
+              <textarea
+                placeholder="Enter text here"
+                name="body"
+                onChange={handleChange}
+                value={values.body}
+                className="size-full min-h-34 flex-1 resize-none outline-0"
+              ></textarea>
+            </div>
             {errors.body && <small className="text-xs text-danger">{errors.body}</small>}
           </div>
           <div className="flex justify-between items-center">
@@ -108,7 +112,7 @@ export default function CreateCapsule() {
             </div>
             <div className="flex gap-3 items-center">
               <button type="button" className="btn-outline">Save to draft</button>
-              <button type="submit" className="btn">
+              <button disabled={isMutating} type="submit" className="btn">
                 Send
                 <Spinner loading={isMutating} className="!size-4" />
               </button>

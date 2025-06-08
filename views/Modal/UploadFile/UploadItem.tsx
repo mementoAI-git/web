@@ -2,6 +2,7 @@ import FileIcon from "@/public/icon/file.svg"
 import BinIcon from "@/public/icon/bin.svg"
 import { formatFileSize, truncateFileName } from "@/utility"
 import { IFileState } from "."
+import Docs from "@/components/Docs"
 
 interface IFileUploadItem {
   file: IFileState
@@ -18,16 +19,10 @@ const fileColors: Record<string, string> = {
 export default function FileUploadItem({ file, onDelete }: IFileUploadItem) {
   const name = file.file?.name ?? file.result?.name ?? "unknown";
   const size = file.file?.size ?? file.result?.size ?? 0;
-  const ext = name.slice(name.lastIndexOf('.') + 1)
 
   return (
     <div className="flex items-start rounded-lg gap-3 py-3 px-4 border border-grey-500">
-      <div className="w-8 h-10 relative text-[#D5D7DA]">
-        <FileIcon />
-        <span className={`absolute uppercase bottom-1 -left-2 p-[3px] ${fileColors[ext.toLowerCase()] || "bg-primary"}  text-[10px] font-bold font-inter rounded-[3px] text-white`}>
-          {ext}
-        </span>
-      </div>
+      <Docs name={name} />
       <div className="flex-1">
         <div>
           <div className="flex justify-between items-center">
