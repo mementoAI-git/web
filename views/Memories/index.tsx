@@ -19,8 +19,9 @@ const columns = [
 ]
 
 export default function Memories() {
+  const [page, setPage] = useState(1)
   const [mode, setMode] = useState(localStorage.getItem(storageKeys.listmode) || "list");
-  const { data, isLoading } = useSWR(endpoint.memories);
+  const { data, isLoading } = useSWR(`${endpoint.memories}?page=${page}`);
 
   return (
     <div className="w-full overflow-y-auto">
@@ -58,6 +59,7 @@ export default function Memories() {
               columns={columns}
               loading={isLoading}
               loadingRow={<TableRowSekeleton />}
+              onChangePage={setPage}
               renderRow={(r, i) => <MemoriesTableRow key={i} memory={r} />}
             />
         }

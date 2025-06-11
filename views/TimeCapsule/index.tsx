@@ -9,6 +9,7 @@ import TimeCapsuleRow from "./Row";
 import useSWR from "swr";
 import endpoint from "@/api/endpoint";
 import { ICapsule } from "@/utility/interface";
+import { useState } from "react";
 
 const columns = [
   { label: "Recipient", className: "!w-[25%]" },
@@ -20,7 +21,8 @@ const columns = [
 ]
 
 export default function TimeCapsule() {
-  const { data, isLoading } = useSWR(endpoint.capsule)
+  const [page, setPage] = useState(1)
+  const { data, isLoading } = useSWR(`${endpoint.capsule}?page=${page}`)
   return (
     <div className="w-full overflow-y-auto">
       <div className="space-y-4 py-8">
@@ -43,6 +45,7 @@ export default function TimeCapsule() {
           data={data?.data}
           columns={columns}
           loading={isLoading}
+          onChangePage={setPage}
           renderRow={(r: ICapsule, i) => <TimeCapsuleRow key={i} capsule={r} />}
         />
       </div>
