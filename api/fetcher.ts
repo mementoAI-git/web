@@ -77,12 +77,13 @@ export const fileUploadFetcher = async (url: string, { arg }) => {
     toast.success(res.data?.message || "Success");
     return res.data;
   } catch (error) {
-    console.log(error)
     let message = "Something went wrong";
 
     if (Axios.isAxiosError(error)) {
       const axiosError = error as AxiosError<IResponse>;
+      console.log(axiosError.response)
       message = axiosError.response?.data?.message || axiosError.message;
+      console.log(message)
       toast.error(message);
 
       throw axiosError.response?.data || null;

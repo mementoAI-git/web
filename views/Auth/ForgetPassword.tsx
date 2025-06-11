@@ -14,8 +14,9 @@ const schema = yup.object().shape({
     .required("Email is required")
     .email("Invalid email address")
     .trim(),
+  type: yup.string().default("reset")
 });
-const initial = { email: "" };
+const initial = { email: "", type: "reset" };
 export function ForgetPassword() {
   const router = useRouter();
   const { trigger, isMutating } = useFetcher(endpoint.sendLink);
