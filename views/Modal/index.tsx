@@ -15,6 +15,7 @@ import { SearchMemories } from "./Memory/Search";
 import CreateCapsule from "./Capsule/Create";
 import SelectBeneficiary from "./SelectBeneficiary";
 import { DeleteCapsule } from "./Capsule/Delete";
+import { PauseCapsule } from "./Capsule/Pause";
 
 
 const MODAL_COMPONENTS = {
@@ -36,6 +37,7 @@ const MODAL_COMPONENTS = {
   'chat-settings': ChatSettings,
   "create-capsule": CreateCapsule,
   "delete-capsule": DeleteCapsule,
+  "pause-capsule": PauseCapsule,
 }
 
 export default function Modal() {

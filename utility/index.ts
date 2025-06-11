@@ -1,4 +1,6 @@
 import { mutate } from "swr";
+import { clsx, type ClassValue } from "clsx"
+import { twMerge } from "tailwind-merge"
 
 export const hashEmail = (email: string) => {
   const [username, domain] = email.split("@");
@@ -56,8 +58,12 @@ export const isEmpty = (mixedVar: any) => {
   return false;
 };
 
-export const truncateFileName = (name: string) => {
-  if (name.length < 50) return name;
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs))
+}
+
+export const truncateFileName = (name: string, max_len = 50) => {
+  if (name.length < max_len) return name;
   const index = name.lastIndexOf(".");
   return `${name.slice(0, Math.min(index, 30))}..${name.slice(index)}`;
 };

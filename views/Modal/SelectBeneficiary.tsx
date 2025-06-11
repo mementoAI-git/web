@@ -2,20 +2,20 @@ import endpoint from "@/api/endpoint";
 import { Checkbox } from "@/components/Form";
 import { ModalCloseBtn } from "@/components/ModalLayout";
 import UserItem from "@/components/UserItem";
-import { useModal } from "@/hooks/use-modal";
 import { isEmpty } from "@/utility";
 import { IBeneficiary } from "@/utility/interface";
 import { useState } from "react";
 import useSWR from "swr";
 
 interface ISelectBeneficiary {
+  value: string[]
   handleClose: () => void
   onAddRecipient: (a: string[]) => void
 }
 
-export default function SelectBeneficiary({ onAddRecipient, handleClose }: ISelectBeneficiary) {
+export default function SelectBeneficiary({ value = [], onAddRecipient, handleClose }: ISelectBeneficiary) {
   const [page, setPage] = useState(1)
-  const [values, setValues] = useState([])
+  const [values, setValues] = useState(value)
   const { data, isLoading } = useSWR(`${endpoint.beneficiaries}?page=${page}`)
 
   const handleCheck = (b: IBeneficiary) => {

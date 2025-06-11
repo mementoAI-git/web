@@ -1,13 +1,10 @@
 import MicIcon from "@/public/icon/mic.svg";
-import { KeyboardEvent, useRef, useState } from "react";
+import { KeyboardEvent, useRef } from "react";
 import EmojiPicker from "@/components/EmojiPicker";
 import AttachmentPreview from "./AttatchmentPreview";
-import AttatchFile, { IOnUploadPayload } from "./AttatchFile";
-import useSWRMutation from "swr/mutation";
-import endpoint from "@/api/endpoint";
-import { fileUploadFetcher } from "@/api/fetcher";
-import { toast } from "sonner";
+import AttatchFile from "./AttatchFile";
 import { isEmpty } from "@/utility";
+import useFileUpload from "@/hooks/use-file-upload";
 
 interface IChatInput {
   text: string
@@ -20,8 +17,7 @@ interface IChatInput {
 
 export default function ChatInput({ typing = false, onStop, text = "", onChangeText, onSend }: IChatInput) {
   const ref = useRef<HTMLTextAreaElement>(null);
-  const { trigger: uploadFile } = useSWRMutation(endpoint.upload, fileUploadFetcher)
-  const [files, setFiles] = useState<IOnUploadPayload[]>([])
+  const { files, setFiles, handleUpload } = useFileUpload()
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     onChangeText(e.target.value);
@@ -31,23 +27,6 @@ export default function ChatInput({ typing = false, onStop, text = "", onChangeT
       ref.current.style.height = `${Math.min(ref.current.scrollHeight, 300)}px`;
     }
   };
-
-  const handleIUpload = async (file: IOnUploadPayload) => {
-    setFiles(prev => [...prev, file])
-
-    const result = await uploadFile({
-      file: file.file,
-      onProgress: (p: number) => {
-        setFiles(prev => prev.map(f => f.id === file.id ? { ...f, progress: p } : f))
-      }
-    })
-
-    if (!result.data[0]) {
-      toast.error("Upload unsuccessful")
-    } else {
-      setFiles(prev => prev.map(f => f.id === file.id ? { ...f, uploadedFile: result.data[0] } : f))
-    }
-  }
 
   const handleInsertEmoji = (emoji: any) => {
     if (!ref.current) return;
@@ -95,7 +74,7 @@ export default function ChatInput({ typing = false, onStop, text = "", onChangeT
         placeholder="What’s on your mind today? Click here to start typing, or click on the record button to say something. "
       ></textarea>
       <div className="items-center justify-between flex">
-        <AttatchFile onUpload={handleIUpload} />
+        <AttatchFile onUpload={handleUpload} />
         <div className="text-[#344054] flex gap-3 items-center">
           <div className="size-12 flex justify-center cursor-pointer items-center">
             <MicIcon width={14} height={20} />

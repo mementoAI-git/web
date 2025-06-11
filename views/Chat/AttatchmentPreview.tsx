@@ -1,6 +1,6 @@
 import CirclarProgress from "@/components/CirclarProgress";
 import TimesIcon from "@/public/icon/times.svg"
-import { IOnUploadPayload } from "./AttatchFile";
+import { IOnUploadPayload } from "@/utility/interface";
 
 export default function AttachmentPreview({ base64, progress }: IOnUploadPayload) {
   return (

@@ -1,4 +1,3 @@
-import FileIcon from "@/public/icon/file.svg"
 import BinIcon from "@/public/icon/bin.svg"
 import { formatFileSize, truncateFileName } from "@/utility"
 import { IFileState } from "."

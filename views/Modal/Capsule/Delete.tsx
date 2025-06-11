@@ -4,14 +4,21 @@ import Spinner from "@/components/Spinner";
 import useFetcher from "@/hooks/use-fetcher";
 import { useModal } from "@/hooks/use-modal";
 import BinIcon from "@/public/icon/bin.svg"
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 export function DeleteCapsule({ data: id }) {
   const { trigger, isMutating } = useFetcher(endpoint.capsule, "delete")
   const { close } = useModal()
+  const router = useRouter()
 
   const handleDelete = async () => {
-    await trigger(id)
+    const result = await trigger(id)
+    if (result.success) {
+      toast.success(result.message)
+    }
     close("delete-capsule")
+    router.push("/time-capsule")
   }
   return (
     <div className="modal-container !max-w-120">

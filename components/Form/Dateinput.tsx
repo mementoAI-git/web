@@ -1,51 +1,20 @@
 "use client";
 
 import { ITexinput } from "./TextInput"
-import CalendarIcon from "@/public/icon/calendar.svg"
-import ChevronRightIcon from "@/public/icon/chevron-right.svg"
-import ChevronLeftIcon from "@/public/icon/chevron-left.svg"
+import CalendarIcon from "@/public/icon/calendar-1.svg"
 import React, { ChangeEvent, useState } from "react";
-import Datepicker from "tailwind-datepicker-react"
 import dayjs from "dayjs"
 import useClickAway from "@/hooks/use-clickaway"
+import DatePicker from "../DatePicker";
 
-const options = {
-  theme: {
-    background: "!bg-white !top-2 !border !border-[#E9EAEB] !shadow-drop-down",
-    todayBtn: "!bg-[#7F56D9]",
-    clearBtn:
-      "!bg-transparent !text-[#414651] !font-semibold !text-sm !border-[#D5D7DA] border",
-    icons:
-      "!bg-transparent !text-[#414651] !font-semibold !font-inter !cursor-pointer hover:!bg-[#F3F3F3]/50",
-    text: "!font-inter !text-sm !font-normal !text-[#414651] !rounded-full hover:!bg-[#F3F3F3]",
-    disabledText:
-      "!text-[#717680] !font-inter !font-normal !rounded-full hover:!bg-[#F3F3F3]/50",
-    input: "",
-    inputIcon: "",
-    selected: "!rounded-full !bg-[#050709] !hover:bg-[#050709] !text-white",
-  },
-  datepickerClassNames: "text-black !top-20",
-  icons: {
-    next() {
-      return (
-        <span className="text-[#A4A7AE]">
-          <ChevronRightIcon />
-        </span>
-      );
-    },
-    prev() {
-      return (
-        <span className="text-[#A4A7AE]">
-          <ChevronLeftIcon width={8} />
-        </span>
-      );
-    },
-  },
-};
+interface IDateinput extends ITexinput {
+  minDate?: Date | null
+  maxDate?: Date | null
+}
 
-export function Dateinput({ label, onChange, ...props }: ITexinput) {
+export function Dateinput({ label, onChange, minDate = null, maxDate = null, ...props }: IDateinput) {
   const [show, setShow] = useState<boolean>(false)
-  const [value, setValue] = useState(dayjs().toDate())
+  const [value, setValue] = useState<Date>(dayjs(`${props.value}`).isValid() ? dayjs(String(props.value)).toDate() : undefined)
   const ref = useClickAway(() => setShow(false))
 
   const handleChange = (selectedDate: Date) => {
@@ -54,7 +23,7 @@ export function Dateinput({ label, onChange, ...props }: ITexinput) {
       const event = {
         target: {
           name: props.name || "",
-          value: dayjs(selectedDate).format("DD-MM-YYYY"),
+          value: dayjs(selectedDate).toISOString(),
         },
       };
 
@@ -67,24 +36,26 @@ export function Dateinput({ label, onChange, ...props }: ITexinput) {
       className={`input-container group relative ${props.error ? "error" : ""}`}
     >
       <label className="input-label">{label}</label>
-      <Datepicker
+      <DatePicker
         setShow={setShow}
         onChange={handleChange}
         show={show}
         classNames=""
-        options={options}
+        options={{ minDate, maxDate }}
       >
         <div className="input-base flex items-center justify-between">
           <input
             onFocus={() => setShow(true)}
-            placeholder="DD-MM-YYYY"
+            placeholder={dayjs(value).format("DD MMM, YYYY")}
             {...props}
-            value={value ? dayjs(value).format("DD-MM-YYYY") : ""}
+            value={value ? dayjs(value).format("DD MMM, YYYY") : ""}
             className="flex-1 outline-0 placeholder:text-[#000D4D73]"
           />
-          <CalendarIcon />
+          <span className="text-[#000D4D]">
+            <CalendarIcon width={15} />
+          </span>
         </div>
-      </Datepicker>
+      </DatePicker>
       {props.error && (
         <small className="text-xs text-danger">{props.error}</small>
       )}

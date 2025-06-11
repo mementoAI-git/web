@@ -33,7 +33,7 @@ export default function Taginput({ values, setValue, label, ...props }: ITaginpu
       <div className="input-base !h-fit !flex-wrap !justify-start">
         <div className="flex items-center gap-2">
           <div className="flex flex-wrap gap-2">
-            {values.map((v, i) => (
+            {values?.map((v, i) => (
               <span
                 onClick={() => removeTag(v)}
                 key={i}

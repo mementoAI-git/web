@@ -7,14 +7,15 @@ import ClipIcon from "@/public/icon/clip.svg";
 import EditIcon from "@/public/icon/edit.svg";
 import TrashcanIcon from "@/public/icon/trash.svg";
 import LockIcon from "@/public/icon/lock-1.svg";
-import AddBookmarkIcon from "@/public/icon/add-bookmark.svg";
+import PauseIcon from "@/public/icon/pause-outline.svg";
 
 import { useModal } from "@/hooks/use-modal";
 import dayjs from "dayjs";
 import PropsItem from "@/components/PropsItem";
 import { ICapsule } from "@/utility/interface";
-import { isEmpty } from "@/utility";
+import { cn, isEmpty } from "@/utility";
 import { DetailsSideBarSkeleton } from "./Skeleton";
+import { tagColors } from "@/utility/constant";
 
 export default function CapsulesSidebar({ data }: { data: ICapsule }) {
   const { open } = useModal();
@@ -40,7 +41,7 @@ export default function CapsulesSidebar({ data }: { data: ICapsule }) {
           <PropsItem
             icon={<LockIcon width={13} />}
             title="Status:"
-            subtitle={<span className="mem-tags">{data?.status}</span>}
+            subtitle={<span className={cn("mem-tags", tagColors[data?.status])}>{data?.status}</span>}
           />
         </ul>
       </div>
@@ -52,12 +53,12 @@ export default function CapsulesSidebar({ data }: { data: ICapsule }) {
           <PropsItem
             icon={<TextIcon width={13} />}
             title="word count:"
-            subtitle={<span className="mem-tags">{2}</span>}
+            subtitle={<span className="mem-tags">{data?.body.split(/\s+/).length}</span>}
           />
           <PropsItem
             icon={<ClipIcon width={13} />}
             title="attachment:"
-            subtitle={<span className="mem-tags">{6}</span>}
+            subtitle={<span className="mem-tags">{data.attachments.length || 0}</span>}
           />
         </ul>
       </div>
@@ -69,11 +70,13 @@ export default function CapsulesSidebar({ data }: { data: ICapsule }) {
           <PropsItem
             icon={<EditIcon width={13} />}
             title="Edit this post"
+            onClick={() => open("create-capsule", data)}
             className="cursor-pointer !text-sm !font-medium !text-grey-600"
           />
           <PropsItem
-            icon={<AddBookmarkIcon width={13} />}
+            icon={<PauseIcon width={10} />}
             title="Pause Delivery"
+            onClick={() => open("pause-capsule", data._id)}
             className="cursor-pointer !text-sm !font-medium !text-grey-600"
           />
           <PropsItem

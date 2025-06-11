@@ -82,12 +82,20 @@ export interface IBeneficiary {
 export interface ICapsule {
   _id?: string
   user: string
-  recipients: string[]
+  recipients: IUser[]
   delivery_date: string
   title: string
   body: string
-  attachments: string[]
+  attachments: IOnUploadPayload[]
   status: string // Scheduled draft success
   created_at: string
   updated_at: string
+}
+
+export interface IOnUploadPayload {
+  base64?: string
+  file: File | null
+  id: string
+  progress: number
+  uploadedFile?: IFile | null
 }
