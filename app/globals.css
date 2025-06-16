@@ -56,6 +56,7 @@ body {
   font-optical-sizing: auto;
   font-weight: 400;
   font-size: 16px;
+  overflow: hidden;
   font-family:
     var(--font-bricolage), var(--font-geist), var(--font-inter), sans-serif;
 }

@@ -63,7 +63,7 @@ export default function History({ messages, setMessages, children }: IHistory) {
   }, [])
 
   return (
-    <div ref={containerRef} className="flex-1 overflow-y-auto px-4 py-6 pt-8  space-y-4 overflow-x-hidden flex flex-col gap-2 justify-end">
+    <div ref={containerRef} className="size-full overflow-x-hidden overflow-y-auto px-4 py-6 pt-8 space-y-4  gap-2 justify-end">
       <div ref={observerRef} className="mt-10 py-5 flex justify-center items-center h-10 w-full">
         {
           (loading && next) &&

@@ -75,8 +75,11 @@ export default function Chat() {
   }, [messages])
 
   return (
-    <div className="w-full flex justify-center">
-      <div style={{ height: 'calc(100vh - 88px)' }} className="mx-auto overflow-x-hidden flex flex-col w-full max-w-220 flex-1">
+    <div className="size-full flex justify-center">
+      <div
+        style={{ height: 'calc(100vh - 108px)' }}
+        className="mx-auto flex flex-col size-full max-w-220"
+      >
         <History {...{ messages, setMessages }}>
           {
             (isMutating || greeting) ?

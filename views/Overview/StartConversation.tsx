@@ -29,9 +29,9 @@ export default function StartConversation() {
           {[
             { icon: <TextIcon width={16} height={16} />, onCick: () => handleAddMemory() },
             { icon: <CameraIcon width={23} height={21} />, onCick: () => handleAddMemory("video") },
-            { icon: <ImageIcon width={18} height={18} />, onClick: handleAddMemory() },
+            { icon: <ImageIcon width={18} height={18} />, onClick: () => handleAddMemory() },
             { icon: <MicIcon width={14} height={20} />, onCick: () => handleAddMemory("audio") },
-            { icon: <ClipIcon width={17.98} height={19} />, },
+            { icon: <ClipIcon width={17.98} height={19} />, onClick: () => handleAddMemory() },
             // { icon: <PlanepaperIcon width={19.23} height={19.23} />, },
           ].map((d, i) => (
             <div

@@ -26,7 +26,7 @@ export function Profile() {
           <StatsCard icon="✌🏾" value={String(user?.streak || 0)} title="Current streak" />
           <StatsCard
             icon={<BoltIcon width={20} height={22} />}
-            value="256"
+            value="0"
             title="Points earned"
           />
         </div>

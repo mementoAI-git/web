@@ -36,7 +36,7 @@ export function AddBeneficiary() {
     async onSubmit(p) {
       const result = await trigger(p)
       if (result.success) {
-        mutate(endpoint.beneficiaries)
+        await mutate(`${endpoint.beneficiaries}?page=1`)
         toast.success(result?.message)
         close("add-beneficiary")
       }

@@ -3,6 +3,8 @@ import TrashIcon from "@/public/icon/bin.svg";
 import dayjs from "dayjs";
 import { useModal } from "@/hooks/use-modal";
 import UserItem from "@/components/UserItem";
+import { cn, isEmpty } from "@/utility";
+import { tagColors } from "@/utility/constant";
 
 export default function BeneficiaryRow({ beneficiary }) {
   const { open } = useModal()
@@ -19,9 +21,14 @@ export default function BeneficiaryRow({ beneficiary }) {
       <td>
         <UserItem {...beneficiary} />
       </td>
-      <td>{dayjs(beneficiary.created_at).format("MMM DD, YYYY")}</td>
-      <td>{beneficiary?.relationship || ""}</td>
-      <td>{beneficiary?.status || ""}</td>
+      <td>
+        {
+          isEmpty(beneficiary.accepted_at) ?
+            <span className={cn("mem-tags", tagColors[beneficiary?.status])}>{beneficiary?.status}</span> :
+            dayjs(beneficiary.accepted_at).format("MMM DD, YYYY")
+        }
+      </td>
+      <td className="capitalize">{beneficiary?.relationship || ""}</td>
       <td><span className="mem-tags">Level {beneficiary?.level}</span></td>
       <td>
         <div className="flex items-center justify-end gap-2 text-secondary">

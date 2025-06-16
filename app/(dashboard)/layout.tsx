@@ -20,13 +20,13 @@ export default function DashboardLayout({ children }: PropsWithChildren) {
   })
   return (
     <AuthCheck>
-      <div className="bg-white max-w-[1450px] mx-auto w-screen min-h-screen flex">
+      <div className="bg-white max-w-[1450px] mx-auto w-screen h-screen flex">
         <Modal />
         <DashboardSideBar />
-        <main className="flex-1 border-grey-500 border-r">
+        <main className="flex-1 flex flex-col border-grey-500 border-r h-screen">
           <DashboardHeader />
-          <div className="w-full">
-            <div className="mx-auto">
+          <div className="size-full">
+            <div className="mx-auto h-full">
               {children}
             </div>
           </div>

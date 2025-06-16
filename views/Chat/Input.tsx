@@ -58,7 +58,7 @@ export default function ChatInput({ typing = false, onStop, text = "", onChangeT
   };
 
   return (
-    <div className=" w-full border border-primary rounded-2xl p-10 flex flex-col gap-8 h-fit min-h-46 bg-white z-50">
+    <div className="w-full border border-primary rounded-2xl p-10 flex flex-col gap-8 h-fit min-w-lg min-h-46 bg-white z-50">
       {
         !isEmpty(files) &&
         <div className="flex items-center gap-2">

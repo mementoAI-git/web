@@ -1,14 +1,9 @@
-import endpoint from "@/api/endpoint"
-import useFetcher from "@/hooks/use-fetcher"
 import { useStore } from "@/hooks/use-store"
-import { isEmpty } from "@/utility"
 import dayjs from "dayjs"
-import { useEffect, useMemo } from "react"
-import { mutate } from "swr"
+import { useMemo } from "react"
 
 export default function Streak() {
   const { user } = useStore()
-  const { trigger } = useFetcher(endpoint.updateStreak)
 
   const streak = useMemo(() => {
     const end_index = dayjs(user?.last_seen).get("day")
@@ -18,16 +13,7 @@ export default function Streak() {
     }
   }, [user])
 
-  useEffect(() => {
-    if (isEmpty(user)) return;
-    if (!dayjs().isSame(user?.last_seen, "date")) {
-      trigger()
-        .then(res => {
-          if (res.data) mutate(endpoint.profile)
-        })
-        .catch(console.log)
-    }
-  }, [user, trigger, mutate])
+
   return (
     <div className="max-w-[335px] w-full flex flex-col gap-5 flex-1 font-inter rounded-2xl p-10 border-grey-700 bg-[#FCFCFD] border">
       <span className="text-grey-800 font-medium text-xs">✌🏽 MY WEEKLY STREAK</span>

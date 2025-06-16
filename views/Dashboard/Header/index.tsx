@@ -2,9 +2,13 @@ import { Searchinput } from "@/components/Form";
 import { useStore } from "@/hooks/use-store";
 import { isEmpty } from "@/utility";
 import { usePathname } from "next/navigation";
-import React from "react";
+import React, { useEffect } from "react";
 import MenuIcon from "@/public/icon/menu.svg"
 import { useModal } from "@/hooks/use-modal";
+import useFetcher from "@/hooks/use-fetcher";
+import endpoint from "@/api/endpoint";
+import dayjs from "dayjs";
+import { mutate } from "swr";
 
 const headerTitle = {
   "memories": "my memories",
@@ -17,6 +21,18 @@ export function DashboardHeader() {
   const path = usePathname().replace('/', "")
   const { user } = useStore()
   const { open } = useModal()
+  const { trigger } = useFetcher(endpoint.updateStreak)
+
+  useEffect(() => {
+    if (isEmpty(user)) return;
+    if (!dayjs().isSame(user?.last_seen, "date")) {
+      trigger()
+        .then(res => {
+          if (res.data) mutate(endpoint.profile)
+        })
+        .catch(console.log)
+    }
+  }, [user, trigger, mutate])
 
   return (
     <div className="w-full border-b border-grey-500">
