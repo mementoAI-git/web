@@ -12,7 +12,7 @@ export default function Overview() {
   const { data, isLoading } = useSWR(endpoint.prompts);
 
   return (
-    <div className="w-full">
+    <div className="size-full overflow-y-auto hide-scrollbar">
       <div className="py-8 space-y-3">
         <div className="text-4xl text-secondary font-bricolage font-medium leading-11 capitalize">
           Overview

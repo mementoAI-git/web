@@ -77,7 +77,7 @@ export default function Chat() {
   return (
     <div className="size-full flex justify-center">
       <div
-        style={{ height: 'calc(100vh - 108px)' }}
+        style={{ height: 'calc(100vh - 88px)' }}
         className="mx-auto flex flex-col size-full max-w-220"
       >
         <History {...{ messages, setMessages }}>

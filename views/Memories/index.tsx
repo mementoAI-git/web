@@ -24,7 +24,7 @@ export default function Memories() {
   const { data, isLoading } = useSWR(`${endpoint.memories}?page=${page}`);
 
   return (
-    <div className="w-full overflow-y-auto">
+    <div className="size-full overflow-y-auto hide-scrollbar">
       <div className="space-y-4 py-8">
         <div className="flex items-center gap-2">
           <span className="font-inter text-xl leading-[30px] font-semibold">

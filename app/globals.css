@@ -61,6 +61,19 @@ body {
     var(--font-bricolage), var(--font-geist), var(--font-inter), sans-serif;
 }
 
+.hide-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.h-page {
+  height: calc(100vh - 88px)
+}
+
 @layer utilities {
   .page-title {
     @apply text-secondary font-medium font-bricolage text-4xl
