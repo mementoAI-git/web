@@ -21,7 +21,7 @@ export default function AddBeneficiaries() {
     initial,
     schema,
     async onSubmit(p) {
-      trigger(p)
+      trigger({ ...p, relationship: "friend" })
     },
   });
   return (

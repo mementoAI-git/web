@@ -18,7 +18,7 @@ interface IConfirmEmail {
 
 export function ConfirmEmail({ email, token }: IConfirmEmail) {
   const router = useRouter();
-  const { unsetAuth } = useStore()
+  const { unsetAuth, setAuth } = useStore()
   const { trigger, data, error } = useFetcher(endpoint.verifyEmail);
   const { trigger: sendLink, isMutating: sending } = useFetcher(
     endpoint.sendLink,
@@ -38,7 +38,10 @@ export function ConfirmEmail({ email, token }: IConfirmEmail) {
   useEffect(() => {
     if (token) {
       trigger({ token })
-        .then(unsetAuth)
+        .then((data) => {
+          unsetAuth()
+          setAuth(data.data)
+        })
         .catch(console.log);
     }
   }, [token]);

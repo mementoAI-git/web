@@ -16,7 +16,9 @@ const schema = yup.object().shape({
     .trim(),
   type: yup.string().default("reset")
 });
+
 const initial = { email: "", type: "reset" };
+
 export function ForgetPassword() {
   const router = useRouter();
   const { trigger, isMutating } = useFetcher(endpoint.sendLink);

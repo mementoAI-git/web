@@ -10,6 +10,7 @@ import useForm from "@/hooks/use-form";
 import { useStore } from "@/hooks/use-store";
 import { isEmpty } from "@/utility";
 import countries from "@/utility/countries";
+import dayjs from "dayjs";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import * as yup from "yup"
@@ -83,6 +84,7 @@ export function Profile() {
             label="Date of birth"
             value={values.dob}
             error={errors.dob}
+            maxDate={dayjs().toDate()}
             onChange={handleChange}
           />
           <Selectinput
