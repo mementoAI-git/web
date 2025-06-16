@@ -8,7 +8,7 @@ import { AudioRecButtons } from "./RecButtons";
 import { toast } from "sonner";
 import { IRecorder } from "./interface";
 
-const fileType = "audio/mp3";
+const fileType = "audio/webm";
 
 export const AudioRecorder = forwardRef(function AudioRec({ onStart, onFinish }: IRecorder, ref) {
   const [stream, setStream] = useState<MediaStream | null>(null);

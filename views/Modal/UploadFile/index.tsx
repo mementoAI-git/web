@@ -31,8 +31,9 @@ export default function UploadFiles({ data: id }) {
   const { trigger: addToPost, isMutating: adding } = useFetcher(id ? `${endpoint.memories}/${id}` : null, "put")
 
   const handleDeleteFile = async (file: IFileState) => {
-    if (!file.result.name) return
-    await deleteFile(file.result.name)
+    if (file?.result?.name) {
+      await deleteFile(file.result.name)
+    }
 
     setFiles(files => files.filter((f) => f.id !== file.id))
     if (isEmpty(id)) {

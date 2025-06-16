@@ -9,6 +9,7 @@ import endpoint from "@/api/endpoint";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import useFetcher from "@/hooks/use-fetcher";
+import { useStore } from "@/hooks/use-store";
 
 interface IConfirmEmail {
   token: string | null;
@@ -17,6 +18,7 @@ interface IConfirmEmail {
 
 export function ConfirmEmail({ email, token }: IConfirmEmail) {
   const router = useRouter();
+  const { unsetAuth } = useStore()
   const { trigger, data, error } = useFetcher(endpoint.verifyEmail);
   const { trigger: sendLink, isMutating: sending } = useFetcher(
     endpoint.sendLink,
@@ -35,7 +37,9 @@ export function ConfirmEmail({ email, token }: IConfirmEmail) {
 
   useEffect(() => {
     if (token) {
-      trigger({ token });
+      trigger({ token })
+        .then(unsetAuth)
+        .catch(console.log);
     }
   }, [token]);
 

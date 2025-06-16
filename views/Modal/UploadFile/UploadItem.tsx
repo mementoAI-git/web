@@ -28,12 +28,9 @@ export default function FileUploadItem({ file, onDelete }: IFileUploadItem) {
             <span className="text-secondary font-medium font-inter text-sm">
               {truncateFileName(name)}
             </span>
-            {
-              file.result &&
-              <div onClick={() => onDelete(file)} className="text-[#A4A7AE] cursor-pointer">
-                <BinIcon width={13} height={13} />
-              </div>
-            }
+            <div onClick={() => onDelete(file)} className="text-[#A4A7AE] cursor-pointer">
+              <BinIcon width={13} height={13} />
+            </div>
           </div>
           <span className="text-grey-600 font-inter font-normal text-sm">
             {formatFileSize(Number(size))}

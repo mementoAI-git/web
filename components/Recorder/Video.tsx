@@ -20,7 +20,7 @@ const constraints = {
   video: true,
 };
 
-const fileType = "video/mp4";
+const fileType = "video/webm";
 
 export const VideoRecorder = forwardRef(function AudioRec({ onStart, onFinish }: IRecorder, ref) {
   const [stream, setStream] = useState<MediaStream | null>(null);
