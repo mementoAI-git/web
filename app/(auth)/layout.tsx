@@ -6,8 +6,8 @@ import Logo from "@/components/Logo";
 
 export default function AuthLayout({ children }: PropsWithChildren) {
   return (
-    <div className="min-h-screen border-4 mx-auto w-screen bg-surface">
-      <header className="flex max-h-[96px] w-full max-w-[1440px] items-center justify-between px-5 lg:px-20 py-6">
+    <div className="h-screen overflow-y-auto hide-scrollbar border-4 mx-auto w-screen bg-surface">
+      <header className="flex mx-auto max-h-[96px] w-full max-w-[1440px] items-center justify-between px-5 lg:px-20 py-6">
         <Logo />
         <button className="flex max-h-[48px] max-w-[133px] cursor-pointer items-center gap-1 rounded-lg border border-[#0011661A] p-4 shadow-btn">
           <CircleQuestionMarkIcon />
@@ -16,7 +16,7 @@ export default function AuthLayout({ children }: PropsWithChildren) {
           </span>
         </button>
       </header>
-      <main className="mt-3 max-w-[1440px] py-20">{children}</main>
+      <main className="mt-3 mx-auto w-full h-fit max-w-[1440px] py-20">{children}</main>
     </div>
   );
 }

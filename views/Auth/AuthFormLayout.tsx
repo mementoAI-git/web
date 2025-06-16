@@ -23,7 +23,7 @@ export function AuthFormLayout({
 }: IAuthFormLayout) {
   return (
     <div
-      className={`group mx-auto flex w-full max-w-[554px] flex-col justify-center gap-10 rounded-xl bg-white p-10 ${className}`}
+      className={`group mx-auto flex w-full h-fit max-w-[554px] flex-col justify-center gap-10 rounded-xl bg-white p-10 ${className}`}
     >
       {can_go_back && (
         <Link href="/login" className="flex cursor-pointer items-center gap-2">
