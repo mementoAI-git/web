@@ -4,6 +4,7 @@ import Filter from "./Filter";
 import { Searchinput } from "@/components/Form";
 import { useModal } from "@/hooks/use-modal";
 import PlusIcon from "@/public/icon/plus.svg"
+import { cn } from "@/utility";
 
 export default function Header({ count = 0 }) {
   const { open } = useModal()
@@ -16,7 +17,10 @@ export default function Header({ count = 0 }) {
       <div className="flex items-stretch max-h-10 gap-3">
         <Searchinput />
         {/* <Filter /> */}
-        <button onClick={() => open("add-beneficiary")} className="flex items-center justify-center gap-1 bg-secondary rounded-lg w-46 text-white cursor-pointer">
+        <button
+          onClick={() => open("add-beneficiary")}
+          className={cn("btn", "!rounded-lg w-fit")}
+        >
           <PlusIcon width={15} />
           <span>Add Beneficiary</span>
         </button>

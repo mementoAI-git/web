@@ -11,6 +11,7 @@ const columns = [
   { label: "recipient" },
   { label: "date added" },
   { label: "relationship" },
+  { label: "status" },
   { label: "permission level" },
   { label: "Actions", className: "text-right" },
 ]

@@ -21,7 +21,8 @@ const initial = {
   attachments: []
 }
 
-export function CreateMemory() {
+export function CreateMemory({ data }) {
+  const { payload, type: declaredType } = data
   const { close, open, push } = useModal()
 
   const audioRef = useRef(null)
@@ -29,7 +30,7 @@ export function CreateMemory() {
 
   const [editMode, setEditMode] = useState(false)
   const [recording, setRecording] = useState(false)
-  const [type, setType] = useState("text")
+  const [type, setType] = useState(declaredType || "text")
 
   const { trigger, isMutating } = useSWRMutation(endpoint.memories, fileUploadFetcher)
 
@@ -44,7 +45,7 @@ export function CreateMemory() {
   }
 
   const { values, handleChange, setValues, handleSubmit, handleValue } = useForm({
-    initial,
+    initial: { ...initial, ...payload },
     async onSubmit(p) {
       if (isEmpty(p.title)) {
         return toast.error("Title is required")
@@ -54,7 +55,6 @@ export function CreateMemory() {
       if (attachments) {
         p.attachments = JSON.parse(attachments).files.map(f => f.result._id)
       }
-      console.log(p)
       const result = await trigger(p)
       if (result?.success) {
         open("set-tag-permission", result.data);

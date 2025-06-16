@@ -2,6 +2,7 @@ import Image from "next/image";
 import questionIcon from "@/public/image/question.png";
 import quizIcon from "@/public/image/lighten.png";
 import { useModal } from "@/hooks/use-modal";
+import { cn } from "@/utility";
 
 interface IDailyPrompt {
   type: string;
@@ -27,7 +28,12 @@ export default function DailyPrompt({ type, title, _id }: IDailyPrompt) {
         </span>
         <div className="space-y-3">
           <span className="block text-grey-900 font-inter font-semibold ">{title}</span>
-          <button onClick={handleReplyClick} className="hidden group-hover:block cursor-pointer rounded-full bg-secondary py-2 px-5 text-white font-inter disabled:bg-grey-500 disabled:text-grey-800 font-medium text-sm transition-all duration-500">Reply</button>
+          <button
+            onClick={handleReplyClick}
+            className={cn("btn", "hidden")}
+          >
+            Reply
+          </button>
         </div>
       </div>
     </div>

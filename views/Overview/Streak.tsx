@@ -47,9 +47,9 @@ export default function Streak() {
       <span className="text-left text-grey-600">
         Great start so far! Keep going.
       </span>
-      <span className="block cursor-pointer text-center text-xs font-medium text-primary">
+      {/* <span className="block cursor-pointer text-center text-xs font-medium text-primary">
         See more stats
-      </span>
+      </span> */}
     </div>
   );
 }

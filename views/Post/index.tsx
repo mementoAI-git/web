@@ -12,7 +12,7 @@ export default function Post({ memory }: { memory: IMemory }) {
   return (
     <div className="w-full space-y-10">
       <div className="space-y-3">
-        <h3 className="font-medium font-bricolage text-6xl text-secondary">My travel experiences - 2024</h3>
+        <h3 className="font-medium font-bricolage text-6xl text-secondary">{memory?.title}</h3>
         <div className="flex flex-col gap-3 p-3 border border-grey-500 rounded-xl">
           <div className="flex flex-wrap gap-12">
             <PropsItem

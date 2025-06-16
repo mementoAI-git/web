@@ -34,9 +34,8 @@ export function AddBeneficiary() {
     initial,
     schema,
     async onSubmit(p) {
-      console.log(p)
       const result = await trigger(p)
-      if (result?.data) {
+      if (result.success) {
         mutate(endpoint.beneficiaries)
         toast.success(result?.message)
         close("add-beneficiary")

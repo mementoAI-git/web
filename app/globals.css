@@ -116,10 +116,10 @@ body {
   }
 
   .btn {
-    @apply flex cursor-pointer items-center justify-center gap-2 rounded-full bg-secondary px-5 py-2 font-inter font-semibold text-white disabled:bg-[#C7C9C8] disabled:cursor-not-allowed;
+    @apply flex cursor-pointer items-center justify-center gap-2 rounded-full bg-secondary hover:bg-[#000626cc] shadow-btn hover:scale-[97%] px-5 py-2 font-inter font-semibold text-white disabled:bg-[#C7C9C8] disabled:cursor-not-allowed transition-all duration-150;
   }
 
   .btn-outline {
-    @apply flex cursor-pointer items-center justify-center gap-2 rounded-full border border-secondary px-5 py-2 font-inter font-semibold text-secondary disabled:border-[#C7C9C8] disabled:text-[#C7C9C8];
+    @apply flex cursor-pointer items-center justify-center gap-2 rounded-full border border-secondary hover:border-[#000626cc] hover:scale-[97%] px-5 py-2 font-inter font-semibold text-secondary disabled:border-[#C7C9C8] disabled:text-[#C7C9C8] transition-all duration-150;
   }
 }

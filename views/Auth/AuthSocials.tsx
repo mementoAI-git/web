@@ -11,7 +11,7 @@ import useFetcher from "@/hooks/use-fetcher";
 const providers = [
   { title: "google", desc: "Sign up with Google", icon: <GoogleIcon /> },
   { title: "facebook", desc: "Sign up with Facebook", icon: <FacebookIcon /> },
-  { title: "apple", desc: "Sign up with Facebook", icon: <AppleIcon /> },
+  { title: "apple", desc: "Sign up with Apple", icon: <AppleIcon /> },
 ];
 
 export default function AuthSocials() {

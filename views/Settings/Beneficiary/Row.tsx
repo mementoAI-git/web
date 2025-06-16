@@ -21,6 +21,7 @@ export default function BeneficiaryRow({ beneficiary }) {
       </td>
       <td>{dayjs(beneficiary.created_at).format("MMM DD, YYYY")}</td>
       <td>{beneficiary?.relationship || ""}</td>
+      <td>{beneficiary?.status || ""}</td>
       <td><span className="mem-tags">Level {beneficiary?.level}</span></td>
       <td>
         <div className="flex items-center justify-end gap-2 text-secondary">

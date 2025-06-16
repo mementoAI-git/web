@@ -1,6 +1,7 @@
 import { ButtonHTMLAttributes } from "react";
 import Spinner from "../Spinner";
 import Link from "next/link";
+import { cn } from "@/utility";
 
 interface IButton extends ButtonHTMLAttributes<HTMLButtonElement> {
   title: string;
@@ -19,7 +20,7 @@ export function Button({
     return (
       <Link
         href={href}
-        className={`mt-2 flex h-12 w-full cursor-pointer items-center justify-center gap-3 rounded-lg bg-secondary shadow-btn ${className}`}
+        className={cn("btn", "!rounded-lg mt-2 h-12 w-full", className, { "bg-grey-100": props.disabled })}
       >
         <span className="text-center font-inter text-base leading-6 font-bold text-white">
           {title}
@@ -31,7 +32,7 @@ export function Button({
     <button
       {...props}
       disabled={loading}
-      className={`bg-secondary ${props.disabled && "bg-grey-100"} mt-2 flex h-12 w-full cursor-pointer items-center justify-center gap-3 rounded-lg shadow-btn disabled:cursor-not-allowed ${className}`}
+      className={cn("btn", "!rounded-lg mt-2 h-12 w-full", className, { "bg-grey-100": props.disabled })}
     >
       <span className="text-center font-inter text-base leading-6 font-bold text-white">
         {title}
