@@ -11,6 +11,7 @@ import useSWRMutation from "swr/mutation";
 import { AudioRecorder, VideoRecorder } from "@/components/Recorder";
 import { TextArea } from "@/components/Memory/TextArea";
 import useFetcher from "@/hooks/use-fetcher";
+import { isEmpty } from "@/utility";
 
 const initial = {
   body: "",
@@ -85,6 +86,9 @@ export default function PromptInput({ data }) {
       .catch(console.log)
 
   }, [data?.prompt]);
+
+  console.log(memory?.body, values.body)
+  console.log("edit mode:", (memory?.body ? values.body !== memory?.body : !isEmpty(values.body)))
   return (
     <div className="modal-container">
       <ModalCloseBtn onClick={handleClose} />
@@ -111,7 +115,7 @@ export default function PromptInput({ data }) {
         disabled={(["audio", "video"].includes(type) && recording) || isLoading}
         saving={isMutating}
         type={type}
-        editMode={editMode || (memory?.body && values.body !== memory?.body)}
+        editMode={editMode || (memory?.body ? values.body !== memory?.body : !isEmpty(values.body))}
       />
     </div>
   )
