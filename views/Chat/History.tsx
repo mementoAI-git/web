@@ -12,69 +12,117 @@ interface IHistory extends PropsWithChildren {
 }
 
 export default function History({ messages, setMessages, children }: IHistory) {
-  const observerRef = useRef(null)
-  const containerRef = useRef(null)
-  const [next, setNext] = useState(null)
-  const { trigger: getMessages, isMutating: loading, } = useFetcher(`${endpoint.aiPromptMessage}?next=${next || ""}`, "get")
+  const containerRef = useRef<HTMLDivElement>(null)
+  const wasAtBottomRef = useRef(true);
+  const lastScrollTop = useRef(0);
+  const isLoadingMoreRef = useRef(false);
+  const loadMoreTriggeredRef = useRef(false);
+
+  const [next, setNext] = useState<string | null>(null)
+  const [hasInitialized, setHasInitialized] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+
+  const { trigger: getMessages } = useFetcher(`${endpoint.aiPromptMessage}?limit=50&next=${next || ""}`, "get")
 
   const fetchMessage = useCallback(async () => {
+    if (isLoadingMoreRef.current) return;
+
+    isLoadingMoreRef.current = true;
+    setIsLoadingMore(true);
+
     try {
-      const { data } = await getMessages()
+      const { data } = await getMessages();
       if (!data) return;
 
-      if (isEmpty(messages)) setMessages(data?.messages || [])
-      else setMessages(p => [...data?.messages, ...p]);
+      const container = containerRef.current;
+      const oldScrollHeight = container?.scrollHeight || 0;
 
-      setNext(data?.next)
-    } catch (error) {
-      console.log(error)
-    }
-  }, [messages, getMessages])
+      if (isEmpty(messages)) {
+        setMessages(data?.messages || []);
+      } else {
+        setMessages(prev => [...data?.messages, ...prev]);
+      }
+      setNext(data?.next);
 
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && !isEmpty(next)) {
-          fetchMessage();
+      setTimeout(() => {
+        if (container) {
+          const newScrollHeight = container.scrollHeight;
+          const heightDifference = newScrollHeight - oldScrollHeight;
+          container.scrollTop = container.scrollTop + heightDifference;
         }
-      },
-      {
-        root: containerRef.current,
-        rootMargin: '50px',
-        threshold: 0.5,
-      }
-    );
+        loadMoreTriggeredRef.current = false;
+      }, 50);
 
-    const currentObserverRef = observerRef.current;
-    if (currentObserverRef) {
-      observer.observe(currentObserverRef);
+    } catch (error) {
+      console.log(error);
+      loadMoreTriggeredRef.current = false;
+    } finally {
+      isLoadingMoreRef.current = false;
+      setIsLoadingMore(false);
+    }
+  }, [getMessages, messages]);
+
+  // Initial load
+  useEffect(() => {
+    if (!hasInitialized) {
+      fetchMessage();
+      setHasInitialized(true);
+    }
+  }, []);
+
+  const handleScroll = useCallback(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const { scrollTop, scrollHeight, clientHeight } = container;
+    wasAtBottomRef.current = scrollTop + clientHeight >= scrollHeight - 10;
+
+    const isScrollingUp = scrollTop < lastScrollTop.current;
+
+    if (
+      scrollTop <= 30 &&
+      isScrollingUp &&
+      next &&
+      !isLoadingMoreRef.current &&
+      !loadMoreTriggeredRef.current
+    ) {
+      loadMoreTriggeredRef.current = true;
+      fetchMessage();
     }
 
-    return () => {
-      if (currentObserverRef) {
-        observer.unobserve(currentObserverRef);
-      }
-      observer.disconnect();
-    };
-  }, [fetchMessage]);
+    lastScrollTop.current = scrollTop;
+  }, [next, fetchMessage]);
 
   useEffect(() => {
-    fetchMessage()
-  }, [])
+    const container = containerRef.current;
+    if (!container || !hasInitialized) return;
+
+    if (wasAtBottomRef.current && !isLoadingMore) {
+      setTimeout(() => {
+        container.scrollTo({
+          top: container.scrollHeight,
+          behavior: 'smooth'
+        });
+      }, 100);
+    }
+  }, [messages, children, hasInitialized, isLoadingMore]);
 
   return (
-    <div ref={containerRef} className="size-full overflow-x-hidden overflow-y-auto px-4 py-6 pt-8 space-y-4  gap-2 justify-end">
-      <div ref={observerRef} className="mt-10 py-5 flex justify-center items-center h-10 w-full">
-        {
-          (loading && next) &&
-          <div className="flex gap-1.5">
-            <span>Loading...</span>
-            <div>
-              <Spinner loading={loading} className="!size-3" />
-            </div>
+    <div
+      ref={containerRef}
+      onScroll={handleScroll}
+      className="size-full overflow-x-hidden overflow-y-auto px-4 py-6 pt-8 space-y-4 gap-2"
+      style={{ scrollBehavior: 'smooth' }}
+    >
+      {isLoadingMore && (
+        <div className="py-3 flex justify-center items-center">
+          <div className="flex gap-1.5 text-sm text-gray-500">
+            <span>Loading more messages...</span>
+            <Spinner loading={true} className="!size-3" />
           </div>
-        }
-      </div>
+        </div>
+      )}
+
       {messages && messages.map((m, i) => <Message key={i} {...m} />)}
       {children}
     </div>

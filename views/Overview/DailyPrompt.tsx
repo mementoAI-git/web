@@ -30,7 +30,7 @@ export default function DailyPrompt({ type, title, _id }: IDailyPrompt) {
           <span className="block text-grey-900 font-inter font-semibold ">{title}</span>
           <button
             onClick={handleReplyClick}
-            className={cn("btn", "hidden")}
+            className={cn("cursor-pointer bg-secondary hover:bg-[#000626b3] rounded-full shadow-btn hover:scale-[97%] px-5 py-2 font-inter font-semibold text-white transition-all duration-150 hidden group-hover:flex")}
           >
             Reply
           </button>

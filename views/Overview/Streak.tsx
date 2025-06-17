@@ -15,7 +15,7 @@ export default function Streak() {
 
 
   return (
-    <div className="max-w-[335px] w-full flex flex-col gap-5 flex-1 font-inter rounded-2xl p-10 border-grey-700 bg-[#FCFCFD] border">
+    <div className="max-w-[335px] min-h-60 w-full flex flex-col gap-5 flex-1 font-inter rounded-2xl p-10 border-grey-700 bg-[#FCFCFD] border">
       <span className="text-grey-800 font-medium text-xs">✌🏽 MY WEEKLY STREAK</span>
       <div className="mx-auto flex justify-between uppercase items-stretch">
         {
