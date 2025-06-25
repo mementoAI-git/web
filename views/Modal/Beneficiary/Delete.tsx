@@ -5,6 +5,7 @@ import useFetcher from "@/hooks/use-fetcher";
 import { useModal } from "@/hooks/use-modal";
 import BinIcon from "@/public/icon/bin.svg"
 import { toast } from "sonner";
+import { mutate } from "swr";
 
 export function DeleteBeneficiary({ data: id }) {
   const { trigger, isMutating } = useFetcher(endpoint.beneficiaries, "delete")
@@ -13,6 +14,7 @@ export function DeleteBeneficiary({ data: id }) {
   const handleDelete = async () => {
     const result = await trigger(id)
     if (result?.data) {
+      await mutate(`${endpoint.beneficiaries}?page=1`)
       toast.success(result?.message)
       close("delete-beneficiary")
     }

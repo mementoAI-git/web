@@ -1,8 +1,9 @@
 import MicIcon from "@/public/icon/mic.svg";
-import { KeyboardEvent, useRef } from "react";
+import { KeyboardEvent, useRef, useState } from "react";
 import EmojiPicker from "@/components/EmojiPicker";
 import AttachmentPreview from "./AttatchmentPreview";
 import AttatchFile from "./AttatchFile";
+import RecordingInput from "./RecordingInput";
 import { isEmpty } from "@/utility";
 import useFileUpload from "@/hooks/use-file-upload";
 
@@ -17,7 +18,8 @@ interface IChatInput {
 
 export default function ChatInput({ typing = false, onStop, text = "", onChangeText, onSend }: IChatInput) {
   const ref = useRef<HTMLTextAreaElement>(null);
-  const { files, setFiles, handleUpload } = useFileUpload()
+  const { files, setFiles, handleUpload } = useFileUpload();
+  const [isRecording, setIsRecording] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     onChangeText(e.target.value);
@@ -57,6 +59,33 @@ export default function ChatInput({ typing = false, onStop, text = "", onChangeT
     }
   };
 
+  const handleStartRecording = () => {
+    setIsRecording(true);
+  };
+
+  const handleFinishRecording = (file: File) => {
+    // Handle the recorded audio file
+    console.log("Recording finished:", file);
+    setIsRecording(false);
+
+    // You can either upload it immediately or add it to attachments
+    // handleUpload(file);
+  };
+
+  const handleCancelRecording = () => {
+    setIsRecording(false);
+  };
+
+  // Show recording component when recording
+  if (isRecording) {
+    return (
+      <RecordingInput
+        onFinish={handleFinishRecording}
+        onCancel={handleCancelRecording}
+      />
+    );
+  }
+
   return (
     <div className="w-full border border-primary rounded-2xl p-10 flex flex-col gap-8 h-fit min-w-lg min-h-46 bg-white z-50">
       {
@@ -71,12 +100,15 @@ export default function ChatInput({ typing = false, onStop, text = "", onChangeT
         ref={ref}
         onKeyDown={handleKeyDown}
         onChange={handleChange}
-        placeholder="What’s on your mind today? Click here to start typing, or click on the record button to say something. "
+        placeholder="What's on your mind today? Click here to start typing, or click on the record button to say something. "
       ></textarea>
       <div className="items-center justify-between flex">
         <AttatchFile onUpload={handleUpload} />
         <div className="text-[#344054] flex gap-3 items-center">
-          <div className="size-12 flex justify-center cursor-pointer items-center">
+          <div
+            className="size-12 flex justify-center cursor-pointer items-center hover:bg-grey-100 rounded-full transition-colors"
+            onClick={handleStartRecording}
+          >
             <MicIcon width={14} height={20} />
           </div>
           <EmojiPicker onSelect={handleInsertEmoji} />

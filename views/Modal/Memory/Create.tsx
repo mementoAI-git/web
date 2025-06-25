@@ -71,7 +71,11 @@ export function CreateMemory({ data }) {
     setEditMode(false)
     setValues(initial)
     setRecording(false)
-    if (videoRef.current) videoRef.current.reset();
+
+    if (videoRef.current) {
+      videoRef.current.resetStream();
+      videoRef.current.reset();
+    }
     if (audioRef.current) audioRef.current.reset();
   }
 

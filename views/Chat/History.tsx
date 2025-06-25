@@ -111,7 +111,7 @@ export default function History({ messages, setMessages, children }: IHistory) {
     <div
       ref={containerRef}
       onScroll={handleScroll}
-      className="size-full overflow-x-hidden overflow-y-auto px-4 py-6 pt-8 space-y-4 gap-2"
+      className="size-full overflow-x-hidden hide-scrollbar overflow-y-auto px-4 py-6 pt-8 space-y-4 gap-2"
       style={{ scrollBehavior: 'smooth' }}
     >
       {isLoadingMore && (

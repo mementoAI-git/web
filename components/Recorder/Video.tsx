@@ -57,7 +57,15 @@ export const VideoRecorder = forwardRef(function AudioRec({ onStart, onFinish }:
     }
   }
 
-  useImperativeHandle(ref, () => ({ ...recorder, start, stop }));
+  const resetStream = () => {
+    console.log("resetStream")
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+    setStream(null);
+  }
+
+  useImperativeHandle(ref, () => ({ ...recorder, start, stop, resetStream }));
   return (
     <div>
       <div className="flex items-center justify-center rounded-t-2xl bg-grey-400 py-1 text-grey-800">
@@ -91,23 +99,13 @@ export const VideoRecorder = forwardRef(function AudioRec({ onStart, onFinish }:
                   className="!bg-white/[22%] !text-white"
                 />
               </div>
-              <div className="flex aspect-square w-8 items-center justify-center rounded-full bg-white/[22%]">
-                <svg
-                  width="15"
-                  height="10"
-                  viewBox="0 0 15 10"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M7.5 1V9M4.5 3V7M1.5 4V6M10.5 3V7M13.5 4V6"
-                    stroke="white"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </div>
+              <AudioVisualizer
+                stream={stream}
+                color="white"
+                className="bg-white/[22%]"
+                recorder={recorder.recorder}
+                isRecording={recorder.recording}
+              />
             </div>
             <VideoRecButtons {...{ ...recorder, start, stop }} />
           </div>
@@ -118,7 +116,11 @@ export const VideoRecorder = forwardRef(function AudioRec({ onStart, onFinish }:
                 counter={recorder.timer}
                 recoding={recorder.recording}
               />
-              <AudioVisualizer recorder={recorder.recorder} />
+              <AudioVisualizer
+                stream={stream}
+                recorder={recorder.recorder}
+                isRecording={recorder.recording}
+              />
             </div>
             <button
               onClick={start}

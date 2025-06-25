@@ -5,6 +5,7 @@ import { useModal } from "@/hooks/use-modal";
 import UserItem from "@/components/UserItem";
 import { cn, isEmpty } from "@/utility";
 import { tagColors } from "@/utility/constant";
+import RefreshIcon from "@/public/icon/refresh.svg";
 
 export default function BeneficiaryRow({ beneficiary }) {
   const { open } = useModal()
@@ -15,6 +16,10 @@ export default function BeneficiaryRow({ beneficiary }) {
 
   const handleEditClick = () => {
     open("update-beneficiary", beneficiary)
+  }
+
+  const handleResendInvite = () => {
+    open("resend-invite", beneficiary)
   }
   return (
     <tr className="font-inter">
@@ -31,7 +36,10 @@ export default function BeneficiaryRow({ beneficiary }) {
       <td className="capitalize">{beneficiary?.relationship || ""}</td>
       <td><span className="mem-tags">Level {beneficiary?.level}</span></td>
       <td>
-        <div className="flex items-center justify-end gap-2 text-secondary">
+        <div className="flex items-center justify-end gap-3 text-secondary">
+          <div className="cursor-pointer" onClick={handleResendInvite}>
+            <RefreshIcon width={15} size={15} />
+          </div>
           <div className="cursor-pointer" onClick={handleEditClick}>
             <EditIcon width={16} size={16} />
           </div>

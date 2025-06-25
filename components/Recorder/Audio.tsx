@@ -64,7 +64,11 @@ export const AudioRecorder = forwardRef(function AudioRec({ onStart, onFinish }:
                     counter={recorder.timer}
                     recoding={recorder.recording}
                   />
-                  <AudioVisualizer stream={stream} recorder={recorder.recorder} />
+                  <AudioVisualizer
+                    stream={stream}
+                    recorder={recorder.recorder}
+                    isRecording={recorder.recording}
+                  />
                 </div>
                 <AudioRecButtons {...{ ...recorder, start, stop: stop }} />
               </div>
