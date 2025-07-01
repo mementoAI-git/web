@@ -15,6 +15,7 @@ import FileAttachment from "@/components/FileAttachment";
 import AttachFileBtn from "./AttachFileBtn";
 import useFileUpload from "@/hooks/use-file-upload";
 import { isEmpty } from "@/utility";
+import { mutate } from "swr";
 
 const schema = yup.object().shape({
   delivery_date: yup.date().required("Delivery date is required"),
@@ -36,7 +37,7 @@ export default function CreateCapsule({ data = null }) {
   const { close } = useModal()
   const [show, setShow] = useState(false);
   const { files, handleUpload, handleDeleteFile } = useFileUpload()
-  const { trigger, isMutating } = useFetcher(data ? `${endpoint.capsule}/${data?._id}` : endpoint.capsule, data ? "put" : "post")
+  const { trigger, isMutating } = useFetcher(isEmpty(data) ? endpoint.capsule : `${endpoint.capsule}/${data?._id}`, isEmpty(data) ? "post" : "put")
 
   const onSubmit = async (p, { setValues }) => {
     if (!isEmpty(files)) {
@@ -46,11 +47,12 @@ export default function CreateCapsule({ data = null }) {
     const result = await trigger(p)
     if (result?.success) {
       toast.success(result?.message)
+      mutate(`${endpoint.capsule}?page=1`)
       setValues(initial)
       close("create-capsule")
     }
   }
-  const { setValues, values, errors, handleSubmit, handleChange, handleValue } = useForm({ initial, schema, onSubmit })
+  const { setValues, values, errors, handleSubmit, handleChange, handleValue, getField } = useForm({ initial, schema, onSubmit })
 
   const handleSaveToDraft = (e) => {
     if (isMutating) return;

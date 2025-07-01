@@ -19,7 +19,7 @@ export const topNavigations = [
   { Icon: ChatIcon, title: "chat", link: "/chat" },
   { Icon: DoubleHeartIcon, title: "my memories", link: "/memories" },
   // { Icon: CompassIcon, title: "explore", link: "/explore" },
-  { Icon: TimeIcon, title: "time capsule", link: "/time-capsule" }
+  // { Icon: TimeIcon, title: "time capsule", link: "/time-capsule" }
 ];
 
 export const bottomNavigations = [

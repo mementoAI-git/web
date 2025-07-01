@@ -30,7 +30,7 @@ const schema = yup.object().shape({
 export function AddBeneficiary() {
   const { close } = useModal();
   const { trigger, isMutating } = useFetcher(endpoint.beneficiaries)
-  const { values, handleSubmit, isValid, handleChange, errors } = useForm({
+  const { values, handleSubmit, isValid, handleChange, errors, getField } = useForm({
     initial,
     schema,
     async onSubmit(p) {
@@ -56,27 +56,21 @@ export function AddBeneficiary() {
             type="email"
             name="email"
             inputClassName="!h-[50px]"
-            value={values.email}
-            error={errors.email}
+            {...getField("email")}
             placeholder="example@gmail.com"
-            onChange={handleChange}
             labelClassName="!text-[rgba(0,9,51,0.65)] !text-xs !font-normal"
           />
           <Textinput
             label="Name"
             name="name"
-            value={values.name}
-            error={errors.name}
+            {...getField("name")}
             placeholder="John Doe"
-            onChange={handleChange}
             inputClassName="!h-[50px]"
             labelClassName="!text-[rgba(0,9,51,0.65)] !text-xs !font-normal"
           />
           <Textinput
             name="relationship"
-            value={values.relationship}
-            error={errors.relationship}
-            onChange={handleChange}
+            {...getField("relationship")}
             placeholder="Brother"
             label="Relationship(This person to you)"
             inputClassName="!h-[50px]"
@@ -92,9 +86,8 @@ export function AddBeneficiary() {
               { label: "Level 2", value: "2" },
               { label: "Level 3", value: "3" },
             ]}
+            {...getField("level")}
             value={String(values.level)}
-            error={errors.level}
-            onChange={handleChange}
           />
           <div className="w-full flex gap-4 items-center justify-end">
             <button className="btn-outline">Discard</button>

@@ -84,6 +84,15 @@ export default function useForm<T extends Record<string, any>>({
     }
   };
 
+  const getField = (name: keyof typeof initial) => {
+    return {
+      name,
+      value: values[name],
+      error: errors[name],
+      onChange: handleChange
+    }
+  }
+
   useEffect(() => {
     validateForm();
   }, [values, validateForm]);
@@ -96,5 +105,6 @@ export default function useForm<T extends Record<string, any>>({
     handleChange,
     handleSubmit,
     isValid,
+    getField
   };
 }

@@ -107,7 +107,7 @@ export default function ChatInput({ typing = false, onStop, text = "", onChangeT
         <div className="text-[#344054] flex gap-3 items-center">
           <div
             className="size-12 flex justify-center cursor-pointer items-center hover:bg-grey-100 rounded-full transition-colors"
-            onClick={handleStartRecording}
+          // onClick={handleStartRecording}
           >
             <MicIcon width={14} height={20} />
           </div>

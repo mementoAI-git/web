@@ -22,7 +22,7 @@ const initial = { email: "", type: "reset" };
 export function ForgetPassword() {
   const router = useRouter();
   const { trigger, isMutating } = useFetcher(endpoint.sendLink);
-  const { handleSubmit, handleChange, values, errors } = useForm({
+  const { handleSubmit, getField } = useForm({
     schema,
     initial,
     async onSubmit(payload) {
@@ -37,11 +37,8 @@ export function ForgetPassword() {
     <form onSubmit={handleSubmit} className="flex flex-col gap-6">
       <Textinput
         label="Email"
-        name="email"
         placeholder="johndoe@mail.com"
-        value={values.email}
-        error={errors.email}
-        onChange={handleChange}
+        {...getField("email")}
       />
       <Button
         title="Submit"

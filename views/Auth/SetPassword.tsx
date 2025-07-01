@@ -34,7 +34,7 @@ export function SetPassword({ token }: { token: string }) {
   const initial = { confirm_password: "", password: "", token };
   const { trigger, isMutating } = useFetcher(endpoint.setPassword);
 
-  const { handleSubmit, handleChange, values, errors } = useForm({
+  const { handleSubmit, values, getField } = useForm({
     schema,
     initial,
     async onSubmit(payload) {
@@ -69,17 +69,11 @@ export function SetPassword({ token }: { token: string }) {
     <form onSubmit={handleSubmit} className="flex flex-col gap-6">
       <Passwordinput
         label="Password"
-        name="password"
-        value={values.password}
-        error={errors.password}
-        onChange={handleChange}
+        {...getField("password")}
       />
       <Passwordinput
         label="Confirm Password"
-        name="confirm_password"
-        value={values.confirm_password}
-        error={errors.confirm_password}
-        onChange={handleChange}
+        {...getField("confirm_password")}
       />
       <StrengthIndicator level={level} />
       <Button

@@ -23,19 +23,20 @@ const columns = [
 export default function TimeCapsule() {
   const [page, setPage] = useState(1)
   const { data, isLoading } = useSWR(`${endpoint.capsule}?page=${page}`)
+
   return (
     <div className="w-full overflow-y-auto">
       <div className="space-y-4 py-8">
         <div className="flex items-center gap-3">
           <StatCard
             icon={<CalendarIcon width={20} height={16} />}
-            subtitle="memories added"
-            title="25"
+            subtitle="Capsules created"
+            title="0"
           />
           <StatCard
             icon={<BookmarkIcon width={14} height={18} />}
             subtitle="bookmarks"
-            title="5"
+            title="0"
           />
         </div>
       </div>

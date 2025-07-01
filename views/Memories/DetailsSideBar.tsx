@@ -13,6 +13,7 @@ import ChainIcon from "@/public/icon/chain.svg";
 import TagIcon from "@/public/icon/tag.svg";
 import ClockIcon from "@/public/icon/clock.svg";
 import AddBookmarkIcon from "@/public/icon/add-bookmark.svg";
+import RemoveBookmarkIcon from "@/public/icon/remove-bookmark.svg";
 
 import { useModal } from "@/hooks/use-modal";
 import { IMemory } from "@/utility/interface";
@@ -96,8 +97,9 @@ export default function MemoryDetailsSidebar({ memory }: { memory: IMemory }) {
             className="cursor-pointer !text-sm !font-medium !text-grey-600"
           />
           <PropsItem
-            icon={<AddBookmarkIcon width={13} />}
-            title="add to bookmark"
+            icon={memory.bookmarked ? <RemoveBookmarkIcon width={13} /> : <AddBookmarkIcon width={13} />}
+            title={`${memory.bookmarked ? "remove from" : "add to"} bookmark`}
+            onClick={() => open("bookmark-memory", memory)}
             className="cursor-pointer !text-sm !font-medium !text-grey-600"
           />
           <PropsItem
@@ -106,11 +108,11 @@ export default function MemoryDetailsSidebar({ memory }: { memory: IMemory }) {
             onClick={() => open("share-post", memory._id)}
             className="cursor-pointer !text-sm !font-medium !text-grey-600"
           />
-          <PropsItem
+          {/* <PropsItem
             icon={<ClockIcon width={16} />}
             title="show edit history"
             className="cursor-pointer !text-sm !font-medium !text-grey-600"
-          />
+          /> */}
           <PropsItem
             icon={<TrashcanIcon width={16} />}
             title="delete"

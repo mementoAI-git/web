@@ -18,8 +18,8 @@ export default function TimeCapsuleRow({ capsule }: { capsule: ICapsule }) {
               email={capsule.recipients[0].email}
             /> :
             <UserItem
-              name={`${capsule.recipients[0].first_name || ""} ${capsule.recipients[0].last_name || ""}`}
-              email={capsule.recipients[0].email}
+              name={`${capsule.recipients[0]?.first_name || ""} ${capsule.recipients[0]?.last_name || ""}`}
+              email={capsule.recipients[0]?.email}
             />
         }
       </td>

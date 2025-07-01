@@ -21,7 +21,7 @@ const schema = yup.object().shape({
 export function UpdateBeneficiary({ data: beneficiary }) {
   const { close } = useModal();
   const { trigger, isMutating } = useFetcher(`${endpoint.beneficiaries}/${beneficiary?._id}`, "put")
-  const { values, handleSubmit, setValues, isValid, handleChange, errors } = useForm({
+  const { values, handleSubmit, setValues, isValid, getField } = useForm({
     initial: {
       email: beneficiary?.email || "",
       name: beneficiary?.name || "",
@@ -55,33 +55,23 @@ export function UpdateBeneficiary({ data: beneficiary }) {
           <Textinput
             label="Email"
             type="email"
-            name="email"
             inputClassName="!h-[50px]"
-            value={values.email}
-            error={errors.email}
-            onChange={handleChange}
+            {...getField("email")}
             labelClassName="!text-[rgba(0,9,51,0.65)] !text-xs !font-normal"
           />
           <Textinput
             label="Name"
-            name="name"
-            value={values.name}
-            error={errors.name}
-            onChange={handleChange}
+            {...getField("name")}
             inputClassName="!h-[50px]"
             labelClassName="!text-[rgba(0,9,51,0.65)] !text-xs !font-normal"
           />
           <Textinput
-            name="relationship"
-            value={values.relationship}
-            error={errors.relationship}
-            onChange={handleChange}
+            {...getField("relationship")}
             label="Relationship(This person to you)"
             inputClassName="!h-[50px]"
             labelClassName="!text-[rgba(0,9,51,0.65)] !text-xs !font-normal"
           />
           <Selectinput
-            name="level"
             label="Permission level"
             labelClassName="!text-[rgba(0,9,51,0.65)] !text-xs !font-normal"
             placeholder="Set permission level"
@@ -90,9 +80,8 @@ export function UpdateBeneficiary({ data: beneficiary }) {
               { label: "Level 2", value: "2" },
               { label: "Level 3", value: "3" },
             ]}
+            {...getField("level")}
             value={String(values.level)}
-            error={errors.level}
-            onChange={handleChange}
           />
           <div className="w-full flex gap-4 items-center justify-end">
             <button onClick={handleDiscard} className="btn-outline">Discard</button>

@@ -48,6 +48,7 @@ export interface IMemory {
   last_opened: string;
   created_at: string;
   updated_at: string
+  bookmarked?: boolean
 }
 
 export interface IMessage {

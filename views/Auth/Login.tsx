@@ -32,7 +32,7 @@ export function Login() {
   const router = useRouter();
   const { setAuth } = useStore();
   const { trigger, isMutating } = useFetcher(endpoint.login);
-  const { handleSubmit, handleChange, values, errors } = useForm({
+  const { handleSubmit, handleChange, values, getField } = useForm({
     schema,
     initial,
     async onSubmit(payload) {
@@ -56,18 +56,14 @@ export function Login() {
     <form onSubmit={handleSubmit} className="flex flex-col gap-6">
       <Textinput
         label="Email"
-        name="email"
         placeholder="johndoe@mail.com"
+        {...getField("email")}
         value={values.email}
-        error={errors.email}
-        onChange={handleChange}
       />
       <Passwordinput
         label="Password"
-        name="password"
+        {...getField("password")}
         value={values.password}
-        error={errors.email}
-        onChange={handleChange}
       />
 
       <div className="flex items-center justify-between font-inter text-sm">

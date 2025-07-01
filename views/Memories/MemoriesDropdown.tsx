@@ -11,7 +11,8 @@ import {
 } from "@/components/Dropdown";
 import { useModal } from "@/hooks/use-modal";
 import { IMemory } from "@/utility/interface";
-
+import RemoveBookmarkIcon from "@/public/icon/remove-bookmark.svg";
+import AddBookmarkIcon from "@/public/icon/add-bookmark.svg";
 export function MemoryItemActions({ memory }: { memory: IMemory }) {
   const { open } = useModal()
 
@@ -22,7 +23,9 @@ export function MemoryItemActions({ memory }: { memory: IMemory }) {
     if (value === "edit-memory") {
       open("edit-memory", memory)
     }
-
+    if (value === "bookmark") {
+      open("bookmark-memory", memory)
+    }
   }
 
   return (
@@ -42,13 +45,9 @@ export function MemoryItemActions({ memory }: { memory: IMemory }) {
         {
           label: "Book mark",
           value: "bookmark",
-          startIcon: (
-            <BookmarkIcon
-              className="h-[16px] w-[16px]"
-              width={16}
-              height={16}
-            />
-          ),
+          startIcon: memory.bookmarked ?
+            <RemoveBookmarkIcon width={16} height={16} />
+            : <AddBookmarkIcon width={16} height={16} />
         },
       ]}
       footerItem={

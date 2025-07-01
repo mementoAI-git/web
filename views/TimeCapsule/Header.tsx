@@ -24,7 +24,7 @@ export default function TimeCapsulesHeader({ count = 0 }: IMemoriesHeader) {
         <div onClick={() => open("search-memory")}>
           <Searchinput />
         </div>
-        <button onClick={() => open("create-capsule")} className="flex items-center justify-center gap-1 bg-secondary rounded-lg min-x-49.5 px-4 text-white cursor-pointer">
+        <button onClick={() => open("create-capsule", null)} className="flex items-center justify-center gap-1 bg-secondary rounded-lg min-x-49.5 px-4 text-white cursor-pointer">
           <PlusIcon width={15} />
           <span>Create New Capsule</span>
         </button>

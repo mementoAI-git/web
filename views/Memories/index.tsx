@@ -22,6 +22,7 @@ export default function Memories() {
   const [page, setPage] = useState(1)
   const [mode, setMode] = useState(localStorage.getItem(storageKeys.listmode) || "list");
   const { data, isLoading } = useSWR(`${endpoint.memories}?page=${page}`);
+  const { data: stats } = useSWR(endpoint.memoriesStats);
 
   return (
     <div className="size-full overflow-y-auto hide-scrollbar">
@@ -36,12 +37,12 @@ export default function Memories() {
           <StatCard
             icon={<BookIcon width={20} height={16} />}
             subtitle="memories added"
-            title="25"
+            title={stats?.data?.memory_count || 0}
           />
           <StatCard
             icon={<BookmarkIcon width={14} height={18} />}
             subtitle="bookmarks"
-            title="5"
+            title={stats?.data?.bookmark_count || 0}
           />
         </div>
       </div>

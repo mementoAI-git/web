@@ -17,6 +17,7 @@ export function DashboardSideBar() {
   useEffect(() => {
     if (!pathname.includes("settings")) {
       setSubNavs([])
+      setCollapse(false)
     } else {
       setCollapse(true)
       setSubNavs(settingNavigations)
@@ -33,12 +34,15 @@ export function DashboardSideBar() {
                 <div className="shrink-0">
                   <Logo size={32} textClassName="!text-[24.24px] group-[.close]:hidden" />
                 </div>
-                <div
-                  onClick={() => setCollapse(p => !p)}
-                  className={`text-[rgba(0,13,77,0.45)] cursor-pointer ${collapse ? "rotate-0" : "rotate-180"} transition-all  duration-500 ease-in-out`}
-                >
-                  <DoubleRightArrowIcon />
-                </div>
+                {
+                  !pathname.includes("settings") &&
+                  <div
+                    onClick={() => setCollapse(p => !p)}
+                    className={`text-[rgba(0,13,77,0.45)] cursor-pointer ${collapse ? "rotate-0" : "rotate-180"} transition-all  duration-500 ease-in-out`}
+                  >
+                    <DoubleRightArrowIcon />
+                  </div>
+                }
               </div>
               <div className="space-y-2">
                 <span className="text-center text-grey-600 font-inter hidden group-[.close]:inline-block">Menu</span>

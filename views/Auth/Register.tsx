@@ -33,7 +33,7 @@ const initial = { email: "", password: "" };
 export function Register() {
   const router = useRouter();
   const { trigger, isMutating } = useFetcher(endpoint.register);
-  const { handleSubmit, handleChange, values, errors } = useForm({
+  const { handleSubmit, getField } = useForm({
     schema,
     initial,
     async onSubmit(payload) {
@@ -48,18 +48,12 @@ export function Register() {
     <form onSubmit={handleSubmit} className="flex flex-col gap-6">
       <Textinput
         label="Email"
-        name="email"
         placeholder="johndoe@mail.com"
-        value={values.email}
-        error={errors.email}
-        onChange={handleChange}
+        {...getField("email")}
       />
       <Passwordinput
         label="Password"
-        name="password"
-        value={values.password}
-        error={errors.password}
-        onChange={handleChange}
+        {...getField("password")}
       />
       <Button
         loading={isMutating}
