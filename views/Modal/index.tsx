@@ -4,7 +4,7 @@ import Welcome from "./Welcome";
 import FilePreview from "./FilePreview";
 import { isEmpty } from "@/utility";
 import UploadFiles from "./UploadFile";
-import SetTagPermissions from "./SetTagPermissions";
+import SetTagPermissions from "./Memory/SetTagPermissions";
 import PromptInput from "./PromptInput";
 import { BookmarkMemory, CreateMemory, DeleteMemory, UpdateMemory } from "./Memory";
 import { AddBeneficiary, DeleteBeneficiary, ResendInvite } from "./Beneficiary";

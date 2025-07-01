@@ -19,8 +19,8 @@ export default function NotFound() {
             Oops! Page Not Found
           </h2>
           <p className="text-gray-600 font-inter leading-relaxed">
-            The page you're looking for seems to have wandered off into the digital void.
-            Don't worry, even the best memories sometimes get lost!
+            The page you&rsquo;re looking for seems to have wandered off into the digital void.
+            Don&rsquo;t worry, even the best memories sometimes get lost!
           </p>
         </div>
 
