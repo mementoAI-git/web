@@ -52,7 +52,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
 
           {
             !isEmpty(headerTitle[path]) &&
-            <div className="shrink-0 text-2xl sm:text-3xl lg:text-4xl font-bricolage text-secondary font-medium leading-11 capitalize">
+            <div className="shrink-0 hidden sm:block text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bricolage text-secondary font-medium leading-11 capitalize truncate max-w-full">
               {headerTitle[path]}
             </div>
           }

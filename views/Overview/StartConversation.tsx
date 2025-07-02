@@ -16,16 +16,16 @@ export default function StartConversation() {
   }
 
   return (
-    <div className="flex flex-1 flex-col justify-between rounded-2xl bg-grey-700 p-10">
+    <div className="flex flex-1 flex-col justify-between rounded-2xl bg-grey-700 p-4 sm:p-6 md:p-10 w-full min-h-44 sm:min-h-60 max-w-full">
       <textarea
         value={body}
         onChange={e => setBody(e.target.value)}
         placeholder="What’s on your mind today? click below to start typing"
-        className="h-fit w-full flex-1 resize-none bg-transparent outline-0 placeholder:font-inter placeholder:text-[#949494]"
+        className="h-fit w-full flex-1 resize-none bg-transparent outline-0 placeholder:font-inter placeholder:text-[#949494] text-sm sm:text-base"
       ></textarea>
 
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3 text-[#344054]">
+      <div className="flex flex-row items-stretch sm:items-center justify-between gap-3 mt-4">
+        <div className="flex items-center gap-2 sm:gap-3 text-[#344054]">
           {[
             { icon: <TextIcon width={16} height={16} />, onCick: () => handleAddMemory() },
             { icon: <CameraIcon width={23} height={21} />, onCick: () => handleAddMemory("video") },
@@ -35,7 +35,7 @@ export default function StartConversation() {
             // { icon: <PlanepaperIcon width={19.23} height={19.23} />, },
           ].map((d, i) => (
             <div
-              className="flex aspect-square w-12 shrink-0 cursor-pointer items-center justify-center"
+              className="flex aspect-square w-10 sm:w-12 shrink-0 cursor-pointer items-center justify-center"
               key={i}
               onClick={d.onCick}
             >
@@ -43,7 +43,7 @@ export default function StartConversation() {
             </div>
           ))}
         </div>
-        <button onClick={() => handleAddMemory()} className="btn !text-grey-400">Add new</button>
+        <button onClick={() => handleAddMemory()} className="btn !text-grey-400 w-auto mt-2 sm:mt-0">Add new</button>
       </div>
     </div>
   );

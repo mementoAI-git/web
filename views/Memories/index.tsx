@@ -1,3 +1,5 @@
+"use client";
+
 import BookIcon from "@/public/icon/dashboard/book.svg";
 import BookmarkIcon from "@/public/icon/dashboard/bookmark.svg";
 import { StatCard } from "../Dashboard";
@@ -26,14 +28,14 @@ export default function Memories() {
 
   return (
     <div className="size-full overflow-y-auto hide-scrollbar">
-      <div className="space-y-4 py-8">
+      <div className="space-y-4 py-4 sm:py-8">
         <div className="flex items-center gap-2">
-          <span className="font-inter text-xl leading-[30px] font-semibold">
+          <span className="font-inter text-lg sm:text-xl leading-[30px] font-semibold">
             Stats
           </span>
           <div className="flex-1 border-t border-[#EBEBEB]" />
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col sm:flex-row items-stretch gap-3">
           <StatCard
             icon={<BookIcon width={20} height={16} />}
             subtitle="memories added"
@@ -46,7 +48,7 @@ export default function Memories() {
           />
         </div>
       </div>
-      <div className="space-y-6 py-8">
+      <div className="space-y-4 sm:space-y-6 py-4 sm:py-8">
         <MemoriesHeader
           mode={mode}
           onChangeMode={setMode}
@@ -55,14 +57,16 @@ export default function Memories() {
         {
           mode === "grid" ?
             <MemoriesGrid data={data?.data} /> :
-            <Table
-              data={data?.data}
-              columns={columns}
-              loading={isLoading}
-              loadingRow={<TableRowSekeleton />}
-              onChangePage={setPage}
-              renderRow={(r, i) => <MemoriesTableRow key={i} memory={r} />}
-            />
+            <div className="w-full overflow-x-auto hide-scrollbar">
+              <Table
+                data={data?.data}
+                columns={columns}
+                loading={isLoading}
+                loadingRow={<TableRowSekeleton />}
+                onChangePage={setPage}
+                renderRow={(r, i) => <MemoriesTableRow key={i} memory={r} />}
+              />
+            </div>
         }
       </div>
     </div>

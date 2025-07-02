@@ -24,7 +24,7 @@ export function Beneficiaries() {
         <h4 className="page-title text-2xl sm:text-3xl lg:text-4xl">Beneficiaries</h4>
         <small className="text-sm sm:text-base font-inter text-grey-600">Manage Beneficiaries and their access to your content</small>
       </div>
-      <div className="py-4 sm:py-8 space-y-4 sm:space-y-6">
+      <div className="py-4 sm:py-8 space-y-6">
         <Header count={data?.data?.totalDocs} />
         <div className="w-full overflow-x-auto hide-scrollbar">
           <Table
