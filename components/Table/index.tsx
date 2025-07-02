@@ -26,14 +26,14 @@ export default function Table<T>({ data, columns, renderRow, onChangePage, loadi
     onChangePage(data.prevPage)
   }
   return (
-    <div className="mem-table h-fit w-full rounded-xl border border-[rgba(233,234,235,1)] bg-white shadow-sm shadow-[rgba(10,13,18,0.05)]">
-      <table className="h-full w-full text-left">
-        <thead className="font-inter text-xs font-semibold text-[rgba(113,118,128,1)] capitalize">
+    <div className="mem-table h-fit w-full rounded-xl border border-[rgba(233,234,235,1)] bg-white shadow-sm shadow-[rgba(10,13,18,0.05)] overflow-x-auto hide-scrollbar">
+      <table className="min-w-[600px] w-full text-left text-xs sm:text-sm">
+        <thead className="font-inter text-xs sm:text-sm font-semibold text-[rgba(113,118,128,1)] capitalize">
           <tr>
             {columns.map((c, i) => <th className={c.className} key={i}>{c.label}</th>)}
           </tr>
         </thead>
-        <tbody className="border-y border-inherit text-sm text-[#535862]">
+        <tbody className="border-y border-inherit text-xs sm:text-sm text-[#535862]">
           {
             loading || isEmpty(data) ?
               (loadingRow || <TableRowSekeleton col={columns.length} />) :
@@ -41,11 +41,11 @@ export default function Table<T>({ data, columns, renderRow, onChangePage, loadi
           }
         </tbody>
       </table>
-      <div className="flex w-full items-center justify-between border-[rgba(213,215,218,1)] px-6 py-3 font-inter text-sm text-[rgba(65,70,81,1)]">
+      <div className="flex w-full flex-row gap-2 sm:gap-0 items-center justify-between border-[rgba(213,215,218,1)] px-3 sm:px-6 py-3 font-inter text-xs sm:text-sm text-[rgba(65,70,81,1)]">
         <button
           disabled={!data?.hasPrevPage}
           onClick={handleOnPrevPage}
-          className="flex max-h-9 cursor-pointer disabled:cursor-not-allowed items-center justify-center rounded-lg border border-inherit bg-white px-3 py-2 font-semibold shadow-sm disabled:opacity-65"
+          className="flex max-h-9 cursor-pointer disabled:cursor-not-allowed items-center justify-center rounded-lg border border-inherit bg-white px-3 py-2 font-semibold shadow-sm disabled:opacity-65 text-xs sm:text-sm"
         >
           Previous
         </button>
@@ -55,7 +55,7 @@ export default function Table<T>({ data, columns, renderRow, onChangePage, loadi
         <button
           disabled={!data?.hasNextPage}
           onClick={handleOnNextPage}
-          className="flex max-h-9 cursor-pointer disabled:cursor-not-allowed items-center justify-center rounded-lg border border-inherit bg-white px-3 py-2 font-semibold shadow-sm disabled:opacity-65"
+          className="flex max-h-9 cursor-pointer disabled:cursor-not-allowed items-center justify-center rounded-lg border border-inherit bg-white px-3 py-2 font-semibold shadow-sm disabled:opacity-65 text-xs sm:text-sm"
         >
           Next
         </button>

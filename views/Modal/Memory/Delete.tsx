@@ -4,14 +4,22 @@ import Spinner from "@/components/Spinner";
 import useFetcher from "@/hooks/use-fetcher";
 import { useModal } from "@/hooks/use-modal";
 import BinIcon from "@/public/icon/bin.svg"
+import { usePathname, useRouter } from "next/navigation";
 
 export function DeleteMemory({ data: id }) {
   const { trigger, isMutating } = useFetcher(endpoint.memories, "delete")
   const { close } = useModal()
+  const pathname = usePathname()
+  const router = useRouter()
 
   const handleDelete = async () => {
-    await trigger(id)
-    close("delete-memory")
+    const result = await trigger(id)
+    if (result?.success) {
+      if (pathname.includes(id)) {
+        router.push("/memories")
+      }
+      close("delete-memory")
+    }
   }
   return (
     <div className="modal-container !max-w-120">

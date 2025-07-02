@@ -17,7 +17,11 @@ const headerTitle = {
   "time-capsule": "time capsule"
 }
 
-export function DashboardHeader() {
+interface DashboardHeaderProps {
+  onMenuClick?: () => void;
+}
+
+export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
   const path = usePathname().replace('/', "")
   const { user } = useStore()
   const { open } = useModal()
@@ -36,11 +40,19 @@ export function DashboardHeader() {
 
   return (
     <div className="w-full border-b border-grey-500">
-      <header className="mx-auto flex max-h-23 w-[93%] items-center justify-between gap-6 py-6">
-        <div className="flex items-center gap-6 flex-1">
+      <header className="mx-auto flex max-h-23 w-[93%] items-center justify-between gap-4 sm:gap-6 py-4 sm:py-6">
+        <div className="flex items-center gap-4 sm:gap-6 flex-1">
+          {/* Mobile Menu Button */}
+          <button
+            onClick={onMenuClick}
+            className="lg:hidden p-2 rounded-lg hover:bg-grey-400 transition-colors"
+          >
+            <MenuIcon width={20} height={20} />
+          </button>
+
           {
             !isEmpty(headerTitle[path]) &&
-            <div className="shrink-0 text-4xl font-bricolage text-secondary font-medium leading-11 capitalize">
+            <div className="shrink-0 text-2xl sm:text-3xl lg:text-4xl font-bricolage text-secondary font-medium leading-11 capitalize">
               {headerTitle[path]}
             </div>
           }
@@ -48,25 +60,25 @@ export function DashboardHeader() {
             <Searchinput />
           </div>
         </div>
-        <div className="flex max-h-10 shrink-0 items-center gap-4 font-inter">
-          <div className="h-full cursor-pointer space-x-1 rounded-full bg-grey-400 px-5 py-2">
+        <div className="flex max-h-10 shrink-0 items-center gap-2 sm:gap-4 font-inter">
+          <div className="h-full cursor-pointer space-x-1 rounded-full bg-grey-400 px-3 sm:px-5 py-2">
             <span>✌🏾</span>
-            <span className="font-semibold text-grey-600">{user?.streak || 0}</span>
+            <span className="font-semibold text-grey-600 text-sm sm:text-base">{user?.streak || 0}</span>
           </div>
           {
             path === "chat" ?
               <div
                 onClick={() => open("chat-settings")}
-                className="size-10 cursor-pointer text-white rounded-full flex justify-center items-center bg-grey-600"
+                className="size-8 sm:size-10 cursor-pointer text-white rounded-full flex justify-center items-center bg-grey-600"
               >
-                <MenuIcon width={15} height={10} />
+                <MenuIcon width={12} height={8} className="sm:w-[15px] sm:h-[10px]" />
               </div> :
               <React.Fragment>
-                <div className="h-full cursor-pointer rounded-full border border-[rgba(199,201,200,1)] px-5 py-2">
-                  <span className="font-semibold text-grey-600">Invite friends</span>
+                <div className="h-full cursor-pointer rounded-full border border-[rgba(199,201,200,1)] px-3 sm:px-5 py-2 hidden sm:block">
+                  <span className="font-semibold text-grey-600 text-sm sm:text-base">Invite friends</span>
                 </div>
-                <div className="h-full cursor-pointer rounded-full border border-[rgba(199,201,200,1)] px-5 py-2">
-                  <span className="font-semibold text-grey-600">Help</span>
+                <div className="h-full cursor-pointer rounded-full border border-[rgba(199,201,200,1)] px-3 sm:px-5 py-2 hidden sm:block">
+                  <span className="font-semibold text-grey-600 text-sm sm:text-base">Help</span>
                 </div>
               </React.Fragment>
           }

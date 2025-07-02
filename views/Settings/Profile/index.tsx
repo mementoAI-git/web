@@ -11,18 +11,18 @@ import { isEmpty } from "@/utility";
 export function Profile() {
   const { user } = useStore()
   return (
-    <div className="max-w-140">
+    <div className="w-full max-w-140 space-y-6 sm:space-y-8">
       <div className="space-y-3">
-        <div className="space-y-3">
-          <h4 className="text-secondary font-medium font-bricolage text-4xl">My Profile</h4>
+        <div className="space-y-2 sm:space-y-3">
+          <h4 className="text-secondary font-medium font-bricolage text-3xl lg:text-4xl">My Profile</h4>
           <small className="text-base font-inter text-grey-600">Manage your memento profile</small>
         </div>
         <ChangeImage image={user?.picture_url} />
       </div>
 
-      <div className="py-8 space-y-6">
-        <span className="text-[#000933A6] inline-block">Stats</span>
-        <div className="flex flex-wrap gap-6">
+      <div className="py-6 sm:py-8 space-y-4 sm:space-y-6">
+        <span className="text-[#000933A6] inline-block text-sm sm:text-base">Stats</span>
+        <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
           <StatsCard icon="✌🏾" value={String(user?.streak || 0)} title="Current streak" />
           <StatsCard
             icon={<BoltIcon width={20} height={22} />}
@@ -32,8 +32,8 @@ export function Profile() {
         </div>
       </div>
 
-      <div className="py-8 flex flex-col gap-6">
-        <span className="text-[#000933A6]">Personal info</span>
+      <div className="py-6 sm:py-8 flex flex-col gap-4 sm:gap-6">
+        <span className="text-[#000933A6] text-sm sm:text-base">Personal info</span>
         <UpdateTextinput label="First name" name="first_name" />
         <UpdateTextinput label="Last name" name="last_name" />
         <Textinput
