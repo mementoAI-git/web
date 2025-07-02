@@ -13,9 +13,10 @@ export function Beneficiaries() {
   const { data } = useSWR(endpoint.beneficiaries);
 
   return (
-    <div className="flex w-full max-w-[583px] flex-col gap-10 py-20">
-      <div className="flex flex-col gap-5 rounded-3xl bg-surface p-10">
-        <span className="font-bricolage text-[32px] leading-10 font-bold">
+    <div className="flex w-full max-w-lg flex-col gap-6 sm:gap-10 py-8 sm:py-16 md:py-20 px-2 sm:px-0">
+      <span onClick={() => router.back()} className="underline text-grey-200 cursor-pointer mb-2 w-fit">Go back</span>
+      <div className="flex flex-col gap-4 sm:gap-5 rounded-3xl bg-surface p-4 sm:p-8 md:p-10">
+        <span className="font-bricolage text-2xl sm:text-3xl md:text-[32px] leading-8 sm:leading-10 font-bold">
           Add beneficiaries
         </span>
         <AddBeneficiaries />
@@ -33,8 +34,7 @@ export function Beneficiaries() {
           </div>
         )}
       </div>
-      <div className="flex items-end justify-between font-geist font-bold text-base">
-        <span onClick={() => router.back()} className="underline text-grey-200 cursor-pointer">Go back</span>
+      <div className="flex items-end justify-end font-geist font-bold text-base mt-4">
         <Link
           prefetch={false}
           href="/login"

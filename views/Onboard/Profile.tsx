@@ -55,13 +55,14 @@ export function Profile() {
   return (
     <form
       onSubmit={handleSubmit}
-      className="flex w-full max-w-[583px] flex-col gap-10 py-20"
+      className="flex w-full max-w-lg flex-col gap-6 sm:gap-10 py-8 sm:py-16 md:py-20 px-2 sm:px-0"
     >
-      <div className="flex flex-col gap-5 rounded-3xl bg-surface p-10">
-        <span className="font-bricolage text-[32px] leading-10 font-bold">
+      <span className="cursor-pointer  sm:hidden text-grey-200 underline">Go back</span>
+      <div className="flex flex-col gap-4 sm:gap-5 rounded-3xl bg-surface p-4 sm:p-8 md:p-10">
+        <span className="font-bricolage text-2xl sm:text-3xl md:text-[32px] leading-8 sm:leading-10 font-bold">
           Let’s get to know you better
         </span>
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           <Textinput
             name="first_name"
             label="First name"
@@ -104,8 +105,8 @@ export function Profile() {
           />
         </div>
       </div>
-      <div className="flex items-end justify-between font-geist text-base font-bold">
-        <span className="cursor-pointer text-grey-200 underline">Go back</span>
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-end justify-between font-geist text-base font-bold gap-3 sm:gap-0 mt-4">
+        <span className="cursor-pointer hidden sm:block text-grey-200 underline">Go back</span>
         <button className="flex h-12 cursor-pointer items-center justify-center gap-2 rounded-lg bg-secondary px-4 text-white">
           Continue <Spinner loading={isMutating} />
         </button>

@@ -118,15 +118,15 @@ body {
   }
 
   .modal-container {
-    @apply relative w-full max-w-[618px] rounded-2xl bg-white p-10;
+    @apply relative w-full max-w-[95vw] sm:max-w-[480px] md:max-w-[618px] rounded-2xl bg-white p-4 sm:p-8 md:p-10;
   }
 
   .modal-close-btn {
-    @apply absolute top-10 right-10 flex aspect-square w-9 cursor-pointer items-center justify-center rounded-full bg-grey-400;
+    @apply absolute top-4 right-4 sm:top-8 sm:right-8 flex aspect-square w-8 sm:w-9 cursor-pointer items-center justify-center rounded-full bg-grey-400;
   }
 
   .modal-title {
-    @apply font-inter text-3xl leading-9 font-semibold text-secondary;
+    @apply font-inter text-xl sm:text-2xl md:text-3xl leading-7 sm:leading-8 md:leading-9 font-semibold text-secondary;
   }
 
   .btn {
