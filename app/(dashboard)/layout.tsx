@@ -8,7 +8,6 @@ import { DashboardHeader, DashboardSideBar } from "@/views/Dashboard";
 import Modal from "@/views/Modal";
 import { PropsWithChildren, useState } from "react";
 import useSWR from "swr";
-import MenuIcon from "@/public/icon/menu.svg";
 
 export default function DashboardLayout({ children }: PropsWithChildren) {
   const { setUser } = useStore()
