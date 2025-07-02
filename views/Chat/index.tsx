@@ -75,10 +75,10 @@ export default function Chat() {
   }, [messages])
 
   return (
-    <div className="size-full flex justify-center">
+    <div className="flex justify-center w-full h-full min-h-0">
       <div
         style={{ height: 'calc(100vh - 88px)' }}
-        className="mx-auto flex flex-col size-full max-w-220"
+        className="mx-auto flex flex-col w-full max-w-2xl sm:max-w-3xl md:max-w-4xl lg:max-w-220 px-2 sm:px-4 md:px-8 size-full min-h-0"
       >
         <History {...{ messages, setMessages }}>
           {
@@ -91,7 +91,7 @@ export default function Chat() {
               />
           }
         </History>
-        <div className="pb-4">
+        <div className="pb-2 sm:pb-4 px-1 sm:px-0 w-full">
           <ChatInput
             text={prompt}
             onChangeText={setPrompt}

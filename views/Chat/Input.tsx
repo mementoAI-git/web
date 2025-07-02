@@ -87,26 +87,26 @@ export default function ChatInput({ typing = false, onStop, text = "", onChangeT
   }
 
   return (
-    <div className="w-full border border-primary rounded-2xl p-10 flex flex-col gap-8 h-fit min-w-lg min-h-46 bg-white z-50">
+    <div className="w-full border border-primary rounded-2xl p-4 sm:p-6 md:p-10 flex flex-col gap-4 sm:gap-6 md:gap-8 h-fit bg-white z-50">
       {
         !isEmpty(files) &&
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {files.map(img => <AttachmentPreview {...img} key={img.id} />)}
         </div>
       }
       <textarea
-        className="max-h-75 outline-none overflow-y-auto resize-none placeholder:text-grey-800 font-inter font-normal"
+        className="max-h-60 sm:max-h-75 outline-none overflow-y-auto resize-none placeholder:text-grey-800 font-inter font-normal text-sm sm:text-base"
         value={text}
         ref={ref}
         onKeyDown={handleKeyDown}
         onChange={handleChange}
         placeholder="What's on your mind today? Click here to start typing, or click on the record button to say something. "
       ></textarea>
-      <div className="items-center justify-between flex">
+      <div className="items-center justify-between flex flex-row gap-3 sm:gap-0">
         <AttatchFile onUpload={handleUpload} />
-        <div className="text-[#344054] flex gap-3 items-center">
+        <div className="text-[#344054] flex gap-2 sm:gap-3 items-center mt-2 sm:mt-0">
           <div
-            className="size-12 flex justify-center cursor-pointer items-center hover:bg-grey-100 rounded-full transition-colors"
+            className="size-10 sm:size-12 flex justify-center cursor-pointer items-center hover:bg-grey-100 rounded-full transition-colors"
           // onClick={handleStartRecording}
           >
             <MicIcon width={14} height={20} />
