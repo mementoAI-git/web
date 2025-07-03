@@ -40,7 +40,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
 
   return (
     <div className="w-full border-b border-grey-500">
-      <header className="mx-auto flex max-h-23 w-[93%] items-center justify-between gap-4 sm:gap-6 py-4 sm:py-6">
+      <header className="mx-auto flex max-h-23 w-[93%] max-w-[1160px] items-center justify-between gap-4 sm:gap-6 py-4 sm:py-6">
         <div className="flex items-center gap-4 sm:gap-6 flex-1">
           {/* Mobile Menu Button */}
           <button

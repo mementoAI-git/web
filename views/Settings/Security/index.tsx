@@ -48,7 +48,7 @@ export function Security() {
   })
 
   return (
-    <div className="max-w-140">
+    <div className="max-w-140 2xl:mx-auto">
       <div className="space-y-3">
         <h4 className="text-secondary font-medium font-bricolage text-3xl lg:text-4xl">Security</h4>
         <small className="text-base font-inter text-grey-600">Manage your memento security</small>

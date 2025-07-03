@@ -26,7 +26,7 @@ export default function Table<T>({ data, columns, renderRow, onChangePage, loadi
     onChangePage(data.prevPage)
   }
   return (
-    <div className="mem-table h-fit w-full rounded-xl border border-[rgba(233,234,235,1)] bg-white shadow-sm shadow-[rgba(10,13,18,0.05)]">
+    <div className="mem-table h-fit w-full rounded-xl border border-[rgba(233,234,235,1)] bg-white shadow-sm shadow-[rgba(10,13,18,0.05)] overflow-hidden">
       <div className="overflow-x-auto hide-scrollbar">
         <table className="min-w-[600px] w-full text-left text-xs sm:text-sm">
           <thead className="font-inter text-xs sm:text-sm font-semibold text-[rgba(113,118,128,1)] capitalize">
@@ -43,7 +43,7 @@ export default function Table<T>({ data, columns, renderRow, onChangePage, loadi
           </tbody>
         </table>
       </div>
-      <div className="flex w-full flex-row gap-2 sm:gap-0 items-center justify-between border-t border-[rgba(213,215,218,1)] px-3 sm:px-6 py-3 font-inter text-xs sm:text-sm text-[rgba(65,70,81,1)] bg-white">
+      <div className="flex w-full flex-row gap-2 sm:gap-0 items-center justify-between border-t-0 border-[rgba(213,215,218,1)] px-3 sm:px-6 py-3 font-inter text-xs sm:text-sm text-[rgba(65,70,81,1)] bg-white">
         <button
           disabled={!data?.hasPrevPage}
           onClick={handleOnPrevPage}

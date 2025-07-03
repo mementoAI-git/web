@@ -7,7 +7,7 @@ export default function RecentActivities() {
   const { data, isLoading } = useSWR(endpoint.activities)
 
   return (
-    <div className="flex-1 w-full rounded-2xl bg-grey-700 space-y-4 sm:space-y-6 py-4 sm:py-8">
+    <div className="flex-1 w-full rounded-2xl bg-grey-700 space-y-4 sm:space-y-6 py-4 sm:py-8 min-h-72.5">
       <div className="flex items-center justify-between px-4 sm:px-8">
         <span className="font-inter text-xs font-medium text-grey-800">
           RECENT ACTIVITIES

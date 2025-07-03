@@ -11,7 +11,7 @@ export const settingNavigations = [
   { title: "security", link: "/settings/security" },
   { title: "notifications", link: "/settings/notifications" },
   { title: "beneficiaries", link: "/settings/beneficiaries" },
-  { title: "upgrade and plans", link: "/settings/plane" },
+  // { title: "upgrade and plans", link: "/settings/plan" },
 ]
 
 export const topNavigations = [

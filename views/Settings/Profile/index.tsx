@@ -11,7 +11,7 @@ import { isEmpty } from "@/utility";
 export function Profile() {
   const { user } = useStore()
   return (
-    <div className="w-full max-w-140 space-y-6 sm:space-y-8">
+    <div className="w-full 2xl:mx-auto max-w-140 space-y-6 sm:space-y-8">
       <div className="space-y-3">
         <div className="space-y-2 sm:space-y-3">
           <h4 className="text-secondary font-medium font-bricolage text-3xl lg:text-4xl">My Profile</h4>
