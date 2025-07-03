@@ -4,6 +4,7 @@ import { useModal } from "@/hooks/use-modal";
 import { toast } from "sonner";
 import useFetcher from "@/hooks/use-fetcher";
 import endpoint from "@/api/endpoint";
+import { mutate } from "swr";
 
 export default function TwoFactorAuthenticator() {
   const { open } = useModal()
@@ -21,6 +22,7 @@ export default function TwoFactorAuthenticator() {
   const handleDisable2FA = async () => {
     const result = await disable2FA("")
     if (result?.success) {
+      mutate(endpoint.profile)
       toast.success(result?.message)
     }
   }
