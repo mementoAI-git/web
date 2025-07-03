@@ -45,7 +45,7 @@ export default function Overview() {
             <Topics />
           </div>
 
-          <div className="w-full lg:w-auto mt-4 lg:mt-0">
+          <div className="w-full sm:max-w-[335px] lg:w-auto mt-4 lg:mt-0 flex-1">
             <RecentActivities />
           </div>
         </div>

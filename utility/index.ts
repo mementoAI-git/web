@@ -1,6 +1,10 @@
 import { mutate } from "swr";
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
+import dayjs from "dayjs";
+import calendar from "dayjs/plugin/calendar";
+
+dayjs.extend(calendar);
 
 export const hashEmail = (email: string) => {
   const [username, domain] = email.split("@");
@@ -86,3 +90,10 @@ export const getDuration = (seconds: number = 0) => {
 
   return { secs, mins, hrs }
 }
+
+export const formattedDate = (date: string) => dayjs(date).calendar(null, {
+  sameDay: '[Today] HH:mm A',
+  lastDay: '[Yesterday] HH:mm A',
+  lastWeek: 'dddd HH:mm A',
+  sameElse: 'DD MMM YYYY'
+});
