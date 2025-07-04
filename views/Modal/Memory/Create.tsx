@@ -6,7 +6,7 @@ import { TextArea } from "@/components/Memory/TextArea";
 import { ModalCloseBtn } from "@/components/ModalLayout";
 import useForm from "@/hooks/use-form";
 import { useModal } from "@/hooks/use-modal";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import endpoint from "@/api/endpoint";
 import useSWRMutation from "swr/mutation";
 import { fileUploadFetcher } from "@/api/fetcher";
@@ -31,13 +31,9 @@ export function CreateMemory({ data }) {
   const [editMode, setEditMode] = useState(false)
   const [recording, setRecording] = useState(false)
   const [type, setType] = useState(declaredType || "text")
+  const [attachments, setAttachments] = useState([])
 
   const { trigger, isMutating } = useSWRMutation(endpoint.memories, fileUploadFetcher)
-
-  const handleOnFinishRecording = (f) => {
-    handleValue("file", f)
-    setRecording(false)
-  }
 
   const handleOnStartRecording = () => {
     setEditMode(true)
@@ -47,6 +43,7 @@ export function CreateMemory({ data }) {
   const { values, handleChange, setValues, handleSubmit, handleValue } = useForm({
     initial: { ...initial, ...payload },
     async onSubmit(p) {
+      console.log(p)
       if (isEmpty(p.title)) {
         return toast.error("Title is required")
       }
@@ -67,6 +64,11 @@ export function CreateMemory({ data }) {
     },
   })
 
+  const handleOnFinishRecording = (f) => {
+    handleValue("file", f)
+    setRecording(false)
+  }
+
   const handleDiscard = () => {
     setEditMode(false)
     setValues(initial)
@@ -83,6 +85,15 @@ export function CreateMemory({ data }) {
     handleDiscard()
     close("create-memory")
   }
+
+  useEffect(() => {
+    console.log("Mounted!!")
+    const attachments = localStorage.getItem(storageKeys.attachments)
+    if (attachments) {
+      console.log(JSON.parse(attachments).files.map(f => f.result))
+      setAttachments(JSON.parse(attachments).files.map(f => f.result))
+    }
+  }, [])
 
   return (
     <div className="modal-container">
@@ -113,6 +124,7 @@ export function CreateMemory({ data }) {
               <TextArea
                 value={values.body}
                 name="body"
+                attachments={attachments}
                 onChange={handleChange}
               />
         }

@@ -35,7 +35,7 @@ export const AudioRecorder = forwardRef(function AudioRec({ onStart, onFinish }:
     recorder.stop()
     if (recorder.chunks) {
       const blob = new Blob(recorder.chunks, { type: fileType });
-      const file = new File([blob], "recorded.mp3", { type: fileType });
+      const file = new File([blob], "recorded.webm", { type: fileType });
 
       onFinish(file)
     }

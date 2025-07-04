@@ -26,7 +26,7 @@ export default function FileUploadItem({ file, onDelete }: IFileUploadItem) {
         <div>
           <div className="flex justify-between items-center">
             <span className="text-secondary font-medium font-inter text-sm">
-              {truncateFileName(name)}
+              {truncateFileName(name, 60)}
             </span>
             <div onClick={() => onDelete(file)} className="text-[#A4A7AE] cursor-pointer">
               <BinIcon width={13} height={13} />

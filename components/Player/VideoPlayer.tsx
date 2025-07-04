@@ -22,7 +22,16 @@ export default function VideoPlayer({ src }: { src: string }) {
   };
   return (
     <div className="size-full relative">
-      <video ref={ref as Ref<HTMLVideoElement>} className="size-full object-cover" src={src} playsInline />
+      <video
+        ref={ref as Ref<HTMLVideoElement>}
+        autoPlay
+        // muted
+        preload="auto"
+        className="size-full object-cover"
+        src={src}
+        playsInline
+        onError={() => { }}
+      />
       <div className="absolute top-0 right-0 left-0 bottom-0 size-full flex justify-center items-end">
         {
           canPlay ?

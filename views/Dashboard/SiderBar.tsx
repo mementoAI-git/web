@@ -81,7 +81,7 @@ export function DashboardSideBar({ onClose }: DashboardSideBarProps) {
                     <SideBarItem {...n} active={n.link === pathname} key={i} />
                   ))}
                 </div>
-                <StorageTracker />
+                {/* <StorageTracker /> */}
               </div>
             </div>
           </div>

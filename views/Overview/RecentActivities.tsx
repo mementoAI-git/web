@@ -4,7 +4,7 @@ import endpoint from "@/api/endpoint";
 import { formattedDate, isEmpty } from "@/utility";
 
 export default function RecentActivities() {
-  const { data, isLoading } = useSWR(endpoint.activities)
+  const { data, isLoading } = useSWR(`${endpoint.activities}?page=1&limit=10`)
 
   return (
     <div className="flex-1 w-full rounded-2xl bg-grey-700 space-y-4 sm:space-y-6 py-4 sm:py-8 min-h-72.5">
@@ -37,7 +37,7 @@ export default function RecentActivities() {
                       {activity?.description}
                     </span>
                     <span className="text-xs text-grey-800 leading-4.5">
-                      {formattedDate(activity?.createdAt)}
+                      {formattedDate(activity?.created_at)}
                     </span>
                   </div>
                 </div>

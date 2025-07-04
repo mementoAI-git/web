@@ -5,6 +5,7 @@ import useFetcher from "@/hooks/use-fetcher";
 import { useModal } from "@/hooks/use-modal";
 import BinIcon from "@/public/icon/bin.svg"
 import { usePathname, useRouter } from "next/navigation";
+import { mutate } from "swr";
 
 export function DeleteMemory({ data: id }) {
   const { trigger, isMutating } = useFetcher(endpoint.memories, "delete")
@@ -18,6 +19,7 @@ export function DeleteMemory({ data: id }) {
       if (pathname.includes(id)) {
         router.push("/memories")
       }
+      mutate(`${endpoint.memories}?page=1`)
       close("delete-memory")
     }
   }

@@ -86,9 +86,6 @@ export default function PromptInput({ data }) {
       .catch(console.log)
 
   }, [data?.prompt]);
-
-  console.log(memory?.body, values.body)
-  console.log("edit mode:", (memory?.body ? values.body !== memory?.body : !isEmpty(values.body)))
   return (
     <div className="modal-container">
       <ModalCloseBtn onClick={handleClose} />

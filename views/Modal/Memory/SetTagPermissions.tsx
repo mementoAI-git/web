@@ -7,6 +7,7 @@ import { useModal } from "@/hooks/use-modal";
 import { isEmpty } from "@/utility";
 import { IMemory } from "@/utility/interface";
 import { Dispatch, KeyboardEvent, SetStateAction, useMemo, useState } from "react";
+import { mutate } from "swr";
 
 interface ITaginput {
   values: string[];
@@ -101,6 +102,7 @@ export default function SetTagPermissions({ data: memory }: { data: IMemory }) {
 
   const handleSubmit = async () => {
     await trigger({ level, title, status: "save", tags });
+    mutate(`${endpoint.memories}?page=1`)
     open("share-post", memory?._id);
   };
 

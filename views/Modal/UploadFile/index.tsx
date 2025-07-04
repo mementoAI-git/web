@@ -46,6 +46,7 @@ export default function UploadFiles({ data: id }) {
 
   const handleAddToPost = async () => {
     if (adding) return
+    console.log(files)
     const attachments = files.map(f => f.result._id)
 
     if (isEmpty(id)) {

@@ -70,17 +70,20 @@ export default function FilePreview({ data: files }: { data: IFile[] }) {
         ))
       }
       <div>
-        <div className="mx-auto mt-7 flex w-fit items-center justify-center gap-1 rounded-full bg-black/[32%] px-2 py-1">
-          {
-            files.map((_, i) => (
-              <div
-                key={i}
-                onClick={() => setIndex(i)}
-                className={`size-2 cursor-pointer rounded-full ${index === i ? "bg-white" : "bg-[#C7C9C8]"}`}
-              />
-            ))
-          }
-        </div>
+        {
+          files.length > 1 &&
+          <div className="mx-auto mt-7 flex w-fit items-center justify-center gap-1 rounded-full bg-black/[32%] px-2 py-1">
+            {
+              files.map((_, i) => (
+                <div
+                  key={i}
+                  onClick={() => setIndex(i)}
+                  className={`size-2 cursor-pointer rounded-full ${index === i ? "bg-white" : "bg-[#C7C9C8]"}`}
+                />
+              ))
+            }
+          </div>
+        }
       </div>
     </div>
   );

@@ -30,14 +30,14 @@ export default function MemoriesTableRow({ memory }) {
           </span>
         </div>
       </td>
-      <td className="text-sm text-[#535862]">
+      <td className="text-sm whitespace-nowrap text-[#535862]">
         {dayjs(memory.created_at).format("MMM DD, YYYY")}
       </td>
       <td>
         <div className="flex items-center gap-1">
           {
             memory.tags.slice(0, 3).map((tag, i) => (
-              <span key={i} className={`mem-tags ${tagColors[tag] || ""} `}>
+              <span key={i} className={`mem-tags whitespace-nowrap truncate-ellipsis ${tagColors[tag] || ""} `}>
                 {tag}
               </span>
             ))

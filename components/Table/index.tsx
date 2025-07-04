@@ -1,4 +1,4 @@
-import { isEmpty } from "@/utility"
+import { cn, isEmpty } from "@/utility"
 import { IPagination } from "@/utility/interface"
 import TableRowSekeleton from "./RowSekeleton"
 
@@ -31,7 +31,7 @@ export default function Table<T>({ data, columns, renderRow, onChangePage, loadi
         <table className="min-w-[600px] w-full text-left text-xs sm:text-sm">
           <thead className="font-inter text-xs sm:text-sm font-semibold text-[rgba(113,118,128,1)] capitalize">
             <tr>
-              {columns.map((c, i) => <th className={c.className} key={i}>{c.label}</th>)}
+              {columns.map((c, i) => <th className={cn("whitespace-nowrap", c.className)} key={i}>{c.label}</th>)}
             </tr>
           </thead>
           <tbody className="border-y border-[rgba(233,234,235,1)] text-xs sm:text-sm text-[#535862]">
