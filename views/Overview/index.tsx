@@ -36,7 +36,7 @@ export default function Overview() {
                 <div className="h-72.5 w-full sm:w-1/2 max-w-[368.5px] flex-1 rounded-2xl bg-gray-200" />
               </div>
             ) : (
-              <div className="flex flex-wrap items-stretch gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {data?.data?.map((item, i) => (
                   <DailyPrompt key={i} {...item} />
                 ))}
