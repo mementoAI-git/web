@@ -35,7 +35,9 @@ export default function Chat() {
     const last_seen = lastMessage ? dayjs().diff(lastMessage.created_at, 'millisecond') : 0;
 
     const ONE_DAY_MS = 24 * 60 * 60 * 1000; // a day
-    if (isEmpty(messages.length) || (last_seen > ONE_DAY_MS)) {
+    if (lastMessage && lastMessage.role === "ai") return;
+
+    if (isEmpty(messages.length) || (last_seen > ONE_DAY_MS) || lastMessage.role === "user") {
       return triggerGreeting({ onChunk: handleChuckArrival })
     }
   }, [messages])
