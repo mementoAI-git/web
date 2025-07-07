@@ -5,6 +5,7 @@ import VideoPlayer from "@/components/Player/VideoPlayer";
 import AudioPlayer from "@/components/Player/AudioPlayer";
 
 interface IFilePlayer {
+  id?: string
   src: string
   alt?: string
 }
@@ -19,10 +20,10 @@ function VideoPreview({ src }: IFilePlayer) {
   )
 }
 
-function AudioPreview({ src, alt }: IFilePlayer) {
+function AudioPreview({ src, alt, id }: IFilePlayer) {
   return (
     <div className="modal-container !mx-auto flex !min-h-126 !w-154.5">
-      <AudioPlayer {...{ src, alt }} />
+      <AudioPlayer {...{ src, alt, id }} />
     </div>
   );
 }
@@ -63,7 +64,7 @@ export default function FilePreview({ data: files }: { data: IFile[] }) {
               file.type.includes("video") ?
                 <VideoPreview alt={file.name} src={file.url} /> :
                 file.type.includes("audio") ?
-                  <AudioPreview alt={file.name} src={file.url} /> :
+                  <AudioPreview alt={file.name} src={file.url} id={file._id} /> :
                   <img src={file.url} alt={file.name} className="rounded-2xl size-full mx-auto max-w-110 h-auto border-[3px] border-grey-500" />
             }
           </div>

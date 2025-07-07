@@ -37,10 +37,12 @@ export default {
   aiPrompt: "/ai/prompt",
   aiGreet: "/ai/prompt/greet",
   aiPromptMessage: "/ai/prompt/messages",
+  transcription: "/ai/transcribe-audio",
 
   // capsule
   capsule: "/capsule",
 
   // activities
   activities: "/activities"
+
 };

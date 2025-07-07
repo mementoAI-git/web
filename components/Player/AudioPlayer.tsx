@@ -12,11 +12,12 @@ import Transcription from "./Transcription";
 
 export interface IMediaPlayer {
   src: string
+  id?: string
   alt?: string
   className?: string
 }
 
-export default function AudioPlayer({ src, className = "", alt }: IMediaPlayer) {
+export default function AudioPlayer({ src, className = "", id = null, alt }: IMediaPlayer) {
   const { ref, media, togglePlay, backward, forward, seek, canPlay, playing, progress } = usePlayer()
   const progressBar = useRef(null)
   const current = getDuration(media?.currentTime)
@@ -77,7 +78,7 @@ export default function AudioPlayer({ src, className = "", alt }: IMediaPlayer) 
             <ForwardIcon width={24} />
           </div>
         </div>
-        <Transcription />
+        {id && <Transcription id={id} />}
       </div>
       <Image src={wave} height={79} className="w-full h-20 object-cover" alt="wave" />
     </div>

@@ -1,18 +1,68 @@
-import { useState } from "react"
+import endpoint from "@/api/endpoint"
+import { postFetcher } from "@/api/fetcher"
+import useSWR from "swr"
+import { useCallback, useState, useEffect } from "react"
+import useTypingEffect from "@/hooks/use-typing-effect"
+import { toast } from "sonner"
+import { isEmpty } from "@/utility"
 
-export default function Transcription() {
+const fetchTranscription = async (id: string) => {
+  const result = await postFetcher(endpoint.transcription, { arg: { file_id: id } })
+  console.log(String(result.data))
+  if (result.success) return String(result.data);
+  toast.error("Failed to fetch transcription")
+}
+
+export default function Transcription({ id }: { id: string }) {
   const [show, setShow] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
+  const { data, isLoading } = useSWR(
+    show ? [endpoint.transcription] : null,
+    () => fetchTranscription(id)
+  )
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 640)
+    checkMobile()
+    window.addEventListener("resize", checkMobile)
+    return () => window.removeEventListener("resize", checkMobile)
+  }, [])
+
+  // Responsive font size
+  const getFontSize = (length: number) => {
+    if (isMobile) {
+      if (length <= 100) return "20px"
+      if (length >= 1000) return "12px"
+      return `${20 - (length - 100) * 8 / 900}px`
+    } else {
+      if (length <= 100) return "30px"
+      if (length >= 1000) return "16px"
+      return `${30 - (length - 100) * 14 / 900}px`
+    }
+  }
+
+  const handleShowTranscription = useCallback(() => {
+    setShow(prev => !prev)
+  }, [])
+
+  const typedText = useTypingEffect(isEmpty(data) ? "" : data)
+  console.log(typedText)
   return (
     <div className="relative">
-      <span onClick={() => setShow(p => !p)} className="mx-auto cursor-pointer hover:underline underline-offset-2 block text-center font-inter text-xs text-secondary">
-        {show ? "Hide" : "Show"} transcription
+      <span
+        onClick={handleShowTranscription}
+        className="mx-auto cursor-pointer hover:underline underline-offset-2 block text-center font-inter text-xs text-secondary"
+      >
+        {(!show || isLoading) ? isLoading ? "Showing transcription..." : "Show transcription" : "Hide transcription"}
       </span>
       {
-        show &&
-        <div className="absolute  overflow-x-hidden overflow-y-auto max-h-110.5 top-65 left-1/2 -translate-1/2 bg-grey-600 rounded-2xl p-5 w-129.5">
-          <span className="text-[30px] font-inter font-medium text-white">
-            Lorem ipsum dolor sit amet consectetur. Gravida nulla tellus sed aliquet pulvinar. Metus nulla turpis massa vitae non enim. Cras in aliquet tincidunt at varius cras ullamcorper ut mattis. Cursus sed vitae pellentesque tortor tincidunt.
-            Tristique scelerisque volutpat leo sodales convallis arcu. Id id fringilla semper tellus. Felis imperdiet sodales ac cursus ante at arcu ut aliquet. Dui dui morbi amet sem faucibus malesu
+        show && data &&
+        <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 w-full sm:max-w-md md:max-w-lg lg:max-w-xl lg:min-w-lg md:min-w-md sm:min-w-sm max-w-full overflow-x-hidden overflow-y-auto max-h-110.5 bg-grey-600 rounded-2xl p-4 sm:p-5 z-10 shadow-lg">
+          <span
+            className="font-inter font-medium text-white"
+            style={{ fontSize: getFontSize(data.length), transition: 'font-size 0.2s' }}
+          >
+            {typedText}
           </span>
         </div>
       }

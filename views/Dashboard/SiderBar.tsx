@@ -33,8 +33,8 @@ export function DashboardSideBar({ onClose }: DashboardSideBarProps) {
     <aside className="flex items-stretch h-full">
       {
         isEmpty(subNavs) &&
-        <div className={`group ${collapse ? "close w-fit min-w-[96px]" : "w-full max-w-[250px]"} transition-all duration-500 ease-in-out overflow-x-hidden bg-white`}>
-          <div className="h-full border-r border-grey-500">
+        <div className={`group ${collapse ? "close" : ""} w-69 transition-all duration-500 ease-in-out overflow-x-hidden bg-white`}>
+          <div className="h-full">
             <div className="flex h-full max-h-300 flex-col justify-between group-[.close]:justify-start group-[.close]:gap-4 px-3 sm:px-4 py-6 sm:py-8">
               <div className="space-y-6 sm:space-y-8">
                 <div className="flex items-center justify-between gap-3">
@@ -92,7 +92,7 @@ export function DashboardSideBar({ onClose }: DashboardSideBarProps) {
       }
       {
         !isEmpty(subNavs) &&
-        <div className="w-full min-w-69 space-y-4 bg-white px-4 sm:px-6 border-r border-grey-500 py-6 sm:py-8">
+        <div className="w-full min-w-69 space-y-4 bg-white px-4 sm:px-6 py-6 sm:py-8">
           <div className="flex items-center justify-between">
             <h5 className="font-inter text-lg sm:text-xl text-secondary font-bold px-3 py-2">Settings</h5>
             {onClose && (
