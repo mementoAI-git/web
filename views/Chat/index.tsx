@@ -32,10 +32,16 @@ export default function Chat() {
   const handleTriggerGreeting = useCallback(() => {
     if (!messages) return;
     const lastMessage = messages[messages.length - 1];
+    const secondLastMessage = messages[messages.length - 2];
     const last_seen = lastMessage ? dayjs().diff(lastMessage.created_at, 'millisecond') : 0;
 
     const ONE_DAY_MS = 24 * 60 * 60 * 1000; // a day
-    if (lastMessage && lastMessage.role === "ai") return;
+    if (
+      lastMessage &&
+      secondLastMessage &&
+      lastMessage.role === "ai" &&
+      secondLastMessage.role === "ai"
+    ) return;
 
     if (isEmpty(messages.length) || (last_seen > ONE_DAY_MS) || lastMessage.role === "user") {
       return triggerGreeting({ onChunk: handleChuckArrival })
