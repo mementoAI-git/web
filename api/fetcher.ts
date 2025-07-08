@@ -74,7 +74,6 @@ export const fileUploadFetcher = async (url: string, { arg }) => {
     });
 
     res.data.success = true
-    toast.success(res.data?.message || "Success");
     return res.data;
   } catch (error) {
     let message = "Something went wrong";

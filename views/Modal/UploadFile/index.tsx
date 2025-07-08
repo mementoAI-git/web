@@ -46,7 +46,6 @@ export default function UploadFiles({ data: id }) {
 
   const handleAddToPost = async () => {
     if (adding) return
-    console.log(files)
     const attachments = files.map(f => f.result._id)
 
     if (isEmpty(id)) {
@@ -75,6 +74,7 @@ export default function UploadFiles({ data: id }) {
     if (!result.data[0]) {
       toast.error("Upload unsuccessful")
     } else {
+      toast.success(result?.message || "Success");
       setFiles(prev => prev.map(f => f.id === file.id ? { ...f, result: result.data[0] } : f))
     }
   }, [])

@@ -40,7 +40,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
 
   return (
     <div className="w-full border-b border-grey-500">
-      <header className="mx-auto flex max-h-23 w-[93%] max-w-[1160px] items-center justify-between gap-4 sm:gap-6 py-4 sm:py-6">
+      <header className="mx-auto flex max-h-23 w-[93%] max-w-[1160px] items-center justify-between gap-4 sm:gap-6 px-2 py-4 sm:py-6">
         <div className="flex items-center gap-4 sm:gap-6 flex-1">
           {/* Mobile Menu Button */}
           <button
@@ -52,7 +52,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
 
           {
             !isEmpty(headerTitle[path]) &&
-            <div className="shrink-0 hidden sm:block text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bricolage text-secondary font-medium leading-11 capitalize truncate max-w-full">
+            <div className="page-title hidden sm:block">
               {headerTitle[path]}
             </div>
           }
@@ -61,7 +61,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
           </div>
         </div>
         <div className="flex max-h-10 shrink-0 items-center gap-2 sm:gap-4 font-inter">
-          <div className="h-full cursor-pointer space-x-1 rounded-full bg-grey-400 px-3 sm:px-5 py-2">
+          <div className="h-full shrink-0 cursor-pointer space-x-1 rounded-full bg-grey-400 px-3 sm:px-5 py-2">
             <span>✌🏾</span>
             <span className="font-semibold text-grey-600 text-sm sm:text-base">{user?.streak || 0}</span>
           </div>
@@ -69,7 +69,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
             path === "chat" ?
               <div
                 onClick={() => open("chat-settings")}
-                className="size-8 sm:size-10 cursor-pointer text-white rounded-full flex justify-center items-center bg-grey-600"
+                className="size-8 shrink-0 sm:size-10 cursor-pointer text-white rounded-full flex justify-center items-center bg-grey-600"
               >
                 <MenuIcon width={12} height={8} className="sm:w-[15px] sm:h-[10px]" />
               </div> :

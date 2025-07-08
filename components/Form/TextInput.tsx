@@ -17,7 +17,7 @@ export function Textinput({ label, end, labelClassName = "", inputClassName = ""
           {...props}
           className="flex-1 outline-0 placeholder:text-[#000D4D73]"
         />
-        {end && <div>{end}</div>}
+        {end && <div className="shrink-0">{end}</div>}
       </div>
       {error && <small className="text-xs text-danger">{error}</small>}
     </div>

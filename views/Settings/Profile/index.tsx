@@ -11,11 +11,11 @@ import { isEmpty } from "@/utility";
 export function Profile() {
   const { user } = useStore()
   return (
-    <div className="w-full 2xl:mx-auto max-w-140 space-y-6 sm:space-y-8">
+    <div className="w-full 2xl:mx-auto max-w-140 space-y-4 sm:space-y-6">
       <div className="space-y-3">
-        <div className="space-y-2 sm:space-y-3">
-          <h4 className="text-secondary font-medium font-bricolage text-3xl lg:text-4xl">My Profile</h4>
-          <small className="text-base font-inter text-grey-600">Manage your memento profile</small>
+        <div className="space-y-2">
+          <h4 className="text-secondary font-geist font-bold">My Profile</h4>
+          <small className="text-sm font-geist text-grey-600">Manage your memento profile</small>
         </div>
         <ChangeImage image={user?.picture_url} />
       </div>

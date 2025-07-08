@@ -8,7 +8,6 @@ import { isEmpty } from "@/utility"
 
 const fetchTranscription = async (id: string) => {
   const result = await postFetcher(endpoint.transcription, { arg: { file_id: id } })
-  console.log(String(result.data))
   if (result.success) return String(result.data);
   toast.error("Failed to fetch transcription")
 }
@@ -17,7 +16,7 @@ export default function Transcription({ id }: { id: string }) {
   const [show, setShow] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
   const { data, isLoading } = useSWR(
-    show ? [endpoint.transcription] : null,
+    show ? [`/${endpoint.transcription}/${id}`] : null,
     () => fetchTranscription(id)
   )
 

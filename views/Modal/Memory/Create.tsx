@@ -43,7 +43,6 @@ export function CreateMemory({ data }) {
   const { values, handleChange, setValues, handleSubmit, handleValue } = useForm({
     initial: { ...initial, ...payload },
     async onSubmit(p) {
-      console.log(p)
       if (isEmpty(p.title)) {
         return toast.error("Title is required")
       }
@@ -52,13 +51,10 @@ export function CreateMemory({ data }) {
       if (attachments) {
         p.attachments = JSON.parse(attachments).files.map(f => f.result._id)
       }
-      const result = await trigger(p)
+      const result = await trigger({ ...p, status: "draft" })
       if (result?.success) {
-        open("set-tag-permission", result.data);
+        push("set-tag-permission", result.data);
         setEditMode(false)
-      }
-
-      if (attachments) {
         localStorage.removeItem(storageKeys.attachments)
       }
     },
@@ -87,7 +83,6 @@ export function CreateMemory({ data }) {
   }
 
   useEffect(() => {
-    console.log("Mounted!!")
     const attachments = localStorage.getItem(storageKeys.attachments)
     if (attachments) {
       console.log(JSON.parse(attachments).files.map(f => f.result))
