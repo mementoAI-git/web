@@ -10,10 +10,11 @@ interface ISegment {
 
 interface ISegmentController {
   segments: ISegment[]
+  initial: string
 }
 
-export default function SegmentedController({ segments }: ISegmentController) {
-  const [active, setActive] = useState(segments[0].key);
+export default function SegmentedController({ segments, initial = segments[0].key }: ISegmentController) {
+  const [active, setActive] = useState(initial);
   const [indicatorStyle, setIndicatorStyle] = useState({});
   const tabRefs = useRef([]);
 

@@ -72,12 +72,16 @@ export interface IPagination<T> {
   totalPages: number;
 }
 
+type IBeneficiaryUser = Pick<IUser, "email" | "first_name" | "last_name" | "picture_url">
+
 export interface IBeneficiary {
+  _id?: string
   name: string
   email: string
   relationship: string
   level: number
-  user: string
+  user: IBeneficiaryUser
+  benefactor: IBeneficiaryUser
 }
 
 export interface ICapsule {

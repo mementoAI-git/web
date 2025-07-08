@@ -19,7 +19,9 @@ export default {
 
   // beneficiaries
   beneficiaries: "/beneficiaries",
-  resendInvite: "/beneficiaries/resend-invite",
+  resendInvite: "/beneficiaries/invite/resend",
+  getInvite: "/beneficiaries/invite/",
+  acceptInvite: "/beneficiaries/invite/accept",
 
   // files
   upload: "/files/upload",

@@ -1,23 +1,26 @@
 import Image from "next/image";
 import logo from "@/public/image/logo.png";
+import lightlogo from "@/public/image/logo-light.png";
+import { cn } from "@/utility";
 
 interface ILogo {
   size?: number;
+  color?: "light" | "dark"
   textClassName?: string;
 }
 
-export default function Logo({ size = 38, textClassName }: ILogo) {
+export default function Logo({ size = 38, color = "dark", textClassName = "" }: ILogo) {
   return (
     <div className="flex cursor-pointer items-center gap-[6px]">
       <Image
         width={size}
         height={size}
-        src={logo}
+        src={color === "light" ? lightlogo : logo}
         className="aspect-square shrink-0 object-cover"
         alt="memento logo"
       />
       <span
-        className={`font-geist text-[28.79px] font-semibold capitalize ${textClassName}`}
+        className={cn("font-geist text-[28.79px] font-semibold capitalize", textClassName, { "text-white": color === "light" })}
       >
         memento
       </span>
