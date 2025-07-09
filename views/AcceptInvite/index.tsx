@@ -7,15 +7,13 @@ import { AuthLoader } from "../Auth"
 import { AuthFormLayout } from "../Auth";
 import TimesIcon from "@/public/icon/times.svg";
 import AcceptInviteForm from "./Form"
-import { isEmpty } from "@/utility"
-import AcceptInviteButtons from "./Butttons"
 
 export default function AcceptInvite({ invite_id }) {
   const { data, error, isLoading } = useSWR(`${endpoint.getInvite}${invite_id}`)
 
   return (
-    <div className="flex flex-col items-center gap-16 w-full max-w-[583px] z-50">
-      <Logo color="light" size={50} textClassName="text-9.5" />
+    <div className="flex flex-col items-center gap-10 sm:gap-16 w-full max-w-full sm:max-w-[583px] px-4 sm:px-0 z-50">
+      <Logo color="light" size={40} textClassName="text-6 sm:text-9.5" />
       {
         isLoading ?
           <AuthLoader title="Loading..." /> :

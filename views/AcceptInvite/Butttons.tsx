@@ -18,9 +18,9 @@ export default function AcceptInviteButtons({ data }: { data: IBeneficiary }) {
     }
   }
   return (
-    <div className="flex gap-3 justify-center items-center">
-      <button disabled className="btn-outline">Cancel</button>
-      <button onClick={handleAcceptInvitation} className="btn">
+    <div className="flex gap-3 flex-col-reverse sm:flex-row justify-center items-center">
+      <button disabled className="btn-outline w-full sm:w-auto">Cancel</button>
+      <button onClick={handleAcceptInvitation} className="btn w-full sm:w-auto">
         Accept invite
         {isMutating && <Spinner loading className="mr-2 !size-4" />}
       </button>

@@ -46,14 +46,14 @@ export default function AcceptInviteForm({ data }: { data: IBeneficiary }) {
     },
   })
   return (
-    <div className="w-full space-y-5 p-10 rounded-3xl bg-white">
-      <div className={cn("size-18 bg-grey-500 flex justify-center items-center rounded-full overflow-hidden border-[#314FDF] mx-auto", { "border-2": !isEmpty(benefactor.picture_url) })}>
+    <div className="w-full max-w-full sm:max-w-[500px] space-y-5 p-4 sm:p-10 rounded-3xl bg-white">
+      <div className={cn("size-16 sm:size-18 bg-grey-500 flex justify-center items-center rounded-full overflow-hidden border-[#314FDF] mx-auto", { "border-2": !isEmpty(benefactor.picture_url) })}>
         {
           isEmpty(benefactor.picture_url) ?
-            <span className="uppercase font-bold font-geist text-3xl">{(isEmpty(name.trim()) ? email : name)[0]}</span> :
+            <span className="uppercase font-bold font-geist text-2xl sm:text-3xl">{(isEmpty(name.trim()) ? email : name)[0]}</span> :
             <Image
-              width={72}
-              height={72}
+              width={64}
+              height={64}
               src={benefactor.picture_url}
               alt={benefactor?.first_name || "Profile pics"}
               className="size-full object-cover rounded-full"
@@ -61,40 +61,43 @@ export default function AcceptInviteForm({ data }: { data: IBeneficiary }) {
         }
       </div>
       <div className="flex flex-col gap-2 font-geist items-center text-center">
-        <span className="font-bold text-2xl text-secondary leading-[140%]">Join <span className="capitalize">{name}</span> on Memento AI</span>
-        <span className="block text-sm leading-[150%] text-[#667085] max-w-90">
+        <span className="font-bold text-xl sm:text-2xl text-secondary leading-[140%]">Join <span className="capitalize">{name}</span> on Memento AI</span>
+        <span className="block text-xs sm:text-sm leading-[150%] text-[#667085] max-w-90">
           Your contact, <span className="capitalize">{name}</span> has invited you to join Memento as a beneficiary on his profile.{" "}
           <span className="text-[#314FDF] font-medium underline cursor-pointer underline-offset-3">What does this mean?</span>
         </span>
       </div>
-      <div className="flex items-center justify-center gap-3">
-        <span className="text-sm text-[#667085]">You're Joining as:</span>
+      <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3">
+        <span className="text-xs sm:text-sm text-[#667085]">You're Joining as:</span>
         <span className="mem-tags !lowercase">{email}</span>
       </div>
       {
-        isEmpty(data) ?
+        isEmpty(data?.user) ?
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-4">
               <Textinput
                 placeholder="Enter first name"
                 label="first name"
+                className="w-full"
                 {...getField("first_name")}
               />
               <Textinput
                 placeholder="Enter last name"
                 label="last name"
+                className="w-full"
                 {...getField("last_name")}
               />
               <Dateinput
                 placeholder="DD-MM-YY"
                 label="date of birth"
                 maxDate={dayjs().toDate()}
+                className="w-full"
                 {...getField("dob")}
               />
             </div>
-            <div className="flex gap-3 justify-end items-center">
-              <button disabled className="btn-outline">Cancel</button>
-              <button type="submit" className="btn">
+            <div className="flex sm:flex-row gap-3 flex-col-reverse justify-end items-center">
+              <button disabled className="btn-outline w-full sm:w-auto">Cancel</button>
+              <button type="submit" className="btn w-full sm:w-auto">
                 Accept invite
                 {isMutating && <Spinner loading className="mr-2 !size-4" />}
               </button>

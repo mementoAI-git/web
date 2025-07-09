@@ -30,7 +30,7 @@ const schema = yup.object().shape({
 export function AddBeneficiary() {
   const { close } = useModal();
   const { trigger, isMutating } = useFetcher(endpoint.beneficiaries)
-  const { values, handleSubmit, isValid, handleChange, errors, getField } = useForm({
+  const { values, handleSubmit, isValid, getField } = useForm({
     initial,
     schema,
     async onSubmit(p) {
