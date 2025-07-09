@@ -36,7 +36,7 @@ export default function SegmentedController({ segments, initial = segments[0].ke
           <Link
             key={idx}
             href={segment.key}
-            // @ts-ignore
+            // @ts-expect-error: Link does not accept ref, but we need to measure the DOM node for indicator
             ref={el => (tabRefs.current[idx] = el)}
             className={cn("h-8 shrink-0 whitespace-nowrap px-6 items-center text-center flex rounded-sm cursor-pointer transition-colors relative z-10 font-normal text-[#667085]", { "font-bold  text-black": active === segment.key })}
             onClick={() => setActive(segment.key)}
