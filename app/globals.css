@@ -136,4 +136,37 @@ body {
   .btn-outline {
     @apply flex cursor-pointer items-center justify-center gap-2 rounded-full border border-secondary hover:border-[#000626b3] hover:scale-[97%] px-5 py-2 font-inter font-semibold text-secondary disabled:border-[#C7C9C8] disabled:text-[#C7C9C8] transition-all duration-150;
   }
+
+  /* Search animations */
+  .animate-fadeIn {
+    animation: fadeIn 0.3s ease-in-out;
+  }
+
+  .animate-slideIn {
+    animation: slideIn 0.4s ease-out;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes slideIn {
+    from {
+      opacity: 0;
+      transform: translateX(-20px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
 }

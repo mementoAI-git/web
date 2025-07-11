@@ -11,6 +11,7 @@ import { MemoryListFilter } from "./MemoriesDropdown";
 import { useModal } from "@/hooks/use-modal";
 import { storageKeys } from "@/utility/constant";
 import { cn } from "@/utility";
+import { useEffect } from "react";
 
 interface IMemoriesHeader {
   mode?: string;
@@ -25,6 +26,21 @@ export default function MemoriesHeader({ count = 0, mode = "list", onChangeMode 
     localStorage.setItem(storageKeys.listmode, m)
     onChangeMode(m)
   }
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key === "k") {
+        event.preventDefault();
+        open("search-memory");
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [open]);
   return (
     <div className="flex flex-1 flex-col gap-3">
       <div className="flex flex-row items-center sm:items-center justify-between gap-2 sm:gap-0">
@@ -63,7 +79,7 @@ export default function MemoriesHeader({ count = 0, mode = "list", onChangeMode 
         <div className="flex flex-col sm:flex-row items-stretch lg:max-h-10 gap-2 sm:gap-3 mt-2 sm:mt-0 w-full sm:w-auto">
           <div onClick={() => open("search-memory")}
             className="w-full sm:w-auto">
-            <Searchinput />
+            <Searchinput end={<div className="border-grey-500 border rounded py-[1px] px-1 text-[#717680] font-medium font-inter text-xs">⌘K</div>} />
           </div>
           <button onClick={() => open("create-memory")} className={cn("btn", "!rounded-lg w-full sm:w-fit")}>
             <PlusIcon width={15} />

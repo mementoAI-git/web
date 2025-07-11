@@ -99,6 +99,14 @@ export const formattedDate = (date: string) => dayjs(date).calendar(null, {
   sameElse: 'DD MMM YYYY'
 });
 
+// Highlight search terms in text
+export const highlightText = (text: string, searchTerm: string): string => {
+  if (!searchTerm || !text) return text;
+
+  const regex = new RegExp(`(${searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+  return text.replace(regex, '<mark class="bg-[#155FFF36] font-semibold">$1</mark>');
+};
+
 // Recent memories utilities
 export const addToRecentMemories = (memory: any, email: string) => {
   if (typeof window === 'undefined') return;

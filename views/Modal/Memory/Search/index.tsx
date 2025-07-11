@@ -2,7 +2,7 @@ import { ModalCloseBtn } from "@/components/ModalLayout";
 import { useModal } from "@/hooks/use-modal";
 import SearchIcon from "@/public/icon/dashboard/search.svg";
 import ArrowRightIcon from "@/public/icon/arrow-right.svg"
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { getRecentMemories, isEmpty } from "@/utility";
 import SearchItem from "./SearchItem";
 import EmptyRecentMemories from "./EmptyRecentMemories";
@@ -16,19 +16,28 @@ export function SearchMemories() {
   const { user } = useStore();
   const [recentMemories, setRecentMemories] = useState([]);
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
 
   useEffect(() => {
     const recent = getRecentMemories(user.email);
     setRecentMemories(recent);
   }, [user.email]);
 
-  const url = `${endpoint.memories}?search=${encodeURIComponent(search.trim())}`
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 1500);
 
-  const { data: searchData, isLoading } = useSWR(search.trim() ? url : null);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  const url = `${endpoint.memories}?search=${encodeURIComponent(debouncedSearch.trim())}`;
+
+  const { data: searchData, isLoading } = useSWR(debouncedSearch.trim() ? url : null);
   const searchResults = searchData?.data?.docs || [];
 
-  const showRecent = !search.trim();
-  const showEmpty = search.trim() ? (!isLoading && isEmpty(searchResults)) : isEmpty(recentMemories);
+  const showRecent = !debouncedSearch.trim();
+  const showEmpty = debouncedSearch.trim() ? (!isLoading && isEmpty(searchResults)) : isEmpty(recentMemories);
 
   return (
     <div className="modal-container !max-w-200">
@@ -52,22 +61,36 @@ export function SearchMemories() {
               </div>
           }
         </div>
-        {showEmpty ?
-          <EmptyRecentMemories />
-          : showRecent ?
-            <div className="space-y-3">
+
+        <div className="transition-all duration-300 ease-in-out">
+          {showEmpty ? (
+            <div className="animate-fadeIn">
+              <EmptyRecentMemories />
+            </div>
+          ) : showRecent ? (
+            <div className="space-y-3 animate-fadeIn">
               <span className="font-inter inline-block font-semibold text-sm text-secondary">Recently opened posts:</span>
               <div className="space-y-2">
-                {recentMemories.map((memory, i) => <SearchItem key={i} memory={memory} />)}
-              </div>
-            </div> :
-            <div className="space-y-3">
-              <span className="font-inter inline-block font-semibold text-sm text-secondary">Search results:</span>
-              <div className="space-y-2">
-                {searchResults.map((memory, i) => <SearchItem key={i} memory={memory} />)}
+                {recentMemories.map((memory, i) => (
+                  <div key={i} className="animate-slideIn" style={{ animationDelay: `${i * 50}ms` }}>
+                    <SearchItem memory={memory} searchTerm="" />
+                  </div>
+                ))}
               </div>
             </div>
-        }
+          ) : (
+            <div className="space-y-3 animate-fadeIn">
+              <span className="font-inter inline-block font-semibold text-sm text-secondary">Search results:</span>
+              <div className="space-y-2">
+                {searchResults.map((memory, i) => (
+                  <div key={i} className="animate-slideIn" style={{ animationDelay: `${i * 50}ms` }}>
+                    <SearchItem memory={memory} searchTerm={debouncedSearch.trim()} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
