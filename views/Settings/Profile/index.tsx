@@ -1,6 +1,6 @@
 "use client";
 
-import { Textinput } from "@/components/Form";
+import { Dateinput, Textinput } from "@/components/Form";
 import StatsCard from "./StatsCard";
 import BoltIcon from "@/public/icon/bolt.svg"
 import ChangeImage from "./ChangeImage";

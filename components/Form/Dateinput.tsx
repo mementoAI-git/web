@@ -5,17 +5,24 @@ import CalendarIcon from "@/public/icon/calendar-1.svg"
 import React, { ChangeEvent, useState } from "react";
 import dayjs from "dayjs"
 import useClickAway from "@/hooks/use-clickaway"
+import { useViewportPosition } from "@/hooks/use-viewport-position"
 import DatePicker from "../DatePicker";
 
 interface IDateinput extends ITexinput {
   minDate?: Date | null
   maxDate?: Date | null
+  position?: "top" | "bottom" | "auto"
 }
 
-export function Dateinput({ label, onChange, minDate = null, maxDate = null, ...props }: IDateinput) {
+export function Dateinput({ label, onChange, position = "auto", minDate = null, maxDate = null, ...props }: IDateinput) {
   const [show, setShow] = useState<boolean>(false)
   const [value, setValue] = useState<Date>(dayjs(`${props.value}`).isValid() ? dayjs(String(props.value)).toDate() : undefined)
   const ref = useClickAway(() => setShow(false))
+  const { isInTopHalf, ref: viewportRef } = useViewportPosition()
+
+  const dynamicPosition = position === "auto" || !position
+    ? (isInTopHalf ? "bottom" : "top")
+    : position
 
   const handleChange = (selectedDate: Date) => {
     setValue(selectedDate);
@@ -32,15 +39,16 @@ export function Dateinput({ label, onChange, minDate = null, maxDate = null, ...
   };
   return (
     <div
-      ref={ref}
+      ref={(el) => {
+        ref.current = el;
+        viewportRef.current = el;
+      }}
       className={`input-container group relative ${props.error ? "error" : ""}`}
     >
       <label className="input-label">{label}</label>
       <DatePicker
-        setShow={setShow}
+        {...{ setShow, show, position: dynamicPosition }}
         onChange={handleChange}
-        show={show}
-        classNames=""
         options={{ minDate, maxDate }}
       >
         <div className="input-base flex items-center justify-between">

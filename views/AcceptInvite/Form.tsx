@@ -26,7 +26,7 @@ const schema = yup.object().shape({
 
 export default function AcceptInviteForm({ data }: { data: IBeneficiary }) {
   const { _id: invite_id, email, benefactor } = data
-  const name = benefactor?.first_name || benefactor?.last_name;
+  const name = benefactor?.first_name || benefactor?.last_name || benefactor?.email;
 
   const router = useRouter();
   const { trigger, isMutating } = useFetcher(endpoint.acceptInvite)

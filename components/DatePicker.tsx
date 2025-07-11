@@ -2,6 +2,7 @@ import Datepicker from "tailwind-datepicker-react"
 import ChevronRightIcon from "@/public/icon/chevron-right.svg"
 import ChevronLeftIcon from "@/public/icon/chevron-left.svg"
 import { IDatePickerProps } from "tailwind-datepicker-react/types/Components/DatePicker";
+import { cn } from "@/utility";
 
 const options = {
   theme: {
@@ -18,7 +19,6 @@ const options = {
     inputIcon: "",
     selected: "!rounded-full !bg-[#050709] !hover:bg-[#050709] !text-white",
   },
-  datepickerClassNames: "text-black !top-20",
   icons: {
     next() {
       return (
@@ -37,9 +37,20 @@ const options = {
   },
 };
 
-export default function DatePicker(props: IDatePickerProps) {
+interface IDatePicker extends IDatePickerProps {
+  position?: "top" | "bottom" | "auto"
+}
+
+export default function DatePicker(props: IDatePicker) {
   return (
-    <Datepicker {...props} options={{ ...options, ...props.options }}>
+    <Datepicker
+      {...props}
+      options={{
+        ...options,
+        ...props.options,
+        datepickerClassNames: cn("text-black absolute !top-[40px]", { "!-top-[370px]": props.position === "top" })
+      }}
+    >
       {props.children}
     </Datepicker>
   )

@@ -37,9 +37,12 @@ export default function BeneficiaryRow({ beneficiary }) {
       <td><span className="mem-tags">Level {beneficiary?.level}</span></td>
       <td>
         <div className="flex items-center justify-end gap-3 text-secondary">
-          <div className="cursor-pointer" onClick={handleResendInvite}>
-            <RefreshIcon width={15} size={15} />
-          </div>
+          {
+            isEmpty(beneficiary.accepted_at) &&
+            <div className="cursor-pointer" onClick={handleResendInvite}>
+              <RefreshIcon width={15} size={15} />
+            </div>
+          }
           <div className="cursor-pointer" onClick={handleEditClick}>
             <EditIcon width={16} size={16} />
           </div>
