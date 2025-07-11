@@ -5,6 +5,7 @@ import Spinner from "@/components/Spinner";
 import useFetcher from "@/hooks/use-fetcher";
 import useForm from "@/hooks/use-form";
 import { useModal } from "@/hooks/use-modal";
+import { isEmpty } from "@/utility";
 import { toast } from "sonner";
 import * as yup from "yup";
 
@@ -56,6 +57,7 @@ export function UpdateBeneficiary({ data: beneficiary }) {
             label="Email"
             type="email"
             inputClassName="!h-[50px]"
+            disabled={!isEmpty(beneficiary?.accepted_at)}
             {...getField("email")}
             labelClassName="!text-[rgba(0,9,51,0.65)] !text-xs !font-normal"
           />

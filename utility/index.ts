@@ -3,6 +3,7 @@ import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 import dayjs from "dayjs";
 import calendar from "dayjs/plugin/calendar";
+import { storageKeys } from "./constant";
 
 dayjs.extend(calendar);
 
@@ -97,3 +98,48 @@ export const formattedDate = (date: string) => dayjs(date).calendar(null, {
   lastWeek: 'dddd HH:mm A',
   sameElse: 'DD MMM YYYY'
 });
+
+// Recent memories utilities
+export const addToRecentMemories = (memory: any, email: string) => {
+  if (typeof window === 'undefined') return;
+
+  try {
+    const recentMemories = getRecentMemories(email);
+    const maxItems = 5; // Keep last 20 memories
+
+    // Remove if already exists
+    const filtered = recentMemories.filter(m => m._id !== memory._id);
+    memory = {
+      _id: memory?._id,
+      title: memory?.title,
+      attachments: memory?.attachments,
+      body: memory?.body.substring(0, 150),
+      opened_at: dayjs().toISOString(),
+      created_at: memory?.created_at,
+    }
+
+    // Add to beginning with timestamp
+    const updated = [memory, ...filtered].slice(0, maxItems);
+
+    localStorage.setItem(`${storageKeys.recentMemories}:${email}`, JSON.stringify(updated));
+  } catch (error) {
+    console.error('Error saving recent memory:', error);
+  }
+};
+
+export const getRecentMemories = (email: string): any[] => {
+  if (typeof window === 'undefined') return [];
+
+  try {
+    const stored = localStorage.getItem(`${storageKeys.recentMemories}:${email}`);
+    return stored ? JSON.parse(stored) : [];
+  } catch (error) {
+    console.error('Error reading recent memories:', error);
+    return [];
+  }
+};
+
+export const clearRecentMemories = () => {
+  if (typeof window === 'undefined') return;
+  localStorage.removeItem(storageKeys.recentMemories);
+};

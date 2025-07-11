@@ -22,6 +22,8 @@ export function BookmarkMemory({ data: memory }: { data: IMemory }) {
       if (result?.success) {
         toast.success("Memory added to bookmarks successfully!");
         mutate(`${endpoint.memories}/${memory._id}`)
+        mutate(endpoint.memoriesStats)
+        mutate(`${endpoint.memories}?page=1`)
         close("bookmark-memory");
       }
     } catch (error) {
@@ -35,6 +37,8 @@ export function BookmarkMemory({ data: memory }: { data: IMemory }) {
       if (result?.success) {
         toast.success("Memory removed from bookmarks successfully!");
         mutate(`${endpoint.memories}/${memory._id}`)
+        mutate(endpoint.memoriesStats)
+        mutate(`${endpoint.memories}?page=1`)
         close("bookmark-memory");
       }
     } catch (error) {
