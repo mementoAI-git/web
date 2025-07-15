@@ -53,7 +53,7 @@ export function CreateMemory({ data }) {
       }
       const result = await trigger({ ...p, status: "draft" })
       if (result?.success) {
-        push("set-tag-permission", result.data);
+        push("set-tag-permission", { memory: result.data, isNew: true });
         setEditMode(false)
         localStorage.removeItem(storageKeys.attachments)
       }

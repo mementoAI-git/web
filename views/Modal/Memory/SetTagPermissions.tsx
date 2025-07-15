@@ -7,11 +7,19 @@ import { useModal } from "@/hooks/use-modal";
 import { isEmpty } from "@/utility";
 import { IMemory } from "@/utility/interface";
 import { Dispatch, KeyboardEvent, SetStateAction, useMemo, useState } from "react";
+import { toast } from "sonner";
 import { mutate } from "swr";
 
 interface ITaginput {
   values: string[];
   setValue: Dispatch<SetStateAction<string[]>>;
+}
+
+interface ISetTagPermissionsProps {
+  data: {
+    memory: IMemory
+    isNew?: boolean
+  }
 }
 
 function Taginput({ values, setValue }: ITaginput) {
@@ -93,7 +101,8 @@ function Taginput({ values, setValue }: ITaginput) {
   );
 }
 
-export default function SetTagPermissions({ data: memory }: { data: IMemory }) {
+export default function SetTagPermissions({ data }: ISetTagPermissionsProps) {
+  const { memory, isNew = false } = data
   const { open, close } = useModal();
   const [tags, setTag] = useState<string[]>(memory?.tags || []);
   const [title, setTitle] = useState<string>(memory?.title || "");
@@ -101,9 +110,12 @@ export default function SetTagPermissions({ data: memory }: { data: IMemory }) {
   const { trigger, isMutating } = useFetcher(`${endpoint.memories}/${memory._id}`, "put");
 
   const handleSubmit = async () => {
-    await trigger({ level, title, status: "save", tags });
-    mutate(`${endpoint.memories}?page=1`)
-    open("share-post", memory?._id);
+    const result = await trigger({ level, title, status: "save", tags });
+    if (result.success) {
+      mutate(`${endpoint.memories}?page=1`)
+      open("share-post", memory?._id);
+      toast.success(isNew ? "Memory created successfully" : result?.message)
+    }
   };
 
   const handleDiscard = () => {
