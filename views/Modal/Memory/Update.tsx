@@ -21,7 +21,7 @@ export function UpdateMemory({ data: memory }: { data: IMemory }) {
       await trigger({ body: text })
       mutate(endpoint.memories)
     }
-    push("set-tag-permission", memory)
+    push("set-tag-permission", { memory, isNew: false })
   }
   return (
     <div className="modal-container">

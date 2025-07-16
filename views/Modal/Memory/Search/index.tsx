@@ -62,7 +62,7 @@ export function SearchMemories() {
           }
         </div>
 
-        <div className="transition-all duration-300 ease-in-out">
+        <div className="transition-all max-h-60 sm:max-h-80 md:max-h-96 hide-scrollbar overflow-y-auto duration-300 ease-in-out">
           {showEmpty ? (
             <div className="animate-fadeIn">
               <EmptyRecentMemories />

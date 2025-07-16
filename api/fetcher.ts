@@ -57,9 +57,13 @@ export const fileUploadFetcher = async (url: string, { arg }) => {
   }
 
   if (!isEmpty(payload)) {
-    Object.entries(payload).forEach(([key, value]) =>
-      formData.append(key, String(value)),
-    );
+    Object.entries(payload).forEach(([key, value]) => {
+      if (Array.isArray(value)) {
+        value.forEach(v => formData.append(key, String(v)))
+      } else {
+        formData.append(key, String(value))
+      }
+    });
   }
 
   try {

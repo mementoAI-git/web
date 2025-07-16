@@ -2,7 +2,7 @@ import Switch from "@/components/Switch";
 
 export function Notification() {
   return (
-    <div className="space-y-10 2xl:mx-auto max-w-140">
+    <div className="space-y-10 max-w-140">
       <div className="space-y-2">
         <h4 className="text-secondary font-geist font-bold">Notifications</h4>
         <small className="text-sm font-geist text-grey-600">Setup and manage notifications</small>
