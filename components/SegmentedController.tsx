@@ -27,7 +27,7 @@ export default function SegmentedController({ segments, initial = segments[0].ke
         width: node.offsetWidth,
       });
     }
-  }, [active]);
+  }, [active, segments]);
 
   return (
     <div className="relative w-fit">
