@@ -17,9 +17,17 @@ interface IMemoriesHeader {
   mode?: string;
   onChangeMode: (m: string) => void;
   count?: number;
+  filter: string;
+  onChangeFilter: (f: string) => void;
 }
 
-export default function MemoriesHeader({ count = 0, mode = "list", onChangeMode }: IMemoriesHeader) {
+export default function MemoriesHeader({
+  count = 0,
+  mode = "list",
+  onChangeMode,
+  filter,
+  onChangeFilter
+}: IMemoriesHeader) {
   const { open } = useModal()
 
   const handleChangeMode = (m: string) => {
@@ -68,13 +76,13 @@ export default function MemoriesHeader({ count = 0, mode = "list", onChangeMode 
       </div>
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-2 md:gap-0">
         <div className="flex flex-wrap lg:max-h-10 items-center gap-2 sm:gap-4">
-          <MemoryListFilter />
-          <div className="h-[25px] border-r border-grey-500" />
+          <MemoryListFilter value={filter} onChange={onChangeFilter} />
+          {/* <div className="h-[25px] border-r border-grey-500" />
           <DropdownButton
             items={[{ label: "All", value: "all" }]}
             title="Tags"
             onSelect={console.log}
-          />
+          /> */}
         </div>
         <div className="flex flex-col sm:flex-row items-stretch lg:max-h-10 gap-2 sm:gap-3 mt-2 sm:mt-0 w-full sm:w-auto">
           <div onClick={() => open("search-memory")}

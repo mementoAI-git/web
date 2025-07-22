@@ -34,6 +34,7 @@ export default {
   // memories
   memories: "/memories",
   memoriesStats: "/memories/stats",
+  removeFileFromMemory: "/memories/remove-file",
 
   // ai
   aiPrompt: "/ai/prompt",

@@ -10,8 +10,13 @@ export interface IDropdownIcon extends IDropdownMenu {
   icon: React.ReactElement;
 }
 
-export interface IDropdownButton extends IDropdownMenu {
-  title: React.ReactElement | string;
+export interface IDropdownButton {
+  title: React.ReactNode;
+  onSelect: (value: string) => void;
+  items: { label: string; value: string }[];
+  ItemLayout?: ({ onClick, item }: IDropdownOption) => React.JSX.Element;
+  className?: string;
+  value?: string;
 }
 
 export interface IDropdownMenu {
@@ -20,9 +25,11 @@ export interface IDropdownMenu {
   items: IDropdownItem[];
   footerItem?: React.ReactElement;
   className?: string;
+  value?: string;
 }
 
 export interface IDropdownOption {
   onClick: (v: string) => void;
   item: IDropdownItem;
+  value?: string;
 }

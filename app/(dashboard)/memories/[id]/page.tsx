@@ -31,7 +31,7 @@ export default function MemoryPage({ params }) {
 
   return (
     <div className="flex max-w-[1160px] mx-auto">
-      <div className="flex-1 py-6 px-6">
+      <div className="flex-1 min-h-screen py-6 px-6">
         <MemoryDetails memory={data?.data} />
       </div>
       <div className="w-[29%] max-w-[333px] shrink-0">

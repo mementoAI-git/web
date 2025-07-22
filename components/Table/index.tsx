@@ -26,9 +26,10 @@ export default function Table<T>({ data, columns, renderRow, onChangePage, loadi
     onChangePage(data.prevPage)
   }
   return (
-    <div className="mem-table h-fit w-full rounded-xl border border-[rgba(233,234,235,1)] bg-white shadow-sm shadow-[rgba(10,13,18,0.05)] overflow-hidden">
-      <div className="overflow-x-auto hide-scrollbar">
-        <table className="min-w-[600px] w-full text-left text-xs sm:text-sm">
+    <div className="mem-table h-fit w-full rounded-xl border border-[rgba(233,234,235,1)] bg-white shadow-sm shadow-[rgba(10,13,18,0.05)]">
+      {/* TODO: fixed the overflow problem it's causing issues like dropdowns not properly displayed */}
+      <div className=" overflow-y-visible overflow-x-auto hide-scrollbar">
+        <table className="min-w-[600px]  w-full text-left text-xs sm:text-sm">
           <thead className="font-inter text-xs sm:text-sm font-semibold text-[rgba(113,118,128,1)] capitalize">
             <tr>
               {columns.map((c, i) => <th className={cn("whitespace-nowrap", c.className)} key={i}>{c.label}</th>)}

@@ -15,7 +15,7 @@ export function DefaultDropdownOption({ onClick, item }: IDropdownOption) {
   );
 }
 
-export function CheckboxOption({ onClick, item }: IDropdownOption) {
+export function CheckboxOption({ onClick, item, value }: IDropdownOption) {
   return (
     <li
       onClick={() => onClick(item.value)}
@@ -24,6 +24,7 @@ export function CheckboxOption({ onClick, item }: IDropdownOption) {
       <Checkbox
         label={item.label}
         value={item.value}
+        checked={item.value === value}
         className="text-sm text-[#3C3F3E]"
       />
     </li>

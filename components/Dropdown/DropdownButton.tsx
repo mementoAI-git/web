@@ -6,7 +6,7 @@ import { IDropdownButton } from "./interface";
 import { DropdowmMenu } from "./DropdownMenu";
 import useClickAway from "@/hooks/use-clickaway";
 
-export function DropdownButton({ title, ...props }: IDropdownButton) {
+export function DropdownButton({ title, value, ...props }: IDropdownButton & { value?: string }) {
   const [open, setOpen] = useState(false);
   const ref = useClickAway(() => setOpen(false));
 
@@ -24,7 +24,7 @@ export function DropdownButton({ title, ...props }: IDropdownButton) {
         {title}
         <ChevronDown />
       </button>
-      {open && <DropdowmMenu {...{ ...props, onSelect: handleSelect }} />}
+      {open && <DropdowmMenu {...{ ...props, onSelect: handleSelect, value }} />}
     </div>
   );
 }

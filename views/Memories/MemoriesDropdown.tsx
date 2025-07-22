@@ -13,6 +13,13 @@ import { useModal } from "@/hooks/use-modal";
 import { IMemory } from "@/utility/interface";
 import RemoveBookmarkIcon from "@/public/icon/remove-bookmark.svg";
 import AddBookmarkIcon from "@/public/icon/add-bookmark.svg";
+
+const FILTER_LABELS = {
+  all: "All",
+  bookmarked: "Bookmarked",
+  deleted: "Deleted"
+};
+
 export function MemoryItemActions({ memory }: { memory: IMemory }) {
   const { open } = useModal()
 
@@ -65,23 +72,23 @@ export function MemoryItemActions({ memory }: { memory: IMemory }) {
   );
 }
 
-export function MemoryListFilter() {
+export function MemoryListFilter({ value = "all", onChange }: { value: string, onChange: (v: string) => void }) {
   return (
     <DropdownButton
       title={
         <div className="flex items-center gap-1">
           <FilterIcon />
-          <span>filter: all</span>
+          <span>filter: {FILTER_LABELS[value] || value}</span>
         </div>
       }
-      onSelect={console.log}
-      ItemLayout={CheckboxOption}
+      onSelect={onChange}
+      ItemLayout={({ onClick, item }) => <CheckboxOption {...{ onClick, item, value }} />}
       items={[
         { label: "All", value: "all" },
         { label: "Bookmarked", value: "bookmarked" },
         { label: "Deleted", value: "deleted" },
-        { label: "Bookmarked", value: "bookmarked" },
       ]}
+      value={value}
     />
   );
 }

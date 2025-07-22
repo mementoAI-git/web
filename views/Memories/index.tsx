@@ -23,7 +23,13 @@ const columns = [
 export default function Memories() {
   const [page, setPage] = useState(1)
   const [mode, setMode] = useState(localStorage.getItem(storageKeys.listmode) || "list");
-  const { data, isLoading } = useSWR(`${endpoint.memories}?page=${page}`);
+  const [filter, setFilter] = useState("all");
+
+  let filterQuery = '';
+  if (filter === "bookmarked") filterQuery = "&bookmarked=true";
+  if (filter === "deleted") filterQuery = "&deleted=true";
+
+  const { data, isLoading } = useSWR(`${endpoint.memories}?page=${page}${filterQuery}`);
   const { data: stats } = useSWR(endpoint.memoriesStats);
 
   return (
@@ -53,11 +59,13 @@ export default function Memories() {
           mode={mode}
           onChangeMode={setMode}
           count={data?.data?.totalDocs}
+          filter={filter}
+          onChangeFilter={setFilter}
         />
         {
           mode === "grid" ?
             <MemoriesGrid data={data?.data} /> :
-            <div className="w-full overflow-x-auto hide-scrollbar">
+            <div className="w-full">
               <Table
                 data={data?.data}
                 columns={columns}

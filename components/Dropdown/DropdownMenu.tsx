@@ -3,10 +3,12 @@
 import { Fragment, useRef } from "react";
 import { DefaultDropdownOption } from "./DropdownOptions";
 import { IDropdownMenu } from "./interface";
+import { createPortal } from "react-dom";
 
 export function DropdowmMenu({
   items,
   ItemLayout,
+  value,
   onSelect,
   footerItem,
   className = "top-full left-0",
@@ -20,7 +22,7 @@ export function DropdowmMenu({
     >
       {items.map((item, i) =>
         ItemLayout ? (
-          <ItemLayout key={i} item={item} onClick={onSelect} />
+          <ItemLayout key={i} item={item} value={value} onClick={onSelect} />
         ) : (
           <DefaultDropdownOption key={i} onClick={onSelect} item={item} />
         ),
