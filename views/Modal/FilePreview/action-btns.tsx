@@ -7,14 +7,17 @@ import { mutate } from "swr";
 import { IFilePreviewItem } from ".";
 import { DeleteMemoryAttachment } from "./delete-attachment";
 import { useState } from "react";
+import Spinner from "@/components/Spinner";
 
 export default function ActionBtn(props: IFilePreviewItem) {
   const { close } = useModal();
+  const [downloading, setDownloading] = useState(false)
   const [openDeleteConfirmation, setOpenDeleteConfirmation] = useState(false)
   const { trigger: deleteFile, isMutating } = useFetcher(`${endpoint.removeFileFromMemory}/${props._id}`, "delete");
 
   const handleDownload = async () => {
     try {
+      setDownloading(true)
       const response = await fetch(props.url, { mode: "cors" });
       if (!response.ok) throw new Error("Network response was not ok");
       const blob = await response.blob();
@@ -28,6 +31,8 @@ export default function ActionBtn(props: IFilePreviewItem) {
       window.URL.revokeObjectURL(url);
     } catch (error) {
       alert("Failed to download file.");
+    } finally {
+      setDownloading(false)
     }
   };
 
@@ -69,7 +74,11 @@ export default function ActionBtn(props: IFilePreviewItem) {
         className="bg-[#F3F3F3] rounded-full flex items-center cursor-pointer justify-center gap-2 py-[9px] px-4 text-sm w-fit font-geist text-[#98A2B3] font-medium"
         onClick={handleDownload}
       >
-        <DownloadIcon width={16} height={16} />
+        {
+          downloading ?
+            <Spinner loading className="!text-[#98A2B3] !m-0" /> :
+            <DownloadIcon width={16} height={16} />
+        }
         <span className="text-black">Download</span>
       </div>
       <div
