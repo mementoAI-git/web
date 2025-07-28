@@ -107,7 +107,7 @@ export default function SetTagPermissions({ data }: ISetTagPermissionsProps) {
   const [tags, setTag] = useState<string[]>(memory?.tags || []);
   const [title, setTitle] = useState<string>(memory?.title || "");
   const [level, setLevel] = useState(memory?.level || "1");
-  const { trigger, isMutating } = useFetcher(`${endpoint.memories}/${memory._id}`, "put");
+  const { trigger, isMutating } = useFetcher(`${endpoint.memories}/${memory?._id}`, "put");
 
   const handleSubmit = async () => {
     const result = await trigger({ level, title, status: "save", tags });

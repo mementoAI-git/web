@@ -39,7 +39,7 @@ export default function PromptInput({ data }) {
       p.prompt_id = memory?.prompt;
       const result = await trigger(p)
       if (result?.success) {
-        open("set-tag-permission", result.data);
+        open("set-tag-permission", { memory: result.data, isNew: isEmpty(data?.prompt) });
         setEditMode(false)
       }
     },
