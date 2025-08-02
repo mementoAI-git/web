@@ -1,6 +1,5 @@
 "use client";
 
-import { DropdownButton } from "@/components/Dropdown";
 import { Searchinput } from "@/components/Form";
 
 import GridIcon from "@/public/icon/dashboard/grid.svg";
@@ -87,7 +86,9 @@ export default function MemoriesHeader({
         <div className="flex flex-col sm:flex-row items-stretch lg:max-h-10 gap-2 sm:gap-3 mt-2 sm:mt-0 w-full sm:w-auto">
           <div onClick={() => open("search-memory")}
             className="w-full sm:w-auto">
-            <Searchinput end={<div className="border-grey-500 border rounded py-[1px] px-1 text-[#717680] font-medium font-inter text-xs">⌘K</div>} />
+            <Searchinput
+              end={<div className="border-grey-500 border rounded py-[1px] px-1 text-[#717680] font-medium font-inter text-xs">⌘K</div>}
+            />
           </div>
           <button onClick={() => open("create-memory")} className={cn("btn", "!rounded-lg w-full sm:w-fit")}>
             <PlusIcon width={15} />

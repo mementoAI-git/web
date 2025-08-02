@@ -3,7 +3,8 @@ import { useModal } from "@/hooks/use-modal";
 import CalendarIcon from "@/public/icon/calendar-1.svg"
 import dayjs from "dayjs";
 import { useRouter } from "next/navigation";
-import { highlightText } from "@/utility";
+import { highlightText, isEmpty } from "@/utility";
+import Docsclip from "@/public/icon/docs-clip.svg"
 
 export default function SearchItem({ memory, searchTerm = "" }) {
   const { close } = useModal();
@@ -20,7 +21,13 @@ export default function SearchItem({ memory, searchTerm = "" }) {
   return (
     <div onClick={handleMemoryClick} className="flex gap-6 py-2 items-start border-grey-400 border-b last:border-0">
       <div className="w-24 flex justify-center h-20.5 shrink-0">
-        <ImageThumbnail images={memory?.attachments} size={70} />
+        {
+          isEmpty(memory?.attachments) ?
+            <div className="size-[80%] rounded-[5.83px] justify-center items-center flex bg-grey-500">
+              <Docsclip width={28} />
+            </div> :
+            <ImageThumbnail images={memory?.attachments} size={70} />
+        }
       </div>
       <div className="flex-1 flex gap-2 flex-col font-inter">
         <h5

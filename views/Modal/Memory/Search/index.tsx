@@ -2,7 +2,7 @@ import { ModalCloseBtn } from "@/components/ModalLayout";
 import { useModal } from "@/hooks/use-modal";
 import SearchIcon from "@/public/icon/dashboard/search.svg";
 import ArrowRightIcon from "@/public/icon/arrow-right.svg"
-import { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { getRecentMemories, isEmpty } from "@/utility";
 import SearchItem from "./SearchItem";
 import EmptyRecentMemories from "./EmptyRecentMemories";
@@ -10,6 +10,7 @@ import { useStore } from "@/hooks/use-store";
 import useSWR from "swr";
 import endpoint from "@/api/endpoint";
 import Spinner from "@/components/Spinner";
+import { SkeletonLoader } from "./Loader";
 
 export function SearchMemories() {
   const { close } = useModal();
@@ -26,7 +27,7 @@ export function SearchMemories() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(search);
-    }, 1500);
+    }, 100);
 
     return () => clearTimeout(timer);
   }, [search]);
@@ -61,7 +62,6 @@ export function SearchMemories() {
               </div>
           }
         </div>
-
         <div className="transition-all max-h-60 sm:max-h-80 md:max-h-96 hide-scrollbar overflow-y-auto duration-300 ease-in-out">
           {showEmpty ? (
             <div className="animate-fadeIn">
@@ -81,13 +81,25 @@ export function SearchMemories() {
           ) : (
             <div className="space-y-3 animate-fadeIn">
               <span className="font-inter inline-block font-semibold text-sm text-secondary">Search results:</span>
-              <div className="space-y-2">
-                {searchResults.map((memory, i) => (
-                  <div key={i} className="animate-slideIn" style={{ animationDelay: `${i * 50}ms` }}>
-                    <SearchItem memory={memory} searchTerm={debouncedSearch.trim()} />
+              {
+                isLoading ?
+                  <React.Fragment>
+                    {
+                      Array(2).fill(0).map((_, i) => (
+                        <div key={i} className="animate-slideIn" style={{ animationDelay: `${i * 50}ms` }}>
+                          <SkeletonLoader />
+                        </div>
+                      ))
+                    }
+                  </React.Fragment> :
+                  <div className="space-y-2">
+                    {searchResults.map((memory, i) => (
+                      <div key={i} className="animate-slideIn" style={{ animationDelay: `${i * 50}ms` }}>
+                        <SearchItem memory={memory} searchTerm={debouncedSearch.trim()} />
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
+              }
             </div>
           )}
         </div>

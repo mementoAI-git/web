@@ -56,7 +56,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
               {headerTitle[path]}
             </div>
           }
-          <div className="h-10 max-w-150 flex-1">
+          <div onClick={() => open("search-memory")} className="h-10 max-w-150 flex-1">
             <Searchinput />
           </div>
         </div>
