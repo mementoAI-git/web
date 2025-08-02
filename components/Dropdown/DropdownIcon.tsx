@@ -68,7 +68,7 @@ export function DropdowmIcon({ icon, ...props }: IDropdownIcon) {
               position: 'fixed', // Fixed positioning relative to viewport
               top: position.top,
               left: position.left,
-              zIndex: 9999,
+              zIndex: 40,
               minWidth: position.width,
               // Prevent the dropdown from being selectable during rapid scrolling
               pointerEvents: 'auto'

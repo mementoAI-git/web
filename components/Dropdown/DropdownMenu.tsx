@@ -3,7 +3,6 @@
 import { Fragment, useRef } from "react";
 import { DefaultDropdownOption } from "./DropdownOptions";
 import { IDropdownMenu } from "./interface";
-import { createPortal } from "react-dom";
 
 export function DropdowmMenu({
   items,
