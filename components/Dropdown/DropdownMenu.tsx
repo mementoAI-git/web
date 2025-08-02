@@ -3,6 +3,7 @@
 import { Fragment, useRef } from "react";
 import { DefaultDropdownOption } from "./DropdownOptions";
 import { IDropdownMenu } from "./interface";
+import { createPortal } from "react-dom";
 
 export function DropdowmMenu({
   items,
@@ -28,7 +29,7 @@ export function DropdowmMenu({
       )}
       {footerItem && (
         <Fragment>
-          <div className="w-full border-t border-[#EAECF0]" />
+          <div className="w-full my-1 border-t border-[#EAECF0]" />
           {footerItem}
         </Fragment>
       )}

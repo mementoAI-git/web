@@ -5,7 +5,7 @@ export function DefaultDropdownOption({ onClick, item }: IDropdownOption) {
   return (
     <li
       onClick={() => onClick(typeof item === "string" ? item : item.value)}
-      className="flex cursor-pointer items-center gap-2.5 px-1 py-2 text-[#3C3F3E]"
+      className="flex cursor-pointer hover:bg-[#f5f5f5]/60 items-center gap-2.5 px-1 py-2 text-[#3C3F3E]"
     >
       {typeof item !== "string" && item?.startIcon}
       <span className="font-inter text-sm">

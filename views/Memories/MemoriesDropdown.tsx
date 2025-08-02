@@ -60,7 +60,7 @@ export function MemoryItemActions({ memory }: { memory: IMemory }) {
       footerItem={
         <li
           onClick={() => open("delete-memory", memory._id)}
-          className="flex cursor-pointer items-center gap-2.5 px-1 py-2 text-[#F97066]"
+          className="flex cursor-pointer items-center gap-2.5 px-1 py-2 hover:bg-[#F97066]/8 text-[#F97066]"
         >
           <TrashIcon width={16} size={16} />
           <span className="font-inter text-sm">Delete</span>
