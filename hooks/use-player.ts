@@ -78,7 +78,7 @@ export default function usePlayer() {
         media.oncanplay = null;
       }
     };
-  }, [ref])
+  }, [])
 
   return {
     media: ref.current,

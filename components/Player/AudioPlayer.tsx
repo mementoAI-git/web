@@ -78,7 +78,13 @@ export default function AudioPlayer({ src, className = "", id = null, alt }: IMe
             <ForwardIcon width={24} />
           </div>
         </div>
-        {id && <Transcription id={id} />}
+        {id && (
+          <Transcription
+            id={id}
+            currentTime={media?.currentTime || 0}
+            duration={media?.duration || 0}
+          />
+        )}
       </div>
       <Image src={wave} height={79} className="w-full h-20 object-cover" alt="wave" />
     </div>
