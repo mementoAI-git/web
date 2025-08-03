@@ -25,8 +25,10 @@ export default function Overview() {
 
       <div className="py-4 sm:py-8">
         <span className="font-inter text-base sm:text-lg font-semibold text-grey-900">
-          Today's memory prompts
-          <span className="text-grey-800"> 0/{data?.data?.length || 0}</span>
+          Today's memory prompts {" "}
+          <span className="text-grey-800">
+            {data?.data?.filter(v => v.memory).length}/{data?.data?.length || 0}
+          </span>
         </span>
         <div className="mt-2 flex flex-col lg:flex-row items-stretch gap-3">
           <div className="flex flex-1 flex-col gap-6 sm:gap-10">

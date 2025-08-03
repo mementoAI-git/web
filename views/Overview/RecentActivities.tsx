@@ -32,7 +32,7 @@ export default function RecentActivities() {
                   <div className="bg-[#EBEBEB] shrink-0 rounded-sm size-6 flex items-center justify-center">
                     <QIcon width={10} height={13} />
                   </div>
-                  <div className="flex flex-col w-full">
+                  <div className="flex flex-col w-[87%]">
                     <span className="text-xs sm:text-sm text-grey-600 leading-5 whitespace-nowrap truncate w-full font-medium">
                       {activity?.description}
                     </span>
