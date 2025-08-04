@@ -27,10 +27,9 @@ const fetchTranscription = async (id: string): Promise<TimedTranscription> => {
 interface TranscriptionProps {
   id: string
   currentTime?: number
-  duration?: number
 }
 
-export default function Transcription({ id, currentTime = 0, duration = 0 }: TranscriptionProps) {
+export default function Transcription({ id, currentTime = 0 }: TranscriptionProps) {
   const [show, setShow] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
   const { data, isLoading } = useSWR(

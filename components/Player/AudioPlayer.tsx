@@ -82,7 +82,6 @@ export default function AudioPlayer({ src, className = "", id = null, alt }: IMe
           <Transcription
             id={id}
             currentTime={media?.currentTime || 0}
-            duration={media?.duration || 0}
           />
         )}
       </div>
