@@ -15,13 +15,34 @@ export interface IMediaPlayer {
   id?: string
   alt?: string
   className?: string
+  duration?: number
 }
 
-export default function AudioPlayer({ src, className = "", id = null, alt }: IMediaPlayer) {
-  const { ref, media, togglePlay, backward, forward, seek, canPlay, playing, progress } = usePlayer()
+export default function AudioPlayer({
+  src,
+  alt,
+  className = "",
+  id = null,
+  duration = 0
+}: IMediaPlayer) {
+  const {
+    ref,
+    media,
+    togglePlay,
+    backward,
+    forward,
+    seek,
+    canPlay,
+    playing,
+    progress,
+    volume,
+    isMuted,
+    setVolumeLevel,
+    toggleMute
+  } = usePlayer()
   const progressBar = useRef(null)
   const current = getDuration(media?.currentTime)
-  const end = getDuration(media?.duration || 0)
+  const end = getDuration(media?.duration || duration)
 
   const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!progressBar.current) return;
@@ -51,14 +72,31 @@ export default function AudioPlayer({ src, className = "", id = null, alt }: IMe
             <span className="font-inter text-xs font-medium text-secondary">
               {current.mins}:{current.secs}/<span className="font-normal text-grey-800">{end.mins}:{end.secs}</span>
             </span>
-            <span>
-              <VolumeIcon width={10} />
-            </span>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={toggleMute}
+                className="flex items-center justify-center p-1 hover:bg-grey-100 rounded transition-colors"
+              >
+                <VolumeIcon width={10} className={isMuted ? "opacity-50" : ""} />
+              </button>
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.01"
+                value={isMuted ? 0 : volume}
+                onChange={(e) => setVolumeLevel(parseFloat(e.target.value))}
+                className="w-8 h-[2px] bg-grey-300 rounded-lg appearance-none cursor-pointer volume__slider"
+                style={{
+                  background: `linear-gradient(to right, var(--color-secondary) 0%, var(--color-secondary) ${(isMuted ? 0 : volume) * 100}%, #d1d5db ${(isMuted ? 0 : volume) * 100}%, #d1d5db 100%)`
+                }}
+              />
+            </div>
           </div>
         </div>
         <div className="flex w-full items-center justify-between">
           <div
-            className="flex size-11 items-center justify-center rounded-full bg-grey-500 cursor-pointer"
+            className="flex size-11 items-center justify-center rounded-full bg-grey-500 cursor-pointer hover:bg-grey-400 hover:scale-[97%] transition-colors duration-200"
             onClick={() => backward()}
           >
             <BackwardIcon width={24} />
@@ -69,21 +107,21 @@ export default function AudioPlayer({ src, className = "", id = null, alt }: IMe
                 <PauseIcon width={11} /> :
                 <PlayIcon width={11} />
             }
-            <span className="font-inter text-sm font-semibold">Play</span>
+            <span className="font-inter text-sm font-semibold">
+              {playing ? "Pause" : "Play"}
+            </span>
           </button>
           <div
-            className="flex size-11 items-center justify-center rounded-full bg-grey-500"
+            className="flex size-11 items-center justify-center rounded-full bg-grey-500 cursor-pointer hover:bg-grey-400 hover:scale-[97%] transition-colors duration-200"
             onClick={() => forward()}
           >
             <ForwardIcon width={24} />
           </div>
         </div>
-        {id && (
-          <Transcription
-            id={id}
-            currentTime={media?.currentTime || 0}
-          />
-        )}
+        {
+          id &&
+          <Transcription id={id} currentTime={media?.currentTime || 0} />
+        }
       </div>
       <Image src={wave} height={79} className="w-full h-20 object-cover" alt="wave" />
     </div>

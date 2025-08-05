@@ -11,6 +11,7 @@ export default function AudioPreview(props: IFilePreviewItem) {
           src={props.url}
           alt={props.name}
           id={props._id}
+          duration={props.duration}
         />
       </div>
     </div>

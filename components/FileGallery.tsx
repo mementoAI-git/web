@@ -1,7 +1,7 @@
 import { useModal } from "@/hooks/use-modal"
 import Image from "next/image"
 import wave from "@/public/image/wave.png"
-import { getDuration } from "@/utility"
+import { getDuration, isEmpty } from "@/utility"
 import { IFile } from "@/utility/interface"
 
 const sizes = [
@@ -13,12 +13,14 @@ const sizes = [
 ]
 
 function AudioFile({ file }: { file: IFile }) {
-  const { mins, secs, hrs } = getDuration(new Audio(file.url).duration || 0)
+  const { mins, secs, hrs } = getDuration(file.duration || 0)
   return (
     <div className="h-50 flex flex-col justify-between rounded-lg bg-grey-400 overflow-hidden">
       <div className="flex flex-col font-inter p-3">
         <span className="font-medium whitespace-nowrap truncate text-sm text-[#050709]">{file.name}</span>
-        <span className="text-grey-600 text-xs">{hrs}:{mins}:{secs}</span>
+        <span className="text-grey-600 text-xs">
+          {hrs !== "00" && `${hrs}:`}{mins}:{secs}
+        </span>
       </div>
       <Image src={wave} alt="wave" />
     </div>
@@ -26,12 +28,12 @@ function AudioFile({ file }: { file: IFile }) {
 }
 
 function VideoFile({ file }: { file: IFile }) {
-  const { mins, secs, hrs } = getDuration(new Audio(file.url).duration || 0)
+  const { mins, secs, hrs } = getDuration(file.duration || 0)
   return (
     <div className="h-50 flex flex-col justify-between rounded-lg bg-grey-400 overflow-hidden">
       <div className="flex flex-col font-inter p-3">
         <span className="font-medium text-sm whitespace-nowrap truncate text-[#050709]">{file.name}</span>
-        <span className="text-grey-600 text-xs">{hrs}:{mins}:{secs}</span>
+        <span className="text-grey-600 text-xs">{hrs !== "00" && `${hrs}:`}{mins}:{secs}</span>
       </div>
       <Image src={wave} alt="wave" />
     </div>)

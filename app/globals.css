@@ -173,4 +173,31 @@ body {
       transform: translateX(0);
     }
   }
+
+  /* Volume slider styles */
+  .volume__slider {
+    -webkit-appearance: none;
+    appearance: none;
+    outline: none;
+  }
+
+  .volume__slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--color-secondary);
+    cursor: pointer;
+    border: none;
+  }
+
+  .volume__slider::-moz-range-thumb {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--color-secondary);
+    cursor: pointer;
+    border: none;
+  }
 }

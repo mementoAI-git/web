@@ -6,6 +6,8 @@ export default function usePlayer() {
   const [playing, setPlaying] = useState(false);
   const [canPlay, setCanPlay] = useState(false)
   const [progress, setProgress] = useState(0);
+  const [volume, setVolume] = useState(1);
+  const [isMuted, setIsMuted] = useState(false);
 
   const togglePlay = () => {
     const media = ref.current;
@@ -22,7 +24,6 @@ export default function usePlayer() {
     }
     setPlaying(!playing);
   };
-
 
   const forward = (seconds: number = 15) => {
     const media = ref.current;
@@ -46,6 +47,34 @@ export default function usePlayer() {
 
     media.currentTime = Math.max(Math.min(seconds, media.duration), 0)
   }
+
+  const setVolumeLevel = (newVolume: number) => {
+    const media = ref.current;
+    if (!media) return;
+
+    const clampedVolume = Math.max(0, Math.min(1, newVolume));
+    media.volume = clampedVolume;
+    setVolume(clampedVolume);
+
+    if (clampedVolume === 0) {
+      setIsMuted(true);
+    } else if (isMuted) {
+      setIsMuted(false);
+    }
+  };
+
+  const toggleMute = () => {
+    const media = ref.current;
+    if (!media) return;
+
+    if (isMuted) {
+      media.volume = volume;
+      setIsMuted(false);
+    } else {
+      media.volume = 0;
+      setIsMuted(true);
+    }
+  };
 
   useEffect(() => {
     const media = ref.current
@@ -89,6 +118,10 @@ export default function usePlayer() {
     backward,
     forward,
     seek,
-    canPlay
+    canPlay,
+    volume,
+    isMuted,
+    setVolumeLevel,
+    toggleMute
   }
 }

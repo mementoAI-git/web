@@ -27,12 +27,12 @@ export default function MemoryDetailsSidebar({ memory }: { memory: IMemory }) {
 
   if (isEmpty(memory)) return <DetailsSideBarSkeleton />
   return (
-    <div className="size-full space-y-3 bg-[#FCFCFD] p-6">
-      <div className="space-y-4 border-b border-grey-500 pb-14">
+    <div className="size-full space-y-2 sm:space-y-3 bg-[#FCFCFD] p-3 sm:p-4 lg:p-6">
+      <div className="space-y-3 sm:space-y-4 border-b border-grey-500 pb-8 sm:pb-10 lg:pb-14">
         <span className="block font-inter text-xs font-medium text-grey-800 uppercase">
           properties
         </span>
-        <ul className="space-y-4">
+        <ul className="space-y-3 sm:space-y-4">
           <PropsItem
             icon={<FolderIcon width={16} />}
             title="post type:"
@@ -55,11 +55,11 @@ export default function MemoryDetailsSidebar({ memory }: { memory: IMemory }) {
           />
         </ul>
       </div>
-      <div className="space-y-4 border-b border-grey-500 pb-14">
+      <div className="space-y-3 sm:space-y-4 border-b border-grey-500 pb-8 sm:pb-10 lg:pb-14">
         <span className="block font-inter text-xs font-medium text-grey-800 uppercase">
           stats
         </span>
-        <ul className="space-y-4">
+        <ul className="space-y-3 sm:space-y-4">
           {
             !isEmpty(memory?.body) &&
             <PropsItem
@@ -78,18 +78,18 @@ export default function MemoryDetailsSidebar({ memory }: { memory: IMemory }) {
             title="tags:"
             className="!items-start"
             subtitle={
-              <div className="flex items-center gap-2 flex-wrap">
-                {memory.tags.map(t => <span key={t} className="mem-tags">{t}</span>)}
+              <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
+                {memory.tags.map(t => <span key={t} className="mem-tags text-xs sm:text-sm">{t}</span>)}
               </div>
             }
           />
         </ul>
       </div>
-      <div className="space-y-4 border-b border-grey-500 pb-14">
+      <div className="space-y-3 sm:space-y-4 border-b border-grey-500 pb-8 sm:pb-10 lg:pb-14">
         <span className="block font-inter text-xs font-medium text-grey-800 uppercase">
           actions
         </span>
-        <ul className="space-y-4">
+        <ul className="space-y-3 sm:space-y-4">
           <PropsItem
             icon={<EditIcon width={13} />}
             title="Edit this post"

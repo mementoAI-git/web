@@ -33,15 +33,15 @@ export default function Memories() {
   const { data: stats } = useSWR(endpoint.memoriesStats);
 
   return (
-    <div className="size-full overflow-y-auto hide-scrollbar">
-      <div className="space-y-4 py-4 sm:py-8">
+    <div className="size-full overflow-y-auto hide-scrollbar px-4 sm:px-6 lg:px-8">
+      <div className="space-y-3 sm:space-y-4 py-3 sm:py-4 lg:py-8">
         <div className="flex items-center gap-2">
-          <span className="font-inter text-lg sm:text-xl leading-[30px] font-semibold">
+          <span className="font-inter text-base sm:text-lg lg:text-xl leading-[1.2] sm:leading-[30px] font-semibold">
             Stats
           </span>
           <div className="flex-1 border-t border-[#EBEBEB]" />
         </div>
-        <div className="flex flex-col sm:flex-row items-stretch gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-2 sm:gap-3">
           <StatCard
             icon={<BookIcon width={20} height={16} />}
             subtitle="memories added"
@@ -54,7 +54,7 @@ export default function Memories() {
           />
         </div>
       </div>
-      <div className="space-y-4 sm:space-y-6 py-4 sm:py-8">
+      <div className="space-y-3 sm:space-y-4 lg:space-y-6 py-3 sm:py-4 lg:py-8">
         <MemoriesHeader
           mode={mode}
           onChangeMode={setMode}
@@ -65,7 +65,7 @@ export default function Memories() {
         {
           mode === "grid" ?
             <MemoriesGrid data={data?.data} /> :
-            <div className="w-full">
+            <div className="w-full overflow-x-auto">
               <Table
                 data={data?.data}
                 columns={columns}

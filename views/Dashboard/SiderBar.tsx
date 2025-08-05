@@ -45,13 +45,14 @@ export function DashboardSideBar({ onClose }: DashboardSideBarProps) {
                 <span className="text-center text-grey-600 font-inter hidden group-[.close]:inline-block text-sm">Menu</span>
                 <div className="flex flex-col gap-1 sm:gap-2">
                   {topNavigations.map((n, i) => (
-                    <SideBarItem {...n} active={n.link === pathname} key={i} />
+                    <SideBarItem {...n} active={n.link === pathname} key={i} onClick={onClose} />
                   ))}
                   <SideBarItem
                     Icon={SlideIcon}
                     title="settings"
                     active={pathname.includes("settings")}
                     link="/settings/profile"
+                    onClick={onClose}
                   />
                 </div>
               </div>
@@ -61,7 +62,7 @@ export function DashboardSideBar({ onClose }: DashboardSideBarProps) {
               <div className="space-y-4 sm:space-y-6">
                 <div className="flex flex-col gap-1 sm:gap-2">
                   {bottomNavigations.map((n, i) => (
-                    <SideBarItem {...n} active={n.link === pathname} key={i} />
+                    <SideBarItem {...n} active={n.link === pathname} key={i} onClick={onClose} />
                   ))}
                 </div>
                 {/* <StorageTracker /> */}

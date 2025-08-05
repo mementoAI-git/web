@@ -102,19 +102,22 @@ export default function Transcription({ id, currentTime = 0 }: TranscriptionProp
       </span>
       {
         show && data &&
-        <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 w-full sm:max-w-md md:max-w-lg lg:max-w-xl lg:min-w-lg md:min-w-md sm:min-w-sm max-w-full overflow-x-hidden overflow-y-auto max-h-110.5 bg-grey-600 rounded-2xl p-4 sm:p-5 z-10 shadow-lg">
-          {renderedSegments ? (
-            <div className="font-inter font-medium leading-relaxed">
-              {renderedSegments}
-            </div>
-          ) : (
-            <span
-              className="font-inter font-medium text-[#6D7276]"
-              style={{ fontSize: getFontSize(data.full_text?.length || 0), transition: 'font-size 0.2s' }}
-            >
-              {data.full_text || ""}
-            </span>
-          )}
+        <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 w-full sm:max-w-md max-w-[518px] md:max-w-lg lg:max-w-xl lg:min-w-lg md:min-w-md sm:min-w-sm max-h-[442px] bg-grey-600 rounded-2xl p-4 sm:p-5 z-10 shadow-lg overflow-hidden">
+          <div className="relative overflow-hidden">
+            {renderedSegments ? (
+              <div className="font-inter font-medium leading-relaxed overflow-hidden">
+                {renderedSegments}
+              </div>
+            ) : (
+              <span
+                className="font-inter font-medium text-[#6D7276]"
+                style={{ fontSize: getFontSize(data.full_text?.length || 0), transition: 'font-size 0.2s' }}
+              >
+                {data.full_text || ""}
+              </span>
+            )}
+            <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-grey-600 to-transparent pointer-events-none"></div>
+          </div>
         </div>
       }
     </div>

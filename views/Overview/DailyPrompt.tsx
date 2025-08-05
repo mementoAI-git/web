@@ -24,7 +24,10 @@ export default function DailyPrompt({ prompt, memory, }: IDailyPrompt) {
   const hasResponse = Boolean(memory);
 
   return (
-    <div className="group relative flex h-64 sm:h-72.5 w-full cursor-pointer flex-col justify-between rounded-xl sm:rounded-2xl bg-grey-700 p-4 sm:p-6 lg:p-8">
+    <div
+      onClick={handleReplyClick}
+      className="group relative flex h-64 sm:h-72.5 w-full cursor-pointer flex-col justify-between rounded-xl sm:rounded-2xl bg-grey-700 p-4 sm:p-6 lg:p-8"
+    >
       {/* Response indicator */}
       {hasResponse && (
         <div className="absolute top-3 right-3 sm:top-4 sm:right-4 lg:top-6 lg:right-6">
@@ -44,7 +47,6 @@ export default function DailyPrompt({ prompt, memory, }: IDailyPrompt) {
         <div className="space-y-2 sm:space-y-3">
           <span className="block text-grey-900 font-inter text-sm sm:text-base font-semibold leading-tight">{title}</span>
           <button
-            onClick={handleReplyClick}
             disabled={hasResponse}
             className={cn("cursor-pointer bg-secondary hover:bg-[#000626b3] rounded-full shadow-btn hover:scale-[97%] px-3 sm:px-4 lg:px-5 py-1.5 sm:py-2 font-inter text-sm sm:text-base font-semibold text-white transition-all duration-150 hidden group-hover:flex", hasResponse && "opacity-50")}
           >
