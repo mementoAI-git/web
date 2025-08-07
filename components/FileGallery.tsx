@@ -1,7 +1,7 @@
 import { useModal } from "@/hooks/use-modal"
 import Image from "next/image"
 import wave from "@/public/image/wave.png"
-import { getDuration, isEmpty } from "@/utility"
+import { getDuration } from "@/utility"
 import { IFile } from "@/utility/interface"
 
 const sizes = [
