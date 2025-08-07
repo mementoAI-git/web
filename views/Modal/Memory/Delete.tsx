@@ -37,7 +37,10 @@ export function DeleteMemory({ data: id }) {
           </span>
         </div>
         <div className="flex justify-between items-center gap-4">
-          <button className="flex-1 cursor-pointer bg-white/1 border border-[#0011661A] rounded-lg h-10 font-inter font-semibold text-sm shadow">Cancel</button>
+          <button
+            className="flex-1 cursor-pointer bg-white/1 border border-[#0011661A] rounded-lg h-10 font-inter font-semibold text-sm shadow"
+            onClick={() => close("delete-memory")}
+          >Cancel</button>
           <button
             disabled={isMutating}
             onClick={handleDelete}

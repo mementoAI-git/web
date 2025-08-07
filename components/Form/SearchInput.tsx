@@ -5,7 +5,10 @@ export function Searchinput({ end = null }: { end?: ReactNode }) {
   return (
     <div className="flex h-full flex-1 items-center gap-2 rounded-lg border border-[rgba(208,213,221,1)] px-[14px] py-2">
       <SearchIcon />
-      <input placeholder="Search" className="flex-1 outline-0" />
+      <input
+        placeholder="Search"
+        className="flex-1 outline-0"
+      />
       {end}
     </div>
   );

@@ -4,6 +4,7 @@ import { isEmpty } from "@/utility";
 import { usePathname } from "next/navigation";
 import React, { useEffect } from "react";
 import MenuIcon from "@/public/icon/menu.svg"
+import SearchIcon from "@/public/icon/dashboard/search.svg"
 import { useModal } from "@/hooks/use-modal";
 import useFetcher from "@/hooks/use-fetcher";
 import endpoint from "@/api/endpoint";
@@ -39,7 +40,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
   }, [user, trigger, mutate])
 
   return (
-    <div className="w-full border-b border-grey-500">
+    <div className="w-full border-b border-grey-500 bg-white relative safe-top">
       <header className="mx-auto flex max-h-23 w-[93%] max-w-[1160px] items-center justify-between gap-4 sm:gap-6 px-2 py-4 sm:py-6">
         <div className="flex items-center gap-4 sm:gap-6 flex-1">
           {/* Mobile Menu Button */}
@@ -56,11 +57,18 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
               {headerTitle[path]}
             </div>
           }
-          <div onClick={() => open("search-memory")} className="h-10 max-w-150 flex-1">
+
+          <div
+            onClick={() => open("search-memory")}
+            className="h-10 max-w-150 flex-1 hidden sm:block"
+          >
             <Searchinput />
           </div>
         </div>
         <div className="flex max-h-10 shrink-0 items-center gap-2 sm:gap-4 font-inter">
+          <div onClick={() => open("search-memory")} className="h-10 w-10 flex items-center justify-center rounded-lg border border-[rgba(208,213,221,1)] bg-white sm:hidden">
+            <SearchIcon width={20} height={20} />
+          </div>
           <div className="h-full shrink-0 cursor-pointer space-x-1 rounded-full bg-grey-400 px-3 sm:px-5 py-2">
             <span>✌🏾</span>
             <span className="font-semibold text-grey-600 text-sm sm:text-base">{user?.streak || 0}</span>

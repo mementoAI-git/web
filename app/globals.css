@@ -122,7 +122,24 @@ body {
   }
 
   .modal-container {
-    @apply relative w-full max-w-[95vw] sm:max-w-[480px] md:max-w-[618px] rounded-2xl bg-white p-4 sm:p-8 md:p-10;
+    @apply relative !w-[95%] sm:w-full max-w-[95vw] sm:max-w-[480px] md:max-w-[618px] rounded-2xl bg-white p-4 sm:p-8 md:p-10;
+  }
+
+  /* Full screen modal classes */
+  .modal-full-screen {
+    @apply fixed inset-0 bg-white flex flex-col max-sm:h-screen;
+  }
+
+  .modal-header {
+    @apply flex-shrink-0 border-b border-grey-100 bg-white px-4 py-3 sm:px-6 sm:py-4;
+  }
+
+  .modal-body {
+    @apply flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-6;
+  }
+
+  .modal-footer {
+    @apply flex-shrink-0 border-t border-grey-100 bg-white px-4 py-3 sm:px-6 sm:py-4;
   }
 
   .modal-close-btn {
@@ -199,5 +216,20 @@ body {
     background: var(--color-secondary);
     cursor: pointer;
     border: none;
+  }
+
+  /* Safari mobile viewport fixes */
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* Ensure header stays visible on mobile Safari */
+  @supports (-webkit-touch-callout: none) {
+    .safe-top {
+      position: sticky;
+      top: 0;
+      /* z-index: 50; */
+    }
   }
 }

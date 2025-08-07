@@ -17,7 +17,7 @@ export default function ChangeImage({ image }) {
     mutate(endpoint.profile)
   }, [])
   return (
-    <div className="w-full rounded-2xl py-8 px-10 bg-grey-700 flex items-center gap-3">
+    <div className="w-full rounded-2xl sm:py-8 p-5 sm:px-10 bg-grey-700 flex items-center gap-3">
       <input type="file" accept="image/*" hidden name="file" />
       <div className="relative overflow-hidden size-18 rounded-full bg-black/15">
         {

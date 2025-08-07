@@ -24,10 +24,103 @@ export default function ModalLayout({ open, children, onClose }: IModalLayout) {
   );
 }
 
+interface IModalWrapper extends PropsWithChildren {
+  isMobile?: boolean;
+  header?: React.ReactNode;
+  footer?: React.ReactNode;
+  onClose?: () => void;
+}
+
+export function ModalWrapper({ isMobile = false, header, footer, children, onClose }: IModalWrapper) {
+  if (isMobile) {
+    return (
+      <div className="modal-full-screen">
+        {header && (
+          <div className="modal-header">
+            <div className="flex items-center justify-between">
+              {header}
+              {onClose && (
+                <div
+                  onClick={onClose}
+                  className="flex shrink-0 aspect-square w-8 cursor-pointer items-center justify-center rounded-full bg-grey-400"
+                >
+                  <TimesIcon width={8.33} height={8.33} />
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        <div className="modal-body">
+          {children}
+        </div>
+
+        {footer && (
+          <div className="modal-footer">
+            {footer}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="modal-container">
+      {onClose && <ModalCloseBtn onClick={onClose} />}
+      {children}
+      {footer}
+    </div>
+  );
+}
+
+interface IFullScreenModal extends PropsWithChildren {
+  open: boolean;
+  onClose: () => void;
+  header?: React.ReactNode;
+  footer?: React.ReactNode;
+}
+
+export function FullScreenModal({ open, onClose, header, footer, children }: IFullScreenModal) {
+  return (
+    <div
+      className={`modal-overlay z-50 bg-[rgba(94,94,94,0.5)] ${open ? "flex" : "hidden"}`}
+    >
+      <div className="modal-full-screen">
+        {header && (
+          <div className="modal-header">
+            <div className="flex items-center justify-between">
+              {header}
+              <div
+                onClick={onClose}
+                className="flex aspect-square w-8 cursor-pointer items-center justify-center rounded-full bg-grey-400"
+              >
+                <TimesIcon width={8.33} height={8.33} />
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="modal-body">
+          {children}
+        </div>
+
+        {footer && (
+          <div className="modal-footer">
+            {footer}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export function ModalCloseBtn({ onClick }) {
   return (
-    <div onClick={onClick} className="modal-close-btn">
+    <div
+      onClick={onClick}
+      className="modal-close-btn"
+    >
       <TimesIcon width={8.33} height={8.33} />
     </div>
-  )
+  );
 }

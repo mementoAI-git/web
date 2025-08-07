@@ -16,7 +16,7 @@ export function SharePost({ data: id }) {
   const [copied, handleCopy] = useCopy()
   const link = `${window.origin}/post/${id}`
   return (
-    <div className="modal-container !max-w-120">
+    <div className="modal-container !w-[95%] sm:w-full !max-w-120">
       <ModalCloseBtn onClick={() => close("share-post")} />
       <div className="space-y-6">
         <h4 className="modal-title">Share this post</h4>
@@ -52,7 +52,7 @@ export function SharePost({ data: id }) {
             <div className="flex-1 border-t border-grey-500" />
           </div>
 
-          <div className="flex items-center justify-between gap-11">
+          <div className="flex items-center justify-center md:justify-between gap-3 md:gap-11">
             {[facebook, linkedin, twitter, instagram].map((img, i) => (
               <div
                 key={i}

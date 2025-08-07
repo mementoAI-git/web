@@ -3,6 +3,7 @@ import Picker from '@emoji-mart/react'
 import data from '@emoji-mart/data'
 import { useState } from "react";
 import useClickAway from "@/hooks/use-clickaway";
+import { useFloating, offset, flip, shift, autoUpdate } from '@floating-ui/react';
 
 interface IEmojiPicker {
   className?: string
@@ -12,19 +13,46 @@ interface IEmojiPicker {
 export default function EmojiPicker({ onSelect, className = "" }: IEmojiPicker) {
   const [show, setShow] = useState(false)
   const ref = useClickAway(() => setShow(false))
+
+  const { refs, floatingStyles } = useFloating({
+    placement: 'top',
+    middleware: [
+      offset(10),
+      flip(),
+      shift({
+        padding: 20,
+        mainAxis: true,
+        crossAxis: true,
+      })
+    ],
+    whileElementsMounted: autoUpdate,
+  });
+
   return (
-    <div ref={ref} onClick={() => setShow(p => !p)} className={`relative size-12 flex justify-center cursor-pointer  items-center ${className}`}>
+    <div
+      ref={(el) => {
+        ref.current = el
+        refs.setReference(el)
+      }}
+      onClick={() => setShow(p => !p)}
+      className={`relative size-12 flex justify-center cursor-pointer items-center ${className}`}
+    >
       <EmojiIcon width={20} height={20} />
-      {
-        show &&
-        <div onClick={(e) => e.stopPropagation()} className="absolute bottom-full right-0">
+
+      {show && (
+        <div
+          ref={refs.setFloating}
+          style={floatingStyles}
+          onClick={(e) => e.stopPropagation()}
+          className="z-50"
+        >
           <Picker
             theme="light"
             data={data}
             onEmojiSelect={onSelect}
           />
         </div>
-      }
+      )}
     </div>
   )
 }

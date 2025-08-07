@@ -5,8 +5,9 @@ import SideBarItem from "./SideBarItem";
 import Logo from "@/components/Logo";
 import DoubleRightArrowIcon from "@/public/icon/double-right-arrow.svg"
 import { cn } from "@/utility";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import TimesIcon from "@/public/icon/times.svg";
+import Link from "next/link";
 
 interface DashboardSideBarProps {
   onClose?: () => void;
@@ -15,6 +16,12 @@ interface DashboardSideBarProps {
 export function DashboardSideBar({ onClose }: DashboardSideBarProps) {
   const [collapse, setCollapse] = useState(false)
   const pathname = usePathname();
+  const router = useRouter();
+
+  const handleLogoClick = () => {
+    router.push("/overview");
+    onClose()
+  }
 
   return (
     <aside className="flex items-stretch h-full">
@@ -23,7 +30,7 @@ export function DashboardSideBar({ onClose }: DashboardSideBarProps) {
           <div className="flex h-full max-h-300 flex-col justify-between group-[.close]:justify-start group-[.close]:gap-4 px-3 sm:px-4 py-6 sm:py-8">
             <div className="space-y-6 sm:space-y-8">
               <div className="flex items-center justify-between gap-3">
-                <div className="shrink-0">
+                <div onClick={handleLogoClick} className="shrink-0">
                   <Logo size={28} textClassName="!text-[20px] sm:!text-[24.24px] group-[.close]:hidden" />
                 </div>
                 <div className="flex items-center gap-2">

@@ -16,7 +16,7 @@ import CreateCapsule from "./Capsule/Create";
 import SelectBeneficiary from "./SelectBeneficiary";
 import { DeleteCapsule } from "./Capsule/Delete";
 import { PauseCapsule } from "./Capsule/Pause";
-
+import { useState, useEffect } from "react";
 
 const MODAL_COMPONENTS = {
   "share-post": SharePost,
@@ -45,13 +45,21 @@ const MODAL_COMPONENTS = {
 export default function Modal() {
   const { state } = useModal();
   const modal = state[0]
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 640)
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   if (isEmpty(state)) return null;
   const ModalComponent = MODAL_COMPONENTS[modal?.name];
 
   return (
     <div className={`modal-overlay z-[100] bg-[rgba(94,94,94,0.5)] ${state ? "flex" : "hidden"}`}>
-      {ModalComponent && <ModalComponent data={modal.props || {}} />}
+      {ModalComponent && <ModalComponent data={modal.props || {}} isMobile={isMobile} />}
     </div>
   );
 }

@@ -8,6 +8,7 @@ import { IFilePreviewItem } from ".";
 import { DeleteMemoryAttachment } from "./delete-attachment";
 import { useState } from "react";
 import Spinner from "@/components/Spinner";
+import { createPortal } from "react-dom";
 
 export default function ActionBtn(props: IFilePreviewItem) {
   const { close } = useModal();
@@ -48,16 +49,19 @@ export default function ActionBtn(props: IFilePreviewItem) {
   };
 
   return (
-    <div className="w-full mb-6 flex justify-end items-stretch gap-3">
+    <div className="w-full flex justify-end items-stretch gap-3">
       {
         props._id &&
         openDeleteConfirmation &&
-        <DeleteMemoryAttachment
-          onDelete={handleDelete}
-          loading={isMutating}
-          open={openDeleteConfirmation}
-          close={() => setOpenDeleteConfirmation(false)}
-        />
+        createPortal((
+          <DeleteMemoryAttachment
+            onDelete={handleDelete}
+            loading={isMutating}
+            open={openDeleteConfirmation}
+            close={() => setOpenDeleteConfirmation(false)}
+          />
+        ), document.body)
+
       }
       <div
         className="bg-[#F3F3F3] rounded-full flex items-center cursor-pointer justify-center gap-2 py-[9px] px-4 text-sm w-fit font-geist text-danger font-medium"

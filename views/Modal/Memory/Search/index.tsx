@@ -1,4 +1,4 @@
-import { ModalCloseBtn } from "@/components/ModalLayout";
+import { ModalCloseBtn, ModalWrapper } from "@/components/ModalLayout";
 import { useModal } from "@/hooks/use-modal";
 import SearchIcon from "@/public/icon/dashboard/search.svg";
 import ArrowRightIcon from "@/public/icon/arrow-right.svg"
@@ -12,7 +12,7 @@ import endpoint from "@/api/endpoint";
 import Spinner from "@/components/Spinner";
 import { SkeletonLoader } from "./Loader";
 
-export function SearchMemories() {
+export function SearchMemories({ isMobile = false }) {
   const { close } = useModal();
   const { user } = useStore();
   const [recentMemories, setRecentMemories] = useState([]);
@@ -41,28 +41,33 @@ export function SearchMemories() {
   const showEmpty = debouncedSearch.trim() ? (!isLoading && isEmpty(searchResults)) : isEmpty(recentMemories);
 
   return (
-    <div className="modal-container !max-w-200">
-      <ModalCloseBtn onClick={() => close("search-memory")} />
-      <div className="space-y-6">
-        <h4 className="text-2xl font-semibold font-inter text-secondary">Search Memento</h4>
-        <div className="flex h-full flex-1 items-center gap-2 rounded-full border border-[rgba(208,213,221,1)] px-[14px] py-2">
-          <SearchIcon />
-          <input
-            placeholder="Search"
-            className="flex-1 outline-0"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            autoFocus
-          />
-          {
-            isLoading ?
-              <Spinner loading className="!size-6 !text-black shrink-0" /> :
-              <div className="bg-secondary cursor-pointer flex justify-center items-center text-white rounded-full size-6">
-                <ArrowRightIcon width={11} />
-              </div>
-          }
+    <ModalWrapper
+      isMobile={isMobile}
+      header={<h4 className="text-2xl font-semibold font-inter text-secondary">Search Memento</h4>}
+      onClose={() => close("search-memory")}
+    >
+      <div className="h-full space-y-6">
+        <h4 className="hidden sm:block text-2xl font-semibold font-inter text-secondary">Search Memento</h4>
+        <div>
+          <div className="flex h-full flex-1 items-center gap-2 rounded-full border border-[rgba(208,213,221,1)] px-[14px] py-2">
+            <SearchIcon />
+            <input
+              placeholder="Search"
+              className="flex-1 outline-0"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              autoFocus
+            />
+            {
+              isLoading ?
+                <Spinner loading className="!size-6 !text-black shrink-0" /> :
+                <div className="bg-secondary cursor-pointer flex justify-center items-center text-white rounded-full size-6">
+                  <ArrowRightIcon width={11} />
+                </div>
+            }
+          </div>
         </div>
-        <div className="transition-all max-h-60 sm:max-h-80 md:max-h-96 hide-scrollbar overflow-y-auto duration-300 ease-in-out">
+        <div className="transition-all sm:max-h-80 md:max-h-96 hide-scrollbar overflow-y-auto duration-300 ease-in-out">
           {showEmpty ? (
             <div className="animate-fadeIn">
               <EmptyRecentMemories />
@@ -104,6 +109,6 @@ export function SearchMemories() {
           )}
         </div>
       </div>
-    </div>
-  );
+    </ModalWrapper >
+  )
 }

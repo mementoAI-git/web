@@ -13,6 +13,10 @@ import { useModal } from "@/hooks/use-modal";
 import { IMemory } from "@/utility/interface";
 import RemoveBookmarkIcon from "@/public/icon/remove-bookmark.svg";
 import AddBookmarkIcon from "@/public/icon/add-bookmark.svg";
+import useFetcher from "@/hooks/use-fetcher";
+import { toast } from "sonner";
+import endpoint from "@/api/endpoint";
+import { mutate } from "swr";
 
 const FILTER_LABELS = {
   all: "All",
@@ -22,6 +26,31 @@ const FILTER_LABELS = {
 
 export function MemoryItemActions({ memory }: { memory: IMemory }) {
   const { open } = useModal()
+  const { trigger: addBookmark } = useFetcher(`${endpoint.memories}/${memory._id}/bookmark`, "post");
+  const { trigger: removeBookmark } = useFetcher(`${endpoint.memories}/${memory._id}/bookmark`, "delete");
+
+  const handleBookmarkAction = async () => {
+    try {
+      if (memory.bookmarked) {
+        const result = await removeBookmark("");
+        if (result?.success) {
+          toast.success("Memory removed from bookmarks successfully!");
+        }
+      } else {
+        const result = await addBookmark();
+        if (result?.success) {
+          toast.success("Memory added to bookmarks successfully!");
+        }
+      }
+
+      // Update the cache
+      mutate(`${endpoint.memories}/${memory._id}`)
+      mutate(endpoint.memoriesStats)
+      mutate(`${endpoint.memories}?page=1`)
+    } catch (error) {
+      toast.error("An error occurred while bookmarking");
+    }
+  };
 
   const handleSelect = (value: string) => {
     if (value === "share-story") {
@@ -31,7 +60,7 @@ export function MemoryItemActions({ memory }: { memory: IMemory }) {
       open("edit-memory", memory)
     }
     if (value === "bookmark") {
-      open("bookmark-memory", memory)
+      handleBookmarkAction()
     }
   }
 
@@ -50,7 +79,7 @@ export function MemoryItemActions({ memory }: { memory: IMemory }) {
           startIcon: <LunchIcon width={16} size={16} />,
         },
         {
-          label: "Book mark",
+          label: memory.bookmarked ? "Remove bookmark" : "Add bookmark",
           value: "bookmark",
           startIcon: memory.bookmarked ?
             <RemoveBookmarkIcon width={16} height={16} />

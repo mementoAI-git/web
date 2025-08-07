@@ -3,7 +3,7 @@
 import { AudioRecorder, VideoRecorder } from "@/components/Recorder";
 import { FooterBtnGroup } from "@/components/Memory/FooterBtnGroup";
 import { TextArea } from "@/components/Memory/TextArea";
-import { ModalCloseBtn } from "@/components/ModalLayout";
+import { ModalWrapper } from "@/components/ModalLayout";
 import useForm from "@/hooks/use-form";
 import { useModal } from "@/hooks/use-modal";
 import { useEffect, useRef, useState } from "react";
@@ -21,9 +21,9 @@ const initial = {
   attachments: []
 }
 
-export function CreateMemory({ data }) {
+export function CreateMemory({ data, isMobile = false }) {
   const { payload, type: declaredType } = data
-  const { close, open, push } = useModal()
+  const { close, push } = useModal()
 
   const audioRef = useRef(null)
   const videoRef = useRef(null)
@@ -85,22 +85,42 @@ export function CreateMemory({ data }) {
   useEffect(() => {
     const attachments = localStorage.getItem(storageKeys.attachments)
     if (attachments) {
-      console.log(JSON.parse(attachments).files.map(f => f.result))
       setAttachments(JSON.parse(attachments).files.map(f => f.result))
     }
   }, [])
 
+  const header = (
+    <h2 className="text-xl font-geist font-semibold text-secondary">Create Memory</h2>
+  )
+
+  const footer = (
+    <FooterBtnGroup
+      onAddFileBtnClick={() => push("file-upload", null)}
+      onDiscard={handleDiscard}
+      onSave={handleSubmit}
+      onTypeChange={setType}
+      disabled={["audio", "video"].includes(type) && recording}
+      saving={isMutating}
+      type={type}
+      editMode={editMode || !isEmpty(values.body)}
+    />
+  )
+
   return (
-    <div className="modal-container">
-      <ModalCloseBtn onClick={handleClose} />
-      <div className="space-y-3">
-        <div className="border-t border-[#0011661A] py-2 pr-10">
+    <ModalWrapper
+      isMobile={isMobile}
+      header={header}
+      footer={footer}
+      onClose={handleClose}
+    >
+      <div className="space-y-4">
+        <div className="py-2">
           <input
             placeholder="Enter title here"
             value={values.title}
             name="title"
             onChange={handleChange}
-            className="font-inter resize-none text-2xl w-full h-9 min-h-9 first-letter:capitalize outline-0 font-semibold"
+            className="font-inter resize-none text-3xl w-full h-9 min-h-9 first-letter:capitalize outline-0 font-semibold"
           />
         </div>
         {
@@ -124,16 +144,6 @@ export function CreateMemory({ data }) {
               />
         }
       </div>
-      <FooterBtnGroup
-        onAddFileBtnClick={() => push("file-upload", null)}
-        onDiscard={handleDiscard}
-        onSave={handleSubmit}
-        onTypeChange={setType}
-        disabled={["audio", "video"].includes(type) && recording}
-        saving={isMutating}
-        type={type}
-        editMode={editMode || !isEmpty(values.body)}
-      />
-    </div>
+    </ModalWrapper >
   )
 }

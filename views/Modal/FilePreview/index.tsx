@@ -42,7 +42,7 @@ export default function FilePreview({ data }: { data: IFile[] }) {
   }
 
   return (
-    <div className="relative z-50 flex items-center justify-center flex-col min-w-[80%]">
+    <div className="relative z-50 flex items-center justify-center flex-col w-full sm:w-[90%] md:w-[80%] lg:w-[80%] p-4 sm:p-6">
       {
         files.map((file, i) => (
           <div key={i} className={`transition-opacity duration-1000 ease-in-out w-full ${index === i ? 'opacity-100 block' : 'opacity-0 hidden'}`}>
@@ -59,7 +59,7 @@ export default function FilePreview({ data }: { data: IFile[] }) {
       <div>
         {
           files.length > 1 &&
-          <div className="mx-auto mt-7 flex w-fit items-center justify-center gap-1 rounded-full bg-black/[32%] px-2 py-1">
+          <div className="mx-auto mt-4 sm:mt-7 flex w-fit items-center justify-center gap-1 rounded-full bg-black/[32%] px-2 py-1">
             {
               files.map((_, i) => (
                 <div

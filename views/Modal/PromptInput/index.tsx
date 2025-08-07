@@ -1,6 +1,6 @@
 "use client";
 
-import { ModalCloseBtn } from "@/components/ModalLayout";
+import { ModalCloseBtn, ModalWrapper } from "@/components/ModalLayout";
 import { useModal } from "@/hooks/use-modal";
 import { FooterBtnGroup } from "@/components/Memory/FooterBtnGroup";
 import useForm from "@/hooks/use-form";
@@ -19,7 +19,7 @@ const initial = {
   prompt_id: ""
 }
 
-export default function PromptInput({ data }) {
+export default function PromptInput({ data, isMobile = false }) {
   const { close, open, push } = useModal()
 
   const audioRef = useRef(null)
@@ -86,9 +86,58 @@ export default function PromptInput({ data }) {
       .catch(console.log)
 
   }, [data?.prompt]);
+  // return (
+  //   <div className="modal-container">
+  //     <ModalCloseBtn onClick={handleClose} />
+  //     <div className="space-y-3">
+  //       <h4 className="modal-title">{memory?.title}</h4>
+  //       {
+  //         type === "audio" ?
+  //           <AudioRecorder ref={audioRef} {...{ onFinish, onStart }} /> :
+  //           type === "video" ?
+  //             <VideoRecorder ref={videoRef} {...{ onFinish, onStart }} /> :
+  //             <TextArea
+  //               value={values.body}
+  //               name="body"
+  //               attachments={memory?.attachments}
+  //               onChange={handleChange}
+  //             />
+  //       }
+  //     </div>
+  //     <FooterBtnGroup
+  //       onAddFileBtnClick={() => push("file-upload", memory?._id || null)}
+  //       onDiscard={handleDiscard}
+  //       onSave={handleSubmit}
+  //       onTypeChange={setType}
+  //       disabled={(["audio", "video"].includes(type) && recording) || isLoading}
+  //       saving={isMutating}
+  //       type={type}
+  //       editMode={editMode || (memory?.body ? values.body !== memory?.body : !isEmpty(values.body))}
+  //     />
+  //   </div>
+  // )
+  const header = (
+    <h4 className="modal-title">{memory?.title}</h4>
+  )
+  const footer = (
+    <FooterBtnGroup
+      onAddFileBtnClick={() => push("file-upload", memory?._id || null)}
+      onDiscard={handleDiscard}
+      onSave={handleSubmit}
+      onTypeChange={setType}
+      disabled={(["audio", "video"].includes(type) && recording) || isLoading}
+      saving={isMutating}
+      type={type}
+      editMode={editMode || (memory?.body ? values.body !== memory?.body : !isEmpty(values.body))}
+    />
+  )
   return (
-    <div className="modal-container">
-      <ModalCloseBtn onClick={handleClose} />
+    <ModalWrapper
+      isMobile={isMobile}
+      header={<h2 className="text-xl font-geist font-semibold text-secondary">Reply Prompt</h2>}
+      footer={footer}
+      onClose={handleClose}
+    >
       <div className="space-y-3">
         <h4 className="modal-title">{memory?.title}</h4>
         {
@@ -104,17 +153,6 @@ export default function PromptInput({ data }) {
               />
         }
       </div>
-      <FooterBtnGroup
-        onAddFileBtnClick={() => push("file-upload", memory?._id || null)}
-        onDiscard={handleDiscard}
-        onSave={handleSubmit}
-        onTypeChange={setType}
-        disabled={(["audio", "video"].includes(type) && recording) || isLoading}
-        saving={isMutating}
-        type={type}
-        editMode={editMode || (memory?.body ? values.body !== memory?.body : !isEmpty(values.body))}
-      />
-    </div>
+    </ModalWrapper >
   )
-
 }

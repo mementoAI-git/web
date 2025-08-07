@@ -140,7 +140,7 @@ export default function SetTagPermissions({ data }: ISetTagPermissionsProps) {
         Choose a title and a tag for this entry, this allows Memento correctly
         categorize your contents.
       </small>
-      <form className="flex flex-col gap-6">
+      <form className="flex flex-col gap-6 mt-3">
         <Textinput
           label="title"
           onChange={e => setTitle(e.target.value)}
