@@ -20,67 +20,63 @@ export default function Chat() {
   const { trigger, isMutating } = useSWRMutation(endpoint.aiPrompt, streamlineFetcher)
   const { trigger: triggerGreeting, isMutating: greeting } = useSWRMutation(endpoint.aiGreet, streamlineFetcher)
 
-  const handleChuckArrival = (chunk: string) => {
+  const handleChuckArrival = useCallback((chunk: string) => {
     if (chunk.trim().startsWith("ERROR: ")) {
+      setAiMessage("");
       return toast.error("Something went wrong, try again")
     }
+
     if (typeof chunk === 'string' && chunk.trim() !== '') {
-      setAiMessage((p) => p + chunk);
+      setAiMessage((prev) => prev + chunk);
     }
-  }
-
-  const handleTriggerGreeting = useCallback(() => {
-    if (!messages) return;
-    const lastMessage = messages[messages.length - 1];
-    const secondLastMessage = messages[messages.length - 2];
-    const last_seen = lastMessage ? dayjs().diff(lastMessage.created_at, 'millisecond') : 0;
-
-    const ONE_DAY_MS = 24 * 60 * 60 * 1000; // a day
-    if (
-      lastMessage &&
-      secondLastMessage &&
-      lastMessage.role === "ai" &&
-      secondLastMessage.role === "ai"
-    ) return;
-
-    if (isEmpty(messages.length) || (last_seen > ONE_DAY_MS) || lastMessage.role === "user") {
-      return triggerGreeting({ onChunk: handleChuckArrival })
-    }
-  }, [messages])
+  }, []);
 
   const handleSend = async ({ attachments = [] }) => {
     if (isEmpty(prompt)) return;
-    setMessages((p) => ([...p, { text: prompt, role: "user" }]));
-    setPrompt("")
-    setAiMessage("");
-    const ctlr = new AbortController();
-    setAbortController(ctlr);
 
-    return await trigger({
-      text: prompt,
-      attachments,
-      signal: ctlr.signal,
-      onChunk: handleChuckArrival
-    })
+    try {
+      setMessages((p) => ([...p, { text: prompt, role: "user" }]));
+      setPrompt("")
+      setAiMessage("");
+
+      const ctlr = new AbortController();
+      setAbortController(ctlr);
+
+      await trigger({
+        text: prompt,
+        attachments,
+        signal: ctlr.signal,
+        onChunk: handleChuckArrival
+      });
+    } catch (error) {
+      if (error.name !== 'AbortError') {
+        toast.error("Failed to send message");
+        setAiMessage("");
+      }
+    } finally {
+      setAbortController(null);
+    }
   }
 
   const handleStop = () => {
     if (abortController) {
       abortController.abort();
-      setAiMessage((prev) => prev + "...");
       setAbortController(null);
+    }
+    if (aiMessage) {
+      setAiMessage((prev) => prev + "...");
     }
   };
 
   const handleOnFinishTyping = (text: string) => {
-    setMessages((p) => ([...p, { text, role: "ai" }]));
+    if (text && text.trim()) {
+      setMessages((p) => ([...p, { text, role: "ai" }]));
+    }
     setAiMessage("");
     setPrompt("")
   }
 
-  useEffect(() => {
-    handleTriggerGreeting()
-  }, [messages])
+  const isTyping = isMutating || greeting;
 
   return (
     <div className="flex justify-center w-full h-full min-h-0">
@@ -90,7 +86,7 @@ export default function Chat() {
       >
         <History {...{ messages, setMessages }}>
           {
-            (isMutating || greeting) ?
+            isTyping && !aiMessage ?
               <i>Typing...</i> :
               aiMessage &&
               <TypeMessage
@@ -104,7 +100,7 @@ export default function Chat() {
             text={prompt}
             onChangeText={setPrompt}
             onSend={handleSend}
-            typing={isMutating || greeting}
+            typing={isTyping}
             onStop={handleStop}
           />
         </div>

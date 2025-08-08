@@ -18,30 +18,69 @@ export default function Message({ created_at, text, role }: Partial<IMessage>) {
 }
 
 export function TypeMessage({ text, onFinish }) {
-  const [index, setIndex] = useState(0)
+  const [displayText, setDisplayText] = useState("");
   const intervalRef = useRef(null);
+  const previousTextRef = useRef("");
+  const isTypingRef = useRef(false);
 
   useEffect(() => {
-    clearInterval(intervalRef.current);
+    if (!text) return;
 
-    intervalRef.current = setInterval(() => {
-      setIndex(prev => {
-        if (prev < text.length) {
-          return prev + 1
+    // If this is a new message (not an update to existing text)
+    if (previousTextRef.current === "") {
+      setDisplayText("");
+      previousTextRef.current = text;
+      isTypingRef.current = true;
+
+      // Start typing from the beginning
+      let currentIndex = 0;
+
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+
+      intervalRef.current = setInterval(() => {
+        currentIndex += 1;
+
+        if (currentIndex <= text.length) {
+          setDisplayText(text.slice(0, currentIndex));
         } else {
-          return prev
+          clearInterval(intervalRef.current);
+          intervalRef.current = null;
+          isTypingRef.current = false;
+          onFinish(text);
         }
-      })
+      }, 20);
+    } else {
+      // This is an update to existing text (new chunks arriving)
+      const newChars = text.slice(previousTextRef.current.length);
 
-    }, 10);
-
-    if (index >= text.length) {
-      clearInterval(intervalRef.current);
-      onFinish(text);
+      if (newChars.length > 0) {
+        // Add new characters immediately without typing effect
+        setDisplayText(text);
+        previousTextRef.current = text;
+      }
     }
 
-    return () => clearInterval(intervalRef.current);
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, [text, onFinish]);
+
+  // Reset when text becomes empty (new message starting)
+  useEffect(() => {
+    if (!text) {
+      previousTextRef.current = "";
+      setDisplayText("");
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    }
   }, [text]);
 
-  return <Message text={text.slice(0, index)} />
+  return <Message text={displayText} />
 }

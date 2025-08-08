@@ -3,31 +3,62 @@ import { useEffect, useRef, useState } from "react";
 
 export default function useTypingEffect(text: string, speed = 15) {
   const [index, setIndex] = useState(0)
-  const [typedText, setTypedText] = useState(null)
+  const [typedText, setTypedText] = useState("")
   const intervalRef = useRef(null);
+  const textRef = useRef(text);
+
+  // Update text reference when text changes
+  useEffect(() => {
+    textRef.current = text;
+  }, [text]);
 
   useEffect(() => {
-    if (isEmpty(text)) return;
-    clearInterval(intervalRef.current);
+    if (isEmpty(text)) {
+      setIndex(0);
+      setTypedText("");
+      return;
+    }
+
+    // Reset when text changes
+    if (text !== textRef.current) {
+      setIndex(0);
+      setTypedText("");
+    }
+
+    // Clear existing interval
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+    }
 
     intervalRef.current = setInterval(() => {
       setIndex(prev => {
-        console.log(prev)
-        if (prev > text.length) {
+        if (prev >= text.length) {
           clearInterval(intervalRef.current);
+          intervalRef.current = null;
           setTypedText(text);
+          return prev;
         }
-
-        if (prev < text.length) {
-          return prev + 1
-        } else {
-          return prev
-        }
-      })
+        return prev + 1;
+      });
     }, speed);
 
-    return () => clearInterval(intervalRef.current);
-  }, [speed, text]);
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, [text, speed]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, []);
 
   return isEmpty(typedText) ? text.slice(0, index) : typedText;
 }
