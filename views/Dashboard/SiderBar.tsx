@@ -25,7 +25,7 @@ export function DashboardSideBar({ onClose }: DashboardSideBarProps) {
 
   return (
     <aside className="flex items-stretch h-full">
-      <div className={`group ${collapse ? "close w-fit" : "w-69"} transition-all duration-500 ease-in-out overflow-x-hidden bg-white`}>
+      <div className={`group ${collapse ? "close w-fit" : "w-69"} dynamic-height min-h-screen transition-all duration-500 ease-in-out overflow-x-hidden bg-white`}>
         <div className="h-full">
           <div className="flex h-full max-h-300 flex-col justify-between group-[.close]:justify-start group-[.close]:gap-4 px-3 sm:px-4 py-6 sm:py-8">
             <div className="space-y-6 sm:space-y-8">

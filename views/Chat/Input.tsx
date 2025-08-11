@@ -95,12 +95,12 @@ export default function ChatInput({ typing = false, onStop, text = "", onChangeT
         </div>
       }
       <textarea
-        className="max-h-60 sm:max-h-75 outline-none overflow-y-auto resize-none placeholder:text-grey-800 font-inter font-normal text-sm sm:text-base"
+        className="max-h-60 sm:max-h-75 outline-none overflow-y-auto resize-none placeholder:text-grey-800 font-inter font-normal text-base"
         value={text}
         ref={ref}
         onKeyDown={handleKeyDown}
         onChange={handleChange}
-        placeholder="What's on your mind today? Click here to start typing, or click on the record button to say something. "
+        placeholder="What's on your mind today?"
       ></textarea>
       <div className="items-center justify-between flex flex-row gap-3 sm:gap-0">
         <AttatchFile onUpload={handleUpload} />

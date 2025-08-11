@@ -61,6 +61,33 @@ body {
     var(--font-bricolage), var(--font-geist), var(--font-inter), sans-serif;
 }
 
+.dynamic-height {
+  height: 100vh;
+  height: 100dvh;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+.dynamic-height-content {
+  height: calc(100vh-env(safe-area-inset-top)-env(safe-area-inset-bottom));
+  height: calc(100dvh-env(safe-area-inset-top)-env(safe-area-inset-bottom));
+  min-height: calc(100vh-env(safe-area-inset-top)-env(safe-area-inset-bottom));
+  min-height: calc(100dvh-env(safe-area-inset-top)-env(safe-area-inset-bottom));
+}
+
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+body {
+  height: 100vh;
+  height: 100dvh;
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
+}
+
 .hide-scrollbar {
   scrollbar-width: none;
   -ms-overflow-style: none;
@@ -71,12 +98,16 @@ body {
 }
 
 .h-page {
-  height: calc(100vh - 88px)
+  height: calc(100vh-88px)
 }
 
 @layer utilities {
   .page-title {
     @apply shrink-0 text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bricolage text-secondary font-medium leading-11 capitalize truncate max-w-full
+  }
+
+  .page-viewport {
+    @apply flex-1 h-full flex flex-col overflow-y-auto mx-auto w-[93%] max-w-[1160px];
   }
 
   .input-container {
@@ -125,6 +156,34 @@ body {
     @apply relative !w-[95%] sm:w-full max-w-[95vw] sm:max-w-[480px] md:max-w-[618px] rounded-2xl bg-white p-4 sm:p-8 md:p-10;
   }
 
+  .modal-overlay {
+    height: 100vh;
+    height: 100dvh;
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .modal-container {
+    max-height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 2rem);
+    max-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 2rem);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .modal-body {
+    max-height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 8rem);
+    max-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 8rem);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .modal-full-screen {
+    height: 100vh;
+    height: 100dvh;
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
   /* Full screen modal classes */
   .modal-full-screen {
     @apply fixed inset-0 bg-white flex flex-col max-sm:h-screen;
@@ -139,7 +198,7 @@ body {
   }
 
   .modal-footer {
-    @apply flex-shrink-0 border-t border-grey-100 bg-white px-4 py-3 sm:px-6 sm:py-4;
+    @apply flex-shrink-0 border-t border-grey-100 bg-white px-4 py-3 sm:px-6 sm:py-4 sticky bottom-0;
   }
 
   .modal-close-btn {
@@ -218,18 +277,13 @@ body {
     border: none;
   }
 
-  /* Safari mobile viewport fixes */
-  .safe-top {
+  .header-container {
     padding-top: env(safe-area-inset-top);
     padding-bottom: env(safe-area-inset-bottom);
   }
 
-  /* Ensure header stays visible on mobile Safari */
-  @supports (-webkit-touch-callout: none) {
-    .safe-top {
-      position: sticky;
-      top: 0;
-      /* z-index: 50; */
-    }
+  .header-container {
+    position: sticky;
+    top: 0;
   }
 }

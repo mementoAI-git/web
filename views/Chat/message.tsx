@@ -19,20 +19,28 @@ export default function Message({ created_at, text, role }: Partial<IMessage>) {
 
 export function TypeMessage({ text, onFinish }) {
   const [displayText, setDisplayText] = useState("");
+  const [isTyping, setIsTyping] = useState(false);
   const intervalRef = useRef(null);
-  const previousTextRef = useRef("");
-  const isTypingRef = useRef(false);
+  const lastTextLengthRef = useRef(0);
 
   useEffect(() => {
-    if (!text) return;
-
-    // If this is a new message (not an update to existing text)
-    if (previousTextRef.current === "") {
+    if (!text) {
       setDisplayText("");
-      previousTextRef.current = text;
-      isTypingRef.current = true;
+      setIsTyping(false);
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+      return;
+    }
 
-      // Start typing from the beginning
+    // If this is a completely new message (starting from empty)
+    if (lastTextLengthRef.current === 0) {
+      setDisplayText("");
+      setIsTyping(true);
+      lastTextLengthRef.current = text.length;
+
+      // Start typing effect from the beginning
       let currentIndex = 0;
 
       if (intervalRef.current) {
@@ -47,18 +55,25 @@ export function TypeMessage({ text, onFinish }) {
         } else {
           clearInterval(intervalRef.current);
           intervalRef.current = null;
-          isTypingRef.current = false;
+          setIsTyping(false);
           onFinish(text);
         }
       }, 20);
     } else {
       // This is an update to existing text (new chunks arriving)
-      const newChars = text.slice(previousTextRef.current.length);
+      const newChars = text.slice(lastTextLengthRef.current);
 
       if (newChars.length > 0) {
         // Add new characters immediately without typing effect
         setDisplayText(text);
-        previousTextRef.current = text;
+        lastTextLengthRef.current = text.length;
+
+        // If we were typing, stop and show the new content
+        if (isTyping && intervalRef.current) {
+          clearInterval(intervalRef.current);
+          intervalRef.current = null;
+          setIsTyping(false);
+        }
       }
     }
 
@@ -68,13 +83,14 @@ export function TypeMessage({ text, onFinish }) {
         intervalRef.current = null;
       }
     };
-  }, [text, onFinish]);
+  }, [text, onFinish, isTyping]);
 
   // Reset when text becomes empty (new message starting)
   useEffect(() => {
     if (!text) {
-      previousTextRef.current = "";
+      lastTextLengthRef.current = 0;
       setDisplayText("");
+      setIsTyping(false);
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
         intervalRef.current = null;

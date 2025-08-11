@@ -5,7 +5,7 @@ import BinIcon from "@/public/icon/bin.svg"
 export function DeleteMemoryAttachment({ loading = false, open = false, close, onDelete }) {
   return (
     <div className={`modal-overlay z-[100] bg-[rgba(94,94,94,0.5)] ${open ? "flex" : "hidden"}`}>
-      <div className="modal-container w-full max-w-full sm:max-w-96 md:max-w-120 !max-w-120 p-4 sm:p-6">
+      <div className="modal-container w-full max-w-full sm:max-w-96 md:max-w-120 p-4 sm:p-6">
         <ModalCloseBtn onClick={close} />
         <div className="flex justify-center items-center cursor-pointer rounded-full size-10 sm:size-12 text-danger bg-[#FEE4E2]">
           <BinIcon width={16} height={18} className="sm:w-[18px] sm:h-[20px]" />

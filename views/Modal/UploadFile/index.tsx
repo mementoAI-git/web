@@ -1,4 +1,4 @@
-"use clients";
+"use client";
 
 import UploadInput from "./UploadInput"
 import { useCallback, useEffect, useState } from "react"
@@ -89,31 +89,30 @@ export default function UploadFiles({ data: id }) {
   return (
     <div className="modal-container">
       <ModalCloseBtn onClick={() => close("file-upload")} />
-      <div className="space-y-6">
-        <h4 className="modal-title">Upload your images or videos</h4>
-        <div className="mt-6 flex flex-col">
-          <div className="flex flex-col gap-6 min-h-[425px] max-h-[660px]">
+      <div className="space-y-4 sm:space-y-6">
+        <h4 className="modal-title text-lg sm:text-xl lg:text-2xl">Upload your images or videos</h4>
+
+        <div className="mt-4 sm:mt-6 flex flex-col">
+          <div className="flex flex-col gap-4 sm:gap-6 min-h-[300px] sm:min-h-[425px] max-h-[500px] sm:max-h-[660px]">
             <UploadInput onUpload={handleOnUpload} />
-            {
-              files.length > 0 &&
-              <div className="space-y-4 flex-1 max-h-[300px] overflow-y-auto">
-                {
-                  files.map((f, i) => (
-                    <UploadItem
-                      onDelete={handleDeleteFile}
-                      file={f}
-                      key={i}
-                    />
-                  ))
-                }
+
+            {files.length > 0 && (
+              <div className="space-y-3 sm:space-y-4 flex-1 max-h-[200px] sm:max-h-[300px] overflow-y-auto">
+                {files.map((f, i) => (
+                  <UploadItem
+                    onDelete={handleDeleteFile}
+                    file={f}
+                    key={i}
+                  />
+                ))}
               </div>
-            }
+            )}
           </div>
           <div className="flex mt-6 gap-3 justify-end">
             <button className="btn-outline">Discard</button>
             <button onClick={handleAddToPost} disabled={files.length === 0} className="btn">
               Add to post
-              <Spinner loading={adding} className="!size-4" />
+              <Spinner loading={adding} className="!size-3 sm:!size-4" />
             </button>
           </div>
         </div>

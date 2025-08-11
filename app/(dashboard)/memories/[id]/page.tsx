@@ -27,7 +27,7 @@ export default function MemoryPage({ params }) {
     if (data?.data && !isLoading) {
       addToRecentMemories(data.data, user.email);
     }
-  }, [data?.data, isLoading]);
+  }, [data?.data, user.email, isLoading]);
 
   return (
     <div className="flex max-w-[1160px] mx-auto">

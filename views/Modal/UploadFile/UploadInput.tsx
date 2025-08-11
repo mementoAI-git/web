@@ -31,19 +31,43 @@ export default function FileUploadInput({ onUpload }: IFileUploadinput) {
   }, [])
 
   return (
-    <label htmlFor="file-upload" ref={ref} className="flex-1 min-h-[154px] max-h-[425px] h-full p-3 bg-[#FCFCFD] rounded-2xl border border-dashed border-grey-500 flex justify-center items-center flex-col gap-6">
-      <AddImageIcon width={20} />
-      <input id="file-upload" type="file" name="file" hidden onChange={handleUpload} />
-      <div className="flex flex-col font-inter text-center justify-center items-center gap-2">
-        <span className="text-sm text-grey-600">Drag and drop your file here or click to upload</span>
-        <span className="text-xs text-grey-800">Max file size: 120mb</span>
+    <label
+      htmlFor="file-upload"
+      ref={ref}
+      className="flex-1 min-h-[40px] sm:min-h-[154px] max-h-[300px] sm:max-h-[425px] h-full p-2 sm:p-3 lg:p-4 bg-[#FCFCFD] rounded-xl sm:rounded-2xl border border-dashed border-grey-500 flex justify-center items-center flex-col gap-3 sm:gap-4 lg:gap-6"
+    >
+      <AddImageIcon
+        width={16}
+        height={16}
+        className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-grey-600"
+      />
+
+      <input
+        id="file-upload"
+        type="file"
+        name="file"
+        hidden
+        onChange={handleUpload}
+      />
+
+      <div className="flex flex-col font-inter text-center justify-center items-center gap-1 sm:gap-2">
+        <span className="text-xs sm:text-sm lg:text-base text-grey-600 leading-tight">
+          <span className="hidden sm:inline">
+            Drag and drop your file here or{" "}
+          </span>
+          <span className="sm:hidden">Tap to upload</span>
+          <span className="hidden sm:inline">click to upload</span>
+        </span>
+        <span className="text-xs text-grey-800 leading-tight">
+          Max file size: 120mb
+        </span>
       </div>
-      {
-        height > 154 &&
-        <span className="btn !font-medium">
+
+      {height > 154 && (
+        <span className="btn !font-medium text-xs sm:text-sm px-3 sm:px-4 py-2 sm:py-2.5">
           Browse files
         </span>
-      }
+      )}
     </label>
   )
 }

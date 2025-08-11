@@ -10,7 +10,6 @@ import { isEmpty } from "@/utility";
 import { toast } from "sonner";
 import { IMessage } from "@/utility/interface";
 import History from "./History";
-import dayjs from "dayjs";
 
 export default function Chat() {
   const [prompt, setPrompt] = useState("")
@@ -79,23 +78,25 @@ export default function Chat() {
   const isTyping = isMutating || greeting;
 
   return (
-    <div className="flex justify-center w-full h-full min-h-0">
-      <div
-        style={{ height: 'calc(100vh - 88px)' }}
-        className="mx-auto flex flex-col w-full max-w-2xl sm:max-w-3xl md:max-w-4xl lg:max-w-220 px-2 sm:px-4 md:px-8 size-full min-h-0"
-      >
-        <History {...{ messages, setMessages }}>
-          {
-            isTyping && !aiMessage ?
-              <i>Typing...</i> :
-              aiMessage &&
-              <TypeMessage
-                text={aiMessage}
-                onFinish={handleOnFinishTyping}
-              />
-          }
-        </History>
-        <div className="pb-2 sm:pb-4 px-1 sm:px-0 w-full">
+    <div className="flex h-screen flex-col hide-scrollbar">
+      <div className="flex-1 overflow-y-auto hide-scrollbar px-4 sm:px-6 lg:px-8 mx-auto max-w-2xl sm:max-w-3xl md:max-w-4xl lg:max-w-220">
+        <div className="space-y-3 sm:space-y-4 py-3 sm:py-4 lg:py-8">
+          <History {...{ messages, setMessages }}>
+            {
+              isTyping && !aiMessage ?
+                <i>Typing...</i> :
+                aiMessage &&
+                <TypeMessage
+                  text={aiMessage}
+                  onFinish={handleOnFinishTyping}
+                />
+            }
+          </History>
+        </div>
+      </div>
+
+      <div className="sticky bottom-0 bg-white border-t border-[#e5e5e5] px-4 sm:px-6 lg:px-8 py-4">
+        <div className="mx-auto max-w-2xl sm:max-w-3xl md:max-w-4xl lg:max-w-220">
           <ChatInput
             text={prompt}
             onChangeText={setPrompt}
@@ -105,6 +106,6 @@ export default function Chat() {
           />
         </div>
       </div>
-    </div >
+    </div>
   )
 }

@@ -59,7 +59,9 @@ export default function Modal() {
 
   return (
     <div className={`modal-overlay z-[100] bg-[rgba(94,94,94,0.5)] ${state ? "flex" : "hidden"}`}>
-      {ModalComponent && <ModalComponent data={modal.props || {}} isMobile={isMobile} />}
+      <div className="w-full h-full flex items-center justify-center p-4">
+        {ModalComponent && <ModalComponent data={modal.props || {}} isMobile={isMobile} />}
+      </div>
     </div>
   );
 }
