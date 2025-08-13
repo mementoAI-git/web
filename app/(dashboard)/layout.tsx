@@ -23,7 +23,7 @@ export default function DashboardLayout({ children }: PropsWithChildren) {
 
   return (
     <AuthCheck>
-      <div className="bg-white w-full min-h-screen flex flex-col lg:flex-row overflow-hidden hide-scrollbar dynamic-height">
+      <div className="bg-background w-full min-h-screen flex flex-col lg:flex-row overflow-hidden hide-scrollbar dynamic-height">
         <Modal />
         {sidebarOpen && (
           <div
@@ -31,15 +31,10 @@ export default function DashboardLayout({ children }: PropsWithChildren) {
             onClick={() => setSidebarOpen(false)}
           />
         )}
-        <div className={`
-          fixed lg:static inset-y-0 left-0 z-50 transform transition-transform duration-300 ease-in-out
-          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-        `}>
-          <DashboardSideBar onClose={() => setSidebarOpen(false)} />
-        </div>
+        <DashboardSideBar onClose={() => setSidebarOpen(false)} />
 
         {/* Main Content */}
-        <main className="flex-1 flex flex-col lg:border-l border-grey-500 overflow-hidden dynamic-height-content">
+        <main className="flex-1 flex flex-col overflow-hidden dynamic-height-content">
           <DashboardHeader onMenuClick={() => setSidebarOpen(true)} />
           <div className="flex-1 overflow-hidden">
             {children}

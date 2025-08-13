@@ -9,6 +9,16 @@ interface ILogo {
   textClassName?: string;
 }
 
+export function LogoV2({ className = "" }) {
+  return (
+    <span
+      className={cn("font-averia font-bold capitalize text-[36.92px] leading-[110%] text-[#1E1E1E]", className)}
+    >
+      memento.
+    </span>
+  )
+}
+
 export default function Logo({ size = 38, color = "dark", textClassName = "" }: ILogo) {
   return (
     <div className="flex cursor-pointer items-center gap-[6px]">

@@ -15,12 +15,12 @@ export default function SideBarItem({ link, active = false, onClick, ...props }:
       prefetch={false}
       href={link}
       onClick={onClick}
-      className={`${active && "active"} flex items-center group-[.close]:justify-center group/item gap-2 rounded-[6px] w-full group-[.close]:w-11 h-10 bg-transparent [.active]:bg-grey-400 hover:bg-grey-400 cursor-pointer text-[#344054] [.active]:text-primary hover:text-primary font-semibold font-inter px-3 py-2`}
+      className={`${active && "active"} flex items-center group/item gap-2 rounded-[8px] w-full h-10 bg-transparent [.active]:bg-[#F5EEE3] hover:bg-[#F5EEE3] cursor-pointer px-3 py-2`}
     >
-      <div className="text-[#667085] group-hover/item:text-primary group-[.active]/item:text-primary">
+      <div className="text-gray-500 group-[.active]/item:text-sand-10 group-hover/item:text-sand-10">
         <props.Icon />
       </div>
-      <span className="capitalize group-[.close]:hidden"> {props.title} </span>
+      <span className="capitalize group-[.active]/item:text-sand-10 group-hover/item:text-sand-10 text-base font-inter font-medium text-gray-700"> {props.title} </span>
     </Link>
   );
 }
