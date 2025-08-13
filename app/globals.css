@@ -20,10 +20,16 @@
 
   --color-background: #FEFBF8;
 
+  --color-blue-6: #52A1DD;
+
+  --color-gray-50: #FAFAFA;
   --color-gray-200: #EAECF0;
   --color-gray-500: #667085;
   --color-gray-700: #344054;
 
+  --color-sand-2: #FBF5EB;
+  --color-sand-4: #F5E7D1;
+  --color-sand-8: #B5955E;
   --color-sand-10: #846633;
   --color-sand-12: #412C09;
 
@@ -50,10 +56,16 @@
   --color-grey-900: var(--color-grey-900);
   --color-background: var(--color-background);
 
+  --color-blue-6: var(--color-blue-6);
+
+  --color-gray-50: var(--color-gray-50);
   --color-gray-200: var(--color-gray-200);
   --color-gray-500: var(--color-gray-500);
   --color-gray-700: var(--color-gray-700);
 
+  --color-sand-2: var(--color-sand-2);
+  --color-sand-4: var(--color-sand-4);
+  --color-sand-8: var(--color-sand-8);
   --color-sand-10: var(--color-sand-10);
   --color-sand-12: var(--color-sand-12);
 
@@ -68,6 +80,7 @@
   --font-bricolage: var(--font-bricolage);
   --font-averia: var(--font-averia);
   --font-canela: var(--font-canela);
+  --font-georgia: var(--font-georgia);
 }
 
 body {
