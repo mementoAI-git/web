@@ -20,6 +20,7 @@
 
   --color-background: #FEFBF8;
 
+  --color-blue-2: #E9F1FC;
   --color-blue-6: #52A1DD;
 
   --color-gray-50: #FAFAFA;
@@ -56,6 +57,7 @@
   --color-grey-900: var(--color-grey-900);
   --color-background: var(--color-background);
 
+  --color-blue-2: var(--color-blue-2);
   --color-blue-6: var(--color-blue-6);
 
   --color-gray-50: var(--color-gray-50);
@@ -182,6 +184,10 @@ body {
 
   .mem-tags {
     @apply cursor-pointer rounded-full border border-[#E9EAEB] bg-[#FAFAFA] px-2 py-0.5 text-center font-inter text-xs font-medium capitalize;
+  }
+
+  .icon-container {
+    @apply size-11 bg-sand-2 flex items-center rounded-full justify-center text-sand-8 cursor-pointer hover:scale-90
   }
 
   .modal-overlay {
