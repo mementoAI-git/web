@@ -84,9 +84,6 @@ export default function AudioVisualizer({
         const newLevels = [];
         const binCount = analyserRef.current.frequencyBinCount;
 
-        // Use more frequency bins per bar for better sensitivity
-        const binSize = Math.max(1, Math.floor(binCount / (barCount * 2)));
-
         // Focus on mid-range frequencies (100Hz - 4kHz) for better speech/voice detection
         const startBin = Math.floor(binCount * 0.05); // Skip very low frequencies
         const endBin = Math.floor(binCount * 0.6);   // Focus on speech range
