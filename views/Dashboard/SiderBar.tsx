@@ -19,17 +19,19 @@ export function DashboardSideBar({ onClose }: DashboardSideBarProps) {
 
   const handleLogoClick = () => {
     router.push("/overview");
-    onClose()
+    onClose?.()
   }
 
   return (
-    <div className="dynamic-height w-full max-w-80.5 min-h-screen overflow-x-hidden border-r border-gray-200">
+    <div className="dynamic-height w-full min-h-screen overflow-x-hidden border-r border-gray-200 bg-white">
       <div className="flex size-full max-h-300 flex-col justify-between">
         <div className="w-full">
-          <div onClick={handleLogoClick} className="shrink-0 p-5 pl-6">
-            <LogoV2 />
+          <div className="flex items-center justify-between p-5 pl-6">
+            <div onClick={handleLogoClick} className="cursor-pointer">
+              <LogoV2 />
+            </div>
           </div>
-          <div className="flex py-8 px-4 flex-col gap-1 sm:gap-2">
+          <div className="flex py-4 md:py-8 px-4 flex-col gap-1 sm:gap-2">
             {topNavigations.map((n, i) => (
               <SideBarItem {...n} active={n.link === pathname} key={i} onClick={onClose} />
             ))}

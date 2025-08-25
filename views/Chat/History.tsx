@@ -124,6 +124,7 @@ export default function History({ messages, setMessages, children }: IHistory) {
 
       {messages && messages.map((m, i) => <Message key={i} {...m} />)}
       {children}
+      <div className="w-full h-35" />
     </div>
   )
 }

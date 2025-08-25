@@ -1,3 +1,5 @@
+"use client"
+
 import image6 from "@/public/image/image-6.png"
 import familyImage from "@/public/image/family-friends.png"
 import findingPurposeImage from "@/public/image/finding-purpose.png"
@@ -6,6 +8,7 @@ import loveImage from "@/public/image/love-relationship.png"
 import faithImage from "@/public/image/faith.png"
 import PromptCard from "./prompt-card";
 import CategoryCard from "@/components/category-card"
+import Slider from "@/components/Slider"
 import Link from "next/link"
 
 const categories = [
@@ -47,10 +50,20 @@ export default function Explore() {
       <div className="container">
         <div className="py-12 flex flex-col gap-10">
           <div className="space-y-2">
-            <h2 className="text-[32px] leading-[38px] font-canela font-medium text-sand-12">Pick up from where you left off. </h2>
-            <span className="text-xl font-canela font-light text-sand-10">Complete some unfinished prompts to earn points.</span>
+            <h2 className="text-xl md:text-2xl font-canela font-medium text-sand-12">Pick up from where you left off. </h2>
+            <span className="text-md sm:text-xl font-canela font-light text-sand-10">Complete some unfinished prompts to earn points.</span>
           </div>
-          <div className="flex gap-6 items-stretch">
+
+          {/* Mobile Slider View for Prompt Cards */}
+          <div className="block md:hidden">
+            <Slider>
+              <PromptCard />
+              <PromptCard />
+            </Slider>
+          </div>
+
+          {/* Desktop Grid View for Prompt Cards */}
+          <div className="hidden md:flex gap-6 items-stretch overflow-x-auto pb-4 hide-scrollbar">
             <PromptCard />
             <PromptCard />
           </div>
@@ -64,6 +77,7 @@ export default function Explore() {
               See all
             </Link>
           </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4 lg:gap-6">
             {categories.map((category, index) => (
               <CategoryCard key={index}{...category} />

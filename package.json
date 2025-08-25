@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:https": "next dev --experimental-https --experimental-https-key ./localhost+2-key.pem --experimental-https-cert ./localhost+2.pem",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
@@ -24,6 +25,7 @@
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-markdown": "^10.1.0",
+    "react-media-recorder": "^1.7.2",
     "sonner": "^2.0.3",
     "swr": "^2.3.3",
     "tailwind-datepicker-react": "^1.4.3",
