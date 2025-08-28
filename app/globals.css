@@ -29,9 +29,11 @@
   --color-gray-700: #344054;
 
   --color-sand-2: #FBF5EB;
+  --color-sand-3: #F5EEE3;
   --color-sand-4: #F5E7D1;
   --color-sand-8: #B5955E;
   --color-sand-10: #846633;
+  --color-sand-11: #5C4114;
   --color-sand-12: #412C09;
 
   --shadow-sm: 0px 1px 2px 0px rgba(16, 24, 40, 0.05);
@@ -66,9 +68,11 @@
   --color-gray-700: var(--color-gray-700);
 
   --color-sand-2: var(--color-sand-2);
+  --color-sand-3: var(--color-sand-3);
   --color-sand-4: var(--color-sand-4);
   --color-sand-8: var(--color-sand-8);
   --color-sand-10: var(--color-sand-10);
+  --color-sand-11: var(--color-sand-11);
   --color-sand-12: var(--color-sand-12);
 
   --shadow-btn: var(--shadow-btn);

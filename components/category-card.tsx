@@ -1,5 +1,6 @@
 import { StaticImport } from "next/dist/shared/lib/get-img-props"
 import Image from "next/image"
+import Link from "next/link"
 
 interface ICategoryCardProps {
   title: string
@@ -8,7 +9,7 @@ interface ICategoryCardProps {
 }
 export default function CategoryCard({ image, title, subtitle }: ICategoryCardProps) {
   return (
-    <div className="w-full h-[220.89px] overflow-hidden rounded-[10px] relative group cursor-pointer">
+    <Link href="/explore/categories/1" className="w-full h-[220.89px] overflow-hidden rounded-[10px] relative group cursor-pointer">
       <Image
         src={image}
         alt=""
@@ -20,6 +21,6 @@ export default function CategoryCard({ image, title, subtitle }: ICategoryCardPr
           <span className="text-sm font-georgia font-light text-gray-50">{subtitle}</span>
         </div>
       </div>
-    </div>
+    </Link>
   )
 }

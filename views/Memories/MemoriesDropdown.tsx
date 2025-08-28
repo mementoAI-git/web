@@ -66,7 +66,7 @@ export function MemoryItemActions({ memory }: { memory: IMemory }) {
 
   return (
     <DropdowmIcon
-      icon={<VeriticalElipseIcon />}
+      icon={<VeriticalElipseIcon className="w-1 h-3" />}
       items={[
         {
           label: "Edit story",
@@ -76,7 +76,7 @@ export function MemoryItemActions({ memory }: { memory: IMemory }) {
         {
           label: "Share story",
           value: "share-story",
-          startIcon: <LunchIcon width={16} size={16} />,
+          startIcon: <LunchIcon className="size-[14px]" width={14} size={14} />,
         },
         {
           label: memory.bookmarked ? "Remove bookmark" : "Add bookmark",
