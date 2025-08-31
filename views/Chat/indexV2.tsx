@@ -2,33 +2,27 @@ import ChatIcon from "@/public/icon/chat.svg";
 import GearIcon from "@/public/icon/gear.svg";
 import PlusIcon from "@/public/icon/plus.svg";
 import WaveIcon from "@/public/icon/wave.svg";
+import EllipseIcon from "@/public/icon/vertical-ellipse.svg";
+import chatIcon from "@/public/image/chat.png"
 import careerImage from "@/public/image/image-6.png"
 import { cn } from "@/utility";
 import Image from "next/image";
+import RecentConversationItem from "./RecentConversationItem";
+import Topic from "@/components/Topic";
+import Link from "next/link";
 
 function SuggestedCategories() {
   return (
     <div className="space-y-6">
-      <div className="container w-full">
+      <div className="container flex items-center justify-between w-full">
         <h4 className="font-canela font-medium text-xl md:text-2xl text-sand-12">Suggested Conversations</h4>
+        <Link href="/chat/conversations/suggested" className="text-blue-6 underline font-semibold font-inter text-lg cursor-pointer">
+          See more
+        </Link>
       </div>
       <div className="relative w-full">
         <div className="flex gap-6 overflow-x-auto hide-scrollbar lg:pl-29">
-          {
-            [1, 2, 3, 4, 5, 6, 7, 8].map(t => (
-              <div key={t} className="border border-sand-4 space-y-6 rounded-2xl w-full max-w-[270px] p-6 flex-shrink-0">
-                <div className="h-30 relative rounded-lg overflow-hidden">
-                  <div className="absolute top-2 left-2 rounded-full bg-gray-50 px-2 border border-gray-200">
-                    <span className="font-inter font-medium text-xs text-gray-700">Question</span>
-                  </div>
-                  <Image alt="" className="size-full object-cover" src={careerImage} />
-                </div>
-                <div>
-                  <span className="font-georgia md:text-xl text-sand-12 font-normal">In what ways do your family or friends support you when you feel down?</span>
-                </div>
-              </div>
-            ))
-          }
+          {[1, 2, 3, 4, 5, 6, 7, 8].map(t => <Topic key={t} tag="Question" />)}
         </div>
         <div className="absolute hidden md:block left-0 top-0 bottom-4 w-16 bg-gradient-to-r from-background to-transparent pointer-events-none z-10" />
         <div className="absolute hidden md:block  right-0 top-0 bottom-4 w-16 bg-gradient-to-l from-background to-transparent pointer-events-none z-10" />
@@ -84,7 +78,20 @@ export default function Chat() {
               </div>
             </div>
           </div>
-          <SuggestedCategories />
+
+          <div className="container w-full space-y-6">
+            <div className="flex items-center justify-between">
+              <h4 className="font-canela font-medium text-xl md:text-2xl text-sand-12">Recent Conversations</h4>
+              <Link href="/chat/conversations" className="text-blue-6 underline font-semibold font-inter text-lg cursor-pointer">
+                See more
+              </Link>
+            </div>
+
+            <RecentConversationItem />
+            <RecentConversationItem />
+            <RecentConversationItem />
+          </div>
+
           <SuggestedCategories />
           <div className="h-10 w-full" />
         </div>

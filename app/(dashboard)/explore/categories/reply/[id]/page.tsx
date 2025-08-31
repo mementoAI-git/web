@@ -1,4 +1,4 @@
-import Reply from "@/views/Categories/Reply";
+import Reply from "@/views/Conversation";
 
 export default function ReplyPage() {
   return <Reply />

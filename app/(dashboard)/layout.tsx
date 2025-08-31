@@ -38,7 +38,7 @@ export default function DashboardLayout({ children }: PropsWithChildren) {
         <div className={`
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
           fixed md:relative inset-y-0 left-0 z-50 md:z-auto
-          transition-transform duration-300 ease-in-out md:transition-none w-full max-w-[322px]
+          transition-transform duration-300 ease-in-out md:transition-none w-full md:w-[22.3%] max-w-[322px]
         `}>
           <DashboardSideBar onClose={() => setSidebarOpen(false)} />
         </div>
