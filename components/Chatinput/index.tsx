@@ -3,18 +3,31 @@
 import GearIcon from "@/public/icon/gear.svg";
 import PlusIcon from "@/public/icon/plus.svg";
 import WaveIcon from "@/public/icon/wave.svg";
-import MicIcon from "@/public/icon/mic.svg"
-import TImesMarkIcon from "@/public/icon/times.svg"
 import { cn } from "@/utility";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
+import React, { KeyboardEvent, useCallback, useEffect, useRef, useState } from "react";
+import Voiceinput from "./Voiceinput";
+
+interface IOnSendPayload {
+  attachments?: string[];
+  text: string
+}
 
 interface IChatinputProps {
   className?: string
   inputClassName?: string
+  typing?: boolean
+  onChangeText?: (str: string) => void;
+  onSend?: (p: IOnSendPayload) => void
+  onStop?: () => void
 }
 
-export default function Chatinput({ className = "", inputClassName = "" }: IChatinputProps) {
+export default function Chatinput({
+  className = "",
+  inputClassName = "",
+  typing,
+  onStop,
+  onSend
+}: IChatinputProps) {
   const [text, setText] = useState("")
   const [isVoicMode, setIsVoiceMode] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -35,31 +48,26 @@ export default function Chatinput({ className = "", inputClassName = "" }: IChat
     }
   }, []);
 
+  const handleSend = () => {
+    const payload = { text }
+    setText("")
+    onSend(payload)
+  }
+
+  const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      text.trim();
+      handleSend()
+    }
+  };
+
   useEffect(() => {
     adjustHeight();
   }, []);
 
   if (isVoicMode) {
-    return createPortal(
-      <div className="fixed border bg-background h-screen w-screen top-0 bottom-0 right-0 left-0 flex justify-center items-center">
-        <div className="space-y-10">
-          <div className="space-y-6">
-            <div className="size-30 rounded-full border" />
-            <span className="font-georgia text-2xl text-center text-sand-12">00:13:00</span>
-          </div>
-          <div className="flex gap-6 items-center">
-            <div className={cn("icon-container !bg-blue-2", "!rounded-xl")}>
-              <MicIcon className="size-5 text-blue-6" />
-            </div>
-
-            <div onClick={() => setIsVoiceMode(false)} className={cn("icon-container !bg-blue-2", "!rounded-xl")}>
-              <TImesMarkIcon className="size-4 text-blue-6" />
-            </div>
-          </div>
-        </div>
-      </div>,
-      document.body
-    )
+    return <Voiceinput onCancel={() => setIsVoiceMode(false)} />
   }
 
   return (
@@ -73,11 +81,13 @@ export default function Chatinput({ className = "", inputClassName = "" }: IChat
     >
       <textarea
         ref={textareaRef}
+        value={text}
         onChange={e => setText(e.target.value)}
         placeholder="Type text here..."
         className={cn("min-h-10 md:min-h-12 w-full outline-none resize-none text-lg md:text-xl overflow-hidden", inputClassName)}
         onInput={adjustHeight}
         rows={1}
+        onKeyDown={handleKeyDown}
       >
 
       </textarea>
@@ -92,8 +102,13 @@ export default function Chatinput({ className = "", inputClassName = "" }: IChat
         </div>
         {
           text.length > 0 ?
-            <button className="btn !bg-blue-6 text-white">Send</button> :
-            <button onClick={() => setIsVoiceMode(true)} className="sm:bg-blue-2 cursor-pointer bg-transparent flex items-center gap-2 rounded-full px-5 py-2.5 text-blue-6">
+            typing ?
+              <button onClick={onStop} className="btn !bg-blue-6 text-white">Stop</button> :
+              <button onClick={handleSend} className="btn !bg-blue-6 text-white">Send</button> :
+            <button
+              onClick={() => setIsVoiceMode(true)}
+              className="sm:bg-blue-2 cursor-pointer bg-transparent flex items-center gap-2 rounded-full px-5 py-2.5 text-blue-6"
+            >
               <WaveIcon className="size-5 stroke-2" />
               <span className="font-inter hidden sm:inline text-sm font-semibold">Use voice mode</span>
             </button>

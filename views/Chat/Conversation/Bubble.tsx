@@ -1,0 +1,132 @@
+import { cn } from "@/utility"
+import careerImage from "@/public/image/image-6.png"
+import Image from "next/image"
+import Markdown from 'react-markdown'
+import { useEffect, useRef, useState } from "react"
+
+export default function Bubble({ role = "user", text = "" }) {
+  const isUser = role === "user"
+  return (
+    <div className="space-y-1">
+      {/* {
+        isUser &&
+        <div className="bg-sand-3 ml-auto px-4 py-3 rounded-xl flex gap-2 w-full md:w-fit max-w-[520px]">
+          {
+            Array.from({ length: 3 }).map((_, i) => (
+              <Image
+                src={careerImage}
+                className="max-w-[148px] shrink flex-1 rounded-lg max-h-[99px] h-auto object-cover"
+                alt="Career"
+                key={i}
+              />
+            ))
+          }
+        </div>
+      } */}
+      <div
+        className={cn("w-full py-3", {
+          "ml-auto w-fit bg-sand-3 px-4 max-w-[520px] rounded-xl": isUser
+        })}
+      >
+        <span className="font-georgia text-sand-12 ">
+          <Markdown>{text || ""}</Markdown>
+        </span>
+      </div>
+    </div>
+  )
+}
+
+
+export function TypingBubble({ text, onFinish }) {
+  const [displayText, setDisplayText] = useState("");
+  const [isTyping, setIsTyping] = useState(false);
+  const intervalRef = useRef(null);
+  const lastTextLengthRef = useRef(0);
+
+  useEffect(() => {
+    if (!text) {
+      setDisplayText("");
+      setIsTyping(false);
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+      return;
+    }
+
+    // If this is a completely new message (starting from empty)
+    if (lastTextLengthRef.current === 0) {
+      setDisplayText("");
+      setIsTyping(true);
+      lastTextLengthRef.current = text.length;
+
+      // Start typing effect from the beginning
+      let currentIndex = 0;
+
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+
+      intervalRef.current = setInterval(() => {
+        currentIndex += 1;
+
+        if (currentIndex <= text.length) {
+          setDisplayText(text.slice(0, currentIndex));
+        } else {
+          clearInterval(intervalRef.current);
+          intervalRef.current = null;
+          setIsTyping(false);
+          onFinish(text);
+        }
+      }, 20);
+    } else {
+      // This is an update to existing text (new chunks arriving)
+      const newChars = text.slice(lastTextLengthRef.current);
+
+      if (newChars.length > 0) {
+        // Add new characters immediately without typing effect
+        setDisplayText(text);
+        lastTextLengthRef.current = text.length;
+
+        // If we were typing, stop and show the new content
+        if (isTyping && intervalRef.current) {
+          clearInterval(intervalRef.current);
+          intervalRef.current = null;
+          setIsTyping(false);
+        }
+      }
+    }
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, [text, onFinish, isTyping]);
+
+  // Reset when text becomes empty (new message starting)
+  useEffect(() => {
+    if (!text) {
+      lastTextLengthRef.current = 0;
+      setDisplayText("");
+      setIsTyping(false);
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    }
+  }, [text]);
+
+  return <Bubble role="ai" text={displayText} />
+}
+
+export function Typing() {
+  return (
+    <div className="flex items-center gap-1 px-5 py-3">
+      <div className="w-2 h-2 bg-sand-8 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+      <div className="w-2 h-2 bg-sand-8 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+      <div className="w-2 h-2 bg-sand-8 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+    </div>
+  )
+}

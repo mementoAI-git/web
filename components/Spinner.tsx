@@ -1,10 +1,12 @@
+import { cn } from "@/utility";
+
 export default function Spinner({ loading = false, className = "" }) {
   if (!loading) {
     return null;
   }
   return (
     <svg
-      className={`mr-3 -ml-1 size-5 animate-spin text-white ${className}`}
+      className={cn("mr-3 -ml-1 size-5 animate-spin text-white", { [className]: true })}
       xmlns="http://www.w3.org/2000/svg"
       fill="none"
       viewBox="0 0 24 24"

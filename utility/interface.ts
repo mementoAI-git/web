@@ -105,3 +105,12 @@ export interface IOnUploadPayload {
   progress: number
   uploadedFile?: IFile | null
 }
+
+export interface IPrompt {
+  _id?: string
+  title: string
+  type: string
+  tags: string[]
+  created_at: string
+  updated_at: string
+}
