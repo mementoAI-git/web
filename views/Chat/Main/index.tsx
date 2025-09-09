@@ -7,8 +7,25 @@ import Link from "next/link";
 import Chatinput from "@/components/Chatinput";
 import RecentConversations from "./RecentConversation";
 import SuggestedCategories from "./SuggestedConversations";
+import { useRouter } from "next/navigation";
+import useFetcher from "@/hooks/use-fetcher";
+import endpoint from "@/api/endpoint";
 
 export default function Chat() {
+  const router = useRouter();
+  const { trigger: startConversation, isMutating: startingConversation } = useFetcher(endpoint.startConversation)
+
+  const handleSend = async ({ text, attachments = [] }) => {
+    if (!text.trim()) return;
+    try {
+      const result = await startConversation({ text, attachments })
+      const { memory_id } = result?.data
+      router.replace(`/chat/${memory_id}`);
+    } catch (error) {
+      console.log(error)
+    }
+  };
+
   return (
     <div className="flex h-screen flex-col">
       <div className="w-full px-2 py-3">
@@ -35,6 +52,8 @@ export default function Chat() {
             <Chatinput
               inputClassName="min-h-10 md:min-h-25"
               className="max-w-[760px]"
+              onSend={handleSend}
+              typing={startingConversation}
             />
           </div>
 

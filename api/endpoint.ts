@@ -42,6 +42,7 @@ export default {
   aiGreet: "/ai/prompt/greet",
   aiPromptMessage: "/ai/prompt/messages",
   transcription: "/ai/transcribe-audio",
+  startConversation: "/ai/prompt/memory/new",
 
   // capsule
   capsule: "/capsule",

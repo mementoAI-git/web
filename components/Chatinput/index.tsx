@@ -19,6 +19,7 @@ interface IChatinputProps {
   onChangeText?: (str: string) => void;
   onSend?: (p: IOnSendPayload) => void
   onStop?: () => void
+  context?: "default" | "memory" | "chat";
 }
 
 export default function Chatinput({
@@ -29,7 +30,7 @@ export default function Chatinput({
   onSend
 }: IChatinputProps) {
   const [text, setText] = useState("")
-  const [isVoicMode, setIsVoiceMode] = useState(false)
+  const [isVoiceMode, setIsVoiceMode] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const adjustHeight = useCallback(() => {
@@ -50,8 +51,8 @@ export default function Chatinput({
 
   const handleSend = () => {
     const payload = { text }
-    setText("")
     onSend(payload)
+    setText("")
   }
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -66,8 +67,12 @@ export default function Chatinput({
     adjustHeight();
   }, []);
 
-  if (isVoicMode) {
-    return <Voiceinput onCancel={() => setIsVoiceMode(false)} />
+  if (isVoiceMode) {
+    return (
+      <Voiceinput
+        onCancel={() => setIsVoiceMode(false)}
+      />
+    );
   }
 
   return (
@@ -101,17 +106,19 @@ export default function Chatinput({
           </div>
         </div>
         {
-          text.length > 0 ?
-            typing ?
-              <button onClick={onStop} className="btn !bg-blue-6 text-white">Stop</button> :
+          typing ?
+            <button onClick={onStop} className="btn !bg-blue-6 text-white">Stop</button> :
+            text.length > 0 ?
               <button onClick={handleSend} className="btn !bg-blue-6 text-white">Send</button> :
-            <button
-              onClick={() => setIsVoiceMode(true)}
-              className="sm:bg-blue-2 cursor-pointer bg-transparent flex items-center gap-2 rounded-full px-5 py-2.5 text-blue-6"
-            >
-              <WaveIcon className="size-5 stroke-2" />
-              <span className="font-inter hidden sm:inline text-sm font-semibold">Use voice mode</span>
-            </button>
+              <button
+                onClick={() => setIsVoiceMode(true)}
+                className="sm:bg-blue-2 cursor-pointer bg-transparent flex items-center gap-2 rounded-full px-5 py-2.5 text-blue-6"
+              >
+                <WaveIcon className="size-5 stroke-2" />
+                <span className="font-inter hidden sm:inline text-sm font-semibold">
+                  Use voice mode
+                </span>
+              </button>
         }
       </div>
     </div>

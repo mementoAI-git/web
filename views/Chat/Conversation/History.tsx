@@ -8,6 +8,7 @@ import useFetcher from "@/hooks/use-fetcher";
 import endpoint from "@/api/endpoint";
 import Spinner from "@/components/Spinner";
 import useIntersectionObserver from "@/hooks/use-intersection-observer";
+import { isEmpty } from "@/utility";
 
 interface IHistory extends PropsWithChildren {
   setMessages: Dispatch<SetStateAction<Partial<IMessage>[]>>;
@@ -21,7 +22,12 @@ export default function History({ memory, messages, children, setMessages, scrol
   const containerRef = scrollContainerRef;
   const [next, setNext] = useState<string | null>(null);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const { trigger: getMessages } = useFetcher(`${endpoint.aiPromptMessage}/${memory?._id}?next=${next || ""}`, "get");
+  const { trigger: getMessages } = useFetcher(
+    !isEmpty(memory?._id) ?
+      `${endpoint.aiPromptMessage}/${memory?._id}?next=${next || ""}` :
+      null
+    , "get"
+  );
 
   const loadMoreRef = useRef<HTMLDivElement>(null);
   const isIntersecting = useIntersectionObserver(loadMoreRef, {
@@ -31,7 +37,7 @@ export default function History({ memory, messages, children, setMessages, scrol
   });
 
   const fetchMessage = useCallback(async () => {
-    if (isLoadingMoreRef.current) return;
+    if (isLoadingMoreRef.current || isEmpty(memory?._id)) return;
 
     isLoadingMoreRef.current = true;
     setIsLoadingMore(true);

@@ -1,8 +1,7 @@
 "use client";
 
 import Chatinput from "@/components/Chatinput";
-import ConversationHeader from "./Header";
-import Bubble, { Typing, TypingBubble } from "./Bubble";
+import { Typing, TypingBubble } from "./Bubble";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import useSWR from "swr";
 import endpoint from "@/api/endpoint";
@@ -17,9 +16,10 @@ import { toast } from "sonner";
 export default function Conversation({ id }) {
   const [aiMessage, setAiMessage] = useState("")
   const abortCtrl = useRef(null)
-  const [messages, setMessages] = useState<Partial<IMessage | any>[]>([])
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const wasAtBottomRef = useRef(true);
+
+  const [messages, setMessages] = useState<Partial<IMessage | any>[]>([])
 
   const { trigger: sendMessage, isMutating: isTyping } = useSWRMutation(endpoint.aiPrompt, streamlineFetcher)
   const { data: memoryData, isLoading: loadingMemory, error: memoryError } = useSWR(
@@ -54,10 +54,9 @@ export default function Conversation({ id }) {
         const newText = prev + chunk;
         return newText;
       });
-      // Only scroll down if the user was at the bottom when the typing started
-      if (wasAtBottomRef.current) {
-        scrollToBottom();
-      }
+
+      scrollToBottom();
+
     }
   }, [scrollToBottom]);
 
@@ -131,6 +130,27 @@ export default function Conversation({ id }) {
       }
     }
   }, [messages, scrollToBottom]);
+
+  // useEffect(() => {
+  //   if (
+  //     isNew &&
+  //     chatData &&
+  //     !startingConversation &&
+  //     isEmpty(messages.length) &&
+  //     !hasStartedConversation.current
+  //   ) {
+  //     hasStartedConversation.current = true;
+  //     setMessages([{ text: chatData?.text, role: "user" }])
+  //     startConversation(chatData)
+  //       .then(result => {
+  //         const { memory_id, response } = result?.data
+  //         setAiMessage(response)
+  //         router.replace(`/chat/${memory_id}`);
+  //       })
+  //       .catch(console.log)
+  //       .finally(() => clearChat())
+  //   }
+  // }, [])
 
   if (loadingMemory || loadingPrompt) {
     return <Loader />
