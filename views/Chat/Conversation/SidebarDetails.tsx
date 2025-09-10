@@ -7,8 +7,10 @@ import LockIcon from "@/public/icon/lock-1.svg";
 import ClipIcon from "@/public/icon/clip.svg";
 import TagIcon from "@/public/icon/tag.svg";
 import TimesIcon from "@/public/icon/times.svg";
+import EditIcon from "@/public/icon/edit.svg";
 
 import dayjs from "dayjs";
+import { useModal } from "@/hooks/use-modal";
 
 interface SidebarDetailsProps {
   memory: IMemory;
@@ -16,6 +18,8 @@ interface SidebarDetailsProps {
 }
 
 export default function SidebarDetails({ memory, onClose }: SidebarDetailsProps) {
+  const { open } = useModal();
+
   return (
     <div className="size-full space-y-2 sm:space-y-3 p-3 sm:p-4 lg:p-6">
       <div className="flex justify-end">
@@ -70,8 +74,27 @@ export default function SidebarDetails({ memory, onClose }: SidebarDetailsProps)
             subtitle={
               <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
                 {memory.tags.map(t => <span key={t} className="mem-tags text-xs sm:text-sm">{t}</span>)}
+                <span
+                  onClick={() => open("set-tag-permission", { memory, isNew: false })}
+                  className="mem-tags !border !border-[#1D2939] !bg-transparent text-xs sm:text-sm"
+                >
+                  + Add tag
+                </span>
               </div>
             }
+          />
+        </ul>
+      </div>
+      <div className="space-y-3 sm:space-y-4 pb-8 sm:pb-10 lg:pb-14">
+        <span className="block font-inter text-xs text-[#667085] uppercase">
+          actions
+        </span>
+        <ul className="space-y-3 sm:space-y-4">
+          <PropsItem
+            icon={<EditIcon width={13} />}
+            title="Edit permission & tags"
+            onClick={() => open("set-tag-permission", { memory, isNew: false })}
+            className="cursor-pointer !text-sm !font-medium !text-grey-600"
           />
         </ul>
       </div>

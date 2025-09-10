@@ -50,11 +50,15 @@ export default function ConversationHeader({ memory, onViewDetails }: { memory: 
           <button className="rounded-full cursor-pointer hover:scale-[97%] gap-[6px] flex items-center text-xs border-[1.5px] text-sand-10 border-sand-10 px-3 py-1">
             Question
           </button>
-          <div className="flex gap-4 items-center text-sand-12">
-            <div onClick={() => open("share-post", memory?._id)}>
+          <div className="flex gap-1 items-center text-sand-12">
+            <div
+              className="aspect-square size-8 shrink-0 rounded-lg p-2 hover:bg-sand-2"
+              onClick={() => open("share-post", memory?._id)}
+            >
               <LunchIcon className="size-[18px] stroke-[1.5px] cursor-pointer" />
             </div>
-            <div className="text-sand-12" onClick={handleBookmarkAction}>
+            <div
+              className="text-sand-12 aspect-square size-8 shrink-0 rounded-lg p-2 hover:bg-sand-2" onClick={handleBookmarkAction}>
               {
                 memory.bookmarked ?
                   <RemoveBookmarkIcon className="size-[18px] text-sand-8 stroke-2 cursor-pointer" /> :

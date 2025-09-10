@@ -21,7 +21,6 @@ export function MemoryDropdown({ memory, onViewDetails }: IMemoryDropdownProps) 
     }
     if (value === "view-detilas") {
       onViewDetails()
-      // open("view-detilas", memory)
     }
   }
 

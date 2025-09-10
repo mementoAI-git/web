@@ -27,7 +27,7 @@ export function AuthFormLayout({
     >
       {can_go_back && (
         <Link href="/login" className="flex cursor-pointer items-center gap-2">
-          <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+          <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 opacity-45 text-[#000D4D]" />
           <span className="font-geist text-xs sm:text-sm leading-5 font-bold text-grey-200 underline">
             Back to Login
           </span>

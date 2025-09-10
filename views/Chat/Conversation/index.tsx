@@ -149,7 +149,11 @@ export default function Conversation({ id }) {
 
   return (
     <div className="flex flex-1 overflow-hidden items-stretch h-full">
-      <div className="page-viewport hide-scrollbar h-full" ref={scrollContainerRef} onScroll={handleScroll}>
+      <div
+        className="page-viewport hide-scrollbar h-full"
+        ref={scrollContainerRef}
+        onScroll={handleScroll}
+      >
         <History {...{
           memory,
           messages,

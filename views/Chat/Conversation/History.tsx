@@ -9,6 +9,8 @@ import endpoint from "@/api/endpoint";
 import Spinner from "@/components/Spinner";
 import useIntersectionObserver from "@/hooks/use-intersection-observer";
 import { isEmpty } from "@/utility";
+import ArrowLeftIcon from "@/public/icon/arrow-left.svg"
+import { useRouter } from "next/navigation";
 
 interface IHistory extends PropsWithChildren {
   setMessages: Dispatch<SetStateAction<Partial<IMessage>[]>>;
@@ -27,6 +29,7 @@ export default function History({
   onViewDetails
 }: IHistory
 ) {
+  const router = useRouter()
   const isLoadingMoreRef = useRef(false);
   const containerRef = scrollContainerRef;
   const [next, setNext] = useState<string | null>(null);
@@ -110,7 +113,17 @@ export default function History({
       className="container flex-1"
       ref={containerRef}
     >
+
       <div className="py-12 space-y-6">
+        <div>
+          <button
+            onClick={router.back}
+            className="text-sand-10 cursor-pointer hover:scale-95 flex gap-1.5 items-center rounded-full bg-sand-3 text-sm font-medium font-inter py-2.5 px-3.5"
+          >
+            <ArrowLeftIcon className="text-lg size-3 stroke-2" />
+            <span>Go back</span>
+          </button>
+        </div>
         <ConversationHeader {...{ onViewDetails, memory }} />
       </div>
       <div className="px-5 space-y-6">

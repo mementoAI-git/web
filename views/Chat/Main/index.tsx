@@ -10,9 +10,11 @@ import SuggestedCategories from "./SuggestedConversations";
 import { useRouter } from "next/navigation";
 import useFetcher from "@/hooks/use-fetcher";
 import endpoint from "@/api/endpoint";
+import { useStore } from "@/hooks/use-store";
 
 export default function Chat() {
   const router = useRouter();
+  const { user } = useStore()
   const { trigger: startConversation, isMutating: startingConversation } = useFetcher(endpoint.startConversation)
 
   const handleSend = async ({ text, attachments = [] }) => {
@@ -43,7 +45,7 @@ export default function Chat() {
         <div className="space-y-10 md:space-y-16 w-full pb-8">
           <div className="container space-y-10 md:space-y-16 py-6 md:py-12">
             <h4 className="hidden md:block text-center font-canela text-[32px] leading-[38px] text-sand-12">
-              Hey Groot, What’s on your mind today?
+              {user?.first_name && `Hey ${user?.first_name},`} What’s on your mind today?
             </h4>
             <h4 className="md:hidden font-medium font-canela text-2xl text-sand-12">
               Hey <span className="italic font-light gray-500">Groot</span>, <br />
