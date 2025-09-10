@@ -6,6 +6,7 @@ import WaveIcon from "@/public/icon/wave.svg";
 import { cn } from "@/utility";
 import React, { KeyboardEvent, useCallback, useEffect, useRef, useState } from "react";
 import Voiceinput from "./Voiceinput";
+import Spinner from "../Spinner";
 
 interface IOnSendPayload {
   attachments?: string[];
@@ -16,6 +17,7 @@ interface IChatinputProps {
   className?: string
   inputClassName?: string
   typing?: boolean
+  loading?: boolean
   onChangeText?: (str: string) => void;
   onSend?: (p: IOnSendPayload) => void
   onStop?: () => void
@@ -25,7 +27,8 @@ interface IChatinputProps {
 export default function Chatinput({
   className = "",
   inputClassName = "",
-  typing,
+  typing = false,
+  loading = false,
   onStop,
   onSend
 }: IChatinputProps) {
@@ -108,8 +111,21 @@ export default function Chatinput({
         {
           typing ?
             <button onClick={onStop} className="btn !bg-blue-6 text-white">Stop</button> :
-            text.length > 0 ?
-              <button onClick={handleSend} className="btn !bg-blue-6 text-white">Send</button> :
+            (text.length > 0 || loading) ?
+              <button
+                onClick={handleSend}
+                disabled={loading || typing}
+                className="btn !bg-blue-6 space-x-2 disabled:opacity-60 text-white"
+              >
+                {
+                  loading ?
+                    <>
+                      <span>Sending..</span>
+                      <Spinner loading className="!size-4" />
+                    </> :
+                    "Send"
+                }
+              </button> :
               <button
                 onClick={() => setIsVoiceMode(true)}
                 className="sm:bg-blue-2 cursor-pointer bg-transparent flex items-center gap-2 rounded-full px-5 py-2.5 text-blue-6"

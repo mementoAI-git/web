@@ -29,9 +29,11 @@
   --color-gray-700: #344054;
   --color-gray-800: #1D2939;
 
+  --color-sand-1: #FEFBF8;
   --color-sand-2: #FBF5EB;
   --color-sand-3: #F5EEE3;
   --color-sand-4: #F5E7D1;
+  --color-sand-5: #EBD2A9;
   --color-sand-8: #B5955E;
   --color-sand-10: #846633;
   --color-sand-11: #5C4114;
@@ -69,9 +71,11 @@
   --color-gray-700: var(--color-gray-700);
   --color-gray-800: var(--color-gray-800);
 
+  --color-sand-1: var(--color-sand-1);
   --color-sand-2: var(--color-sand-2);
   --color-sand-3: var(--color-sand-3);
   --color-sand-4: var(--color-sand-4);
+  --color-sand-5: var(--color-sand-5);
   --color-sand-8: var(--color-sand-8);
   --color-sand-10: var(--color-sand-10);
   --color-sand-11: var(--color-sand-11);
@@ -201,7 +205,7 @@ body {
   }
 
   .modal-container {
-    @apply relative !w-[95%] sm:w-full max-w-[95vw] sm:max-w-[480px] md:max-w-[618px] rounded-2xl bg-white p-4 sm:p-8 md:p-10;
+    @apply relative !w-[95%] sm:w-full max-w-[95vw] sm:max-w-[480px] md:max-w-[618px] rounded-2xl bg-sand-1 p-4 sm:p-8 md:p-10;
   }
 
   .modal-overlay {
@@ -250,11 +254,11 @@ body {
   }
 
   .modal-close-btn {
-    @apply absolute top-4 right-4 sm:top-8 sm:right-8 flex aspect-square w-8 sm:w-9 cursor-pointer items-center justify-center rounded-full bg-grey-400;
+    @apply absolute top-4 right-4 sm:top-8 sm:right-8 flex aspect-square w-8 sm:w-9 cursor-pointer items-center justify-center rounded-full bg-sand-3;
   }
 
   .modal-title {
-    @apply font-inter text-xl sm:text-2xl md:text-3xl leading-7 sm:leading-8 md:leading-9 font-semibold text-secondary;
+    @apply font-canela text-xl sm:text-2xl md:text-3xl leading-7 sm:leading-8 md:leading-9 text-sand-12;
   }
 
   .btn {

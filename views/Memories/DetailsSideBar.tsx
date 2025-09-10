@@ -11,7 +11,6 @@ import TrashcanIcon from "@/public/icon/trash.svg";
 import LockIcon from "@/public/icon/lock-1.svg";
 import ChainIcon from "@/public/icon/chain.svg";
 import TagIcon from "@/public/icon/tag.svg";
-import ClockIcon from "@/public/icon/clock.svg";
 import AddBookmarkIcon from "@/public/icon/add-bookmark.svg";
 import RemoveBookmarkIcon from "@/public/icon/remove-bookmark.svg";
 

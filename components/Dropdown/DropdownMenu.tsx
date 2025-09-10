@@ -17,7 +17,7 @@ export function DropdowmMenu({
   return (
     <ul
       ref={ref}
-      className={`absolute z-50 mt-1.5 h-fit min-w-[167px] rounded-lg bg-white p-2 shadow-[2px_4px_12px_0px_rgba(0,0,0,0.25)] ${className}`}
+      className={`absolute z-50 mt-1.5 h-fit min-w-[167px] rounded-lg bg-white p-1 shadow-[2px_4px_12px_0px_rgba(0,0,0,0.25)] ${className}`}
     >
       {items.map((item, i) =>
         ItemLayout ? (

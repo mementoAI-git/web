@@ -12,6 +12,7 @@ import Loader from "./Loader";
 import useSWRMutation from "swr/mutation";
 import { streamlineFetcher } from "@/api/fetcher";
 import { toast } from "sonner";
+import SidebarDetails from "./SidebarDetails";
 
 export default function Conversation({ id }) {
   const [aiMessage, setAiMessage] = useState("")
@@ -20,6 +21,7 @@ export default function Conversation({ id }) {
   const wasAtBottomRef = useRef(true);
 
   const [messages, setMessages] = useState<Partial<IMessage | any>[]>([])
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false) // Sidebar closed by default
 
   const { trigger: sendMessage, isMutating: isTyping } = useSWRMutation(endpoint.aiPrompt, streamlineFetcher)
   const { data: memoryData, isLoading: loadingMemory, error: memoryError } = useSWR(
@@ -40,6 +42,16 @@ export default function Conversation({ id }) {
         behavior: 'smooth'
       });
     }
+  }, []);
+
+  // Close sidebar handler
+  const handleCloseSidebar = useCallback(() => {
+    setIsSidebarOpen(false);
+  }, []);
+
+  // Open sidebar handler 
+  const handleOpenSidebar = useCallback(() => {
+    setIsSidebarOpen(true);
   }, []);
 
   const handleChuckArrival = useCallback((chunk: string) => {
@@ -131,48 +143,42 @@ export default function Conversation({ id }) {
     }
   }, [messages, scrollToBottom]);
 
-  // useEffect(() => {
-  //   if (
-  //     isNew &&
-  //     chatData &&
-  //     !startingConversation &&
-  //     isEmpty(messages.length) &&
-  //     !hasStartedConversation.current
-  //   ) {
-  //     hasStartedConversation.current = true;
-  //     setMessages([{ text: chatData?.text, role: "user" }])
-  //     startConversation(chatData)
-  //       .then(result => {
-  //         const { memory_id, response } = result?.data
-  //         setAiMessage(response)
-  //         router.replace(`/chat/${memory_id}`);
-  //       })
-  //       .catch(console.log)
-  //       .finally(() => clearChat())
-  //   }
-  // }, [])
-
   if (loadingMemory || loadingPrompt) {
     return <Loader />
   }
 
   return (
-    <div className="page-viewport hide-scrollbar" ref={scrollContainerRef} onScroll={handleScroll}>
-      <History {...{ memory, messages, setMessages, scrollContainerRef }}>
-        {
-          isTyping && !aiMessage ?
-            <Typing /> :
-            aiMessage &&
-            <TypingBubble
-              text={aiMessage}
-              onFinish={handleOnFinishTyping}
-            />
-        }
-      </History>
-      <div className="sticky bottom-0 pb-4 bg-background">
-        <div className="container">
-          <Chatinput onStop={handleStop} onSend={handleSend} />
+    <div className="flex flex-1 overflow-hidden items-stretch h-full">
+      <div className="page-viewport hide-scrollbar h-full" ref={scrollContainerRef} onScroll={handleScroll}>
+        <History {...{
+          memory,
+          messages,
+          setMessages,
+          scrollContainerRef,
+          onViewDetails: handleOpenSidebar
+        }}>
+          {
+            isTyping && !aiMessage ?
+              <Typing /> :
+              aiMessage &&
+              <TypingBubble
+                text={aiMessage}
+                onFinish={handleOnFinishTyping}
+              />
+          }
+        </History>
+        <div className="sticky bottom-0 pb-4 bg-background">
+          <div className="container">
+            <Chatinput onStop={handleStop} onSend={handleSend} />
+          </div>
         </div>
+      </div>
+      {/* Updated sidebar with slide-in transition */}
+      <div
+        className={`h-full border-l border-[#EAECF0] transition-all duration-300 ease-in-out overflow-hidden ${isSidebarOpen ? 'w-60' : 'w-0'
+          }`}
+      >
+        <SidebarDetails {...{ memory, onClose: handleCloseSidebar }} />
       </div>
     </div>
   );

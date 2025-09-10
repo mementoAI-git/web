@@ -13,8 +13,8 @@ export default function PropsItem({ title, icon, subtitle = null, className, onC
       className={`flex items-center gap-2 font-inter text-xs font-normal text-grey-800 capitalize ${className}`}
     >
       <div className="shrink-0">{icon}</div>
-      <span>{title} </span>
-      <strong className="text-sm font-medium text-grey-600">{subtitle}</strong>
+      <span className="text-xs text-[#667085]">{title} </span>
+      <strong className="text-xs font-medium text-[#1D2939]">{subtitle}</strong>
     </li>
   );
 }

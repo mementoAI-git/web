@@ -35,7 +35,7 @@ export default function Chat() {
             <span className="text-sand-10 text-sm font-inter">Recent Conversations</span>
           </Link>
           <div className={cn("icon-container", "!rounded-xl")}>
-            <GearIcon className="size-5" />
+            <GearIcon className="size-5 stroke-2" />
           </div>
         </div>
       </div>
@@ -53,7 +53,7 @@ export default function Chat() {
               inputClassName="min-h-10 md:min-h-25"
               className="max-w-[760px]"
               onSend={handleSend}
-              typing={startingConversation}
+              loading={startingConversation}
             />
           </div>
 

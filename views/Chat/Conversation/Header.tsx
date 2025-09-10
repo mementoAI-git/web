@@ -3,10 +3,42 @@ import questionImage from "@/public/image/question-2.png"
 import Image from "next/image"
 import LunchIcon from "@/public/icon/lauch.svg"
 import BookmarkIcon from "@/public/icon/dashboard/bookmark.svg"
-import EllipseIcon from "@/public/icon/vertical-ellipse.svg"
 import { IMemory } from "@/utility/interface"
+import RemoveBookmarkIcon from "@/public/icon/bookmark-solid.svg"
+import useFetcher from "@/hooks/use-fetcher"
+import endpoint from "@/api/endpoint"
+import { toast } from "sonner"
+import { mutate } from "swr"
+import { MemoryDropdown } from "./Dropdown"
+import { useModal } from "@/hooks/use-modal"
 
-export default function COnversationHeader({ memory }: { memory: IMemory }) {
+export default function ConversationHeader({ memory, onViewDetails }: { memory: IMemory, onViewDetails: () => void }) {
+  const { trigger: addBookmark } = useFetcher(`${endpoint.memories}/${memory._id}/bookmark`, "post");
+  const { trigger: removeBookmark } = useFetcher(`${endpoint.memories}/${memory._id}/bookmark`, "delete");
+  const { open } = useModal()
+  const handleBookmarkAction = async () => {
+    try {
+      if (memory.bookmarked) {
+        const result = await removeBookmark("");
+        if (result?.success) {
+          toast.success("Memory removed from bookmarks successfully!");
+        }
+      } else {
+        const result = await addBookmark();
+        if (result?.success) {
+          toast.success("Memory added to bookmarks successfully!");
+        }
+      }
+
+      // Update the cache
+      mutate(`${endpoint.memories}/${memory._id}`)
+      mutate(endpoint.memoriesStats)
+      mutate(`${endpoint.memories}?page=1`)
+    } catch (error) {
+      toast.error("An error occurred while bookmarking");
+    }
+  };
+
   return (
     <div className="border border-sand-4 rounded-2xl p-6 flex items-center gap-10">
       <div className="size-[86px] shrink-0 hidden sm:flex items-center justify-center">
@@ -19,13 +51,21 @@ export default function COnversationHeader({ memory }: { memory: IMemory }) {
             Question
           </button>
           <div className="flex gap-4 items-center text-sand-12">
-            <LunchIcon className="size-[18px] stroke-[1.5px] cursor-pointer" />
-            <BookmarkIcon className="size-[18px] stroke-2 cursor-pointer" />
-            <EllipseIcon className="size-[16px] stroke-1 cursor-pointer" />
+            <div onClick={() => open("share-post", memory?._id)}>
+              <LunchIcon className="size-[18px] stroke-[1.5px] cursor-pointer" />
+            </div>
+            <div className="text-sand-12" onClick={handleBookmarkAction}>
+              {
+                memory.bookmarked ?
+                  <RemoveBookmarkIcon className="size-[18px] text-sand-8 stroke-2 cursor-pointer" /> :
+                  <BookmarkIcon className="size-[18px] text-sand-12 stroke-2 cursor-pointer" />
+              }
+            </div>
+            <MemoryDropdown {...{ memory, onViewDetails }} />
           </div>
         </div>
         <h3 className="md:text-xl md:font-medium font-canela text-sand-12">
-          {memory?.title}
+          {memory?.title || "New conversation"}
         </h3>
       </div>
     </div>

@@ -15,9 +15,18 @@ interface IHistory extends PropsWithChildren {
   messages: Partial<IMessage>[];
   memory: IMemory;
   scrollContainerRef: any;
+  onViewDetails: () => void
 }
 
-export default function History({ memory, messages, children, setMessages, scrollContainerRef }: IHistory) {
+export default function History({
+  memory,
+  messages,
+  children,
+  setMessages,
+  scrollContainerRef,
+  onViewDetails
+}: IHistory
+) {
   const isLoadingMoreRef = useRef(false);
   const containerRef = scrollContainerRef;
   const [next, setNext] = useState<string | null>(null);
@@ -102,7 +111,7 @@ export default function History({ memory, messages, children, setMessages, scrol
       ref={containerRef}
     >
       <div className="py-12 space-y-6">
-        <ConversationHeader memory={memory} />
+        <ConversationHeader {...{ onViewDetails, memory }} />
       </div>
       <div className="px-5 space-y-6">
         {isLoadingMore && (

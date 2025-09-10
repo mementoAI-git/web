@@ -22,15 +22,15 @@ export function SharePost({ data: id }) {
         <h4 className="modal-title">Share this post</h4>
         <div className="space-y-6">
           <div className="font-inter text-sm font-medium !text-grey-600">
-            <span>Share link</span>
-            <div className="relative flex items-center justify-between rounded-lg border border-grey-400 bg-grey-700 p-2">
+            <span className="font-normal">Share link</span>
+            <div className="relative flex items-center justify-between rounded-lg border-dashed border border-sand-4 bg-sand-2 p-2">
               <span className="font-normal truncate whitespace-nowrap">
                 {link}
               </span>
 
               <button
                 onClick={() => handleCopy(link, "Link copied successfully")}
-                className="flex cursor-pointer items-center justify-center gap-1 rounded-sm bg-secondary px-3 py-2 text-white"
+                className="flex cursor-pointer items-center justify-center gap-1 rounded-full bg-blue-6 px-3 py-2 text-white"
               >
                 {
                   copied ?
