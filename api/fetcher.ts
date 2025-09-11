@@ -71,11 +71,15 @@ export const fileUploadFetcher = async (url: string, { arg }) => {
       headers: { "Content-Type": "multipart/form-data" },
       onUploadProgress: (event) => {
         if (onProgress) {
-          const percent = Math.round((event.loaded * 100) / event.total);
+          const percent = Math.round((event.loaded * 80) / event.total);
           onProgress(percent);
         }
       },
     });
+
+    if (res.status === 200) {
+      onProgress(100);
+    }
 
     res.data.success = true
     return res.data;

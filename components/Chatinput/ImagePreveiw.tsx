@@ -1,5 +1,6 @@
 import { IOnUploadPayload } from "@/utility/interface";
 import Spinner from "../Spinner";
+import CirclarProgress from "../CirclarProgress";
 
 interface IImagePreviewProps {
   files: IOnUploadPayload[]
@@ -11,27 +12,21 @@ export default function ImagePreview({ files, handleRemoveFile }: IImagePreviewP
     <div className="flex flex-wrap gap-1.5 mb-2">
       {files.map((file) => (
         <div key={file.id} className="relative group">
-          <div className="relative w-12 h-12 rounded-md overflow-hidden border border-sand-4">
-            {file.base64 ? (
+          <div className="relative w-12 h-12 rounded-md border border-sand-4">
+            <div className="overflow-hidden size-full rounded-md">
               <img
                 src={file.base64}
                 alt="Preview"
                 className="w-full h-full object-cover"
               />
-            ) : (
-              <div className="w-full h-full bg-sand-2 flex items-center justify-center">
-                <Spinner loading className="!size-3 !text-blue-6" />
-              </div>
-            )}
+            </div>
 
-            {/* Upload Progress */}
-            {file.progress > 0 && file.progress < 100 && (
-              <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-                <div className="text-white text-[10px] font-medium">
-                  {file.progress}%
-                </div>
+            {
+              file.progress !== 100 &&
+              <div className="absolute rounded-lg top-0 right-0 bottom-0 left-0 size-full flex items-center bg-black/20 justify-center">
+                <CirclarProgress progress={file.progress} className="size-7" />
               </div>
-            )}
+            }
 
             {/* Delete Button */}
             <button

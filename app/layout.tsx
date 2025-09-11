@@ -4,7 +4,7 @@ import Providers from "./provider";
 import font from "./fonts"
 
 const { averia, bricolage, geist, inter, canela, georgia } = font
-
+// https://www.npmjs.com/package/react-modal-sheet - check this link for bottom sheet
 export default function RootLayout({
   children,
 }: Readonly<{
