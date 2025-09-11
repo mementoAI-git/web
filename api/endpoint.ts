@@ -31,9 +31,11 @@ export default {
   prompts: "/prompts",
   suggestions: "/prompts/suggestions",
   replyPrompt: "/prompts/reply",
+  promptDetails: "/prompts/", // /prompts + id
 
   // memories
   memories: "/memories",
+  memoryPrompt: "/memories/prompt",
   memoriesStats: "/memories/stats",
   removeFileFromMemory: "/memories/remove-file",
 

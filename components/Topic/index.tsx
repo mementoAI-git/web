@@ -1,20 +1,27 @@
 import Image from "next/image";
 import careerImage from "@/public/image/image-6.png"
 import { cn } from "@/utility";
+import Link from "next/link";
 
 interface ITopicProps {
   title: string
   className?: string
   tag?: string
   onClick?: () => void
+  id?: string // Add ID prop for navigation
 }
 
-export default function Topic({ title, tag = "Question", className = "", onClick }: ITopicProps) {
-  return (
-    <div 
-      className={cn("border border-sand-4 space-y-6 rounded-2xl w-full max-w-[270px] p-6 flex-shrink-0 transition-all duration-300 ease-in-out hover:scale-105 hover:shadow-xl hover:shadow-sand-4/20 hover:-translate-y-1 cursor-pointer", className)}
-      onClick={onClick}
-    >
+export default function Topic({ title, tag = "Question", className = "", onClick, id }: ITopicProps) {
+  const handleClick = () => {
+    if (onClick) {
+      onClick();
+    }
+  };
+
+  const containerClassName = cn("border border-sand-4 space-y-6 rounded-2xl w-full max-w-[270px] p-6 flex-shrink-0 transition-all duration-300 ease-in-out hover:scale-105 hover:shadow-xl hover:shadow-sand-4/20 hover:-translate-y-1 cursor-pointer block", className)
+
+  const content = (
+    <>
       <div className="h-30 relative rounded-lg overflow-hidden">
         <div className="absolute top-2 left-2 rounded-full bg-gray-50 px-2 border border-gray-200">
           <span className="font-inter capitalize font-medium text-xs text-gray-700">{tag}</span>
@@ -24,8 +31,30 @@ export default function Topic({ title, tag = "Question", className = "", onClick
       <div>
         <span className="font-georgia md:text-xl text-sand-12 font-normal">{title}</span>
       </div>
+    </>
+  );
+
+  // If we have an ID and no custom onClick, use Link with the same styling
+  if (id && !onClick) {
+    return (
+      <Link
+        href={`/chat/reply/${id}`}
+        className={containerClassName}
+      >
+        {content}
+      </Link>
+    );
+  }
+
+  // Otherwise, use regular div with onClick
+  return (
+    <div
+      className={containerClassName}
+      onClick={handleClick}
+    >
+      {content}
     </div>
-  )
+  );
 }
 
 export function TopicSkeleton() {

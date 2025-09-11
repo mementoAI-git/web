@@ -1,4 +1,4 @@
-import EditIcon from "@/public/icon/edit.svg";
+import InfoIcon from "@/public/icon/info.svg";
 import TrashIcon from "@/public/icon/trash.svg";
 import {
   DropdowmIcon,
@@ -31,7 +31,7 @@ export function MemoryDropdown({ memory, onViewDetails }: IMemoryDropdownProps) 
         {
           label: "View Detils",
           value: "view-detilas",
-          startIcon: <EditIcon width={16} size={16} />,
+          startIcon: <InfoIcon className="stroke-2" />,
         },
       ]}
       footerItem={

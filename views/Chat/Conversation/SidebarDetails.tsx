@@ -65,7 +65,7 @@ export default function SidebarDetails({ memory, onClose }: SidebarDetailsProps)
           <PropsItem
             icon={<ClipIcon width={13} />}
             title="attachment:"
-            subtitle={<span className="mem-tags">{memory.attachments.length || 0}</span>}
+            subtitle={<span className="mem-tags">{memory?.attachments?.length || 0}</span>}
           />
           <PropsItem
             icon={<TagIcon width={16} />}

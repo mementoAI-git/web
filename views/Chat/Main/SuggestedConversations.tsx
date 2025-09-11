@@ -23,7 +23,7 @@ export default function SuggestedCategories() {
               <TopicSkeleton />
               <TopicSkeleton />
             </> :
-            data?.data?.docs?.map(t => <Topic title={t?.title} key={t?.id || t?.title} tag="Question" />)
+            data?.data?.docs?.map((t, i) => <Topic id={t?._id} title={t?.title} key={i} tag="Question" />)
           }
         </div>
         <div className="absolute hidden md:block left-0 top-0 bottom-4 w-16 bg-gradient-to-r from-background to-transparent pointer-events-none z-10" />

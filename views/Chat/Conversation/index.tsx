@@ -3,7 +3,7 @@
 import Chatinput from "@/components/Chatinput";
 import { Typing, TypingBubble } from "./Bubble";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import useSWR from "swr";
+import useSWR, { mutate } from "swr";
 import endpoint from "@/api/endpoint";
 import { isEmpty } from "@/utility";
 import History from "./History";
@@ -13,8 +13,9 @@ import useSWRMutation from "swr/mutation";
 import { streamlineFetcher } from "@/api/fetcher";
 import { toast } from "sonner";
 import SidebarDetails from "./SidebarDetails";
+import useFetcher from "@/hooks/use-fetcher";
 
-export default function Conversation({ id }) {
+export default function Conversation({ id, type = "memory" }) {
   const [aiMessage, setAiMessage] = useState("")
   const abortCtrl = useRef(null)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
@@ -24,15 +25,18 @@ export default function Conversation({ id }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false) // Sidebar closed by default
 
   const { trigger: sendMessage, isMutating: isTyping } = useSWRMutation(endpoint.aiPrompt, streamlineFetcher)
-  const { data: memoryData, isLoading: loadingMemory, error: memoryError } = useSWR(
-    id ? `${endpoint.memories}/${id}` : null
+  const { data: memoryData, isLoading: loadingMemory } = useSWR(
+    id && type === "memory" ? `${endpoint.memories}/${id}` : null
   );
-
   const { data: promptData, isLoading: loadingPrompt } = useSWR(
-    id && (memoryError || isEmpty(memoryData?.data)) ?
-      `${endpoint.replyPrompt}/${id}` :
+    id && type === "prompt" ?
+      `${endpoint.memoryPrompt}/${id}` :
       null
   );
+
+  const { trigger: startConversation, isMutating: startingConversation } = useFetcher(endpoint.startConversation)
+
+  const memory = useMemo(() => memoryData?.data || promptData?.data, [promptData, memoryData])
 
   // Function to scroll to bottom
   const scrollToBottom = useCallback(() => {
@@ -62,13 +66,14 @@ export default function Conversation({ id }) {
 
     if (typeof chunk === 'string' && chunk.trim() !== '') {
       setAiMessage((prev) => {
-        // This ensures the message updates with each chunk.
-        const newText = prev + chunk;
-        return newText;
+        if (prev && chunk.length > prev.length && chunk.startsWith(prev)) {
+          return chunk;
+        } else {
+          return prev + chunk;
+        }
       });
 
       scrollToBottom();
-
     }
   }, [scrollToBottom]);
 
@@ -88,14 +93,27 @@ export default function Conversation({ id }) {
       // Always scroll to bottom when the user sends a message
       setTimeout(scrollToBottom, 50);
 
-      abortCtrl.current = new AbortController();
+      if (memory?._id) {
+        abortCtrl.current = new AbortController();
 
-      await sendMessage({
+        await sendMessage({
+          text,
+          memory: memory?._id,
+          signal: abortCtrl.current.signal,
+          onChunk: handleChuckArrival
+        });
+        return;
+      }
+      const result = await startConversation({
         text,
-        memory: id,
-        signal: abortCtrl.current.signal,
-        onChunk: handleChuckArrival
-      });
+        prompt_id: id
+      })
+
+      if (result?.data?.response) {
+        handleOnFinishTyping(result?.data?.response)
+        mutate(`${endpoint.memoryPrompt}/${id}`)
+      }
+
     } catch (error) {
       if (error.name !== 'AbortError') {
         toast.error("Failed to send message");
@@ -122,8 +140,6 @@ export default function Conversation({ id }) {
     }
     setAiMessage("");
   }
-
-  const memory = useMemo(() => memoryData?.data || promptData?.data, [promptData, memoryData])
 
   // Update wasAtBottomRef on scroll to manage conditional scrolling
   const handleScroll = useCallback(() => {
@@ -162,7 +178,7 @@ export default function Conversation({ id }) {
           onViewDetails: handleOpenSidebar
         }}>
           {
-            isTyping && !aiMessage ?
+            (isTyping || startingConversation) && !aiMessage ?
               <Typing /> :
               aiMessage &&
               <TypingBubble
@@ -173,17 +189,24 @@ export default function Conversation({ id }) {
         </History>
         <div className="sticky bottom-0 pb-4 bg-background">
           <div className="container">
-            <Chatinput onStop={handleStop} onSend={handleSend} />
+            <Chatinput
+              loading={startingConversation}
+              onStop={handleStop}
+              onSend={handleSend}
+            />
           </div>
         </div>
       </div>
       {/* Updated sidebar with slide-in transition */}
-      <div
-        className={`h-full border-l border-[#EAECF0] transition-all duration-300 ease-in-out overflow-hidden ${isSidebarOpen ? 'w-60' : 'w-0'
-          }`}
-      >
-        <SidebarDetails {...{ memory, onClose: handleCloseSidebar }} />
-      </div>
+      {
+        memory?._id &&
+        <div
+          className={`h-full border-l border-[#EAECF0] transition-all duration-300 ease-in-out overflow-hidden ${isSidebarOpen ? 'w-60' : 'w-0'
+            }`}
+        >
+          <SidebarDetails {...{ memory, onClose: handleCloseSidebar }} />
+        </div>
+      }
     </div>
   );
 }

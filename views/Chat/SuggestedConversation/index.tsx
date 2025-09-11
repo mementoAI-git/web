@@ -67,6 +67,7 @@ export default function SuggestedConversation() {
             conversations.map((conversation, i) => (
               <Topic
                 key={i}
+                id={conversation?._id}
                 title={conversation.title}
                 tag={conversation.tag}
                 className="p-3"

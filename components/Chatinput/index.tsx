@@ -56,6 +56,13 @@ export default function Chatinput({
     const payload = { text }
     onSend(payload)
     setText("")
+
+    // Reset textarea height to original size
+    const textarea = textareaRef.current;
+    if (textarea) {
+      textarea.style.height = 'auto';
+      textarea.style.overflowY = 'hidden';
+    }
   }
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
