@@ -3,10 +3,14 @@
 import GearIcon from "@/public/icon/gear.svg";
 import PlusIcon from "@/public/icon/plus.svg";
 import WaveIcon from "@/public/icon/wave.svg";
-import { cn } from "@/utility";
+import { cn, toBase64 } from "@/utility";
 import React, { KeyboardEvent, useCallback, useEffect, useRef, useState } from "react";
 import Voiceinput from "./Voiceinput";
 import Spinner from "../Spinner";
+import useFileUpload from "@/hooks/use-file-upload";
+import { IOnUploadPayload } from "@/utility/interface";
+import { v4 as uuidv4 } from "uuid";
+import ImagePreview from "./ImagePreveiw";
 
 interface IOnSendPayload {
   attachments?: string[];
@@ -36,6 +40,8 @@ export default function Chatinput({
   const [isVoiceMode, setIsVoiceMode] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  const { files, handleUpload, handleDeleteFile } = useFileUpload();
+
   const adjustHeight = useCallback(() => {
     const textarea = textareaRef.current;
     if (textarea) {
@@ -52,10 +58,42 @@ export default function Chatinput({
     }
   }, []);
 
+  const handleFileUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Check if it's an image
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file');
+      return;
+    }
+
+    // Check file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('File size must be less than 10MB');
+      return;
+    }
+
+    const base64 = await toBase64(file)
+
+    const uploadPayload: IOnUploadPayload = {
+      id: uuidv4(),
+      file,
+      progress: 0,
+      base64
+    };
+
+    await handleUpload(uploadPayload);
+  }, [handleUpload]);
+
   const handleSend = () => {
-    const payload = { text }
-    onSend(payload)
-    setText("")
+    const attachments = files
+      .filter(f => f.uploadedFile)
+      .map(f => f.uploadedFile!._id);
+
+    const payload = { text, attachments };
+    onSend?.(payload);
+    setText("");
 
     // Reset textarea height to original size
     const textarea = textareaRef.current;
@@ -66,12 +104,20 @@ export default function Chatinput({
   }
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter") {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      text.trim();
-      handleSend()
+      if (text.trim() || files.length > 0) {
+        handleSend();
+      }
     }
   };
+
+  const handleRemoveFile = useCallback((fileId: string) => {
+    const file = files.find(f => f.id === fileId);
+    if (file) {
+      handleDeleteFile(file);
+    }
+  }, [files, handleDeleteFile]);
 
   useEffect(() => {
     adjustHeight();
@@ -89,7 +135,7 @@ export default function Chatinput({
     <div
       className={
         cn(
-          "w-full h-fit flex flex-col gap-3 md:gap-10 rounded-2xl border border-sand-4 py-3 px-4 md:p-6 bg-white mx-auto shadow-[0px_4px_8px_0px_#AB7E2B1C]",
+          "w-full h-fit flex flex-col gap-3 md:gap-4 rounded-2xl border border-sand-4 py-3 px-4 md:p-6 bg-white mx-auto shadow-[0px_4px_8px_0px_#AB7E2B1C]",
           className
         )
       }
@@ -103,22 +149,31 @@ export default function Chatinput({
         onInput={adjustHeight}
         rows={1}
         onKeyDown={handleKeyDown}
-      >
-
-      </textarea>
+      />
+      <ImagePreview {...{ files, handleRemoveFile }} />
       <div className="flex justify-between">
         <div className="flex items-center gap-4">
-          <div className="icon-container !size-8 md:!size-11">
+          {/* File Upload Button */}
+          <label htmlFor="chat-file-trigger" className="icon-container !size-8 md:!size-11 cursor-pointer">
             <PlusIcon className="size-3 md:size-5" />
-          </div>
+            <input
+              id="chat-file-trigger"
+              type="file"
+              accept="image/*"
+              onChange={handleFileUpload}
+              className="hidden"
+            />
+          </label>
+
           <div className={cn("icon-container", "!rounded-xl !size-8 md:!size-11")}>
             <GearIcon className="size-4 md:size-5" />
           </div>
         </div>
+
         {
           typing ?
             <button onClick={onStop} className="btn !bg-blue-6 text-white">Stop</button> :
-            (text.length > 0 || loading) ?
+            (text.length > 0 || files.length > 0 || loading) ?
               <button
                 onClick={handleSend}
                 disabled={loading || typing}

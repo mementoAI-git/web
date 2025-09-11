@@ -11,10 +11,12 @@ import { useRouter } from "next/navigation";
 import useFetcher from "@/hooks/use-fetcher";
 import endpoint from "@/api/endpoint";
 import { useStore } from "@/hooks/use-store";
+import { useModal } from "@/hooks/use-modal";
 
 export default function Chat() {
   const router = useRouter();
   const { user } = useStore()
+  const { open } = useModal()
   const { trigger: startConversation, isMutating: startingConversation } = useFetcher(endpoint.startConversation)
 
   const handleSend = async ({ text, attachments = [] }) => {
@@ -36,7 +38,7 @@ export default function Chat() {
             <div className="size-5 flex items-center justify-center text-sand-8"><ChatIcon /></div>
             <span className="text-sand-10 text-sm font-inter">Recent Conversations</span>
           </Link>
-          <div className={cn("icon-container", "!rounded-xl")}>
+          <div onClick={() => open('chat-settings')} className={cn("icon-container", "!rounded-xl")}>
             <GearIcon className="size-5 stroke-2" />
           </div>
         </div>

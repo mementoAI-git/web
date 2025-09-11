@@ -59,10 +59,6 @@ export default function ChatInput({ typing = false, onStop, text = "", onChangeT
     }
   };
 
-  const handleStartRecording = () => {
-    setIsRecording(true);
-  };
-
   const handleFinishRecording = (file: File) => {
     // Handle the recorded audio file
     console.log("Recording finished:", file);
