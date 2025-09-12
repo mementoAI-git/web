@@ -1,0 +1,38 @@
+{
+  "career": {
+    "title": "Career and ambition",
+    "slug": "career",
+    "subtitle": "The aspirations and goals you've set to achieve professional success and personal fulfillment.",
+    "image": "/image/categories/career.png"
+  },
+  "family": {
+    "title": "Family life",
+    "slug": "family",
+    "subtitle": "The aspirations and goals you've set to achieve professional success and personal fulfillment.",
+    "image": "/image/categories/family.png"
+  },
+  "relationship": {
+    "title": "Finding love & relationships",
+    "slug": "relationship",
+    "subtitle": "The aspirations and goals you've set to achieve professional success and personal fulfillment.",
+    "image": "/image/categories/relationship.png"
+  },
+  "region": {
+    "title": "Faith and religious beliefs",
+    "slug": "region",
+    "subtitle": "The aspirations and goals you've set to achieve professional success and personal fulfillment.",
+    "image": "/image/categories/region.png"
+  },
+  "belief": {
+    "title": "Worldviews & beliefs",
+    "slug": "belief",
+    "subtitle": "The aspirations and goals you've set to achieve professional success and personal fulfillment.",
+    "image": "/image/categories/belief.png"
+  },
+  "purpose": {
+    "title": "Finding purpose",
+    "slug": "purpose",
+    "subtitle": "The aspirations and goals you've set to achieve professional success and personal fulfillment.",
+    "image": "/image/categories/purpose.png"
+  }
+}

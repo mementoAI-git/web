@@ -1,10 +1,16 @@
 import endpoint from "@/api/endpoint";
+import { fetcher } from "@/api/fetcher";
 import Topic, { TopicSkeleton } from "@/components/Topic";
+import { getCategory } from "@/utility";
 import Link from "next/link";
 import useSWR from "swr";
 
 export default function SuggestedCategories() {
-  const { data, isLoading } = useSWR(endpoint.suggestions)
+  const { data, isLoading } = useSWR(
+    endpoint.suggestions,
+    fetcher,
+    { revalidateOnFocus: false }
+  )
 
   return (
     <div className="space-y-6">
@@ -23,7 +29,20 @@ export default function SuggestedCategories() {
               <TopicSkeleton />
               <TopicSkeleton />
             </> :
-            data?.data?.docs?.map((t, i) => <Topic id={t?._id} title={t?.title} key={i} tag="Question" />)
+            data?.data?.docs
+              ?.splice(1, 10)
+              .map((t, i) => {
+                const category = getCategory(t?.category)
+                return (
+                  <Topic
+                    id={t?._id}
+                    title={t?.title}
+                    key={i}
+                    image={category?.image}
+                    tag={category?.slug || t.tag[0]}
+                  />
+                )
+              })
           }
         </div>
         <div className="absolute hidden md:block left-0 top-0 bottom-4 w-16 bg-gradient-to-r from-background to-transparent pointer-events-none z-10" />

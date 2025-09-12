@@ -77,7 +77,7 @@ export default function Conversation({ id, type = "memory" }) {
     }
   }, [scrollToBottom]);
 
-  const handleSend = async ({ text }) => {
+  const handleSend = async ({ text, attachments }) => {
     if (isEmpty(text)) return;
 
     try {
@@ -98,6 +98,7 @@ export default function Conversation({ id, type = "memory" }) {
 
         await sendMessage({
           text,
+          attachments,
           memory: memory?._id,
           signal: abortCtrl.current.signal,
           onChunk: handleChuckArrival

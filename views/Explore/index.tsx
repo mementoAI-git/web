@@ -1,48 +1,10 @@
 "use client"
 
-import image6 from "@/public/image/image-6.png"
-import familyImage from "@/public/image/family-friends.png"
-import findingPurposeImage from "@/public/image/finding-purpose.png"
-import worldViewImage from "@/public/image/world-veiw.png"
-import loveImage from "@/public/image/love-relationship.png"
-import faithImage from "@/public/image/faith.png"
 import PromptCard from "./prompt-card";
 import CategoryCard from "@/components/category-card"
 import Slider from "@/components/Slider"
 import Link from "next/link"
-
-const categories = [
-  {
-    title: "Career and ambition",
-    image: image6,
-    subtitle: "The aspirations and goals you've set to achieve professional success and personal fulfillment."
-  },
-  {
-    title: "Family life",
-    image: familyImage,
-    subtitle: "The aspirations and goals you've set to achieve professional success and personal fulfillment."
-  },
-  {
-    title: "Finding love & relationships",
-    image: loveImage,
-    subtitle: "The aspirations and goals you've set to achieve professional success and personal fulfillment."
-  },
-  {
-    title: "Faith and religious beliefs",
-    image: faithImage,
-    subtitle: "The aspirations and goals you've set to achieve professional success and personal fulfillment."
-  },
-  {
-    title: "Worldviews & beliefs",
-    image: worldViewImage,
-    subtitle: "The aspirations and goals you've set to achieve professional success and personal fulfillment."
-  },
-  {
-    title: "Finding purpose",
-    image: findingPurposeImage,
-    subtitle: "The aspirations and goals you've set to achieve professional success and personal fulfillment."
-  }
-];
+import categories from "@/utility/data/categories.json"
 
 export default function Explore() {
   return (
@@ -79,9 +41,10 @@ export default function Explore() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4 lg:gap-6">
-            {categories.map((category, index) => (
-              <CategoryCard key={index}{...category} />
-            ))}
+            {
+              Object.values(categories)
+                .map((category, index) => <CategoryCard key={index}{...category} />)
+            }
           </div>
         </div>
       </div>

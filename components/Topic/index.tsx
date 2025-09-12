@@ -7,11 +7,19 @@ interface ITopicProps {
   title: string
   className?: string
   tag?: string
+  image?: string
   onClick?: () => void
   id?: string // Add ID prop for navigation
 }
 
-export default function Topic({ title, tag = "Question", className = "", onClick, id }: ITopicProps) {
+export default function Topic({
+  title,
+  image = null,
+  tag = "Question",
+  className = "",
+  onClick,
+  id
+}: ITopicProps) {
   const handleClick = () => {
     if (onClick) {
       onClick();
@@ -26,7 +34,7 @@ export default function Topic({ title, tag = "Question", className = "", onClick
         <div className="absolute top-2 left-2 rounded-full bg-gray-50 px-2 border border-gray-200">
           <span className="font-inter capitalize font-medium text-xs text-gray-700">{tag}</span>
         </div>
-        <Image alt="" className="size-full object-cover transition-transform duration-300 ease-in-out hover:scale-110" src={careerImage} />
+        <Image alt="" width={120} height={120} className="size-full object-cover transition-transform duration-300 ease-in-out hover:scale-110" src={image || careerImage} />
       </div>
       <div>
         <span className="font-georgia md:text-xl text-sand-12 font-normal">{title}</span>

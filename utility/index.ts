@@ -4,6 +4,7 @@ import { twMerge } from "tailwind-merge"
 import dayjs from "dayjs";
 import calendar from "dayjs/plugin/calendar";
 import { storageKeys } from "./constant";
+import categories from "@/utility/data/categories.json"
 
 dayjs.extend(calendar);
 
@@ -151,3 +152,7 @@ export const clearRecentMemories = () => {
   if (typeof window === 'undefined') return;
   localStorage.removeItem(storageKeys.recentMemories);
 };
+
+export const getCategory = (c: string) => {
+  return categories[c]
+}

@@ -1,18 +1,18 @@
-import { StaticImport } from "next/dist/shared/lib/get-img-props"
-import Image from "next/image"
 import Link from "next/link"
 
 interface ICategoryCardProps {
   title: string
   subtitle: string
-  image: StaticImport
+  slug: string
+  image: string
 }
-export default function CategoryCard({ image, title, subtitle }: ICategoryCardProps) {
+
+export default function CategoryCard({ image, slug, title, subtitle }: ICategoryCardProps) {
   return (
-    <Link href="/explore/categories/1" className="w-full h-[220.89px] overflow-hidden rounded-[10px] relative group cursor-pointer">
-      <Image
+    <Link href={`/explore/categories/${slug}`} className="w-full h-[220.89px] overflow-hidden rounded-[10px] relative group cursor-pointer">
+      <img
         src={image}
-        alt=""
+        alt={title}
         className="size-full object-cover object-center transition-transform duration-300 ease-in-out group-hover:scale-110"
       />
       <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/80 text-white flex items-end p-6">

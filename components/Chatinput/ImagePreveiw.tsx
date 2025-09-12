@@ -1,5 +1,4 @@
 import { IOnUploadPayload } from "@/utility/interface";
-import Spinner from "../Spinner";
 import CirclarProgress from "../CirclarProgress";
 
 interface IImagePreviewProps {

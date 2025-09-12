@@ -48,7 +48,7 @@ export const useIntersectionObserver = (
     return () => {
       observer.unobserve(element);
     };
-  }, [elementRef, threshold, rootMargin, root]); // Dependencies array now includes the ref
+  }, [elementRef.current, threshold, rootMargin, root]); // Dependencies array now includes the ref
 
   return isIntersecting;
 };

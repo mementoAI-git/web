@@ -1,88 +1,95 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import Topic, { TopicSkeleton } from "@/components/Topic";
 import endpoint from "@/api/endpoint";
-import useSWR from "swr";
+import useSWRInfinite from "swr/infinite";
 import useIntersectionObserver from "@/hooks/use-intersection-observer";
-import { isEmpty } from "@/utility";
+import { getCategory } from "@/utility";
+import { fetcher } from "@/api/fetcher";
+import GoBack from "@/components/GoBack";
 
 export default function SuggestedConversation() {
-  const [conversations, setConversations] = useState([]);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
+  // Get the key function for useSWRInfinite
+  const getKey = (pageIndex: number, previousPageData: any) => {
+    // If we've reached the end, return null to stop fetching
+    if (previousPageData && !previousPageData.data?.hasNextPage) return null;
 
-  const { data, isLoading } = useSWR(`${endpoint.suggestions}?page=${page}}`);
+    // Return the URL for the next page
+    return `${endpoint.suggestions}?page=${pageIndex + 1}`;
+  };
 
-  const fetchMore = useCallback(async () => {
-    if (!isLoading && hasMore) {
-      setPage(prev => prev + 1);
+  const {
+    data,
+    isLoading,
+    size,
+    setSize
+  } = useSWRInfinite(getKey, fetcher, {
+    revalidateOnFocus: false,
+    revalidateFirstPage: false
+  });
+
+  // Flatten all pages of data into a single array
+  const conversations = data ? data.flatMap(page => page?.data?.docs || []) : [];
+  const isLoadingMore = isLoading || (size > 0 && data && typeof data[size - 1] === 'undefined');
+  const isEmpty = data?.[0]?.data?.docs?.length === 0;
+  const isReachingEnd = isEmpty || (data && data[data.length - 1]?.data?.hasNextPage === false);
+
+  const fetchMore = useCallback(() => {
+    if (!isLoadingMore && !isReachingEnd) {
+      setSize(size + 1);
     }
-  }, [isLoading, hasMore]);
+  }, [isLoadingMore, isReachingEnd, size, setSize]);
 
-  // Use the new hook pattern: create a ref and pass it to the hook.
+  // Use the intersection observer hook
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
   const isIntersecting = useIntersectionObserver(loadMoreRef);
 
-  // Use a useEffect to trigger the fetch when the element is intersecting.
+  // Trigger fetch when element is intersecting
   useEffect(() => {
     if (isIntersecting) {
       fetchMore();
     }
   }, [isIntersecting, fetchMore]);
 
-  useEffect(() => {
-    if (data?.data?.docs) {
-      if (page === 1) {
-        // Reset data for new search or initial load
-        setConversations(data.data.docs);
-      } else {
-        // Append new data for pagination
-        setConversations(prev => [...prev, ...data.data.docs]);
-      }
-
-      // Check if there are more pages - be more explicit about this
-      const hasNextPage = data.data.hasNextPage !== false && data.data.docs.length > 0;
-      setHasMore(hasNextPage);
-    }
-  }, [data, page]);
-
   return (
     <div className="container">
-      <div className="pb-4 pt-12">
+      <div className="pb-4 space-y-5 pt-12">
+        <div>
+          <GoBack />
+        </div>
         <h2 className="text-[40px] leading-[48px] font-normal font-canela text-sand-12">
           Suggested conversations
         </h2>
       </div>
       <div className="overflow-y-auto hide-scrollbar scroll-smooth pt-8" style={{ maxHeight: 'calc(100vh - 200px)' }}>
         <div className="grid grid-cols-3 gap-6">
-          {/* Show skeletons only during initial loading */}
-          {isLoading && page === 1 && (
-            Array.from({ length: 6 }, (_, i) => (
-              <TopicSkeleton key={`skeleton-${i}`} />
-            ))
-          )}
           {
-            !isEmpty(conversations) &&
-            conversations.map((conversation, i) => (
-              <Topic
-                key={i}
-                id={conversation?._id}
-                title={conversation.title}
-                tag={conversation.tag}
-                className="p-3"
-              />
-            ))
+            !isEmpty &&
+            conversations.map((c, i) => {
+              const category = getCategory(c?.category)
+              return (
+                <Topic
+                  key={i}
+                  id={c?._id}
+                  title={c.title}
+                  image={category?.image}
+                  tag={category ? category?.title : c?.tag[0]}
+                  className="p-3"
+                />
+              )
+            })
           }
-          {isLoading && page > 1 && (
+          {/* Show loading skeletons for additional pages */}
+          {isLoadingMore && !isLoading && (
             Array.from({ length: 6 }, (_, i) => (
-              <TopicSkeleton key={`skeleton-${i}`} />
+              <TopicSkeleton key={`skeleton-more-${i}`} />
             ))
           )}
         </div>
 
         {/* Empty state */}
-        {!isLoading && conversations.length === 0 && (
+        {!isLoading && isEmpty && (
           <div className="flex flex-col items-center justify-center py-16">
             <div className="text-center space-y-2">
               <h3 className="text-lg font-medium text-sand-11">No suggestions available</h3>
@@ -92,7 +99,9 @@ export default function SuggestedConversation() {
         )}
 
         {/* The sentinel element for infinite scroll */}
-        <div ref={loadMoreRef} className="w-full h-20" />
+        {!isReachingEnd && (
+          <div ref={loadMoreRef} className="w-full h-20" />
+        )}
       </div>
     </div>
   );

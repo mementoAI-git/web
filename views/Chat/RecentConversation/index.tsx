@@ -2,7 +2,7 @@
 
 import SearchIcon from "@/public/icon/dashboard/search.svg";
 import TopicBar from "@/components/Topic/TopicBar";
-import useSWR from "swr";
+import useSWRInfinite from "swr/infinite";
 import endpoint from "@/api/endpoint";
 import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { IMemory } from "@/utility/interface";
@@ -10,7 +10,8 @@ import dayjs from "dayjs";
 import calendar from "dayjs/plugin/calendar";
 import SectionSkeleton from "./SectionSkeletion";
 import { useIntersectionObserver } from "@/hooks/use-intersection-observer";
-import Spinner from "@/components/Spinner";
+import { fetcher } from "@/api/fetcher";
+import GoBack from "@/components/GoBack";
 
 dayjs.extend(calendar);
 
@@ -76,23 +77,42 @@ function groupMemoriesByDate(memories: IMemory[]) {
 
 export default function RecentConversation() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [page, setPage] = useState(1);
-  const [allMemories, setAllMemories] = useState<IMemory[]>([]);
-  const [hasMore, setHasMore] = useState(true);
 
-  // Fetch memories data
-  const { data, isLoading } = useSWR(
-    `${endpoint.memories}?page=${page}${searchQuery ? `&search=${encodeURIComponent(searchQuery)}` : ''}`
-  );
+  // Get the key function for useSWRInfinite
+  const getKey = (pageIndex: number, previousPageData: any) => {
+    // If we've reached the end, return null to stop fetching
+    if (previousPageData && !previousPageData.data?.hasNextPage) return null;
+
+    // Return the URL for the next page with search query
+    const searchParam = searchQuery ? `&search=${encodeURIComponent(searchQuery)}` : '';
+    return `${endpoint.memories}?page=${pageIndex + 1}${searchParam}`;
+  };
+
+  const {
+    data,
+    isLoading,
+    size,
+    setSize,
+    mutate
+  } = useSWRInfinite(getKey, fetcher, {
+    revalidateOnFocus: false,
+    revalidateFirstPage: false
+  });
+
+  // Flatten all pages of data into a single array
+  const allMemories = data ? data.flatMap(page => page?.data?.docs || []) : [];
+  const isLoadingMore = isLoading || (size > 0 && data && typeof data[size - 1] === 'undefined');
+  const isEmpty = data?.[0]?.data?.docs?.length === 0;
+  const isReachingEnd = isEmpty || (data && data[data.length - 1]?.data?.hasNextPage === false);
 
   // Load more function
   const loadMore = useCallback(() => {
-    if (!isLoading && hasMore) {
-      setPage(prev => prev + 1);
+    if (!isLoadingMore && !isReachingEnd) {
+      setSize(size + 1);
     }
-  }, [isLoading, hasMore]);
+  }, [isLoadingMore, isReachingEnd, size, setSize]);
 
-  // Use the new hook pattern: create a ref and pass it to the hook
+  // Use the intersection observer hook
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
   const isIntersecting = useIntersectionObserver(loadMoreRef);
 
@@ -120,32 +140,19 @@ export default function RecentConversation() {
     }
   }, [isIntersecting, loadMore]);
 
-  // Update allMemories when new data arrives
-  useEffect(() => {
-    if (data?.data?.docs) {
-      // Otherwise, append the new data for pagination.
-      if (page === 1) {
-        setAllMemories(data.data.docs);
-      } else {
-        setAllMemories(prev => [...prev, ...data.data.docs]);
-      }
-
-      // Check if there are more pages - be more explicit about this
-      const hasNextPage = data.data.hasNextPage !== false && data.data.docs.length > 0;
-      setHasMore(hasNextPage);
-    }
-  }, [data, page]);
-
   // Reset pagination when search changes
-  // useEffect(() => {
-  //   setPage(1);
-  //   setAllMemories([]);
-  //   setHasMore(true);
-  // }, [searchQuery]);
+  useEffect(() => {
+    setSize(1);
+    mutate();
+  }, [searchQuery, setSize, mutate]);
+
   return (
     <div className="page-viewport hide-scrollbar">
       <div className="container">
         <div className="py-6 sm:py-12 flex flex-col gap-3 sm:gap-10">
+          <div>
+            <GoBack />
+          </div>
           <h2 className="text-2xl sm:text-[40px] sm:leading-[48px] font-normal font-canela text-sand-12">
             Recent conversations
           </h2>
@@ -162,47 +169,51 @@ export default function RecentConversation() {
 
         <div className="flex flex-col gap-6">
           {/* Show skeletons only when initial load is in progress */}
-          {isLoading && groupedMemories.length === 0 ?
+          {isLoading && groupedMemories.length === 0 ? (
             <>
               <SectionSkeleton />
               <SectionSkeleton />
-            </> : groupedMemories.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-gray-500">
-                  {searchQuery ? "No conversations found matching your search." : "No conversations yet."}
-                </p>
-              </div>
-            ) : (
-              <>
-                {groupedMemories.map((group, index) => (
-                  <div key={`${group.label}-${index}`} className="flex flex-col md:flex-row gap-4">
-                    <div className="flex flex-col min-w-30 shrink-0">
-                      <span className="font-bold text-sm font-inter text-gray-800">{group.label}</span>
-                      <span className="text-gray-500 text-sm font-inter font-normal">{group.date}</span>
-                    </div>
-                    <div className="flex flex-col flex-1 gap-4">
-                      {group.memories.map((memory, i) => (
-                        <TopicBar
-                          key={i}
-                          size="lg"
-                          _id={memory._id}
-                          title={memory.title || "Untitled Conversation"}
-                        />
-                      ))}
-                    </div>
+            </>
+          ) : groupedMemories.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-gray-500">
+                {searchQuery ? "No conversations found matching your search." : "No conversations yet."}
+              </p>
+            </div>
+          ) : (
+            <>
+              {groupedMemories.map((group, index) => (
+                <div key={`${group.label}-${index}`} className="flex flex-col md:flex-row gap-4">
+                  <div className="flex flex-col min-w-30 shrink-0">
+                    <span className="font-bold text-sm font-inter text-gray-800">{group.label}</span>
+                    <span className="text-gray-500 text-sm font-inter font-normal">{group.date}</span>
                   </div>
-                ))}
-                {/* Loading indicator for pagination */}
-                {isLoading && page > 1 && (
-                  <div className="flex justify-center py-4">
-                    <Spinner loading className="size-5 text-black" />
+                  <div className="flex flex-col flex-1 gap-4">
+                    {group.memories.map((memory, i) => (
+                      <TopicBar
+                        key={memory._id || i}
+                        size="lg"
+                        _id={memory._id}
+                        title={memory.title || "Untitled Conversation"}
+                      />
+                    ))}
                   </div>
-                )}
-              </>
-            )}
+                </div>
+              ))}
+
+              {/* Loading indicator for pagination */}
+              {isLoadingMore && !isLoading && (
+                <SectionSkeleton />
+              )}
+            </>
+          )}
         </div>
+
         {/* The sentinel element for infinite scroll */}
-        <div ref={loadMoreRef} className="w-full h-10" />
+        {!isReachingEnd ?
+          <div ref={loadMoreRef} className="w-full h-10" /> :
+          <div className="w-full h-10" />
+        }
       </div>
     </div>
   );
