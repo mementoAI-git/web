@@ -1,32 +1,30 @@
-import family from "@/public/image/family.png";
-import Image from "next/image";
+import CategoryCard from "@/components/category-card"
+import categories from "@/utility/data/categories.json"
+import Link from "next/link"
 
-function TopicItem() {
+export default function BrowseTopics() {
   return (
-    <div className="relative min-h-60 min-w-60 flex-1 overflow-hidden rounded-2xl bg-[#EEEEFF] p-4">
-      <span className="font-bricolage text-base font-bold text-[#101828]">
-        Family, friends and relationships.
-      </span>
-      <Image
-        className="absolute right-0 -bottom-2 size-[163px] object-contain"
-        src={family}
-        alt=""
-      />
-    </div>
-  );
-}
-
-export default function Topics() {
-  return (
-    <div className="space-y-5">
-      <div className="flex items-center justify-between font-inter text-lg font-semibold text-grey-600">
-        <span>Browse conversations by topics</span>
-        <span className="cursor-pointer text-sm">See all</span>
+    <div className="w-full space-y-6 py-6 sm:py-9 lg:py-12">
+      <div className="flex items-center justify-between">
+        <h2 className="font-canela text-sand-12 font-normal text-xl sm:text-2xl lg:text-[32px] leading-[38px]">
+          Browse conversations
+          <i className="text-gray-500"> by topics</i>
+        </h2>
+        <Link className="text-blue-6 font-semibold text-lg underline" href="/explore">See all</Link>
       </div>
-      <div className="flex flex-wrap items-stretch gap-3">
-        <TopicItem />
-        <TopicItem />
+      <div className="relative w-full">
+        <div className="flex flex-col gap-6 sm:flex-row sm:overflow-x-auto hide-scrollbar py-4">
+          {
+            Object.values(categories)
+              .splice(0, 5)
+              .map((category, i) => (
+                <CategoryCard key={i} className="sm:!max-w-[427px] shrink-0 !w-full" {...category} />
+              ))
+          }
+        </div>
+
+        <div className="absolute hidden md:block  right-0 top-0 bottom-4 w-16 bg-gradient-to-l from-background to-transparent pointer-events-none z-10" />
       </div>
     </div>
-  );
+  )
 }

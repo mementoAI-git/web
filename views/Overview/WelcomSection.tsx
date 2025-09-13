@@ -62,7 +62,7 @@ export default function WelcomSection() {
           <div className="absolute border border-sand-3 rounded-2xl p-5 sm:p-8 lg:p-10 bg-[linear-gradient(266.6deg,rgba(254,251,248,0)_10.3%,#FEFBF8_80.25%)] flex flex-col justify-between size-full top-0 right-0 left-0">
             <h2 className="font-georgia text-base sm:text-lg md:text-xl lg:text-2xl text-[#475467]">What’s on your mind today?</h2>
             <div className="flex gap-3 items-stretch">
-              <button className="btn !text-sm !md:text-base !px-4 !sm:px-5 !py-1.5 !sm:py-2.5">
+              <button className="btn md:!bg-blue-6 !text-sm !md:text-base !px-4 !sm:px-5 !py-1.5 !sm:py-2.5">
                 <PlusIcon className="size-4 hidden md:block" />
                 <span className="whitespace-nowrap">
                   Add a memory

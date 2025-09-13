@@ -1,3 +1,4 @@
+import { cn } from "@/utility"
 import Link from "next/link"
 
 interface ICategoryCardProps {
@@ -5,11 +6,15 @@ interface ICategoryCardProps {
   subtitle: string
   slug: string
   image: string
+  className?: string
 }
 
-export default function CategoryCard({ image, slug, title, subtitle }: ICategoryCardProps) {
+export default function CategoryCard({ image, slug, title, subtitle, className }: ICategoryCardProps) {
   return (
-    <Link href={`/explore/categories/${slug}`} className="w-full h-[220.89px] overflow-hidden rounded-[10px] relative group cursor-pointer">
+    <Link
+      href={`/explore/categories/${slug}`}
+      className={cn("w-full h-[220.89px] overflow-hidden rounded-[10px] relative group cursor-pointer", { [className]: true })}
+    >
       <img
         src={image}
         alt={title}
