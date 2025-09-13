@@ -145,7 +145,7 @@ export default function Chatinput({
         value={text}
         onChange={e => setText(e.target.value)}
         placeholder="Type text here..."
-        className={cn("min-h-10 md:min-h-12 w-full outline-none resize-none text-lg md:text-xl overflow-hidden", inputClassName)}
+        className={cn("min-h-10 md:min-h-12 w-full outline-none font-georgia resize-none text-lg md:text-xl overflow-hidden", inputClassName)}
         onInput={adjustHeight}
         rows={1}
         onKeyDown={handleKeyDown}

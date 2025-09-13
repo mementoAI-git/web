@@ -30,7 +30,7 @@ export default function Bubble({ role = "user", attatchments = [], text = "" }) 
           "ml-auto w-fit bg-sand-3 px-4 max-w-[520px] rounded-xl": isUser
         })}
       >
-        <span className="font-georgia text-sand-12 ">
+        <span className="font-georgia text-xl text-sand-12 ">
           <Markdown>{text || ""}</Markdown>
         </span>
       </div>

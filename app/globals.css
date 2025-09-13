@@ -26,15 +26,19 @@
 
   --color-gray-50: #FAFAFA;
   --color-gray-200: #EAECF0;
+  --color-gray-400: #667085;
   --color-gray-500: #667085;
+  --color-gray-600: #475467;
   --color-gray-700: #344054;
   --color-gray-800: #1D2939;
+  --color-gray-900: #101828;
 
   --color-sand-1: #FEFBF8;
   --color-sand-2: #FBF5EB;
   --color-sand-3: #F5EEE3;
   --color-sand-4: #F5E7D1;
   --color-sand-5: #EBD2A9;
+  --color-sand-6: #DDBF8F;
   --color-sand-7: #CFAB6F;
   --color-sand-8: #B5955E;
   --color-sand-10: #846633;
@@ -70,15 +74,19 @@
 
   --color-gray-50: var(--color-gray-50);
   --color-gray-200: var(--color-gray-200);
+  --color-gray-400: var(--color-gray-400);
   --color-gray-500: var(--color-gray-500);
+  --color-gray-600: var(--color-gray-600);
   --color-gray-700: var(--color-gray-700);
   --color-gray-800: var(--color-gray-800);
+  --color-gray-900: var(--color-gray-900);
 
   --color-sand-1: var(--color-sand-1);
   --color-sand-2: var(--color-sand-2);
   --color-sand-3: var(--color-sand-3);
   --color-sand-4: var(--color-sand-4);
   --color-sand-5: var(--color-sand-5);
+  --color-sand-6: var(--color-sand-6);
   --color-sand-7: var(--color-sand-7);
   --color-sand-8: var(--color-sand-8);
   --color-sand-10: var(--color-sand-10);
