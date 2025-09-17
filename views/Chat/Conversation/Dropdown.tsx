@@ -26,7 +26,8 @@ export function MemoryDropdown({ memory, onViewDetails }: IMemoryDropdownProps) 
 
   return (
     <DropdowmIcon
-      icon={<EllipseIcon className="size-[16px] stroke-1 cursor-pointer" />}
+      icon={<EllipseIcon className="!size-full stroke-1 cursor-pointer" />}
+      className="!size-7 sm:!size-8 !p-1.5 flex justify-center items-center"
       items={[
         {
           label: "View Detils",
@@ -35,13 +36,13 @@ export function MemoryDropdown({ memory, onViewDetails }: IMemoryDropdownProps) 
         },
       ]}
       footerItem={
-        <li
+        < li
           onClick={() => open("delete-memory", memory._id)}
           className="flex cursor-pointer items-center rounded gap-2.5 px-2.5 py-1.5 hover:bg-[#F97066]/8 text-[#F97066]"
         >
           <TrashIcon width={16} size={16} />
           <span className="font-inter text-sm">Delete</span>
-        </li>
+        </li >
       }
       onSelect={handleSelect}
     />

@@ -5,8 +5,9 @@ import { DropdowmMenu } from "./DropdownMenu";
 import { IDropdownIcon } from "./interface";
 import useClickAway from "@/hooks/use-clickaway";
 import { createPortal } from "react-dom";
+import { cn, isEmpty } from "@/utility";
 
-export function DropdowmIcon({ icon, ...props }: IDropdownIcon) {
+export function DropdowmIcon({ icon, className = "", ...props }: IDropdownIcon) {
   const [open, setOpen] = useState(false);
   const [position, setPosition] = useState({
     top: 0,
@@ -100,7 +101,7 @@ export function DropdowmIcon({ icon, ...props }: IDropdownIcon) {
       <button
         ref={buttonRef}
         onClick={() => setOpen((p) => !p)}
-        className="aspect-square size-8 shrink-0 rounded-lg p-2 hover:bg-sand-2"
+        className={cn("aspect-square size-8 shrink-0 rounded-lg p-2 hover:bg-sand-2", { [className]: !isEmpty(className) })}
       >
         {icon}
       </button>
@@ -120,8 +121,8 @@ export function DropdowmIcon({ icon, ...props }: IDropdownIcon) {
             <DropdowmMenu
               {...{ ...props, onSelect: handleSelect }}
               className={`${position.placement === 'top' ? 'bottom-full mb-1.5' : 'top-full mt-1.5'} ${position.alignment === 'right' ? 'right-0' :
-                  position.alignment === 'center' ? 'left-1/2 -translate-x-1/2' :
-                    'left-0'
+                position.alignment === 'center' ? 'left-1/2 -translate-x-1/2' :
+                  'left-0'
                 }`}
             />
           </div>,

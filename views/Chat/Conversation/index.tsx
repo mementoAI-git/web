@@ -194,6 +194,7 @@ export default function Conversation({ id, type = "memory" }) {
               loading={startingConversation}
               onStop={handleStop}
               onSend={handleSend}
+              inputClassName="!text-sm sm:!text-lg md:!text-xl"
             />
           </div>
         </div>

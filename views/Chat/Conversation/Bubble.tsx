@@ -26,11 +26,11 @@ export default function Bubble({ role = "user", attatchments = [], text = "" }) 
         </div>
       }
       <div
-        className={cn("w-full py-3", {
-          "ml-auto w-fit bg-sand-3 px-4 max-w-[520px] rounded-xl": isUser
+        className={cn("w-full py-1 md:py-3", {
+          "ml-auto w-fit bg-sand-3 px-2 md:px-4 max-w-[520px] rounded-lg md:rounded-xl": isUser
         })}
       >
-        <span className="font-georgia text-xl text-sand-12 ">
+        <span className="font-georgia md:text-xl text-sand-12 ">
           <Markdown>{text || ""}</Markdown>
         </span>
       </div>

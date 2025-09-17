@@ -45,8 +45,7 @@ export function BackgroundMusicProvider({ children }: PropsWithChildren) {
       audioRef.current.addEventListener('pause', () => setIsPlaying(false));
       audioRef.current.addEventListener('ended', () => setIsPlaying(false));
       audioRef.current.addEventListener('error', (e) => {
-        console.error('Audio error:', e);
-        toast.error("Failed to load audio file");
+        console.error('Audio error:', e)
       });
     }
   }, []);

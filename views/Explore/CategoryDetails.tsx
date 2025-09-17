@@ -42,7 +42,7 @@ export default function CategoryDetail({ category }) {
   return (
     <div className="page-viewport hide-scrollbar">
       <div className="container">
-        <div className="py-12 space-y-6">
+        <div className="py-3 sm:py-12 space-y-6">
           <div className="w-full min-h-[253px] gap-6 rounded-xl bg-sand-2 flex flex-col md:flex-row border border-sand-3 p-4">
             <div className="overflow-hidden border border-[#EAECF0] max-h-[221px] w-full md:max-w-[346px] rounded-[10px]">
               <img src={category?.image} className="size-full object-cover" alt="Career and ambition" />
@@ -62,9 +62,9 @@ export default function CategoryDetail({ category }) {
             </div>
           </div>
         </div>
-        <div className="py-12">
+        <div className="py-2 sm:py-12">
           <div className="space-y-6">
-            <div className="w-full overflow-x-auto hide-scrollbar gap-6 flex items-center">
+            <div className="w-full overflow-x-auto hide-scrollbar gap-2 sm:gap-6 flex items-center">
               {
                 ["Uploaded", "Answered", "Unanswered"].map((tab, i) => (
                   <div key={i} className={cn("p-4 cursor-pointer text-gray-500 hover:text-blue-6 hover:font-bold font-inter font-normal transition-all duration-200 ease-in-out", {

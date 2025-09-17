@@ -11,6 +11,7 @@ import useFileUpload from "@/hooks/use-file-upload";
 import { IOnUploadPayload } from "@/utility/interface";
 import { v4 as uuidv4 } from "uuid";
 import ImagePreview from "./ImagePreveiw";
+import { isEmpty } from "lodash";
 
 interface IOnSendPayload {
   attachments?: string[];
@@ -135,7 +136,7 @@ export default function Chatinput({
     <div
       className={
         cn(
-          "w-full h-fit flex flex-col gap-3 md:gap-4 rounded-2xl border border-sand-4 py-3 px-4 md:p-6 bg-white mx-auto shadow-[0px_4px_8px_0px_#AB7E2B1C]",
+          "w-full h-fit flex focus-within:border-sand-8 flex-col gap-3 md:gap-4 rounded-xl md:rounded-2xl border border-sand-4 py-3 px-4 md:p-6 bg-white mx-auto shadow-[0px_4px_8px_0px_#AB7E2B1C]",
           className
         )
       }
@@ -145,7 +146,9 @@ export default function Chatinput({
         value={text}
         onChange={e => setText(e.target.value)}
         placeholder="Type text here..."
-        className={cn("min-h-10 md:min-h-12 w-full outline-none font-georgia resize-none text-lg md:text-xl overflow-hidden", inputClassName)}
+        className={cn("h-10 md:h-12 w-full outline-none font-georgia resize-none text-lg md:text-xl overflow-hidden", {
+          [inputClassName]: !isEmpty(inputClassName)
+        })}
         onInput={adjustHeight}
         rows={1}
         onKeyDown={handleKeyDown}
@@ -166,7 +169,7 @@ export default function Chatinput({
           </label>
 
           <div className={cn("icon-container", "!rounded-xl !size-8 md:!size-11")}>
-            <GearIcon className="size-4 md:size-5" />
+            <GearIcon className="size-4 md:size-5 stroke-2" />
           </div>
         </div>
 

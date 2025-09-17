@@ -118,7 +118,7 @@ export default function History({
         </div>
         <ConversationHeader {...{ onViewDetails, memory }} />
       </div>
-      <div className="px-5 space-y-6">
+      <div className="px-0 sm:px-3 md:px-5 space-y-6">
         {isLoadingMore && (
           <div className="py-3 flex justify-center items-center">
             <div className="flex gap-1.5 text-sm text-gray-500">

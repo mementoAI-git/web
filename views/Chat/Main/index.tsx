@@ -34,11 +34,11 @@ export default function Chat() {
     <div className="flex h-screen flex-col">
       <div className="w-full px-2 py-3">
         <div className="w-full px-2 mx-auto max-w-[1038px] flex items-center justify-between">
-          <Link href="/chat/conversations" className="bg-sand-2 p-3 rounded-xl flex items-center gap-2">
+          <Link href="/chat/conversations" className="bg-sand-2 px-3 py-2 sm:p-3 rounded-full sm:rounded-xl flex items-center gap-1 sm:gap-2">
             <div className="size-5 flex items-center justify-center text-sand-8"><ChatIcon /></div>
             <span className="text-sand-10 text-sm font-inter">Recent Conversations</span>
           </Link>
-          <div onClick={() => open('chat-settings')} className={cn("icon-container", "!rounded-xl")}>
+          <div onClick={() => open('chat-settings')} className={cn("icon-container", "!size-9 md:!size-11 md:!rounded-xl")}>
             <GearIcon className="size-5 stroke-2" />
           </div>
         </div>
@@ -54,7 +54,7 @@ export default function Chat() {
               What’s on your mind today?
             </h4>
             <Chatinput
-              inputClassName="min-h-10 md:min-h-25"
+              inputClassName="!h-10 md:h-25"
               className="max-w-[760px]"
               onSend={handleSend}
               loading={startingConversation}
