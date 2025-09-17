@@ -29,6 +29,7 @@ export interface IUser {
   streak: number;
   picture_url?: string
   newsletter_subscriber: boolean;
+  bg_music: string | null
   two_factor: {
     secret: string
     enabled: boolean

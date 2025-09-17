@@ -1,10 +1,11 @@
 import Image from "next/image";
 import diamond from "@/public/image/diamond.png"
-import TimesIcon from "@/public/icon/times.svg";
+import bg from "@/public/image/bg/4.png"
 
 export default function UpgradePlan() {
   return (
-    <div className="rounded-2xl py-5 px-4 flex gap-4 bg-black/5 border border-black/6">
+    <div className="rounded-2xl relative py-5 px-4 flex gap-4 bg-black/5 border border-black/6">
+      <Image src={bg} alt="BG" className="absolute object-cover top-0 right-0 left-0 size-full" />
       <Image src={diamond} width={61} height={61} className="size-[61px] shrink-0" alt="diamond" />
       <div className="flex-1 space-y-1 text-sm">
         <div className="text-secondary flex items-center justify-between w-full">
