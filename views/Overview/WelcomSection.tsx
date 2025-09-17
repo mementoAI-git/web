@@ -7,20 +7,24 @@ import Image from "next/image"
 import PlusIcon from "@/public/icon/plus.svg"
 import AIIcon from "@/public/icon/ai.svg"
 import Slider from "@/components/Slider"
+import { useStore } from "@/hooks/use-store"
+import StreakTracker from "@/components/StreakTracker"
 
 function StreakCount() {
   return (
-    <div className="w-full flex items-center relative rounded-2xl overflow-hidden p-4 gap-2">
-      <Image src={bg2Image} alt="1" className="absolute top-0 right-0 left-0 object-cover size-full" />
-      <div className="flex flex-col gap-2 font-inter">
-        <span className="text-gray-400 uppercase text-xs">Streak count</span>
-        <span className="text-sm text-gray-700 font-bold">You’re on a 15-day streak</span>
-        <span className="text-gray-600 text-sm ">Complete reflections each day so your streak won’t reset</span>
+    <StreakTracker>
+      <div className="w-full flex items-center relative rounded-2xl overflow-hidden p-4 gap-2">
+        <Image src={bg2Image} alt="1" className="absolute top-0 right-0 left-0 object-cover size-full" />
+        <div className="flex flex-col gap-2 font-inter">
+          <span className="text-gray-400 uppercase text-xs">Streak count</span>
+          <span className="text-sm text-gray-700 font-bold">You’re on a 15-day streak</span>
+          <span className="text-gray-600 text-sm ">Complete reflections each day so your streak won’t reset</span>
+        </div>
+        <div className="size-16 flex items-center justify-center">
+          <Image src={blueFire} width={45} alt="Blue fire" />
+        </div>
       </div>
-      <div className="size-16 flex items-center justify-center">
-        <Image src={blueFire} width={45} alt="Blue fire" />
-      </div>
-    </div>
+    </StreakTracker>
   )
 }
 
@@ -45,12 +49,16 @@ function Leaderboard() {
 }
 
 export default function WelcomSection() {
+  const { user } = useStore()
   return (
     <div className="w-full space-y-6 sm:space-y-8 lg:space-y-10 py-6 sm:py-9 lg:py-12">
       <div className="space-y-2">
         <h2 className="font-canela text-sand-12 font-normal text-[24px] sm:text-[32px] lg:text-[40px] leading-[32px] sm:leading-[40px] lg:leading-[48px]">
-          Welcome,
-          <i className="text-gray-500"> Groot.</i>
+          Welcome
+          {
+            user?.first_name &&
+            <i className="text-gray-500">, {user?.first_name}.</i>
+          }
         </h2>
         <span className="text-gray-500 font-georgia text-[16px] sm:text-[20px] lg:text-[24px] leading-5 sm:leading-[28px] lg:leading-[32px]">
           Complete some unfinished prompts to earn points.

@@ -16,7 +16,7 @@ interface SliderProps {
 
 export default function Slider({
   children,
-  showArrows = true,
+  showArrows = false,
   showIndicators = true,
   autoPlay = false,
   autoPlayInterval = 3000,
@@ -100,8 +100,8 @@ export default function Slider({
               key={index}
               onClick={() => goToSlide(index)}
               className={`w-3 h-3 rounded-full transition-all duration-200 cursor-pointer ${index === currentSlide
-                  ? 'bg-sand-8 scale-110'
-                  : 'bg-sand-4 hover:bg-sand-6'
+                ? 'bg-sand-8 scale-110'
+                : 'bg-sand-4 hover:bg-sand-6'
                 }`}
             />
           ))}

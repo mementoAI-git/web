@@ -167,7 +167,7 @@ export default function Conversation({ id, type = "memory" }) {
   return (
     <div className="flex flex-1 overflow-hidden items-stretch h-full">
       <div
-        className="page-viewport hide-scrollbar h-full"
+        className="page-viewport hide-scrollbar h-full w-full !max-w-[90%]"
         ref={scrollContainerRef}
         onScroll={handleScroll}
       >
