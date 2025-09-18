@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useRef, useEffect } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import endpoint from "@/api/endpoint";
 import CategoryPromptCard from "@/views/Explore/CategoryPromptCard";
 import Spinner from "@/components/Spinner";
@@ -10,10 +10,23 @@ import { fetcher } from "@/api/fetcher";
 import useIntersectionObserver from "@/hooks/use-intersection-observer";
 
 export default function CategoryDetail({ category }) {
+  const [activeTab, setActiveTab] = useState(0); // 0: Uploaded, 1: Answered, 2: Unanswered
+
   const getKey = (pageIndex: number, previousPageData) => {
     // Return null to not fetch for the initial page or if the previous page had no more data.
     if (previousPageData && !previousPageData.data.docs.length) return null;
-    return `${endpoint.promptCategories}${category?.slug}?page=${pageIndex + 1}`;
+
+    const params = new URLSearchParams();
+    params.append('page', (pageIndex + 1).toString());
+
+    // Add answered filter based on active tab
+    if (activeTab === 1) { // Answered
+      params.append('answered', 'true');
+    } else if (activeTab === 2) { // Unanswered
+      params.append('answered', 'false');
+    }
+
+    return `${endpoint.promptCategories}${category?.slug}?${params.toString()}`;
   };
 
   const { data, size, setSize, isLoading } = useSWRInfinite(
@@ -36,6 +49,10 @@ export default function CategoryDetail({ category }) {
       setSize(size + 1);
     }
   }, [isIntersecting, isLoadingMore, hasMore, setSize, size]);
+
+  const handleTabChange = (tabIndex: number) => {
+    setActiveTab(tabIndex);
+  };
 
   const totalDocs = data?.[0]?.data?.totalDocs || 0;
 
@@ -67,9 +84,13 @@ export default function CategoryDetail({ category }) {
             <div className="w-full overflow-x-auto hide-scrollbar gap-2 sm:gap-6 flex items-center">
               {
                 ["Uploaded", "Answered", "Unanswered"].map((tab, i) => (
-                  <div key={i} className={cn("p-4 cursor-pointer text-gray-500 hover:text-blue-6 hover:font-bold font-inter font-normal transition-all duration-200 ease-in-out", {
-                    "font-bold text-blue-6 border-b-2": i === 0
-                  })}>
+                  <div
+                    key={i}
+                    className={cn("p-4 cursor-pointer text-gray-500 hover:text-blue-6 hover:font-bold font-inter font-normal transition-all duration-200 ease-in-out", {
+                      "font-bold text-blue-6 border-b-2": activeTab === i
+                    })}
+                    onClick={() => handleTabChange(i)}
+                  >
                     <span>{tab}</span>
                   </div>
                 ))
