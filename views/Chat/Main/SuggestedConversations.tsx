@@ -13,10 +13,10 @@ export default function SuggestedCategories() {
   )
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3 md:space-y-6">
       <div className="container flex items-center justify-between w-full">
         <h4 className="font-canela font-medium text-xl md:text-2xl text-sand-12">Suggested Conversations</h4>
-        <Link href="/chat/conversations/suggested" className="text-blue-6 underline font-semibold font-inter text-lg cursor-pointer">
+        <Link href="/chat/conversations/suggested" className="text-blue-6 underline font-semibold font-inter text-sm sm:text-base md:text-lg cursor-pointer">
           See more
         </Link>
       </div>

@@ -20,6 +20,7 @@
 
   --color-background: #FEFBF8;
 
+  --color-blue-1: #F1F6FD;
   --color-blue-2: #E9F1FC;
   --color-blue-6: #52A1DD;
   --color-blue-7: #4284B6;
@@ -69,6 +70,7 @@
   --color-grey-900: var(--color-grey-900);
   --color-background: var(--color-background);
 
+  --color-blue-1: var(--color-blue-1);
   --color-blue-2: var(--color-blue-2);
   --color-blue-6: var(--color-blue-6);
   --color-blue-7: var(--color-blue-7);
@@ -207,7 +209,7 @@ body {
   }
 
   .mem-tags {
-    @apply cursor-pointer rounded-full border border-[#E9EAEB] bg-[#FAFAFA] px-2 py-0.5 text-center font-inter text-xs font-medium capitalize;
+    @apply cursor-pointer rounded-full border border-sand-5 bg-sand-1 px-2 py-0.5 text-center font-inter text-xs font-medium capitalize;
   }
 
   .icon-container {
@@ -272,15 +274,15 @@ body {
   }
 
   .modal-title {
-    @apply font-canela text-xl sm:text-2xl md:text-3xl leading-7 sm:leading-8 md:leading-9 text-sand-12;
+    @apply font-canela text-2xl md:text-3xl leading-7 sm:leading-8 md:leading-9 text-sand-12;
   }
 
   .btn {
-    @apply flex cursor-pointer items-center justify-center gap-2 rounded-full bg-secondary hover:bg-[#000626b3] shadow-btn hover:scale-[97%] px-5 py-2 font-inter font-semibold text-white disabled:bg-[#C7C9C8] disabled:cursor-not-allowed transition-all duration-150;
+    @apply flex cursor-pointer items-center justify-center gap-2 rounded-full bg-blue-6 hover:bg-blue-7 shadow-btn hover:scale-[97%] px-5 py-2 font-inter font-semibold text-white disabled:bg-[#C7C9C8] disabled:cursor-not-allowed transition-all duration-150;
   }
 
   .btn-outline {
-    @apply flex cursor-pointer items-center justify-center gap-2 rounded-full border border-secondary hover:border-[#000626b3] hover:scale-[97%] px-5 py-2 font-inter font-semibold text-secondary disabled:border-[#C7C9C8] disabled:text-[#C7C9C8] transition-all duration-150;
+    @apply flex cursor-pointer items-center justify-center gap-2 rounded-full border border-[#84663366] hover:border-[#000626b3] hover:scale-[97%] px-5 py-2 font-inter font-semibold text-sand-10 disabled:border-[#C7C9C8] disabled:text-[#C7C9C8] transition-all duration-150;
   }
 
   /* Search animations */

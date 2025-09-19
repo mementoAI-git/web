@@ -7,6 +7,7 @@ import { useModal } from "@/hooks/use-modal";
 import { isEmpty } from "@/utility";
 import { IMemory } from "@/utility/interface";
 import { Dispatch, KeyboardEvent, SetStateAction, useMemo, useState } from "react";
+import { Sheet } from "react-modal-sheet";
 import { toast } from "sonner";
 import { mutate } from "swr";
 
@@ -101,9 +102,9 @@ function Taginput({ values, setValue }: ITaginput) {
   );
 }
 
-export default function SetTagPermissions({ data }: ISetTagPermissionsProps) {
+function Content({ data }: ISetTagPermissionsProps) {
   const { memory, isNew = false } = data
-  const { open, close } = useModal();
+  const { open } = useModal();
   const [tags, setTag] = useState<string[]>(memory?.tags || []);
   const [title, setTitle] = useState<string>(memory?.title || "");
   const [level, setLevel] = useState(memory?.level || "1");
@@ -133,9 +134,14 @@ export default function SetTagPermissions({ data }: ISetTagPermissionsProps) {
   }, [memory?.tags, memory?.title, memory?.level])
 
   return (
-    <div className="modal-container">
-      <ModalCloseBtn onClick={() => close("set-tag-permission")} />
-      <h4 className="modal-title">One more thing...</h4>
+    <div className="w-full">
+      <h4 className="modal-title mb-3 !text-2xl sm:!text-4xl">
+        {
+          isNew ?
+            "One more thing..." :
+            "Edit tags and permissions"
+        }
+      </h4>
       <small className="font-inter text-sm text-grey-600">
         Choose a title and a tag for this entry, this allows Memento correctly
         categorize your contents.
@@ -161,12 +167,41 @@ export default function SetTagPermissions({ data }: ISetTagPermissionsProps) {
         />
       </form>
       <div className="mt-6 flex justify-end gap-3">
-        <button onClick={handleDiscard} className="btn-outline">Discard</button>
+        <button onClick={handleDiscard} className="btn-outline bo">Discard</button>
         <button disabled={editMode} onClick={handleSubmit} className="btn flex items-center gap-2">
           Submit
           <Spinner loading={isMutating} className="!size-4" />
         </button>
       </div>
+    </div>
+  );
+}
+
+export default function SetTagPermissions({ data }: ISetTagPermissionsProps) {
+  const { close } = useModal();
+
+  return (
+    <div>
+      <div className="hidden sm:modal-container">
+        <ModalCloseBtn onClick={() => close("set-tag-permission")} />
+        <Content data={data} />
+      </div>
+      <Sheet
+        detent="content"
+        className="block sm:hidden"
+        isOpen
+        onClose={() => close("set-tag-permission")}
+        snapPoints={[0.5, 0.75, 1]}
+      >
+        <Sheet.Container className="bg-sand-1" >
+          <Sheet.Header className="bg-sand-1 rounded-3xl" />
+          <Sheet.Content className="bg-sand-1 px-4 pb-6">
+            <ModalCloseBtn className="!relative ml-auto !right-0 !top-0 mb-2" onClick={() => close("set-tag-permission")} />
+            <Content {...{ data }} />
+          </Sheet.Content>
+        </Sheet.Container>
+        <Sheet.Backdrop />
+      </Sheet>
     </div>
   );
 }

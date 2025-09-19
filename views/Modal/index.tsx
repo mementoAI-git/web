@@ -10,7 +10,7 @@ import { BookmarkMemory, CreateMemory, DeleteMemory, UpdateMemory } from "./Memo
 import { AddBeneficiary, DeleteBeneficiary, ResendInvite } from "./Beneficiary";
 import { UpdateBeneficiary } from "./Beneficiary/Update";
 import Setup2FA from "./Setup2FA";
-import ChatSettings from "./ChatSetting";
+import ChatSettings from "../../components/ChatSetting";
 import { SearchMemories } from "./Memory/Search";
 import CreateCapsule from "./Capsule/Create";
 import SelectBeneficiary from "./SelectBeneficiary";

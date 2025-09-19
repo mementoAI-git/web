@@ -12,6 +12,7 @@ import useFetcher from "@/hooks/use-fetcher";
 import endpoint from "@/api/endpoint";
 import { useStore } from "@/hooks/use-store";
 import { useModal } from "@/hooks/use-modal";
+import ChatSettings from "@/components/ChatSetting";
 
 export default function Chat() {
   const router = useRouter();
@@ -38,15 +39,17 @@ export default function Chat() {
             <div className="size-5 flex items-center justify-center text-sand-8"><ChatIcon /></div>
             <span className="text-sand-10 text-sm font-inter">Recent Conversations</span>
           </Link>
-          <div onClick={() => open('chat-settings')} className={cn("icon-container", "!size-9 md:!size-11 md:!rounded-xl")}>
-            <GearIcon className="size-5 stroke-2" />
-          </div>
+          <ChatSettings>
+            <div className={cn("icon-container", "!size-9 md:!size-11 md:!rounded-xl")}>
+              <GearIcon className="size-5 stroke-2" />
+            </div>
+          </ChatSettings>
         </div>
       </div>
       <div className="flex overflow-y-auto page-viewport flex-1 hide-scrollbar">
         <div className="space-y-10 md:space-y-16 w-full pb-8">
-          <div className="container space-y-10 md:space-y-16 py-6 md:py-12">
-            <h4 className="hidden md:block text-center font-canela text-[32px] leading-[38px] text-sand-12">
+          <div className="container space-y-10 md:space-y-16 py-3 sm:py-6 md:py-12">
+            <h4 className="hidden md:block text-center font-canela text-[30px] sm:text-[32px] leading-[34px] sm:leading-[38px] text-sand-12">
               {user?.first_name && `Hey ${user?.first_name},`} What’s on your mind today?
             </h4>
             <h4 className="md:hidden font-medium font-canela text-2xl text-sand-12">

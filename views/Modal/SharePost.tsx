@@ -10,20 +10,20 @@ import instagram from "@/public/image/instagram.png";
 import linkedin from "@/public/image/linkedin.png";
 import { ModalCloseBtn } from "@/components/ModalLayout";
 import useCopy from "@/hooks/use-copy";
+import { Sheet } from "react-modal-sheet";
 
-export function SharePost({ data: id }) {
+function Content({ data: id }) {
   const { close } = useModal();
   const [copied, handleCopy] = useCopy()
   const link = `${window.origin}/post/${id}`
   return (
-    <div className="modal-container !w-[95%] sm:w-full !max-w-120">
-      <ModalCloseBtn onClick={() => close("share-post")} />
+    <div className="w-full !max-w-120">
       <div className="space-y-6">
         <h4 className="modal-title">Share this post</h4>
         <div className="space-y-6">
           <div className="font-inter text-sm font-medium !text-grey-600">
             <span className="font-normal">Share link</span>
-            <div className="relative flex items-center justify-between rounded-lg border-dashed border border-sand-4 bg-sand-2 p-2">
+            <div className="relative mt-2 flex items-center justify-between rounded-lg border-dashed border border-sand-4 bg-sand-2 p-2">
               <span className="font-normal truncate whitespace-nowrap">
                 {link}
               </span>
@@ -70,5 +70,34 @@ export function SharePost({ data: id }) {
         </div>
       </div>
     </div >
+  );
+}
+
+export function SharePost({ data }: { data: { id: string } }) {
+  const { close } = useModal();
+
+  return (
+    <div>
+      <div className="hidden sm:flex modal-container">
+        <ModalCloseBtn onClick={() => close("share-post")} />
+        <Content data={data} />
+      </div>
+      <Sheet
+        detent="content"
+        className="block sm:hidden"
+        isOpen
+        onClose={() => close("share-post")}
+        snapPoints={[0.5, 0.75, 1]}
+      >
+        <Sheet.Container className="bg-sand-1" >
+          <Sheet.Header className="bg-sand-1 rounded-3xl" />
+          <Sheet.Content className="bg-sand-1 px-4 pb-6">
+            <ModalCloseBtn className="!relative ml-auto !right-0 !top-0 mb-1" onClick={() => close("share-post")} />
+            <Content data={data} />
+          </Sheet.Content>
+        </Sheet.Container>
+        <Sheet.Backdrop />
+      </Sheet>
+    </div>
   );
 }

@@ -14,7 +14,6 @@ export function DropdowmIcon({ icon, className = "", ...props }: IDropdownIcon) 
     left: 0,
     width: 0,
     placement: 'bottom' as 'top' | 'bottom',
-    alignment: 'left' as 'left' | 'right' | 'center'
   });
   const buttonRef = useRef<HTMLButtonElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -29,29 +28,26 @@ export function DropdowmIcon({ icon, className = "", ...props }: IDropdownIcon) 
         height: window.innerHeight
       };
 
-      // Estimate dropdown dimensions (you can make this more precise by measuring)
+      // Estimate dropdown dimensions
       const dropdownHeight = 200; // Approximate height
-      const dropdownWidth = Math.max(167, rect.width); // Minimum width from DropdownMenu
+      const dropdownWidth = 167; // Use minimum width from DropdownMenu
 
       // Determine vertical placement
       const spaceBelow = viewport.height - rect.bottom;
       const spaceAbove = rect.top;
       const shouldPlaceAbove = spaceBelow < dropdownHeight && spaceAbove > spaceBelow;
 
-      // Determine horizontal alignment
+      // Calculate horizontal position - align with button's left edge
       let left = rect.left;
-      let alignment: 'left' | 'right' | 'center' = 'left';
 
       // Check if dropdown would overflow on the right
-      if (left + dropdownWidth > viewport.width) {
-        // Try to align to the right edge of the button
+      if (left + dropdownWidth > viewport.width - 8) {
+        // Align to the right edge of the button
         left = rect.right - dropdownWidth;
-        alignment = 'right';
 
-        // If still overflowing, center it
-        if (left < 0) {
-          left = Math.max(8, (viewport.width - dropdownWidth) / 2);
-          alignment = 'center';
+        // If still overflowing, position it to fit within viewport
+        if (left < 8) {
+          left = 8;
         }
       }
 
@@ -59,11 +55,10 @@ export function DropdowmIcon({ icon, className = "", ...props }: IDropdownIcon) 
       left = Math.max(8, Math.min(left, viewport.width - dropdownWidth - 8));
 
       setPosition({
-        top: shouldPlaceAbove ? rect.top - dropdownHeight - 4 : rect.bottom + 4,
+        top: shouldPlaceAbove ? rect.top - dropdownHeight - 8 : rect.bottom + 8,
         left,
         width: rect.width,
         placement: shouldPlaceAbove ? 'top' : 'bottom',
-        alignment
       });
     }
   }, []);
@@ -120,10 +115,7 @@ export function DropdowmIcon({ icon, className = "", ...props }: IDropdownIcon) 
           >
             <DropdowmMenu
               {...{ ...props, onSelect: handleSelect }}
-              className={`${position.placement === 'top' ? 'bottom-full mb-1.5' : 'top-full mt-1.5'} ${position.alignment === 'right' ? 'right-0' :
-                position.alignment === 'center' ? 'left-1/2 -translate-x-1/2' :
-                  'left-0'
-                }`}
+              className={`${position.placement === 'top' ? 'bottom-full mb-2' : 'top-full mt-2'} left-0`}
             />
           </div>,
           document.body

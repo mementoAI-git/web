@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import 'react-spring-bottom-sheet/dist/style.css'
 import Providers from "./provider";
 import font from "./fonts"
 

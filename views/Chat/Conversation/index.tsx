@@ -202,12 +202,11 @@ export default function Conversation({ id, type = "memory" }) {
       {/* Updated sidebar with slide-in transition */}
       {
         memory?._id &&
-        <div
-          className={`h-full border-l border-[#EAECF0] transition-all duration-300 ease-in-out overflow-hidden ${isSidebarOpen ? 'w-60' : 'w-0'
-            }`}
-        >
-          <SidebarDetails {...{ memory, onClose: handleCloseSidebar }} />
-        </div>
+        <SidebarDetails
+          memory={memory}
+          onClose={handleCloseSidebar}
+          isOpen={isSidebarOpen}
+        />
       }
     </div>
   );

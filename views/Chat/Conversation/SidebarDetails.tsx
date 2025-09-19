@@ -1,3 +1,5 @@
+"use client";
+
 import PropsItem from "@/components/PropsItem";
 import { IMemory } from "@/utility/interface";
 
@@ -11,14 +13,29 @@ import EditIcon from "@/public/icon/edit.svg";
 
 import dayjs from "dayjs";
 import { useModal } from "@/hooks/use-modal";
+import { Sheet } from 'react-modal-sheet';
 
 interface SidebarDetailsProps {
   memory: IMemory;
   onClose: () => void;
+  isOpen: boolean;
 }
 
-export default function SidebarDetails({ memory, onClose }: SidebarDetailsProps) {
+interface ContentProps {
+  memory: IMemory;
+  onClose: () => void;
+  isMobile?: boolean;
+}
+
+function Content({ memory, onClose, isMobile = false }: ContentProps) {
   const { open } = useModal();
+
+  const handleEditPermission = () => {
+    open("set-tag-permission", { memory, isNew: false });
+    if (isMobile) {
+      onClose();
+    }
+  }
 
   return (
     <div className="size-full space-y-2 sm:space-y-3 p-3 sm:p-4 lg:p-6">
@@ -34,7 +51,7 @@ export default function SidebarDetails({ memory, onClose }: SidebarDetailsProps)
         <span className="block font-inter text-xs text-[#667085] uppercase">
           properties
         </span>
-        <ul className="space-y-3 sm:space-y-4">
+        <ul>
           <PropsItem
             icon={<FolderIcon width={16} />}
             title="post type:"
@@ -57,11 +74,11 @@ export default function SidebarDetails({ memory, onClose }: SidebarDetailsProps)
           />
         </ul>
       </div>
-      <div className="space-y-3 sm:space-y-4 border-b border-[#EAECF0] pb-8 sm:pb-10 lg:pb-14">
+      <div className="space-y-3 sm:space-y-4 border-b border-[#EAECF0] pb-8 sm:pb-10 lg:pb-14 mt-4">
         <span className="block font-inter text-xs text-[#667085] uppercase">
           stats
         </span>
-        <ul className="space-y-3 sm:space-y-4">
+        <ul>
           <PropsItem
             icon={<ClipIcon width={13} />}
             title="attachment:"
@@ -85,19 +102,48 @@ export default function SidebarDetails({ memory, onClose }: SidebarDetailsProps)
           />
         </ul>
       </div>
-      <div className="space-y-3 sm:space-y-4 pb-8 sm:pb-10 lg:pb-14">
+      <div className="space-y-3 sm:space-y-4 pb-8 sm:pb-10 lg:pb-14 mt-4">
         <span className="block font-inter text-xs text-[#667085] uppercase">
           actions
         </span>
-        <ul className="space-y-3 sm:space-y-4">
+        <ul>
           <PropsItem
             icon={<EditIcon width={13} />}
             title="Edit permission & tags"
-            onClick={() => open("set-tag-permission", { memory, isNew: false })}
+            onClick={handleEditPermission}
             className="cursor-pointer !text-sm !font-medium !text-grey-600"
           />
         </ul>
       </div>
-    </div >
-  )
+    </div>
+  );
+}
+
+export default function SidebarDetails({ memory, onClose, isOpen }: SidebarDetailsProps) {
+  return (
+    <>
+      <Sheet
+        detent="content"
+        isOpen={isOpen}
+        className="block md:hidden"
+        onClose={onClose}
+        snapPoints={[0.5, 0.75, 1]}
+      >
+        <Sheet.Container className="bg-sand-1">
+          <Sheet.Header className="bg-sand-1 rounded-3xl" />
+          <Sheet.Content className="bg-sand-1">
+            <Content memory={memory} onClose={onClose} isMobile />
+          </Sheet.Content>
+        </Sheet.Container>
+        <Sheet.Backdrop />
+      </Sheet>
+
+      <div
+        className={`h-full hidden md:block border-l border-[#EAECF0] transition-all duration-300 ease-in-out overflow-hidden ${isOpen ? 'w-60' : 'w-0'
+          }`}
+      >
+        <Content memory={memory} onClose={onClose} isMobile={false} />
+      </div>
+    </>
+  );
 }

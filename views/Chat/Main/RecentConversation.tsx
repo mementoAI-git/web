@@ -7,10 +7,10 @@ export default function RecentConversations() {
   const { data, isLoading } = useSWR(`${endpoint.memories}?page=1`)
 
   return (
-    <div className="container w-full space-y-6">
+    <div className="container w-full space-y-3 md:space-y-6">
       <div className="flex items-center justify-between">
         <h4 className="font-canela font-medium text-xl md:text-2xl text-sand-12">Recent Conversations</h4>
-        <Link href="/chat/conversations" className="text-blue-6 underline font-semibold font-inter text-lg cursor-pointer">
+        <Link href="/chat/conversations" className="text-blue-6 md:underline font-semibold font-inter text-sm sm:text-base md:text-lg cursor-pointer">
           See more
         </Link>
       </div>

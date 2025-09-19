@@ -1,4 +1,5 @@
 import TimesIcon from "@/public/icon/times.svg";
+import { cn, isEmpty } from "@/utility";
 import { PropsWithChildren } from "react";
 
 interface IModalLayout extends PropsWithChildren {
@@ -114,11 +115,11 @@ export function FullScreenModal({ open, onClose, header, footer, children }: IFu
   );
 }
 
-export function ModalCloseBtn({ onClick }) {
+export function ModalCloseBtn({ onClick, className = "" }) {
   return (
     <div
       onClick={onClick}
-      className="modal-close-btn"
+      className={cn("modal-close-btn", { [className]: !isEmpty(className) })}
     >
       <TimesIcon width={8.33} height={8.33} />
     </div>

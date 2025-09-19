@@ -10,7 +10,7 @@ export default function PropsItem({ title, icon, subtitle = null, className, onC
   return (
     <li
       onClick={onClick || null}
-      className={`flex items-center gap-2 font-inter text-xs font-normal text-grey-800 capitalize ${className}`}
+      className={`flex items-center py-2 gap-2 font-inter text-xs font-normal text-grey-800 capitalize ${className}`}
     >
       <div className="shrink-0">{icon}</div>
       <span className="text-xs text-[#667085]">{title} </span>

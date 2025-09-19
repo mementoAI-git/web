@@ -118,6 +118,7 @@ export default function BackgroundMusic() {
         playTrack(selectedAudio.key);
       }
     } catch (error) {
+      console.error(error);
       toast.error("Failed to update background music");
     }
   }, [currentTrackIndex, isPlaying, user, setUser, trigger, playTrack, pauseTrack, resumeTrack, audioFiles]);
@@ -144,6 +145,7 @@ export default function BackgroundMusic() {
         }
       }
     } catch (error) {
+      console.error(error);
       toast.error("Failed to update background music settings");
     }
   }, [user, setUser, trigger, playTrack, stopTrack, audioFiles]);
@@ -167,7 +169,7 @@ export default function BackgroundMusic() {
               <div
                 key={i}
                 className={`border py-2.5 px-3 rounded-xl flex gap-3 items-center cursor-pointer transition-colors ${currentTrackIndex === i
-                  ? 'border-sand-8 bg-sand-2'
+                  ? 'border-blue-6 border-2 bg-blue-1'
                   : 'border-[#EAECF0] hover:border-gray-300'
                   } ${isMutating ? 'opacity-50 cursor-not-allowed' : ''}`}
                 onClick={() => !isMutating && handleTrackSelect(i)}
@@ -179,8 +181,8 @@ export default function BackgroundMusic() {
                 </div>
                 {currentTrackIndex === i && isPlaying && (
                   <span className="relative flex size-2">
-                    <div className="size-full absolute bg-green-300 animate-ping rounded-full" />
-                    <span className="relative inline-flex size-2 rounded-full bg-green-400"></span>
+                    <div className="size-full absolute bg-blue-6 animate-ping rounded-full" />
+                    <span className="relative inline-flex size-2 rounded-full bg-blue-6"></span>
                   </span>
                 )}
               </div>

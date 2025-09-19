@@ -12,6 +12,7 @@ import { IOnUploadPayload } from "@/utility/interface";
 import { v4 as uuidv4 } from "uuid";
 import ImagePreview from "./ImagePreveiw";
 import { isEmpty } from "lodash";
+import ChatSettings from "../ChatSetting";
 
 interface IOnSendPayload {
   attachments?: string[];
@@ -168,9 +169,11 @@ export default function Chatinput({
             />
           </label>
 
-          <div className={cn("icon-container", "!rounded-xl !size-8 md:!size-11")}>
-            <GearIcon className="size-4 md:size-5 stroke-2" />
-          </div>
+          <ChatSettings>
+            <div className={cn("icon-container", "!rounded-xl !size-8 md:!size-11")}>
+              <GearIcon className="size-4 md:size-5 stroke-2" />
+            </div>
+          </ChatSettings>
         </div>
 
         {
