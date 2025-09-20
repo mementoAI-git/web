@@ -31,23 +31,11 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
   const { user } = useStore()
   const { open } = useModal()
   const router = useRouter();
-  const { trigger } = useFetcher(endpoint.updateStreak)
 
   const handleLogoClick = () => {
     router.push("/overview");
     // onClose?.()
   }
-
-  useEffect(() => {
-    if (isEmpty(user)) return;
-    if (!dayjs().isSame(user?.last_seen, "date")) {
-      trigger()
-        .then(res => {
-          if (res.data) mutate(endpoint.profile)
-        })
-        .catch(console.log)
-    }
-  }, [user, trigger, mutate])
 
   return (
     <div className="w-full fixed top-0 left-0 right-0  border-b border-grey-500 sm:relative header-container">

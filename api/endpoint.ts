@@ -10,7 +10,6 @@ export default {
 
   // user
   profile: "/users/profile",
-  updateStreak: "/users/update-streak",
   uploadPicture: "/users/upload-picture",
   changePassword: "/users/change-password",
   setup2FA: "/users/2fa/setup",

@@ -26,18 +26,6 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
   const path = usePathname().replace('/', "")
   const { user } = useStore()
   const { open } = useModal()
-  const { trigger } = useFetcher(endpoint.updateStreak)
-
-  useEffect(() => {
-    if (isEmpty(user)) return;
-    if (!dayjs().isSame(user?.last_seen, "date")) {
-      trigger()
-        .then(res => {
-          if (res.data) mutate(endpoint.profile)
-        })
-        .catch(console.log)
-    }
-  }, [user, trigger, mutate])
 
   return (
     <div className="w-full fixed top-0 left-0 right-0  border-b border-grey-500 sm:relative header-container">
