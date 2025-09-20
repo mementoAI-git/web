@@ -57,8 +57,8 @@ export default function Chat() {
               What’s on your mind today?
             </h4>
             <Chatinput
-              inputClassName="!h-10 md:h-25"
-              className="max-w-[760px]"
+              inputClassName="!h-[50px]"
+              className="max-w-[760px] !gap-3  sm:!gap-10"
               onSend={handleSend}
               loading={startingConversation}
             />

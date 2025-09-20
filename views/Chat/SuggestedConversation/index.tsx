@@ -53,55 +53,57 @@ export default function SuggestedConversation() {
   }, [isIntersecting, fetchMore]);
 
   return (
-    <div className="container">
-      <div className="pb-4 space-y-5 pt-12">
-        <div>
-          <GoBack />
+    <div className="page-viewport hide-scrollbar">
+      <div className="container">
+        <div className="pb-2 sm:pb-4 space-y-5 pt-12">
+          <div>
+            <GoBack />
+          </div>
+          <h2 className="text-[24px] leading-[32px] sm:text-[32px] sm:leading-[40px] md:text-[40px] md:leading-[48px] font-normal font-canela text-sand-12">
+            Suggested conversations
+          </h2>
         </div>
-        <h2 className="text-[40px] leading-[48px] font-normal font-canela text-sand-12">
-          Suggested conversations
-        </h2>
-      </div>
-      <div className="overflow-y-auto hide-scrollbar scroll-smooth pt-8" style={{ maxHeight: 'calc(100vh - 200px)' }}>
-        <div className="grid grid-cols-3 gap-6">
-          {
-            !isEmpty &&
-            conversations.map((c, i) => {
-              const category = getCategory(c?.category)
-              return (
-                <Topic
-                  key={i}
-                  id={c?._id}
-                  title={c.title}
-                  image={category?.image}
-                  tag={category ? category?.title : c?.tag[0]}
-                  className="p-3"
-                />
-              )
-            })
-          }
-          {/* Show loading skeletons for additional pages */}
-          {isLoadingMore && !isLoading && (
-            Array.from({ length: 6 }, (_, i) => (
-              <TopicSkeleton key={`skeleton-more-${i}`} />
-            ))
+        <div className="overflow-y-auto hide-scrollbar scroll-smooth pt-2 sm:pt-8" style={{ maxHeight: 'calc(100vh - 200px)' }}>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-6">
+            {
+              !isEmpty &&
+              conversations.map((c, i) => {
+                const category = getCategory(c?.category)
+                return (
+                  <Topic
+                    key={i}
+                    id={c?._id}
+                    title={c.title}
+                    image={category?.image}
+                    tag={category ? category?.title : c?.tag[0]}
+                    className="p-3"
+                  />
+                )
+              })
+            }
+            {/* Show loading skeletons for additional pages */}
+            {isLoadingMore && !isLoading && (
+              Array.from({ length: 6 }, (_, i) => (
+                <TopicSkeleton key={`skeleton-more-${i}`} />
+              ))
+            )}
+          </div>
+
+          {/* Empty state */}
+          {!isLoading && isEmpty && (
+            <div className="flex flex-col items-center justify-center py-16">
+              <div className="text-center space-y-2">
+                <h3 className="text-lg font-medium text-sand-11">No suggestions available</h3>
+                <p className="text-sm text-sand-10">Check back later for new conversation suggestions.</p>
+              </div>
+            </div>
+          )}
+
+          {/* The sentinel element for infinite scroll */}
+          {!isReachingEnd && (
+            <div ref={loadMoreRef} className="w-full h-20" />
           )}
         </div>
-
-        {/* Empty state */}
-        {!isLoading && isEmpty && (
-          <div className="flex flex-col items-center justify-center py-16">
-            <div className="text-center space-y-2">
-              <h3 className="text-lg font-medium text-sand-11">No suggestions available</h3>
-              <p className="text-sm text-sand-10">Check back later for new conversation suggestions.</p>
-            </div>
-          </div>
-        )}
-
-        {/* The sentinel element for infinite scroll */}
-        {!isReachingEnd && (
-          <div ref={loadMoreRef} className="w-full h-20" />
-        )}
       </div>
     </div>
   );

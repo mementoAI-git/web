@@ -5,7 +5,7 @@ import { Typing, TypingBubble } from "./Bubble";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import useSWR, { mutate } from "swr";
 import endpoint from "@/api/endpoint";
-import { isEmpty } from "@/utility";
+import { cn, isEmpty } from "@/utility";
 import History from "./History";
 import { IMessage } from "@/utility/interface";
 import Loader from "./Loader";
@@ -167,7 +167,7 @@ export default function Conversation({ id, type = "memory" }) {
   return (
     <div className="flex flex-1 overflow-hidden items-stretch h-full">
       <div
-        className="page-viewport hide-scrollbar h-full w-full !max-w-[90%]"
+        className={cn("page-viewport hide-scrollbar h-full w-full !max-w-[90%]", { ["px-5"]: isSidebarOpen })}
         ref={scrollContainerRef}
         onScroll={handleScroll}
       >
