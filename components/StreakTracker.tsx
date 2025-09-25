@@ -21,6 +21,7 @@ import { cn } from "@/utility";
 
 function Streak() {
   const { user } = useStore()
+  const name = user?.first_name || user?.last_name
 
   const streak = useMemo(() => {
     const end_index = dayjs(user?.last_seen).get("day")
@@ -44,7 +45,9 @@ function Streak() {
         </div>
         <div className="text-center flex flex-col gap-1">
           <span className="text-xl font-canela text-gray-800">Week streak</span>
-          <span className="text-xs font-inter text-gray-500">You are on a roll, Groot. Keep it up!</span>
+          <span className="text-xs font-inter text-gray-500">
+            You are on a roll{name ? `, ${name}.` : "."} Keep it up!
+          </span>
         </div>
       </div>
       <div className="flex gap-2.5 justify-center">
