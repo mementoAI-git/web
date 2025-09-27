@@ -4,10 +4,9 @@ import MicOffIcon from "@/public/icon/mic-off.svg"
 import MicIcon from "@/public/icon/mic.svg"
 import { createPortal } from "react-dom"
 import { cn } from "@/utility"
-import { useEffect, useRef, useState, useCallback } from "react";
-import { useLiveAPIContext } from "@/hooks/use-live-api/context";
-import { Modality } from "@google/genai";
+import { useEffect, useRef, useState } from "react";
 import AudioPulse from "../AudioPulse"
+import { useLiveAPI } from "@/hooks/use-live-api";
 
 // Transcript entry type
 type TranscriptEntry = {
@@ -24,33 +23,24 @@ interface VoiceinputProps {
 }
 
 export default function Voiceinput({ onCancel, onTranscriptEntry }: VoiceinputProps) {
-  const { 
-    connected, 
-    connect, 
-    disconnect, 
-    volume, 
-    transcript, 
-    setConfig 
-  } = useLiveAPIContext();
-  
+  const {
+    connected,
+    connect,
+    disconnect,
+    volume,
+    transcript,
+    isRecording: isRecordingLiveAPI,
+  } = useLiveAPI();
+
   const [muted, setMuted] = useState(false);
-  const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [isDisconnecting, setIsDisconnecting] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
 
-  // System instruction for the AI
-  const systemInstruction = useCallback(() => `You are my personal assistant biographer—your role is to help document, reflect on, and narrate the story of my life with depth and care. Observe my experiences, interests, and memories, and weave them into thoughtful summaries, analyses, or creative reflections. Act as a curator of my personal history: attentive, insightful, and discreet.
-
-For example:
-
-If I share a meaningful event, help me unpack its significance.
-
-If I mention a recurring habit or passion, highlight patterns or connections.
-
-Surprise me with reflective questions or observations to deepen my self-awareness.
-
-Your tone should be warm, professional, and tailored to my voice—whether analytical, poetic, or casual. Prioritize understanding over assumptions, and always invite me to expand (but never pry).`, []);
+  useEffect(() => {
+    setIsRecording(isRecordingLiveAPI);
+  }, [isRecordingLiveAPI]);
 
   // Timer effect - start when connected, stop when disconnected
   useEffect(() => {
@@ -85,13 +75,12 @@ Your tone should be warm, professional, and tailored to my voice—whether analy
   const toggleRecording = async () => {
     if (!connected) {
       // Not connected - connect and start recording
-      setIsRecording(true);
       setMuted(false);
       setRecordingTime(0); // Reset timer when starting new connection
       await connect();
+      console.log("connected", connected);
     } else if (connected && !isRecording) {
       // Connected but not recording - start recording
-      setIsRecording(true);
       setMuted(false);
     } else if (connected && isRecording && !muted) {
       // Recording and not muted - mute the recording
@@ -109,7 +98,6 @@ Your tone should be warm, professional, and tailored to my voice—whether analy
     try {
       // Stop recording if active
       if (isRecording) {
-        setIsRecording(false);
         setMuted(true);
       }
 
@@ -136,25 +124,6 @@ Your tone should be warm, professional, and tailored to my voice—whether analy
       setIsDisconnecting(false);
     }
   };
-
-  // Set up configuration when component mounts
-  useEffect(() => {
-    setConfig({
-      model: "gemini-2.0-flash-live-001",
-      systemInstruction: systemInstruction(),
-      responseModalities: [Modality.AUDIO],
-      speechConfig: {
-        voiceConfig: {
-          prebuiltVoiceConfig: {
-            voiceName: "Aoede"
-          }
-        }
-      },
-      tools: [
-        { googleSearch: {} }
-      ]
-    });
-  }, [setConfig, systemInstruction]);
 
   // Listen for new transcript entries and notify parent
   useEffect(() => {

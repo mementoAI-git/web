@@ -8,7 +8,6 @@ import { BackgroundMusicProvider } from "@/hooks/use-background-music";
 import { PropsWithChildren } from "react";
 import { Toaster } from "sonner";
 import { SWRConfig } from "swr";
-import { LiveAPIProvider } from "@/hooks/use-live-api/context";
 import { GEMINI_CONFIG } from "@/config/gemini";
 
 export default function Providers({ children }: PropsWithChildren) {
@@ -17,21 +16,19 @@ export default function Providers({ children }: PropsWithChildren) {
       <BackgroundMusicProvider>
         <ModalProvider>
           <ChatProvider>
-            <LiveAPIProvider apiKey={GEMINI_CONFIG.API_KEY}>
-              <SWRConfig value={{ fetcher }}>
-                {children}
-                <Toaster
-                  position="top-center"
-                  closeButton
-                  toastOptions={{
-                    classNames: {
-                      success: "!text-success",
-                      error: "!text-danger"
-                    }
-                  }}
-                />
-              </SWRConfig>
-            </LiveAPIProvider>
+            <SWRConfig value={{ fetcher }}>
+              {children}
+              <Toaster
+                position="top-center"
+                closeButton
+                toastOptions={{
+                  classNames: {
+                    success: "!text-success",
+                    error: "!text-danger"
+                  }
+                }}
+              />
+            </SWRConfig>
           </ChatProvider>
         </ModalProvider>
       </BackgroundMusicProvider>

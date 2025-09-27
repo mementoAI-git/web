@@ -1,8 +1,9 @@
+'use client'
+
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { GoogleGenAI, Modality } from "@google/genai";
-import { AudioStreamer } from "@/lib/audio-streamer";
-import { audioContext } from "@/lib/utils";
-import VolMeterWorket from "@/lib/worklets/vol-meter";
+import { GoogleGenAI, LiveServerMessage, Session, Modality, Blob, LiveConnectConfig } from "@google/genai";
+import { createBlob, decode, decodeAudioData } from "./utils";
+import { GEMINI_CONFIG } from "@/config/gemini";
 
 // Transcript entry type
 export type TranscriptEntry = {
@@ -12,25 +13,11 @@ export type TranscriptEntry = {
   timestamp: number;
 };
 
-export type LiveConfig = {
-  model: string;
-  systemInstruction?: string;
-  responseModalities?: Modality[];
-  speechConfig?: {
-    voiceConfig?: {
-      prebuiltVoiceConfig?: {
-        voiceName?: string;
-      };
-    };
-  };
-  tools?: any[];
-};
-
 export type UseLiveAPIResults = {
   client: GoogleGenAI;
   session: any;
-  setConfig: (config: LiveConfig) => void;
-  config: LiveConfig;
+  setConfig: (config: LiveConnectConfig) => void;
+  config: LiveConnectConfig;
   connected: boolean;
   connect: () => Promise<void>;
   disconnect: () => Promise<void>;
@@ -38,34 +25,42 @@ export type UseLiveAPIResults = {
   transcript: TranscriptEntry[];
   addTranscriptEntry: (entry: TranscriptEntry) => void;
   clearTranscript: () => void;
+  isRecording: boolean;
+  error: string | null;
 };
 
-export function useLiveAPI(apiKey?: string): UseLiveAPIResults {
+export function useLiveAPI(): UseLiveAPIResults {
   const client = useMemo(() => {
-    if (!apiKey) {
+    if (!GEMINI_CONFIG.API_KEY) {
       throw new Error("API key is required for Google GenAI SDK");
     }
-    return new GoogleGenAI({ apiKey });
-  }, [apiKey]);
+    return new GoogleGenAI({ apiKey: GEMINI_CONFIG.API_KEY });
+  }, []);
 
-  const sessionRef = useRef<any>(null);
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const audioStreamRef = useRef<MediaStream | null>(null);
-  const audioWorkletRef = useRef<AudioWorkletNode | null>(null);
-  const processorRef = useRef<ScriptProcessorNode | null>(null);
-  const audioStreamerRef = useRef<AudioStreamer | null>(null);
+  const sessionRef = useRef<Session>(null);
+  const inputAudioContextRef = useRef<AudioContext | null>(null);
+  const outputAudioContextRef = useRef<AudioContext | null>(null);
+  const mediaStreamRef = useRef<MediaStream | null>(null);
+  const sourceNodeRef = useRef<MediaStreamAudioSourceNode | null>(null);
+  const scriptProcessorNodeRef = useRef<ScriptProcessorNode | null>(null);
+  const outputNodeRef = useRef<GainNode | null>(null);
+  const nextStartTimeRef = useRef(0);
+  const sourcesRef = useRef<Set<AudioBufferSourceNode>>(new Set());
+  const isConnectingRef = useRef(false);
 
   const [connected, setConnected] = useState(false);
+  let isRecording = useRef(false).current;
   const [volume, setVolume] = useState(0);
   const [transcript, setTranscript] = useState<TranscriptEntry[]>([]);
-  const [config, setConfig] = useState<LiveConfig>({
-    model: "gemini-2.5-flash-native-audio-preview-09-2025",
-    systemInstruction: "You are a helpful assistant.",
+  const [error, setError] = useState<string | null>(null);
+
+  const [config, setConfig] = useState<LiveConnectConfig>({
+    systemInstruction: GEMINI_CONFIG.SYSTEM_INSTRUCTIONS.default,
     responseModalities: [Modality.AUDIO],
     speechConfig: {
       voiceConfig: {
         prebuiltVoiceConfig: {
-          voiceName: "Aoede"
+          voiceName: "Orus"
         }
       }
     }
@@ -81,193 +76,253 @@ export function useLiveAPI(apiKey?: string): UseLiveAPIResults {
     setTranscript([]);
   }, []);
 
-  // Initialize audio context and worklet
-  useEffect(() => {
-    const initAudio = async () => {
-      try {
-        const audioContext = new AudioContext();
-        audioContextRef.current = audioContext;
-
-        // Load audio worklet for volume monitoring
-        try {
-          await audioContext.audioWorklet.addModule('/worklets/vol-meter.js');
-        } catch (error) {
-          console.warn('Audio worklet not available, using fallback volume monitoring');
-        }
-      } catch (error) {
-        console.error('Failed to initialize audio:', error);
-      }
-    };
-
-    initAudio();
-
-    return () => {
-      if (audioContextRef.current) {
-        audioContextRef.current.close();
-      }
-    };
+  // Clear error
+  const clearError = useCallback(() => {
+    setError(null);
   }, []);
 
-  // Connect to Live API
-  const connect = useCallback(async () => {
-    console.log("Connecting to Live API....");
-    if (sessionRef.current) {
-      return; // Already connected
+  // Initialize audio contexts
+  const initializeAudioContexts = useCallback(() => {
+    if (!inputAudioContextRef.current) {
+      inputAudioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({
+        sampleRate: 16000,
+      });
     }
 
-    if (!apiKey) {
-      throw new Error("API key is required to connect to Live API");
+    if (!outputAudioContextRef.current) {
+      outputAudioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({
+        sampleRate: 24000,
+      });
+    }
+
+    if (!outputNodeRef.current && outputAudioContextRef.current) {
+      outputNodeRef.current = outputAudioContextRef.current.createGain();
+      outputNodeRef.current.connect(outputAudioContextRef.current.destination);
+    }
+
+    nextStartTimeRef.current = outputAudioContextRef.current?.currentTime || 0;
+  }, []);
+
+  // Start audio recording
+  const startAudioRecording = useCallback(async () => {
+    if (
+      isRecording ||
+      !sessionRef.current ||
+      !inputAudioContextRef.current ||
+      !outputAudioContextRef.current
+    ) {
+      return;
     }
 
     try {
+      await inputAudioContextRef.current.resume();
+
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: true,
+        video: false,
+      });
+
+      mediaStreamRef.current = stream;
+      isRecording = true;
+
+      const sourceNode = inputAudioContextRef.current.createMediaStreamSource(stream);
+      sourceNodeRef.current = sourceNode;
+      sourceNode.connect(inputAudioContextRef.current.createGain());
+
+      const bufferSize = 256;
+      const scriptProcessorNode = inputAudioContextRef.current.createScriptProcessor(
+        bufferSize,
+        1,
+        1,
+      );
+
+      scriptProcessorNode.onaudioprocess = (audioProcessingEvent) => {
+        if (!isRecording || !sessionRef.current) return;
+
+        const inputBuffer = audioProcessingEvent.inputBuffer;
+        const pcmData = inputBuffer.getChannelData(0);
+        // Calculate volume
+        let sum = 0;
+        for (let i = 0; i < pcmData.length; i++) {
+          sum += pcmData[i] * pcmData[i];
+        }
+        const rms = Math.sqrt(sum / pcmData.length);
+        setVolume(Math.min(rms * 1000, 100));
+
+        // Send audio data to Live API
+        try {
+          sessionRef.current.sendRealtimeInput({ media: createBlob(pcmData) });
+        } catch (error) {
+          console.error('Failed to send audio data:', error);
+        }
+      };
+
+      sourceNode.connect(scriptProcessorNode);
+      scriptProcessorNode.connect(inputAudioContextRef.current.destination);
+      scriptProcessorNodeRef.current = scriptProcessorNode;
+    } catch (error) {
+      setError('Failed to access microphone. Please check permissions.');
+      isRecording = false;
+    }
+  }, [isRecording]);
+
+  // Stop audio recording
+  const stopAudioRecording = useCallback(() => {
+    if (!isRecording) return;
+
+    isRecording = false;
+
+    if (scriptProcessorNodeRef.current && sourceNodeRef.current && inputAudioContextRef.current) {
+      scriptProcessorNodeRef.current.disconnect();
+      sourceNodeRef.current.disconnect();
+    }
+
+    scriptProcessorNodeRef.current = null;
+    sourceNodeRef.current = null;
+
+    if (mediaStreamRef.current) {
+      mediaStreamRef.current.getTracks().forEach((track) => track.stop());
+      mediaStreamRef.current = null;
+    }
+
+    setVolume(0);
+  }, [isRecording]);
+
+  // Connect to Live API
+  const connect = useCallback(async () => {
+    if (!GEMINI_CONFIG.API_KEY) {
+      setError("API key is required to connect to Live API");
+      return;
+    }
+
+    if (isConnectingRef.current) {
+      return;
+    }
+
+    isConnectingRef.current = true;
+    clearError();
+
+    try {
+      // Initialize audio contexts
+      initializeAudioContexts();
+
       const session = await client.live.connect({
-        model: config.model,
+        model: GEMINI_CONFIG.MODEL,
         callbacks: {
           onopen: () => {
-            console.log('Live API connected');
             setConnected(true);
+            isConnectingRef.current = false;
           },
-          onmessage: (message: any) => {
-            console.log(message);
-            // Handle AI responses
-            if (message.serverContent && message.serverContent.modelTurn) {
-              const parts = message.serverContent.modelTurn.parts;
-              if (parts && parts.length > 0) {
-                const textParts = parts
-                  .filter((part: any) => part.text)
-                  .map((part: any) => part.text)
-                  .join(' ');
+          onmessage: async (message: LiveServerMessage) => {
+            // Handle audio response
+            console.log("message", message);
+            const audio = message.serverContent?.modelTurn?.parts[0]?.inlineData;
+            console.log("audio", audio);
 
-                if (textParts.trim()) {
-                  addTranscriptEntry({
-                    _id: Date.now().toString(),
-                    role: 'ai',
-                    text: textParts,
-                    timestamp: Date.now()
-                  });
-                }
+            if (audio && outputAudioContextRef.current && outputNodeRef.current) {
+              nextStartTimeRef.current = Math.max(
+                nextStartTimeRef.current,
+                outputAudioContextRef.current.currentTime,
+              );
+
+              try {
+                const audioBuffer = await decodeAudioData(
+                  decode(audio.data),
+                  outputAudioContextRef.current,
+                  24000,
+                  1,
+                );
+
+                const source = outputAudioContextRef.current.createBufferSource();
+                source.buffer = audioBuffer;
+                source.connect(outputNodeRef.current);
+
+                source.addEventListener('ended', () => {
+                  sourcesRef.current.delete(source);
+                });
+
+                source.start(nextStartTimeRef.current);
+                nextStartTimeRef.current = nextStartTimeRef.current + audioBuffer.duration;
+                sourcesRef.current.add(source);
+              } catch (error) {
+                console.error('Failed to play audio response:', error);
               }
             }
 
-            // Handle audio data
-            if (message.data) {
-              // Play audio response
-              if (audioContextRef.current) {
-                try {
-                  const audioBuffer = audioContextRef.current.createBuffer(1, 1024, 24000);
-                  const source = audioContextRef.current.createBufferSource();
-                  source.buffer = audioBuffer;
-                  source.connect(audioContextRef.current.destination);
-                  source.start();
-                } catch (error) {
-                  console.warn('Failed to play audio:', error);
-                }
+            // Handle interruption
+            const interrupted = message.serverContent?.interrupted;
+            if (interrupted) {
+              for (const source of sourcesRef.current.values()) {
+                source.stop();
+                sourcesRef.current.delete(source);
+              }
+              nextStartTimeRef.current = 0;
+            }
+
+            if (message?.serverContent?.generationComplete) {
+              console.log("AI Response completed");
+            }
+            if (message?.serverContent?.turnComplete) {
+              console.log("User's turn completed");
+            }
+
+
+            // Handle text responses for transcript
+            if (message.serverContent?.modelTurn?.parts) {
+              const textParts = message.serverContent.modelTurn.parts
+                .filter((part: any) => part.text)
+                .map((part: any) => part.text)
+                .join(' ');
+              console.log("textParts", textParts);
+              if (textParts.trim()) {
+                addTranscriptEntry({
+                  _id: Date.now().toString(),
+                  role: 'ai',
+                  text: textParts,
+                  timestamp: Date.now()
+                });
               }
             }
           },
           onerror: (error: any) => {
-            console.error('Live API error:', error);
+            console.log('Live API error:', error);
+            setError(`Live API error: ${error.message || error}`);
             setConnected(false);
+            isConnectingRef.current = false;
           },
-          onclose: () => {
-            console.log('Live API disconnected');
+          onclose: (e: any) => {
+            console.log('Live API disconnected:', e.reason);
             setConnected(false);
-          }
+            isConnectingRef.current = false;
+            stopAudioRecording();
+          },
         },
         config: {
           responseModalities: config.responseModalities,
           systemInstruction: config.systemInstruction,
           speechConfig: config.speechConfig,
-          tools: config.tools
+          tools: config.tools,
         }
       });
 
       sessionRef.current = session;
-
-      // Start audio recording
       await startAudioRecording();
     } catch (error) {
       console.error('Failed to connect to Live API:', error);
+      setError(`Connection failed: ${error instanceof Error ? error.message : error}`);
       setConnected(false);
+      isConnectingRef.current = false;
     }
-  }, [client, config, addTranscriptEntry, apiKey]);
-
-  // Start audio recording
-  const startAudioRecording = useCallback(async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          sampleRate: 16000,
-          channelCount: 1,
-          echoCancellation: true,
-          noiseSuppression: true
-        }
-      });
-
-      audioStreamRef.current = stream;
-
-      if (audioContextRef.current) {
-        const source = audioContextRef.current.createMediaStreamSource(stream);
-
-        // Try to create audio worklet for volume monitoring
-        try {
-          const worklet = new AudioWorkletNode(audioContextRef.current, 'vol-meter');
-          worklet.port.onmessage = (event) => {
-            setVolume(event.data.volume);
-          };
-
-          source.connect(worklet);
-          audioWorkletRef.current = worklet;
-        } catch (error) {
-          console.warn('Audio worklet not available, using fallback');
-        }
-
-        // Process audio data and send to Live API
-        const processor = audioContextRef.current.createScriptProcessor(4096, 1, 1);
-        processor.onaudioprocess = (event) => {
-          if (sessionRef.current && connected) {
-            const inputBuffer = event.inputBuffer;
-            const audioData = inputBuffer.getChannelData(0);
-
-            // Calculate volume for fallback
-            let sum = 0;
-            for (let i = 0; i < audioData.length; i++) {
-              sum += audioData[i] * audioData[i];
-            }
-            const rms = Math.sqrt(sum / audioData.length);
-            setVolume(rms);
-
-            // Convert float32 to int16 PCM
-            const pcmData = new Int16Array(audioData.length);
-            for (let i = 0; i < audioData.length; i++) {
-              pcmData[i] = Math.max(-32768, Math.min(32767, audioData[i] * 32768));
-            }
-
-            // Convert to base64
-            const base64Audio = btoa(String.fromCharCode(...new Uint8Array(pcmData.buffer)));
-
-            // Send to Live API
-            try {
-              sessionRef.current.sendRealtimeInput({
-                audio: {
-                  data: base64Audio,
-                  mimeType: "audio/pcm;rate=16000"
-                }
-              });
-            } catch (error) {
-              console.warn('Failed to send audio data:', error);
-            }
-          }
-        };
-
-        source.connect(processor);
-        processor.connect(audioContextRef.current.destination);
-        processorRef.current = processor;
-      }
-    } catch (error) {
-      console.error('Failed to start audio recording:', error);
-    }
-  }, [connected]);
+  }, [
+    client,
+    config,
+    initializeAudioContexts,
+    startAudioRecording,
+    stopAudioRecording,
+    addTranscriptEntry,
+    clearError,
+    clearTranscript
+  ]);
 
   // Disconnect from Live API
   const disconnect = useCallback(async () => {
@@ -277,55 +332,36 @@ export function useLiveAPI(apiKey?: string): UseLiveAPIResults {
         sessionRef.current = null;
       }
 
-      // Stop audio recording
-      if (audioStreamRef.current) {
-        audioStreamRef.current.getTracks().forEach(track => track.stop());
-        audioStreamRef.current = null;
-      }
-
-      if (audioWorkletRef.current) {
-        audioWorkletRef.current.disconnect();
-        audioWorkletRef.current = null;
-      }
-
-      if (processorRef.current) {
-        processorRef.current.disconnect();
-        processorRef.current = null;
-      }
-
+      stopAudioRecording();
       setConnected(false);
-    } catch (error) {
-      console.error('Failed to disconnect from Live API:', error);
-    }
-  }, []);
+      isConnectingRef.current = false;
+      clearError();
 
-  useEffect(() => {
-    if (!audioStreamerRef.current) {
-      audioContext({ id: "audio-out" }).then((audioCtx: AudioContext) => {
-        audioStreamerRef.current = new AudioStreamer(audioCtx);
-        audioStreamerRef.current
-          .addWorklet<any>("vumeter-out", VolMeterWorket, (ev: any) => {
-            setVolume(ev.data.volume);
-          })
-          .then(() => {
-            // Successfully added worklet
-          });
-      });
+    } catch (error) {
+      setError(`Disconnect failed: ${error instanceof Error ? error.message : error}`);
     }
-  }, [audioStreamerRef]);
+  }, [stopAudioRecording, clearError]);
 
   // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (sessionRef.current) {
-        sessionRef.current.close();
-      }
-      if (audioStreamRef.current) {
-        audioStreamRef.current.getTracks().forEach(track => track.stop());
-      }
-    };
-  }, []);
+  // useEffect(() => {
+  //   return () => {
+  //     if (sessionRef.current) {
+  //       sessionRef.current.close();
+  //     }
+  //     stopAudioRecording();
+  //     if (inputAudioContextRef.current) {
+  //       inputAudioContextRef.current.close();
+  //     }
+  //     if (outputAudioContextRef.current) {
+  //       outputAudioContextRef.current.close();
+  //     }
+  //   };
+  // }, []);
 
+  // console
+  // console.log("is connected", isConnectingRef.current);
+
+  // console.log("sessionRef.current", sessionRef.current.);
   return {
     client,
     session: sessionRef.current,
@@ -337,6 +373,8 @@ export function useLiveAPI(apiKey?: string): UseLiveAPIResults {
     volume,
     transcript,
     addTranscriptEntry,
-    clearTranscript
+    clearTranscript,
+    isRecording: isRecording,
+    error
   };
 }
