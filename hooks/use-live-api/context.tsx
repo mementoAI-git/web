@@ -5,13 +5,11 @@ const LiveAPIContext = createContext<UseLiveAPIResults | undefined>(undefined);
 
 export type LiveAPIProviderProps = {
   children: ReactNode;
+  apiKey?: string;
 };
 
-const host = "generativelanguage.googleapis.com";
-const url = `wss://${host}/ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContent`;
-
-export const LiveAPIProvider: FC<LiveAPIProviderProps> = ({ children }) => {
-  const liveAPI = useLiveAPI({ url, apiKey: "AIzaSyA1CkTAac-3xD04CdZ-iw0BjFFc95HKBkw" });
+export const LiveAPIProvider: FC<LiveAPIProviderProps> = ({ children, apiKey }) => {
+  const liveAPI = useLiveAPI(apiKey);
 
   return (
     <LiveAPIContext.Provider value={liveAPI}>
@@ -23,7 +21,7 @@ export const LiveAPIProvider: FC<LiveAPIProviderProps> = ({ children }) => {
 export const useLiveAPIContext = () => {
   const context = useContext(LiveAPIContext);
   if (!context) {
-    throw new Error("useLiveAPIContext must be used wihin a LiveAPIProvider");
+    throw new Error("useLiveAPIContext must be used within a LiveAPIProvider");
   }
   return context;
 };

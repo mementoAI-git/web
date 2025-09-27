@@ -9,6 +9,7 @@ import { PropsWithChildren } from "react";
 import { Toaster } from "sonner";
 import { SWRConfig } from "swr";
 import { LiveAPIProvider } from "@/hooks/use-live-api/context";
+import { GEMINI_CONFIG } from "@/config/gemini";
 
 export default function Providers({ children }: PropsWithChildren) {
   return (
@@ -16,7 +17,7 @@ export default function Providers({ children }: PropsWithChildren) {
       <BackgroundMusicProvider>
         <ModalProvider>
           <ChatProvider>
-            <LiveAPIProvider>
+            <LiveAPIProvider apiKey={GEMINI_CONFIG.API_KEY}>
               <SWRConfig value={{ fetcher }}>
                 {children}
                 <Toaster
