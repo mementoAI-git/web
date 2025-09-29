@@ -194,7 +194,9 @@ export default function Conversation({ id, type = "memory" }) {
               loading={startingConversation}
               onStop={handleStop}
               onSend={handleSend}
+              history={messages.slice(-20).map(({ role, text }) => ({ role, text }))}
               inputClassName="!text-sm sm:!text-lg md:!text-xl"
+              memoryId={memory?._id || null}
             />
           </div>
         </div>

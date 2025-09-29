@@ -18,6 +18,7 @@
     "@google/generative-ai": "^0.24.1",
     "@svgr/webpack": "^8.1.0",
     "@types/lodash": "^4.17.20",
+    "@types/three": "^0.180.0",
     "axios": "^1.8.4",
     "classnames": "^2.5.1",
     "clsx": "^2.1.1",
@@ -37,6 +38,7 @@
     "sonner": "^2.0.3",
     "swr": "^2.3.3",
     "tailwind-datepicker-react": "^1.4.3",
+    "three": "^0.180.0",
     "uuid": "^11.1.0",
     "yup": "^1.6.1"
   },

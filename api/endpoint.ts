@@ -38,6 +38,7 @@ export default {
   memoryPrompt: "/memories/prompt",
   memoriesStats: "/memories/stats",
   removeFileFromMemory: "/memories/remove-file",
+  addMessageToMemory: "/memories/add-message",
 
   // ai
   aiPrompt: "/ai/prompt",

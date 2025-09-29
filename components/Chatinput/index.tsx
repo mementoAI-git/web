@@ -27,7 +27,8 @@ interface IChatinputProps {
   onChangeText?: (str: string) => void;
   onSend?: (p: IOnSendPayload) => void
   onStop?: () => void
-  context?: "default" | "memory" | "chat";
+  memoryId?: string | null
+  history?: { role: "user" | "ai", text: string }[]
 }
 
 export default function Chatinput({
@@ -36,7 +37,9 @@ export default function Chatinput({
   typing = false,
   loading = false,
   onStop,
-  onSend
+  onSend,
+  memoryId,
+  history = []
 }: IChatinputProps) {
   const [text, setText] = useState("")
   const [isVoiceMode, setIsVoiceMode] = useState(false)
@@ -129,6 +132,7 @@ export default function Chatinput({
     return (
       <Voiceinput
         onCancel={() => setIsVoiceMode(false)}
+        {...{ memoryId, history }}
       />
     );
   }

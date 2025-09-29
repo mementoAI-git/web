@@ -7,30 +7,21 @@ import { cn } from "@/utility"
 import { useEffect, useRef, useState } from "react";
 import AudioPulse from "../AudioPulse"
 import { useLiveAPI } from "@/hooks/use-live-api";
-
-// Transcript entry type
-type TranscriptEntry = {
-  _id: string;
-  role: 'user' | 'ai';
-  text: string;
-  timestamp: number;
-};
-
 // Props interface
 interface VoiceinputProps {
-  onCancel: () => void;
-  onTranscriptEntry?: (transcript: TranscriptEntry) => void;
+  onCancel: () => void
+  memoryId?: string | null
+  history?: { role: "user" | "ai", text: string }[]
 }
 
-export default function Voiceinput({ onCancel, onTranscriptEntry }: VoiceinputProps) {
+export default function Voiceinput({ onCancel, memoryId, history = [] }: VoiceinputProps) {
   const {
     connected,
     connect,
     disconnect,
     volume,
-    transcript,
-    isRecording: isRecordingLiveAPI,
-  } = useLiveAPI();
+    isRecording: isRecordingLiveAPI
+  } = useLiveAPI({ memoryId, turns: history });
 
   const [muted, setMuted] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
@@ -124,14 +115,6 @@ export default function Voiceinput({ onCancel, onTranscriptEntry }: VoiceinputPr
       setIsDisconnecting(false);
     }
   };
-
-  // Listen for new transcript entries and notify parent
-  useEffect(() => {
-    if (transcript.length > 0) {
-      const latestEntry = transcript[transcript.length - 1];
-      onTranscriptEntry?.(latestEntry);
-    }
-  }, [transcript, onTranscriptEntry]);
 
   useEffect(() => {
     document.documentElement.style.setProperty(

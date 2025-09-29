@@ -1,16 +1,17 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { GoogleGenAI, LiveServerMessage, Session, Modality, Blob, LiveConnectConfig } from "@google/genai";
+import { GoogleGenAI, LiveServerMessage, Session, Modality, LiveConnectConfig } from "@google/genai";
 import { createBlob, decode, decodeAudioData } from "./utils";
 import { GEMINI_CONFIG } from "@/config/gemini";
+import { isEmpty } from "@/utility";
+import useFetcher from "../use-fetcher";
+import endpoint from "@/api/endpoint";
 
 // Transcript entry type
 export type TranscriptEntry = {
-  _id: string;
   role: 'user' | 'ai';
   text: string;
-  timestamp: number;
 };
 
 export type UseLiveAPIResults = {
@@ -22,14 +23,18 @@ export type UseLiveAPIResults = {
   connect: () => Promise<void>;
   disconnect: () => Promise<void>;
   volume: number;
-  transcript: TranscriptEntry[];
-  addTranscriptEntry: (entry: TranscriptEntry) => void;
-  clearTranscript: () => void;
   isRecording: boolean;
   error: string | null;
+  inputNode: GainNode | null;
+  outputNode: GainNode | null;
 };
 
-export function useLiveAPI(): UseLiveAPIResults {
+interface UseLiveAPIProps {
+  memoryId?: string | null;
+  turns?: { role: "user" | "ai", text: string }[];
+}
+
+export function useLiveAPI({ memoryId, turns = [] }: UseLiveAPIProps): UseLiveAPIResults {
   const client = useMemo(() => {
     if (!GEMINI_CONFIG.API_KEY) {
       throw new Error("API key is required for Google GenAI SDK");
@@ -51,8 +56,11 @@ export function useLiveAPI(): UseLiveAPIResults {
   const [connected, setConnected] = useState(false);
   let isRecording = useRef(false).current;
   const [volume, setVolume] = useState(0);
-  const [transcript, setTranscript] = useState<TranscriptEntry[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const transcriptText = useRef({
+    user: "",
+    ai: ""
+  })
 
   const [config, setConfig] = useState<LiveConnectConfig>({
     systemInstruction: GEMINI_CONFIG.SYSTEM_INSTRUCTIONS.default,
@@ -66,15 +74,7 @@ export function useLiveAPI(): UseLiveAPIResults {
     }
   });
 
-  // Add transcript entry
-  const addTranscriptEntry = useCallback((entry: TranscriptEntry) => {
-    setTranscript(prev => [...prev, entry]);
-  }, []);
-
-  // Clear transcript
-  const clearTranscript = useCallback(() => {
-    setTranscript([]);
-  }, []);
+  const { trigger: addMessageToMemory } = useFetcher(endpoint.addMessageToMemory, "post")
 
   // Clear error
   const clearError = useCallback(() => {
@@ -166,6 +166,31 @@ export function useLiveAPI(): UseLiveAPIResults {
     }
   }, [isRecording]);
 
+  const updateTranscriptText = useCallback((role: "user" | "ai", text: string, finished = false) => {
+    if (finished) {
+      const messages = Object
+        .entries(transcriptText.current)
+        .filter(([_, text]) => !isEmpty(text) && !text.match(/<noise>/))
+        .map(([role, text]) => ({ role, text, is_voice: true }));
+
+      if (!isEmpty(messages)) {
+        addMessageToMemory({
+          memory_id: memoryId,
+          messages
+        })
+      }
+
+      transcriptText.current = {
+        user: "",
+        ai: ""
+      }
+      return;
+    }
+
+    if (isEmpty(text)) return;
+    transcriptText.current[role] += text;
+  }, [addMessageToMemory]);
+
   // Stop audio recording
   const stopAudioRecording = useCallback(() => {
     if (!isRecording) return;
@@ -214,10 +239,7 @@ export function useLiveAPI(): UseLiveAPIResults {
             isConnectingRef.current = false;
           },
           onmessage: async (message: LiveServerMessage) => {
-            // Handle audio response
-            console.log("message", message);
             const audio = message.serverContent?.modelTurn?.parts[0]?.inlineData;
-            console.log("audio", audio);
 
             if (audio && outputAudioContextRef.current && outputNodeRef.current) {
               nextStartTimeRef.current = Math.max(
@@ -249,6 +271,24 @@ export function useLiveAPI(): UseLiveAPIResults {
               }
             }
 
+            const aiTranscription = message.serverContent?.outputTranscription;
+            if (!isEmpty(aiTranscription) || message?.serverContent?.turnComplete) {
+              updateTranscriptText(
+                "ai",
+                aiTranscription?.text,
+                message?.serverContent?.turnComplete
+              );
+            }
+
+            const userTranscription = message.serverContent?.inputTranscription;
+            if (!isEmpty(userTranscription) || message?.serverContent?.turnComplete) {
+              updateTranscriptText(
+                "user",
+                userTranscription?.text,
+                message?.serverContent?.turnComplete
+              );
+            }
+
             // Handle interruption
             const interrupted = message.serverContent?.interrupted;
             if (interrupted) {
@@ -257,31 +297,6 @@ export function useLiveAPI(): UseLiveAPIResults {
                 sourcesRef.current.delete(source);
               }
               nextStartTimeRef.current = 0;
-            }
-
-            if (message?.serverContent?.generationComplete) {
-              console.log("AI Response completed");
-            }
-            if (message?.serverContent?.turnComplete) {
-              console.log("User's turn completed");
-            }
-
-
-            // Handle text responses for transcript
-            if (message.serverContent?.modelTurn?.parts) {
-              const textParts = message.serverContent.modelTurn.parts
-                .filter((part: any) => part.text)
-                .map((part: any) => part.text)
-                .join(' ');
-              console.log("textParts", textParts);
-              if (textParts.trim()) {
-                addTranscriptEntry({
-                  _id: Date.now().toString(),
-                  role: 'ai',
-                  text: textParts,
-                  timestamp: Date.now()
-                });
-              }
             }
           },
           onerror: (error: any) => {
@@ -302,8 +317,24 @@ export function useLiveAPI(): UseLiveAPIResults {
           systemInstruction: config.systemInstruction,
           speechConfig: config.speechConfig,
           tools: config.tools,
+          inputAudioTranscription: {
+            languageCode: "en-US",
+          },
+          outputAudioTranscription: {
+            languageCode: "en-US",
+          }
         }
       });
+
+      if (!isEmpty(turns)) {
+        session.sendClientContent({
+          turns: turns.map(({ role, text }) => ({
+            role: role === "ai" ? "model" : "user",
+            parts: [{ text }]
+          })),
+          turnComplete: false
+        })
+      }
 
       sessionRef.current = session;
       await startAudioRecording();
@@ -319,9 +350,8 @@ export function useLiveAPI(): UseLiveAPIResults {
     initializeAudioContexts,
     startAudioRecording,
     stopAudioRecording,
-    addTranscriptEntry,
-    clearError,
-    clearTranscript
+    updateTranscriptText,
+    clearError
   ]);
 
   // Disconnect from Live API
@@ -371,10 +401,9 @@ export function useLiveAPI(): UseLiveAPIResults {
     connect,
     disconnect,
     volume,
-    transcript,
-    addTranscriptEntry,
-    clearTranscript,
     isRecording: isRecording,
-    error
+    error,
+    inputNode: inputAudioContextRef.current?.createGain(),
+    outputNode: outputAudioContextRef.current?.createGain(),
   };
 }
