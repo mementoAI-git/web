@@ -5,9 +5,9 @@ import Markdown from 'react-markdown'
 import { useEffect, useMemo, useRef, useState } from "react"
 
 interface IBubbleProps {
-  role: "user" | "ai"
+  role?: "user" | "ai" | string
   attatchments?: { url: string, name: string }[]
-  text: string
+  text?: string
   duration?: number
   is_voice?: boolean
 }

@@ -5,7 +5,6 @@ import MicIcon from "@/public/icon/mic.svg"
 import { createPortal } from "react-dom"
 import { cn } from "@/utility"
 import { useEffect, useRef, useState } from "react";
-import AudioPulse from "../AudioPulse"
 import { useLiveAPI } from "@/hooks/use-live-api";
 import { Visual3D } from "./AudioVisual3D"
 // Props interface
@@ -101,6 +100,7 @@ export default function Voiceinput({ onCancel, memoryId, history = [] }: Voicein
 
       onCancel();
     } catch (error) {
+      console.error(error)
       onCancel();
     } finally {
       setIsDisconnecting(false);
