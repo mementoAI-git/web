@@ -61,6 +61,11 @@ export function useLiveAPI({ memoryId, turns = [] }: UseLiveAPIProps): UseLiveAP
     user: "",
     ai: ""
   })
+  const turnTimerRef = useRef({
+    duration: 0,
+    startTime: null,
+    interval: null
+  });
 
   const [config, setConfig] = useState<LiveConnectConfig>({
     systemInstruction: GEMINI_CONFIG.SYSTEM_INSTRUCTIONS.default,
@@ -166,12 +171,38 @@ export function useLiveAPI({ memoryId, turns = [] }: UseLiveAPIProps): UseLiveAP
     }
   }, [isRecording]);
 
+  // Start turn duration tracking
+  const startTurnTimer = useCallback(() => {
+    if (turnTimerRef.current.interval) return; // Already running
+
+    turnTimerRef.current.startTime = Date.now();
+    turnTimerRef.current.interval = setInterval(() => {
+      if (turnTimerRef.current.startTime) {
+        turnTimerRef.current.duration = Math.floor((Date.now() - turnTimerRef.current.startTime) / 1000);
+      }
+    }, 1000);
+  }, []);
+
+  // Stop turn duration tracking
+  const stopTurnTimer = useCallback(() => {
+    if (turnTimerRef.current.interval) {
+      clearInterval(turnTimerRef.current.interval);
+      turnTimerRef.current.interval = null;
+    }
+    turnTimerRef.current.startTime = null;
+  }, []);
+
   const updateTranscriptText = useCallback((role: "user" | "ai", text: string, finished = false) => {
     if (finished) {
       const messages = Object
         .entries(transcriptText.current)
         .filter(([_, text]) => !isEmpty(text) && !text.match(/<noise>/))
-        .map(([role, text]) => ({ role, text, is_voice: true }));
+        .map(([role, text]) => ({
+          role,
+          text,
+          is_voice: true,
+          duration: turnTimerRef.current.duration
+        }));
 
       if (!isEmpty(messages)) {
         addMessageToMemory({
@@ -184,12 +215,17 @@ export function useLiveAPI({ memoryId, turns = [] }: UseLiveAPIProps): UseLiveAP
         user: "",
         ai: ""
       }
+      stopTurnTimer(); // Stop timer when turn is complete
+      turnTimerRef.current.duration = 0;
       return;
     }
 
     if (isEmpty(text)) return;
     transcriptText.current[role] += text;
-  }, [addMessageToMemory]);
+    if (!turnTimerRef.current.interval) {
+      startTurnTimer();
+    }
+  }, [addMessageToMemory, startTurnTimer, stopTurnTimer]);
 
   // Stop audio recording
   const stopAudioRecording = useCallback(() => {
@@ -237,6 +273,7 @@ export function useLiveAPI({ memoryId, turns = [] }: UseLiveAPIProps): UseLiveAP
           onopen: () => {
             setConnected(true);
             isConnectingRef.current = false;
+            turnTimerRef.current.duration = 0;
           },
           onmessage: async (message: LiveServerMessage) => {
             const audio = message.serverContent?.modelTurn?.parts[0]?.inlineData;
@@ -351,7 +388,9 @@ export function useLiveAPI({ memoryId, turns = [] }: UseLiveAPIProps): UseLiveAP
     startAudioRecording,
     stopAudioRecording,
     updateTranscriptText,
-    clearError
+    clearError,
+    startTurnTimer,
+    stopTurnTimer
   ]);
 
   // Disconnect from Live API
@@ -363,6 +402,7 @@ export function useLiveAPI({ memoryId, turns = [] }: UseLiveAPIProps): UseLiveAP
       }
 
       stopAudioRecording();
+      stopTurnTimer(); // Stop timer on disconnect
       setConnected(false);
       isConnectingRef.current = false;
       clearError();
@@ -370,7 +410,7 @@ export function useLiveAPI({ memoryId, turns = [] }: UseLiveAPIProps): UseLiveAP
     } catch (error) {
       setError(`Disconnect failed: ${error instanceof Error ? error.message : error}`);
     }
-  }, [stopAudioRecording, clearError]);
+  }, [stopAudioRecording, stopTurnTimer, clearError]);
 
   // Cleanup on unmount
   // useEffect(() => {
@@ -404,6 +444,6 @@ export function useLiveAPI({ memoryId, turns = [] }: UseLiveAPIProps): UseLiveAP
     isRecording: isRecording,
     error,
     inputNode: inputAudioContextRef.current?.createGain(),
-    outputNode: outputAudioContextRef.current?.createGain(),
+    outputNode: outputAudioContextRef.current?.createGain()
   };
 }

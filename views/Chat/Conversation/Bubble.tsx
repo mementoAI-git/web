@@ -1,11 +1,34 @@
-import { cn, isEmpty } from "@/utility"
-import careerImage from "@/public/image/image-6.png"
+import { cn, getDuration, isEmpty } from "@/utility"
+import WaveIcon from "@/public/icon/wave.svg";
 import Image from "next/image"
 import Markdown from 'react-markdown'
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 
-export default function Bubble({ role = "user", attatchments = [], text = "" }) {
+interface IBubbleProps {
+  role: "user" | "ai"
+  attatchments?: { url: string, name: string }[]
+  text: string
+  duration?: number
+  is_voice?: boolean
+}
+
+interface ITypingBubbleProps extends Pick<IBubbleProps, "text"> {
+  onFinish: (text: string) => void
+}
+
+export default function Bubble({
+  role = "user",
+  attatchments = [],
+  duration = 0,
+  text = "",
+  is_voice = false
+}: IBubbleProps) {
+
   const isUser = role === "user"
+  const { mins, secs } = useMemo(() => {
+    if (!is_voice) return getDuration(0)
+    return getDuration(duration)
+  }, [is_voice, duration])
   return (
     <div className="space-y-1">
       {
@@ -25,21 +48,32 @@ export default function Bubble({ role = "user", attatchments = [], text = "" }) 
           }
         </div>
       }
-      <div
-        className={cn("w-full py-1 md:py-3", {
-          "ml-auto w-fit bg-sand-3 px-2 md:px-4 max-w-[520px] rounded-lg md:rounded-xl": isUser
-        })}
-      >
-        <span className="font-georgia md:text-xl text-sand-12 ">
-          <Markdown>{text || ""}</Markdown>
-        </span>
+      <div>
+        <div
+          className={cn("w-full py-1 md:py-3", {
+            "ml-auto w-fit bg-sand-3 px-2 md:px-4 max-w-[520px] rounded-lg md:rounded-xl": isUser
+          })}
+        >
+          <span className="font-georgia md:text-xl text-sand-12 ">
+            <Markdown>{text || ""}</Markdown>
+          </span>
+        </div>
+        {
+          isUser && is_voice &&
+          <div className="mt-2 flex gap-2">
+            <WaveIcon className="size-[15px] text-[#667085] ml-auto stroke-2" />
+            <span className="font-inter text-xs text-gray-700">
+              {mins}:{secs}
+            </span>
+          </div>
+        }
       </div>
     </div>
   )
 }
 
 
-export function TypingBubble({ text, onFinish }) {
+export function TypingBubble({ text, onFinish }: ITypingBubbleProps) {
   const [displayText, setDisplayText] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const intervalRef = useRef(null);
