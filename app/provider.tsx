@@ -8,7 +8,6 @@ import { BackgroundMusicProvider } from "@/hooks/use-background-music";
 import { PropsWithChildren } from "react";
 import { Toaster } from "sonner";
 import { SWRConfig } from "swr";
-import { GEMINI_CONFIG } from "@/config/gemini";
 
 export default function Providers({ children }: PropsWithChildren) {
   return (
