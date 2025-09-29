@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { GoogleGenAI, LiveServerMessage, Session, Modality, LiveConnectConfig } from "@google/genai";
+import { GoogleGenAI, LiveServerMessage, Session, Modality, LiveConnectConfig, LiveSendRealtimeInputParameters } from "@google/genai";
 import { createBlob, decode, decodeAudioData } from "./utils";
 import { GEMINI_CONFIG } from "@/config/gemini";
 import { isEmpty } from "@/utility";
@@ -14,48 +14,30 @@ export type TranscriptEntry = {
   text: string;
 };
 
-export type UseLiveAPIResults = {
-  client: GoogleGenAI;
-  session: any;
-  setConfig: (config: LiveConnectConfig) => void;
-  config: LiveConnectConfig;
-  connected: boolean;
-  connect: () => Promise<void>;
-  disconnect: () => Promise<void>;
-  volume: number;
-  isRecording: boolean;
-  error: string | null;
-  inputNode: GainNode | null;
-  outputNode: GainNode | null;
-};
-
 interface UseLiveAPIProps {
   memoryId?: string | null;
   turns?: { role: "user" | "ai", text: string }[];
 }
 
-export function useLiveAPI({ memoryId, turns = [] }: UseLiveAPIProps): UseLiveAPIResults {
-  const client = useMemo(() => {
-    if (!GEMINI_CONFIG.API_KEY) {
-      throw new Error("API key is required for Google GenAI SDK");
-    }
-    return new GoogleGenAI({ apiKey: GEMINI_CONFIG.API_KEY });
-  }, []);
+export function useLiveAPI({ memoryId, turns = [] }: UseLiveAPIProps) {
+  const [isRecording, setIsRecording] = useState(false);
+  const [status, setStatus] = useState('');
+  const [inputNode, setInputNode] = useState<GainNode | null>(null);
+  const [outputNode, setOutputNode] = useState<GainNode | null>(null);
 
-  const sessionRef = useRef<Session>(null);
+  const clientRef = useRef<GoogleGenAI | null>(null);
+  const sessionPromiseRef = useRef<Promise<Session> | null>(null);
+  const isRecordingRef = useRef(false);
   const inputAudioContextRef = useRef<AudioContext | null>(null);
   const outputAudioContextRef = useRef<AudioContext | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const sourceNodeRef = useRef<MediaStreamAudioSourceNode | null>(null);
   const scriptProcessorNodeRef = useRef<ScriptProcessorNode | null>(null);
-  const outputNodeRef = useRef<GainNode | null>(null);
   const nextStartTimeRef = useRef(0);
   const sourcesRef = useRef<Set<AudioBufferSourceNode>>(new Set());
   const isConnectingRef = useRef(false);
 
   const [connected, setConnected] = useState(false);
-  let isRecording = useRef(false).current;
-  const [volume, setVolume] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const transcriptText = useRef({
     user: "",
@@ -67,109 +49,64 @@ export function useLiveAPI({ memoryId, turns = [] }: UseLiveAPIProps): UseLiveAP
     interval: null
   });
 
-  const [config, setConfig] = useState<LiveConnectConfig>({
-    systemInstruction: GEMINI_CONFIG.SYSTEM_INSTRUCTIONS.default,
-    responseModalities: [Modality.AUDIO],
-    speechConfig: {
-      voiceConfig: {
-        prebuiltVoiceConfig: {
-          voiceName: "Orus"
-        }
-      }
-    }
-  });
-
   const { trigger: addMessageToMemory } = useFetcher(endpoint.addMessageToMemory, "post")
 
-  // Clear error
-  const clearError = useCallback(() => {
-    setError(null);
-  }, []);
-
-  // Initialize audio contexts
-  const initializeAudioContexts = useCallback(() => {
-    if (!inputAudioContextRef.current) {
-      inputAudioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({
-        sampleRate: 16000,
-      });
-    }
-
-    if (!outputAudioContextRef.current) {
-      outputAudioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({
-        sampleRate: 24000,
-      });
-    }
-
-    if (!outputNodeRef.current && outputAudioContextRef.current) {
-      outputNodeRef.current = outputAudioContextRef.current.createGain();
-      outputNodeRef.current.connect(outputAudioContextRef.current.destination);
-    }
-
-    nextStartTimeRef.current = outputAudioContextRef.current?.currentTime || 0;
-  }, []);
-
   // Start audio recording
-  const startAudioRecording = useCallback(async () => {
-    if (
-      isRecording ||
-      !sessionRef.current ||
-      !inputAudioContextRef.current ||
-      !outputAudioContextRef.current
-    ) {
-      return;
-    }
+  const startRecording = useCallback(async () => {
+    if (isRecordingRef.current) return;
+    isRecordingRef.current = true;
+    setIsRecording(true);
+
+    const inputAudioContext = inputAudioContextRef.current;
+    if (!inputAudioContext) return;
+
+    await inputAudioContext.resume();
+    setStatus('Requesting microphone access...');
 
     try {
-      await inputAudioContextRef.current.resume();
-
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: true,
         video: false,
       });
-
       mediaStreamRef.current = stream;
-      isRecording = true;
 
-      const sourceNode = inputAudioContextRef.current.createMediaStreamSource(stream);
-      sourceNodeRef.current = sourceNode;
-      sourceNode.connect(inputAudioContextRef.current.createGain());
+      setStatus('Microphone access granted. Starting capture...');
 
-      const bufferSize = 256;
-      const scriptProcessorNode = inputAudioContextRef.current.createScriptProcessor(
+      const source = inputAudioContext.createMediaStreamSource(stream);
+      sourceNodeRef.current = source;
+      source.connect(inputNode!);
+
+      const bufferSize = 4096;
+      const scriptProcessor = inputAudioContext.createScriptProcessor(
         bufferSize,
         1,
         1,
       );
+      scriptProcessorNodeRef.current = scriptProcessor;
 
-      scriptProcessorNode.onaudioprocess = (audioProcessingEvent) => {
-        if (!isRecording || !sessionRef.current) return;
+      scriptProcessor.onaudioprocess = (audioProcessingEvent) => {
+        if (!isRecordingRef.current) return;
 
         const inputBuffer = audioProcessingEvent.inputBuffer;
         const pcmData = inputBuffer.getChannelData(0);
-        // Calculate volume
-        let sum = 0;
-        for (let i = 0; i < pcmData.length; i++) {
-          sum += pcmData[i] * pcmData[i];
-        }
-        const rms = Math.sqrt(sum / pcmData.length);
-        setVolume(Math.min(rms * 1000, 100));
 
-        // Send audio data to Live API
-        try {
-          sessionRef.current.sendRealtimeInput({ media: createBlob(pcmData) });
-        } catch (error) {
-          console.error('Failed to send audio data:', error);
-        }
+        sessionPromiseRef.current?.then((session) => {
+          session.sendRealtimeInput({
+            media: createBlob(pcmData)
+          });
+        });
       };
 
-      sourceNode.connect(scriptProcessorNode);
-      scriptProcessorNode.connect(inputAudioContextRef.current.destination);
-      scriptProcessorNodeRef.current = scriptProcessorNode;
-    } catch (error) {
-      setError('Failed to access microphone. Please check permissions.');
-      isRecording = false;
+      source.connect(scriptProcessor);
+      scriptProcessor.connect(inputAudioContext.destination);
+      setStatus('🔴 Recording... Capturing PCM chunks.');
+    } catch (err: any) {
+      console.error('Error starting recording:', err);
+      setStatus(`Error: ${err.message}`);
+      isRecordingRef.current = false;
+      setIsRecording(false);
     }
-  }, [isRecording]);
+  }, [inputNode]);
 
   // Start turn duration tracking
   const startTurnTimer = useCallback(() => {
@@ -228,73 +165,61 @@ export function useLiveAPI({ memoryId, turns = [] }: UseLiveAPIProps): UseLiveAP
   }, [addMessageToMemory, startTurnTimer, stopTurnTimer]);
 
   // Stop audio recording
-  const stopAudioRecording = useCallback(() => {
-    if (!isRecording) return;
+  const stopRecording = useCallback(() => {
+    if (!isRecordingRef.current) return;
 
-    isRecording = false;
+    setStatus('Stopping recording...');
+    isRecordingRef.current = false;
+    setIsRecording(false);
 
-    if (scriptProcessorNodeRef.current && sourceNodeRef.current && inputAudioContextRef.current) {
-      scriptProcessorNodeRef.current.disconnect();
-      sourceNodeRef.current.disconnect();
-    }
+    scriptProcessorNodeRef.current?.disconnect();
+    sourceNodeRef.current?.disconnect();
+    scriptProcessorNodeRef.current = undefined;
+    sourceNodeRef.current = undefined;
 
-    scriptProcessorNodeRef.current = null;
-    sourceNodeRef.current = null;
+    mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
+    mediaStreamRef.current = undefined;
 
-    if (mediaStreamRef.current) {
-      mediaStreamRef.current.getTracks().forEach((track) => track.stop());
-      mediaStreamRef.current = null;
-    }
+    stopTurnTimer(); // Stop timer on disconnect
+    setConnected(false);
+    isConnectingRef.current = false;
 
-    setVolume(0);
-  }, [isRecording]);
+    setStatus('Recording stopped. Click Start to begin again.');
+  }, []);
 
   // Connect to Live API
   const connect = useCallback(async () => {
-    if (!GEMINI_CONFIG.API_KEY) {
-      setError("API key is required to connect to Live API");
-      return;
-    }
-
-    if (isConnectingRef.current) {
-      return;
-    }
-
-    isConnectingRef.current = true;
-    clearError();
+    if (!clientRef.current || !outputAudioContextRef.current) return;
+    const outputAudioContext = outputAudioContextRef.current;
 
     try {
-      // Initialize audio contexts
-      initializeAudioContexts();
-
-      const session = await client.live.connect({
+      sessionPromiseRef.current = clientRef.current.live.connect({
         model: GEMINI_CONFIG.MODEL,
         callbacks: {
           onopen: () => {
             setConnected(true);
-            isConnectingRef.current = false;
             turnTimerRef.current.duration = 0;
           },
           onmessage: async (message: LiveServerMessage) => {
             const audio = message.serverContent?.modelTurn?.parts[0]?.inlineData;
 
-            if (audio && outputAudioContextRef.current && outputNodeRef.current) {
+            if (audio) {
               nextStartTimeRef.current = Math.max(
                 nextStartTimeRef.current,
-                outputAudioContextRef.current.currentTime,
+                outputAudioContext.currentTime,
               );
 
               try {
                 const audioBuffer = await decodeAudioData(
                   decode(audio.data),
-                  outputAudioContextRef.current,
+                  outputAudioContext,
                   24000,
                   1,
                 );
 
-                const source = outputAudioContextRef.current.createBufferSource();
+                const source = outputAudioContext.createBufferSource();
                 source.buffer = audioBuffer;
-                source.connect(outputNodeRef.current);
+                source.connect(outputNode!);
 
                 source.addEventListener('ended', () => {
                   sourcesRef.current.delete(source);
@@ -343,17 +268,21 @@ export function useLiveAPI({ memoryId, turns = [] }: UseLiveAPIProps): UseLiveAP
             isConnectingRef.current = false;
           },
           onclose: (e: any) => {
-            console.log('Live API disconnected:', e.reason);
             setConnected(false);
             isConnectingRef.current = false;
-            stopAudioRecording();
           },
         },
         config: {
-          responseModalities: config.responseModalities,
-          systemInstruction: config.systemInstruction,
-          speechConfig: config.speechConfig,
-          tools: config.tools,
+          responseModalities: [Modality.AUDIO],
+          systemInstruction: GEMINI_CONFIG.SYSTEM_INSTRUCTIONS.default,
+          speechConfig: {
+            languageCode: 'en-US',
+            voiceConfig: {
+              prebuiltVoiceConfig: {
+                voiceName: "Orus"
+              }
+            }
+          },
           inputAudioTranscription: {
             languageCode: "en-US",
           },
@@ -364,17 +293,16 @@ export function useLiveAPI({ memoryId, turns = [] }: UseLiveAPIProps): UseLiveAP
       });
 
       if (!isEmpty(turns)) {
-        session.sendClientContent({
-          turns: turns.map(({ role, text }) => ({
-            role: role === "ai" ? "model" : "user",
-            parts: [{ text }]
-          })),
-          turnComplete: false
+        sessionPromiseRef.current?.then((session) => {
+          session.sendClientContent({
+            turns: turns.map(({ role, text }) => ({
+              role: role === "ai" ? "model" : "user",
+              parts: [{ text }]
+            })),
+            turnComplete: false
+          })
         })
       }
-
-      sessionRef.current = session;
-      await startAudioRecording();
     } catch (error) {
       console.error('Failed to connect to Live API:', error);
       setError(`Connection failed: ${error instanceof Error ? error.message : error}`);
@@ -382,68 +310,51 @@ export function useLiveAPI({ memoryId, turns = [] }: UseLiveAPIProps): UseLiveAP
       isConnectingRef.current = false;
     }
   }, [
-    client,
-    config,
-    initializeAudioContexts,
-    startAudioRecording,
-    stopAudioRecording,
     updateTranscriptText,
-    clearError,
-    startTurnTimer,
-    stopTurnTimer
+    outputNode
   ]);
 
-  // Disconnect from Live API
-  const disconnect = useCallback(async () => {
-    try {
-      if (sessionRef.current) {
-        sessionRef.current.close();
-        sessionRef.current = null;
-      }
+  useEffect(() => {
+    const inputCtx = new ((window as any).AudioContext || (window as any).webkitAudioContext)({
+      sampleRate: 16000,
+    });
 
-      stopAudioRecording();
-      stopTurnTimer(); // Stop timer on disconnect
-      setConnected(false);
-      isConnectingRef.current = false;
-      clearError();
+    const outputCtx = new ((window as any).AudioContext || (window as any).webkitAudioContext)({
+      sampleRate: 24000,
+    });
+    inputAudioContextRef.current = inputCtx;
+    outputAudioContextRef.current = outputCtx;
+    nextStartTimeRef.current = outputCtx.currentTime;
 
-    } catch (error) {
-      setError(`Disconnect failed: ${error instanceof Error ? error.message : error}`);
+    const inNode = inputCtx.createGain();
+    const outNode = outputCtx.createGain();
+    outNode.connect(outputCtx.destination);
+    setInputNode(inNode);
+    setOutputNode(outNode);
+
+    clientRef.current = new GoogleGenAI({ apiKey: GEMINI_CONFIG.API_KEY });
+
+    return () => {
+      sessionPromiseRef.current?.then((session) => session.close());
+      inputCtx.close().catch(console.error);
+      outputCtx.close().catch(console.error);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (outputNode) {
+      connect();
     }
-  }, [stopAudioRecording, stopTurnTimer, clearError]);
+  }, [outputNode, connect]);
 
-  // Cleanup on unmount
-  // useEffect(() => {
-  //   return () => {
-  //     if (sessionRef.current) {
-  //       sessionRef.current.close();
-  //     }
-  //     stopAudioRecording();
-  //     if (inputAudioContextRef.current) {
-  //       inputAudioContextRef.current.close();
-  //     }
-  //     if (outputAudioContextRef.current) {
-  //       outputAudioContextRef.current.close();
-  //     }
-  //   };
-  // }, []);
-
-  // console
-  // console.log("is connected", isConnectingRef.current);
-
-  // console.log("sessionRef.current", sessionRef.current.);
   return {
-    client,
-    session: sessionRef.current,
-    config,
-    setConfig,
     connected,
     connect,
-    disconnect,
-    volume,
-    isRecording: isRecording,
+    startRecording,
+    stopRecording,
+    isRecording,
     error,
-    inputNode: inputAudioContextRef.current?.createGain(),
-    outputNode: outputAudioContextRef.current?.createGain()
+    inputNode,
+    outputNode
   };
 }

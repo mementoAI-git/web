@@ -7,6 +7,7 @@ import { cn } from "@/utility"
 import { useEffect, useRef, useState } from "react";
 import AudioPulse from "../AudioPulse"
 import { useLiveAPI } from "@/hooks/use-live-api";
+import { Visual3D } from "./AudioVisual3D"
 // Props interface
 interface VoiceinputProps {
   onCancel: () => void
@@ -18,24 +19,21 @@ export default function Voiceinput({ onCancel, memoryId, history = [] }: Voicein
   const {
     connected,
     connect,
-    disconnect,
-    volume,
-    isRecording: isRecordingLiveAPI
+    startRecording,
+    stopRecording,
+    inputNode,
+    outputNode,
+    isRecording
   } = useLiveAPI({ memoryId, turns: history });
 
   const [muted, setMuted] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [isDisconnecting, setIsDisconnecting] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
-  const [isRecording, setIsRecording] = useState(false);
-
-  useEffect(() => {
-    setIsRecording(isRecordingLiveAPI);
-  }, [isRecordingLiveAPI]);
 
   // Timer effect - start when connected, stop when disconnected
   useEffect(() => {
-    if (connected) {
+    if (isRecording) {
       // Start timer when connected
       intervalRef.current = setInterval(() => {
         setRecordingTime(prev => prev + 1);
@@ -53,7 +51,7 @@ export default function Voiceinput({ onCancel, memoryId, history = [] }: Voicein
         clearInterval(intervalRef.current);
       }
     };
-  }, [connected]);
+  }, [isRecording]);
 
   // Format time as MM:SS
   const formatTime = (seconds: number) => {
@@ -64,20 +62,14 @@ export default function Voiceinput({ onCancel, memoryId, history = [] }: Voicein
 
   // Toggle recording function - handles connection, muting, and unmuting
   const toggleRecording = async () => {
-    if (!connected) {
-      // Not connected - connect and start recording
+    if (!connected) await connect();
+
+    if (connected && !isRecording) {
       setMuted(false);
-      setRecordingTime(0); // Reset timer when starting new connection
-      await connect();
-      console.log("connected", connected);
-    } else if (connected && !isRecording) {
-      // Connected but not recording - start recording
-      setMuted(false);
-    } else if (connected && isRecording && !muted) {
-      // Recording and not muted - mute the recording
-      setMuted(true);
-    } else if (connected && isRecording && muted) {
-      setMuted(false);
+      setRecordingTime(0);
+      await startRecording();
+    } else {
+      setMuted(p => !p);
     }
   };
 
@@ -101,7 +93,7 @@ export default function Voiceinput({ onCancel, memoryId, history = [] }: Voicein
       // Disconnect from AI (this should work regardless of recording state)
       if (connected) {
         // Wait for disconnect to complete
-        await disconnect();
+        await stopRecording();
 
         // Wait a bit more to ensure disconnect is fully processed
         await new Promise(resolve => setTimeout(resolve, 200));
@@ -109,27 +101,23 @@ export default function Voiceinput({ onCancel, memoryId, history = [] }: Voicein
 
       onCancel();
     } catch (error) {
-      console.log(error)
       onCancel();
     } finally {
       setIsDisconnecting(false);
     }
   };
 
-  useEffect(() => {
-    document.documentElement.style.setProperty(
-      "--volume",
-      `${Math.max(5, Math.min(volume * 200, 8))}px`
-    );
-  }, [volume]);
-
   return createPortal(
     <div className="fixed border bg-background h-screen w-screen top-0 bottom-0 right-0 left-0 flex justify-center items-center">
       <div className="space-y-10 flex flex-col justify-center items-center">
         <div className="space-y-6 flex flex-col justify-center items-center">
           {/* Audio indicator with volume visualization */}
-          <div className="relative size-30 rounded-full border-2 border-blue-6 flex items-center justify-center">
+          {/* <div className="relative size-30 rounded-full border-2 border-blue-6 flex items-center justify-center">
             <AudioPulse active={isRecording} volume={volume} />
+          </div> */}
+
+          <div className="relative overflow-hidden rounded-full size-[120px]">
+            <Visual3D {...{ inputNode, outputNode }} />
           </div>
 
           <span className="font-georgia text-2xl text-center text-sand-12 block">
