@@ -1025,10 +1025,10 @@
   resolved "https://registry.yarnpkg.com/@floating-ui/utils/-/utils-0.2.10.tgz#a2a1e3812d14525f725d011a73eceb41fef5bc1c"
   integrity sha512-aGTxbpbg8/b5JfU1HXSrbH3wXZuLPJcNEcZQFMxLs3oSzgtVu6nFPkbbGGUvBcUjKV2YyB9Wxxabo+HEH9tcRQ==
 
-"@google/genai@^1.21.0":
-  version "1.21.0"
-  resolved "https://registry.yarnpkg.com/@google/genai/-/genai-1.21.0.tgz#3385514882bcf6cf5cb1d3ec218422a7b2fa56f1"
-  integrity sha512-k47DECR8BF9z7IJxQd3reKuH2eUnOH5NlJWSe+CKM6nbXx+wH3hmtWQxUQR9M8gzWW1EvFuRVgjQssEIreNZsw==
+"@google/genai@1.20.0":
+  version "1.20.0"
+  resolved "https://registry.yarnpkg.com/@google/genai/-/genai-1.20.0.tgz#b728bdb383fc58fbb1b92eff26e831ff598688c0"
+  integrity sha512-QdShxO9LX35jFogy3iKprQNqgKKveux4H2QjOnyIvyHRuGi6PHiz3fjNf8Y0VPY8o5V2fHqR2XqiSVoz7yZs0w==
   dependencies:
     google-auth-library "^9.14.2"
     ws "^8.18.0"
