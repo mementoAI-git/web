@@ -8,14 +8,14 @@ import React, { KeyboardEvent, useCallback, useEffect, useRef, useState } from "
 import Voiceinput from "./Voiceinput";
 import Spinner from "../Spinner";
 import useFileUpload from "@/hooks/use-file-upload";
-import { IOnUploadPayload } from "@/utility/interface";
+import { IFile, IOnUploadPayload } from "@/utility/interface";
 import { v4 as uuidv4 } from "uuid";
 import ImagePreview from "./ImagePreveiw";
 import { isEmpty } from "lodash";
 import ChatSettings from "../ChatSetting";
 
-interface IOnSendPayload {
-  attachments?: string[];
+export interface IOnSendPayload {
+  attachments?: IFile[];
   text: string
 }
 
@@ -45,7 +45,7 @@ export default function Chatinput({
   const [isVoiceMode, setIsVoiceMode] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const { files, handleUpload, handleDeleteFile } = useFileUpload();
+  const { files, handleUpload, setFiles, handleDeleteFile } = useFileUpload();
 
   const adjustHeight = useCallback(() => {
     const textarea = textareaRef.current;
@@ -92,13 +92,18 @@ export default function Chatinput({
   }, [handleUpload]);
 
   const handleSend = () => {
+    if (!isEmpty(files) && files.every(f => f.progress < 100)) {
+      return;
+    }
+
     const attachments = files
       .filter(f => f.uploadedFile)
-      .map(f => f.uploadedFile!._id);
+      .map(f => f.uploadedFile);
 
     const payload = { text, attachments };
     onSend?.(payload);
     setText("");
+    setFiles([]);
 
     // Reset textarea height to original size
     const textarea = textareaRef.current;
@@ -186,7 +191,7 @@ export default function Chatinput({
             (text.length > 0 || files.length > 0 || loading) ?
               <button
                 onClick={handleSend}
-                disabled={loading || typing}
+                disabled={loading || typing || (!isEmpty(files) && files.every(f => f.progress < 100))}
                 className="btn !bg-blue-6 space-x-2 disabled:opacity-60 text-white"
               >
                 {

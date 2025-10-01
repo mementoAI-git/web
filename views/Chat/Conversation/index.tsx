@@ -1,6 +1,6 @@
 "use client";
 
-import Chatinput from "@/components/Chatinput";
+import Chatinput, { IOnSendPayload } from "@/components/Chatinput";
 import { Typing, TypingBubble } from "./Bubble";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import useSWR, { mutate } from "swr";
@@ -77,18 +77,20 @@ export default function Conversation({ id, type = "memory" }) {
     }
   }, [scrollToBottom]);
 
-  const handleSend = async ({ text, attachments }) => {
+  const handleSend = async ({ text, attachments }: IOnSendPayload) => {
     if (isEmpty(text)) return;
-
     try {
       // If there's an ongoing AI response, finalize it first
       if (aiMessage && aiMessage.trim()) {
-        setMessages((p) => ([...p, { text: aiMessage, role: "ai" }]));
+        setMessages((p) => ([...p, {
+          text: aiMessage,
+          role: "ai"
+        }]));
         setAiMessage("");
       }
 
       // Then add the new user message
-      setMessages((p) => ([...p, { text, role: "user" }]));
+      setMessages((p) => ([...p, { text, role: "user", attatchments: attachments }]));
 
       // Always scroll to bottom when the user sends a message
       setTimeout(scrollToBottom, 50);
@@ -98,7 +100,7 @@ export default function Conversation({ id, type = "memory" }) {
 
         await sendMessage({
           text,
-          attachments,
+          attachments: attachments.map(a => a._id),
           memory: memory?._id,
           signal: abortCtrl.current.signal,
           onChunk: handleChuckArrival

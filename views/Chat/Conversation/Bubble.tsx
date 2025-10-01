@@ -33,7 +33,7 @@ export default function Bubble({
     <div className="space-y-1">
       {
         !isEmpty(attatchments) &&
-        <div className="bg-sand-3 ml-auto px-4 py-3 rounded-xl flex gap-2 w-full md:w-fit max-w-[520px]">
+        <div className="bg-sand-3 ml-auto px-4 py-3 rounded-xl flex gap-2 w-fit max-w-[520px]">
           {
             attatchments.map(({ url, name }, i) => (
               <Image

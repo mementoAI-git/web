@@ -12,28 +12,50 @@ export interface IAuth {
   expires_at: string;
 }
 
+interface IUserPreferences {
+  communication_style?: 'formal' | 'casual' | 'friendly' | 'professional'
+  topics_of_interest?: string[]
+  conversation_tone?: 'upbeat' | 'calm' | 'analytical' | 'creative'
+  response_length?: 'short' | 'medium' | 'long'
+}
+interface IUserContext {
+  important_notes?: string[]
+  key_preferences?: string[]
+  conversation_history_summary?: string
+  emotional_state_trends?: string[]
+  goals_and_aspirations?: string[]
+}
+
 export interface IUser {
-  email: string;
-  first_name: string;
-  last_name: string;
-  gender: string;
-  phone_number: string;
-  dob: string;
-  country: string;
-  password: string;
-  providers: string[];
-  verified: boolean;
-  private_key: string;
-  public_key: string;
-  last_seen: string;
-  streak: number;
-  picture_url?: string
-  newsletter_subscriber: boolean;
-  bg_music: string | null
+  _id?: string
+  email: string
+  first_name: string
+  last_name: string
+  gender: string
+  phone_number: string
+  dob: string
+  country: string
+  password: string
+  onbaorded: boolean
+  providers: string[]
+  preferences: IUserPreferences
+  context: IUserContext
+  verified: boolean
+  private_key: string
+  public_key: string
   two_factor: {
     secret: string
     enabled: boolean
   }
+  picture: string
+  picture_url?: string
+  last_seen: string
+  streak: number
+  bg_music?: string
+  chat_voice?: string | null
+  fullname?: string | null
+  newsletter_subscriber: boolean
+  created_at: string
 }
 
 export interface IMemory {

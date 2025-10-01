@@ -1,12 +1,13 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { GoogleGenAI, LiveServerMessage, Session, Modality, LiveConnectConfig, LiveSendRealtimeInputParameters } from "@google/genai";
+import { GoogleGenAI, LiveServerMessage, Session, Modality } from "@google/genai";
 import { createBlob, decode, decodeAudioData } from "./utils";
-import { GEMINI_CONFIG } from "@/config/gemini";
-import { isEmpty } from "@/utility";
+import { GEMINI_CONFIG } from "./config";
+import { createSystemContext, isEmpty } from "@/utility";
 import useFetcher from "../use-fetcher";
 import endpoint from "@/api/endpoint";
+import { useStore } from "@/hooks/use-store";
 
 // Transcript entry type
 export type TranscriptEntry = {
@@ -20,8 +21,9 @@ interface UseLiveAPIProps {
 }
 
 export function useLiveAPI({ memoryId, turns = [] }: UseLiveAPIProps) {
+  const { user } = useStore();
   const [isRecording, setIsRecording] = useState(false);
-  const [status, setStatus] = useState('');
+  const [, setStatus] = useState('');
   const [inputNode, setInputNode] = useState<GainNode | null>(null);
   const [outputNode, setOutputNode] = useState<GainNode | null>(null);
 
@@ -36,6 +38,8 @@ export function useLiveAPI({ memoryId, turns = [] }: UseLiveAPIProps) {
   const nextStartTimeRef = useRef(0);
   const sourcesRef = useRef<Set<AudioBufferSourceNode>>(new Set());
   const isConnectingRef = useRef(false);
+
+  const context = useMemo(() => createSystemContext(user), [user]);
 
   const [connected, setConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -274,12 +278,12 @@ export function useLiveAPI({ memoryId, turns = [] }: UseLiveAPIProps) {
         },
         config: {
           responseModalities: [Modality.AUDIO],
-          systemInstruction: GEMINI_CONFIG.SYSTEM_INSTRUCTIONS.default,
+          systemInstruction: context,
           speechConfig: {
             languageCode: 'en-US',
             voiceConfig: {
               prebuiltVoiceConfig: {
-                voiceName: "Orus"
+                voiceName: user?.chat_voice || "Orus"
               }
             }
           },
@@ -311,8 +315,16 @@ export function useLiveAPI({ memoryId, turns = [] }: UseLiveAPIProps) {
     }
   }, [
     updateTranscriptText,
+    user?.chat_voice,
+    context,
     outputNode
   ]);
+
+  const disconnect = useCallback(() => {
+    sessionPromiseRef.current?.then((session) => session.close());
+    inputAudioContextRef.current?.close().catch(console.error);
+    outputAudioContextRef.current?.close().catch(console.error);
+  }, []);
 
   useEffect(() => {
     const inputCtx = new ((window as any).AudioContext || (window as any).webkitAudioContext)({
@@ -350,6 +362,7 @@ export function useLiveAPI({ memoryId, turns = [] }: UseLiveAPIProps) {
   return {
     connected,
     connect,
+    disconnect,
     startRecording,
     stopRecording,
     isRecording,

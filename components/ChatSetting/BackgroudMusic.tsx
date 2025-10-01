@@ -7,6 +7,7 @@ import useFetcher from "@/hooks/use-fetcher";
 import endpoint from "@/api/endpoint";
 import { toast } from "sonner";
 import { useBackgroundMusic } from "@/hooks/use-background-music";
+import { cn } from "@/utility";
 
 function Slider({ volume, onVolumeChange }: { volume: number; onVolumeChange: (volume: number) => void }) {
   const sliderRef = React.useRef<HTMLDivElement>(null);
@@ -168,10 +169,11 @@ export default function BackgroundMusic() {
             {audioFiles.map((audio, i) => (
               <div
                 key={i}
-                className={`border py-2.5 px-3 rounded-xl flex gap-3 items-center cursor-pointer transition-colors ${currentTrackIndex === i
-                  ? 'border-blue-6 border-2 bg-blue-1'
-                  : 'border-[#EAECF0] hover:border-gray-300'
-                  } ${isMutating ? 'opacity-50 cursor-not-allowed' : ''}`}
+                className={cn(`border py-2.5 px-3 rounded-xl flex gap-3 items-center cursor-pointer transition-colors`, {
+                  "border-blue-6 border-2 bg-blue-1": currentTrackIndex === i,
+                  "opacity-50 cursor-not-allowed": isMutating,
+                  "border-[#EAECF0] hover:border-gray-300": currentTrackIndex !== i
+                })}
                 onClick={() => !isMutating && handleTrackSelect(i)}
               >
                 <Image src={musicImage} width={32} height={32} className="size-8" alt="Music" />

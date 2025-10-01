@@ -2,9 +2,7 @@ import * as THREE from 'three';
 import { EXRLoader } from 'three/addons/loaders/EXRLoader.js';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
-// import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
-// import { FXAAShader } from 'three/addons/shaders/FXAAShader.js';
 import React, { useEffect, useRef } from 'react';
 import { Analyser } from './analyser';
 import { fs as backdropFS, vs as backdropVS } from './backdrop-shader';
@@ -38,7 +36,7 @@ export function Visual3D({ inputNode, outputNode }: Visual3DProps) {
     const rotation = new THREE.Vector3(0, 0, 0);
 
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x100c14);
+    scene.background = null //new THREE.Color(0x100c14);
 
     const backdrop = new THREE.Mesh(
       new THREE.IcosahedronGeometry(10, 5),
@@ -63,7 +61,7 @@ export function Visual3D({ inputNode, outputNode }: Visual3DProps) {
     );
     camera.position.set(2, -2, 5);
 
-    const renderer = new THREE.WebGLRenderer({ canvas, antialias: false });
+    const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: false });
     renderer.setSize(width, height);
     renderer.setPixelRatio(window.devicePixelRatio);
 
@@ -100,8 +98,7 @@ export function Visual3D({ inputNode, outputNode }: Visual3DProps) {
     });
 
     const renderPass = new RenderPass(scene, camera);
-    const bloomPass = new UnrealBloomPass(
-      new THREE.Vector2(width, height), 5, 0.5, 0);
+    const bloomPass = new UnrealBloomPass(new THREE.Vector2(width, height), 5, 0.5, 0);
     const composer = new EffectComposer(renderer);
     composer.addPass(renderPass);
     composer.addPass(bloomPass);
