@@ -59,12 +59,15 @@ export default function Bubble({
           </span>
         </div>
         {
-          isUser && is_voice &&
+          is_voice &&
           <div className="mt-2 flex gap-2">
-            <WaveIcon className="size-[15px] text-[#667085] ml-auto stroke-2" />
-            <span className="font-inter text-xs text-gray-700">
-              {mins}:{secs}
-            </span>
+            <WaveIcon className={cn("size-[18px] text-sand-8 stroke-2", { "ml-auto size-[15px] text-[#667085]": isUser })} />
+            {
+              isUser &&
+              <span className="font-inter text-xs text-gray-700">
+                {mins}:{secs}
+              </span>
+            }
           </div>
         }
       </div>

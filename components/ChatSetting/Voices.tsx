@@ -70,11 +70,6 @@ export default function Voices() {
               <span className="text-sand-12 font-inter font-medium text-sm">{title}</span>
               <span className="font-inter text-xs text-[#667085]">{subtitle}</span>
             </div>
-            {selectedVoice === voiceName && (
-              <div className="ml-auto">
-                <div className="w-2 h-2 bg-primary rounded-full"></div>
-              </div>
-            )}
           </div>
         ))}
       </div>
