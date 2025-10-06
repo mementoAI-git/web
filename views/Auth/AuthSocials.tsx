@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState } from "react";
-import { SocialButton } from "@/components/Buttons";
 import GoogleIcon from "@/public/icon/google.svg";
 import AppleIcon from "@/public/icon/apple.svg";
 import FacebookIcon from "@/public/icon/facebook.svg";
@@ -28,24 +27,25 @@ export default function AuthSocials() {
   };
   return (
     <React.Fragment>
-      <div className="my-3 flex flex-col gap-4">
-        {providers.map((p) => (
-          <SocialButton
-            key={p.title}
-            icon={p.icon}
-            disabled={isMutating}
-            onClick={() => handleBtnClick(p.title)}
-            title={p.desc}
-          />
-        ))}
-      </div>
-
-      <div className="mb-3 flex items-center justify-between gap-6">
+      <div className=" flex items-center justify-between gap-6">
         <div className="flex-1 border-t border-grey-100" />
         <span className="font-geist text-sm text-grey-200">
           Or sign in with
         </span>
         <div className="flex-1 border-t border-grey-100" />
+      </div>
+
+      <div className="my-1 flex w-full gap-4">
+        {providers.map((p, i) => (
+          <button
+            key={i}
+            onClick={() => handleBtnClick(p.title)}
+            disabled={isMutating}
+            className="flex max-h-11 w-full cursor-pointer items-center justify-center gap-3 rounded-lg border border-grey-100 bg-white px-3 py-4 shadow-sm disabled:opacity-65 transition-all duration-150 hover:scale-[97%]"
+          >
+            {p.icon}
+          </button>
+        ))}
       </div>
     </React.Fragment>
   );

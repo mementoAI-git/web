@@ -6,6 +6,7 @@ import Link from "next/link";
 interface IAuthFormLayout extends PropsWithChildren {
   title: string;
   subtitle: React.ReactElement | string;
+  footer?: React.ReactElement | string;
   can_go_back?: boolean;
   include_auth_socials?: boolean;
   icon?: React.ReactElement | null;
@@ -16,6 +17,7 @@ export function AuthFormLayout({
   children,
   subtitle,
   title,
+  footer = null,
   can_go_back = false,
   include_auth_socials = false,
   icon = null,
@@ -23,18 +25,9 @@ export function AuthFormLayout({
 }: IAuthFormLayout) {
   return (
     <div
-      className={`group mx-auto flex w-full h-fit max-w-[554px] flex-col justify-center gap-6 sm:gap-8 lg:gap-10 rounded-xl bg-white p-4 sm:p-6 lg:p-10 ${className}`}
+      className={`group mx-auto flex w-full h-fit max-w-[618px] flex-col justify-center gap-6 sm:gap-8 lg:gap-10 rounded-3xl bg-white p-4 sm:p-6 lg:p-10 ${className}`}
     >
-      {can_go_back && (
-        <Link href="/login" className="flex cursor-pointer items-center gap-2">
-          <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 opacity-45 text-[#000D4D]" />
-          <span className="font-geist text-xs sm:text-sm leading-5 font-bold text-grey-200 underline">
-            Back to Login
-          </span>
-        </Link>
-      )}
-
-      <div className="flex flex-col items-center justify-center gap-3 sm:gap-4 text-center">
+      <div className="flex flex-col gap-3 sm:gap-4">
         {icon && (
           <div
             className={`flex aspect-square w-16 sm:w-18 lg:w-20 items-center justify-center rounded-full bg-primary/5 text-[#5F48D9] group-[.error]:bg-danger/5 group-[.error]:text-danger group-[.success]:bg-[#0ACC92]/5 group-[.success]:text-success`}
@@ -42,17 +35,25 @@ export function AuthFormLayout({
             {icon}
           </div>
         )}
-        <span className="font-bricolage text-3xl lg:text-[32px] font-bold text-secondary">
+        <span className="font-canela text-3xl lg:leading-[38px] lg:text-[32px] text-gray-800">
           {title}
         </span>
-        <span className="px-2 sm:px-5 font-inter text-sm text-grey-200">
+        <span className="font-inter text-gray-600">
           {subtitle}
         </span>
       </div>
 
       <div className="flex flex-col gap-4 sm:gap-6">
-        {include_auth_socials && <AuthSocials />}
         {children}
+        {include_auth_socials && <AuthSocials />}
+        {footer}
+        {can_go_back && (
+          <Link href="/login" className="text-center block w-full cursor-pointer gap-2">
+            <span className="font-geist text-center text-xs sm:text-sm leading-5 font-bold text-grey-200 underline">
+              Back to Login
+            </span>
+          </Link>
+        )}
       </div>
     </div>
   );

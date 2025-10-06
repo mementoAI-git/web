@@ -2,12 +2,8 @@ import { useState } from "react";
 import SlideIcon from "@/public/icon/dashboard/slide.svg";
 import { bottomNavigations, topNavigations } from "./navigations";
 import SideBarItem from "./SideBarItem";
-import Logo, { LogoV2 } from "@/components/Logo";
-import DoubleRightArrowIcon from "@/public/icon/double-right-arrow.svg"
-import { cn } from "@/utility";
+import { LogoV2 } from "@/components/Logo";
 import { usePathname, useRouter } from "next/navigation";
-import TimesIcon from "@/public/icon/times.svg";
-import Link from "next/link";
 
 interface DashboardSideBarProps {
   onClose?: () => void;

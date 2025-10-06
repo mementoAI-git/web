@@ -45,7 +45,24 @@ export function Register() {
     },
   });
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+    <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+      <div className="flex justify-between items-center gap-3 w-full">
+        <div className="flex-1">
+          <Textinput
+            label="First name"
+            placeholder="John"
+            className="flex-1"
+            {...getField("email")}
+          />
+        </div>
+        <div className="flex-1">
+          <Textinput
+            label="Last name"
+            placeholder="Doe"
+            {...getField("email")}
+          />
+        </div>
+      </div>
       <Textinput
         label="Email"
         placeholder="johndoe@mail.com"
@@ -59,13 +76,13 @@ export function Register() {
         loading={isMutating}
         type="submit"
         title="Create account"
-        className="mt-3"
+        className="mt-3 !rounded-full"
       />
 
-      <small className="px-3 text-center font-inter text-sm leading-5 text-grey-200">
+      <small className="px-3 text-center font-inter text-sm leading-5 text-gray-800">
         By clicking “Create account” you agree to the
-        <span className="text-primary underline">Terms of Use</span> and
-        <span className="text-primary underline"> Privacy Policy</span>
+        <span className="text-blue-6 underline">Terms of Use</span> and
+        <span className="text-blue-6 underline"> Privacy Policy</span>
       </small>
     </form>
   );

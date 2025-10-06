@@ -44,7 +44,7 @@ export function ForgetPassword() {
         title="Submit"
         type="submit"
         loading={isMutating}
-        className="mt-3"
+        className="mt-3 !rounded-full"
       />
     </form>
   );

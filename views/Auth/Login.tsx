@@ -75,16 +75,16 @@ export function Login() {
         />
         <Link
           href="/forget-password"
-          className="cursor-pointer font-bold text-primary"
+          className="cursor-pointer text-blue-6 font-bold"
         >
-          Reset password
+          Forgot password?
         </Link>
       </div>
       <Button
         loading={isMutating}
         type="submit"
         title="Login"
-        className="mt-3"
+        className="mt-3 !rounded-full"
       />
     </form>
   );

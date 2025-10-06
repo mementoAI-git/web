@@ -183,7 +183,7 @@ body {
   }
 
   .input-base {
-    @apply h-10 rounded-lg border border-grey-100 bg-white px-3 py-2 shadow-sm group-[.error]:border-[1.5px] group-[.error]:border-danger focus-within:border-[1.5px] focus-within:border-primary;
+    @apply h-10 rounded-lg border border-grey-100 bg-white px-3 py-2 shadow-sm group-[.error]:border-[1.5px] group-[.error]:border-danger focus-within:border-[1.5px] focus-within:border-blue-6;
   }
 
   .mem-table thead th:first-child,
