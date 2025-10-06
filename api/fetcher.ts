@@ -76,13 +76,19 @@ export const fileUploadFetcher = async (url: string, { arg }) => {
         }
       },
     });
-
-    if (res.status === 200) {
+    console.log("res here here", res)
+    if (res.status === 200 && typeof onProgress === "function") {
       onProgress(100);
     }
 
-    res.data.success = true
-    return res.data;
+    // res.data.success = true
+    // console.log("res data here", res.data)
+    // return res.data;
+    return {
+      success: true,
+      data: res.data.data,       
+      message: res.data.message,
+    };
   } catch (error) {
     let message = "Something went wrong";
 
@@ -93,11 +99,17 @@ export const fileUploadFetcher = async (url: string, { arg }) => {
       console.log(message)
       toast.error(message);
 
-      throw axiosError.response?.data || null;
+      // throw axiosError.response?.data || null;
+      return {
+        success: false,
+        data: null,
+        message,
+      };
     }
     toast.error(message);
 
-    throw { message };
+    // throw { message };
+    return { success: false, data: null, message };
   }
 };
 

@@ -47,7 +47,11 @@ export function SearchMemories({ isMobile = false }) {
       onClose={() => close("search-memory")}
     >
       <div className="h-full space-y-6">
-        <h4 className="hidden sm:block text-2xl font-semibold font-inter text-secondary">Search Memento</h4>
+        <div>
+          <h4 className="hidden sm:block text-2xl font-semibold font-inter text-secondary">Search Memento</h4>
+          <p className="text-[#475467] mt-2 text-sm">Find anything on Memento</p>
+        </div>
+        
         <div>
           <div className="flex h-full flex-1 items-center gap-2 rounded-full border border-[rgba(208,213,221,1)] px-[14px] py-2">
             <SearchIcon />

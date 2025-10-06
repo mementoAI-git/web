@@ -47,6 +47,19 @@ function Taginput({ values, setValue }: ITaginput) {
     setValue((p) => p.filter((_p) => _p !== tag));
   };
 
+  const predefinedTags = [
+    "family & friends",
+    "career & work",
+    "life",
+    "politics",
+    "relationship",
+    "traveling",
+    "homestead",
+    "food & drinks",
+    "early childhood",
+    "culture",
+  ];
+
   return (
     <div>
       <label className="input-label">Tags</label>
@@ -77,26 +90,22 @@ function Taginput({ values, setValue }: ITaginput) {
         </div>
       </div>
       <div className="mt-2 flex flex-wrap gap-2">
-        {[
-          "family & friends",
-          "career & work",
-          "life",
-          "politics",
-          "relationship",
-          "traveling",
-          "homestead",
-          "food & drinks",
-          "early childhood",
-          "culture",
-        ].map((tag, i) => (
-          <span
-            onClick={() => addTag(tag)}
-            key={i}
-            className="mem-tags !bg-transparent !font-normal !text-grey-600"
-          >
-            {tag}
-          </span>
-        ))}
+        {predefinedTags.map((tag, i) => {
+          const isSelected = values.includes(tag);
+          return (
+            <span
+              onClick={() => addTag(tag)}
+              key={i}
+              className={`mem-tags cursor-pointer !font-normal transition-colors ${
+                isSelected
+                  ? "!bg-[#EBD2A9] !text-black"
+                  : "!bg-transparent !text-grey-600 hover:!bg-red-50"
+              }`}
+            >
+              {tag}
+            </span>
+          );
+        })}
       </div>
     </div>
   );
@@ -113,6 +122,7 @@ function Content({ data }: ISetTagPermissionsProps) {
   const handleSubmit = async () => {
     const result = await trigger({ level, title, status: "save", tags });
     if (result.success) {
+      console.log("[SetTagPermissions] opening share-post with memory:", memory)
       mutate(`${endpoint.memories}?page=1`)
       open("share-post", memory?._id);
       toast.success(isNew ? "Memory created successfully" : result?.message)
@@ -178,20 +188,22 @@ function Content({ data }: ISetTagPermissionsProps) {
 }
 
 export default function SetTagPermissions({ data }: ISetTagPermissionsProps) {
+  console.log("[SetTagPermissions] received props:", data);
   const { close } = useModal();
 
   return (
     <div>
-      <div className="hidden sm:modal-container">
+      <div className="hidden md:block modal-container">
         <ModalCloseBtn onClick={() => close("set-tag-permission")} />
         <Content data={data} />
       </div>
       <Sheet
         detent="content"
-        className="block sm:hidden"
+        className="block md:hidden"
         isOpen
         onClose={() => close("set-tag-permission")}
         snapPoints={[0.5, 0.75, 1]}
+        initialSnap={1}
       >
         <Sheet.Container className="bg-sand-1" >
           <Sheet.Header className="bg-sand-1 rounded-3xl" />

@@ -42,13 +42,13 @@ export function FooterBtnGroup({ onDiscard, onSave, onAddFileBtnClick, onTypeCha
             onClick={() => onSave()}
             className="btn flex items-center gap-2"
           >
-            Save
+            Continue
             <Spinner loading={saving} className="!size-4" />
           </button>
         </div>
       ) : (
         <div className="flex items-center gap-2">
-          {Object.values(inputTypes).map((t) => (
+          {/* {Object.values(inputTypes).map((t) => (
             <button
               key={t}
               disabled={disabled}
@@ -57,7 +57,22 @@ export function FooterBtnGroup({ onDiscard, onSave, onAddFileBtnClick, onTypeCha
             >
               {renderIcons[t]}
             </button>
-          ))}
+          ))} */}
+          <button
+            disabled={disabled}
+            onClick={() => onDiscard()}
+            className="btn-outline !border-[#C7C9C8]"
+          >
+            Cancel
+          </button>
+          <button
+            disabled={disabled}
+            onClick={() => onSave()}
+            className="btn flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Continue
+            <Spinner loading={saving} className="!size-4" />
+          </button>
         </div>
       )}
     </div>

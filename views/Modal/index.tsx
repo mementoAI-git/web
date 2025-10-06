@@ -17,6 +17,7 @@ import SelectBeneficiary from "./SelectBeneficiary";
 import { DeleteCapsule } from "./Capsule/Delete";
 import { PauseCapsule } from "./Capsule/Pause";
 import { useState, useEffect } from "react";
+import { DatePickerFilter } from "../Memories/MemoriesFilter";
 
 const MODAL_COMPONENTS = {
   "share-post": SharePost,
@@ -40,11 +41,12 @@ const MODAL_COMPONENTS = {
   "create-capsule": CreateCapsule,
   "delete-capsule": DeleteCapsule,
   "pause-capsule": PauseCapsule,
+  "date-picker-filter": DatePickerFilter
 }
 
 export default function Modal() {
   const { state } = useModal();
-  const modal = state[0]
+  // const modal = state[0]
   const [isMobile, setIsMobile] = useState(false)
 
   useEffect(() => {
@@ -54,8 +56,19 @@ export default function Modal() {
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
 
-  if (isEmpty(state)) return null;
-  const ModalComponent = MODAL_COMPONENTS[modal?.name];
+  console.log("[Modal.tsx] state:", state)
+
+  // if (isEmpty(state)) return null;
+  if (isEmpty(state)) {
+    console.log("[Modal.tsx] no modal state, returning null")
+    return null;
+  }
+  // const ModalComponent = MODAL_COMPONENTS[modal?.name];
+  const modal = state[0];
+  console.log("[Modal.tsx] showing modal:", modal?.name, "with props:", modal?.props)
+  const ModalComponent = modal ? MODAL_COMPONENTS[modal.name] : null;
+
+  if (!ModalComponent) return null;
 
   return (
     <div className={`modal-overlay z-[100] bg-[rgba(94,94,94,0.5)] ${state ? "flex" : "hidden"}`}>
