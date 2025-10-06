@@ -25,7 +25,7 @@ export default function CheckMailPage() {
       icon={<EvelopIcon width={33.33} />}
       subtitle={`We’ve sent an email containing the password reset instructions to ${hashEmail(email || "")}. Please check your inbox or spam folders.`}
     >
-      <Button onClick={() => openMailBox(String(email))} title="Open Mailbox" />
+      <Button className="!rounded-full" onClick={() => openMailBox(String(email))} title="Open Mailbox" />
     </AuthFormLayout>
   );
 }

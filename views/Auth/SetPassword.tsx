@@ -80,7 +80,7 @@ export function SetPassword({ token }: { token: string }) {
         loading={isMutating}
         type="submit"
         title="Set new password"
-        className="mt-3"
+        className="mt-3 !rounded-full"
       />
     </form>
   );
