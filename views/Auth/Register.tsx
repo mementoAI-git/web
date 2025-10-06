@@ -10,6 +10,14 @@ import { toast } from "sonner";
 import * as yup from "yup";
 
 const schema = yup.object().shape({
+  first_name: yup
+    .string()
+    .required("First name is required")
+    .trim(),
+  last_name: yup
+    .string()
+    .required("Last name is required")
+    .trim(),
   email: yup
     .string()
     .required("Email is required")
