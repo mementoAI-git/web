@@ -5,7 +5,7 @@ interface IButton extends ButtonHTMLAttributes<HTMLButtonElement> {
   icon: React.ReactElement;
 }
 
-export function SocialButton({ icon, title, ...props }: IButton) {
+export function SocialButton({ icon, ...props }: IButton) {
   return (
     <button
       {...props}
