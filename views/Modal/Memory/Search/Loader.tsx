@@ -1,7 +1,7 @@
 
 export function SkeletonLoader() {
   return (
-    <div className="flex gap-2">
+    <div className="flex w-full gap-2">
       <div className="size-20 shrink-0 bg-gray-200 rounded" />
       <div className="space-y-3 w-full">
         <div className="bg-gray-200 rounded h-4 w-[60%]" />

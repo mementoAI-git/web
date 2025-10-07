@@ -182,7 +182,7 @@ export default function SetTagPermissions({ data }: ISetTagPermissionsProps) {
 
   return (
     <div>
-      <div className="hidden sm:modal-container">
+      <div className="hidden sm:block modal-container">
         <ModalCloseBtn onClick={() => close("set-tag-permission")} />
         <Content data={data} />
       </div>
