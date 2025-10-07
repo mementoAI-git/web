@@ -7,7 +7,7 @@ import { useStore } from "@/hooks/use-store";
 import { useRouter } from "next/navigation";
 
 export function ProfileDropdown() {
-  const { user } = useStore()
+  const { user, unsetAuth } = useStore()
   const router = useRouter()
 
   const handleSelect = (value: string) => {
@@ -17,7 +17,7 @@ export function ProfileDropdown() {
   }
 
   const handleLogout = () => {
-    localStorage.removeItem("auth")
+    unsetAuth()
     router.push("/login")
   }
 
