@@ -9,14 +9,14 @@ import Link from "next/link";
 import { useState } from "react";
 
 function MemoriesGridItem({ memory }: { memory: IMemory }) {
-  
+
   const [isHovered, setIsHovered] = useState(false);
 
   return (
-    <div className="flex min-h-[250px] w-full flex-col gap-3 sm:gap-4 rounded-xl sm:rounded-2xl bg-[#F9F9F9] p-4 sm:p-6">
-      <div 
-        className="relative flex h-[120px] sm:h-[138px] overflow-hidden w-full items-center justify-center rounded-lg bg-[#F3F3F3]" 
-        onMouseEnter={() => setIsHovered(true)} 
+    <div className="flex min-h-[250px] w-full flex-col gap-3 sm:gap-4 rounded-xl sm:rounded-2xl bg-sand-1 p-4 sm:p-6 border-gray-200 border hover:border-sand-8">
+      <div
+        className="relative flex h-[120px] sm:h-[138px] overflow-hidden w-full items-center justify-center rounded-lg bg-[#F3F3F3]"
+        onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
         {
@@ -52,15 +52,15 @@ function MemoriesGridItem({ memory }: { memory: IMemory }) {
           <div className="flex flex-wrap items-center gap-1 sm:gap-2">
             {memory.tags.slice(0, 3).map((tag, i) => {
               const tagStyles = "rounded-full px-1 sm:px-1.5 py-0.5 font-inter text-xs sm:text-sm";
-              
+
               const colorClasses = [
-                "border border-[#D7DDF9] bg-[#EAECFC] text-[#4863E3]", 
-                "border border-[#FEE4E2] bg-[#FDF3F3] text-[#F98079]", 
-                "border border-[#12B76A] text-[#12B76A] bg-transparent font-medium", 
+                "border border-[#D7DDF9] bg-[#EAECFC] text-[#4863E3]",
+                "border border-[#FEE4E2] bg-[#FDF3F3] text-[#F98079]",
+                "border border-[#12B76A] text-[#12B76A] bg-transparent font-medium",
               ];
-              
+
               const colorClass = colorClasses[i % colorClasses.length];
-              
+
               return (
                 <span key={i} className={`${tagStyles} ${colorClass}`}>
                   {tag}

@@ -57,7 +57,7 @@ export default function Memories() {
       <div className="space-y-3 sm:space-y-4 py-3 sm:py-4 lg:py-8">
         <div className="flex flex-col md:flex-row md:justify-between gap-2">
           <div>
-            <p className="font-[Canela Trial] font-normal text-2xl sm:text-3xl md:text-4xl lg:text-[40px] leading-tight sm:leading-snug md:leading-[48px]">
+            <p className="font-canela font-normal text-2xl sm:text-3xl md:text-4xl lg:text-[40px] leading-tight sm:leading-snug md:leading-[48px]">
               <span>My</span>
               <span className="text-[#412C0966] px-2 italic">Stories</span>
             </p>
@@ -68,7 +68,7 @@ export default function Memories() {
           </div>
 
           <div className="md:self-end">
-            <button onClick={() => open("create-memory")} className={cn("btn", "!rounded-lg w-full sm:w-fit")}>
+            <button onClick={() => open("create-memory")} className={cn("btn", "!rounded-full w-full sm:w-fit")}>
               <PlusIcon width={15} />
               <span>Add Memory</span>
             </button>
@@ -82,12 +82,12 @@ export default function Memories() {
             title={stats?.data?.memory_count || 0}
           />
           <StatCard
-            icon={<ConversationIcon width={22} height={20} />}
+            icon={<ConversationIcon strokeWidth={2} width={22} height={20} />}
             subtitle="Conversations"
             title={stats?.data?.bookmark_count || 0}
           />
           <StatCard
-            icon={<BookmarkIcon width={14} height={18} />}
+            icon={<BookmarkIcon strokeWidth={2} width={14} height={18} />}
             subtitle="bookmarks"
             title={stats?.data?.bookmark_count || 0}
           />

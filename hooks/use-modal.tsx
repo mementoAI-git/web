@@ -28,12 +28,10 @@ export function ModalProvider({ children }: PropsWithChildren) {
   const [state, setState] = useState<IState[]>([]);
 
   const open = useCallback((name: string, props: any = null) => {
-    console.log("[ModalProvider.open] opening:", name, "props:", props)
     setState([{ name, props }]);
   }, []);
 
   const push = useCallback((name: string, props: any = null) => {
-    console.log("[ModalProvider.push] pushing:", name, "props:", props)
     setState(p => [{ name, props }, ...p]);
   }, []);
 
@@ -41,7 +39,6 @@ export function ModalProvider({ children }: PropsWithChildren) {
     if (!name && state[0]) {
       name = state[0].name
     }
-    console.log("[ModalProvider.close] closing:", name)
     setState(p => {
       if (name && p.some(a => a.name === name)) {
         return p.filter((n) => n.name !== name);
