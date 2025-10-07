@@ -42,8 +42,8 @@ function Content() {
   return (
     <div className="size-full bg-sand-1 space-y-6">
       <div className="space-y-4">
-        <h4 className="text-[32px] leading-[38px] font-canela text-gray-800">Search Memento</h4>
-        <span className="text-gray-600 font-inter block">Find anything on Memento</span>
+        <h4 className="text-2xl sm:text-[32px] sm:leading-[38px] font-canela text-gray-800">Search Memento</h4>
+        <span className="text-gray-600 text-sm sm:text-base font-inter block">Find anything on Memento</span>
       </div>
       <div>
         <div className="flex h-full flex-1 items-center gap-2 bg-white rounded-lg border border-gray-200 px-[14px] py-2">
@@ -79,7 +79,9 @@ function Content() {
           </div>
         ) : (
           <div className="space-y-3 animate-fadeIn">
-            <span className="font-inter inline-block font-medium text-sm text-gray-800">Search results:</span>
+            <span className="font-inter inline-block font-medium text-sm text-gray-800">
+              {searchResults.length} results found:
+            </span>
             {
               isLoading ?
                 <React.Fragment>
