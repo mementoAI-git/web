@@ -1,8 +1,7 @@
-import { ModalCloseBtn, ModalWrapper } from "@/components/ModalLayout";
+import { ModalCloseBtn } from "@/components/ModalLayout";
 import { useModal } from "@/hooks/use-modal";
 import SearchIcon from "@/public/icon/dashboard/search.svg";
-import ArrowRightIcon from "@/public/icon/arrow-right.svg"
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState } from "react";
 import { getRecentMemories, isEmpty } from "@/utility";
 import SearchItem from "./SearchItem";
 import EmptyRecentMemories from "./EmptyRecentMemories";
