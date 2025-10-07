@@ -7,7 +7,7 @@ export interface IDropdownItem {
 }
 
 export interface IDropdownIcon extends IDropdownMenu {
-  icon: React.ReactElement;
+  icon?: React.ReactElement;
 }
 
 export interface IDropdownButton {

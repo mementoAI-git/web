@@ -7,7 +7,13 @@ import useClickAway from "@/hooks/use-clickaway";
 import { createPortal } from "react-dom";
 import { cn, isEmpty } from "@/utility";
 
-export function DropdowmIcon({ icon, className = "", ...props }: IDropdownIcon) {
+export function DropdowmIcon({
+  icon = null,
+  children = null,
+  className = "",
+  ...props
+}: IDropdownIcon & { children?: React.ReactElement }
+) {
   const [open, setOpen] = useState(false);
   const [position, setPosition] = useState({
     top: 0,
@@ -96,11 +102,15 @@ export function DropdowmIcon({ icon, className = "", ...props }: IDropdownIcon) 
       <button
         ref={buttonRef}
         onClick={() => setOpen((p) => !p)}
-        className={cn("aspect-square size-8 shrink-0 rounded-lg p-2 hover:bg-sand-2", { [className]: !isEmpty(className) })}
+        className={cn("", {
+          [className]: !isEmpty(className),
+          ["aspect-square size-8 shrink-0 rounded-lg p-2 hover:bg-sand-2"]: !isEmpty(icon)
+        })}
       >
-        {icon}
+        {children || icon}
       </button>
-      {open &&
+      {
+        open &&
         createPortal(
           <div
             ref={dropdownRef}
@@ -121,6 +131,6 @@ export function DropdowmIcon({ icon, className = "", ...props }: IDropdownIcon) 
           document.body
         )
       }
-    </div>
+    </div >
   );
 }

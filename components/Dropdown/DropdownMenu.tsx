@@ -5,7 +5,7 @@ import { DefaultDropdownOption } from "./DropdownOptions";
 import { IDropdownMenu } from "./interface";
 
 export function DropdowmMenu({
-  items,
+  items = [],
   ItemLayout,
   value,
   onSelect,
