@@ -85,7 +85,7 @@ export default function RecentConversation() {
 
     // Return the URL for the next page with search query
     const searchParam = searchQuery ? `&search=${encodeURIComponent(searchQuery)}` : '';
-    return `${endpoint.memories}?page=${pageIndex + 1}${searchParam}`;
+    return `${endpoint.conversations}?page=${pageIndex + 1}${searchParam}`;
   };
 
   const {

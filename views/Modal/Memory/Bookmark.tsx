@@ -2,51 +2,21 @@
 
 import { ModalCloseBtn } from "@/components/ModalLayout";
 import Spinner from "@/components/Spinner";
-import useFetcher from "@/hooks/use-fetcher";
 import { useModal } from "@/hooks/use-modal";
-import { toast } from "sonner";
 import AddBookmarkIcon from "@/public/icon/add-bookmark.svg";
 import RemoveBookmarkIcon from "@/public/icon/remove-bookmark.svg";
 import { IMemory } from "@/utility/interface";
-import endpoint from "@/api/endpoint";
-import { mutate } from "swr";
+import { useBookmark } from "@/hooks/use-bookmark";
 
 export function BookmarkMemory({ data: memory }: { data: IMemory }) {
-  const { trigger, isMutating } = useFetcher(`${endpoint.memories}/${memory._id}/bookmark`, "post");
-  const { trigger: removeBookmark, isMutating: removing } = useFetcher(`${endpoint.memories}/${memory._id}/bookmark`, "delete");
   const { close } = useModal();
-
-  const handleBookmark = async () => {
-    try {
-      const result = await trigger();
-      if (result?.success) {
-        toast.success("Memory added to bookmarks successfully!");
-        mutate(`${endpoint.memories}/${memory._id}`)
-        mutate(endpoint.memoriesStats)
-        mutate(`${endpoint.memories}?page=1`)
-        close("bookmark-memory");
-      }
-    } catch (error) {
-      toast.error("An error occurred while bookmarking");
-    }
-  };
-
-  const handleRemoveBookmark = async () => {
-    try {
-      const result = await removeBookmark("");
-      if (result?.success) {
-        toast.success("Memory removed from bookmarks successfully!");
-        mutate(`${endpoint.memories}/${memory._id}`)
-        mutate(endpoint.memoriesStats)
-        mutate(`${endpoint.memories}?page=1`)
-        close("bookmark-memory");
-      }
-    } catch (error) {
-      toast.error("An error occurred while removing bookmark");
-    }
-  };
-
   const isBookmarked = memory.bookmarked || false;
+
+  const { addToBookmark, removeFromBookmark, isLoading } = useBookmark({
+    memoryId: memory._id,
+    isBookmarked,
+    onSuccess: () => close("bookmark-memory")
+  });
 
   return (
     <div className="modal-container !max-w-120">
@@ -84,12 +54,12 @@ export function BookmarkMemory({ data: memory }: { data: IMemory }) {
             Cancel
           </button>
           <button
-            disabled={isMutating || removing}
-            onClick={isBookmarked ? handleRemoveBookmark : handleBookmark}
+            disabled={isLoading}
+            onClick={isBookmarked ? removeFromBookmark : addToBookmark}
             className="flex-1 flex items-center gap-2 justify-center cursor-pointer bg-secondary text-white rounded-lg h-10 font-inter font-semibold text-sm"
           >
             {isBookmarked ? "Remove Bookmark" : "Add Bookmark"}
-            <Spinner loading={isMutating || removing} className="!size-4" />
+            <Spinner loading={isLoading} className="!size-4" />
           </button>
         </div>
       </div>

@@ -29,7 +29,7 @@ export default function Memories() {
   if (filter === "bookmarked") filterQuery = "&bookmarked=true";
   if (filter === "deleted") filterQuery = "&deleted=true";
 
-  const { data, isLoading } = useSWR(`${endpoint.memories}?page=${page}${filterQuery}`);
+  const { data, isLoading } = useSWR(`${endpoint.stories}?page=${page}${filterQuery}`);
   const { data: stats } = useSWR(endpoint.memoriesStats);
 
   return (

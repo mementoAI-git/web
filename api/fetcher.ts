@@ -77,7 +77,7 @@ export const fileUploadFetcher = async (url: string, { arg }) => {
       },
     });
 
-    if (res.status === 200) {
+    if (res.status === 200 && onProgress) {
       onProgress(100);
     }
 
@@ -88,9 +88,8 @@ export const fileUploadFetcher = async (url: string, { arg }) => {
 
     if (Axios.isAxiosError(error)) {
       const axiosError = error as AxiosError<IResponse>;
-      console.log(axiosError.response)
       message = axiosError.response?.data?.message || axiosError.message;
-      console.log(message)
+
       toast.error(message);
 
       throw axiosError.response?.data || null;

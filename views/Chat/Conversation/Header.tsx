@@ -5,40 +5,16 @@ import LunchIcon from "@/public/icon/lauch.svg"
 import BookmarkIcon from "@/public/icon/dashboard/bookmark.svg"
 import { IMemory } from "@/utility/interface"
 import RemoveBookmarkIcon from "@/public/icon/bookmark-solid.svg"
-import useFetcher from "@/hooks/use-fetcher"
-import endpoint from "@/api/endpoint"
-import { toast } from "sonner"
-import { mutate } from "swr"
 import { MemoryDropdown } from "./Dropdown"
 import { useModal } from "@/hooks/use-modal"
+import { useBookmark } from "@/hooks/use-bookmark"
 
 export default function ConversationHeader({ memory, onViewDetails }: { memory: IMemory, onViewDetails: () => void }) {
-  const { trigger: addBookmark } = useFetcher(`${endpoint.memories}/${memory?._id}/bookmark`, "post");
-  const { trigger: removeBookmark } = useFetcher(`${endpoint.memories}/${memory?._id}/bookmark`, "delete");
   const { open } = useModal()
-
-  const handleBookmarkAction = async () => {
-    try {
-      if (memory.bookmarked) {
-        const result = await removeBookmark("");
-        if (result?.success) {
-          toast.success("Memory removed from bookmarks successfully!");
-        }
-      } else {
-        const result = await addBookmark();
-        if (result?.success) {
-          toast.success("Memory added to bookmarks successfully!");
-        }
-      }
-
-      // Update the cache
-      mutate(`${endpoint.memories}/${memory._id}`)
-      mutate(endpoint.memoriesStats)
-      mutate(`${endpoint.memories}?page=1`)
-    } catch (error) {
-      toast.error("An error occurred while bookmarking");
-    }
-  };
+  const { toggleBookmark } = useBookmark({
+    memoryId: memory?._id,
+    isBookmarked: memory?.bookmarked
+  });
 
   return (
     <div className="border border-sand-4 rounded-xl md:rounded-2xl p-3 sm:p-4.5 md:p-6 flex items-center gap-10">
@@ -61,7 +37,7 @@ export default function ConversationHeader({ memory, onViewDetails }: { memory: 
                 <LunchIcon className="stroke-[1.5px] size-full text-sand-12 cursor-pointer" />
               </div>
               <div
-                className="text-sand-12 flex justify-center items-center p-1.5 aspect-square size-7 sm:size-8 shrink-0 rounded-lg hover:bg-sand-2" onClick={handleBookmarkAction}>
+                className="text-sand-12 flex justify-center items-center p-1.5 aspect-square size-7 sm:size-8 shrink-0 rounded-lg hover:bg-sand-2" onClick={toggleBookmark}>
                 {
                   memory.bookmarked ?
                     <RemoveBookmarkIcon className="text-sand-8 size-full stroke-2 cursor-pointer" /> :

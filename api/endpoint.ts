@@ -35,6 +35,8 @@ export default {
 
   // memories
   memories: "/memories",
+  conversations: "/memories/conversations",
+  stories: "/memories/stories",
   memoryPrompt: "/memories/prompt",
   memoriesStats: "/memories/stats",
   removeFileFromMemory: "/memories/remove-file",
@@ -45,7 +47,7 @@ export default {
   aiGreet: "/ai/prompt/greet",
   aiPromptMessage: "/ai/prompt/messages",
   transcription: "/ai/transcribe-audio",
-  startConversation: "/ai/prompt/memory/new",
+  startConversation: "/ai/conversation/new",
 
   // capsule
   capsule: "/capsule",

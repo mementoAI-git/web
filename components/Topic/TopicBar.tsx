@@ -1,16 +1,57 @@
+"use client";
+
 import Image from "next/image";
 import EllipseIcon from "@/public/icon/vertical-ellipse.svg";
+import BookmarkIcon from "@/public/icon/dashboard/bookmark.svg";
+import TrashIcon from "@/public/icon/trash.svg";
+import InfoIcon from "@/public/icon/info.svg";
+import LaunchIcon from "@/public/icon/lauch.svg";
 import chatIcon from "@/public/image/chat.png"
 import { cn } from "@/utility";
-import Link from "next/link";
+import { DropdowmIcon } from "@/components/Dropdown";
+import { useRouter } from "next/navigation";
+import { useModal } from "@/hooks/use-modal";
+import { useBookmark } from "@/hooks/use-bookmark";
 
-export default function TopicBar({ title, _id, size = "sm" }) {
+export default function TopicBar({ title, _id, bookmarked = false, size = "sm" }) {
   const isLarge = size === "lg"
+  const router = useRouter()
+  const { open } = useModal()
+  const { toggleBookmark } = useBookmark({ memoryId: _id, isBookmarked: bookmarked });
+
+  const dropdownItems = [
+    { label: "Share", value: "share", startIcon: <LaunchIcon className="size-4 stroke-[1.5]" /> },
+    { label: "Bookmark", value: "bookmark", startIcon: <BookmarkIcon className="size-4 stroke-2" /> },
+    { label: "View details", value: "details", startIcon: <InfoIcon className="stroke-2" /> },
+  ];
+
+  const handleDropdownSelect = (value: string) => {
+    switch (value) {
+      case "share":
+        open("share-post", _id);
+        break
+      case "bookmark":
+        toggleBookmark()
+        break;
+      case "details":
+        router.push(`/chat/${_id}`)
+        break
+    }
+  }
+
+  const handleClick = (e: React.MouseEvent) => {
+    // Navigate to chat when clicking the container
+    router.push(`/chat/${_id}`)
+  }
+
   return (
-    <Link href={`/chat/${_id}`} className={cn(
-      "w-full rounded-xl border-sand-4 border flex items-center justify-between px-3 py-2", {
-      "p-3 sm:p-6": isLarge
-    })}>
+    <div
+      onClick={handleClick}
+      className={cn(
+        "w-full rounded-xl border-sand-4 border flex items-center justify-between px-3 py-2 cursor-pointer", {
+        "p-3 sm:p-6": isLarge
+      })}
+    >
       <div className="flex items-center gap-4">
         <Image
           alt="Chat icon"
@@ -21,8 +62,24 @@ export default function TopicBar({ title, _id, size = "sm" }) {
           {title}
         </span>
       </div>
-      <EllipseIcon className={cn("size-4 cursor-pointer", { "size-3 sm:size-4": isLarge })} />
-    </Link>
+      <div onClick={(e) => e.stopPropagation()}>
+        <DropdowmIcon
+          items={dropdownItems}
+          onSelect={handleDropdownSelect}
+          icon={<EllipseIcon className={cn("size-4", { "size-3 sm:size-4": isLarge })} />}
+          className="hover:bg-sand-2 rounded-lg p-2"
+          footerItem={
+            < li
+              onClick={() => open("delete-memory", _id)}
+              className="flex cursor-pointer items-center rounded gap-2.5 px-2.5 py-1.5 hover:bg-[#F97066]/8 text-[#F97066]"
+            >
+              <TrashIcon width={16} size={16} />
+              <span className="font-inter text-sm">Delete</span>
+            </li >
+          }
+        />
+      </div>
+    </div>
   )
 }
 

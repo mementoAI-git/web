@@ -2,10 +2,12 @@ import Link from "next/link";
 import useSWR from "swr";
 import endpoint from "@/api/endpoint";
 import TopicBar, { TopicBarSkeleton } from "@/components/Topic/TopicBar";
+import { isEmpty } from "@/utility";
 
 export default function RecentConversations() {
-  const { data, isLoading } = useSWR(`${endpoint.memories}?page=1`)
+  const { data, isLoading } = useSWR(`${endpoint.conversations}?page=1`)
 
+  if (!isLoading && isEmpty(data?.data?.docs)) return null;
   return (
     <div className="container w-full space-y-3 md:space-y-6">
       <div className="flex items-center justify-between">

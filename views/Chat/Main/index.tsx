@@ -11,13 +11,11 @@ import { useRouter } from "next/navigation";
 import useFetcher from "@/hooks/use-fetcher";
 import endpoint from "@/api/endpoint";
 import { useStore } from "@/hooks/use-store";
-import { useModal } from "@/hooks/use-modal";
 import ChatSettings from "@/components/ChatSetting";
 
 export default function Chat() {
   const router = useRouter();
   const { user } = useStore()
-  const { open } = useModal()
   const { trigger: startConversation, isMutating: startingConversation } = useFetcher(endpoint.startConversation)
 
   const handleSend = async ({ text, attachments = [] }) => {

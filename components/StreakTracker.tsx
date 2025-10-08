@@ -41,7 +41,9 @@ function Streak() {
       <div className="py-6 flex flex-col gap-11 justify-center items-center">
         <div className="size-[115.2px] relative flex justify-center items-center rounded-full border border-sand-4">
           <Image src={blueFire} alt="Streak blue fire" className="size-16 object-contain" />
-          <div className="absolute font-canela font-bold text-[50px] leading-[50px] px-6 bg-sand-1 top-[90%]">3</div>
+          <div className="absolute font-canela font-bold text-[50px] leading-[50px] px-6 bg-sand-1 top-[90%]">
+            {user?.streak ? (Number(user?.streak) / 7).toFixed(0) : 0}
+          </div>
         </div>
         <div className="text-center flex flex-col gap-1">
           <span className="text-xl font-canela text-gray-800">Week streak</span>
