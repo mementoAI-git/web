@@ -39,8 +39,7 @@ export default function TopicBar({ title, _id, bookmarked = false, size = "sm" }
     }
   }
 
-  const handleClick = (e: React.MouseEvent) => {
-    // Navigate to chat when clicking the container
+  const handleClick = () => {
     router.push(`/chat/${_id}`)
   }
 
