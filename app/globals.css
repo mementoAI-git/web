@@ -51,6 +51,14 @@
   --shadow-sm: 0px 1px 2px 0px rgba(16, 24, 40, 0.05);
   --shadow-btn: 0px 2px 4px -2px #00000014, 0px 4px 8px -2px #0000000a;
   --shadow-drop-down: 2px 4px 12px 0px #00000040;
+
+  --rdp-accent-color: #52A1DD;
+  --rdp-range_start-background: #E9F1FC;
+  --rdp-range_middle-background: #E9F1FC;
+  --rdp-range_end-background: #E9F1FC;
+  --rdp-day-selected-color: #fff;
+  --rdp-day-selected-background: #52A1DD;
+
 }
 
 @theme {
@@ -121,6 +129,20 @@ body {
   overflow: hidden;
   font-family:
     var(--font-bricolage), var(--font-geist), var(--font-inter), sans-serif;
+}
+
+.rdp-day_range_start,
+.rdp-day_range_end {
+  border-radius: 8px !important;
+}
+
+.rdp-day_range_middle {
+  background-color: var(--rdp-range_middle-background) !important;
+}
+
+.rdp-day_today {
+  color: #52A1DD !important;
+  font-weight: 600;
 }
 
 .dynamic-height {
@@ -371,5 +393,76 @@ body {
   .header-container {
     position: sticky;
     top: 0;
+  }
+
+  /* Tiptap Editor Styles */
+  .tiptap-editor .ProseMirror {
+    outline: none;
+    min-height: 300px;
+  }
+
+  .tiptap-editor .ProseMirror p.is-editor-empty:first-child::before {
+    content: attr(data-placeholder);
+    float: left;
+    color: #C7C9C8;
+    pointer-events: none;
+    height: 0;
+  }
+
+  .tiptap-editor h1 {
+    font-size: 2em;
+    font-weight: bold;
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+  }
+
+  .tiptap-editor h2 {
+    font-size: 1.5em;
+    font-weight: bold;
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+  }
+
+  .tiptap-editor h3 {
+    font-size: 1.25em;
+    font-weight: bold;
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+  }
+
+  .tiptap-editor ul,
+  .tiptap-editor ol {
+    padding-left: 1.5em;
+    margin: 0.5em 0;
+  }
+
+  .tiptap-editor blockquote {
+    border-left: 3px solid #e5e7eb;
+    padding-left: 1em;
+    color: #6b7280;
+    font-style: italic;
+    margin: 1em 0;
+  }
+
+  .tiptap-editor code {
+    background-color: #f3f4f6;
+    color: #ef4444;
+    padding: 0.2em 0.4em;
+    border-radius: 0.25em;
+    font-size: 0.9em;
+  }
+
+  .tiptap-editor pre {
+    background-color: #1f2937;
+    color: #f9fafb;
+    padding: 1em;
+    border-radius: 0.5em;
+    overflow-x: auto;
+  }
+
+  .tiptap-editor hr {
+    border: none;
+    border-top: 2px solid #e5e7eb;
+    margin: 2em 0;
   }
 }

@@ -1,4 +1,4 @@
-"use clients"
+"use client"
 
 import { AudioRecorder, VideoRecorder } from "@/components/Recorder";
 import { FooterBtnGroup } from "@/components/Memory/FooterBtnGroup";
@@ -21,9 +21,18 @@ const initial = {
   attachments: []
 }
 
+const INPUT_TYPES = [
+  { value: "text", label: "Use texts" },
+  { value: "audio", label: "Use audio" },
+  { value: "video", label: "Paste something" },
+] as const
+
+const cn = (...classes: (string | boolean | undefined)[]) =>
+  classes.filter(Boolean).join(" ")
+
 export function CreateMemory({ data, isMobile = false }) {
   const { payload, type: declaredType } = data
-  const { close, push } = useModal()
+  const { close, push, open } = useModal()
 
   const audioRef = useRef(null)
   const videoRef = useRef(null)
@@ -52,8 +61,10 @@ export function CreateMemory({ data, isMobile = false }) {
         p.attachments = JSON.parse(attachments).files.map(f => f.result._id)
       }
       const result = await trigger({ ...p, status: "draft" })
+      // console.log("result here", result)
       if (result?.success) {
-        push("set-tag-permission", { memory: result.data, isNew: true });
+        console.log("[CreateMemory] opening set-tag-permission with:", result.data)
+        open("set-tag-permission", { memory: result.data, isNew: true });
         setEditMode(false)
         localStorage.removeItem(storageKeys.attachments)
       }
@@ -120,8 +131,31 @@ export function CreateMemory({ data, isMobile = false }) {
             value={values.title}
             name="title"
             onChange={handleChange}
-            className="font-inter resize-none text-3xl w-full h-9 min-h-9 first-letter:capitalize outline-0 font-semibold"
+            className="font-canela placeholder:text-gray-300 resize-none text-3xl w-full h-9 min-h-9 first-letter:capitalize outline-0"
           />
+        </div>
+
+        <div className="flex gap-6 border-b border-gray-200">
+          {INPUT_TYPES.map(({ value, label }) => {
+            const isActive = type === value
+            return (
+              <button
+                key={value}
+                onClick={() => setType(value)}
+                className={cn(
+                  "pb-3 px-1 font-medium text-sm transition-colors relative",
+                  isActive
+                    ? "text-[#52A1DD]"
+                    : "text-gray-500 hover:text-gray-700"
+                )}
+              >
+                {label}
+                {isActive && (
+                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#52A1DD]" />
+                )}
+              </button>
+            )
+          })}
         </div>
         {
           type === "audio" ?

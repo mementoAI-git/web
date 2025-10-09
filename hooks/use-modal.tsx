@@ -12,7 +12,8 @@ interface IState {
   name: string;
   props?: any;
 }
-export const initialStates = { state: null };
+// export const initialStates = { state: null };
+export const initialStates: ModalContext = { state: [] };
 
 interface ModalContext {
   state: IState[];

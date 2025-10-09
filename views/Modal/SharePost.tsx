@@ -8,6 +8,9 @@ import facebook from "@/public/image/Facebook.png";
 import twitter from "@/public/image/twitter.png";
 import instagram from "@/public/image/instagram.png";
 import linkedin from "@/public/image/linkedin.png";
+import PlusIcon from "@/public/icon/plus.svg";
+import { cn } from "@/utility";
+import confetti from "@/public/image/confetti.png";
 import { ModalCloseBtn } from "@/components/ModalLayout";
 import useCopy from "@/hooks/use-copy";
 import { Sheet } from "react-modal-sheet";
@@ -19,27 +22,41 @@ function Content({ data: id }) {
   return (
     <div className="w-full !max-w-120">
       <div className="space-y-6">
-        <h4 className="modal-title">Share this post</h4>
-        <div className="space-y-6">
+        <div className="flex justify-start w-fit">
+          <Image src={confetti} alt="Confetti" className="size-14 object-contain" />
+        </div>
+        <div>
+          <h4 className="modal-title text-[#1D2939] text-5xl">Story added successfully</h4>
+          <p className="text-[#475467] ">You have added a new story to your Memento</p>
+        </div>
+        
+        <div className="space-y-6 border border-[#EAECF0] p-6 rounded-lg">
           <div className="font-inter text-sm font-medium !text-grey-600">
             <span className="font-normal">Share link</span>
-            <div className="relative mt-2 flex items-center justify-between rounded-lg border-dashed border border-sand-4 bg-sand-2 p-2">
+            <div className="relative mt-2 flex items-center justify-between rounded-lg border-dashed border border-sand-4 p-2">
               <span className="font-normal truncate whitespace-nowrap">
                 {link}
               </span>
 
               <button
                 onClick={() => handleCopy(link, "Link copied successfully")}
-                className="flex cursor-pointer items-center justify-center gap-1 rounded-full bg-blue-6 px-3 py-2 text-white"
+                className="cursor-pointer text-blue-6 border-l border-[#EAECF0]"
               >
-                {
+                <div className="flex px-3 py-2 items-center justify-center gap-1">
+                  {
                   copied ?
-                    <CircleCheckIcon width={16} /> :
+                    <>
+                      <CircleCheckIcon width={16} />
+                      <span>Copied</span>
+                    </>
+                     :
                     <>
                       <CopyIcon width={16} />
                       <span>Copy</span>
                     </>
                 }
+                </div>
+                
               </button>
             </div>
           </div>
@@ -68,6 +85,14 @@ function Content({ data: id }) {
             ))}
           </div>
         </div>
+
+        <div className="mt-6 flex justify-center md:justify-end gap-3">
+          <button onClick={() => close("share-post")} className="btn-outline border">Dismiss</button>
+          <button onClick={() => open("create-memory")} className={cn("btn", "!rounded-full md:w-full w-fit")}>
+            <PlusIcon width={9} />
+            <span>Add Memory</span>
+          </button>
+        </div>
       </div>
     </div >
   );
@@ -79,7 +104,7 @@ export function SharePost({ data }: { data: { id: string } }) {
   return (
     <div>
       <div className="hidden sm:flex modal-container">
-        <ModalCloseBtn onClick={() => close("share-post")} />
+        {/* <ModalCloseBtn onClick={() => close("share-post")} /> */}
         <Content data={data} />
       </div>
       <Sheet
