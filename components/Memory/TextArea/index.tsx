@@ -20,9 +20,6 @@ interface ITextArea {
   onChange?: (e: { target: { value: string; name?: string } }) => void
 }
 
-const cn = (...classes: (string | boolean | undefined)[]) =>
-  classes.filter(Boolean).join(" ")
-
 export function TextArea({ attachments = [], value, name, onChange }: ITextArea) {
   const { open } = useModal()
   const [showSlashMenu, setShowSlashMenu] = useState(false)
@@ -33,7 +30,7 @@ export function TextArea({ attachments = [], value, name, onChange }: ITextArea)
     extensions: [
       StarterKit.configure({
         heading: {
-          levels: [1, 2, 3],
+          levels: [1, 2, 3, 4],
         },
       }),
       Placeholder.configure({
@@ -42,7 +39,7 @@ export function TextArea({ attachments = [], value, name, onChange }: ITextArea)
       Link.configure({
         openOnClick: false,
         HTMLAttributes: {
-          class: 'text-blue-600 underline cursor-pointer',
+          class: 'text-blue-6 underline cursor-pointer',
         },
       }),
     ],

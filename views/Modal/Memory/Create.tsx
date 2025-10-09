@@ -3,7 +3,7 @@
 import { AudioRecorder, VideoRecorder } from "@/components/Recorder";
 import { FooterBtnGroup } from "@/components/Memory/FooterBtnGroup";
 import { TextArea } from "@/components/Memory/TextArea";
-import { ModalWrapper } from "@/components/ModalLayout";
+import { ModalCloseBtn } from "@/components/ModalLayout";
 import useForm from "@/hooks/use-form";
 import { useModal } from "@/hooks/use-modal";
 import { useEffect, useRef, useState } from "react";
@@ -13,6 +13,7 @@ import { fileUploadFetcher } from "@/api/fetcher";
 import { isEmpty } from "@/utility";
 import { toast } from "sonner";
 import { storageKeys } from "@/utility/constant";
+import { Sheet } from "react-modal-sheet";
 
 const initial = {
   title: "",
@@ -23,14 +24,17 @@ const initial = {
 
 const INPUT_TYPES = [
   { value: "text", label: "Use texts" },
-  { value: "audio", label: "Use audio" },
-  { value: "video", label: "Paste something" },
+  { value: "audio", label: "Use audio" }
 ] as const
 
 const cn = (...classes: (string | boolean | undefined)[]) =>
   classes.filter(Boolean).join(" ")
 
-export function CreateMemory({ data, isMobile = false }) {
+const header = (
+  <h2 className="text-xl font-geist font-semibold text-secondary">Create Memory</h2>
+)
+
+function Content({ data }) {
   const { payload, type: declaredType } = data
   const { close, push, open } = useModal()
 
@@ -100,30 +104,8 @@ export function CreateMemory({ data, isMobile = false }) {
     }
   }, [])
 
-  const header = (
-    <h2 className="text-xl font-geist font-semibold text-secondary">Create Memory</h2>
-  )
-
-  const footer = (
-    <FooterBtnGroup
-      onAddFileBtnClick={() => push("file-upload", null)}
-      onDiscard={handleDiscard}
-      onSave={handleSubmit}
-      onTypeChange={setType}
-      disabled={["audio", "video"].includes(type) && recording}
-      saving={isMutating}
-      type={type}
-      editMode={editMode || !isEmpty(values.body)}
-    />
-  )
-
   return (
-    <ModalWrapper
-      isMobile={isMobile}
-      header={header}
-      footer={footer}
-      onClose={handleClose}
-    >
+    <div className="space-y-4">
       <div className="space-y-4">
         <div className="py-2">
           <input
@@ -178,6 +160,46 @@ export function CreateMemory({ data, isMobile = false }) {
               />
         }
       </div>
-    </ModalWrapper >
+      <FooterBtnGroup
+        onAddFileBtnClick={() => push("file-upload", null)}
+        onDiscard={handleDiscard}
+        onSave={handleSubmit}
+        onTypeChange={setType}
+        disabled={["audio", "video"].includes(type) && recording}
+        saving={isMutating}
+        type={type}
+        editMode={editMode || !isEmpty(values.body)}
+      />
+    </div>
+  )
+}
+
+export function CreateMemory({ data }) {
+  const { close } = useModal()
+
+  return (
+    <div >
+      <div className="hidden !min-w-[618px] sm:block modal-container">
+        <ModalCloseBtn onClick={() => close("set-tag-permission")} />
+        <Content data={data} />
+      </div>
+      <Sheet
+        detent="content"
+        className="block md:hidden"
+        isOpen
+        onClose={() => close("set-tag-permission")}
+        snapPoints={[0.5, 0.75, 1]}
+        initialSnap={1}
+      >
+        <Sheet.Container className="bg-sand-1" >
+          <Sheet.Header className="bg-sand-1 rounded-3xl" />
+          <Sheet.Content className="bg-sand-1 px-4 pb-6">
+            <ModalCloseBtn className="!relative ml-auto !right-0 !top-0 mb-2" onClick={() => close("set-tag-permission")} />
+            <Content {...{ data }} />
+          </Sheet.Content>
+        </Sheet.Container>
+        <Sheet.Backdrop />
+      </Sheet>
+    </div >
   )
 }
