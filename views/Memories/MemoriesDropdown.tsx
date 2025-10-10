@@ -2,7 +2,6 @@ import VeriticalElipseIcon from "@/public/icon/vertical-ellipse.svg";
 import EditIcon from "@/public/icon/edit.svg";
 import TrashIcon from "@/public/icon/trash.svg";
 import LunchIcon from "@/public/icon/lauch.svg";
-import BookmarkIcon from "@/public/icon/dashboard/bookmark.svg";
 import FilterIcon from "@/public/icon/filter.svg";
 import {
   CheckboxOption,
@@ -95,106 +94,6 @@ export function MemoryListFilter({ value = "all", onChange }: { value: string, o
         { label: "Custom date", value: "custom-date" },
       ]}
       value={value}
-    />
-  );
-}
-
-export function StoriesActions({ memory }: { memory: IMemory }) {
-  const { open } = useModal();
-  const { trigger: addBookmark } = useFetcher(`${endpoint.memories}/${memory._id}/bookmark`, "post");
-  const { trigger: removeBookmark } = useFetcher(`${endpoint.memories}/${memory._id}/bookmark`, "delete");
-  const { trigger: restoreMemory } = useFetcher(`${endpoint.memories}/${memory._id}/restore`, "post");
-
-  const handleBookmarkAction = async () => {
-    try {
-      if (memory.bookmarked) {
-        const result = await removeBookmark("");
-        if (result?.success) {
-          toast.success("Memory removed from bookmarks successfully!");
-        }
-      } else {
-        const result = await addBookmark();
-        if (result?.success) {
-          toast.success("Memory added to bookmarks successfully!");
-        }
-      }
-
-      // Update the cache
-      mutate(`${endpoint.memories}/${memory._id}`)
-      mutate(endpoint.memoriesStats)
-      mutate(`${endpoint.memories}?page=1`)
-    } catch (error) {
-      toast.error("An error occurred while bookmarking");
-    }
-  };
-
-  const handleRestore = async () => {
-    try {
-      const result = await restoreMemory();
-      if (result?.success) {
-        toast.success("Memory restored successfully!");
-        // Update the cache
-        mutate(`${endpoint.memories}/${memory._id}`);
-        mutate(endpoint.memoriesStats);
-        mutate(`${endpoint.memories}?page=1`);
-      }
-    } catch (error) {
-      toast.error("An error occurred while restoring the memory");
-    }
-  };
-
-  const handleSelect = (value: string) => {
-    if (value === "share-story") {
-      open("share-post", memory?._id)
-    }
-    if (value === "edit-memory") {
-      open("edit-memory", memory)
-    }
-    if (value === "bookmark") {
-      handleBookmarkAction()
-    }
-    if (value === "restore") {
-      handleRestore()
-    }
-  };
-
-  return (
-    <DropdowmIcon
-      icon={<VeriticalElipseIcon className="w-4 h-3" />}
-      items={[
-        {
-          label: "Restore",
-          value: "restore",
-          startIcon: <FilterIcon width={16} height={16} />,
-        },
-        {
-          label: "Edit story",
-          value: "edit-memory",
-          startIcon: <EditIcon width={16} size={16} />,
-        },
-        {
-          label: "Share story",
-          value: "share-story",
-          startIcon: <LunchIcon className="size-[14px]" width={14} size={14} />,
-        },
-        {
-          label: memory.bookmarked ? "Remove bookmark" : "Add bookmark",
-          value: "bookmark",
-          startIcon: memory.bookmarked ?
-            <RemoveBookmarkIcon width={16} height={16} />
-            : <AddBookmarkIcon width={16} height={16} />
-        },
-      ]}
-      footerItem={
-        <li
-          onClick={() => open("delete-memory", memory._id)}
-          className="flex cursor-pointer items-center gap-2.5 px-1 py-2 hover:bg-[#F97066]/8 text-[#F97066]"
-        >
-          <TrashIcon width={16} size={16} />
-          <span className="font-inter text-sm">Delete</span>
-        </li>
-      }
-      onSelect={handleSelect}
     />
   );
 }

@@ -2,8 +2,6 @@ import { Editor, Range } from '@tiptap/core'
 import BoldIcon from "@/public/icon/editor/bold.svg"
 import ItalicIcon from "@/public/icon/editor/italic.svg"
 import HeadingIcon from "@/public/icon/editor/heading.svg"
-import LinkIcon from "@/public/icon/editor/link.svg"
-import ImageIcon from "@/public/icon/editor/image.svg"
 import ListIcon from "@/public/icon/editor/unorderlist.svg"
 import OrderListIcon from "@/public/icon/editor/orderlist.svg"
 import QuoteIcon from "@/public/icon/editor/quote.svg"

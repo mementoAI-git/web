@@ -16,7 +16,7 @@ import useCopy from "@/hooks/use-copy";
 import { Sheet } from "react-modal-sheet";
 
 function Content({ data: id }) {
-  const { close } = useModal();
+  const { close, open } = useModal();
   const [copied, handleCopy] = useCopy()
   const link = `${window.origin}/post/${id}`
   return (
@@ -29,34 +29,34 @@ function Content({ data: id }) {
           <h4 className="modal-title text-[#1D2939] text-5xl">Story added successfully</h4>
           <p className="text-[#475467] ">You have added a new story to your Memento</p>
         </div>
-        
-        <div className="space-y-6 border border-[#EAECF0] p-6 rounded-lg">
+
+        <div className="space-y-4 border border-gray-200 p-6 rounded-lg">
           <div className="font-inter text-sm font-medium !text-grey-600">
             <span className="font-normal">Share link</span>
-            <div className="relative mt-2 flex items-center justify-between rounded-lg border-dashed border border-sand-4 p-2">
+            <div className="relative mt-2 flex items-center justify-between rounded-lg border border-gray-200 p-2">
               <span className="font-normal truncate whitespace-nowrap">
                 {link}
               </span>
 
               <button
                 onClick={() => handleCopy(link, "Link copied successfully")}
-                className="cursor-pointer text-blue-6 border-l border-[#EAECF0]"
+                className="cursor-pointer text-blue-6 border-l border-gray-200"
               >
                 <div className="flex px-3 py-2 items-center justify-center gap-1">
                   {
-                  copied ?
-                    <>
-                      <CircleCheckIcon width={16} />
-                      <span>Copied</span>
-                    </>
-                     :
-                    <>
-                      <CopyIcon width={16} />
-                      <span>Copy</span>
-                    </>
-                }
+                    copied ?
+                      <>
+                        <CircleCheckIcon width={16} />
+                        <span>Copied</span>
+                      </>
+                      :
+                      <>
+                        <CopyIcon width={16} />
+                        <span>Copy</span>
+                      </>
+                  }
                 </div>
-                
+
               </button>
             </div>
           </div>
@@ -73,10 +73,10 @@ function Content({ data: id }) {
             {[facebook, linkedin, twitter, instagram].map((img, i) => (
               <div
                 key={i}
-                className="flex cursor-pointer size-17 items-center justify-center rounded-full border border-grey-400"
+                className="flex cursor-pointer size-[56px] items-center justify-center rounded-full border border-grey-400"
               >
                 <Image
-                  className="size-8 object-contain"
+                  className="size-[28px] object-contain"
                   src={img}
                   key={i}
                   alt="social logos"
@@ -88,9 +88,9 @@ function Content({ data: id }) {
 
         <div className="mt-6 flex justify-center md:justify-end gap-3">
           <button onClick={() => close("share-post")} className="btn-outline border">Dismiss</button>
-          <button onClick={() => open("create-memory")} className={cn("btn", "!rounded-full md:w-full w-fit")}>
+          <button onClick={() => open("create-memory")} className={cn("btn", "!rounded-full w-fit")}>
             <PlusIcon width={9} />
-            <span>Add Memory</span>
+            <span>Add Story</span>
           </button>
         </div>
       </div>

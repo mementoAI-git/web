@@ -1,6 +1,3 @@
-import TextIcon from "@/public/icon/text.svg";
-import VideoIcon from "@/public/icon/video.svg";
-import MicIcon from "@/public/icon/mic.svg";
 import Spinner from "../Spinner";
 import AddFileButton from "../AddFileButton";
 
@@ -16,13 +13,8 @@ interface IFooterBtnGroup {
 }
 
 export const inputTypes = { text: "text", video: "video", audio: "audio" };
-const renderIcons = {
-  [inputTypes.text]: <TextIcon width={11} />,
-  [inputTypes.video]: <VideoIcon width={14} height={10} />,
-  [inputTypes.audio]: <MicIcon width={9} height={13} />,
-};
 
-export function FooterBtnGroup({ onDiscard, onSave, onAddFileBtnClick, onTypeChange, type = "text", saving = false, editMode = false, disabled = false }: IFooterBtnGroup) {
+export function FooterBtnGroup({ onDiscard, onSave, onAddFileBtnClick, saving = false, editMode = false, disabled = false }: IFooterBtnGroup) {
   return (
     <div
       className={`mt-2 flex items-center justify-between ${disabled && "!cursor-not-allowed opacity-40"}`}
@@ -48,16 +40,6 @@ export function FooterBtnGroup({ onDiscard, onSave, onAddFileBtnClick, onTypeCha
         </div>
       ) : (
         <div className="flex items-center gap-2">
-          {/* {Object.values(inputTypes).map((t) => (
-            <button
-              key={t}
-              disabled={disabled}
-              onClick={() => onTypeChange(t)}
-              className={`flex aspect-square w-10 cursor-pointer items-center justify-center rounded-full border border-[#344054] bg-grey-500 text-[#344054] ${t === type ? "border" : "border-0"}`}
-            >
-              {renderIcons[t]}
-            </button>
-          ))} */}
           <button
             disabled={disabled}
             onClick={() => onDiscard()}

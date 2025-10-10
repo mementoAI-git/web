@@ -1,6 +1,7 @@
 import endpoint from "@/api/endpoint";
 import AddFileButton from "@/components/AddFileButton";
 import ImageThumbnail from "@/components/ImageThumbnail";
+import { TextArea } from "@/components/Memory/TextArea";
 import { ModalCloseBtn, ModalWrapper } from "@/components/ModalLayout";
 import Spinner from "@/components/Spinner";
 import useFetcher from "@/hooks/use-fetcher";
@@ -48,35 +49,12 @@ export function UpdateMemory({ data: memory, isMobile = false }) {
     >
       <div className="space-y-6">
         <h4 className="modal-title hidden sm:block">{memory?.title}</h4>
-        <div className="mt-5">
-          <div className="w-full">
-            <div className="flex min-h-[425px] flex-col gap-6 rounded-2xl bg-grey-700 p-3 font-inter text-xs">
-              {
-                !isEmpty(memory?.attachments) && (
-                  <div onClick={() => push("file-preview", memory?.attachments)} className="relative size-fit">
-                    <ImageThumbnail
-                      boxClassName="!rounded-[12px] !border-2"
-                      images={memory?.attachments}
-                      size={69}
-                    />
-                    {memory?.attachments.length > 3 && (
-                      <div className="absolute top-0 -right-10 z-40 rounded-full border border-white bg-secondary px-1.5 py-0.5 font-inter text-xs font-light text-[#C1FDC5]">
-                        +{memory?.attachments.length} files
-                      </div>
-                    )}
-                  </div>
-                )
-              }
-
-              <textarea
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-                className="size-full flex-1 resize-none outline-0 placeholder:text-[#C7C9C8]"
-                placeholder="Tap to start typing..."
-              ></textarea>
-            </div>
-          </div>
-        </div>
+        <TextArea
+          value={text}
+          name="body"
+          attachments={memory?.attachments}
+          onChange={(e) => setText(e.target.value)}
+        />
       </div>
     </ModalWrapper >
   )

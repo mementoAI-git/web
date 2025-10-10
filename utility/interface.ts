@@ -65,6 +65,7 @@ export interface IMemory {
   user: string;
   attachments: IFile[];
   tags: string[];
+  type: string;
   status: string; // draft
   level: number;
   refrence: string;

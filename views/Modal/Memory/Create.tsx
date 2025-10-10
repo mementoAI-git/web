@@ -65,10 +65,8 @@ function Content({ data }) {
         p.attachments = JSON.parse(attachments).files.map(f => f.result._id)
       }
       const result = await trigger({ ...p, status: "draft" })
-      // console.log("result here", result)
       if (result?.success) {
-        console.log("[CreateMemory] opening set-tag-permission with:", result.data)
-        open("set-tag-permission", { memory: result.data, isNew: true });
+        open("create-memory", { memory: result.data, isNew: true });
         setEditMode(false)
         localStorage.removeItem(storageKeys.attachments)
       }
@@ -180,21 +178,21 @@ export function CreateMemory({ data }) {
   return (
     <div >
       <div className="hidden !min-w-[618px] sm:block modal-container">
-        <ModalCloseBtn onClick={() => close("set-tag-permission")} />
+        <ModalCloseBtn onClick={() => close("create-memory")} />
         <Content data={data} />
       </div>
       <Sheet
         detent="content"
-        className="block md:hidden"
+        className="block sm:hidden"
         isOpen
-        onClose={() => close("set-tag-permission")}
+        onClose={() => close("create-memory")}
         snapPoints={[0.5, 0.75, 1]}
         initialSnap={1}
       >
         <Sheet.Container className="bg-sand-1" >
           <Sheet.Header className="bg-sand-1 rounded-3xl" />
           <Sheet.Content className="bg-sand-1 px-4 pb-6">
-            <ModalCloseBtn className="!relative ml-auto !right-0 !top-0 mb-2" onClick={() => close("set-tag-permission")} />
+            <ModalCloseBtn className="!relative ml-auto !right-0 !top-0 mb-2" onClick={() => close("create-memory")} />
             <Content {...{ data }} />
           </Sheet.Content>
         </Sheet.Container>

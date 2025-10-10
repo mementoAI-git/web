@@ -2,7 +2,7 @@
 
 import CalendarIcon from "@/public/icon/calendar.svg";
 import ImageThumbnail from "@/components/ImageThumbnail";
-import { MemoryItemActions, StoriesActions } from "./MemoriesDropdown";
+import { MemoryItemActions } from "./MemoriesDropdown";
 import { IMemory, IPagination } from "@/utility/interface";
 import dayjs from "dayjs";
 import Link from "next/link";
@@ -34,7 +34,7 @@ function MemoriesGridItem({ memory }: { memory: IMemory }) {
 
         {isHovered && (
           <div className="absolute top-4 right-4 bg-white rounded-md shadow-md">
-            <StoriesActions memory={memory} />
+            <MemoryItemActions memory={memory} />
           </div>
         )}
       </div>

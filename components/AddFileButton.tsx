@@ -36,9 +36,9 @@ export default function AddFileButton({ onClick, disabled = false }) {
       <button
         disabled={disabled}
         onClick={() => setShow((p) => !p)}
-        className="flex aspect-square w-10 cursor-pointer items-center justify-center rounded-full border border-[#EAECF0]"
+        className="flex aspect-square w-12 text-sand-8 cursor-pointer items-center justify-center rounded-[10px] bg-sand-2"
       >
-        <PlusIcon width={12} height={12} />
+        <PlusIcon strokeWidth={3} width={16} height={16} />
       </button>
     </div>
   );

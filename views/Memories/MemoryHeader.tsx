@@ -5,12 +5,11 @@ import { Searchinput } from "@/components/Form";
 
 import GridIcon from "@/public/icon/dashboard/grid.svg";
 import ListIcon from "@/public/icon/dashboard/list.svg";
-import PlusIcon from "@/public/icon/plus.svg"
+import ChevronDown from "@/public/icon/chevron-down.svg";
 import FilterIcon from "@/public/icon/filter.svg";
-
+import SearchIcon from "@/public/icon/dashboard/search.svg";
 import { useModal } from "@/hooks/use-modal";
 import { storageKeys } from "@/utility/constant";
-import { cn } from "@/utility";
 import { useEffect } from "react";
 
 import { MemoryListFilter } from "./MemoriesFilter";
@@ -84,52 +83,43 @@ export default function MemoriesHeader({
         </div> */}
 
       </div>
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-2 md:gap-0">
-        <div className="flex flex-wrap lg:max-h-10 items-center gap-2 sm:gap-4">
-          <div className="flex items-center gap-1 px-3 py-2 border border-gray-200 rounded-lg bg-white transition-colors cursor-pointer" onClick={() => setShowFilter(!showFilter)}>
+      <div className="flex flex-row items-center justify-between gap-2 md:gap-0">
+        <div className="flex flex-1 items-center gap-2 sm:gap-4">
+          <div className="flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-lg bg-white transition-colors cursor-pointer" onClick={() => setShowFilter(!showFilter)}>
             <FilterIcon />
             <span>Filter</span>
+            <ChevronDown />
           </div>
-          {/* <div className="h-[25px] border-r border-grey-500" />
-          <DropdownButton
-            items={[{ label: "All", value: "all" }]}
-            title="Tags"
-            onSelect={console.log}
-          /> */}
           <div
             onClick={() => open("search-memory")}
-            className="w-full sm:w-auto"
+            className="w-fit sm:w-full"
           >
-            <Searchinput
-              className="bg-white !border-gray-200"
-              end={<div className="border-grey-500 border rounded py-[1px] px-1 text-[#717680] font-medium font-inter text-xs">⌘K</div>}
-            />
+            <div className="w-10 h-10 flex cursor-pointer bg-white items-center justify-center rounded-lg border border-gray-200 sm:hidden">
+              <SearchIcon />
+            </div>
+            <div className="hidden sm:block max-w-[489px]">
+              <Searchinput
+                className="bg-white !border-gray-200"
+                end={<div className="border-grey-500 border rounded py-[1px] px-1 text-[#717680] font-medium font-inter text-xs">⌘K</div>}
+              />
+            </div>
           </div>
         </div>
-        <div>
-
-        </div>
-        <div className="flex flex-col sm:flex-row items-stretch lg:max-h-10 gap-2 sm:gap-3 mt-2 sm:mt-0 w-full sm:w-auto">
-          <div className="flex items-center gap-2 sm:gap-3 mt-2 sm:mt-0">
-            {
-              ["grid", "list"].map(m => (
-                <div
-                  key={m}
-                  onClick={() => handleChangeMode(m)}
-                  className={`${mode === m ? "border" : "border-0"} rounded-[10px] flex items-center text-gray-500 cursor-pointer justify-center w-9 sm:w-10 aspect-square`}
-                >
-                  {m === "list" ?
-                    <ListIcon /> :
-                    <GridIcon />
-                  }
-                </div>
-              ))
-            }
-          </div>
-          {/* <button onClick={() => open("create-memory")} className={cn("btn", "!rounded-lg w-full sm:w-fit")}>
-            <PlusIcon width={15} />
-            <span>Add Memory</span>
-          </button> */}
+        <div className="flex items-center gap-2 sm:gap-3">
+          {
+            ["grid", "list"].map(m => (
+              <div
+                key={m}
+                onClick={() => handleChangeMode(m)}
+                className={`${mode === m ? "border" : "border-0"} rounded-[10px] flex items-center text-gray-500 cursor-pointer justify-center w-9 sm:w-10 aspect-square`}
+              >
+                {m === "list" ?
+                  <ListIcon /> :
+                  <GridIcon />
+                }
+              </div>
+            ))
+          }
         </div>
       </div>
       {showFilter && (

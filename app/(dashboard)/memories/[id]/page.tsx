@@ -25,18 +25,13 @@ export default function MemoryPage({ params }) {
   // Track when memory is opened
   useEffect(() => {
     if (data?.data && !isLoading) {
-      addToRecentMemories(data.data, user.email);
+      addToRecentMemories(data.data, user?.email);
     }
-  }, [data?.data, user.email, isLoading]);
+  }, [data?.data, user?.email, isLoading]);
 
   return (
-    <div className="flex max-w-[1160px] mx-auto">
-      <div className="flex-1 min-h-screen py-6 px-6">
-        <MemoryDetails memory={data?.data} />
-      </div>
-      <div className="w-[29%] max-w-[333px] shrink-0">
-        <MemoryDetailsSidebar memory={data?.data} />
-      </div>
+    <div className="flex max-w-[1160px] mx-auto h-screen">
+      <MemoryDetails memory={data?.data} />
     </div>
   );
 }

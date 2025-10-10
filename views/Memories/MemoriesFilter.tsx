@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useModal } from "@/hooks/use-modal";
 import { DayPicker, DateRange } from "react-day-picker";
 import "react-day-picker/dist/style.css";
+import { Checkbox } from "@/components/Form";
 
 
 const FILTER_LABELS = {
@@ -35,13 +36,7 @@ function FilterCheckboxOption({ onClick, item, value }: any) {
       onClick={() => onClick(item.value)}
       className="flex cursor-pointer items-center gap-2.5 px-3 py-2 hover:bg-gray-50 text-[#344054]"
     >
-      <input
-        type="checkbox"
-        checked={isChecked}
-        readOnly
-        className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-      />
-      <span className="font-inter text-sm">{item.label}</span>
+      <Checkbox label={item.label} checked={isChecked} />
     </li>
   );
 }
@@ -170,8 +165,8 @@ export function DatePickerFilter({ data }: any) {
               onClick={handleApply}
               disabled={!range?.from || !range?.to}
               className={`px-6 py-2.5 text-sm font-medium rounded-lg transition-colors ${range?.from && range?.to
-                  ? "bg-[#52A1DD] text-white hover:bg-[#4299E1]"
-                  : "bg-gray-300 text-gray-600 cursor-not-allowed"
+                ? "bg-[#52A1DD] text-white hover:bg-[#4299E1]"
+                : "bg-gray-300 text-gray-600 cursor-not-allowed"
                 }`}
             >
               Apply

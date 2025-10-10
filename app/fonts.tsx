@@ -1,4 +1,4 @@
-import { Averia_Serif_Libre, Bricolage_Grotesque, Geist, Inter } from "next/font/google";
+import { Averia_Serif_Libre, EB_Garamond, Bricolage_Grotesque, Geist, Inter } from "next/font/google";
 import localFont from "next/font/local";
 import "./globals.css";
 
@@ -13,6 +13,10 @@ const geist = Geist({
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
+});
+const ebGaramond = EB_Garamond({
+  subsets: ["latin"],
+  variable: "--font-garamond",
 });
 
 const averia = Averia_Serif_Libre({
@@ -79,5 +83,6 @@ export default {
   canela,
   averia,
   inter,
-  bricolage
+  bricolage,
+  ebGaramond
 }

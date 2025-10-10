@@ -5,11 +5,9 @@ import BoldIcon from "@/public/icon/editor/bold.svg"
 import ItalicIcon from "@/public/icon/editor/italic.svg"
 import HeadingIcon from "@/public/icon/editor/heading.svg"
 import LinkIcon from "@/public/icon/editor/link.svg"
-import ImageIcon from "@/public/icon/editor/image.svg"
 import ListIcon from "@/public/icon/editor/unorderlist.svg"
 import OrderListIcon from "@/public/icon/editor/orderlist.svg"
 import QuoteIcon from "@/public/icon/editor/quote.svg"
-import { useModal } from "@/hooks/use-modal"
 import { useState } from "react"
 import { LinkInput } from './LinkInput'
 
@@ -21,7 +19,6 @@ const cn = (...classes: (string | boolean | undefined)[]) =>
   classes.filter(Boolean).join(" ")
 
 export function EditorToolbar({ editor }: EditorToolbarProps) {
-  const { open } = useModal()
   const [showLinkInput, setShowLinkInput] = useState(false)
   const [linkPosition, setLinkPosition] = useState({ top: 0, left: 0 })
 

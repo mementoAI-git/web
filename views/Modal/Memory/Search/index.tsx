@@ -19,9 +19,9 @@ function Content() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
 
   useEffect(() => {
-    const recent = getRecentMemories(user.email);
+    const recent = getRecentMemories(user?.email);
     setRecentMemories(recent);
-  }, [user.email]);
+  }, [user?.email]);
 
   useEffect(() => {
     const timer = setTimeout(() => {

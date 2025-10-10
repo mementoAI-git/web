@@ -119,9 +119,9 @@ export function TextArea({ attachments = [], value, name, onChange }: ITextArea)
   }
 
   return (
-    <div className="flex min-h-[374px] flex-col gap-6 border border-gray-200 rounded-2xl bg-white font-inter text-xs overflow-hidden relative">
+    <div className="flex min-h-[374px] flex-col border border-gray-200 rounded-2xl bg-white font-inter text-xs overflow-hidden relative">
       {!isEmpty(attachments) && (
-        <div onClick={() => open("file-preview", attachments)} className="relative size-fit p-3">
+        <div onClick={() => open("file-preview", attachments)} className="relative size-fit p-3 mb-6">
           <ImageThumbnail
             boxClassName="!rounded-[12px] !border-2"
             images={attachments}
@@ -138,7 +138,7 @@ export function TextArea({ attachments = [], value, name, onChange }: ITextArea)
       <div className="relative flex-1">
         <EditorContent
           editor={editor}
-          className="size-full flex-1 text-base p-3 tiptap-editor"
+          className="size-full max-h-[460px] overflow-y-auto flex-1 text-base pt-3 px-3 tiptap-editor"
         />
 
         <SlashCommandPopup

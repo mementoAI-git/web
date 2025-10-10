@@ -12,7 +12,7 @@ import Loader from "./Loader";
 import useSWRMutation from "swr/mutation";
 import { streamlineFetcher } from "@/api/fetcher";
 import { toast } from "sonner";
-import SidebarDetails from "./SidebarDetails";
+import SidebarDetails from "../../../components/Memory/SidebarDetails";
 import useFetcher from "@/hooks/use-fetcher";
 
 export default function Conversation({ id, type = "memory" }) {

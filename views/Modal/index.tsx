@@ -46,7 +46,6 @@ const MODAL_COMPONENTS = {
 
 export default function Modal() {
   const { state } = useModal();
-  // const modal = state[0]
   const [isMobile, setIsMobile] = useState(false)
 
   useEffect(() => {
@@ -56,16 +55,11 @@ export default function Modal() {
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
 
-  console.log("[Modal.tsx] state:", state)
-
-  // if (isEmpty(state)) return null;
   if (isEmpty(state)) {
-    console.log("[Modal.tsx] no modal state, returning null")
     return null;
   }
-  // const ModalComponent = MODAL_COMPONENTS[modal?.name];
+
   const modal = state[0];
-  console.log("[Modal.tsx] showing modal:", modal?.name, "with props:", modal?.props)
   const ModalComponent = modal ? MODAL_COMPONENTS[modal.name] : null;
 
   if (!ModalComponent) return null;
