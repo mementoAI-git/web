@@ -97,7 +97,6 @@ export default function Memories() {
         <MemoriesHeader
           mode={mode}
           onChangeMode={setMode}
-          count={data?.data?.totalDocs}
           filter={filter}
           onChangeFilter={setFilter}
         />

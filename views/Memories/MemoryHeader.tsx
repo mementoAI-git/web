@@ -17,13 +17,11 @@ import { MemoryListFilter } from "./MemoriesFilter";
 interface IMemoriesHeader {
   mode?: string;
   onChangeMode: (m: string) => void;
-  count?: number;
   filter: string;
   onChangeFilter: (f: string) => void;
 }
 
 export default function MemoriesHeader({
-  count = 0,
   mode = "list",
   onChangeMode,
   filter,

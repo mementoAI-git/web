@@ -3,7 +3,6 @@
 import endpoint from "@/api/endpoint";
 import { isEmpty } from "@/utility";
 import MemoryDetails from "@/views/Memories/Details";
-import MemoryDetailsSidebar from "@/views/Memories/DetailsSideBar";
 import { useRouter } from "next/navigation";
 import { use, useEffect } from "react";
 import useSWR from "swr";
