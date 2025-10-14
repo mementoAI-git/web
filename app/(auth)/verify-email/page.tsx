@@ -22,7 +22,6 @@ function VerifyMail() {
     <AuthFormLayout
       title="Verify your email"
       can_go_back
-      icon={<EvelopIcon width={33.33} />}
       subtitle={`We’ve sent verification instructions to ${hashEmail(String(email))}. Please check your inbox or spam folders.`}
     >
       <Button title="Open Mailbox" />

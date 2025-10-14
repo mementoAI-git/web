@@ -7,6 +7,8 @@ import { useState } from "react";
 import { cn } from "@/utility";
 import Security from "./Security";
 import { Sheet } from "react-modal-sheet";
+import Beneficiary from "./Beneficiary";
+import UserIcon from "@/public/icon/users.svg";
 
 const settings = {
   general: {
@@ -19,14 +21,11 @@ const settings = {
     icon: <LockIcon strokeWidth={2} width={13.37} height={15} />,
     component: <Security />
   },
-}
-
-function Content({ children }) {
-  return (
-    <div className="flex-1 py-[30px] px-6">
-      {children}
-    </div>
-  )
+  beneficiary: {
+    label: "Beneficiary",
+    icon: <UserIcon strokeWidth={1.5} width={16} height={15} />,
+    component: <Beneficiary />
+  }
 }
 
 export default function Settings() {

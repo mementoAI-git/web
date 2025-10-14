@@ -57,8 +57,8 @@ export default function General() {
             }
           </div>
           <div className="flex flex-col gap-2">
-            <span className="font-garamond text-2xl font-medium text-gray-950/90">John Doe</span>
-            <span className="font-inter text-sm text-gray-950/70">treehousegrids@gmail.com</span>
+            <span className="font-garamond text-2xl font-medium text-gray-950/90">{user?.first_name} {user?.last_name}</span>
+            <span className="font-inter text-sm text-gray-950/70">{user?.email}</span>
             <label htmlFor="file" className="font-inter cursor-pointer py-2 px-3 border border-black/10 text-xs rounded-full font-medium text-center text-gray-950/90">
               Edit photo
               <input id="file" type="file" accept="image/*" hidden name="file" onChange={handleUpload} />

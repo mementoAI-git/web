@@ -7,7 +7,7 @@ import * as yup from "yup";
 import useFetcher from "@/hooks/use-fetcher";
 import endpoint from "@/api/endpoint";
 import { toast } from "sonner";
-import TwoFactorAuthenticator from "./2FA";
+import TwoFactorAuthenticator from "../../Modal/Settings/2FA";
 
 const initial = {
   new_password: "",
