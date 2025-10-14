@@ -2,7 +2,6 @@
 
 import { Button } from "@/components/Buttons";
 import { AuthFormLayout, AuthLoader } from "@/views/Auth";
-import EvelopIcon from "@/public/icon/evelop.svg"
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect } from "react";
 import { hashEmail } from "@/utility";
