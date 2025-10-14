@@ -49,12 +49,7 @@ export default function MemoriesTableRow({ memory }) {
         </div>
       </td>
       <td className="w-fit">
-        <div className="flex items-center justify-end gap-4 text-[#949494]">
-          <div className="p-2 rounded-full hover:bg-[#f5f5f5]/80 cursor-pointer" onClick={() => open("edit-memory", memory)}>
-            <EditIcon />
-          </div>
-          <MemoryItemActions memory={memory} />
-        </div>
+        <MemoryItemActions memory={memory} />
       </td>
     </tr>
   );

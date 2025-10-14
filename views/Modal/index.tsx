@@ -18,6 +18,7 @@ import { DeleteCapsule } from "./Capsule/Delete";
 import { PauseCapsule } from "./Capsule/Pause";
 import { useState, useEffect } from "react";
 import { DatePickerFilter } from "../Memories/MemoriesFilter";
+import Settings from "./Settings";
 
 const MODAL_COMPONENTS = {
   "share-post": SharePost,
@@ -41,6 +42,7 @@ const MODAL_COMPONENTS = {
   "create-capsule": CreateCapsule,
   "delete-capsule": DeleteCapsule,
   "pause-capsule": PauseCapsule,
+  "settings": Settings,
   "date-picker-filter": DatePickerFilter
 }
 

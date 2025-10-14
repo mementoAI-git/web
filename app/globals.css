@@ -35,6 +35,7 @@
   --color-gray-700: #344054;
   --color-gray-800: #1D2939;
   --color-gray-900: #101828;
+  --color-gray-950: #1E1E1E;
 
   --color-sand-1: #FEFBF8;
   --color-sand-2: #FBF5EB;
@@ -94,6 +95,7 @@
   --color-gray-700: var(--color-gray-700);
   --color-gray-800: var(--color-gray-800);
   --color-gray-900: var(--color-gray-900);
+  --color-gray-950: var(--color-gray-950);
 
   --color-sand-1: var(--color-sand-1);
   --color-sand-2: var(--color-sand-2);

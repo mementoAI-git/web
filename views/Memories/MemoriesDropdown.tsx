@@ -51,7 +51,7 @@ export function MemoryItemActions({ memory }: { memory: IMemory }) {
         {
           label: "Share story",
           value: "share-story",
-          startIcon: <LunchIcon className="size-[14px]" width={14} size={14} />,
+          startIcon: <LunchIcon className="size-[14px]" strokeWidth={1.5} width={14} size={14} />,
         },
         {
           label: memory.bookmarked ? "Remove bookmark" : "Add bookmark",
@@ -64,7 +64,7 @@ export function MemoryItemActions({ memory }: { memory: IMemory }) {
       footerItem={
         <li
           onClick={() => open("delete-memory", memory._id)}
-          className="flex cursor-pointer items-center gap-2.5 px-1 py-2 hover:bg-[#F97066]/8 text-[#F97066]"
+          className="flex cursor-pointer items-center rounded gap-2.5 px-2.5 py-1.5 hover:bg-[#F97066]/8 text-[#F97066]"
         >
           <TrashIcon width={16} size={16} />
           <span className="font-inter text-sm">Delete</span>

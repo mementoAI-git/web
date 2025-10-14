@@ -79,12 +79,12 @@ export default function Memories() {
           <StatCard
             icon={<BookIcon width={20} height={16} />}
             subtitle="Stories added"
-            title={stats?.data?.memory_count || 0}
+            title={stats?.data?.stories_count || 0}
           />
           <StatCard
             icon={<ConversationIcon strokeWidth={2} width={22} height={20} />}
             subtitle="Conversations"
-            title={stats?.data?.bookmark_count || 0}
+            title={stats?.data?.conversations_count || 0}
           />
           <StatCard
             icon={<BookmarkIcon strokeWidth={2} width={14} height={18} />}

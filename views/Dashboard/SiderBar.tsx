@@ -4,6 +4,7 @@ import { bottomNavigations, topNavigations } from "./navigations";
 import SideBarItem from "./SideBarItem";
 import { LogoV2 } from "@/components/Logo";
 import { usePathname, useRouter } from "next/navigation";
+import { useModal } from "@/hooks/use-modal";
 
 interface DashboardSideBarProps {
   onClose?: () => void;
@@ -12,6 +13,7 @@ interface DashboardSideBarProps {
 export function DashboardSideBar({ onClose }: DashboardSideBarProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const { open } = useModal();
 
   const handleLogoClick = () => {
     router.push("/overview");
@@ -34,9 +36,7 @@ export function DashboardSideBar({ onClose }: DashboardSideBarProps) {
             <SideBarItem
               Icon={SlideIcon}
               title="settings"
-              active={pathname.includes("settings")}
-              link="/settings/profile"
-              onClick={onClose}
+              onClick={() => open("settings")}
             />
           </div>
         </div>

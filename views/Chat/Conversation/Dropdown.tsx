@@ -27,7 +27,7 @@ export function MemoryDropdown({ memory, onViewDetails }: IMemoryDropdownProps) 
   return (
     <DropdowmIcon
       icon={<EllipseIcon className="!size-full stroke-1 cursor-pointer" />}
-      className="!size-7 sm:!size-8 !p-1.5 flex justify-center items-center"
+      className="!size-7 sm:!size-8 !p-2 flex justify-center items-center"
       items={[
         {
           label: "View Detils",
