@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { GoogleGenAI, LiveServerMessage, Session, Modality } from "@google/genai";
+import { v4 as uuidv4 } from "uuid";
 import { createBlob, decode, decodeAudioData } from "./utils";
 import { GEMINI_CONFIG } from "./config";
 import { createSystemContext, isEmpty } from "@/utility";
@@ -38,6 +39,7 @@ export function useLiveAPI({ memoryId, turns = [] }: UseLiveAPIProps) {
   const nextStartTimeRef = useRef(0);
   const sourcesRef = useRef<Set<AudioBufferSourceNode>>(new Set());
   const isConnectingRef = useRef(false);
+  const sessionIdRef = useRef<string | null>(null);
 
   const context = useMemo(() => createSystemContext(user), [user]);
 
@@ -148,6 +150,7 @@ export function useLiveAPI({ memoryId, turns = [] }: UseLiveAPIProps) {
       if (!isEmpty(messages)) {
         addMessageToMemory({
           memory_id: memoryId,
+          session_id: sessionIdRef.current,
           messages
         })
       }
@@ -166,7 +169,7 @@ export function useLiveAPI({ memoryId, turns = [] }: UseLiveAPIProps) {
     if (!turnTimerRef.current.interval) {
       startTurnTimer();
     }
-  }, [addMessageToMemory, startTurnTimer, stopTurnTimer]);
+  }, [addMessageToMemory, startTurnTimer, stopTurnTimer, memoryId]);
 
   // Stop audio recording
   const stopRecording = useCallback(() => {
@@ -202,6 +205,9 @@ export function useLiveAPI({ memoryId, turns = [] }: UseLiveAPIProps) {
         callbacks: {
           onopen: () => {
             setConnected(true);
+            if (sessionIdRef.current) {
+              sessionIdRef.current = uuidv4();
+            }
             turnTimerRef.current.duration = 0;
           },
           onmessage: async (message: LiveServerMessage) => {
@@ -266,7 +272,6 @@ export function useLiveAPI({ memoryId, turns = [] }: UseLiveAPIProps) {
             }
           },
           onerror: (error: any) => {
-            console.log('Live API error:', error);
             setError(`Live API error: ${error.message || error}`);
             setConnected(false);
             isConnectingRef.current = false;
@@ -324,6 +329,7 @@ export function useLiveAPI({ memoryId, turns = [] }: UseLiveAPIProps) {
     sessionPromiseRef.current?.then((session) => session.close());
     inputAudioContextRef.current?.close().catch(console.error);
     outputAudioContextRef.current?.close().catch(console.error);
+    sessionIdRef.current = null;
   }, []);
 
   useEffect(() => {
