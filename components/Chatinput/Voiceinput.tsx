@@ -95,6 +95,7 @@ export default function Voiceinput({ onCancel, memoryId, history = [] }: Voicein
 
       onCancel();
     } catch (error) {
+      console.log(error)
       onCancel();
     } finally {
       await mutate(`${endpoint.conversations}?page=1`)
