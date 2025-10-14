@@ -61,6 +61,11 @@ export function useLiveAPI({ memoryId, turns = [] }: UseLiveAPIProps) {
   const startRecording = useCallback(async () => {
     if (isRecordingRef.current) return;
     isRecordingRef.current = true;
+
+    if (!sessionIdRef.current) {
+      sessionIdRef.current = uuidv4();
+    }
+
     setIsRecording(true);
 
     const inputAudioContext = inputAudioContextRef.current;
@@ -205,7 +210,7 @@ export function useLiveAPI({ memoryId, turns = [] }: UseLiveAPIProps) {
         callbacks: {
           onopen: () => {
             setConnected(true);
-            if (sessionIdRef.current) {
+            if (!sessionIdRef.current) {
               sessionIdRef.current = uuidv4();
             }
             turnTimerRef.current.duration = 0;

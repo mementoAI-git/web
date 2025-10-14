@@ -95,13 +95,9 @@ export default function Voiceinput({ onCancel, memoryId, history = [] }: Voicein
 
       onCancel();
     } catch (error) {
-      console.log(error)
       onCancel();
     } finally {
-      await mutate((key) => {
-        console.log(key)
-        return typeof key === 'string' && key.startsWith(`${endpoint.aiPromptMessage}/${memoryId}`)
-      })
+      await mutate(`${endpoint.conversations}?page=1`)
       setIsDisconnecting(false);
     }
   };
