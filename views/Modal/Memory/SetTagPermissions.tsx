@@ -121,7 +121,7 @@ function Content({ data }: ISetTagPermissionsProps) {
   const handleSubmit = async () => {
     const result = await trigger({ level, title, status: "save", tags });
     if (result.success) {
-      console.log("[SetTagPermissions] opening share-post with memory:", memory)
+
       mutate(`${endpoint.memories}?page=1`)
       open("share-post", memory?._id);
       toast.success(isNew ? "Memory created successfully" : result?.message)

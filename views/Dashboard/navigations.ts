@@ -4,7 +4,7 @@ import DoubleHeartIcon from "@/public/icon/double-heart.svg";
 import QuestionIcon from "@/public/icon/dashboard/question-octagon.svg";
 import DollarIcon from "@/public/icon/dashboard/dollar.svg";
 import CompassIcon from "@/public/icon/dashboard/compass.svg";
-import TimeIcon from "@/public/icon/hour-glass.svg";
+import AIIcon from "@/public/icon/ai.svg"
 
 export const settingNavigations = [
   { title: "my profile", link: "/settings/profile" },
@@ -16,7 +16,7 @@ export const settingNavigations = [
 
 export const topNavigations = [
   { Icon: HomeIcon, title: "overview", link: "/overview" },
-  { Icon: ChatIcon, title: "chat", link: "/chat" },
+  { Icon: AIIcon, title: "My conversations", link: "/chat" },
   { Icon: DoubleHeartIcon, title: "my stories", link: "/memories" },
   { Icon: CompassIcon, title: "explore", link: "/explore" },
   // { Icon: TimeIcon, title: "time capsule", link: "/time-capsule" }

@@ -9,6 +9,7 @@ import Security from "./Security";
 import { Sheet } from "react-modal-sheet";
 import Beneficiary from "./Beneficiary";
 import UserIcon from "@/public/icon/users.svg";
+import Privacy from "./Privacy";
 
 const settings = {
   general: {
@@ -25,6 +26,11 @@ const settings = {
     label: "Beneficiary",
     icon: <UserIcon strokeWidth={1.5} width={16} height={15} />,
     component: <Beneficiary />
+  },
+  privacy: {
+    label: "Privacy & account",
+    icon: <UserIcon strokeWidth={1.5} width={16} height={15} />,
+    component: <Privacy />
   }
 }
 
@@ -53,7 +59,7 @@ export default function Settings() {
             }
           </ul>
         </div>
-        <div className="flex-1 py-[30px] px-6">
+        <div className="flex-1 py-[30px] px-6 overflow-y-auto hide-scrollbar">
           {settings[active].component}
         </div>
       </div>
@@ -72,7 +78,7 @@ export default function Settings() {
             <h4 className="modal-title mb-5 !text-4xl">
               Settings
             </h4>
-            <div className="flex w-full my-5 flex-nowrap overflow-x-auto gap-2">
+            <div className="flex w-full flex-nowrap overflow-x-auto gap-2">
               {
                 Object.entries(settings).map(([key, setting]) => (
                   <div
@@ -86,7 +92,7 @@ export default function Settings() {
                 ))
               }
             </div>
-            <div className="flex-1 py-[30px]">
+            <div className="flex-1 pb-[30px]">
               {settings[active].component}
             </div>
           </Sheet.Content>

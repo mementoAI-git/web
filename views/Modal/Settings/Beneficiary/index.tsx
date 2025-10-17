@@ -19,7 +19,7 @@ export default function Beneficiaries() {
   const [page, setPage] = useState(1)
   const { data, isLoading } = useSWR(`${endpoint.beneficiaries}?page=${page}`)
   return (
-    <div className="w-full flex flex-col gap-10">
+    <div className="w-full flex py-6 flex-col gap-10">
       <div className="flex flex-col gap-2">
         <span className="font-inter text-base font-bold text-gray-950/90">Beneficiary</span>
         <span className="font-inter text-sm text-gray-950/70">

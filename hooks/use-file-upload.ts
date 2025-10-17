@@ -1,7 +1,7 @@
 import endpoint from "@/api/endpoint";
 import { fileUploadFetcher } from "@/api/fetcher";
 import { IOnUploadPayload } from "@/utility/interface";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import useSWRMutation from "swr/mutation";
 import useFetcher from "./use-fetcher";
@@ -37,5 +37,10 @@ export default function useFileUpload() {
     setFiles(files => files.filter((f) => f.id !== id))
   }
 
-  return { files, handleUpload, handleDeleteFile, setFiles }
+  return {
+    files: useMemo(() => files, [files]),
+    handleUpload,
+    handleDeleteFile,
+    setFiles,
+  }
 }

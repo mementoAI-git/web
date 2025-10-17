@@ -3,7 +3,6 @@
 import LunchIcon from "@/public/icon/lauch.svg"
 import BookmarkIcon from "@/public/icon/dashboard/bookmark.svg"
 import RemoveBookmarkIcon from "@/public/icon/bookmark-solid.svg"
-import { useRouter } from "next/navigation";
 import { IMemory } from "@/utility/interface";
 import FileGallery from "@/components/FileGallery";
 import { isEmpty } from "@/utility";

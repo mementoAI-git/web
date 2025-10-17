@@ -20,6 +20,7 @@ const headerTitle = {
   "memories": "my memories",
   "chat": "chat with AI",
   "explore": "explore",
+  "overview": "overview",
   "time-capsule": "time capsule"
 }
 
@@ -40,26 +41,25 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
 
   return (
     <div className="w-full fixed top-0 left-0 right-0  border-b border-grey-500 sm:relative header-container">
-      <header className="mx-auto flex max-h-23 w-[93%] max-w-[1160px] items-center justify-between gap-4 sm:gap-6 px-2 py-4 sm:py-6">
+      <header className="mx-auto flex max-h-20 w-[93%] max-w-[1160px] items-center justify-between gap-4 sm:gap-6 px-10 py-4 sm:py-5">
         <div className="flex items-center gap-4 sm:gap-6 flex-1">
           <div onClick={handleLogoClick} className="cursor-pointer md:hidden">
             <LogoV2 />
           </div>
           {
             !isEmpty(headerTitle[path]) &&
-            <div className="page-title hidden sm:block">
+            <div className="font-garamond capitalize font-medium text-gray-950/90 text-2xl hidden sm:block">
               {headerTitle[path]}
             </div>
           }
-
-          <div
-            onClick={() => open("search-memory")}
-            className="h-10 max-w-150 flex-1 hidden sm:block"
-          >
-            <Searchinput />
-          </div>
         </div>
         <div className="hidden md:flex max-h-10 shrink-0 items-center gap-2 sm:gap-4 font-inter">
+          <div
+            onClick={() => open("search-memory")}
+            className="h-10 max-w-[336px] flex-1 hidden sm:block"
+          >
+            <Searchinput className="!bg-white border-gray-200" />
+          </div>
           <div onClick={() => open("search-memory")} className="h-10 w-10 flex items-center justify-center rounded-lg border border-[rgba(208,213,221,1)] bg-white sm:hidden">
             <SearchIcon width={20} height={20} />
           </div>

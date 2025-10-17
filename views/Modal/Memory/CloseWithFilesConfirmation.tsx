@@ -1,5 +1,4 @@
 import { ModalCloseBtn } from "@/components/ModalLayout";
-import AlertIcon from "@/public/icon/alert-hexagon.svg"
 
 export function CloseWithFilesConfirmation({ open = false, close, onConfirm }) {
   return (

@@ -6,7 +6,7 @@ import { TextArea } from "@/components/Memory/TextArea";
 import { ModalCloseBtn } from "@/components/ModalLayout";
 import useForm from "@/hooks/use-form";
 import { useModal } from "@/hooks/use-modal";
-import { useRef, useState, useEffect, forwardRef, useImperativeHandle } from "react";
+import { useRef, useState, useEffect, forwardRef, useImperativeHandle, useCallback } from "react";
 import endpoint from "@/api/endpoint";
 import useSWRMutation from "swr/mutation";
 import { fileUploadFetcher } from "@/api/fetcher";
@@ -32,10 +32,9 @@ const INPUT_TYPES = [
 
 interface IContentProps {
   data: any
-  setHasFiles: (hasFiles: boolean) => void
 }
 
-const Content = forwardRef(({ data, setHasFiles }: IContentProps, ref) => {
+const Content = forwardRef(({ data }: IContentProps, ref) => {
   const { payload, type: declaredType } = data
   const { open } = useModal()
 
@@ -77,14 +76,10 @@ const Content = forwardRef(({ data, setHasFiles }: IContentProps, ref) => {
     },
   })
 
-  // Monitor files and update hasFiles state
-  useEffect(() => {
-    const hasFilesAttached = files.length > 0 || !isEmpty(values.file)
-    setHasFiles(hasFilesAttached)
-  }, [files, values.file, setHasFiles])
-
   // Create delete all files function and assign to ref
-  const handleDeleteAllFiles = async () => {
+  const handleDeleteAllFiles = useCallback(async () => {
+    if (files.length === 0) return;
+    console.log("files to be deleted", files)
     const deletePromises = files.map(async (file) => {
       if (file.uploadedFile) {
         await handleDeleteFile(file)
@@ -101,11 +96,12 @@ const Content = forwardRef(({ data, setHasFiles }: IContentProps, ref) => {
       videoRef.current.reset();
     }
     if (audioRef.current) audioRef.current.reset();
-  }
+  }, [handleDeleteFile, handleValue, setFiles])
 
   useImperativeHandle(ref, () => ({
-    handleDeleteAllFiles
-  }))
+    handleDeleteAllFiles,
+    hasFiles: files.length > 0
+  }), [handleDeleteAllFiles, files.length])
 
   const handleOnFinishRecording = (f) => {
     handleValue("file", f)
@@ -153,8 +149,6 @@ const Content = forwardRef(({ data, setHasFiles }: IContentProps, ref) => {
     }
     if (audioRef.current) audioRef.current.reset();
   }
-
-
 
   return (
     <div className="space-y-4">
@@ -237,11 +231,10 @@ const Content = forwardRef(({ data, setHasFiles }: IContentProps, ref) => {
 export function CreateMemory({ data }) {
   const { close } = useModal()
   const [showCloseConfirmation, setShowCloseConfirmation] = useState(false)
-  const [hasFiles, setHasFiles] = useState(false)
   const contentRef = useRef(null)
 
   const handleCloseWithConfirmation = () => {
-    if (hasFiles) {
+    if (contentRef.current?.hasFiles) {
       setShowCloseConfirmation(true)
     } else {
       close("create-memory")
@@ -263,7 +256,6 @@ export function CreateMemory({ data }) {
         <ModalCloseBtn onClick={handleCloseWithConfirmation} />
         <Content
           data={data}
-          setHasFiles={setHasFiles}
           ref={contentRef}
         />
       </div>
@@ -278,8 +270,11 @@ export function CreateMemory({ data }) {
         <Sheet.Container className="bg-sand-1" >
           <Sheet.Header className="bg-sand-1 rounded-3xl" />
           <Sheet.Content className="bg-sand-1 px-4 pb-6">
-            <ModalCloseBtn className="!relative ml-auto !right-0 !top-0 mb-2" onClick={handleCloseWithConfirmation} />
-            <Content data={data} setHasFiles={setHasFiles} ref={contentRef} />
+            <ModalCloseBtn
+              className="!relative ml-auto !right-0 !top-0 mb-2"
+              onClick={handleCloseWithConfirmation}
+            />
+            <Content data={data} ref={contentRef} />
           </Sheet.Content>
         </Sheet.Container>
         <Sheet.Backdrop />

@@ -14,14 +14,14 @@ export default function Header({ count = 0 }) {
         <span className="font-medium text-sm text-[#050709] font-inter">Beneficiaries</span>
         <span className="block rounded-full bg-grey-500 shrink-0 px-3 py-0.5 font-inter text-xs text-grey-600">{count} people</span>
       </div>
-      <div className="flex justify-between items-stretch lg:max-h-10 gap-2 sm:gap-3 w-full">
+      <div className="flex flex-col lg:flex-row justify-between items-stretch lg:max-h-10 gap-2 sm:gap-3 w-full">
         <div>
           <Searchinput className="!bg-white border-gray-300" />
         </div>
         {/* <Filter /> */}
         <button
           onClick={() => open("add-beneficiary")}
-          className={cn("btn", "!rounded-lg !bg-gray-950/90 w-full sm:w-fit")}
+          className={cn("btn", "!rounded-lg !bg-gray-950 w-full sm:w-fit")}
         >
           <PlusIcon width={15} />
           <span>Add Beneficiary</span>

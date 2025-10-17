@@ -4,14 +4,6 @@ import wave from "@/public/image/wave.png"
 import { getDuration } from "@/utility"
 import { IFile } from "@/utility/interface"
 
-const sizes = [
-  "w-[40%]",
-  "w-[30%]",
-  "grow",
-  "w-1/4",
-  "w-[30%]"
-]
-
 function AudioFile({ file }: { file: IFile }) {
   const { mins, secs, hrs } = getDuration(file.duration || 0)
   return (
@@ -48,36 +40,51 @@ function FileGalleryItem({ file }: { file: IFile }) {
   }
   return <img
     src={file.url}
-    className="h-50 rounded-sm object-cover"
+    className="size-full rounded-sm object-cover"
     alt={file.name}
   />
 }
 
 export default function FileGallery({ files }: { files: IFile[] }) {
   const { open } = useModal()
+
+  // Show max 6 files
+  const maxFiles = 6
+  const displayFiles = files.slice(0, maxFiles)
+  const hasOverflow = files.length > maxFiles
+
+  // Calculate grid layout based on file count
+  const getGridLayout = (count: number) => {
+    if (count <= 1) return "grid-cols-1"
+    if (count <= 2) return "grid-cols-2"
+    if (count <= 3) return "grid-cols-3"
+    if (count <= 6) return "grid-cols-3 grid-rows-2"
+    return "grid-cols-3 grid-rows-2"
+  }
+
+  const totalItems = displayFiles.length + (hasOverflow ? 1 : 0)
+  const gridLayout = getGridLayout(totalItems)
+
   return (
     <div
       onClick={() => open("file-preview", files)}
-      className="flex space-y-[2%] flex-row flex-wrap gap-[2%]"
+      className={`grid gap-1 bg-sand-3 p-4 rounded-xl w-fit max-h-[266px] ${gridLayout}`}
     >
-      {
-        files.slice(0, 5).map((file, i) => (
-          <div key={i} className={sizes[i]}>
-            <FileGalleryItem file={file} />
-          </div>
-        ))
-      }
-      {
-        files.length > 5 &&
-        <div className="h-50 w-[40%]">
-          <div className="relative overflow-hidden">
-            <div className="absolute flex items-center justify-center w-full h-full top-0 left-0 right-0 rounded-lg backdrop-blur-[1px] font-semibold font-bricolage text-5xl text-white bg-[rgba(94,94,94,0.5)]">
-              {files.length - 5}+
+      {displayFiles.map((file, i) => (
+        <div key={i} className="max-w-[239.3333282470703px] h-[115px]">
+          <FileGalleryItem file={file} />
+        </div>
+      ))}
+      {hasOverflow && (
+        <div className="max-w-[239.3333282470703px] h-[115px]">
+          <div className="relative overflow-hidden h-full">
+            <div className="absolute flex items-center justify-center w-full h-full top-0 left-0 right-0 rounded-lg backdrop-blur-[1px] font-semibold font-bricolage text-2xl text-white bg-[rgba(94,94,94,0.5)]">
+              {files.length - maxFiles}+
             </div>
-            <FileGalleryItem file={files[5]} />
+            <FileGalleryItem file={files[maxFiles]} />
           </div>
         </div>
-      }
+      )}
     </div>
   )
 }
