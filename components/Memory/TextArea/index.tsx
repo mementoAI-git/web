@@ -1,7 +1,6 @@
 "use client"
 
 import { IFile, IOnUploadPayload } from "@/utility/interface"
-import { useModal } from "@/hooks/use-modal"
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
@@ -23,7 +22,6 @@ interface ITextArea {
 }
 
 export function TextArea({ attachments = [], files = [], value, name, onChange }: ITextArea) {
-  const { open, push } = useModal()
   const [showSlashMenu, setShowSlashMenu] = useState(false)
   const [slashPosition, setSlashPosition] = useState({ top: 0, left: 0 })
 

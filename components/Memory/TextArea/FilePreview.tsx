@@ -19,7 +19,7 @@ const imageRotation: Record<number, string> = {
 function FileThumbnailItem({
   file,
   size = 50,
-}: { file: any; size: number }) {
+}: { file: IOnUploadPayload; size: number }) {
   const url = file?.base64 || file.uploadedFile?.url || '';
   const type = file.uploadedFile?.type || file.file?.type || 'image/jpeg';
 

@@ -124,10 +124,8 @@ export default function PromptInput({ data, isMobile = false }) {
       onAddFileBtnClick={() => push("file-upload", memory?._id || null)}
       onDiscard={handleDiscard}
       onSave={handleSubmit}
-      onTypeChange={setType}
       disabled={(["audio", "video"].includes(type) && recording) || isLoading}
       saving={isMutating}
-      type={type}
       editMode={editMode || (memory?.body ? values.body !== memory?.body : !isEmpty(values.body))}
     />
   )
