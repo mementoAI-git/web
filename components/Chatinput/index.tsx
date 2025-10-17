@@ -67,9 +67,10 @@ export default function Chatinput({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Check if it's an image
-    if (!file.type.startsWith('image/')) {
-      alert('Please select an image file');
+    // Check if it's a supported file type
+    const supportedTypes = ['image/png', 'image/jpeg', 'image/heic', 'application/pdf'];
+    if (!supportedTypes.includes(file.type)) {
+      alert('Please select a supported file type (PNG, JPEG, HEIC, or PDF)');
       return;
     }
 
@@ -172,7 +173,7 @@ export default function Chatinput({
             <input
               id="chat-file-trigger"
               type="file"
-              accept="image/*"
+              accept="image/png,image/jpeg,image/heic,application/pdf"
               onChange={handleFileUpload}
               className="hidden"
             />

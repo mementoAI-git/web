@@ -1,18 +1,19 @@
 import endpoint from "@/api/endpoint";
 import AddFileButton from "@/components/AddFileButton";
-import ImageThumbnail from "@/components/ImageThumbnail";
+import { FooterBtnGroup } from "@/components/Memory/FooterBtnGroup";
 import { TextArea } from "@/components/Memory/TextArea";
 import { ModalCloseBtn, ModalWrapper } from "@/components/ModalLayout";
-import Spinner from "@/components/Spinner";
 import useFetcher from "@/hooks/use-fetcher";
+import useFileUpload from "@/hooks/use-file-upload";
 import { useModal } from "@/hooks/use-modal";
-import { isEmpty } from "@/utility";
-import { IMemory } from "@/utility/interface";
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { Sheet } from "react-modal-sheet";
 import { mutate } from "swr";
+import { v4 as uuidv4 } from "uuid";
 
-export function UpdateMemory({ data: memory, isMobile = false }) {
+export function Content({ data: memory }) {
   const { push, close } = useModal()
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const [text, setText] = useState(memory.body);
   const { trigger, isMutating } = useFetcher(`${endpoint.memories}/${memory._id}`, "put")
 
@@ -25,37 +26,99 @@ export function UpdateMemory({ data: memory, isMobile = false }) {
     push("set-tag-permission", { memory, isNew: false })
   }
 
-  const footer = (
-    <div className="mt-2 flex items-center justify-between">
-      <AddFileButton onClick={() => push("file-upload", memory._id)} />
-      <div className="flex items-center gap-2">
-        <button className="btn-outline !border-[#C7C9C8]">
-          Cancel
-        </button>
-        <button onClick={handleContinueBtn} className="btn flex items-center gap-2">
-          Continue
-          <Spinner loading={isMutating} className="!size-4" />
-        </button>
-      </div>
-    </div>
-  )
+  const { files, handleUpload, setFiles } = useFileUpload()
+
+  const handleAddFileClick = () => {
+    fileInputRef.current?.click()
+  }
+
+  const handleDiscard = () => {
+    setFiles([])
+  }
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFiles = Array.from(e.target.files || [])
+    if (selectedFiles.length === 0) return
+
+    for (const file of selectedFiles) {
+      // Convert to base64 for preview
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        const payload = {
+          id: uuidv4(),
+          file,
+          base64: reader.result as string,
+          progress: 0
+        }
+        handleUpload(payload)
+      }
+      reader.readAsDataURL(file)
+    }
+
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
+  }
+
 
   return (
-    <ModalWrapper
-      isMobile={isMobile}
-      header={<h4 className="modal-title">{memory?.title}</h4>}
-      footer={footer}
-      onClose={() => close("edit-memory")}
-    >
+    <div className="space-y-4">
+      <input
+        ref={fileInputRef}
+        type="file"
+        multiple
+        accept="image/png,image/jpeg,image/heic,application/pdf"
+        onChange={handleFileSelect}
+        className="hidden"
+      />
       <div className="space-y-6">
-        <h4 className="modal-title hidden sm:block">{memory?.title}</h4>
+        <h4 className="modal-title">{memory?.title}</h4>
         <TextArea
           value={text}
           name="body"
+          files={files}
           attachments={memory?.attachments}
           onChange={(e) => setText(e.target.value)}
         />
       </div>
-    </ModalWrapper >
+      <FooterBtnGroup
+        onAddFileBtnClick={handleAddFileClick}
+        onDiscard={handleDiscard}
+        onSave={handleContinueBtn}
+        disabled={files.some(f => !f.uploadedFile)}
+        saving={isMutating}
+      />
+    </div>
+  )
+}
+
+export function UpdateMemory({ data }) {
+  const { close } = useModal()
+
+  return (
+    <div >
+      <div className="hidden !min-w-[618px] sm:block modal-container">
+        <ModalCloseBtn onClick={() => close("create-memory")} />
+        <Content data={data} />
+      </div>
+      <Sheet
+        detent="content"
+        className="block sm:hidden"
+        isOpen
+        onClose={() => close("create-memory")}
+        snapPoints={[0.5, 0.75, 1]}
+        initialSnap={1}
+      >
+        <Sheet.Container className="bg-sand-1" >
+          <Sheet.Header className="bg-sand-1 rounded-3xl" />
+          <Sheet.Content className="bg-sand-1 px-4 pb-6">
+            <ModalCloseBtn className="!relative ml-auto !right-0 !top-0 mb-2" onClick={() => close("create-memory")} />
+            <Content {...{ data }} />
+          </Sheet.Content>
+        </Sheet.Container>
+        <Sheet.Backdrop />
+      </Sheet>
+    </div >
   )
 }

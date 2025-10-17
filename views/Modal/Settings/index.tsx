@@ -35,7 +35,7 @@ export default function Settings() {
     <>
       <div className="w-full relative max-w-[953px] h-full max-h-[640px] bg-sand-1 items-stretch rounded-3xl hidden sm:flex">
         <ModalCloseBtn onClick={() => close("settings")} />
-        <div className="w-full max-w-[260px] border-r border-black/5 px-6 py-[30px] flex flex-col gap-6">
+        <div className="w-[27%] max-w-[260px] border-r border-black/5 px-6 py-[30px] flex flex-col gap-6">
           <span className="font-inter text-sm font-bold text-[#1E1E1E66]">Settings</span>
           <ul className="flex flex-col gap-2 w-full">
             {

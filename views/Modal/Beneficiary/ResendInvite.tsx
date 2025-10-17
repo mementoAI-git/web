@@ -24,9 +24,6 @@ export function ResendInvite({ data }) {
   return (
     <div className="modal-container !max-w-120">
       <ModalCloseBtn onClick={() => close("resend-invite")} />
-      <div className="flex justify-center items-center cursor-pointer rounded-full size-12 text-primary bg-[#F5FAFF]">
-        <PlanePaperIcon width={18} height={20} />
-      </div>
       <div className="space-y-6 mt-5">
         <div className="space-y-4">
           <h4 className="modal-title">Resend Invite</h4>

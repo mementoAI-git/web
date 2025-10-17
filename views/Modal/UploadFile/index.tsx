@@ -73,6 +73,8 @@ export default function UploadFiles({ data: id }) {
     })
     if (!result.data[0]) {
       toast.error("Upload unsuccessful")
+      // Remove the failed file from the files array
+      setFiles(prev => prev.filter(f => f.id !== file.id))
     } else {
       toast.success(result?.message || "Success");
       setFiles(prev => prev.map(f => f.id === file.id ? { ...f, result: result.data[0] } : f))

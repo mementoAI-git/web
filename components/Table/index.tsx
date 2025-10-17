@@ -12,10 +12,21 @@ interface ITable<T> {
   columns: IColumn[]
   onChangePage?: (page: number) => void;
   loadingRow?: React.ReactNode;
+  className?: string;
+  headerClassName?: string;
   renderRow?: (item: T, i: number) => React.ReactNode
 }
 
-export default function Table<T>({ data, columns, renderRow, onChangePage, loadingRow = null, loading = false }: ITable<T>) {
+export default function Table<T>({
+  data,
+  columns,
+  renderRow,
+  onChangePage,
+  loadingRow = null,
+  loading = false,
+  className = "",
+  headerClassName = ""
+}: ITable<T>) {
   const handleOnNextPage = () => {
     if (!data.hasNextPage) return;
     onChangePage(data.nextPage)
@@ -26,11 +37,11 @@ export default function Table<T>({ data, columns, renderRow, onChangePage, loadi
     onChangePage(data.prevPage)
   }
   return (
-    <div className="mem-table h-fit w-full rounded-xl border border-[rgba(233,234,235,1)] bg-white shadow-sm shadow-[rgba(10,13,18,0.05)]">
+    <div className={cn("mem-table h-fit w-full rounded-xl border border-[rgba(233,234,235,1)] bg-white shadow-sm shadow-[rgba(10,13,18,0.05)]", className)}>
       {/* TODO: fixed the overflow problem it's causing issues like dropdowns not properly displayed */}
       <div className=" overflow-y-visible overflow-x-auto hide-scrollbar">
         <table className="min-w-[600px]  w-full text-left text-xs sm:text-sm">
-          <thead className="font-inter text-xs sm:text-sm font-semibold text-[rgba(113,118,128,1)] capitalize">
+          <thead className={cn("font-inter text-xs sm:text-sm font-semibold text-[rgba(113,118,128,1)] capitalize", headerClassName)}>
             <tr>
               {columns.map((c, i) => <th className={cn("whitespace-nowrap", c.className)} key={i}>{c.label}</th>)}
             </tr>

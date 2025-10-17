@@ -8,10 +8,10 @@ import endpoint from "@/api/endpoint";
 import { useState } from "react";
 
 const columns = [
-  { label: "recipient" },
-  { label: "date added" },
-  { label: "relationship" },
-  { label: "permission level" },
+  { label: "recipient", className: "w-[22%] max-w-[170px]" },
+  { label: "date added", className: "!w-[15%]" },
+  { label: "relationship", className: "!w-[19%]" },
+  { label: "permission level", className: "!w-[23%]" },
   { label: "Actions", className: "text-right" },
 ]
 
@@ -26,13 +26,14 @@ export default function Beneficiaries() {
           Your beneficiaries are allowed access to your Memento
         </span>
       </div>
-      <div className="py-4 sm:py-8 space-y-6">
+      <div className=" space-y-6">
         <Header count={data?.data?.totalDocs} />
-        <div className="w-full overflow-x-auto hide-scrollbar">
+        <div className="w-full text-xs overflow-x-auto hide-scrollbar">
           <Table
             data={data?.data}
             columns={columns}
             loading={isLoading}
+            headerClassName="text-gray-500 !text-xs"
             renderRow={(r, i) => <Row beneficiary={r} key={i} />}
             onChangePage={setPage}
           />

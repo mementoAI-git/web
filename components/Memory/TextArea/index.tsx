@@ -1,8 +1,6 @@
 "use client"
 
-import { isEmpty } from "@/utility"
-import { IFile } from "@/utility/interface"
-import ImageThumbnail from "../../ImageThumbnail"
+import { IFile, IOnUploadPayload } from "@/utility/interface"
 import { useModal } from "@/hooks/use-modal"
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
@@ -12,16 +10,20 @@ import { useEffect, useState } from "react"
 import { SLASH_COMMANDS } from './slash-commands'
 import { EditorToolbar } from './EditorToolbar'
 import { SlashCommandPopup } from './SlashCommandPopup'
+import { FilePreview } from "./FilePreview"
 
 interface ITextArea {
   attachments?: IFile[]
+  files?: IOnUploadPayload[]
   value?: string
   name?: string
   onChange?: (e: { target: { value: string; name?: string } }) => void
+  onRemoveAttachment?: (fileId: string) => void
+  isUploading?: boolean
 }
 
-export function TextArea({ attachments = [], value, name, onChange }: ITextArea) {
-  const { open } = useModal()
+export function TextArea({ attachments = [], files = [], value, name, onChange }: ITextArea) {
+  const { open, push } = useModal()
   const [showSlashMenu, setShowSlashMenu] = useState(false)
   const [slashPosition, setSlashPosition] = useState({ top: 0, left: 0 })
 
@@ -120,25 +122,12 @@ export function TextArea({ attachments = [], value, name, onChange }: ITextArea)
 
   return (
     <div className="flex min-h-[374px] flex-col border border-gray-200 rounded-2xl bg-white font-inter text-xs overflow-hidden relative">
-      {!isEmpty(attachments) && (
-        <div onClick={() => open("file-preview", attachments)} className="relative size-fit p-3 mb-6">
-          <ImageThumbnail
-            boxClassName="!rounded-[12px] !border-2"
-            images={attachments}
-            size={69}
-          />
-          {attachments.length > 3 && (
-            <div className="absolute top-0 -right-10 z-40 rounded-full border border-white bg-secondary px-1.5 py-0.5 font-inter text-xs font-light text-[#C1FDC5]">
-              +{attachments.length - 3} files
-            </div>
-          )}
-        </div>
-      )}
+      <FilePreview files={files} attachments={attachments} />
 
-      <div className="relative flex-1">
+      <div className="relative flex-1 mt-3">
         <EditorContent
           editor={editor}
-          className="size-full max-h-[460px] overflow-y-auto flex-1 text-base pt-3 px-3 tiptap-editor"
+          className="size-full max-h-[460px] overflow-y-auto flex-1 text-base px-3 tiptap-editor"
         />
 
         <SlashCommandPopup

@@ -6,14 +6,17 @@ import { TextArea } from "@/components/Memory/TextArea";
 import { ModalCloseBtn } from "@/components/ModalLayout";
 import useForm from "@/hooks/use-form";
 import { useModal } from "@/hooks/use-modal";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState, useEffect, forwardRef, useImperativeHandle } from "react";
 import endpoint from "@/api/endpoint";
 import useSWRMutation from "swr/mutation";
 import { fileUploadFetcher } from "@/api/fetcher";
-import { isEmpty } from "@/utility";
+import { cn, isEmpty } from "@/utility";
 import { toast } from "sonner";
-import { storageKeys } from "@/utility/constant";
 import { Sheet } from "react-modal-sheet";
+import useFileUpload from "@/hooks/use-file-upload";
+import { v4 as uuidv4 } from "uuid";
+import { CloseWithFilesConfirmation } from "./CloseWithFilesConfirmation";
+import { createPortal } from "react-dom";
 
 const initial = {
   title: "",
@@ -27,26 +30,25 @@ const INPUT_TYPES = [
   { value: "audio", label: "Use audio" }
 ] as const
 
-const cn = (...classes: (string | boolean | undefined)[]) =>
-  classes.filter(Boolean).join(" ")
+interface IContentProps {
+  data: any
+  setHasFiles: (hasFiles: boolean) => void
+}
 
-const header = (
-  <h2 className="text-xl font-geist font-semibold text-secondary">Create Memory</h2>
-)
-
-function Content({ data }) {
+const Content = forwardRef(({ data, setHasFiles }: IContentProps, ref) => {
   const { payload, type: declaredType } = data
-  const { close, push, open } = useModal()
+  const { open } = useModal()
 
   const audioRef = useRef(null)
   const videoRef = useRef(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [editMode, setEditMode] = useState(false)
   const [recording, setRecording] = useState(false)
   const [type, setType] = useState(declaredType || "text")
-  const [attachments, setAttachments] = useState([])
 
   const { trigger, isMutating } = useSWRMutation(endpoint.memories, fileUploadFetcher)
+  const { files, handleUpload, handleDeleteFile, setFiles } = useFileUpload()
 
   const handleOnStartRecording = () => {
     setEditMode(true)
@@ -60,27 +62,38 @@ function Content({ data }) {
         return toast.error("Title is required")
       }
 
-      const attachments = localStorage.getItem(storageKeys.attachments)
-      if (attachments) {
-        p.attachments = JSON.parse(attachments).files.map(f => f.result._id)
+      // Add attachment IDs from the uploaded files
+      const uploadedFiles = files.filter(f => f.uploadedFile).map(f => f.uploadedFile._id)
+      if (uploadedFiles.length > 0) {
+        p.attachments = uploadedFiles
       }
+
       const result = await trigger({ ...p, status: "draft" })
       if (result?.success) {
-        open("create-memory", { memory: result.data, isNew: true });
+        open("set-tag-permission", { memory: result.data, isNew: true });
         setEditMode(false)
-        localStorage.removeItem(storageKeys.attachments)
+        setFiles([])
       }
     },
   })
 
-  const handleOnFinishRecording = (f) => {
-    handleValue("file", f)
-    setRecording(false)
-  }
+  // Monitor files and update hasFiles state
+  useEffect(() => {
+    const hasFilesAttached = files.length > 0 || !isEmpty(values.file)
+    setHasFiles(hasFilesAttached)
+  }, [files, values.file, setHasFiles])
 
-  const handleDiscard = () => {
-    setEditMode(false)
-    setValues(initial)
+  // Create delete all files function and assign to ref
+  const handleDeleteAllFiles = async () => {
+    const deletePromises = files.map(async (file) => {
+      if (file.uploadedFile) {
+        await handleDeleteFile(file)
+      }
+    })
+    await Promise.all(deletePromises)
+
+    setFiles([])
+    handleValue("file", null)
     setRecording(false)
 
     if (videoRef.current) {
@@ -90,20 +103,71 @@ function Content({ data }) {
     if (audioRef.current) audioRef.current.reset();
   }
 
-  const handleClose = () => {
-    handleDiscard()
-    close("create-memory")
+  useImperativeHandle(ref, () => ({
+    handleDeleteAllFiles
+  }))
+
+  const handleOnFinishRecording = (f) => {
+    handleValue("file", f)
+    setRecording(false)
   }
 
-  useEffect(() => {
-    const attachments = localStorage.getItem(storageKeys.attachments)
-    if (attachments) {
-      setAttachments(JSON.parse(attachments).files.map(f => f.result))
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFiles = Array.from(e.target.files || [])
+    if (selectedFiles.length === 0) return
+
+    for (const file of selectedFiles) {
+      // Convert to base64 for preview
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        const payload = {
+          id: uuidv4(),
+          file,
+          base64: reader.result as string,
+          progress: 0
+        }
+        handleUpload(payload)
+      }
+      reader.readAsDataURL(file)
     }
-  }, [])
+
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
+  }
+
+  const handleAddFileClick = () => {
+    fileInputRef.current?.click()
+  }
+
+  const handleDiscard = () => {
+    setEditMode(false)
+    setValues(initial)
+    setRecording(false)
+    setFiles([])
+
+    if (videoRef.current) {
+      videoRef.current.resetStream();
+      videoRef.current.reset();
+    }
+    if (audioRef.current) audioRef.current.reset();
+  }
+
+
 
   return (
     <div className="space-y-4">
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        multiple
+        accept="image/png,image/jpeg,image/heic,application/pdf"
+        onChange={handleFileSelect}
+        className="hidden"
+      />
+
       <div className="space-y-4">
         <div className="py-2">
           <input
@@ -153,51 +217,83 @@ function Content({ data }) {
               <TextArea
                 value={values.body}
                 name="body"
-                attachments={attachments}
+                files={files}
                 onChange={handleChange}
               />
         }
       </div>
       <FooterBtnGroup
-        onAddFileBtnClick={() => push("file-upload", null)}
+        onAddFileBtnClick={handleAddFileClick}
         onDiscard={handleDiscard}
         onSave={handleSubmit}
-        onTypeChange={setType}
-        disabled={["audio", "video"].includes(type) && recording}
+        disabled={(["audio", "video"].includes(type) && recording) || files.some(f => !f.uploadedFile)}
         saving={isMutating}
-        type={type}
         editMode={editMode || !isEmpty(values.body)}
       />
     </div>
   )
-}
+})
 
 export function CreateMemory({ data }) {
   const { close } = useModal()
+  const [showCloseConfirmation, setShowCloseConfirmation] = useState(false)
+  const [hasFiles, setHasFiles] = useState(false)
+  const contentRef = useRef(null)
+
+  const handleCloseWithConfirmation = () => {
+    if (hasFiles) {
+      setShowCloseConfirmation(true)
+    } else {
+      close("create-memory")
+    }
+  }
+
+  const handleConfirmClose = async () => {
+    setShowCloseConfirmation(false)
+
+    if (contentRef.current) {
+      await contentRef.current?.handleDeleteAllFiles()
+    }
+    close("create-memory")
+  }
 
   return (
     <div >
       <div className="hidden !min-w-[618px] sm:block modal-container">
-        <ModalCloseBtn onClick={() => close("create-memory")} />
-        <Content data={data} />
+        <ModalCloseBtn onClick={handleCloseWithConfirmation} />
+        <Content
+          data={data}
+          setHasFiles={setHasFiles}
+          ref={contentRef}
+        />
       </div>
       <Sheet
         detent="content"
         className="block sm:hidden"
         isOpen
-        onClose={() => close("create-memory")}
+        onClose={handleCloseWithConfirmation}
         snapPoints={[0.5, 0.75, 1]}
         initialSnap={1}
       >
         <Sheet.Container className="bg-sand-1" >
           <Sheet.Header className="bg-sand-1 rounded-3xl" />
           <Sheet.Content className="bg-sand-1 px-4 pb-6">
-            <ModalCloseBtn className="!relative ml-auto !right-0 !top-0 mb-2" onClick={() => close("create-memory")} />
-            <Content {...{ data }} />
+            <ModalCloseBtn className="!relative ml-auto !right-0 !top-0 mb-2" onClick={handleCloseWithConfirmation} />
+            <Content data={data} setHasFiles={setHasFiles} ref={contentRef} />
           </Sheet.Content>
         </Sheet.Container>
         <Sheet.Backdrop />
       </Sheet>
+
+      {/* Confirmation Dialog */}
+      {showCloseConfirmation && createPortal(
+        <CloseWithFilesConfirmation
+          open={showCloseConfirmation}
+          close={() => setShowCloseConfirmation(false)}
+          onConfirm={handleConfirmClose}
+        />,
+        document.body
+      )}
     </div >
   )
 }

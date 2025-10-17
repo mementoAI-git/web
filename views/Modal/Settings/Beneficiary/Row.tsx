@@ -22,9 +22,14 @@ export default function BeneficiaryRow({ beneficiary }) {
     open("resend-invite", beneficiary)
   }
   return (
-    <tr className="font-inter">
-      <td>
-        <UserItem {...beneficiary} />
+    <tr className="font-inter text-xs">
+      <td className="pr-3">
+        <div className="truncate max-w-[170px]">
+          <UserItem
+            {...beneficiary}
+            imageClassName="!size-[32px] !text-base"
+          />
+        </div>
       </td>
       <td>
         {
@@ -34,19 +39,19 @@ export default function BeneficiaryRow({ beneficiary }) {
         }
       </td>
       <td className="capitalize">{beneficiary?.relationship || ""}</td>
-      <td><span className="mem-tags">Level {beneficiary?.level}</span></td>
+      <td><span className="mem-tags !text-xs">Level {beneficiary?.level}</span></td>
       <td>
-        <div className="flex items-center justify-end gap-3 text-secondary">
+        <div className="flex items-center justify-end  gap-3 text-secondary">
           {
             isEmpty(beneficiary.accepted_at) &&
-            <div className="cursor-pointer" onClick={handleResendInvite}>
+            <div className="cursor-pointer text-gray-500" onClick={handleResendInvite}>
               <RefreshIcon width={15} size={15} />
             </div>
           }
-          <div className="cursor-pointer" onClick={handleEditClick}>
+          <div className="cursor-pointer text-gray-500" onClick={handleEditClick}>
             <EditIcon width={16} size={16} />
           </div>
-          <div className="cursor-pointer" onClick={handleDeleteClick}>
+          <div className="cursor-pointer text-gray-500" onClick={handleDeleteClick}>
             <TrashIcon width={16} size={16} />
           </div>
         </div>

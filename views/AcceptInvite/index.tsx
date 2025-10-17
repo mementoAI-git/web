@@ -1,7 +1,7 @@
 "use client"
 
 import endpoint from "@/api/endpoint"
-import Logo from "@/components/Logo"
+import { LogoV2 } from "@/components/Logo"
 import useSWR from "swr"
 import { AuthLoader } from "../Auth"
 import { AuthFormLayout } from "../Auth";
@@ -13,7 +13,7 @@ export default function AcceptInvite({ invite_id }) {
 
   return (
     <div className="flex flex-col items-center gap-10 sm:gap-16 w-full max-w-full sm:max-w-[583px] px-4 sm:px-0 z-50">
-      <Logo color="light" size={40} textClassName="text-6 sm:text-9.5" />
+      <LogoV2 />
       {
         isLoading ?
           <AuthLoader title="Loading..." /> :

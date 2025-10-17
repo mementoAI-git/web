@@ -12,14 +12,14 @@ const FILTER_LABELS = {
   all: "All",
   bookmarked: "Bookmarked",
   deleted: "Deleted",
-  "custom-date": "Custom date"
+  // "custom-date": "Custom date"
 };
 
 const DISPLAY_OPTIONS = [
   { label: "All", value: "all" },
   { label: "Bookmarked", value: "bookmarked" },
   { label: "Deleted", value: "deleted" },
-  { label: "Custom date", value: "custom-date" },
+  // { label: "Custom date", value: "custom-date" },
 ];
 
 interface IMemoryListFilter {

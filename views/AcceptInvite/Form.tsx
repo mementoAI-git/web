@@ -46,8 +46,8 @@ export default function AcceptInviteForm({ data }: { data: IBeneficiary }) {
     },
   })
   return (
-    <div className="w-full max-w-full sm:max-w-[500px] space-y-5 p-4 sm:p-10 rounded-3xl bg-white">
-      <div className={cn("size-16 sm:size-18 bg-grey-500 flex justify-center items-center rounded-full overflow-hidden border-[#314FDF] mx-auto", { "border-2": !isEmpty(benefactor.picture_url) })}>
+    <div className="w-full max-w-full sm:max-w-[618px] space-y-5 p-4 sm:p-10 rounded-3xl bg-white">
+      <div className={cn("size-16 sm:size-18 bg-grey-500 flex justify-center items-center rounded-full overflow-hidden border-[#EAECF0] mx-auto", { "border-2": !isEmpty(benefactor.picture_url) })}>
         {
           isEmpty(benefactor.picture_url) ?
             <span className="uppercase font-bold font-geist text-2xl sm:text-3xl">{(isEmpty(name.trim()) ? email : name)[0]}</span> :
@@ -60,11 +60,13 @@ export default function AcceptInviteForm({ data }: { data: IBeneficiary }) {
             />
         }
       </div>
-      <div className="flex flex-col gap-2 font-geist items-center text-center">
-        <span className="font-bold text-xl sm:text-2xl text-secondary leading-[140%]">Join <span className="capitalize">{name}</span> on Memento AI</span>
-        <span className="block text-xs sm:text-sm leading-[150%] text-[#667085] max-w-90">
+      <div className="flex flex-col gap-2 items-center text-center">
+        <span className="font-medium text-2xl sm:text-3xl text-gray-800 font-garamond leading-[38px]">
+          Join <span className="capitalize">{name}</span> on Memento AI
+        </span>
+        <span className="block text-xs sm:text-xl font-garamond leading-[24px] text-[#667085] max-w-[490px]">
           Your contact, <span className="capitalize">{name}</span> has invited you to join Memento as a beneficiary on his profile.{" "}
-          <span className="text-[#314FDF] font-medium underline cursor-pointer underline-offset-3">What does this mean?</span>
+          <span className="text-[#E26A24] underline cursor-pointer underline-offset-3">What does this mean?</span>
         </span>
       </div>
       <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3">
@@ -95,12 +97,15 @@ export default function AcceptInviteForm({ data }: { data: IBeneficiary }) {
                 {...getField("dob")}
               />
             </div>
-            <div className="flex sm:flex-row gap-3 flex-col-reverse justify-end items-center">
-              <button disabled className="btn-outline w-full sm:w-auto">Cancel</button>
-              <button type="submit" className="btn w-full sm:w-auto">
+            <div className="gap-3 w-full space-y-4">
+              <button type="submit" className="btn w-full">
                 Accept invite
                 {isMutating && <Spinner loading className="mr-2 !size-4" />}
               </button>
+              <span className="text-center text-gray-800 font-inter block mx-auto max-w-[410.52px] text-sm">
+                By clicking “Accept invite” you agree to our
+                <span className="text-[#52A1DD] underline cursor-pointer underline-offset-3"> Terms of Use</span> and
+                <span className="text-[#52A1DD] underline cursor-pointer underline-offset-3"> Privacy Policy</span>.</span>
             </div>
           </form> :
           <AcceptInviteButtons data={data} />

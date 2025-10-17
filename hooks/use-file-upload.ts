@@ -23,6 +23,8 @@ export default function useFileUpload() {
 
     if (!result.data[0]) {
       toast.error("Upload unsuccessful")
+      // Remove the failed file from the files array
+      setFiles(prev => prev.filter(f => f.id !== file.id))
     } else {
       setFiles(prev => prev.map(f => f.id === file.id ? { ...f, uploadedFile: result.data[0] } : f))
     }

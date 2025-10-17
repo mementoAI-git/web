@@ -6,15 +6,20 @@ interface IFooterBtnGroup {
   onDiscard: () => void;
   onSave: () => void;
   onAddFileBtnClick: () => void;
-  onTypeChange: (t: string) => void;
-  type?: string
   saving?: boolean;
   editMode?: boolean;
 }
 
 export const inputTypes = { text: "text", video: "video", audio: "audio" };
 
-export function FooterBtnGroup({ onDiscard, onSave, onAddFileBtnClick, saving = false, editMode = false, disabled = false }: IFooterBtnGroup) {
+export function FooterBtnGroup({
+  onDiscard,
+  onSave,
+  onAddFileBtnClick,
+  saving = false,
+  editMode = false,
+  disabled = false
+}: IFooterBtnGroup) {
   return (
     <div
       className={`mt-2 flex items-center justify-between ${disabled && "!cursor-not-allowed opacity-40"}`}
