@@ -7,6 +7,7 @@ import dayjs from "dayjs"
 import useClickAway from "@/hooks/use-clickaway"
 import { useViewportPosition } from "@/hooks/use-viewport-position"
 import DatePicker from "../DatePicker";
+import { cn, isEmpty } from "@/utility";
 
 interface IDateinput extends ITexinput {
   minDate?: Date | null
@@ -14,7 +15,17 @@ interface IDateinput extends ITexinput {
   position?: "top" | "bottom" | "auto"
 }
 
-export function Dateinput({ label, onChange, position = "auto", minDate = null, maxDate = null, ...props }: IDateinput) {
+export function Dateinput({
+  label,
+  onChange,
+  className = "",
+  labelClassName = "",
+  required = false,
+  position = "auto",
+  minDate = null,
+  maxDate = null,
+  ...props
+}: IDateinput) {
   const [show, setShow] = useState<boolean>(false)
   const [value, setValue] = useState<Date>(dayjs(`${props.value}`).isValid() ? dayjs(String(props.value)).toDate() : undefined)
   const ref = useClickAway(() => setShow(false))
@@ -45,7 +56,12 @@ export function Dateinput({ label, onChange, position = "auto", minDate = null, 
       }}
       className={`input-container group relative ${props.error ? "error" : ""}`}
     >
-      <label className="input-label">{label}</label>
+      {
+        label &&
+        <label className={`input-label ${labelClassName}`}>
+          {label}{required && <span className="text-orange">*</span>}
+        </label>
+      }
       <DatePicker
         {...{ setShow, show, position: dynamicPosition }}
         onChange={handleChange}
@@ -57,7 +73,7 @@ export function Dateinput({ label, onChange, position = "auto", minDate = null, 
             placeholder={dayjs(value).format("DD MMM, YYYY")}
             {...props}
             value={value ? dayjs(value).format("DD MMM, YYYY") : ""}
-            className="flex-1 outline-0 placeholder:text-[#000D4D73]"
+            className={cn("flex-1 outline-0 placeholder:text-[#000D4D73]", { [className]: !isEmpty(className) })}
           />
           <span className="text-[#000D4D]">
             <CalendarIcon width={15} />

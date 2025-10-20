@@ -36,7 +36,12 @@ const schema = yup.object().shape({
     ),
 });
 
-const initial = { email: "", password: "" };
+const initial = {
+  email: "",
+  password: "",
+  first_name: "",
+  last_name: "",
+};
 
 export function Register() {
   const router = useRouter();
@@ -60,14 +65,14 @@ export function Register() {
             label="First name"
             placeholder="John"
             className="flex-1"
-            {...getField("email")}
+            {...getField("first_name")}
           />
         </div>
         <div className="flex-1">
           <Textinput
             label="Last name"
             placeholder="Doe"
-            {...getField("email")}
+            {...getField("last_name")}
           />
         </div>
       </div>

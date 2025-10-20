@@ -4,8 +4,8 @@ import 'react-spring-bottom-sheet/dist/style.css'
 import Providers from "./provider";
 import font from "./fonts"
 
-const { averia, bricolage, geist, inter, canela, georgia, ebGaramond } = font
-// https://www.npmjs.com/package/react-modal-sheet - check this link for bottom sheet
+const { averia, bricolage, geist, inter, canela, georgia, ebGaramond, azeretMono } = font
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -17,7 +17,7 @@ export default function RootLayout({
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
       </head>
       <body
-        className={`${bricolage.variable} ${averia.variable} ${geist.variable} ${inter.variable} ${canela.variable} ${georgia.variable} ${ebGaramond.variable} h-full`}
+        className={`${bricolage.variable} ${averia.variable} ${geist.variable} ${inter.variable} ${canela.variable} ${georgia.variable} ${ebGaramond.variable} ${azeretMono.variable} h-full`}
       >
         <Providers>{children}</Providers>
       </body>

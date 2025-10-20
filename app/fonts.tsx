@@ -1,4 +1,11 @@
-import { Averia_Serif_Libre, EB_Garamond, Bricolage_Grotesque, Geist, Inter } from "next/font/google";
+import {
+  Averia_Serif_Libre,
+  EB_Garamond,
+  Bricolage_Grotesque,
+  Geist,
+  Inter,
+  Azeret_Mono
+} from "next/font/google";
 import localFont from "next/font/local";
 import "./globals.css";
 
@@ -77,7 +84,13 @@ const georgia = localFont({
   variable: "--font-georgia",
 });
 
+const azeretMono = Azeret_Mono({
+  subsets: ["latin"],
+  variable: "--font-azeret",
+});
+
 export default {
+  azeretMono,
   georgia,
   geist,
   canela,
