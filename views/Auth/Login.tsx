@@ -41,8 +41,10 @@ export function Login() {
         if (result.data) {
           toast.success(result?.message)
           setAuth(result.data);
+
           await clearCache();
-          router.push("/overview");
+
+          router.push(result?.data?.onboarded ? "/overview" : "/onboard");
         }
       } catch (err: any) {
         if (err && err.data.requires_verification) {

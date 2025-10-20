@@ -24,6 +24,9 @@ interface IUserContext {
   conversation_history_summary?: string
   emotional_state_trends?: string[]
   goals_and_aspirations?: string[]
+  self_description: string
+  current_priority: string
+  join_reasons: string[]
 }
 
 export interface IUser {
@@ -31,6 +34,7 @@ export interface IUser {
   email: string
   first_name: string
   last_name: string
+  nickname: string
   gender: string
   phone_number: string
   dob: string

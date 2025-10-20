@@ -1,8 +1,11 @@
+"use client";
+
 import endpoint from "@/api/endpoint";
 import { Textinput } from "@/components/Form";
 import Spinner from "@/components/Spinner";
 import useFetcher from "@/hooks/use-fetcher";
 import useForm from "@/hooks/use-form";
+
 import * as yup from "yup";
 
 const schema = yup.object().shape({
@@ -25,11 +28,11 @@ export default function AddBeneficiaries() {
     },
   });
   return (
-    <form onSubmit={handleSubmit} className="">
-      <label htmlFor="email" className="input-label">
+    <form onSubmit={handleSubmit} className="space-y-[6px]">
+      <label htmlFor="email" className="input-label !mb-[6px]">
         Email
       </label>
-      <div className="flex flex-row gap-1">
+      <div className="flex flex-row items-stretch gap-2">
         <div className="w-full flex-3">
           <Textinput
             name="email"
@@ -42,11 +45,11 @@ export default function AddBeneficiaries() {
             error={errors.email}
           />
         </div>
-        <button className="flex h-[40px] min-w-[129px] flex-1 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-lg border border-primary/80 px-4 text-center">
-          <span className="text-center font-geist font-bold whitespace-nowrap text-primary">
+        <button className="flex min-h-10 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full border border-[#10182866] px-8 text-center">
+          <span className="text-center font-inter font-semibold text-sm whitespace-nowrap text-gray-900">
             Send invite
           </span>
-          <Spinner loading={isMutating} className="!text-primary" />
+          <Spinner loading={isMutating} className="!text-blue-6 !size-4" />
         </button>
       </div>
     </form>

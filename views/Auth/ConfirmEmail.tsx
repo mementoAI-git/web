@@ -66,11 +66,10 @@ export function ConfirmEmail({ email, token }: IConfirmEmail) {
     return (
       <AuthFormLayout
         title="Email verified successfully"
-        icon={<CheckIcon width={33.33} />}
         className="success"
         subtitle="Your email has been confirmed. Click on the continue button to complete your onboarding process"
       >
-        <Button href="/onboard/profile" title="Continue" className="!rounded-full" />
+        <Button href="/onboard" title="Continue" className="!rounded-full" />
       </AuthFormLayout>
     );
   }

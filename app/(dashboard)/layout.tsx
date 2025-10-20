@@ -1,25 +1,12 @@
 "use client";
 
-import endpoint from "@/api/endpoint";
-import { fetcher } from "@/api/fetcher";
-import { useStore } from "@/hooks/use-store";
 import AuthCheck from "@/views/AuthCheck";
 import { DashboardHeader, DashboardSideBar } from "@/views/Dashboard";
 import Modal from "@/views/Modal";
 import { PropsWithChildren, useState } from "react";
-import useSWR from "swr";
 
 export default function DashboardLayout({ children }: PropsWithChildren) {
-  const { setUser } = useStore()
   const [sidebarOpen, setSidebarOpen] = useState(false)
-
-  useSWR(endpoint.profile, fetcher, {
-    onSuccess(data) {
-      if (data?.data) {
-        setUser(data.data)
-      }
-    }
-  })
 
   return (
     <AuthCheck>

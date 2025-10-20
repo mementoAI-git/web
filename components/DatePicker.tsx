@@ -7,7 +7,7 @@ import { cn } from "@/utility";
 const options = {
   theme: {
     background: "!bg-white !top-2 !border !border-[#E9EAEB] !shadow-drop-down",
-    todayBtn: "!bg-[#7F56D9]",
+    todayBtn: "!bg-blue-6",
     clearBtn:
       "!bg-transparent !text-[#414651] !font-semibold !text-sm !border-[#D5D7DA] border",
     icons:
@@ -17,7 +17,7 @@ const options = {
       "!text-[#717680] !font-inter !font-normal !rounded-full hover:!bg-[#F3F3F3]/50",
     input: "",
     inputIcon: "",
-    selected: "!rounded-full !bg-[#050709] !hover:bg-[#050709] !text-white",
+    selected: "!rounded-full !bg-blue-6 !hover:bg-[#050709] !text-white",
   },
   icons: {
     next() {

@@ -55,12 +55,12 @@
   --shadow-btn: 0px 2px 4px -2px #00000014, 0px 4px 8px -2px #0000000a;
   --shadow-drop-down: 2px 4px 12px 0px #00000040;
 
-  --rdp-accent-color: #52A1DD;
-  --rdp-range_start-background: #E9F1FC;
-  --rdp-range_middle-background: #E9F1FC;
-  --rdp-range_end-background: #E9F1FC;
+  --rdp-accent-color: var(--color-blue-6);
+  --rdp-range_start-background: var(--color-blue-2);
+  --rdp-range_middle-background: var(--color-blue-2);
+  --rdp-range_end-background: var(--color-blue-2);
   --rdp-day-selected-color: #fff;
-  --rdp-day-selected-background: #52A1DD;
+  --rdp-day-selected-background: var(--color-blue-6);
 
 }
 

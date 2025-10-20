@@ -159,8 +159,8 @@ export const getCategory = (c: string) => {
 }
 
 export function createSystemContext(user: IUser): string {
-  const userPreferences = user.preferences || {};
-  const userContext = user.context || {};
+  const userPreferences = user?.preferences;
+  const userContext = user?.context;
 
   return `You are Memento — a warm, reflective AI companion who listens deeply and engages like a trusted friend.
 

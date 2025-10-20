@@ -10,6 +10,8 @@ export default {
 
   // user
   profile: "/users/profile",
+  userContext: "/users/context",
+  completeOnboarding: "/users/complete-onboarding",
   uploadPicture: "/users/upload-picture",
   changePassword: "/users/change-password",
   setup2FA: "/users/2fa/setup",
@@ -54,5 +56,4 @@ export default {
 
   // activities
   activities: "/activities"
-
 };
