@@ -1,7 +1,7 @@
 "use client";
 
 import Chatinput, { IOnSendPayload } from "@/components/Chatinput";
-import { Typing, TypingBubble } from "./Bubble";
+import Bubble, { Typing } from "./Bubble";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import useSWR, { mutate } from "swr";
 import endpoint from "@/api/endpoint";
@@ -14,22 +14,25 @@ import { streamlineFetcher } from "@/api/fetcher";
 import { toast } from "sonner";
 import SidebarDetails from "../../../components/Memory/SidebarDetails";
 import useFetcher from "@/hooks/use-fetcher";
+import { useRouter } from "next/navigation";
 
 export default function Conversation({ id, type = "memory" }) {
   const [aiMessage, setAiMessage] = useState("")
   const abortCtrl = useRef(null)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const wasAtBottomRef = useRef(true);
+  const isNew = id === "new";
 
+  const router = useRouter();
   const [messages, setMessages] = useState<Partial<IMessage | any>[]>([])
   const [isSidebarOpen, setIsSidebarOpen] = useState(false) // Sidebar closed by default
 
-  const { trigger: sendMessage, isMutating: isTyping } = useSWRMutation(endpoint.aiPrompt, streamlineFetcher)
+  const { trigger: sendMessage, isMutating: isSending } = useSWRMutation(endpoint.aiPrompt, streamlineFetcher)
   const { data: memoryData, isLoading: loadingMemory } = useSWR(
-    id && type === "memory" ? `${endpoint.memories}/${id}` : null
+    id && type === "memory" && !isNew ? `${endpoint.memories}/${id}` : null
   );
   const { data: promptData, isLoading: loadingPrompt } = useSWR(
-    id && type === "prompt" ?
+    id && type === "prompt" && !isNew ?
       `${endpoint.memoryPrompt}/${id}` :
       null
   );
@@ -107,14 +110,16 @@ export default function Conversation({ id, type = "memory" }) {
         });
         return;
       }
+
       const result = await startConversation({
         text,
-        prompt_id: id
+        ...(isNew ? {} : { prompt_id: id })
       })
 
       if (result?.data?.response) {
         handleOnFinishTyping(result?.data?.response)
         mutate(`${endpoint.memoryPrompt}/${id}`)
+        router.replace(`/chat/${result?.data?.memory_id}`)
       }
 
     } catch (error) {
@@ -165,6 +170,7 @@ export default function Conversation({ id, type = "memory" }) {
   if (loadingMemory || loadingPrompt) {
     return <Loader />
   }
+  const isTyping = isSending || startingConversation;
 
   return (
     <div className="flex flex-1 overflow-hidden items-stretch h-full">
@@ -181,19 +187,15 @@ export default function Conversation({ id, type = "memory" }) {
           onViewDetails: handleOpenSidebar
         }}>
           {
-            (isTyping || startingConversation) && !aiMessage ?
+            (isTyping && isEmpty(aiMessage)) ?
               <Typing /> :
-              aiMessage &&
-              <TypingBubble
-                text={aiMessage}
-                onFinish={handleOnFinishTyping}
-              />
+              <Bubble role="ai" text={aiMessage} />
           }
         </History>
         <div className="sticky bottom-0 pb-4 bg-background">
           <div className="container">
             <Chatinput
-              loading={startingConversation}
+              loading={isTyping}
               onStop={handleStop}
               onSend={handleSend}
               history={messages.slice(-20).map(({ role, text }) => ({ role, text }))}

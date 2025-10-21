@@ -49,7 +49,7 @@ export default function AddBeneficiaries() {
           <span className="text-center font-inter font-semibold text-sm whitespace-nowrap text-gray-900">
             Send invite
           </span>
-          <Spinner loading={isMutating} className="!text-blue-6 !size-4" />
+          <Spinner loading={isMutating} className="!text-gray-950/90 !size-4" />
         </button>
       </div>
     </form>

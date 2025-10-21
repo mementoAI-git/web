@@ -11,6 +11,7 @@ import { useStore } from "@/hooks/use-store"
 import StreakTracker from "@/components/StreakTracker"
 import { useRouter } from "next/navigation"
 import { useModal } from "@/hooks/use-modal"
+import Link from "next/link"
 
 function StreakCount() {
   return (
@@ -80,15 +81,16 @@ export default function WelcomSection() {
                   Add a memory
                 </span>
               </button>
-              <button
-                onClick={() => router.push("/chat/new")}
+              <Link
+                href="/chat/new"
+                prefetch
                 className="bg-white/40 flex items-center gap-1.5 cursor-pointer hover:scale-[97%] border border-white backdrop-blur-[2px] rounded-full px-4 sm:px-5 py-1.5 sm:py-2.5"
               >
                 <span className="text-[#667085] size-5 hidden md:block">
                   <AIIcon className="size-5 stroke-2" />
                 </span>
                 <span className="text-[#101828] text-sm md:text-base font-inter font-medium whitespace-nowrap">Chat with AI</span>
-              </button>
+              </Link>
             </div>
           </div>
         </div>
