@@ -8,11 +8,12 @@ import FileGallery from "@/components/FileGallery";
 import { isEmpty } from "@/utility";
 import { DetailsSkeleton } from "./Skeleton";
 import DOMPurify from "isomorphic-dompurify";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useBookmark } from "@/hooks/use-bookmark";
 import SidebarDetails from "../../components/Memory/SidebarDetails";
 import { MemoryDropdown } from "../Chat/Conversation/Dropdown";
 import { useModal } from "@/hooks/use-modal";
+import { useStore } from "@/hooks/use-store";
 
 export default function MemoryDetails({ memory }: { memory: IMemory }) {
   const [isOpen, setIsOpen] = useState(true)
@@ -21,6 +22,14 @@ export default function MemoryDetails({ memory }: { memory: IMemory }) {
     memoryId: memory?._id,
     isBookmarked: memory?.bookmarked
   });
+  const { setHeaderTitle } = useStore();
+
+  useEffect(() => {
+    setHeaderTitle(memory?.title || "New memory");
+    return () => {
+      setHeaderTitle(null);
+    }
+  }, [memory?.title]);
 
   if (isEmpty(memory)) return <DetailsSkeleton />
   return (

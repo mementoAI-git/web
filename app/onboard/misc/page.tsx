@@ -53,7 +53,9 @@ export default function MiscPage() {
       try {
         await completeOnboarding(payload);
         mutate(endpoint.profile)
-
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('welcome_once', '1')
+        }
         router.push("/onboard/beneficiary")
       } catch (error) {
         console.error("Failed to complete onboarding:", error)

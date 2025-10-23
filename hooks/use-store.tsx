@@ -6,12 +6,14 @@ import { IAuth, IUser } from "@/utility/interface";
 import { createContext, PropsWithChildren, useCallback, useContext, useEffect, useState } from "react";
 
 interface IState {
+  headerTitle: string | null
   auth: IAuth | null
   user: IUser | null
   hydrated: boolean
 }
 
 export const initialStates: IState = {
+  headerTitle: null,
   auth: null,
   user: null,
   hydrated: false
@@ -20,6 +22,7 @@ export const initialStates: IState = {
 interface StoreContext extends IState {
   setAuth?: (value: IAuth) => void;
   setUser?: (value: IUser) => void;
+  setHeaderTitle?: (value: string) => void;
   unsetAuth?: () => void;
 }
 
@@ -46,6 +49,10 @@ export function StoreProvider({ children }: PropsWithChildren) {
     }));
   }, []);
 
+  const setHeaderTitle = useCallback((title: string) => {
+    setState((p) => ({ ...p, headerTitle: title }));
+  }, []);
+
   useEffect(() => {
     const auth = localStorage.getItem(storageKeys.auth);
     if (auth) {
@@ -55,7 +62,7 @@ export function StoreProvider({ children }: PropsWithChildren) {
     }
   }, []);
   return (
-    <store.Provider value={{ ...state, unsetAuth, setAuth, setUser }}>
+    <store.Provider value={{ ...state, unsetAuth, setAuth, setUser, setHeaderTitle }}>
       {children}
     </store.Provider>
   );

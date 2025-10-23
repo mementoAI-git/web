@@ -7,9 +7,9 @@ import { IMemory, IPagination } from "@/utility/interface";
 import dayjs from "dayjs";
 import Link from "next/link";
 import { useState } from "react";
+import DoubleHeartIcon from "@/public/icon/double-heart.svg";
 
 function MemoriesGridItem({ memory }: { memory: IMemory }) {
-
   const [isHovered, setIsHovered] = useState(false);
 
   return (
@@ -81,9 +81,26 @@ function MemoriesGridItem({ memory }: { memory: IMemory }) {
 }
 
 export default function MemoriesGrid({ data }: { data: IPagination<IMemory> }) {
+  // Handle empty state
+  if (!data?.docs || data.docs.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 px-4">
+        <div className="text-center">
+          <div className="w-16 h-16 mx-auto mb-4 bg-sand-3 rounded-full flex items-center justify-center">
+            <DoubleHeartIcon className="size-8 stroke-2 text-sand-10" />
+          </div>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">No stories yet</h3>
+          <p className="text-gray-500 text-sm">
+            Start creating your first story to see it here.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 auto-rows-fr">
-      {data?.docs.map((m, i) => <MemoriesGridItem key={i} memory={m} />)}
+      {data.docs.map((m, i) => <MemoriesGridItem key={i} memory={m} />)}
     </div>
   );
 }

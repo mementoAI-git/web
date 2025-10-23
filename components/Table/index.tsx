@@ -12,6 +12,7 @@ interface ITable<T> {
   columns: IColumn[]
   onChangePage?: (page: number) => void;
   loadingRow?: React.ReactNode;
+  emptyRow?: React.ReactNode;
   className?: string;
   headerClassName?: string;
   renderRow?: (item: T, i: number) => React.ReactNode

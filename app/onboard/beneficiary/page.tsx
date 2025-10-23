@@ -12,13 +12,6 @@ export default function BeneficiaryPage() {
   const { data } = useSWR(endpoint.beneficiaries);
   const router = useRouter();
 
-  const handleContinue = () => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('welcome_once', '1')
-    }
-    router.push("/overview")
-  }
-
   return (
     <div className="flex flex-1 flex-col gap-10 p-10">
       <div className="flex flex-col gap-4">
@@ -60,12 +53,13 @@ export default function BeneficiaryPage() {
           >
             Skip for now
           </Link>
-          <button
-            onClick={handleContinue}
+          <Link
+            href="/overview"
+            prefetch
             className="bg-blue-6 text-white text-sm leading-[20px] cursor-pointer font-semibold rounded-full py-[18px] px-8"
           >
             Continue
-          </button>
+          </Link>
         </div>
       </div>
     </div>

@@ -14,6 +14,7 @@ import MemoriesTableRow from "./Row";
 import { TableRowSekeleton } from "./Skeleton";
 import { storageKeys } from "@/utility/constant";
 import PlusIcon from "@/public/icon/plus.svg"
+import DoubleHeartIcon from "@/public/icon/double-heart.svg";
 import { cn } from "@/utility";
 import { useModal } from "@/hooks/use-modal";
 
@@ -23,6 +24,25 @@ const columns = [
   { label: "Tags", className: "min-w-32" },
   { label: "" }
 ]
+
+// Empty state component for table
+const TableEmptyState = () => (
+  <tr>
+    <td colSpan={columns.length} className="py-12">
+      <div className="flex flex-col items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 mx-auto mb-4 bg-sand-3 rounded-full flex items-center justify-center">
+            <DoubleHeartIcon className="size-8 stroke-2 text-sand-10" />
+          </div>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">No stories yet</h3>
+          <p className="text-gray-500 text-sm">
+            Start creating your first story to see it here.
+          </p>
+        </div>
+      </div>
+    </td>
+  </tr>
+);
 
 export default function Memories() {
   const [page, setPage] = useState(1)
@@ -111,6 +131,7 @@ export default function Memories() {
                 loadingRow={<TableRowSekeleton />}
                 onChangePage={setPage}
                 renderRow={(r, i) => <MemoriesTableRow key={i} memory={r} />}
+                emptyRow={<TableEmptyState />}
               />
             </div>
         }

@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import SidebarDetails from "../../../components/Memory/SidebarDetails";
 import useFetcher from "@/hooks/use-fetcher";
 import { useRouter } from "next/navigation";
+import { useStore } from "@/hooks/use-store";
 
 export default function Conversation({ id, type = "memory" }) {
   const [aiMessage, setAiMessage] = useState("")
@@ -22,7 +23,7 @@ export default function Conversation({ id, type = "memory" }) {
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const wasAtBottomRef = useRef(true);
   const isNew = id === "new";
-
+  const { setHeaderTitle } = useStore();
   const router = useRouter();
   const [messages, setMessages] = useState<Partial<IMessage | any>[]>([])
   const [isSidebarOpen, setIsSidebarOpen] = useState(false) // Sidebar closed by default
@@ -166,6 +167,13 @@ export default function Conversation({ id, type = "memory" }) {
       }
     }
   }, [messages, scrollToBottom]);
+
+  useEffect(() => {
+    setHeaderTitle(memory?.title || "New conversation");
+    return () => {
+      setHeaderTitle(null);
+    }
+  }, [memory?.title]);
 
   if (loadingMemory || loadingPrompt) {
     return <Loader />

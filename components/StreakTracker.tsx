@@ -83,7 +83,7 @@ function Streak() {
         <div className="bg-sand-1 font-inter text-gray-400 text-sm rounded-2xl text-center py-4 px-6 flex justify-center items-center w-full">
           <div className="flex-1 flex-col flex gap-2.5">
             <span>Days</span>
-            <span className="text-gray-600">21</span>
+            <span className="text-gray-600">{user?.streak}</span>
           </div>
           <div className="flex-1 flex-col flex gap-2.5">
             <span>Prompts</span>
