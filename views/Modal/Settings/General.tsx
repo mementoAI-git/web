@@ -11,9 +11,11 @@ import { fileUploadFetcher } from "@/api/fetcher";
 import endpoint from "@/api/endpoint";
 import Spinner from "@/components/Spinner";
 import { mutate } from "swr";
+import { useLogout } from "@/hooks/use-logout";
 
 export default function General() {
-  const { user, unsetAuth } = useStore()
+  const { user } = useStore()
+  const { logout, loading } = useLogout();
   const [previewImage, setPreviewImage] = useState(user?.picture_url)
   const { trigger, isMutating } = useSWRMutation(endpoint.uploadPicture, fileUploadFetcher)
 
@@ -29,10 +31,6 @@ export default function General() {
   }, [user?.picture_url])
 
   const router = useRouter()
-  const handleLogout = () => {
-    unsetAuth()
-    router.push("/login")
-  }
   return (
     <div className="w-full flex flex-col gap-10">
       <div className="flex flex-col gap-2">
@@ -66,8 +64,8 @@ export default function General() {
           </div>
         </div>
         <div>
-          <div onClick={handleLogout} className={cn("icon-container", "!size-9 !rounded-[10px]")}>
-            <LogoutIcon className="size-5 stroke-2" />
+          <div onClick={logout} className={cn("icon-container", "!size-9 !rounded-[10px]")}>
+            {loading ? <Spinner loading className="!size-5 !text-blue-6" /> : <LogoutIcon className="size-5 stroke-2" />}
           </div>
         </div>
       </div>

@@ -12,7 +12,7 @@ interface ILogo {
 export function LogoV2({ className = "" }) {
   return (
     <span
-      className={cn("font-averia font-bold capitalize text-[28.82px] sm:text-[36.92px] leading-[110%] text-[#1E1E1E]", className)}
+      className={cn("font-garamond font-medium capitalize text-[28.82px] sm:text-[32px] leading-[38px] text-gray-950", className)}
     >
       memento.
     </span>

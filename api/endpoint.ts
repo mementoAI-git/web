@@ -5,6 +5,8 @@ export default {
   sendLink: "/auth/send-link",
   resendLink: "/auth/resend-link",
   verifyEmail: "/auth/verify-email",
+  refreshToken: "/auth/refresh-token",
+  logout: "/auth/logout",
   oauth: "/auth/oauth/",
   setPassword: "/auth/set-password",
 

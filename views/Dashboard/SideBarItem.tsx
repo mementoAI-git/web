@@ -28,7 +28,7 @@ export default function SideBarItem({ link = null, active = false, onClick, ...p
       <div className="text-gray-500 group-[.active]/item:text-sand-10 group-hover/item:text-sand-10">
         <props.Icon className="size-5 stroke-2" />
       </div>
-      <span className="capitalize group-[.active]/item:text-sand-10 group-hover/item:text-sand-10 text-base font-inter font-medium text-gray-700"> {props.title} </span>
+      <span className="capitalize group-[.active]/item:text-sand-10 group-hover/item:text-sand-10 group-[.active]/item:font-bold group-hover/item:font-bold text-base font-inter font-medium text-gray-700"> {props.title} </span>
     </div>
   );
 }

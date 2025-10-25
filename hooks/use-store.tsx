@@ -3,6 +3,7 @@
 import { clearCache } from "@/utility";
 import { storageKeys } from "@/utility/constant";
 import { IAuth, IUser } from "@/utility/interface";
+import { authService } from "@/utility/auth-service";
 import { createContext, PropsWithChildren, useCallback, useContext, useEffect, useState } from "react";
 
 interface IState {
@@ -23,7 +24,7 @@ interface StoreContext extends IState {
   setAuth?: (value: IAuth) => void;
   setUser?: (value: IUser) => void;
   setHeaderTitle?: (value: string) => void;
-  unsetAuth?: () => void;
+  unsetAuth?: () => Promise<void>;
 }
 
 const store = createContext<StoreContext>(initialStates);
@@ -36,8 +37,8 @@ export function StoreProvider({ children }: PropsWithChildren) {
     setState((p) => ({ ...p, auth }));
   }, []);
 
-  const unsetAuth = useCallback(() => {
-    localStorage.removeItem(storageKeys.auth);
+  const unsetAuth = useCallback(async () => {
+    await authService.logout();
     setState((p) => ({ ...p, auth: null, user: null }));
     clearCache()
   }, []);

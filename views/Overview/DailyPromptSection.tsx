@@ -4,20 +4,21 @@ import { IPrompt } from "@/utility/interface";
 import Link from "next/link";
 import useSWR from "swr";
 import endpoint from "@/api/endpoint";
+import folderIcon from "@/public/image/folder.png"
 
 function DailyPrompt({ title, _id }: IPrompt) {
   return (
-    <Link href={`/chat/reply/${_id}`} className="border gap-9 border-sand-4 flex justify-between flex-col bg-sand-2 md:bg-sand-1 p-6 md:p-8 rounded-2xl">
+    <Link href={`/chat/reply/${_id}`} className="border sm:min-h-[333.5px] border-black/10 flex gap-10 justify-between flex-col bg-white p-6 md:p-8 rounded-2xl">
       <Image
-        src={questionIcon}
+        src={folderIcon}
         alt="Question icon"
-        className="size-10 object-contain sm:size-13 lg:w-16"
+        className="w-[44.26px] h-[41.28px] object-cover"
       />
       <div className="space-y-3">
-        <span className="rounded-full hidden cursor-pointer gap-[6px] md:inline-flex items-center text-xs border-[1.5px] text-gray-700 border-gray-900 px-3 py-1">
+        <span className="rounded-full hidden cursor-pointer gap-[6px] md:inline-flex items-center font-inter font-medium text-xs border-[1.5px] text-gray-500 border-black/10 px-[10px] py-[2px]">
           Question
         </span>
-        <p className="font-georgia text-xl text-sand-12">
+        <p className="font-garamond font-medium text-xl text-gray-800">
           {title}
         </p>
       </div>

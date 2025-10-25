@@ -7,9 +7,8 @@ import useSWR from "swr";
 
 export default function SuggestedCategories() {
   const { data, isLoading } = useSWR(
-    endpoint.suggestions,
-    fetcher,
-    { revalidateOnFocus: false }
+    `${endpoint.suggestions}?page=1&limit=10`,
+    fetcher
   )
 
   return (
@@ -30,7 +29,6 @@ export default function SuggestedCategories() {
               <TopicSkeleton />
             </> :
             data?.data?.docs
-              ?.splice(1, 10)
               .map((t, i) => {
                 const category = getCategory(t?.category)
                 return (

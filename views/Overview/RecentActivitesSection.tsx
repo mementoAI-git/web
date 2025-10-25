@@ -56,9 +56,9 @@ export default function RecentActivitiesSection() {
   const { data, isLoading } = useSWR(`${endpoint.activities}?page=1&limit=4`)
 
   return (
-    <div className="flex-1 w-full lg:max-w-[335px] space-y-6 border rounded-2xl p-6 border-[#0011661A]">
+    <div className="flex-1 w-full lg:max-w-[335px] space-y-6">
       <div className="w-full items-center font-inter flex justify-between">
-        <span className="font-semibold text-sm text-[#000626E5]">
+        <span className="font-semibold text-sm text-gray-800">
           Recent activities
         </span>
         <span className="text-blue-6 text-base underline">See all</span>

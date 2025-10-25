@@ -6,10 +6,11 @@ import { Checkbox, Passwordinput, Textinput } from "@/components/Form";
 import useForm from "@/hooks/use-form";
 import Link from "next/link";
 import * as yup from "yup";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { clearCache } from "@/utility";
 import useFetcher from "@/hooks/use-fetcher";
 import { useStore } from "@/hooks/use-store";
+import { authService } from "@/utility/auth-service";
 import { toast } from "sonner";
 
 const schema = yup.object().shape({
@@ -30,6 +31,7 @@ const initial = {
 
 export function Login() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { setAuth } = useStore();
   const { trigger, isMutating } = useFetcher(endpoint.login);
   const { handleSubmit, handleChange, values, getField } = useForm({
@@ -44,7 +46,16 @@ export function Login() {
 
           await clearCache();
 
-          router.push(result?.data?.onboarded ? "/overview" : "/onboard");
+          // Check if there's a redirect parameter in the URL
+          const redirectPath = searchParams.get('redirect');
+
+          if (redirectPath && result?.data?.onboarded) {
+            // User is onboarded and has a redirect path, redirect there
+            router.push(decodeURIComponent(redirectPath));
+          } else {
+            // Default redirect based on onboarding status
+            router.push(result?.data?.onboarded ? "/overview" : "/onboard");
+          }
         }
       } catch (err: any) {
         if (err && err.data.requires_verification) {

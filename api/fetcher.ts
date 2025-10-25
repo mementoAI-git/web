@@ -5,6 +5,7 @@ import { IResponse, MutationFetcher } from "./interface";
 import { toast } from "sonner";
 import { isEmpty } from "@/utility";
 import { storageKeys } from "@/utility/constant";
+import { authService } from "@/utility/auth-service";
 
 const baseURL = process.env.NEXT_PUBLIC_API_BASE_URL
 
@@ -24,6 +25,42 @@ axios.interceptors.request.use((config) => {
   return config;
 });
 
+// Response interceptor to handle token refresh
+axios.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+
+    // If the error is 401 and we haven't already tried to refresh
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+
+      try {
+        const authData = authService.getAuthData();
+
+        if (authData && !authService.isRefreshTokenExpired(authData)) {
+          // Try to refresh the token
+          const newAuthData = await authService.refreshAccessToken();
+
+          // Update the authorization header with the new token
+          originalRequest.headers.Authorization = `Bearer ${newAuthData.access_token}`;
+
+          // Retry the original request
+          return axios(originalRequest);
+        } else {
+          // Refresh token is expired or not available, redirect to login with current path
+          authService.redirectToLoginWithPath();
+        }
+      } catch (refreshError) {
+        // Refresh failed, redirect to login with current path
+        authService.redirectToLoginWithPath();
+      }
+    }
+
+    return Promise.reject(error);
+  }
+);
+
 export const fetcher = (url: string) => {
   return handleRequest("get", url);
 }
@@ -36,7 +73,7 @@ export const postFetcher: MutationFetcher = async (url, body) => {
   const result = await handleRequest("post", url, body);
 
   if (result?.data?.access_token) {
-    localStorage.setItem("auth", JSON.stringify(result?.data));
+    authService.setAuthData(result?.data);
   }
   return result;
 };

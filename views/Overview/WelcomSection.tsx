@@ -1,30 +1,30 @@
 import bgImage from "@/public/image/bg/1.png"
 import bg2Image from "@/public/image/bg/2.png"
 import bg3Image from "@/public/image/bg/3.png"
-import blueFire from "@/public/image/blue-fire.png"
-import greenDiamond from "@/public/image/green-daimond.png"
+import orangeDiamond from "@/public/image/orange-diamond.png"
+import greenDiamond from "@/public/image/green-diamond.png"
 import Image from "next/image"
 import PlusIcon from "@/public/icon/plus.svg"
-import AIIcon from "@/public/icon/ai.svg"
 import Slider from "@/components/Slider"
 import { useStore } from "@/hooks/use-store"
 import StreakTracker from "@/components/StreakTracker"
 import { useRouter } from "next/navigation"
 import { useModal } from "@/hooks/use-modal"
 import Link from "next/link"
+import BlueFolderIcon from "@/public/icon/folder/blue.svg"
 
 function StreakCount() {
   return (
     <StreakTracker>
-      <div className="w-full flex items-center relative rounded-2xl overflow-hidden p-4 gap-2">
+      <div className="w-full flex-1 flex items-center relative border border-black/5 rounded-2xl overflow-hidden p-4 gap-2">
         <Image src={bg2Image} alt="1" className="absolute top-0 right-0 left-0 object-cover size-full" />
-        <div className="flex flex-col gap-2 font-inter">
-          <span className="text-gray-400 uppercase text-xs">Streak count</span>
-          <span className="text-sm text-gray-700 font-bold">You’re on a 15-day streak</span>
-          <span className="text-gray-600 text-sm ">Complete reflections each day so your streak won’t reset</span>
+        <div className="flex flex-col max-w-[216.86px] gap-2 font-inter">
+          <span className="text-gray-500 font-inter font-normal uppercase text-xs">Streak count</span>
+          <span className="text-sm text-gray-700 font-inter font-bold">You’re on a 15-day streak</span>
+          <span className="text-gray-600 font-normal font-inter text-sm ">Complete reflections each day so your streak won’t reset</span>
         </div>
-        <div className="size-16 flex items-center justify-center">
-          <Image src={blueFire} width={45} alt="Blue fire" />
+        <div className="size-full absolute bottom-0 right-0 max-w-[105.31px] max-h-[100px] flex items-center justify-center">
+          <Image src={orangeDiamond} className="size-full object-cover" width={105.31} alt="Orange diamond" />
         </div>
       </div>
     </StreakTracker>
@@ -33,7 +33,7 @@ function StreakCount() {
 
 function Leaderboard() {
   return (
-    <div className="w-full flex items-center rounded-2xl overflow-hidden relative p-4 gap-2">
+    <div className="w-full flex-1 flex items-center border border-black/5 rounded-2xl overflow-hidden relative p-4 gap-2">
       <Image
         src={bg3Image}
         alt="3"
@@ -41,11 +41,11 @@ function Leaderboard() {
       />
       <div className="flex flex-col gap-2 font-inter">
         <span className="text-gray-400 uppercase text-xs">XP leaderboard</span>
-        <span className="text-sm text-gray-700 font-bold">You’re ranked #45 globally</span>
-        <span className="text-gray-600 text-sm ">You move up the ranking list as you complete more activities and claim more XP.</span>
+        <span className="text-sm text-gray-700 font-bold">Global ranking coming soon</span>
+        <span className="text-gray-600 text-sm ">Coming soon</span>
       </div>
-      <div className="size-[90.62px] absolute -top-3.5 right-3 flex items-center justify-center">
-        <Image src={greenDiamond} width={90.62} alt="Blue fire" />
+      <div className="size-full max-w-[135.64px] max-h-[148.38px] absolute -bottom-0 right-0 flex items-center justify-center">
+        <Image src={greenDiamond} className="size-full object-cover" alt="Green diamond" />
       </div>
     </div>
   )
@@ -53,21 +53,20 @@ function Leaderboard() {
 
 export default function WelcomSection() {
   const { user } = useStore()
-  const router = useRouter()
   const { open } = useModal()
   return (
     <div className="w-full space-y-6 sm:space-y-8 lg:space-y-10 py-6 sm:py-9 lg:py-12">
       <div className="space-y-2">
-        <h2 className="font-canela text-sand-12 font-normal text-[24px] sm:text-[32px] lg:text-[40px] leading-[32px] sm:leading-[40px] lg:leading-[48px]">
-          Welcome
+        <h2 className="font-garamond text-gray-800 font-medium text-[24px] sm:text-[32px] leading-[32px] sm:leading-[38px]">
+          Back at it,
           {
             user?.first_name &&
-            <i className="text-gray-500">, {user?.first_name}.</i>
+            <i className="text-gray-500"> {user?.first_name}.</i>
           }
         </h2>
-        <span className="text-gray-500 font-georgia text-[16px] sm:text-[20px] lg:text-[24px] leading-5 sm:leading-[28px] lg:leading-[32px]">
+        {/* <span className="text-gray-500 font-georgia text-[16px] sm:text-[20px] lg:text-[24px] leading-5 sm:leading-[28px] lg:leading-[32px]">
           Complete some unfinished prompts to earn points.
-        </span>
+        </span> */}
       </div>
       <div className="flex flex-col lg:flex-row gap-6 items-stretch">
         <div className="relative rounded-2xl overflow-hidden flex-1 min-h-[144px] sm:min-h-[254px]">
@@ -84,12 +83,12 @@ export default function WelcomSection() {
               <Link
                 href="/chat/new"
                 prefetch
-                className="bg-white/40 flex items-center gap-1.5 cursor-pointer hover:scale-[97%] border border-white backdrop-blur-[2px] rounded-full px-4 sm:px-5 py-1.5 sm:py-2.5"
+                className="bg-white flex items-center gap-1.5 cursor-pointer hover:scale-[97%] border border-white rounded-full px-4 sm:px-5 py-1.5 sm:py-2.5"
               >
-                <span className="text-[#667085] size-5 hidden md:block">
-                  <AIIcon className="size-5 stroke-2" />
+                <span className="size-5 hidden md:block">
+                  <BlueFolderIcon className="size-5" />
                 </span>
-                <span className="text-[#101828] text-sm md:text-base font-inter font-medium whitespace-nowrap">Chat with AI</span>
+                <span className="text-[#101828] text-sm  font-inter font-semibold whitespace-nowrap">Start a conversation</span>
               </Link>
             </div>
           </div>
@@ -100,7 +99,7 @@ export default function WelcomSection() {
             <Leaderboard />
           </Slider>
         </div>
-        <div className="w-full hidden md:flex flex-rol items-stretch gap-3 md:flex-col lg:max-w-[335px]">
+        <div className="w-full hidden md:flex flex-rol items-stretch gap-3 md:flex-col md:flex-1 lg:max-w-[335px]">
           <StreakCount />
           <Leaderboard />
         </div>

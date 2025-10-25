@@ -1,6 +1,5 @@
 import { Searchinput } from "@/components/Form";
 import { useStore } from "@/hooks/use-store";
-import { isEmpty } from "@/utility";
 import { usePathname, useRouter } from "next/navigation";
 import React from "react";
 import MenuIcon from "@/public/icon/menu.svg"
@@ -8,6 +7,7 @@ import SearchIcon from "@/public/icon/dashboard/search.svg"
 import { useModal } from "@/hooks/use-modal";
 import { LogoV2 } from "@/components/Logo";
 import blueFire from "@/public/image/blue-fire.png"
+import greenDiamond from "@/public/image/green-diamond-full.png"
 import Image from "next/image";
 import StreakTracker from "@/components/StreakTracker";
 import { ProfileDropdown } from "../ProfileDropdown";
@@ -65,9 +65,15 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
           <div onClick={() => open("search-memory")} className="h-10 w-10 flex items-center justify-center rounded-lg border border-[rgba(208,213,221,1)] bg-white sm:hidden">
             <SearchIcon width={20} height={20} />
           </div>
+          <div
+            className="h-full shrink-0 flex gap-1 cursor-pointer space-x-1 px-3 sm:px-5 py-2 hover:bg-blue-3 rounded-lg transition-colors duration-200"
+          >
+            <Image src={greenDiamond} alt="Streak blue fire" className="size-5 object-contain" />
+            <span className="font-semibold text-grey-600 text-sm sm:text-base">0</span>
+          </div>
           <StreakTracker>
             <div
-              className="h-full shrink-0 flex gap-1 cursor-pointer space-x-1 px-3 sm:px-5 py-2 hover:bg-blue-3 rounded-lg transition-colors duration-200"
+              className="h-full shrink-0 flex gap-1 cursor-pointer space-x-1 px-3 sm:px-5 py-2 rounded-lg transition-colors duration-200"
             >
               <Image src={blueFire} alt="Streak blue fire" className="size-5 object-contain" />
               <span className="font-semibold text-grey-600 text-sm sm:text-base">{user?.streak || 0}</span>

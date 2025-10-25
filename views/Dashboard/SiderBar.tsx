@@ -21,7 +21,7 @@ export function DashboardSideBar({ onClose }: DashboardSideBarProps) {
   }
 
   return (
-    <div className="dynamic-height w-full min-h-screen overflow-x-hidden border-r border-gray-200 bg-white">
+    <div className="dynamic-height w-full min-h-screen overflow-x-hidden border-r border-gray-200 bg-background">
       <div className="flex size-full max-h-300 flex-col justify-between">
         <div className="w-full">
           <div className="flex items-center justify-between p-5 pl-6">
