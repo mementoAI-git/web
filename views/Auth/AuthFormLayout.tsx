@@ -25,7 +25,7 @@ export function AuthFormLayout({
 }: IAuthFormLayout) {
   return (
     <div
-      className={`group mx-auto flex w-full h-fit max-w-[618px] flex-col justify-center gap-6 sm:gap-8 lg:gap-10 rounded-3xl bg-white p-4 sm:p-6 lg:p-10 ${className}`}
+      className={`group mx-auto flex w-full h-fit max-w-[618px] flex-col justify-center gap-6 sm:gap-8 lg:gap-10 rounded-3xl bg-white p-6 lg:p-10 ${className}`}
     >
       <div className="flex flex-col gap-3 sm:gap-4">
         {icon && (

@@ -32,6 +32,9 @@ class AuthService {
    */
   getCurrentPath(): string {
     if (typeof window !== 'undefined') {
+      if (window.location.pathname === '/login') {
+        return '';
+      }
       return window.location.pathname + window.location.search;
     }
     return '';

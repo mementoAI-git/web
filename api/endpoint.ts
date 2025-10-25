@@ -19,6 +19,7 @@ export default {
   setup2FA: "/users/2fa/setup",
   verifyTOTP: "/users/2fa/verify",
   disable2FA: "/users/2fa/disable",
+  deleteAccount: "/users/account",
 
   // beneficiaries
   beneficiaries: "/beneficiaries",

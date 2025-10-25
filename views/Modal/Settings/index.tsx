@@ -1,5 +1,6 @@
 import GearIcon from "@/public/icon/gear.svg"
 import LockIcon from "@/public/icon/lock-2.svg"
+import ShieldIcon from "@/public/icon/shield.svg"
 import General from "./General";
 import { ModalCloseBtn } from "@/components/ModalLayout";
 import { useModal } from "@/hooks/use-modal";
@@ -29,7 +30,7 @@ const settings = {
   },
   privacy: {
     label: "Privacy & account",
-    icon: <UserIcon strokeWidth={1.5} width={16} height={15} />,
+    icon: <ShieldIcon strokeWidth={1.5} width={16} height={15} />,
     component: <Privacy />
   }
 }
