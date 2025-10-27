@@ -1,24 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { toast } from "sonner";
-import { useLogout } from "@/hooks/use-logout";
 import { Button } from "@/components/Buttons";
 import DeleteAccount from "./DeleteAccount";
+import LogoutAccount from "./LogoutAccount";
 
 export default function Privacy() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-  const { logout, loading: logoutLoading } = useLogout();
-
-  const handleLogoutAllDevices = async () => {
-    try {
-      await logout();
-      toast.success("Logged out of all devices");
-    } catch (error: any) {
-      toast.error("Failed to logout");
-    }
-  };
 
   return (
     <div className="w-full flex flex-col gap-10">
@@ -59,13 +48,13 @@ export default function Privacy() {
         <div className="flex flex-col gap-4">
           <div className="flex items-center gap-2 justify-between">
             <span className="font-inter text-sm text-gray-950/70">Export your information</span>
-            <button className="font-semibold text-sm text-gray-900 px-3 py-2 border rounded-full border-[#10182866]">Export</button>
+            <button disabled className="font-semibold text-sm text-gray-400 px-3 py-2 border rounded-full border-[#1018286633] cursor-not-allowed">Coming soon...</button>
           </div>
           <div className="flex items-center gap-2 justify-between">
             <span className="font-inter text-sm text-gray-950/70">
               Shared stories/conversations
             </span>
-            <button className="font-semibold text-sm text-gray-900 px-3 py-2 border rounded-full border-[#10182866]">Manage</button>
+            <button disabled className="font-semibold text-sm text-gray-400 px-3 py-2 border rounded-full border-[#1018286633] cursor-not-allowed">Coming soon...</button>
           </div>
         </div>
       </div>
@@ -103,31 +92,10 @@ export default function Privacy() {
         close={() => setShowDeleteConfirm(false)}
         open={showDeleteConfirm}
       />
-
-      {/* Logout All Devices Confirmation Modal */}
-      {showLogoutConfirm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl p-6 max-w-md w-full mx-4">
-            <h3 className="font-inter text-lg font-bold text-gray-950 mb-2">Logout All Devices</h3>
-            <p className="font-inter text-sm text-gray-950/70 mb-6">
-              This will log you out of all devices and sessions. You'll need to log in again on all your devices.
-            </p>
-            <div className="flex gap-3">
-              <Button
-                onClick={() => setShowLogoutConfirm(false)}
-                title="Cancel"
-                className="flex-1 font-semibold text-sm text-gray-900 px-3 py-2 border rounded-full border-[#10182866] bg-transparent hover:bg-gray-50"
-              />
-              <Button
-                onClick={handleLogoutAllDevices}
-                loading={logoutLoading}
-                title="Logout All Devices"
-                className="flex-1 font-semibold text-sm text-gray-900 px-3 py-2 border rounded-full border-[#10182866] bg-transparent hover:bg-gray-50"
-              />
-            </div>
-          </div>
-        </div>
-      )}
+      <LogoutAccount
+        close={() => setShowLogoutConfirm(false)}
+        open={showLogoutConfirm}
+      />
     </div>
   )
 }

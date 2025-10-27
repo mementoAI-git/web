@@ -16,7 +16,7 @@ import { useModal } from "@/hooks/use-modal";
 import { useStore } from "@/hooks/use-store";
 
 export default function MemoryDetails({ memory }: { memory: IMemory }) {
-  const [isOpen, setIsOpen] = useState(true)
+  const [isOpen, setIsOpen] = useState(false)
   const { open } = useModal()
   const { toggleBookmark } = useBookmark({
     memoryId: memory?._id,
@@ -41,7 +41,7 @@ export default function MemoryDetails({ memory }: { memory: IMemory }) {
             <div className="flex gap-1 items-center text-sand-12 mb-3.5">
               <div
                 className="aspect-square flex justify-center items-center p-1.5 size-7 sm:size-8 shrink-0 rounded-lg hover:bg-sand-2"
-                onClick={() => open("share-post", memory?._id)}
+                onClick={() => open("share-memory", { memory })}
               >
                 <LunchIcon className="stroke-[1.5px] size-full text-sand-12 cursor-pointer" />
               </div>
@@ -61,7 +61,10 @@ export default function MemoryDetails({ memory }: { memory: IMemory }) {
             </span>
           </div>
           <div className="flex-1 h-full pb-4 sm:pb-6">
-            <FileGallery files={memory?.attachments || []} />
+            {
+              !isEmpty(memory?.attachments) &&
+              <FileGallery files={memory?.attachments || []} />
+            }
             <div className="tiptap-editor">
               <div
                 className="font-inter text-sm sm:text-base text-grey-600 mt-4 sm:mt-6 leading-relaxed tiptap-editor"

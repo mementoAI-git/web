@@ -11,7 +11,6 @@ import { useRouter } from "next/navigation";
 import useFetcher from "@/hooks/use-fetcher";
 import endpoint from "@/api/endpoint";
 import { useStore } from "@/hooks/use-store";
-import ChatSettings from "@/components/ChatSetting";
 
 export default function Chat() {
   const router = useRouter();
@@ -31,7 +30,7 @@ export default function Chat() {
 
   return (
     <div className="flex h-screen flex-col">
-      <div className="w-full px-2 py-3">
+      {/* <div className="w-full px-2 py-3">
         <div className="w-full px-2 mx-auto max-w-[1038px] flex items-center justify-between">
           <Link href="/chat/conversations" className="bg-sand-2 px-3 py-2 sm:p-3 rounded-full sm:rounded-xl flex items-center gap-1 sm:gap-2">
             <div className="size-5 flex items-center justify-center text-sand-8"><ChatIcon /></div>
@@ -43,7 +42,7 @@ export default function Chat() {
             </div>
           </ChatSettings>
         </div>
-      </div>
+      </div> */}
       <div className="flex overflow-y-auto page-viewport flex-1 hide-scrollbar">
         <div className="space-y-10 md:space-y-16 w-full pb-8">
           <div className="container space-y-10 md:space-y-16 py-3 sm:py-6 md:py-12">

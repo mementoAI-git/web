@@ -22,11 +22,11 @@ function Content({ data: id }) {
   return (
     <div className="w-full !max-w-120">
       <div className="space-y-6">
-        <div className="flex justify-start w-fit">
+        <div className="flex mx-auto sm:mx-0  w-fit">
           <Image src={confetti} alt="Confetti" className="size-14 object-contain" />
         </div>
-        <div>
-          <h4 className="modal-title text-[#1D2939] text-5xl">Story added successfully</h4>
+        <div className="text-center sm:text-left">
+          <h4 className="modal-title !font-medium text-[#1D2939] text-5xl">Story added successfully</h4>
           <p className="text-[#475467] ">You have added a new story to your Memento</p>
         </div>
 
@@ -104,7 +104,7 @@ export function SharePost({ data }: { data: { id: string } }) {
   return (
     <div>
       <div className="hidden sm:flex modal-container">
-        {/* <ModalCloseBtn onClick={() => close("share-post")} /> */}
+        <ModalCloseBtn onClick={() => close("share-post")} />
         <Content data={data} />
       </div>
       <Sheet

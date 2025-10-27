@@ -1,7 +1,7 @@
 import Link from "next/link";
 import useSWR from "swr";
 import endpoint from "@/api/endpoint";
-import TopicBar, { TopicBarSkeleton } from "@/components/Topic/TopicBar";
+import ConversationBar, { ConversationBarSkeleton } from "@/components/ConversationBar";
 import { isEmpty } from "@/utility";
 
 export default function RecentConversations() {
@@ -20,13 +20,13 @@ export default function RecentConversations() {
       {
         isLoading ?
           <>
-            <TopicBarSkeleton />
-            <TopicBarSkeleton />
-            <TopicBarSkeleton />
+            <ConversationBarSkeleton />
+            <ConversationBarSkeleton />
+            <ConversationBarSkeleton />
           </> :
           data?.data?.docs
             ?.slice(0, 3)
-            ?.map((m, i) => <TopicBar key={i} {...m} />)
+            ?.map((m, i) => <ConversationBar key={i} {...m} />)
       }
     </div>
   )

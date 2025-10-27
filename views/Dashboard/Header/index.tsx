@@ -44,13 +44,13 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
 
   return (
     <div className="w-full fixed top-0 left-0 right-0  border-b border-grey-500 sm:relative header-container">
-      <header className="mx-auto flex max-h-20 !w-[88%] max-w-[1160px] items-center justify-between gap-4 sm:gap-6 py-4 sm:py-5">
+      <header className="mx-auto flex max-h-20 !w-[93%] max-w-[1160px] items-center justify-between gap-4 sm:gap-6 py-4 sm:py-5">
         <div className="flex items-center gap-4 sm:gap-6 flex-1">
           <div onClick={handleLogoClick} className="cursor-pointer md:hidden">
             <LogoV2 />
           </div>
 
-          <div className="font-garamond capitalize font-medium text-gray-950/90 text-2xl hidden md:block">
+          <div className="font-garamond capitalize truncate font-medium max-w-[200px] text-gray-950/90 text-2xl hidden md:block">
             {truncateText(defaultHeaderTitle[path] || headerTitle)}
           </div>
 
@@ -66,7 +66,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
             <SearchIcon width={20} height={20} />
           </div>
           <div
-            className="h-full shrink-0 flex gap-1 cursor-pointer space-x-1 px-3 sm:px-5 py-2 hover:bg-blue-3 rounded-lg transition-colors duration-200"
+            className="h-full shrink-0 flex gap-1 cursor-pointer space-x-1 px-3 sm:px-5 py-2 hover:bg-[#B1D9584D] rounded-lg transition-colors duration-200"
           >
             <Image src={greenDiamond} alt="Streak blue fire" className="size-5 object-contain" />
             <span className="font-semibold text-grey-600 text-sm sm:text-base">0</span>
@@ -90,7 +90,6 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
           <MenuIcon width={20} height={20} />
         </button>
       </header>
-
     </div>
   );
 }

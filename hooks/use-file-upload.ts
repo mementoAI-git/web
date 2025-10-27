@@ -1,15 +1,14 @@
 import endpoint from "@/api/endpoint";
-import { fileUploadFetcher } from "@/api/fetcher";
+import { deleteFetcher, fileUploadFetcher } from "@/api/fetcher";
 import { IOnUploadPayload } from "@/utility/interface";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import useSWRMutation from "swr/mutation";
-import useFetcher from "./use-fetcher";
+import { resolvePath } from "@/utility";
 
 export default function useFileUpload() {
   const [files, setFiles] = useState<IOnUploadPayload[]>([])
   const { trigger: uploadFile } = useSWRMutation(endpoint.upload, fileUploadFetcher)
-  const { trigger: deleteFile } = useFetcher(endpoint.files, "delete")
 
   const handleUpload = async (file: IOnUploadPayload) => {
     setFiles(prev => [...prev, file])
@@ -32,7 +31,7 @@ export default function useFileUpload() {
 
   const handleDeleteFile = async ({ id, uploadedFile }: IOnUploadPayload) => {
     if (!uploadedFile?.name) return
-    await deleteFile(uploadedFile.name);
+    await deleteFetcher(resolvePath(endpoint.files, { id: uploadedFile.name }), { arg: {} });
 
     setFiles(files => files.filter((f) => f.id !== id))
   }

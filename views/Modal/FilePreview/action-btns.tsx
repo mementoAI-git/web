@@ -40,7 +40,7 @@ export default function ActionBtn(props: IFilePreviewItem) {
   // Delete handler
   const handleDelete = async () => {
     try {
-      const result = await deleteFile();
+      const result = await deleteFile({});
       await mutate(`${endpoint.memories}/${result?.data?._id}`)
       props.onDelete(props._id)
     } catch (error) {

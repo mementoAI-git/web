@@ -3,23 +3,28 @@ import { ModalCloseBtn } from "@/components/ModalLayout";
 import Spinner from "@/components/Spinner";
 import useFetcher from "@/hooks/use-fetcher";
 import { useModal } from "@/hooks/use-modal";
-import BinIcon from "@/public/icon/bin.svg"
+import { resolvePath } from "@/utility";
 import { usePathname, useRouter } from "next/navigation";
 import { mutate } from "swr";
 
-export function DeleteMemory({ data: id }) {
-  const { trigger, isMutating } = useFetcher(endpoint.memories, "delete")
+export function DeleteMemory({ data: { memory } }) {
+  const { trigger, isMutating } = useFetcher(resolvePath(endpoint.memory, { id: memory._id }), "delete")
   const { close } = useModal()
   const pathname = usePathname()
   const router = useRouter()
 
   const handleDelete = async () => {
-    const result = await trigger(id)
+    const result = await trigger({
+      delete_permanently: memory && memory.status === "deleted"
+    })
     if (result?.success) {
-      if (pathname.includes(id)) {
+      if (pathname.includes(memory._id)) {
         router.push("/memories")
       }
-      mutate(`${endpoint.memories}?page=1`)
+      mutate((key) =>
+        typeof key === 'string' &&
+        key.startsWith(`${endpoint.stories}`));
+
       close("delete-memory")
     }
   }

@@ -1,7 +1,7 @@
 "use client";
 
 import SearchIcon from "@/public/icon/dashboard/search.svg";
-import TopicBar from "@/components/Topic/TopicBar";
+import ConversationBar from "@/components/ConversationBar";
 import useSWRInfinite from "swr/infinite";
 import endpoint from "@/api/endpoint";
 import { useState, useMemo, useEffect, useCallback, useRef } from "react";
@@ -190,7 +190,7 @@ export default function RecentConversation() {
                   </div>
                   <div className="flex flex-col flex-1 gap-4">
                     {group.memories.map((memory, i) => (
-                      <TopicBar
+                      <ConversationBar
                         key={memory._id || i}
                         size="lg"
                         _id={memory._id}

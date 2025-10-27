@@ -13,23 +13,23 @@ import { useRouter } from "next/navigation";
 import { useModal } from "@/hooks/use-modal";
 import { useBookmark } from "@/hooks/use-bookmark";
 
-export default function TopicBar({ title, _id, bookmarked = false, size = "sm" }) {
+export default function ConversationBar({ title, _id, bookmarked = false, size = "sm" }) {
   const isLarge = size === "lg"
   const router = useRouter()
   const { open } = useModal()
   const { toggleBookmark } = useBookmark({ memoryId: _id, isBookmarked: bookmarked });
 
   const dropdownItems = [
-    { label: "Share", value: "share", startIcon: <LaunchIcon className="size-4 stroke-[1.5]" /> },
+    // { label: "Share", value: "share", startIcon: <LaunchIcon className="size-4 stroke-[1.5]" /> },
     { label: "Bookmark", value: "bookmark", startIcon: <BookmarkIcon className="size-4 stroke-2" /> },
     { label: "View details", value: "details", startIcon: <InfoIcon className="stroke-2" /> },
   ];
 
   const handleDropdownSelect = (value: string) => {
     switch (value) {
-      case "share":
-        open("share-post", _id);
-        break
+      // case "share":
+      //   open("share-memory", _id);
+      //   break
       case "bookmark":
         toggleBookmark()
         break;
@@ -82,7 +82,7 @@ export default function TopicBar({ title, _id, bookmarked = false, size = "sm" }
   )
 }
 
-export function TopicBarSkeleton({ size = "sm" }) {
+export function ConversationBarSkeleton({ size = "sm" }) {
   const isLarge = size === "lg"
   return (
     <div className={cn("w-full rounded-2xl border-sand-4 border flex items-center justify-between px-3 py-2 animate-pulse", {

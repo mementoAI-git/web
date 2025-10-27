@@ -18,10 +18,15 @@ import {
 import { createPortal } from "react-dom";
 import dayjs from "dayjs";
 import { cn } from "@/utility";
+import useSWR from "swr";
+import endpoint from "@/api/endpoint";
 
 function Streak() {
   const { user } = useStore()
+  const { data: statsData } = useSWR(endpoint.userStats)
   const name = user?.first_name || user?.last_name
+
+  const stats = statsData?.data || {}
 
   const streak = useMemo(() => {
     const end_index = dayjs(user?.last_seen).get("day")
@@ -83,15 +88,15 @@ function Streak() {
         <div className="bg-sand-1 font-inter text-gray-400 text-sm rounded-2xl text-center py-4 px-6 flex justify-center items-center w-full">
           <div className="flex-1 flex-col flex gap-2.5">
             <span>Days</span>
-            <span className="text-gray-600">{user?.streak}</span>
+            <span className="text-gray-600">{stats.streak_count || user?.streak || 0}</span>
           </div>
           <div className="flex-1 flex-col flex gap-2.5">
-            <span>Prompts</span>
-            <span className="text-gray-600">26</span>
+            <span>Reflections</span>
+            <span className="text-gray-600">{stats.reflections_count || 0}</span>
           </div>
           <div className="flex-1 flex-col flex gap-2.5">
-            <span>Memories</span>
-            <span className="text-gray-600">14</span>
+            <span>Stories</span>
+            <span className="text-gray-600">{stats.stories_count || 0}</span>
           </div>
         </div>
       </div>

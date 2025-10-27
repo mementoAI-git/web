@@ -20,7 +20,7 @@ export default function TwoFactorAuthenticator() {
   }
 
   const handleDisable2FA = async () => {
-    const result = await disable2FA("")
+    const result = await disable2FA({})
     if (result?.success) {
       mutate(endpoint.profile)
       toast.success(result?.message)

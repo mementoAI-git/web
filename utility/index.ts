@@ -240,3 +240,10 @@ IMPORTANT GUIDELINES:
 
 Remember: You're having a conversation with ${user?.fullname || 'the user'}. Be natural, helpful, and personalized.`;
 }
+
+export const resolvePath = (endpoint: string, payload = {}) => {
+  return endpoint.replace(/:(\w+)/g, (match, key) => {
+    const value = payload[key];
+    return isEmpty(value) ? match : value;
+  });
+}

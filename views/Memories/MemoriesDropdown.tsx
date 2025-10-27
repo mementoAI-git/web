@@ -12,7 +12,13 @@ import { useModal } from "@/hooks/use-modal";
 import { IMemory } from "@/utility/interface";
 import RemoveBookmarkIcon from "@/public/icon/remove-bookmark.svg";
 import AddBookmarkIcon from "@/public/icon/add-bookmark.svg";
+import RestoreIcon from "@/public/icon/restore.svg";
 import { useBookmark } from "@/hooks/use-bookmark";
+import useFetcher from "@/hooks/use-fetcher";
+import { resolvePath } from "@/utility";
+import endpoint from "@/api/endpoint";
+import { mutate } from "swr";
+import { toast } from "sonner";
 
 const FILTER_LABELS = {
   all: "All",
@@ -22,14 +28,15 @@ const FILTER_LABELS = {
 
 export function MemoryItemActions({ memory }: { memory: IMemory }) {
   const { open } = useModal()
+  const { trigger: restoreMemory } = useFetcher(resolvePath(endpoint.restoreMemory, { id: memory._id }))
   const { toggleBookmark } = useBookmark({
     memoryId: memory._id,
     isBookmarked: memory.bookmarked
   });
 
-  const handleSelect = (value: string) => {
+  const handleSelect = async (value: string) => {
     if (value === "share-story") {
-      open("share-post", memory?._id)
+      open("share-memory", { memory })
     }
     if (value === "edit-memory") {
       open("edit-memory", memory)
@@ -37,38 +44,57 @@ export function MemoryItemActions({ memory }: { memory: IMemory }) {
     if (value === "bookmark") {
       toggleBookmark()
     }
+    if (value === "restore") {
+      restoreMemory()
+      await mutate((key) =>
+        typeof key === 'string' &&
+        key.startsWith(`${endpoint.stories}`)
+      );
+      toast.success("Memory restored successfully")
+    }
   }
 
   return (
     <DropdowmIcon
       icon={<VeriticalElipseIcon className="w-1 h-3" />}
-      items={[
-        {
-          label: "Edit story",
-          value: "edit-memory",
-          startIcon: <EditIcon width={16} size={16} />,
-        },
-        {
-          label: "Share story",
-          value: "share-story",
-          startIcon: <LunchIcon className="size-[14px]" strokeWidth={1.5} width={14} size={14} />,
-        },
-        {
-          label: memory.bookmarked ? "Remove bookmark" : "Add bookmark",
-          value: "bookmark",
-          startIcon: memory.bookmarked ?
-            <RemoveBookmarkIcon width={16} height={16} />
-            : <AddBookmarkIcon width={16} height={16} />
-        },
-      ]}
+      items={
+        memory.status == "deleted" ?
+          [
+            {
+              label: "Restore",
+              value: "restore",
+              startIcon: <RestoreIcon strokeWidth={1.5} width={20} height={20} />
+            }
+          ] :
+          [
+            {
+              label: "Edit story",
+              value: "edit-memory",
+              startIcon: <EditIcon width={16} size={16} />,
+            },
+            {
+              label: "Share story",
+              value: "share-story",
+              startIcon: <LunchIcon className="size-[14px]" strokeWidth={1.5} width={14} size={14} />,
+            },
+            {
+              label: memory.bookmarked ? "Remove bookmark" : "Add bookmark",
+              value: "bookmark",
+              startIcon: memory.bookmarked ?
+                <RemoveBookmarkIcon width={16} height={16} />
+                : <AddBookmarkIcon width={16} height={16} />
+            },
+          ]
+      }
       footerItem={
         <li
-          onClick={() => open("delete-memory", memory._id)}
+          onClick={() => open("delete-memory", { memory })}
           className="flex cursor-pointer items-center rounded gap-2.5 px-2.5 py-1.5 hover:bg-[#F97066]/8 text-[#F97066]"
         >
           <TrashIcon width={16} size={16} />
           <span className="font-inter text-sm">Delete</span>
         </li>
+
       }
       onSelect={handleSelect}
       className="!right-0 !bottom-8"

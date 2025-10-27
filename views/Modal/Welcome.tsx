@@ -7,6 +7,7 @@ import welcomeIcon3 from "@/public/image/welcome/3.png";
 import welcomeIcon4 from "@/public/image/welcome/4.png";
 import welcomeIcon5 from "@/public/image/welcome/5.png";
 import { useRouter } from "next/navigation";
+import { storageKeys } from "@/utility/constant";
 
 const features = [
   {
@@ -47,7 +48,7 @@ export default function Welcome() {
 
   const handleClose = () => {
     close("welcome");
-    localStorage.setItem('welcome_once', '1');
+    localStorage.removeItem(storageKeys.welcomeOnce);
   }
 
   const handleStartConversation = () => {

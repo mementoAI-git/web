@@ -4,22 +4,19 @@ import endpoint from "@/api/endpoint"
 import { fetcher } from "@/api/fetcher"
 import Topic, { TopicSkeleton } from "@/components/Topic"
 import { getCategory } from "@/utility"
+import CategoryCard from "@/components/category-card"
 
 export default function BrowseTopics() {
-  const { data, isLoading, error } = useSWR(
+  const { data, isLoading } = useSWR(
     `${endpoint.suggestions}?page=1&limit=10`,
     fetcher,
   )
-
-  console.log('Topics data:', data);
-  console.log('Topics loading:', isLoading);
-  console.log('Topics error:', error);
 
   return (
     <div className="w-full space-y-6 py-6 sm:py-9 lg:py-12">
       <div className="flex items-center justify-between">
         <h2 className="font-canela text-sand-12 font-normal text-xl sm:text-2xl lg:text-[32px] leading-[38px]">
-          Browse conversations-
+          Browse conversations
           <i className="text-gray-500"> by topics</i>
         </h2>
         <Link className="text-blue-6 font-semibold text-lg underline" href="/explore">See all</Link>
@@ -39,13 +36,14 @@ export default function BrowseTopics() {
                   .map((t, i) => {
                     const category = getCategory(t?.category)
                     return (
-                      <Topic
-                        id={t?._id}
-                        title={t?.title}
-                        key={i}
-                        image={category?.image}
-                        tag={category?.slug || t.tag[0]}
-                      />
+                      <div className="w-full max-w-[240px] flex shrink-0" key={i}>
+                        <CategoryCard
+                          subtitle={t?.title}
+                          href={`/chat/reply/${t?._id}`}
+                          image={category?.image}
+                          className="w-full max-w-[240px]"
+                        />
+                      </div>
                     )
                   })
             }

@@ -99,21 +99,21 @@ export function UpdateMemory({ data }) {
   return (
     <div >
       <div className="hidden !min-w-[618px] sm:block modal-container">
-        <ModalCloseBtn onClick={() => close("create-memory")} />
+        <ModalCloseBtn onClick={() => close("edit-memory")} />
         <Content data={data} />
       </div>
       <Sheet
         detent="content"
         className="block sm:hidden"
         isOpen
-        onClose={() => close("create-memory")}
+        onClose={() => close("edit-memory")}
         snapPoints={[0.5, 0.75, 1]}
         initialSnap={1}
       >
         <Sheet.Container className="bg-sand-1" >
           <Sheet.Header className="bg-sand-1 rounded-3xl" />
           <Sheet.Content className="bg-sand-1 px-4 pb-6">
-            <ModalCloseBtn className="!relative ml-auto !right-0 !top-0 mb-2" onClick={() => close("create-memory")} />
+            <ModalCloseBtn className="!relative ml-auto !right-0 !top-0 mb-2" onClick={() => close("edit-memory")} />
             <Content {...{ data }} />
           </Sheet.Content>
         </Sheet.Container>

@@ -31,10 +31,11 @@ export function DashboardSideBar({ onClose }: DashboardSideBarProps) {
           </div>
           <div className="flex py-4 md:py-8 px-4 flex-col gap-1 sm:gap-2">
             {topNavigations.map((n, i) => (
-              <SideBarItem {...n} active={n.link === pathname} key={i} onClick={onClose} />
+              <SideBarItem {...n} active={n.link === pathname || pathname.includes(n.link)} key={i} onClick={onClose} />
             ))}
             <SideBarItem
               Icon={SlideIcon}
+              active={pathname.includes("settings")}
               title="settings"
               onClick={() => open("settings")}
             />

@@ -1,3 +1,5 @@
+import { Beneficiaries } from "@/views/Settings";
+
 export default {
   // auth
   login: "/auth/login",
@@ -20,9 +22,11 @@ export default {
   verifyTOTP: "/users/2fa/verify",
   disable2FA: "/users/2fa/disable",
   deleteAccount: "/users/account",
+  userStats: "/users/stats",
 
   // beneficiaries
   beneficiaries: "/beneficiaries",
+  beneficiary: "/beneficiaries/:id",
   resendInvite: "/beneficiaries/invite/resend",
   getInvite: "/beneficiaries/invite/",
   acceptInvite: "/beneficiaries/invite/accept",
@@ -40,9 +44,12 @@ export default {
 
   // memories
   memories: "/memories",
+  memory: "/memories/:id",
+  bookmarkMemory: "/memories/:id/bookmark",
   conversations: "/memories/conversations",
   stories: "/memories/stories",
   memoryPrompt: "/memories/prompt",
+  restoreMemory: "/memories/:id/restore",
   memoriesStats: "/memories/stats",
   removeFileFromMemory: "/memories/remove-file",
   addMessageToMemory: "/memories/add-message",
@@ -56,6 +63,7 @@ export default {
 
   // capsule
   capsule: "/capsule",
+  capsuleDelete: "/capsule/:id",
 
   // activities
   activities: "/activities"

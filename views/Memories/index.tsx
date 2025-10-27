@@ -1,6 +1,6 @@
 "use client";
 
-import BookIcon from "@/public/icon/dashboard/book.svg";
+import DoubleHeartIcon from "@/public/icon/double-heart.svg";
 import BookmarkIcon from "@/public/icon/dashboard/bookmark.svg";
 import ConversationIcon from "@/public/icon/dashboard/conversation.svg";
 import { StatCard } from "../Dashboard";
@@ -14,7 +14,6 @@ import MemoriesTableRow from "./Row";
 import { TableRowSekeleton } from "./Skeleton";
 import { storageKeys } from "@/utility/constant";
 import PlusIcon from "@/public/icon/plus.svg"
-import DoubleHeartIcon from "@/public/icon/double-heart.svg";
 import { cn } from "@/utility";
 import { useModal } from "@/hooks/use-modal";
 
@@ -97,7 +96,7 @@ export default function Memories() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
           <StatCard
-            icon={<BookIcon width={20} height={16} />}
+            icon={<DoubleHeartIcon width={23} />}
             subtitle="Stories added"
             title={stats?.data?.stories_count || 0}
           />

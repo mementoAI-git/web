@@ -19,6 +19,7 @@ import { PauseCapsule } from "./Capsule/Pause";
 import { useState, useEffect } from "react";
 import { DatePickerFilter } from "../Memories/MemoriesFilter";
 import Settings from "./Settings";
+import ShareMemory from "./Memory/ShareMemory";
 
 const MODAL_COMPONENTS = {
   "share-post": SharePost,
@@ -43,7 +44,8 @@ const MODAL_COMPONENTS = {
   "delete-capsule": DeleteCapsule,
   "pause-capsule": PauseCapsule,
   "settings": Settings,
-  "date-picker-filter": DatePickerFilter
+  "date-picker-filter": DatePickerFilter,
+  "share-memory": ShareMemory,
 }
 
 export default function Modal() {

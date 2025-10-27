@@ -17,9 +17,9 @@ export function MemoryDropdown({ memory, onViewDetails }: IMemoryDropdownProps) 
 
   const handleSelect = (value: string) => {
     if (value === "share-story") {
-      open("share-post", memory?._id)
+      open("share-memory", { memory })
     }
-    if (value === "view-detilas") {
+    if (value === "view-details") {
       onViewDetails()
     }
   }
@@ -30,8 +30,8 @@ export function MemoryDropdown({ memory, onViewDetails }: IMemoryDropdownProps) 
       className="!size-7 sm:!size-8 !p-2 flex justify-center items-center"
       items={[
         {
-          label: "View Detils",
-          value: "view-detilas",
+          label: "View Details",
+          value: "view-details",
           startIcon: <InfoIcon className="stroke-2" />,
         },
       ]}

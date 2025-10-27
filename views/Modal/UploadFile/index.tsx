@@ -6,14 +6,14 @@ import UploadItem from "./UploadItem"
 import { IFile } from "@/utility/interface"
 import useSWRMutation from "swr/mutation"
 import endpoint from "@/api/endpoint"
-import { fileUploadFetcher } from "@/api/fetcher"
+import { deleteFetcher, fileUploadFetcher } from "@/api/fetcher"
 import useFetcher from "@/hooks/use-fetcher"
 import Spinner from "@/components/Spinner"
 import { useModal } from "@/hooks/use-modal"
 import { ModalCloseBtn } from "@/components/ModalLayout"
 import { toast } from "sonner"
 import { storageKeys } from "@/utility/constant";
-import { isEmpty } from "@/utility";
+import { isEmpty, resolvePath } from "@/utility";
 import { mutate } from "swr";
 
 export interface IFileState {
@@ -27,12 +27,11 @@ export default function UploadFiles({ data: id }) {
   const { close } = useModal()
   const [files, setFiles] = useState<IFileState[]>([])
   const { trigger: uploadFile } = useSWRMutation(endpoint.upload, fileUploadFetcher)
-  const { trigger: deleteFile } = useFetcher(endpoint.files, "delete")
   const { trigger: addToPost, isMutating: adding } = useFetcher(id ? `${endpoint.memories}/${id}` : null, "put")
 
   const handleDeleteFile = async (file: IFileState) => {
     if (file?.result?.name) {
-      await deleteFile(file.result.name)
+      await deleteFetcher(resolvePath(endpoint.files, { id: file.result.name }), { arg: {} })
     }
 
     setFiles(files => files.filter((f) => f.id !== file.id))

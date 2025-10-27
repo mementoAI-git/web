@@ -2,6 +2,7 @@ import { toast } from "sonner";
 import { mutate } from "swr";
 import useFetcher from "./use-fetcher";
 import endpoint from "@/api/endpoint";
+import { resolvePath } from "@/utility";
 
 interface UseBookmarkOptions {
   memoryId: string;
@@ -18,13 +19,13 @@ export function useBookmark({
   onError,
   showToast = true
 }: UseBookmarkOptions) {
-  const { trigger: addBookmark, isMutating: adding } = useFetcher(`${endpoint.memories}/${memoryId}/bookmark`, "post");
-  const { trigger: removeBookmark, isMutating: removing } = useFetcher(`${endpoint.memories}/${memoryId}/bookmark`, "delete");
+  const { trigger: addBookmark, isMutating: adding } = useFetcher(resolvePath(endpoint.bookmarkMemory, { id: memoryId }), "post");
+  const { trigger: removeBookmark, isMutating: removing } = useFetcher(resolvePath(endpoint.bookmarkMemory, { id: memoryId }), "delete");
 
   const toggleBookmark = async () => {
     try {
       if (isBookmarked) {
-        const result = await removeBookmark("");
+        const result = await removeBookmark({});
         if (result?.success) {
           if (showToast) {
             toast.success("Memory removed from bookmarks successfully!");
@@ -77,7 +78,7 @@ export function useBookmark({
 
   const removeFromBookmark = async () => {
     try {
-      const result = await removeBookmark("");
+      const result = await removeBookmark({});
       if (result?.success) {
         if (showToast) {
           toast.success("Memory removed from bookmarks successfully!");

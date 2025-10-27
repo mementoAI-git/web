@@ -436,6 +436,82 @@ body {
     animation: scale-shake 3s ease-in-out infinite;
   }
 
+  @keyframes gradient-shift-1 {
+
+    0%,
+    100% {
+      opacity: 1;
+    }
+
+    25% {
+      opacity: 0.3;
+    }
+
+    50% {
+      opacity: 0.1;
+    }
+
+    75% {
+      opacity: 0.3;
+    }
+  }
+
+  @keyframes gradient-shift-2 {
+    0% {
+      opacity: 0.3;
+    }
+
+    25% {
+      opacity: 1;
+    }
+
+    50% {
+      opacity: 0.3;
+    }
+
+    75% {
+      opacity: 0.1;
+    }
+
+    100% {
+      opacity: 0.3;
+    }
+  }
+
+  @keyframes gradient-shift-3 {
+    0% {
+      opacity: 0.1;
+    }
+
+    25% {
+      opacity: 0.3;
+    }
+
+    50% {
+      opacity: 1;
+    }
+
+    75% {
+      opacity: 0.3;
+    }
+
+    100% {
+      opacity: 0.1;
+    }
+  }
+
+  .animate-gradient-shift {
+    animation: gradient-shift-1 6s ease-in-out infinite;
+  }
+
+  .animate-gradient-shift:nth-child(2) {
+    animation: gradient-shift-2 6s ease-in-out infinite;
+  }
+
+  .animate-gradient-shift:nth-child(3) {
+    animation: gradient-shift-3 6s ease-in-out infinite;
+  }
+
   /* Volume slider styles */
   .volume__slider {
     -webkit-appearance: none;
@@ -513,10 +589,20 @@ body {
     margin-bottom: 16px;
   }
 
-  .tiptap-editor ul,
+  .tiptap-editor ul {
+    padding-left: 1.5em;
+    margin: 0.5em 0;
+    list-style-type: disc;
+  }
+
   .tiptap-editor ol {
     padding-left: 1.5em;
     margin: 0.5em 0;
+    list-style-type: decimal;
+  }
+
+  .tiptap-editor li {
+    margin: 0.25em 0;
   }
 
   .tiptap-editor blockquote {

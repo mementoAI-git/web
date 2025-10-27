@@ -4,15 +4,16 @@ import Spinner from "@/components/Spinner";
 import useFetcher from "@/hooks/use-fetcher";
 import { useModal } from "@/hooks/use-modal";
 import BinIcon from "@/public/icon/bin.svg"
+import { resolvePath } from "@/utility";
 import { toast } from "sonner";
 import { mutate } from "swr";
 
 export function DeleteBeneficiary({ data: id }) {
-  const { trigger, isMutating } = useFetcher(endpoint.beneficiaries, "delete")
+  const { trigger, isMutating } = useFetcher(resolvePath(endpoint.beneficiary, { id }), "delete")
   const { close } = useModal()
 
   const handleDelete = async () => {
-    const result = await trigger(id)
+    const result = await trigger({})
     if (result?.data) {
       await mutate(`${endpoint.beneficiaries}?page=1`)
       toast.success(result?.message)

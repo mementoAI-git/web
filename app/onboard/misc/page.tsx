@@ -12,6 +12,7 @@ import * as yup from "yup";
 import { mutate } from "swr/_internal";
 import Spinner from "@/components/Spinner";
 import ReasonsSelector from "./reasons-selector";
+import { storageKeys } from "@/utility/constant";
 
 const initial = {
   dob: "",
@@ -54,7 +55,7 @@ export default function MiscPage() {
         await completeOnboarding(payload);
         mutate(endpoint.profile)
         if (typeof window !== 'undefined') {
-          localStorage.setItem('welcome_once', '1')
+          localStorage.setItem(storageKeys.welcomeOnce, '1')
         }
         router.push("/onboard/beneficiary")
       } catch (error) {

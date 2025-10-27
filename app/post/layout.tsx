@@ -1,16 +1,16 @@
 "use client"
 
 import { PropsWithChildren } from "react";
-import Logo from "@/components/Logo";
+import { LogoV2 } from "@/components/Logo";
 import { useStore } from "@/hooks/use-store";
 import { isEmpty } from "@/utility";
 
 export default function PostLayout({ children }: PropsWithChildren) {
   const { auth, hydrated } = useStore()
   return (
-    <div className="min-h-screen w-screen bg-surface">
+    <div className="min-h-screen bg-background w-screen">
       <header className="flex max-h-[96px] border-b border-[#0011661A] w-full max-w-[1440px] items-center justify-between px-20 py-6">
-        <Logo />
+        <LogoV2 />
         {
           !hydrated ?
             <div className="bg-gray-200 h-12 min-w-38 rounded-lg" /> :

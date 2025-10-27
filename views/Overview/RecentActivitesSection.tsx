@@ -61,7 +61,7 @@ export default function RecentActivitiesSection() {
         <span className="font-semibold text-sm text-gray-800">
           Recent activities
         </span>
-        <span className="text-blue-6 text-base underline">See all</span>
+        {/* <span className="text-blue-6 text-base underline">See all</span> */}
       </div>
       <div className="w-full flex flex-col gap-2">
         {
