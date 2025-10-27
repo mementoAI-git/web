@@ -5,7 +5,7 @@ import EllipseIcon from "@/public/icon/vertical-ellipse.svg";
 import BookmarkIcon from "@/public/icon/dashboard/bookmark.svg";
 import TrashIcon from "@/public/icon/trash.svg";
 import InfoIcon from "@/public/icon/info.svg";
-import LaunchIcon from "@/public/icon/lauch.svg";
+// import LaunchIcon from "@/public/icon/lauch.svg";
 import chatIcon from "@/public/image/chat.png"
 import { cn } from "@/utility";
 import { DropdowmIcon } from "@/components/Dropdown";
