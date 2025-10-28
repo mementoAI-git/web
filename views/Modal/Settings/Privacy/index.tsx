@@ -89,10 +89,16 @@ export default function Privacy() {
         </div>
       </div>
 
-      <DeleteAccount
-        close={() => setShowDeleteConfirm(false)}
-        open={showDeleteConfirm}
-      />
+      {
+        showDeleteConfirm &&
+        createPortal(
+          <DeleteAccount
+            close={() => setShowDeleteConfirm(false)}
+            open={showDeleteConfirm}
+          />,
+          document.body
+        )
+      }
 
       {
         showLogoutConfirm &&
