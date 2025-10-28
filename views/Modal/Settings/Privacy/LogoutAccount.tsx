@@ -21,7 +21,7 @@ export default function LogoutAccount({ close, open }: LogoutAccountProps) {
     }
   };
   return (
-    <div className={`modal-overlay z-[100] bg-[rgba(94,94,94,0.5)] ${open ? "flex" : "hidden"}`}>
+    <div className={`modal-overlay !z-[200] bg-[rgba(94,94,94,0.5)] ${open ? "flex" : "hidden"}`}>
       <div className="w-full h-full flex items-center justify-center p-4">
         <div className="modal-container !max-w-120">
           <ModalCloseBtn onClick={close} />

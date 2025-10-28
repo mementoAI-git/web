@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/Buttons";
 import DeleteAccount from "./DeleteAccount";
 import LogoutAccount from "./LogoutAccount";
+import { createPortal } from "react-dom";
 
 export default function Privacy() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -92,10 +93,17 @@ export default function Privacy() {
         close={() => setShowDeleteConfirm(false)}
         open={showDeleteConfirm}
       />
-      <LogoutAccount
-        close={() => setShowLogoutConfirm(false)}
-        open={showLogoutConfirm}
-      />
+
+      {
+        showLogoutConfirm &&
+        createPortal(
+          <LogoutAccount
+            close={() => setShowLogoutConfirm(false)}
+            open={showLogoutConfirm}
+          />,
+          document.body
+        )
+      }
     </div>
   )
 }

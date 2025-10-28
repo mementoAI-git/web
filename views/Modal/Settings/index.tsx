@@ -66,16 +66,19 @@ export default function Settings() {
       </div>
       <Sheet
         detent="content"
-        className="block sm:hidden"
+        className="block sm:hidden !z-[100]"
         isOpen
         onClose={() => close("settings")}
-        snapPoints={[0.5, 0.75, 1]}
+        snapPoints={[1]}
         initialSnap={1}
       >
-        <Sheet.Container className="bg-sand-1 relative" >
+        <Sheet.Container className="bg-sand-1 hide-scrollbar relative" >
           <Sheet.Header className="bg-sand-1 rounded-3xl" />
-          <ModalCloseBtn className="!relative ml-auto !right-0 !top-0 mb-2" onClick={() => close("settings")} />
-          <Sheet.Content className="bg-sand-1 px-3 pb-6 hide-scrollbar">
+          <Sheet.Content className="bg-sand-1 px-4 pb-6 hide-scrollbar">
+            <ModalCloseBtn
+              className="!relative ml-auto !right-0 !top-0 mb-2"
+              onClick={() => close("settings")}
+            />
             <div className="space-y-4 mb-4">
               <h4 className="modal-title mb-5 !text-4xl">
                 Settings
