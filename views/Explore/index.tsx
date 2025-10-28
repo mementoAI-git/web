@@ -3,13 +3,12 @@
 import PromptCard from "./prompt-card";
 import CategoryCard from "@/components/category-card"
 import Slider from "@/components/Slider"
-import Link from "next/link"
 import categories from "@/utility/data/categories.json"
 import useSWR from "swr";
 import endpoint from "@/api/endpoint";
 
 export default function Explore() {
-  const { data, isLoading } = useSWR(endpoint.prompts);
+  const { data } = useSWR(endpoint.prompts);
   return (
     <div className="page-viewport hide-scrollbar">
       <div className="container">
@@ -37,15 +36,15 @@ export default function Explore() {
 
         <div className="md:py-12 py-6 space-y-6">
           <div className="flex w-full items-center justify-between">
-            <span className="font-garamond text-gray-950/90 sm:text-[40px] text-[24px] sm:leading-[48px] leading-[32px] font-medium">
+            <span className="font-garamond text-gray-950/90 sm:text-[40px] text-[30px] sm:leading-[48px] leading-[32px] font-medium">
               Explore categories
             </span>
-            <Link href="/explore/categories" className="text-blue-6 text-lg font-inter font-semibold underline cursor-pointer">
+            {/* <Link href="/explore/categories" className="text-blue-6 text-lg font-inter font-semibold underline cursor-pointer">
               See all
-            </Link>
+            </Link> */}
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8 md:gap-10">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 md:gap-10">
             {
               Object.values(categories)
                 .map((category, index) => <CategoryCard key={index}{...category} />)

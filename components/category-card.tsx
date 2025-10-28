@@ -34,7 +34,7 @@ export default function CategoryCard({
             <h5 className="font-semibold  text-2xl">{title}</h5>
           )
         }
-        <span className="text-xl">{subtitle}</span>
+        <span className="text-xl font-normal text-gray-950/90 line-clamp-3">{subtitle}</span>
       </div>
     </Link>
   )

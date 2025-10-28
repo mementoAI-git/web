@@ -72,26 +72,28 @@ export default function Settings() {
         snapPoints={[0.5, 0.75, 1]}
         initialSnap={1}
       >
-        <Sheet.Container className="bg-sand-1" >
+        <Sheet.Container className="bg-sand-1 relative" >
           <Sheet.Header className="bg-sand-1 rounded-3xl" />
-          <Sheet.Content className="bg-sand-1 px-3 pb-6">
-            <ModalCloseBtn className="!relative ml-auto !right-0 !top-0 mb-2" onClick={() => close("settings")} />
-            <h4 className="modal-title mb-5 !text-4xl">
-              Settings
-            </h4>
-            <div className="flex w-full flex-nowrap overflow-x-auto gap-2">
-              {
-                Object.entries(settings).map(([key, setting]) => (
-                  <div
-                    onClick={() => setActive(key)}
-                    className={cn("shrink-0 py-2 px-3 bg-black/4 text-gray-900 text-sm font-semibold rounded-full", { "bg-gray-950 text-white flex items-center gap-1 justify-center": active === key })}
-                    key={key}
-                  >
-                    {key === active ? setting.icon : null}
-                    {setting.label}
-                  </div>
-                ))
-              }
+          <ModalCloseBtn className="!relative ml-auto !right-0 !top-0 mb-2" onClick={() => close("settings")} />
+          <Sheet.Content className="bg-sand-1 px-3 pb-6 hide-scrollbar">
+            <div className="space-y-4 mb-4">
+              <h4 className="modal-title mb-5 !text-4xl">
+                Settings
+              </h4>
+              <div className="flex w-full flex-nowrap hide-scrollbar overflow-x-auto gap-2">
+                {
+                  Object.entries(settings).map(([key, setting]) => (
+                    <div
+                      onClick={() => setActive(key)}
+                      className={cn("shrink-0 py-2 px-3 bg-black/4 text-gray-900 text-sm font-semibold rounded-full", { "bg-gray-950 text-white flex items-center gap-1 justify-center": active === key })}
+                      key={key}
+                    >
+                      {key === active ? setting.icon : null}
+                      {setting.label}
+                    </div>
+                  ))
+                }
+              </div>
             </div>
             <div className="flex-1 pb-[30px]">
               {settings[active].component}

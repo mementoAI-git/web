@@ -8,6 +8,7 @@ import useFetcher from "@/hooks/use-fetcher";
 import endpoint from "@/api/endpoint";
 import { toast } from "sonner";
 import { mutate } from "swr";
+import LightBulbIcon from "@/public/icon/light-bulb.svg";
 
 const initial = {
   email: "",
@@ -47,12 +48,19 @@ export function AddBeneficiary() {
       <ModalCloseBtn onClick={() => close("add-beneficiary")} />
       <div className="space-y-6">
         <div>
-          <h4 className="modal-title">Add Beneficiary</h4>
-          <small className="font-inter text-sm text-grey-600">Add a beneficiary by sending an invite to their email</small>
+          <h4 className="modal-title">Invite beneficiary</h4>
+        </div>
+        <div className="bg-[#E26A2408] gap-3 text-[#E26A24] border border-[#FDDFC5] flex rounded-xl p-3">
+          <div className="size-5">
+            <LightBulbIcon width={18} height={18} />
+          </div>
+          <span className="font-inter text-sm font-normal flex">
+            Add a Beneficiary by sending an invite to their email address. They will be taken through a process to accept the invite. Once a beneficiary has accepted your invite, they will be able to converse with your Memento.
+          </span>
         </div>
         <form onSubmit={handleSubmit} className="space-y-6">
           <Textinput
-            label="Email"
+            label={<span className="font-inter text-sm font-normal text-gray-950/70">Email</span>}
             type="email"
             name="email"
             inputClassName="!h-[50px]"
@@ -61,7 +69,7 @@ export function AddBeneficiary() {
             labelClassName="!text-[rgba(0,9,51,0.65)] !text-xs !font-normal"
           />
           <Textinput
-            label="Name"
+            label={<span className="font-inter text-sm font-normal text-gray-950/70">Name</span>}
             name="name"
             {...getField("name")}
             placeholder="John Doe"
@@ -72,13 +80,13 @@ export function AddBeneficiary() {
             name="relationship"
             {...getField("relationship")}
             placeholder="Brother"
-            label="Relationship(This person to you)"
+            label={<span className="font-inter text-sm font-normal text-gray-950/70">Relationship(This person to you)</span>}
             inputClassName="!h-[50px]"
             labelClassName="!text-[rgba(0,9,51,0.65)] !text-xs !font-normal"
           />
           <Selectinput
             name="level"
-            label="Permission level"
+            label={<span className="font-inter text-sm font-normal text-gray-950/70">Permission level</span>}
             labelClassName="!text-[rgba(0,9,51,0.65)] !text-xs !font-normal"
             placeholder="Set permission level"
             data={[

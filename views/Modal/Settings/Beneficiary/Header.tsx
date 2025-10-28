@@ -7,7 +7,7 @@ import PlusIcon from "@/public/icon/plus.svg"
 import { cn } from "@/utility";
 
 export default function Header({ count = 0 }) {
-  const { open } = useModal()
+  const { push } = useModal()
   return (
     <div className="flex flex-col items-start justify-between gap-3 w-full">
       <div className="flex items-center gap-2">
@@ -20,11 +20,11 @@ export default function Header({ count = 0 }) {
         </div>
         {/* <Filter /> */}
         <button
-          onClick={() => open("add-beneficiary")}
+          onClick={() => push("add-beneficiary")}
           className={cn("btn", "!rounded-lg !bg-gray-950 w-full sm:w-fit")}
         >
           <PlusIcon width={15} />
-          <span>Add Beneficiary</span>
+          <span className="font-inter text-sm font-semibold text-white">Add Beneficiary</span>
         </button>
       </div>
     </div >

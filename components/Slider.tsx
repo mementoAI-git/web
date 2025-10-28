@@ -1,6 +1,6 @@
 "use client"
 
-import { ReactNode, useState } from "react"
+import { ReactNode, useState, useRef, useEffect } from "react"
 
 interface SliderProps {
   children: ReactNode[]
@@ -26,29 +26,113 @@ export default function Slider({
   arrowClassName = ""
 }: SliderProps) {
   const [currentSlide, setCurrentSlide] = useState(0)
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
+  const isScrollingRef = useRef(false)
+  const startXRef = useRef(0)
+  const scrollLeftRef = useRef(0)
+
+  const scrollToSlide = (index: number) => {
+    if (scrollContainerRef.current) {
+      isScrollingRef.current = true
+      const container = scrollContainerRef.current
+      const slideWidth = container.clientWidth
+      container.scrollTo({
+        left: slideWidth * index,
+        behavior: 'smooth'
+      })
+    }
+  }
 
   const nextSlide = () => {
-    setCurrentSlide((prev) => (prev + 1) % children.length)
+    const next = (currentSlide + 1) % children.length
+    setCurrentSlide(next)
+    scrollToSlide(next)
   }
 
   const prevSlide = () => {
-    setCurrentSlide((prev) => (prev - 1 + children.length) % children.length)
+    const prev = (currentSlide - 1 + children.length) % children.length
+    setCurrentSlide(prev)
+    scrollToSlide(prev)
   }
 
   const goToSlide = (index: number) => {
     setCurrentSlide(index)
+    scrollToSlide(index)
+  }
+
+  // Update current slide based on scroll position
+  useEffect(() => {
+    const handleScroll = () => {
+      if (scrollContainerRef.current) {
+        const container = scrollContainerRef.current
+        const slideWidth = container.clientWidth
+        const currentIndex = Math.round(container.scrollLeft / slideWidth)
+        setCurrentSlide(currentIndex)
+      }
+    }
+
+    const handleScrollEnd = () => {
+      isScrollingRef.current = false
+      if (scrollContainerRef.current) {
+        const container = scrollContainerRef.current
+        const slideWidth = container.clientWidth
+        const currentIndex = Math.round(container.scrollLeft / slideWidth)
+        setCurrentSlide(currentIndex)
+      }
+    }
+
+    const container = scrollContainerRef.current
+    if (container) {
+      container.addEventListener('scroll', handleScroll)
+      container.addEventListener('scrollend', handleScrollEnd)
+      return () => {
+        container.removeEventListener('scroll', handleScroll)
+        container.removeEventListener('scrollend', handleScrollEnd)
+      }
+    }
+  }, [])
+
+  // Touch/mouse drag handlers
+  const handleStart = (clientX: number) => {
+    if (scrollContainerRef.current) {
+      isScrollingRef.current = true
+      startXRef.current = clientX - scrollContainerRef.current.offsetLeft
+      scrollLeftRef.current = scrollContainerRef.current.scrollLeft
+    }
+  }
+
+  const handleMove = (clientX: number) => {
+    if (!isScrollingRef.current || !scrollContainerRef.current) return
+
+    const x = clientX - scrollContainerRef.current.offsetLeft
+    const walk = (x - startXRef.current) * 2
+    scrollContainerRef.current.scrollLeft = scrollLeftRef.current - walk
+  }
+
+  const handleEnd = () => {
+    setTimeout(() => {
+      isScrollingRef.current = false
+      if (scrollContainerRef.current) {
+        const container = scrollContainerRef.current
+        const slideWidth = container.clientWidth
+        const currentIndex = Math.round(container.scrollLeft / slideWidth)
+        setCurrentSlide(currentIndex)
+      }
+    }, 100)
   }
 
   // Auto-play functionality
-  useState(() => {
+  useEffect(() => {
     if (autoPlay && children.length > 1) {
       const interval = setInterval(() => {
-        nextSlide()
+        if (!isScrollingRef.current) {
+          nextSlide()
+        }
       }, autoPlayInterval)
 
       return () => clearInterval(interval)
     }
-  })
+  }, [autoPlay, autoPlayInterval, currentSlide, children.length])
 
   if (!children || children.length === 0) {
     return null
@@ -59,11 +143,19 @@ export default function Slider({
       {/* Slides Container */}
       <div className="relative overflow-hidden rounded-2xl">
         <div
-          className="flex transition-transform duration-300 ease-in-out"
-          style={{ transform: `translateX(-${currentSlide * 100}%)` }}
+          ref={scrollContainerRef}
+          className="flex overflow-x-scroll items-stretch snap-x snap-mandatory scroll-smooth gap-4 hide-scrollbar"
+          style={{ WebkitOverflowScrolling: 'touch' }}
+          onMouseDown={(e) => handleStart(e.clientX)}
+          onMouseMove={(e) => handleMove(e.clientX)}
+          onMouseUp={handleEnd}
+          onMouseLeave={handleEnd}
+          onTouchStart={(e) => handleStart(e.touches[0].clientX)}
+          onTouchMove={(e) => handleMove(e.touches[0].clientX)}
+          onTouchEnd={handleEnd}
         >
           {children.map((child, index) => (
-            <div key={index} className={`w-full flex-shrink-0 ${slideClassName}`}>
+            <div key={index} className={`w-full flex-shrink-0 snap-start ${slideClassName}`}>
               {child}
             </div>
           ))}

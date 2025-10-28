@@ -9,8 +9,8 @@ import useFetcher from "@/hooks/use-fetcher";
 
 const providers = [
   { title: "google", desc: "Sign up with Google", icon: <GoogleIcon /> },
-  { title: "facebook", desc: "Sign up with Facebook", icon: <FacebookIcon /> },
-  { title: "apple", desc: "Sign up with Apple", icon: <AppleIcon /> },
+  // { title: "facebook", desc: "Sign up with Facebook", icon: <FacebookIcon /> },
+  // { title: "apple", desc: "Sign up with Apple", icon: <AppleIcon /> },
 ];
 
 export default function AuthSocials() {
@@ -43,6 +43,7 @@ export default function AuthSocials() {
               className="flex max-h-11 w-full cursor-pointer items-center justify-center gap-3 rounded-lg border border-grey-100 bg-white px-3 py-4 shadow-sm disabled:opacity-65 transition-all duration-150 hover:scale-[97%]"
             >
               {p.icon}
+              {p.desc}
             </button>
           )
         })}
