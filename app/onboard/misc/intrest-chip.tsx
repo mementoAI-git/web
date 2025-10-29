@@ -18,7 +18,7 @@ export default function IntrestChip({ title, Icon, isSelected, onClick, classNam
       })}
     >
       <div className="size-5 flex items-center justify-center text-gray-500" >
-        {Icon ? <Icon width={15} strokeWidth={2} /> : null}
+        {Icon ? <Icon width={15} strokeWidth={2} /> : <TerminalIcon width={15} strokeWidth={2} />}
       </div>
       <span className="text-gray-950/90 text-base font-inter">{title}</span>
     </li>
