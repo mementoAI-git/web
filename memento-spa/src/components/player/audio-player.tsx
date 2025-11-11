@@ -1,0 +1,101 @@
+import { useRef, type Ref } from "react";
+import { Backward15Icon, Forward15Icon, PauseRecIcon, PlayIcon, VolumeIcon } from "@/components/icons";
+import Spinner from "@/components/spinner";
+import usePlayer from "@/hooks/use-player";
+import { getDuration } from "@/utility";
+import wave from "@/assets/image/wave.png";
+import Transcription from "./transcription";
+
+export interface MediaPlayerProps {
+  src: string;
+  id?: string;
+  alt?: string;
+  className?: string;
+  duration?: number;
+}
+
+export default function AudioPlayer({ src, alt, className = "", id = undefined, duration = 0 }: MediaPlayerProps) {
+  const { ref, media, togglePlay, backward, forward, seek, canPlay, playing, progress, volume, isMuted, setVolumeLevel, toggleMute } = usePlayer();
+  const progressBar = useRef<HTMLDivElement | null>(null);
+  const current = getDuration(media?.currentTime || 0);
+  const end = getDuration(media?.duration || duration);
+
+  const handleSeek = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (!progressBar.current || !media?.duration) return;
+
+    const rect = progressBar.current.getBoundingClientRect();
+    const clickX = event.clientX - rect.left;
+    const ratio = clickX / rect.width;
+    seek(media.duration * ratio);
+  };
+
+  return (
+    <div className={`flex flex-1 flex-col items-center justify-between rounded-2xl border border-[#F3F3F3] bg-[#FCFCFD] ${className}`}>
+      <div />
+      <div className="w-62.5 space-y-6">
+        {alt && <span className="block font-inter font-semibold text-secondary">{alt}</span>}
+        <audio ref={ref as Ref<HTMLAudioElement>} src={src} preload="auto" />
+        <div className="space-y-2">
+          <div ref={progressBar} onClick={handleSeek} className="h-1 w-full cursor-pointer rounded-[1px] bg-[#DCC7FF]">
+            <div style={{ width: `${progress}%` }} className="relative h-full bg-primary">
+              <div className="absolute -right-1 top-1/2 size-2 -translate-y-1/2 rounded-full bg-primary" />
+            </div>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="font-inter text-xs font-medium text-secondary">
+              {current.mins}:{current.secs}/<span className="font-normal text-grey-800">{end.mins}:{end.secs}</span>
+            </span>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={toggleMute}
+                className="flex items-center justify-center rounded transition-colors hover:bg-grey-100 p-1"
+                type="button"
+              >
+                <VolumeIcon width={10} className={isMuted ? "opacity-50" : ""} />
+              </button>
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.01"
+                value={isMuted ? 0 : volume}
+                onChange={(event) => setVolumeLevel(parseFloat(event.target.value))}
+                className="volume__slider h-[2px] w-8 cursor-pointer appearance-none rounded-lg bg-grey-300"
+                style={{
+                  background: `linear-gradient(to right, var(--color-secondary) 0%, var(--color-secondary) ${(isMuted ? 0 : volume) * 100}%, #d1d5db ${(isMuted ? 0 : volume) * 100}%, #d1d5db 100%)`,
+                }}
+              />
+            </div>
+          </div>
+        </div>
+        <div className="flex w-full items-center justify-between">
+          <button
+            type="button"
+            onClick={() => backward()}
+            className="flex size-11 cursor-pointer items-center justify-center rounded-full bg-grey-500 transition-all duration-200 hover:scale-[97%] hover:bg-grey-400"
+          >
+            <Backward15Icon width={24} />
+          </button>
+          <button
+            type="button"
+            disabled={!canPlay}
+            onClick={togglePlay}
+            className="btn !px-8 !py-3"
+          >
+            {playing ? <PauseRecIcon width={11} /> : <PlayIcon width={11} />}
+            <span className="font-inter text-sm font-semibold">{playing ? "Pause" : "Play"}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => forward()}
+            className="flex size-11 cursor-pointer items-center justify-center rounded-full bg-grey-500 transition-all duration-200 hover:scale-[97%] hover:bg-grey-400"
+          >
+            <Forward15Icon width={24} />
+          </button>
+        </div>
+        {id && <Transcription id={id} currentTime={media?.currentTime || 0} />}
+      </div>
+      <img src={wave} height={79} className="h-20 w-full object-cover" alt="wave" />
+    </div>
+  );
+}

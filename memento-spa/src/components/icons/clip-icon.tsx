@@ -1,0 +1,21 @@
+import type { SVGProps } from "react";
+
+export function ClipIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      viewBox="0 0 21 22"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      {...props}
+    >
+      <path
+        d="M19.1498 9.89994L10.1342 18.9156C8.08393 20.9658 4.75982 20.9658 2.70956 18.9156C0.659312 16.8653 0.659312 13.5412 2.70956 11.4909L11.7252 2.47532C13.092 1.10849 15.3081 1.10849 16.6749 2.47532C18.0418 3.84216 18.0418 6.05823 16.6749 7.42507L8.01287 16.0871C7.32945 16.7705 6.22141 16.7705 5.53799 16.0871C4.85457 15.4037 4.85457 14.2957 5.53799 13.6123L13.1394 6.01086"
+        stroke="currentColor"
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+

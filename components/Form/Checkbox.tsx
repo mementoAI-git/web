@@ -1,5 +1,5 @@
 import { ITexinput } from "./TextInput";
-import CheckIcon from "@/public/icon/check.svg";
+import CheckIcon from "@/assets/icon/check.svg";
 
 export function Checkbox({ label, className, ...props }: ITexinput) {
   return (

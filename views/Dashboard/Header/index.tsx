@@ -43,7 +43,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
   }
 
   return (
-    <div className="w-full fixed top-0 left-0 right-0  border-b border-grey-500 sm:relative header-container">
+    <div className="header-container fixed left-0 right-0 top-0 w-full border-b border-grey-500 sm:relative">
       <header className="mx-auto flex max-h-20 !w-[93%] max-w-[1160px] items-center justify-between gap-4 sm:gap-6 py-4 sm:py-5">
         <div className="flex items-center gap-4 sm:gap-6 flex-1">
           <div onClick={handleLogoClick} className="cursor-pointer md:hidden">

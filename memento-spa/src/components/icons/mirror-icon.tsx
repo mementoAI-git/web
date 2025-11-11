@@ -1,0 +1,18 @@
+import type { SVGProps } from "react";
+
+export function MirrorIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      viewBox="0 0 15 15"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      {...props}
+    >
+      <path
+        d="M0 0H15V15H0V0ZM13.3333 13.3333V1.66667H1.66667V13.3333H13.3333ZM9.16667 3.33333H5.83333V6.66667H9.16667V3.33333ZM10 8.33333H5V10H3.33333V11.6667H5V10H10V11.6667H11.6667V10H10V8.33333Z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
+

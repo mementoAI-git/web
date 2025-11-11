@@ -1,7 +1,7 @@
 import { useStore } from "@/hooks/use-store";
 import React, { PropsWithChildren, useMemo, useState } from "react";
-import CheckmarkIcon from "@/public/icon/check.svg"
-import blueFire from "@/public/image/blue-fire.png"
+import CheckmarkIcon from "@/assets/icon/check.svg"
+import blueFire from "@/assets/image/blue-fire.png"
 import Image from "next/image";
 import {
   useFloating,
