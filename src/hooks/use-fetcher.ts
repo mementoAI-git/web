@@ -1,6 +1,7 @@
 import endpoint from "@/api/endpoint";
 import {
   deleteFetcher,
+  fileUploadFetcher,
   getFetcher,
   postFetcher,
   putFetcher,
@@ -23,6 +24,15 @@ export default function useFetcher(
 ) {
   const fetcher = fetcherMap[method] || postFetcher;
   return useSWRMutation(url, fetcher, options);
+}
+
+export function useFileUploadFetcher(url: string = endpoint.upload) {
+  return useSWRMutation<
+    IResponse,
+    unknown,
+    string,
+    { arg: any }
+  >(url, fileUploadFetcher);
 }
 
 export function useUser() {

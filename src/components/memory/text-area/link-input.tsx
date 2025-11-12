@@ -25,7 +25,7 @@ export function LinkInput({
   const [text, setText] = useState(initialText);
   const [url, setUrl] = useState(initialUrl);
   const textInputRef = useRef<HTMLInputElement>(null);
-  const containerRef = useClickAway<HTMLDivElement>(onClose);
+  const containerRef = useClickAway(onClose);
 
   useEffect(() => {
     if (show) {

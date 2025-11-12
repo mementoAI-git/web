@@ -2,7 +2,7 @@ import { useState } from "react";
 import * as yup from "yup";
 import { Sheet } from "react-modal-sheet";
 import { toast } from "sonner";
-import { ModalCloseBtn, ModalWrapper } from "./modalLayout";
+import { ModalCloseBtn } from "./modalLayout";
 import { useModal } from "@/hooks/use-modal";
 import { Textinput } from "@/components/Form";
 import useForm from "@/hooks/use-form";

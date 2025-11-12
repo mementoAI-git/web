@@ -1,6 +1,5 @@
 import { useRef, type Ref } from "react";
 import { Backward15Icon, Forward15Icon, PauseRecIcon, PlayIcon, VolumeIcon } from "@/components/icons";
-import Spinner from "@/components/spinner";
 import usePlayer from "@/hooks/use-player";
 import { getDuration } from "@/utility";
 import wave from "@/assets/image/wave.png";

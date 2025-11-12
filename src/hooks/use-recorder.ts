@@ -6,7 +6,7 @@ export default function useRecorder(stream: MediaStream | null, mimeType = "vide
   const [url, setUrl] = useState<string | null>(null);
   const [recording, setRecording] = useState(false);
   const recorderRef = useRef<MediaRecorder | null>(null);
-  const timerRef = useRef<NodeJS.Timeout | undefined>(undefined);
+  const timerRef = useRef<number | undefined>(undefined);
   const chunksRef = useRef<Blob[]>([]);
 
   const start = () => {

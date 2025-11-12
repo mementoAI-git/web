@@ -19,7 +19,7 @@ interface SelectProps extends ITexinput {
 export function Selectinput({ label, onChange, labelClassName = "", data = [], ...props }: SelectProps) {
   const [value, setValue] = useState(props.value);
   const [show, setShow] = useState(false);
-  const ref = useClickAway<HTMLDivElement>(() => setShow(false));
+  const ref = useClickAway(() => setShow(false));
 
   const valueLabelMap = useMemo(() => {
     return data.reduce<Record<string, string>>((acc, item) => {

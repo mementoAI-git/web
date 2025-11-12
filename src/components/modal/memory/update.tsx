@@ -15,7 +15,7 @@ interface ContentProps {
 }
 
 function Content({ data: memory }: ContentProps) {
-  const { push, close } = useModal();
+  const { push } = useModal();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [text, setText] = useState(memory.body);
   const { trigger, isMutating } = useFetcher(`${endpoint.memories}/${memory._id}`, "put");

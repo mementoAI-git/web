@@ -11,7 +11,7 @@ interface AddFileButtonProps {
 
 export default function AddFileButton({ onClick, disabled = false }: AddFileButtonProps) {
   const [show, setShow] = useState(false);
-  const ref = useClickAway<HTMLDivElement>(() => setShow(false));
+  const ref = useClickAway(() => setShow(false));
 
   return (
     <div ref={ref} className="relative">

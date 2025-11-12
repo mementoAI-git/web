@@ -1,5 +1,5 @@
 import endpoint from "@/api/endpoint";
-import { BookmarkIcon, Launch2Icon, RemoveBookmarkIcon, BookmarkSolidIcon } from "@/components/icons";
+import { BookmarkIcon, Launch2Icon, BookmarkSolidIcon } from "@/components/icons";
 import { useBookmark } from "@/hooks/use-bookmark";
 import { useModal } from "@/hooks/use-modal";
 import { useStore } from "@/hooks/use-store";
@@ -12,7 +12,7 @@ import { MemoryDropdown } from "@/pages/dashboard/chat/conversation/dropdown";
 import SidebarDetails from "@/components/memory/sidebar-details";
 import FileGallery from "@/components/file-gallery";
 import DOMPurify from "isomorphic-dompurify";
-import { DetailsSkeleton } from "./components/Skeleton";
+import { DetailsSkeleton } from "./components/skeleton";
 
 export default function StoriesDetails() {
   const { id } = useParams()

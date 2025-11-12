@@ -109,6 +109,8 @@ export interface IBeneficiary {
   level: number;
   user: IBeneficiaryUser;
   benefactor: IBeneficiaryUser;
+  accepted_at?: string;
+  status?: string;
 }
 
 export interface ICapsule {

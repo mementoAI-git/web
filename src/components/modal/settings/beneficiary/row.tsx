@@ -33,7 +33,7 @@ export default function BeneficiaryRow({ beneficiary }: BeneficiaryRowProps) {
         </div>
       </td>
       <td>
-        {isEmpty(beneficiary.accepted_at) ? (
+        {isEmpty(beneficiary?.accepted_at) ? (
           <span className={cn("mem-tags", tagColors[beneficiary?.status as keyof typeof tagColors])}>
             {beneficiary?.status}
           </span>

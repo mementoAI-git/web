@@ -2,11 +2,7 @@ import { Link } from "react-router-dom";
 import useSWR from "swr";
 import endpoint from "@/api/endpoint";
 import folderIcon from "@/assets/image/folder.png";
-import type { IPrompt } from "@/utility/interface";
-
-interface PromptResponse {
-  data?: Array<{ prompt: IPrompt }>;
-}
+import type { IPrompt } from "@/utility/interface"
 
 function DailyPrompt({ title, _id }: IPrompt) {
   return (

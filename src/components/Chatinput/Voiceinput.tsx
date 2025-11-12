@@ -29,7 +29,7 @@ export default function Voiceinput({ onCancel, memoryId, history = [] }: Voicein
   const [muted, setMuted] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [isDisconnecting, setIsDisconnecting] = useState(false);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (isRecording) {

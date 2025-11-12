@@ -32,7 +32,7 @@ export default function PromptInput({ data, isMobile = false }: PromptInputProps
   const [memory, setMemory] = useState(data);
   const [editMode, setEditMode] = useState(false);
   const [recording, setRecording] = useState(false);
-  const [type, setType] = useState<"text" | "audio" | "video">("text");
+  const [type] = useState<"text" | "audio" | "video">("text");
 
   const { trigger: getPromptResponse, isMutating: isLoading } = useFetcher(
     data?.prompt ? `${endpoint.replyPrompt}/${data.prompt}` : null,
@@ -44,7 +44,7 @@ export default function PromptInput({ data, isMobile = false }: PromptInputProps
     initial,
     async onSubmit(payload) {
       payload.prompt_id = memory?.prompt;
-      const result = await trigger(payload);
+      const result = await trigger(payload as any);
       if (result?.success) {
         open?.("set-tag-permission", { memory: result.data, isNew: isEmpty(data?.prompt) });
         setEditMode(false);

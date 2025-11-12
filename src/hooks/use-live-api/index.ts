@@ -281,7 +281,7 @@ export function useLiveAPI({ memoryId, turns = [] }: UseLiveAPIProps) {
             setConnected(false);
             isConnectingRef.current = false;
           },
-          onclose: (e: any) => {
+          onclose: () => {
             setConnected(false);
             isConnectingRef.current = false;
           },

@@ -1,3 +1,5 @@
+import { MicIcon, PauseRecIcon, StopRecIcon } from "../icons";
+
 type RecorderControls = {
   pause: () => void;
   resume: () => void;

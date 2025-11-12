@@ -1,12 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
-import useSWRMutation from "swr/mutation";
 import { toast } from "sonner";
 import UploadInput from "./upload-input";
 import UploadItem from "./upload-item";
 import type { IFile } from "@/utility/interface";
 import endpoint from "@/api/endpoint";
-import { deleteFetcher, fileUploadFetcher } from "@/api/fetcher";
-import useFetcher from "@/hooks/use-fetcher";
+import { deleteFetcher } from "@/api/fetcher";
+import useFetcher, { useFileUploadFetcher } from "@/hooks/use-fetcher";
 import Spinner from "@/components/spinner";
 import { useModal } from "@/hooks/use-modal";
 import { ModalCloseBtn } from "../modalLayout";
@@ -28,7 +27,7 @@ interface UploadFilesProps {
 export default function UploadFiles({ data: id }: UploadFilesProps) {
   const { close } = useModal();
   const [files, setFiles] = useState<FileState[]>([]);
-  const { trigger: uploadFile } = useSWRMutation(endpoint.upload, fileUploadFetcher);
+  const { trigger: uploadFile } = useFileUploadFetcher();
   const { trigger: addToPost, isMutating: adding } = useFetcher(id ? `${endpoint.memories}/${id}` : null, "put");
 
   const persistAttachments = useCallback(
@@ -76,14 +75,16 @@ export default function UploadFiles({ data: id }: UploadFilesProps) {
     async (file: FileState) => {
       setFiles((previous) => [...previous, file]);
 
-      const result = await uploadFile({
+      const payload = {
         file: file.file,
         onProgress: (progress: number) => {
           setFiles((previous) =>
             previous.map((item) => (item.id === file.id ? { ...item, progress } : item)),
           );
         },
-      });
+      };
+
+      const result = await uploadFile(payload as any);
 
       const uploadedFile = result?.data?.[0];
       if (!uploadedFile) {

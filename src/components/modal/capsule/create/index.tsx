@@ -137,6 +137,8 @@ export default function CreateCapsule({ data = null }: CreateCapsuleProps) {
             id="delivery_date"
             label={<span className="font-inter text-xs font-normal text-[#667085]">Message delivery date:</span>}
             {...getField("delivery_date")}
+            name={getField("delivery_date")?.name as string}
+            value={values.delivery_date}
             minDate={dayjs().toDate()}
           />
           <div className="border-t border-[#0011661A] py-2 pr-10">

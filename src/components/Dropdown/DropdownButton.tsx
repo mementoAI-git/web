@@ -6,7 +6,7 @@ import { DropdowmMenu } from "./DropdownMenu";
 
 export function DropdownButton({ title, value, ...props }: IDropdownButton & { value?: string }) {
   const [open, setOpen] = useState(false);
-  const ref = useClickAway<HTMLDivElement>(() => setOpen(false));
+  const ref = useClickAway(() => setOpen(false));
 
   function handleSelect(selectedValue: string) {
     props.onSelect(selectedValue);

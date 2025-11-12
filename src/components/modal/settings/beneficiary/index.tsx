@@ -14,7 +14,7 @@ const columns = [
   { label: "relationship", className: "!w-[19%]" },
   { label: "permission level", className: "!w-[23%]" },
   { label: "actions", className: "text-right" },
-] as const;
+]
 
 export default function Beneficiary() {
   const [page, setPage] = useState(1);

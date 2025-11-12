@@ -11,7 +11,7 @@ interface SlashCommandPopupProps {
 }
 
 export function SlashCommandPopup({ show, position, onCommandSelect, onClose }: SlashCommandPopupProps) {
-  const slashMenuRef = useClickAway<HTMLDivElement>(onClose);
+  const slashMenuRef = useClickAway(onClose);
 
   if (!show) return null;
 

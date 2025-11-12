@@ -13,12 +13,14 @@ export default function useFileUpload() {
   const handleUpload = async (file: IOnUploadPayload) => {
     setFiles((prev) => [...prev, file]);
 
-    const result = await uploadFile({
+    const payload = {
       file: file.file,
       onProgress: (progress: number) => {
         setFiles((prev) => prev.map((f) => (f.id === file.id ? { ...f, progress } : f)));
       },
-    });
+    };
+
+    const result = await uploadFile(payload as any);
 
     if (!result?.data?.[0]) {
       toast.error("Upload unsuccessful");
