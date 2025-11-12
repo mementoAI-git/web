@@ -48,12 +48,12 @@ function Streak() {
       <div className="flex flex-col items-center justify-center gap-11 py-6">
         <div className="relative flex size-[115.2px] items-center justify-center rounded-full border border-sand-4">
           <img src={blueFire} alt="Streak blue fire" className="size-16 object-contain" />
-          <div className="absolute top-[90%] bg-sand-1 px-6 font-canela text-[50px] font-bold leading-[50px]">
+          <div className="absolute top-[90%] bg-sand-1 px-6 font-garamond text-[50px] font-bold leading-[50px]">
             {user?.streak ? (Number(user.streak) / 7).toFixed(0) : 0}
           </div>
         </div>
         <div className="flex flex-col gap-1 text-center">
-          <span className="font-canela text-xl text-gray-800">Week streak</span>
+          <span className="font-garamond text-xl text-gray-800">Week streak</span>
           <span className="font-inter text-xs text-gray-500">
             You are on a roll{name ? `, ${name}.` : "."} Keep it up!
           </span>

@@ -27,35 +27,25 @@ export function DashboardSideBar({ onClose }: DashboardSideBarProps) {
       <div className="flex size-full max-h-300 flex-col justify-between">
         <div className="w-full">
           <div className="flex items-center justify-between p-5 pl-6">
-            <button type="button" onClick={handleLogoClick} className="cursor-pointer">
+            <div onClick={handleLogoClick} className="cursor-pointer">
               <Logo />
-            </button>
+            </div>
           </div>
-          <div className="flex flex-col gap-1 px-4 py-4 sm:gap-2 md:py-8">
-            {topNavigations.map((nav) => (
-              <SideBarItem
-                key={nav.title}
-                {...nav}
-                active={pathname === nav.link || pathname.startsWith(`${nav.link}/`)}
-                onClick={onClose}
-              />
+          <div className="flex py-4 md:py-8 px-4 flex-col gap-1 sm:gap-2">
+            {topNavigations.map((n, i) => (
+              <SideBarItem {...n} active={n.link === pathname || pathname.includes(n.link)} key={i} onClick={onClose} />
             ))}
             <SideBarItem
               Icon={SlideIcon}
               active={pathname.includes("settings")}
               title="settings"
-              onClick={() => open?.("settings")}
+              onClick={() => open("settings")}
             />
           </div>
         </div>
-        <div className="flex w-full flex-col gap-1 px-4 py-8 sm:gap-2">
-          {bottomNavigations.map((nav) => (
-            <SideBarItem
-              key={nav.title}
-              {...nav}
-              active={pathname === nav.link}
-              onClick={onClose}
-            />
+        <div className="flex py-8 px-4 w-full flex-col gap-1 sm:gap-2">
+          {bottomNavigations.map((n, i) => (
+            <SideBarItem {...n} active={n.link === pathname} key={i} onClick={onClose} />
           ))}
         </div>
       </div>

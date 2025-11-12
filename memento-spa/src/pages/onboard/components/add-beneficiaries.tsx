@@ -19,12 +19,12 @@ const initial = { email: "" };
 
 export default function AddBeneficiaries() {
   const { trigger, isMutating } = useFetcher(endpoint.beneficiaries);
-  const { handleSubmit, handleChange, values, errors, setValues } = useForm({
+  const { handleSubmit, handleChange, values, errors } = useForm({
     initial,
     schema,
-    async onSubmit(payload) {
-      await trigger({ ...payload, relationship: "friend" });
-      setValues(initial);
+    async onSubmit(p) {
+      await trigger({ ...p, relationship: "friend" })
+
     },
   });
   return (
@@ -32,7 +32,7 @@ export default function AddBeneficiaries() {
       <label htmlFor="beneficiary-email" className="input-label !mb-[6px]">
         Email
       </label>
-      <div className="flex items-stretch gap-2">
+      <div className="flex items-start gap-2">
         <div className="w-full flex-1">
           <Textinput
             name="email"

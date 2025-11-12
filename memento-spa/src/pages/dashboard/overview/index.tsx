@@ -9,14 +9,11 @@ export default function OverviewPage() {
   const { open } = useModal();
 
   useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
     if (localStorage.getItem(storageKeys.welcomeOnce) === "1") {
       localStorage.removeItem(storageKeys.welcomeOnce);
       open?.("welcome");
     }
-  }, [open]);
+  }, []);
 
   return (
     <div className="page-viewport hide-scrollbar">

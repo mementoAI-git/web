@@ -83,14 +83,6 @@ export interface IMemory {
   category?: string;
 }
 
-export interface IMessage {
-  _id?: string;
-  user: string;
-  text: string;
-  role: string;
-  created_at: string;
-}
-
 export interface IPagination<T> {
   docs: T[];
   hasNextPage: boolean;
@@ -149,3 +141,10 @@ export interface IPrompt {
   updated_at: string;
 }
 
+export interface IMessage {
+  _id?: string
+  user: string
+  text: string
+  role: string // user, ai
+  created_at: string
+}

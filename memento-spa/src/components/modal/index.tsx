@@ -1,25 +1,24 @@
 import { useModal } from "@/hooks/use-modal";
 import { SharePost } from "./share-post";
-import Welcome from "./Welcome";
-import FilePreview from "./FilePreview";
+import Welcome from "./welcome";
+import FilePreview from "./file-preview";
 import { isEmpty } from "@/utility";
-import UploadFiles from "./UploadFile";
+import UploadFiles from "./upload-file";
 import SetTagPermissions from "./memory/set-tag-permission";
-import PromptInput from "./PromptInput";
+import PromptInput from "./prompt-input";
 import { BookmarkMemory, CreateMemory, DeleteMemory, UpdateMemory } from "./memory";
-import { AddBeneficiary, DeleteBeneficiary, ResendInvite } from "./Beneficiary";
-import { UpdateBeneficiary } from "./Beneficiary/Update";
-import Setup2FA from "./Setup2FA";
-import ChatSettings from "../../components/ChatSetting";
+import { AddBeneficiary, DeleteBeneficiary, ResendInvite, UpdateBeneficiary } from "./beneficiary";
+import Setup2FA from "./setup-2fa";
+import ChatSettings from "./chat-settings";
 import { SearchMemories } from "./memory/search";
-import CreateCapsule from "./Capsule/Create";
-import SelectBeneficiary from "./select-beneficiary";
-import { DeleteCapsule } from "./Capsule/Delete";
-import { PauseCapsule } from "./Capsule/Pause";
+import CreateCapsule from "./capsule/create";
+import { DeleteCapsule } from "./capsule/delete";
+import { PauseCapsule } from "./capsule/pause";
 import { useState, useEffect } from "react";
-import { DatePickerFilter } from "../Memories/MemoriesFilter";
-import Settings from "./Settings";
+// import { DatePickerFilter } from "../Memories/MemoriesFilter";
+import Settings from "./settings";
 import ShareMemory from "./memory/share-memory";
+import SelectBeneficiary from "./select-beneficiary";
 
 const MODAL_COMPONENTS = {
   "share-post": SharePost,
@@ -44,7 +43,7 @@ const MODAL_COMPONENTS = {
   "delete-capsule": DeleteCapsule,
   "pause-capsule": PauseCapsule,
   "settings": Settings,
-  "date-picker-filter": DatePickerFilter,
+  // "date-picker-filter": DatePickerFilter,
   "share-memory": ShareMemory,
 }
 

@@ -168,7 +168,7 @@ const Content = forwardRef(({ data }: IContentProps, ref) => {
             value={values.title}
             name="title"
             onChange={handleChange}
-            className="font-canela placeholder:text-gray-300 resize-none text-3xl w-full h-9 min-h-9 first-letter:capitalize outline-0"
+            className="font-garamond placeholder:text-gray-300 resize-none text-3xl w-full h-9 min-h-9 first-letter:capitalize outline-0"
           />
         </div>
 

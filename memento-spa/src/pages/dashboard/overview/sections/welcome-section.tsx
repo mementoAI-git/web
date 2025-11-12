@@ -9,35 +9,19 @@ import bg2 from "@/assets/image/bg/2.png";
 import bg3 from "@/assets/image/bg/3.png";
 import orangeDiamond from "@/assets/image/orange-diamond.png";
 import greenDiamond from "@/assets/image/green-diamond-full.png";
-import { cn } from "@/utility";
 
 function StreakCount() {
   return (
     <StreakTracker>
-      <div className="relative flex flex-1 items-center gap-2 overflow-hidden rounded-2xl border border-black/5 p-4">
-        <img
-          src={bg2}
-          alt="Background"
-          className="pointer-events-none absolute inset-0 size-full object-cover"
-        />
-        <div className="flex max-w-[216.86px] flex-col gap-2 font-inter">
-          <span className="font-inter text-xs font-normal uppercase text-gray-500">
-            Streak count
-          </span>
-          <span className="font-inter text-sm font-bold text-gray-700">
-            You’re on a 15-day streak
-          </span>
-          <span className="font-inter text-sm font-normal text-gray-600">
-            Complete reflections each day so your streak won’t reset
-          </span>
+      <div className="w-full flex-1 flex items-center relative border border-black/5 rounded-2xl overflow-hidden p-4 gap-2">
+        <img src={bg2} alt="1" className="absolute top-0 right-0 left-0 object-cover size-full" />
+        <div className="flex flex-col max-w-[216.86px] gap-2 font-inter">
+          <span className="text-gray-500 font-inter font-normal uppercase text-xs">Streak count</span>
+          <span className="text-sm text-gray-700 font-inter font-bold">You’re on a 15-day streak</span>
+          <span className="text-gray-600 font-normal font-inter text-sm ">Complete reflections each day so your streak won’t reset</span>
         </div>
-        <div className="pointer-events-none absolute bottom-0 right-0 flex size-full max-h-[100px] max-w-[105.31px] items-center justify-center">
-          <img
-            src={orangeDiamond}
-            className="size-full object-cover"
-            width={105.31}
-            alt="Orange diamond"
-          />
+        <div className="size-full absolute bottom-0 right-0 max-w-[105.31px] max-h-[100px] flex items-center justify-center">
+          <img src={orangeDiamond} className="size-full object-cover" width={105.31} alt="Orange diamond" />
         </div>
       </div>
     </StreakTracker>
@@ -46,18 +30,18 @@ function StreakCount() {
 
 function Leaderboard() {
   return (
-    <div className="relative flex flex-1 items-center gap-2 overflow-hidden rounded-2xl border border-black/5 p-4">
+    <div className="w-full flex-1 flex items-center border border-black/5 rounded-2xl overflow-hidden relative p-4 gap-2">
       <img
         src={bg3}
-        alt="Background"
-        className="pointer-events-none absolute inset-0 size-full object-cover"
+        alt="3"
+        className="absolute top-0 right-0 left-0 object-cover size-full"
       />
       <div className="flex flex-col gap-2 font-inter">
-        <span className="text-xs uppercase text-gray-400">XP leaderboard</span>
-        <span className="text-sm font-bold text-gray-700">Global ranking coming soon</span>
-        <span className="text-sm text-gray-600">Coming soon</span>
+        <span className="text-gray-400 uppercase text-xs">XP leaderboard</span>
+        <span className="text-sm text-gray-700 font-bold">Global ranking coming soon</span>
+        <span className="text-gray-600 text-sm ">Coming soon</span>
       </div>
-      <div className="pointer-events-none absolute -bottom-0 right-0 flex size-full max-h-[148.38px] max-w-[135.64px] items-center justify-center">
+      <div className="size-full max-w-[135.64px] max-h-[148.38px] absolute -bottom-0 right-0 flex items-center justify-center">
         <img src={greenDiamond} className="size-full object-cover" alt="Green diamond" />
       </div>
     </div>
@@ -78,9 +62,6 @@ export default function WelcomeSection() {
             <i className="text-gray-500"> {user?.first_name}.</i>
           }
         </h2>
-        {/* <span className="text-gray-500 font-georgia text-[16px] sm:text-[20px] lg:text-[24px] leading-5 sm:leading-[28px] lg:leading-[32px]">
-        Complete some unfinished prompts to earn points.
-      </span> */}
       </div>
       <div className="flex flex-col lg:flex-row gap-6 items-stretch">
         <div className="relative rounded-2xl overflow-hidden flex-1 min-h-[144px] sm:min-h-[254px]">

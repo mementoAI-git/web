@@ -1,5 +1,3 @@
-import menuIcon from "@/assets/icon/menu.svg?url";
-import searchIcon from "@/assets/icon/dashboard/search.svg?url";
 import blueFire from "@/assets/image/blue-fire.png";
 import greenDiamond from "@/assets/image/green-diamond-full.png";
 import { useModal } from "@/hooks/use-modal";
@@ -9,6 +7,7 @@ import StreakTracker from "@/components/streak-tracker";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ProfileDropdown } from "./profile-dropdown";
 import { Searchinput } from "@/components/Form";
+import { SearchIcon, MenuIcon } from "@/components/icons";
 
 const defaultHeaderTitle: Record<string, string> = {
   memories: "my memories",
@@ -37,58 +36,52 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
 
   const handleLogoClick = () => {
     navigate("/overview");
-  };
+  }
 
   return (
-    <div className="header-container fixed left-0 right-0 top-0 w-full border-b border-grey-500 sm:relative">
+    <div className="w-full fixed top-0 left-0 right-0  border-b border-grey-500 sm:relative header-container">
       <header className="mx-auto flex max-h-20 !w-[93%] max-w-[1160px] items-center justify-between gap-4 sm:gap-6 py-4 sm:py-5">
-        <div className="flex flex-1 items-center gap-4 sm:gap-6">
-          <button type="button" onClick={handleLogoClick} className="cursor-pointer md:hidden">
+        <div className="flex items-center gap-4 sm:gap-6">
+          <div onClick={handleLogoClick} className="cursor-pointer md:hidden">
             <Logo />
-          </button>
+          </div>
 
-          <div className="hidden max-w-[200px] truncate font-garamond text-2xl font-medium capitalize text-gray-950/90 md:block">
-            {truncateText(defaultHeaderTitle[path] ?? headerTitle ?? "overview")}
+          <div className="font-garamond capitalize truncate font-medium max-w-[200px] text-gray-950/90 text-2xl hidden md:block">
+            {truncateText(defaultHeaderTitle[path] || headerTitle)}
           </div>
         </div>
-
-        <div className="hidden max-h-10 shrink-0 items-center gap-2 font-inter sm:gap-4 md:flex">
-          <button
-            type="button"
-            onClick={() => open?.("search-memory")}
-            className="hidden h-10 max-w-[336px] flex-1 sm:block"
+        <div className="hidden md:flex max-h-10 shrink-0 items-center gap-2 sm:gap-4 font-inter">
+          <div
+            onClick={() => open("search-memory")}
+            className="h-10 max-w-[336px] flex-1 hidden sm:block"
           >
             <Searchinput className="!bg-white border-gray-200" />
-          </button>
-          <button
-            type="button"
-            onClick={() => open?.("search-memory")}
-            className="flex h-10 w-10 items-center justify-center rounded-lg border border-[rgba(208,213,221,1)] bg-white sm:hidden"
+          </div>
+          <div onClick={() => open("search-memory")} className="h-10 w-10 flex items-center justify-center rounded-lg border border-[rgba(208,213,221,1)] bg-white sm:hidden">
+            <SearchIcon width={20} height={20} />
+          </div>
+          <div
+            className="h-full shrink-0 flex gap-1 cursor-pointer space-x-1 px-3 sm:px-5 py-2 hover:bg-[#B1D9584D] rounded-lg transition-colors duration-200"
           >
-            <img src={searchIcon} alt="Search" className="size-5" />
-          </button>
-          <div className="flex h-full shrink-0 cursor-pointer items-center space-x-1 rounded-lg px-3 py-2 transition-colors duration-200 hover:bg-[#B1D9584D] sm:px-5">
-            <img src={greenDiamond} alt="Points" className="size-5 object-contain" />
-            <span className="text-sm font-semibold text-grey-600 sm:text-base">0</span>
+            <img src={greenDiamond} alt="Streak blue fire" className="size-5 object-contain" />
+            <span className="font-semibold text-grey-600 text-sm sm:text-base">0</span>
           </div>
           <StreakTracker>
-            <div className="flex h-full shrink-0 cursor-pointer items-center space-x-1 rounded-lg px-3 py-2 transition-colors duration-200 sm:px-5">
-              <img src={blueFire} alt="Streak" className="size-5 object-contain" />
-              <span className="text-sm font-semibold text-grey-600 sm:text-base">
-                {user?.streak ?? 0}
-              </span>
+            <div
+              className="h-full shrink-0 flex gap-1 cursor-pointer hover:bg-blue-3 space-x-1 px-3 sm:px-5 py-2 rounded-lg transition-colors duration-200"
+            >
+              <img src={blueFire} alt="Streak blue fire" className="size-5 object-contain" />
+              <span className="font-semibold text-grey-600 text-sm sm:text-base">{user?.streak || 0}</span>
             </div>
           </StreakTracker>
-          <div className="h-5 border-l border-gray-200" />
+          <div className="border-l border-gray-200 h-5" />
           <ProfileDropdown />
         </div>
-
         <button
-          type="button"
           onClick={onMenuClick}
-          className="rounded-lg p-2 transition-colors hover:bg-grey-400 md:hidden"
+          className="md:hidden p-2 rounded-lg hover:bg-grey-400 transition-colors"
         >
-          <img src={menuIcon} alt="Open menu" className="size-5" />
+          <MenuIcon width={20} height={20} />
         </button>
       </header>
     </div>

@@ -1,15 +1,16 @@
 import { Outlet } from "react-router-dom";
 import AuthCheck from "@/components/layouts/auth-check";
-import { DashboardHeader } from "./component/dashboard-header";
+import { DashboardHeader } from "./dashboard-header";
 import { useState } from "react";
-import { DashboardSideBar } from "./component/dashboard-sidebar";
+import { DashboardSideBar } from "./dashboard-sidebar";
+import Modal from "@/components/modal";
 
 export default function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   return (
     <AuthCheck>
       <div className="bg-background w-full min-h-screen flex flex-col md:flex-row overflow-hidden hide-scrollbar dynamic-height">
-        {/* <Modal /> */}
+        <Modal />
         {sidebarOpen && (
           <div
             className="fixed inset-0 modal-overlay bg-[rgba(94,94,94,0.5)] z-40 lg:hidden"
@@ -23,9 +24,8 @@ export default function DashboardLayout() {
         `}>
           <DashboardSideBar onClose={() => setSidebarOpen(false)} />
         </div>
-
         <main className="flex-1 flex flex-col overflow-hidden dynamic-height-content w-full md:w-auto">
-          <DashboardHeader />
+          <DashboardHeader onMenuClick={() => setSidebarOpen(true)} />
           <div className="flex-1 overflow-hidden">
             <Outlet />
           </div>

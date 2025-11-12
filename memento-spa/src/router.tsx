@@ -3,9 +3,13 @@ import App from "@/App";
 import {
   AcceptInvitePage,
   BeneficiaryPage,
+  ChatLandingPage,
+  ChatPage,
   CheckMailPage,
   ConfirmEmailPage,
   DashboardLayout,
+  ExploreCategoryPage,
+  ExplorePage,
   ForgetPasswordPage,
   HomePage,
   LoginPage,
@@ -15,9 +19,14 @@ import {
   OnboardPage,
   OverviewPage,
   PostPage,
+  RecentConversationPage,
   RegisterPage,
+  ReplyPage,
   SetPasswordPage,
+  SuggestedConversationPage,
   VerifyEmailPage,
+  StoriesPage,
+  StoriesDetailsPage
 } from "@/pages";
 
 export const router = createBrowserRouter([
@@ -46,9 +55,20 @@ export const router = createBrowserRouter([
         ],
       },
       {
-        path: "overview",
         element: <DashboardLayout />,
-        children: [{ index: true, element: <OverviewPage /> }],
+        children: [
+          { path: "overview", element: <OverviewPage /> },
+          { path: "explore", element: <ExplorePage /> },
+          { path: "explore/categories", element: <ExplorePage /> },
+          { path: "explore/categories/:id", element: <ExploreCategoryPage /> },
+          { path: "chat", element: <ChatLandingPage /> },
+          { path: "chat/conversations", element: <RecentConversationPage /> },
+          { path: "chat/suggested-conversations", element: <SuggestedConversationPage /> },
+          { path: "chat/reply/:id", element: <ReplyPage /> },
+          { path: "chat/:id", element: <ChatPage /> },
+          { path: "stories", element: <StoriesPage /> },
+          { path: "stories/:id", element: <StoriesDetailsPage /> },
+        ],
       },
     ],
   },

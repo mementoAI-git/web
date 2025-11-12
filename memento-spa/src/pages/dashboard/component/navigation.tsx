@@ -17,7 +17,7 @@ export const settingNavigations = [
 export const topNavigations = [
   { Icon: HomeIcon, title: "overview", link: "/overview" },
   { Icon: AiIcon, title: "My conversations", link: "/chat" },
-  { Icon: DoubleHeartIcon, title: "my stories", link: "/memories" },
+  { Icon: DoubleHeartIcon, title: "my stories", link: "/stories" },
   { Icon: CompassIcon, title: "explore", link: "/explore" },
 ];
 

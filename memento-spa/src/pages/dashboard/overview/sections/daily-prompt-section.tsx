@@ -10,21 +10,19 @@ interface PromptResponse {
 
 function DailyPrompt({ title, _id }: IPrompt) {
   return (
-    <Link
-      to={`/chat/reply/${_id}`}
-      className="flex min-h-[260px] flex-col justify-between gap-6 rounded-2xl border border-black/10 bg-white p-6 transition hover:shadow-lg sm:min-h-[333.5px] md:p-8"
-    >
+    <Link to={`/chat/reply/${_id}`} className="border sm:min-h-[333.5px] border-black/10 flex gap-10 justify-between flex-col bg-white p-6 md:p-8 rounded-2xl">
       <img
         src={folderIcon}
-        alt="Folder icon"
-        className="h-[41.28px] w-[44.26px] object-cover"
-        loading="lazy"
+        alt="Question icon"
+        className="w-[44.26px] h-[41.28px] object-cover"
       />
       <div className="space-y-3">
-        <span className="hidden w-fit items-center gap-[6px] rounded-full border-[1.5px] border-black/10 px-[10px] py-[2px] font-inter text-xs font-medium text-gray-500 md:inline-flex">
+        <span className="rounded-full hidden cursor-pointer gap-[6px] md:inline-flex items-center font-inter font-medium text-xs border-[1.5px] text-gray-500 border-black/10 px-[10px] py-[2px]">
           Question
         </span>
-        <p className="font-garamond text-xl font-medium text-gray-800">{title}</p>
+        <p className="font-garamond font-medium text-xl text-gray-800">
+          {title}
+        </p>
       </div>
     </Link>
   );
@@ -32,13 +30,13 @@ function DailyPrompt({ title, _id }: IPrompt) {
 
 function DailyPromptSkeleton() {
   return (
-    <div className="flex min-h-[260px] flex-col justify-between gap-6 rounded-2xl border border-sand-4 bg-sand-1 p-8 animate-pulse sm:min-h-[333.5px]">
-      <div className="h-16 w-16 rounded bg-sand-3" />
+    <div className="border gap-9 border-sand-4 flex justify-between flex-col bg-sand-1 p-8 rounded-2xl animate-pulse">
+      <div className="w-16 h-16 bg-sand-3 rounded" />
       <div className="space-y-3">
-        <div className="h-6 w-20 rounded-full bg-sand-3" />
+        <div className="w-20 h-6 bg-sand-3 rounded-full" />
         <div className="space-y-2">
-          <div className="h-6 w-full rounded bg-sand-3" />
-          <div className="h-6 w-3/4 rounded bg-sand-3" />
+          <div className="w-full h-6 bg-sand-3 rounded" />
+          <div className="w-3/4 h-6 bg-sand-3 rounded" />
         </div>
       </div>
     </div>
@@ -46,26 +44,17 @@ function DailyPromptSkeleton() {
 }
 
 export default function DailyPromptSection() {
-  const { data, isLoading } = useSWR<PromptResponse>(endpoint.prompts);
-
-  if (isLoading) {
-    return (
-      <div className="grid flex-1 grid-cols-1 gap-3 sm:grid-cols-2">
-        {Array.from({ length: 2 }).map((_, index) => (
-          <DailyPromptSkeleton key={`prompt-skeleton-${index}`} />
-        ))}
-      </div>
-    );
-  }
-
+  const { data, isLoading } = useSWR(endpoint.prompts);
   return (
-    <div className="grid flex-1 grid-cols-1 gap-3 sm:grid-cols-2">
-      {data?.data?.length
-        ? data.data.map(({ prompt }, index) => (
-            <DailyPrompt key={prompt._id ?? index} {...prompt} />
-          ))
-        : null}
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 flex-1">
+      {
+        isLoading ?
+          Array.from({ length: 2 }, (_, i) => (
+            <DailyPromptSkeleton key={`skeleton-${i}`} />
+          )) : data?.data?.length > 0 &&
+          data.data.map((p, i) => <DailyPrompt {...p?.prompt} key={i} />)
+      }
     </div>
-  );
+  )
 }
 

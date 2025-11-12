@@ -25,7 +25,7 @@ export default function CategoryCard({
     >
       <img
         src={image}
-        alt={title}
+        alt={title || subtitle}
         className="size-full h-[164px] object-cover object-center transition-transform duration-300 ease-in-out group-hover:scale-110"
       />
       <div className="flex font-garamond text-gray-950/90 flex-col gap-2">

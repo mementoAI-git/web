@@ -68,7 +68,6 @@
   --font-azeret: 'Azeret Mono', monospace;
   --font-bricolage: 'Bricolage Grotesque', serif;
   --font-averia: 'Averia Serif Libre', serif;
-  --font-canela: 'Canela', serif;
   --font-georgia: 'Georgia', serif;
   --font-inter: 'Inter', sans-serif;
   --font-geist: 'Geist', sans-serif;
@@ -134,7 +133,6 @@
   --font-geist: var(--font-geist);
   --font-bricolage: var(--font-bricolage);
   --font-averia: var(--font-averia);
-  --font-canela: var(--font-canela);
   --font-georgia: var(--font-georgia);
   --font-garamond: var(--font-garamond);
   --font-azeret: var(--font-azeret);

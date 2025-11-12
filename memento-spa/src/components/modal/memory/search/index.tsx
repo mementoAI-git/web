@@ -42,7 +42,7 @@ function Content() {
   return (
     <div className="size-full bg-sand-1 space-y-6">
       <div className="space-y-4">
-        <h4 className="text-2xl sm:text-[32px] sm:leading-[38px] font-canela text-gray-800">Search Memento</h4>
+        <h4 className="text-2xl sm:text-[32px] sm:leading-[38px] font-garamond text-gray-800">Search Memento</h4>
         <span className="text-gray-600 text-sm sm:text-base font-inter block">Find anything on Memento</span>
       </div>
       <div>
