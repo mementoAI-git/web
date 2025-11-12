@@ -1,7 +1,0 @@
-export * from "./AuthFormLayout";
-export * from "./AuthLoader";
-export * from "./ConfirmEmail";
-export * from "./ForgetPassword";
-export * from "./Login";
-export * from "./Register";
-export * from "./SetPassword";
