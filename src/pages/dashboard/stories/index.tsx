@@ -9,8 +9,8 @@ import { storageKeys } from "@/utility/constant";
 import { cn } from "@/utility";
 import StoriesHeader from "./components/header";
 import StoriesGrid from "./components/grid";
-import { TableRowSekeleton } from "./components/Skeleton";
-import StoriesTableRow from "./components/Row";
+import { TableRowSekeleton } from "./components/skeleton";
+import StoriesTableRow from "./components/row";
 import type { IMemory } from "@/utility/interface";
 
 const columns = [
