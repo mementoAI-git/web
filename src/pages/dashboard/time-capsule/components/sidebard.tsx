@@ -1,6 +1,3 @@
-"use client";
-import React from "react";
-
 import CalenderIcon from "@/public/icon/calendar-1.svg";
 import TextIcon from "@/public/icon/text.svg";
 import ClipIcon from "@/public/icon/clip.svg";
@@ -11,8 +8,8 @@ import PauseIcon from "@/public/icon/pause-outline.svg";
 
 import { useModal } from "@/hooks/use-modal";
 import dayjs from "dayjs";
-import PropsItem from "@/components/PropsItem";
-import { ICapsule } from "@/utility/interface";
+import PropsItem from "@/components/props-item";
+import type { ICapsule } from "@/utility/interface";
 import { cn, isEmpty } from "@/utility";
 import { DetailsSideBarSkeleton } from "./skeleton";
 import { tagColors } from "@/utility/constant";

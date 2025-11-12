@@ -5,6 +5,8 @@ import Table from "@/components/table";
 import TimeCapsulesHeader from "./components/header";
 import { StatCard } from "../component/stat-card";
 import TimeCapsuleRow from "./components/row";
+import { AddBookmarkIcon, CalendarIcon } from "@/components/icons";
+import type { ICapsule } from "@/utility/interface";
 
 const columns = [
   { label: "Recipient", className: "!w-[25%]" },
