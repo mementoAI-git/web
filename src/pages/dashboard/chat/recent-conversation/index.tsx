@@ -157,7 +157,7 @@ export default function RecentConversation() {
             Recent conversations
           </h2>
           <div className="bg-white flex items-center gap-2 border border-gray-200 rounded-lg p-3.5">
-            <SearchIcon />
+            <SearchIcon width={15} height={15} className="text-gray-500" />
             <input
               placeholder="Search..."
               className="outline-none w-full flex-1"

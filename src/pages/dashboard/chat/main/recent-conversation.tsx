@@ -11,7 +11,7 @@ export default function RecentConversations() {
   return (
     <div className="container w-full space-y-3 md:space-y-6">
       <div className="flex items-center justify-between">
-        <h4 className="font-garamond font-medium text-xl md:text-[32px] md:leading-[38px] text-sand-12">Suggested Conversations</h4>
+        <h4 className="font-garamond font-medium text-xl md:text-[32px] md:leading-[38px] text-sand-12">Recent Conversations</h4>
         <Link to="/chat/conversations" className="cursor-pointer text-sm font-inter font-semibold text-blue-6 sm:text-base md:text-lg md:underline">
           See more
         </Link>
