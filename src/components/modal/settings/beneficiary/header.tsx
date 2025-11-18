@@ -20,8 +20,8 @@ export default function Header({ count = 0 }: HeaderProps) {
           {count} people
         </span>
       </div>
-      <div className="flex w-full flex-col items-stretch gap-2 sm:gap-3 lg:h-10 lg:flex-row lg:items-center">
-        <div className="w-full lg:flex-1">
+      <div className="flex w-full flex-col items-stretch gap-2 sm:gap-3 lg:h-10 sm:flex-row sm:items-center justify-between">
+        <div className="w-full sm:max-w-[303px] flex-1">
           <Searchinput className="!bg-white border-gray-300" />
         </div>
         <button

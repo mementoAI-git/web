@@ -1,0 +1,41 @@
+name: Memento
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+    - name: Deploy and restart application
+      uses: appleboy/ssh-action@v0.1.7
+      with:
+        host: ${{ secrets.DEV_SSH_HOST }}
+        username: ${{ secrets.DEV_SSH_USERNAME }}
+        password: ${{ secrets.DEV_SSH_PASSWORD }}
+        port: 22
+        script: |
+          export NVM_DIR="$HOME/.nvm"
+          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+          
+          # Set the project directory
+          project_path=${{ secrets.PROJECT_PATH }}
+          deploy_path=${{ secrets.DEPLOY_PATH }}
+          
+          # Navigate to project directory
+          cd $project_path
+          
+          # Stash any local changes and pull latest code
+          git stash
+          git pull origin main
+          
+          # Install dependencies and compile
+          yarn install --frozen-lockfile
+          yarn build
+
+          # Copy the build files to the deployment directory
+          cp -r dist/* $deploy_path/
+       
+

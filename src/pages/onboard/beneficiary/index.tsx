@@ -50,7 +50,7 @@ export default function BeneficiaryPage() {
         <div className="flex items-stretch gap-2">
           <Link
             to="/overview"
-            className="rounded-full border px-8 py-[18px] text-sm font-semibold leading-[20px] text-gray-900"
+            className="rounded-full px-8 py-[18px] text-sm font-semibold leading-[20px] bg-sand-2 text-sand-10"
           >
             Skip for now
           </Link>

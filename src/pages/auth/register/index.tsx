@@ -28,6 +28,9 @@ const schema = yup.object().shape({
       /[!@#$%^&*(),.?":{}|<>]/,
       "Password must contain at least one special character",
     ),
+  invite_code: yup
+    .string().required("Invite code is required").trim()
+    .min(6, "Invite code must be at least 6 characters long"),
 });
 
 const initial = {
@@ -35,6 +38,7 @@ const initial = {
   password: "",
   first_name: "",
   last_name: "",
+  invite_code: ""
 };
 
 export default function RegisterPage() {
@@ -93,7 +97,13 @@ export default function RegisterPage() {
           placeholder="johndoe@mail.com"
           {...getField("email")}
         />
+
         <Passwordinput label="Password" {...getField("password")} />
+        <Textinput
+          label="Invite code"
+          placeholder="123456"
+          {...getField("invite_code")}
+        />
         <Button
           loading={isMutating}
           type="submit"

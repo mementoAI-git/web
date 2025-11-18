@@ -3,14 +3,16 @@ import { DropdowmIcon } from "@/components/Dropdown";
 import { useStore } from "@/hooks/use-store";
 import { useNavigate } from "react-router-dom";
 import { UserCircleIcon, LogoutIcon } from "@/components/icons";
+import { useModal } from "@/hooks/use-modal";
 
 export function ProfileDropdown() {
   const { user, unsetAuth } = useStore();
   const navigate = useNavigate();
+  const { open } = useModal();
 
   const handleSelect = (value: string) => {
     if (value === "profile") {
-      navigate("/settings/profile");
+      open("settings");
     }
   };
 
