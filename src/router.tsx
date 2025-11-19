@@ -15,6 +15,7 @@ import {
   MiscPage,
   NicknamePage,
   OnboardLayout,
+  WelcomePage,
   OnboardPage,
   OverviewPage,
   PostPage,
@@ -48,6 +49,7 @@ export const router = createBrowserRouter([
         element: <OnboardLayout />,
         children: [
           { index: true, element: <OnboardPage /> },
+          { path: "welcome", element: <WelcomePage /> },
           { path: "nickname", element: <NicknamePage /> },
           { path: "misc", element: <MiscPage /> },
           { path: "beneficiary", element: <BeneficiaryPage /> },

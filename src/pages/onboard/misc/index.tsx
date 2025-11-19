@@ -94,13 +94,13 @@ export default function MiscPage() {
   }, [user, navigate, setValues]);
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-1 flex-col gap-10 p-10">
-      <div className="flex flex-col gap-4">
-        <h3 className="font-garamond text-[32px] font-medium leading-[38px] text-gray-950/90">
-          Okay, <span className="capitalize">{user?.nickname}</span>. I’ve got some questions for
+    <form onSubmit={handleSubmit} className="flex flex-1 flex-col gap-6 sm:gap-8 md:gap-10 p-4 sm:p-6 md:p-10">
+      <div className="flex flex-col gap-3 sm:gap-4">
+        <h3 className="font-garamond text-2xl sm:text-[28px] md:text-[32px] font-medium leading-[32px] sm:leading-[36px] md:leading-[38px] text-gray-950/90">
+          Okay, <span className="capitalize">{user?.nickname}</span>. I've got some questions for
           you.
         </h3>
-        <span className="font-garamond text-2xl font-normal leading-[28px] text-gray-950/80">
+        <span className="font-garamond text-base sm:text-xl md:text-2xl font-normal leading-[24px] sm:leading-[26px] md:leading-[28px] text-gray-950/80">
           These questions will help Memento better personalize your experience on the product.
         </span>
       </div>
@@ -108,14 +108,14 @@ export default function MiscPage() {
       <Dateinput
         id="onboard-profile-dob"
         label="Date of birth"
-        className="!font-garamond text-[20px] placeholder:!text-[#667085]"
+        className="font-garamond! text-base sm:text-lg md:text-[20px] placeholder:!text-[#667085]"
         labelClassName="!text-gray-950/90"
         required
         {...getField("dob")}
       />
 
-      <div className="space-y-6">
-        <p className="font-garamond text-[24px] font-medium leading-[32px] text-gray-950/80">
+      <div className="space-y-4 sm:space-y-5 md:space-y-6">
+        <p className="font-garamond text-lg sm:text-xl md:text-[24px] font-medium leading-[28px] sm:leading-[30px] md:leading-[32px] text-gray-950/80">
           What brings you to Memento? <span className="text-orange">(multi-select)</span>
         </p>
         <ReasonsSelector
@@ -128,7 +128,7 @@ export default function MiscPage() {
       <Textinput
         label="How would you describe yourself in a few words?"
         labelClassName="!text-gray-950/90"
-        className="!font-garamond text-[20px] placeholder:!text-[#667085]"
+        className="!font-garamond text-base sm:text-lg md:text-[20px] placeholder:!text-[#667085]"
         placeholder="Eg: Curious, ambitious, simple "
         required
         {...getField("self_description")}
@@ -136,25 +136,25 @@ export default function MiscPage() {
       <Textinput
         label="What matters most to you now?"
         labelClassName="!text-gray-950/90"
-        className="!font-garamond text-[20px] placeholder:!text-[#667085]"
+        className="!font-garamond text-base sm:text-lg md:text-[20px] placeholder:!text-[#667085]"
         placeholder="Eg: Family, self growth, creativity, etc"
         required
         {...getField("current_priority")}
       />
 
       <div className="w-full border-t border-black/5" />
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-3 sm:gap-4">
         <button
           type="button"
           onClick={() => navigate(-1)}
-          className="rounded-full bg-black/4 px-8 py-[18px] text-sm font-semibold leading-[20px] text-gray-900"
+          className="rounded-full bg-black/4 px-6 sm:px-8 py-4 sm:py-[18px] text-sm font-semibold leading-[20px] text-gray-900 transition-colors duration-200 hover:bg-black/6 active:bg-black/8"
         >
           Prev
         </button>
         <button
           type="submit"
           disabled={isMutating}
-          className="flex items-center gap-2 rounded-full bg-blue-6 px-8 py-[18px] text-sm font-semibold leading-[20px] text-white transition-colors duration-200 hover:bg-blue-7 disabled:cursor-not-allowed disabled:bg-blue-6/40"
+          className="flex items-center gap-2 rounded-full bg-blue-6 px-6 sm:px-8 py-4 sm:py-[18px] text-sm font-semibold leading-[20px] text-white transition-colors duration-200 hover:bg-blue-7 active:bg-blue-8 disabled:cursor-not-allowed disabled:bg-blue-6/40"
         >
           <span>Continue</span>
           <Spinner loading={isMutating} className="!size-4" />
