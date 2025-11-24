@@ -1,16 +1,9 @@
 import { Link } from "react-router-dom";
 import useSWR from "swr";
 import endpoint from "@/api/endpoint";
-import { fetcher } from "@/api/fetcher";
 import CategoryCard from "@/components/category-card";
 import { TopicSkeleton } from "@/components/topic";
 import { getCategory } from "@/utility";
-
-interface Suggestion {
-  _id: string;
-  title: string;
-  category: string;
-}
 
 export default function BrowseTopics() {
   const { data, isLoading } = useSWR(endpoint.overviewPrompt);

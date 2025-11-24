@@ -2,7 +2,6 @@ import { type ChangeEvent, useCallback, useEffect, useState } from "react";
 import useSWRMutation from "swr/mutation";
 import endpoint from "@/api/endpoint";
 import { fileUploadFetcher } from "@/api/fetcher";
-import { Textinput } from "@/components/Form";
 import Spinner from "@/components/spinner";
 import { LogoutIcon } from "@/components/icons";
 import { cn, isEmpty, toBase64 } from "@/utility";

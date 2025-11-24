@@ -3,7 +3,7 @@ import useSWRMutation from "swr/mutation";
 import { toast } from "sonner";
 import endpoint from "@/api/endpoint";
 import { deleteFetcher, fileUploadFetcher } from "@/api/fetcher";
-import { concatStrings, resolvePath } from "@/utility";
+import { concatStrings } from "@/utility";
 import type { IOnUploadPayload } from "@/utility/interface";
 
 export default function useFileUpload() {
