@@ -36,7 +36,23 @@ function Streak() {
     };
   }, [user]);
 
-  const name = user?.first_name || user?.last_name || "";
+  const streakCount = Number(user?.streak) || Number(stats.streak_count) || 0;
+
+  const getStreakMessage = (days: number): string => {
+    if (days >= 21) {
+      return `${days} days strong — This is dedication!`;
+    }
+    if (days >= 8) {
+      return "You're on a roll! Your consistency is inspiring";
+    }
+    if (days === 7) {
+      return "A full week of reflection — your story is taking shape!";
+    }
+    if (days >= 3) {
+      return "Great rhythm! You're showing up and finding your pace.";
+    }
+    return "Every story starts with the first step. You've got this.";
+  };
 
   return (
     <div
@@ -54,8 +70,8 @@ function Streak() {
         </div>
         <div className="flex flex-col gap-1 text-center">
           <span className="font-garamond text-xl text-gray-800">Week streak</span>
-          <span className="font-inter text-xs text-gray-500">
-            You are on a roll{name ? `, ${name}.` : "."} Keep it up!
+          <span className="font-inter text-xs max-w-[230px] text-gray-500">
+            {getStreakMessage(streakCount)}
           </span>
         </div>
       </div>

@@ -15,6 +15,7 @@ const defaultHeaderTitle: Record<string, string> = {
   explore: "explore",
   overview: "overview",
   "time-capsule": "time capsule",
+  "": "overview",
 };
 
 const truncateText = (text: string, maxLength = 25): string => {

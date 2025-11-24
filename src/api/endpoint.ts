@@ -39,6 +39,7 @@ export default {
   replyPrompt: "/prompts/reply",
   promptDetails: "/prompts/",
   promptCategories: "/prompts/categories/",
+  overviewPrompt: "/prompts/suggestions/overview",
 
   // memories
   memories: "/memories",

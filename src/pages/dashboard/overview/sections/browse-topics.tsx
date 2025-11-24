@@ -12,17 +12,8 @@ interface Suggestion {
   category: string;
 }
 
-interface SuggestionsResponse {
-  data?: {
-    docs?: Suggestion[];
-  };
-}
-
 export default function BrowseTopics() {
-  const { data, isLoading } = useSWR<SuggestionsResponse>(
-    `${endpoint.suggestions}?page=1&limit=10`,
-    fetcher,
-  );
+  const { data, isLoading } = useSWR(endpoint.overviewPrompt);
 
   return (
     <div className="w-full space-y-6 py-6 sm:py-9 lg:py-12">
@@ -44,8 +35,8 @@ export default function BrowseTopics() {
                   <TopicSkeleton />
                   <TopicSkeleton />
                 </> :
-                data?.data?.docs
-                  .map((t, i) => {
+                data?.data
+                  ?.map((t, i) => {
                     const category = getCategory(t?.category)
                     return (
                       <div className="w-full max-w-[240px] flex shrink-0" key={i}>

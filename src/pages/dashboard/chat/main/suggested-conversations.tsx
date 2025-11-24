@@ -1,12 +1,11 @@
 import endpoint from "@/api/endpoint";
-import { fetcher } from "@/api/fetcher";
 import Topic, { TopicSkeleton } from "@/components/topic";
 import { getCategory } from "@/utility";
 import { Link } from "react-router-dom";
 import useSWR from "swr";
 
 export default function SuggestedCategories() {
-  const { data, isLoading } = useSWR(`${endpoint.suggestions}?page=1&limit=10`, fetcher);
+  const { data, isLoading } = useSWR(endpoint.overviewPrompt);
 
   return (
     <div className="space-y-3 md:space-y-6">
@@ -25,8 +24,8 @@ export default function SuggestedCategories() {
               <TopicSkeleton />
               <TopicSkeleton />
             </> :
-            data?.data?.docs
-              .map((t, i) => {
+            data?.data
+              ?.map((t, i) => {
                 const category = getCategory(t?.category)
                 return (
                   <Topic

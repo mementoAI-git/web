@@ -88,19 +88,20 @@ export default function General() {
         <button
           type="button"
           onClick={handleLogout}
-          className={cn("icon-container", "!size-9 !rounded-[10px]")}
+          className={cn("icon-container", "size-9! rounded-[10px]!")}
         >
-          {loading ? <Spinner loading className="!size-5 !text-blue-6" /> : <LogoutIcon className="size-5" />}
+          {loading ? <Spinner loading className="size-5! text-blue-6!" /> : <LogoutIcon className="size-5" />}
         </button>
       </div>
 
       <div className="flex flex-col gap-4 rounded-2xl border border-gray-200 p-4">
         <UpdateTextInput label="First name" name="first_name" />
         <UpdateTextInput label="Last name" name="last_name" />
-        <Textinput
+        <UpdateTextInput
           label="Location"
-          labelClassName="!text-grey-200 !font-normal"
-          end={<span className="cursor-pointer font-inter text-sm font-semibold text-blue-6">Change</span>}
+          name="location"
+          btnText={user?.location ? "Change" : "Set Location"}
+          placeholder="New York, USA"
         />
         <UpdateTextInput
           label="Phone number"

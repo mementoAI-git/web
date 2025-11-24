@@ -53,6 +53,7 @@ export interface IUser {
     secret: string;
     enabled: boolean;
   };
+  location?: string;
   picture: string;
   picture_url?: string;
   last_seen: string;
