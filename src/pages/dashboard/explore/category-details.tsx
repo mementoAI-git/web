@@ -8,6 +8,7 @@ import Spinner from "@/components/spinner";
 import { cn, isEmpty } from "@/utility";
 import { fetcher } from "@/api/fetcher";
 import useIntersectionObserver from "@/hooks/use-intersection-observer";
+import { useStore } from "@/hooks/use-store";
 
 interface CategoryDetailsProps {
   category: {
@@ -20,6 +21,7 @@ interface CategoryDetailsProps {
 
 export default function CategoryDetails({ category }: CategoryDetailsProps) {
   const [activeTab, setActiveTab] = useState(0);
+  const { setHeaderTitle } = useStore();
 
   const getKey = useCallback(
     (pageIndex: number, previousPageData: any) => {
@@ -59,6 +61,13 @@ export default function CategoryDetails({ category }: CategoryDetailsProps) {
   }, [hasMore, isIntersecting, isLoadingMore, setSize, size]);
 
   const totalDocs = data?.[0]?.data?.totalDocs || 0;
+
+  useEffect(() => {
+    setHeaderTitle(category.title);
+    return () => {
+      setHeaderTitle(null);
+    }
+  }, [category.title]);
 
   if (!category || isEmpty(category)) {
     return (

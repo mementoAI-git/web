@@ -60,13 +60,13 @@ const categories = {
   },
   "identify": {
     "title": "Identity and self-discovery",
-    "slug": "identify",
+    "slug": "identity",
     "subtitle": "Reflections on who you are, what you believe, and how you’ve evolved. Trace your values, turning points, and the personal truths that continue to guide your journey.",
     "image": identifyImg
   },
   "experience": {
     "title": "Experiences & culture",
-    "slug": "experience",
+    "slug": "experience-culture",
     "subtitle": "Moments that connect you to the world — travels, traditions, and shared experiences that shape your perspective and deepen your sense of belonging.",
     "image": experienceImg
   }
