@@ -11,6 +11,7 @@ import { SearchIcon, MenuIcon } from "@/components/icons";
 
 const defaultHeaderTitle: Record<string, string> = {
   memories: "my memories",
+  stories: "my stories",
   chat: "chat with AI",
   explore: "explore",
   overview: "overview",

@@ -122,7 +122,7 @@ function Content({ data }: ISetTagPermissionsProps) {
     const result = await trigger({ level, title, status: "save", tags });
     if (result.success) {
 
-      mutate(`${endpoint.memories}?page=1`);
+      mutate((key) => typeof key === 'string' && key.startsWith(endpoint.stories));
       open?.("share-post", { id: memory?._id });
       toast.success(isNew ? "Memory created successfully" : result?.message)
     }

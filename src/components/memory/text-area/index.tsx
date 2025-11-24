@@ -17,7 +17,8 @@ interface TextAreaProps {
   value?: string;
   name?: string;
   onChange?: (event: { target: { value: string; name?: string } }) => void;
-  onRemoveAttachment?: (fileId: string) => void;
+  onRemoveAttachment?: (attachmentId: string) => void;
+  onRemoveFile?: (fileId: string) => void;
   isUploading?: boolean;
 }
 
@@ -27,6 +28,8 @@ export function TextArea({
   value,
   name,
   onChange,
+  onRemoveAttachment,
+  onRemoveFile,
 }: TextAreaProps) {
   const [showSlashMenu, setShowSlashMenu] = useState(false);
   const [slashPosition, setSlashPosition] = useState({ top: 0, left: 0 });
@@ -124,7 +127,12 @@ export function TextArea({
 
   return (
     <div className="relative flex min-h-[374px] flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white font-inter text-xs">
-      <FilePreview files={files} attachments={attachments} />
+      <FilePreview
+        files={files}
+        attachments={attachments}
+        onRemoveFile={onRemoveFile}
+        onRemoveAttachment={onRemoveAttachment}
+      />
 
       <div className="relative mt-3 flex-1">
         <EditorContent

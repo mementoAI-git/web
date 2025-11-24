@@ -16,6 +16,7 @@ import useFileUpload from "@/hooks/use-file-upload";
 import { v4 as uuidv4 } from "uuid";
 import { CloseWithFilesConfirmation } from "./close-with-files-confirmation";
 import { createPortal } from "react-dom";
+import { mutate } from "swr";
 
 const initial = {
   title: "",
@@ -68,6 +69,7 @@ const Content = forwardRef(({ data }: IContentProps, ref) => {
 
       const result = await trigger({ ...p, status: "draft" })
       if (result?.success) {
+        mutate((key) => typeof key === 'string' && key.startsWith(endpoint.stories));
         open?.("set-tag-permission", { memory: result.data, isNew: true });
         setEditMode(false)
         setFiles([])
@@ -78,7 +80,7 @@ const Content = forwardRef(({ data }: IContentProps, ref) => {
   // Create delete all files function and assign to ref
   const handleDeleteAllFiles = useCallback(async () => {
     if (files.length === 0) return;
-    console.log("files to be deleted", files)
+
     const deletePromises = files.map(async (file) => {
       if (file.uploadedFile) {
         await handleDeleteFile(file)
@@ -132,6 +134,18 @@ const Content = forwardRef(({ data }: IContentProps, ref) => {
     }
   }
 
+  const handleRemoveFile = useCallback(async (fileId: string) => {
+    const fileToRemove = files.find(f => f.id === fileId)
+    if (fileToRemove) {
+      if (fileToRemove.uploadedFile) {
+        await handleDeleteFile(fileToRemove)
+      } else {
+        // If file hasn't been uploaded yet, just remove from state
+        setFiles(prev => prev.filter(f => f.id !== fileId))
+      }
+    }
+  }, [files, handleDeleteFile, setFiles])
+
   const handleAddFileClick = () => {
     fileInputRef.current?.click()
   }
@@ -156,7 +170,7 @@ const Content = forwardRef(({ data }: IContentProps, ref) => {
         ref={fileInputRef}
         type="file"
         multiple
-        accept="image/png,image/jpeg,image/heic,application/pdf"
+        accept="image/png,image/jpeg,image/heic,image/jpg"
         onChange={handleFileSelect}
         className="hidden"
       />
@@ -212,6 +226,7 @@ const Content = forwardRef(({ data }: IContentProps, ref) => {
                 name="body"
                 files={files}
                 onChange={handleChange}
+                onRemoveFile={handleRemoveFile}
               />
         }
       </div>

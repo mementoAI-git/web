@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useCallback } from "react";
 import { Sheet } from "react-modal-sheet";
 import endpoint from "@/api/endpoint";
 import { ModalCloseBtn } from "../modalLayout";
@@ -9,6 +9,9 @@ import useFileUpload from "@/hooks/use-file-upload";
 import { useModal } from "@/hooks/use-modal";
 import { mutate } from "swr";
 import { v4 as uuidv4 } from "uuid";
+import { deleteFetcher } from "@/api/fetcher";
+import { resolvePath } from "@/utility";
+import type { IFile } from "@/utility/interface";
 
 interface ContentProps {
   data: any;
@@ -18,18 +21,73 @@ function Content({ data: memory }: ContentProps) {
   const { push } = useModal();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [text, setText] = useState(memory.body);
+  const [removedAttachmentIds, setRemovedAttachmentIds] = useState<string[]>([]);
+  const [currentAttachments, setCurrentAttachments] = useState<IFile[]>(memory?.attachments || []);
   const { trigger, isMutating } = useFetcher(`${endpoint.memories}/${memory._id}`, "put");
 
   const handleContinueBtn = async () => {
     if (isMutating) return;
+    
+    const payload: any = {};
+    
+    // Include body if changed
     if (text !== memory.body) {
-      await trigger({ body: text });
+      payload.body = text;
+    }
+    
+    // Include new attachment IDs from uploaded files
+    const newAttachmentIds = files.filter(f => f.uploadedFile).map(f => f.uploadedFile._id);
+    // Include current attachments (excluding removed ones) plus new uploads
+    const remainingAttachmentIds = currentAttachments.map(a => a._id);
+    const allAttachmentIds = [...remainingAttachmentIds, ...newAttachmentIds];
+    if (allAttachmentIds.length > 0 || newAttachmentIds.length > 0 || removedAttachmentIds.length > 0) {
+      payload.attachments = allAttachmentIds;
+    }
+    
+    // Include removed attachment IDs
+    if (removedAttachmentIds.length > 0) {
+      payload.removeAttachments = removedAttachmentIds;
+    }
+    
+    // Only trigger if there are changes
+    if (Object.keys(payload).length > 0) {
+      await trigger(payload);
       mutate(endpoint.memories);
     }
+    
     push?.("set-tag-permission", { memory, isNew: false });
   };
 
-  const { files, handleUpload, setFiles } = useFileUpload();
+  const { files, handleUpload, handleDeleteFile, setFiles } = useFileUpload();
+
+  const handleRemoveAttachment = useCallback(async (attachmentId: string) => {
+    const attachment = currentAttachments.find(a => a._id === attachmentId);
+    
+    if (attachment) {
+      // Delete file from server
+      try {
+        await deleteFetcher(resolvePath(endpoint.files, { id: attachment.name }), { arg: {} });
+      } catch (error) {
+        console.error("Failed to delete file from server", error);
+      }
+      
+      // Track removal and update local state
+      setRemovedAttachmentIds(prev => [...prev, attachmentId]);
+      setCurrentAttachments(prev => prev.filter(a => a._id !== attachmentId));
+    }
+  }, [currentAttachments]);
+
+  const handleRemoveFile = useCallback(async (fileId: string) => {
+    const fileToRemove = files.find(f => f.id === fileId);
+    if (fileToRemove) {
+      if (fileToRemove.uploadedFile) {
+        await handleDeleteFile(fileToRemove);
+      } else {
+        // If file hasn't been uploaded yet, just remove from state
+        setFiles(prev => prev.filter(f => f.id !== fileId));
+      }
+    }
+  }, [files, handleDeleteFile, setFiles]);
 
   const handleAddFileClick = () => {
     fileInputRef.current?.click();
@@ -37,6 +95,8 @@ function Content({ data: memory }: ContentProps) {
 
   const handleDiscard = () => {
     setFiles([]);
+    setRemovedAttachmentIds([]);
+    setCurrentAttachments(memory?.attachments || []);
   };
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -67,7 +127,7 @@ function Content({ data: memory }: ContentProps) {
         ref={fileInputRef}
         type="file"
         multiple
-        accept="image/png,image/jpeg,image/heic,application/pdf"
+        accept="image/png,image/jpeg,image/jpg,image/heic"
         onChange={handleFileSelect}
         className="hidden"
       />
@@ -77,8 +137,10 @@ function Content({ data: memory }: ContentProps) {
           value={text}
           name="body"
           files={files}
-          attachments={memory?.attachments}
+          attachments={currentAttachments}
           onChange={(event) => setText(event.target.value)}
+          onRemoveFile={handleRemoveFile}
+          onRemoveAttachment={handleRemoveAttachment}
         />
       </div>
       <FooterBtnGroup

@@ -103,6 +103,17 @@ export const formattedDate = (date: string) =>
     sameElse: "DD MMM YYYY",
   });
 
+export const concatStrings = (...args: any[]): string => {
+  if (args.length === 0) return '';
+
+  const separator = args[args.length - 1];
+  const strings = args.slice(0, -1);
+
+  return strings
+    .filter(str => str && typeof str === 'string' && str.trim() !== '')
+    .join(separator || '');
+};
+
 export const highlightText = (text: string, searchTerm: string): string => {
   if (!searchTerm || !text) return text;
 

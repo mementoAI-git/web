@@ -11,6 +11,6 @@ export type Fetcher = (
 
 export type MutationFetcher = (
   input: string,
-  body: { arg: any },
+  body?: { arg: any },
 ) => Promise<IResponse>;
 

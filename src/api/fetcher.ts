@@ -75,7 +75,7 @@ export const putFetcher: MutationFetcher = async (url, body) => {
   return handleRequest("put", url, body);
 };
 
-export const deleteFetcher: MutationFetcher = async (url, body) => {
+export const deleteFetcher: MutationFetcher = async (url, body = { arg: {} }) => {
   return handleRequest("delete", url, body);
 };
 

@@ -3,7 +3,7 @@ import useSWRMutation from "swr/mutation";
 import { toast } from "sonner";
 import endpoint from "@/api/endpoint";
 import { deleteFetcher, fileUploadFetcher } from "@/api/fetcher";
-import { resolvePath } from "@/utility";
+import { concatStrings, resolvePath } from "@/utility";
 import type { IOnUploadPayload } from "@/utility/interface";
 
 export default function useFileUpload() {
@@ -34,7 +34,9 @@ export default function useFileUpload() {
 
   const handleDeleteFile = async ({ id, uploadedFile }: IOnUploadPayload) => {
     if (!uploadedFile?.name) return;
-    await deleteFetcher(resolvePath(endpoint.files, { id: uploadedFile.name }), { arg: {} });
+    await deleteFetcher(
+      concatStrings(endpoint.files, uploadedFile.name, "/")
+    );
 
     setFiles((prev) => prev.filter((f) => f.id !== id));
   };
