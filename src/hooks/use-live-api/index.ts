@@ -9,6 +9,8 @@ import { createSystemContext, isEmpty } from "@/utility";
 import useFetcher from "../use-fetcher";
 import endpoint from "@/api/endpoint";
 import { useStore } from "@/hooks/use-store";
+import Axios from "axios";
+import { storageKeys } from "@/utility/constant";
 
 // Transcript entry type
 export type TranscriptEntry = {
@@ -27,6 +29,8 @@ export function useLiveAPI({ memoryId, turns = [] }: UseLiveAPIProps) {
   const [, setStatus] = useState('');
   const [inputNode, setInputNode] = useState<GainNode | null>(null);
   const [outputNode, setOutputNode] = useState<GainNode | null>(null);
+  const [connected, setConnected] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const clientRef = useRef<GoogleGenAI | null>(null);
   const sessionPromiseRef = useRef<Promise<Session> | null>(null);
@@ -40,21 +44,19 @@ export function useLiveAPI({ memoryId, turns = [] }: UseLiveAPIProps) {
   const sourcesRef = useRef<Set<AudioBufferSourceNode>>(new Set());
   const isConnectingRef = useRef(false);
   const sessionIdRef = useRef<string | null>(null);
+  const ephemeralTokenRef = useRef<string | null>(null);
+  const hasConnectedRef = useRef(false);
+  const transcriptText = useRef({ user: "", ai: "" })
 
-  const context = useMemo(() => createSystemContext(user), [user]);
-
-  const [connected, setConnected] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const transcriptText = useRef({
-    user: "",
-    ai: ""
-  })
   const turnTimerRef = useRef({
     duration: 0,
     startTime: null,
     interval: null
   });
 
+  const context = useMemo(() => createSystemContext(user), [user]);
+
+  const { trigger: fetchEphemeralToken } = useFetcher(endpoint.ephemeralToken, "get")
   const { trigger: addMessageToMemory } = useFetcher(endpoint.addMessageToMemory, "post")
 
   // Start audio recording
@@ -112,7 +114,6 @@ export function useLiveAPI({ memoryId, turns = [] }: UseLiveAPIProps) {
       scriptProcessor.connect(inputAudioContext.destination);
       setStatus('🔴 Recording... Capturing PCM chunks.');
     } catch (err: any) {
-      console.error('Error starting recording:', err);
       setStatus(`Error: ${err.message}`);
       isRecordingRef.current = false;
       setIsRecording(false);
@@ -201,15 +202,54 @@ export function useLiveAPI({ memoryId, turns = [] }: UseLiveAPIProps) {
 
   // Connect to Live API
   const connect = useCallback(async () => {
-    if (!clientRef.current || !outputAudioContextRef.current) return;
+    if (!outputAudioContextRef.current) return;
+
+    // Prevent multiple simultaneous connection attempts
+    if (isConnectingRef.current || connected) {
+      return;
+    }
+
+    isConnectingRef.current = true;
     const outputAudioContext = outputAudioContextRef.current;
 
     try {
+      if (!ephemeralTokenRef.current) {
+        const result = await fetchEphemeralToken();
+        console.log(result);
+        if (result?.data?.token) {
+          ephemeralTokenRef.current = result.data.token;
+        }
+      }
+
+      if (!clientRef.current) {
+        clientRef.current = new GoogleGenAI({
+          apiKey: ephemeralTokenRef.current || undefined,
+          httpOptions: { apiVersion: 'v1alpha' }
+        });
+      }
+
+      if (!clientRef.current) {
+        throw new Error("Failed to initialize Gemini client");
+      }
+
+      // Close existing session if any before creating a new one
+      if (sessionPromiseRef.current) {
+        try {
+          const existingSession = await sessionPromiseRef.current;
+          existingSession.close();
+        } catch (e) {
+          // Ignore errors from closing existing session
+        }
+        sessionPromiseRef.current = null;
+      }
+
       sessionPromiseRef.current = clientRef.current.live.connect({
         model: GEMINI_CONFIG.MODEL,
         callbacks: {
           onopen: () => {
             setConnected(true);
+            isConnectingRef.current = false;
+            hasConnectedRef.current = true;
             if (!sessionIdRef.current) {
               sessionIdRef.current = uuidv4();
             }
@@ -280,10 +320,12 @@ export function useLiveAPI({ memoryId, turns = [] }: UseLiveAPIProps) {
             setError(`Live API error: ${error.message || error}`);
             setConnected(false);
             isConnectingRef.current = false;
+            hasConnectedRef.current = false;
           },
           onclose: () => {
             setConnected(false);
             isConnectingRef.current = false;
+            hasConnectedRef.current = false;
           },
         },
         config: {
@@ -318,23 +360,30 @@ export function useLiveAPI({ memoryId, turns = [] }: UseLiveAPIProps) {
         })
       }
     } catch (error) {
-      console.error('Failed to connect to Live API:', error);
       setError(`Connection failed: ${error instanceof Error ? error.message : error}`);
       setConnected(false);
       isConnectingRef.current = false;
+      hasConnectedRef.current = false;
+
+      // Clear token on error to force refresh on next attempt
+      ephemeralTokenRef.current = null;
     }
   }, [
     updateTranscriptText,
     user?.chat_voice,
     context,
-    outputNode
+    outputNode,
+    fetchEphemeralToken,
+    connected
   ]);
 
   const disconnect = useCallback(() => {
-    sessionPromiseRef.current?.then((session) => session.close());
-    inputAudioContextRef.current?.close().catch(console.error);
-    outputAudioContextRef.current?.close().catch(console.error);
-    sessionIdRef.current = null;
+    isConnectingRef.current = false;
+    setConnected(false);
+    hasConnectedRef.current = false;
+    sessionPromiseRef.current?.then((session) => session.close()).catch(console.error);
+    sessionPromiseRef.current = null;
+    // Don't close audio contexts here - they're managed by the cleanup
   }, []);
 
   useEffect(() => {
@@ -355,20 +404,25 @@ export function useLiveAPI({ memoryId, turns = [] }: UseLiveAPIProps) {
     setInputNode(inNode);
     setOutputNode(outNode);
 
-    clientRef.current = new GoogleGenAI({ apiKey: GEMINI_CONFIG.API_KEY });
-
     return () => {
       sessionPromiseRef.current?.then((session) => session.close());
       inputCtx.close().catch(console.error);
       outputCtx.close().catch(console.error);
+      ephemeralTokenRef.current = null;
     };
   }, []);
 
   useEffect(() => {
-    if (outputNode) {
+    if (
+      outputNode &&
+      !hasConnectedRef.current &&
+      !connected &&
+      !isConnectingRef.current
+    ) {
       connect();
     }
-  }, [outputNode, connect]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [outputNode, connected]);
 
   return {
     connected,

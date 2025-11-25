@@ -33,7 +33,7 @@ export default function SuggestedCategories() {
                     title={t?.title}
                     key={i}
                     image={category?.image}
-                    tag={category?.slug || t.tag[0]}
+                    tag={category?.slug || t?.tag?.[0] || 'Question'}
                   />
                 )
               })

@@ -59,6 +59,7 @@ export default {
   aiPromptMessage: "/ai/prompt/messages",
   transcription: "/ai/transcribe-audio",
   startConversation: "/ai/conversation/new",
+  ephemeralToken: "/ai/ephemeral-token",
 
   // capsule
   capsule: "/capsule",
