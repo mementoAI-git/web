@@ -9,8 +9,6 @@ import { createSystemContext, isEmpty } from "@/utility";
 import useFetcher from "../use-fetcher";
 import endpoint from "@/api/endpoint";
 import { useStore } from "@/hooks/use-store";
-import Axios from "axios";
-import { storageKeys } from "@/utility/constant";
 
 // Transcript entry type
 export type TranscriptEntry = {
