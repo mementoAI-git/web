@@ -60,7 +60,7 @@ export default function RegisterPage() {
     <AuthLayout
       title="Create account"
       subtitle="Create a new account on Memento to start crafting your stories."
-      include_auth_socials
+      // include_auth_socials
       footer={
         <span className="font-inter text-center text-gray-600">
           Already have an account?
