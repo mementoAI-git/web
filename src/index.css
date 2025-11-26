@@ -3,7 +3,7 @@
 @config "../tailwind.config.ts";
 
 :root {
-  --color-primary: #5a00e8;
+  --color-primary: #52A1DD;
   --color-secondary: rgba(0, 6, 38, 0.9);
   --color-surface: #f5f6fa;
   --color-surfaces-100: #067a57;
