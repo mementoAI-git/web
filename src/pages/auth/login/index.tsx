@@ -63,7 +63,7 @@ export default function LoginPage() {
     <AuthLayout
       title="Login to continue"
       subtitle="Welcome back. Login to access your account"
-      include_auth_socials
+      // include_auth_socials
       footer={
         <span className="font-inter text-center text-gray-600">
           New user?
