@@ -1,5 +1,6 @@
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 import endpoint from "@/api/endpoint";
 import { Button } from "@/components/Buttons";
 import { Passwordinput, Textinput } from "@/components/Form";
@@ -43,8 +44,10 @@ const initial = {
 
 export default function RegisterPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { trigger, isMutating } = useFetcher(endpoint.register);
-  const { handleSubmit, getField } = useForm({
+
+  const { handleSubmit, getField, setValues } = useForm({
     schema,
     initial,
     async onSubmit(payload) {
@@ -55,6 +58,13 @@ export default function RegisterPage() {
       navigate(`/verify-email?email=${payload.email}`);
     },
   });
+
+  useEffect(() => {
+    const code = searchParams.get("code");
+    if (code) {
+      setValues((prev) => ({ ...prev, invite_code: code }));
+    }
+  }, [searchParams, setValues]);
 
   return (
     <AuthLayout
