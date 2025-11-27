@@ -12,7 +12,7 @@ import { v4 as uuidv4 } from "uuid";
 import { deleteFetcher } from "@/api/fetcher";
 import { resolvePath } from "@/utility";
 import type { IFile } from "@/utility/interface";
-import { FILE_ACCEPT_IMAGES_AND_VIDEOS, SUPPORTED_FILE_TYPES } from "@/utility/constant";
+import { SUPPORTED_FILE_TYPES } from "@/utility/constant";
 
 interface ContentProps {
   data: any;
