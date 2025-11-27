@@ -9,6 +9,7 @@ import { v4 as uuidv4 } from "uuid";
 import ImagePreview from "./ImagePreveiw";
 import { isEmpty } from "lodash";
 import ChatSettings from "../modal/chat-settings";
+import { SUPPORTED_FILE_TYPES } from "@/utility/constant";
 
 export interface IOnSendPayload {
   attachments?: IFile[];
@@ -64,15 +65,16 @@ export default function Chatinput({
     if (!file) return;
 
     // Check if it's a supported file type
-    const supportedTypes = ['image/png', 'image/jpeg', 'image/heic', 'application/pdf'];
-    if (!supportedTypes.includes(file.type)) {
-      alert('Please select a supported file type (PNG, JPEG, HEIC, or PDF)');
+    if (!(SUPPORTED_FILE_TYPES as readonly string[]).includes(file.type)) {
+      alert('Please select a supported file type (PNG, JPEG, HEIC, PDF, or Video)');
       return;
     }
 
-    // Check file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      alert('File size must be less than 10MB');
+    // Check file size (max 15MB for videos, 5MB for other files)
+    const maxSize = file.type.startsWith('video/') ? 15 * 1024 * 1024 : 5 * 1024 * 1024;
+    if (file.size > maxSize) {
+      const maxSizeMB = file.type.startsWith('video/') ? 15 : 5;
+      alert(`File size must be less than ${maxSizeMB}MB`);
       return;
     }
 
@@ -169,7 +171,7 @@ export default function Chatinput({
             <input
               id="chat-file-trigger"
               type="file"
-              accept="image/png,image/jpeg,image/heic,application/pdf"
+              accept={SUPPORTED_FILE_TYPES.join(",")}
               onChange={handleFileUpload}
               className="hidden"
             />

@@ -17,6 +17,7 @@ import { v4 as uuidv4 } from "uuid";
 import { CloseWithFilesConfirmation } from "./close-with-files-confirmation";
 import { createPortal } from "react-dom";
 import { mutate } from "swr";
+import { SUPPORTED_FILE_TYPES } from "@/utility/constant";
 
 const initial = {
   title: "",
@@ -170,7 +171,7 @@ const Content = forwardRef(({ data }: IContentProps, ref) => {
         ref={fileInputRef}
         type="file"
         multiple
-        accept="image/png,image/jpeg,image/heic,image/jpg"
+        accept={SUPPORTED_FILE_TYPES.join(",")}
         onChange={handleFileSelect}
         className="hidden"
       />

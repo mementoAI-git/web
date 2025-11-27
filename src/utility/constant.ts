@@ -16,3 +16,21 @@ export const storageKeys = {
   welcomeOnce: "memento:welcome-once",
 };
 
+// Supported file types for uploads
+export const SUPPORTED_FILE_TYPES = [
+  'image/png',
+  'image/jpeg',
+  'image/jpg',
+  'image/heic',
+  'application/pdf',
+  'video/mp4',
+  'video/webm',
+  'video/quicktime',
+  'video/x-msvideo'
+] as const;
+
+// File input accept attribute strings
+export const FILE_ACCEPT_IMAGES_AND_VIDEOS = "image/png,image/jpeg,image/jpg,image/heic,application/pdf,video/mp4,video/webm,video/quicktime,video/x-msvideo";
+export const FILE_ACCEPT_IMAGES_ONLY = "image/*";
+export const FILE_ACCEPT_IMAGES_AND_VIDEOS_WILDCARD = "image/*,video/*";
+

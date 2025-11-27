@@ -26,13 +26,28 @@ function FileThumbnailItem({ file, size = 50, onRemove }: FileThumbnailItemProps
   const url = file?.base64 || file.uploadedFile?.url || "";
   const type = file.uploadedFile?.type || file.file?.type || "image/jpeg";
 
+  const isVideo = type.startsWith("video/");
+  const isImage = type.includes("image");
+
   return (
     <div className="relative size-full group">
-      {type.includes("image") ? (
+      {isImage ? (
         <img width={size} height={size} className="size-full rounded-[5.6px] object-cover" src={url} alt="Preview" />
+      ) : isVideo ? (
+        <div className="relative size-full rounded-[5.6px] overflow-hidden bg-grey-500">
+          <video
+            src={url}
+            className="size-full object-cover"
+            muted
+            playsInline
+          />
+          <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+            <PlayIcon width={size * 0.4} height={size * 0.4} className="text-white" />
+          </div>
+        </div>
       ) : (
         <div className="flex size-full items-center justify-center rounded-[5.6px] bg-grey-500">
-          {type.includes("video") ? <PlayIcon width={size * 0.6} height={size * 0.6} /> : <QIcon width={size * 0.6} height={size * 0.6} />}
+          <QIcon width={size * 0.6} height={size * 0.6} />
         </div>
       )}
 

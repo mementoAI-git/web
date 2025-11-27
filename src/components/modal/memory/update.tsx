@@ -12,6 +12,7 @@ import { v4 as uuidv4 } from "uuid";
 import { deleteFetcher } from "@/api/fetcher";
 import { resolvePath } from "@/utility";
 import type { IFile } from "@/utility/interface";
+import { FILE_ACCEPT_IMAGES_AND_VIDEOS, SUPPORTED_FILE_TYPES } from "@/utility/constant";
 
 interface ContentProps {
   data: any;
@@ -27,14 +28,14 @@ function Content({ data: memory }: ContentProps) {
 
   const handleContinueBtn = async () => {
     if (isMutating) return;
-    
+
     const payload: any = {};
-    
+
     // Include body if changed
     if (text !== memory.body) {
       payload.body = text;
     }
-    
+
     // Include new attachment IDs from uploaded files
     const newAttachmentIds = files.filter(f => f.uploadedFile).map(f => f.uploadedFile._id);
     // Include current attachments (excluding removed ones) plus new uploads
@@ -43,18 +44,18 @@ function Content({ data: memory }: ContentProps) {
     if (allAttachmentIds.length > 0 || newAttachmentIds.length > 0 || removedAttachmentIds.length > 0) {
       payload.attachments = allAttachmentIds;
     }
-    
+
     // Include removed attachment IDs
     if (removedAttachmentIds.length > 0) {
       payload.removeAttachments = removedAttachmentIds;
     }
-    
+
     // Only trigger if there are changes
     if (Object.keys(payload).length > 0) {
       await trigger(payload);
       mutate(endpoint.memories);
     }
-    
+
     push?.("set-tag-permission", { memory, isNew: false });
   };
 
@@ -62,7 +63,7 @@ function Content({ data: memory }: ContentProps) {
 
   const handleRemoveAttachment = useCallback(async (attachmentId: string) => {
     const attachment = currentAttachments.find(a => a._id === attachmentId);
-    
+
     if (attachment) {
       // Delete file from server
       try {
@@ -70,7 +71,7 @@ function Content({ data: memory }: ContentProps) {
       } catch (error) {
         console.error("Failed to delete file from server", error);
       }
-      
+
       // Track removal and update local state
       setRemovedAttachmentIds(prev => [...prev, attachmentId]);
       setCurrentAttachments(prev => prev.filter(a => a._id !== attachmentId));
@@ -127,7 +128,7 @@ function Content({ data: memory }: ContentProps) {
         ref={fileInputRef}
         type="file"
         multiple
-        accept="image/png,image/jpeg,image/jpg,image/heic"
+        accept={SUPPORTED_FILE_TYPES.join(",")}
         onChange={handleFileSelect}
         className="hidden"
       />

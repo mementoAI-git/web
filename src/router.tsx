@@ -26,14 +26,16 @@ import {
   SuggestedConversationPage,
   VerifyEmailPage,
   StoriesPage,
-  StoriesDetailsPage
+  StoriesDetailsPage,
+  NotFoundPage,
+  ErrorPage,
 } from "@/pages";
 
 export const router = createBrowserRouter([
   {
     path: "/",
     element: <App />,
-    errorElement: null,
+    errorElement: <ErrorPage />,
     children: [
       { path: "login", element: <LoginPage /> },
       { path: "register", element: <RegisterPage /> },
@@ -72,6 +74,7 @@ export const router = createBrowserRouter([
           { path: "stories/:id", element: <StoriesDetailsPage /> },
         ],
       },
+      { path: "*", element: <NotFoundPage /> },
     ],
   },
 ]);
