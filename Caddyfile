@@ -31,7 +31,7 @@ dev.mymemento.io {
 
 	# Serve static files from the 'dist' folder (Vite build output)
 	# Make sure to run 'yarn build' first to generate the dist folder
-	root * dist
+	root * /var/www/dev.mymemento.io
 
 	# Enable gzip compression for better performance
 	encode gzip
