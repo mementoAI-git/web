@@ -1,10 +1,5 @@
 # Caddyfile for Memento Frontend
 # Serves static files from the dist folder (Vite build output)
-# 
-# Usage:
-#   1. Build the React app: yarn build
-#   2. Run Caddy: caddy run
-#   3. Access at http://localhost:3000
 
 # Global options
 {
@@ -12,7 +7,6 @@
 	auto_https on
 	
 	# Email for Let's Encrypt certificate notifications
-	# Replace with your email address
 	email info@mymemento.io
 	
 	# Logging
@@ -64,19 +58,4 @@ dev.mymemento.io {
 		rewrite @404 /index.html
 	}
 }
-
-# Development: Local testing (uncomment if needed)
-# :3000 {
-# 	root * dist
-# 	encode gzip
-# 	file_server
-# 	try_files {path} /index.html
-# 	
-# 	header {
-# 		X-Content-Type-Options "nosniff"
-# 		X-Frame-Options "DENY"
-# 		X-XSS-Protection "1; mode=block"
-# 		Referrer-Policy "strict-origin-when-cross-origin"
-# 	}
-# }
 
