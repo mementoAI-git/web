@@ -9,29 +9,15 @@ export default function ImagePreview({ files, handleRemoveFile }: IImagePreviewP
 
   return (
     <div className="flex flex-wrap gap-1.5 mb-2">
-      {files.map((file) => {
-        const fileType = file.uploadedFile?.type || file.file?.type || "";
-        const isVideo = fileType.startsWith('video/');
-        const previewUrl = file.base64 || file.uploadedFile?.url || "";
-
-        return (
+      {files.map((file) => (
         <div key={file.id} className="relative group">
           <div className="relative w-12 h-12 rounded-md border border-sand-4">
             <div className="overflow-hidden size-full rounded-md">
-              {isVideo ? (
-                <video
-                  src={previewUrl}
-                  className="w-full h-full object-cover"
-                  muted
-                  playsInline
-                />
-              ) : (
-                <img
-                  src={previewUrl}
-                  alt="Preview"
-                  className="w-full h-full object-cover"
-                />
-              )}
+              <img
+                src={file.base64}
+                alt="Preview"
+                className="w-full h-full object-cover"
+              />
             </div>
 
             {
@@ -50,8 +36,7 @@ export default function ImagePreview({ files, handleRemoveFile }: IImagePreviewP
             </button>
           </div>
         </div>
-        );
-      })}
+      ))}
     </div>
   )
 }
