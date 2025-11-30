@@ -12,17 +12,17 @@ jobs:
     - name: Deploy and restart application
       uses: appleboy/ssh-action@v0.1.7
       with:
-        host: ${{ secrets.DEV_SSH_HOST }}
-        username: ${{ secrets.DEV_SSH_USERNAME }}
-        password: ${{ secrets.DEV_SSH_PASSWORD }}
+        host: ${{ secrets.PROD_SSH_HOST }}
+        username: ${{ secrets.PROD_SSH_USERNAME }}
+        password: ${{ secrets.PROD_SSH_PASSWORD }}
         port: 22
         script: |
           export NVM_DIR="$HOME/.nvm"
           [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
           
           # Set the project directory
-          project_path=${{ secrets.PROJECT_PATH }}
-          deploy_path=${{ secrets.DEPLOY_PATH }}
+          project_path=${{ secrets.PROD_PROJECT_PATH }}
+          deploy_path=${{ secrets.PROD_DEPLOY_PATH }}
           
           # Navigate to project directory
           cd $project_path
