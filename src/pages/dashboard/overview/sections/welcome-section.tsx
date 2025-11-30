@@ -9,15 +9,25 @@ import bg2 from "@/assets/image/bg/2.png";
 import bg3 from "@/assets/image/bg/3.png";
 import orangeDiamond from "@/assets/image/orange-diamond.png";
 import greenDiamond from "@/assets/image/green-diamond-full.png";
+import { isEmpty } from "@/utility";
 
 function StreakCount() {
+  const { user } = useStore();
   return (
     <StreakTracker>
       <div className="w-full flex-1 flex items-center relative border border-black/5 rounded-2xl overflow-hidden p-4 gap-2">
         <img src={bg2} alt="1" className="absolute top-0 right-0 left-0 object-cover size-full" />
         <div className="flex flex-col max-w-[216.86px] gap-2 font-inter">
           <span className="text-gray-500 font-inter font-normal uppercase text-xs">Streak count</span>
-          <span className="text-sm text-gray-700 font-inter font-bold">You’re on a 15-day streak</span>
+
+          <span className="text-sm text-gray-700 font-inter font-bold">
+            {
+              isEmpty(user?.streak) ?
+                "You have no streak" :
+                `You’re on a ${user?.streak}-day streak`
+            }
+
+          </span>
           <span className="text-gray-600 font-normal font-inter text-sm ">Complete reflections each day so your streak won’t reset</span>
         </div>
         <div className="size-full absolute bottom-0 right-0 max-w-[105.31px] max-h-[100px] flex items-center justify-center">
