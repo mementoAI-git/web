@@ -62,7 +62,7 @@ export function FloatingButton({
     <button
       {...props}
       disabled={loading || props.disabled}
-      className={cn("btn rounded-lg! mt-2 h-12 w-full", className, {
+      className={cn("btn-outline rounded-lg! mt-2 h-12 w-full", className, {
         "bg-grey-100": props.disabled,
       })}
     >
