@@ -17,7 +17,7 @@ function App() {
         />
       )}
 
-      <div className="absolute bottom-4 right-4 text-5xl z-9999">
+      {/*<div className="absolute bottom-4 right-4 text-5xl z-9999">
         <FloatingButton
           onClick={() => setIsOpen((state) => !state)}
           className="h-auto rounded-full! w-10 aspect-square! p-0!"
@@ -28,6 +28,26 @@ function App() {
             className="w-full h-full rounded-full"
           />
         </FloatingButton>
+      </div>*/}
+
+      <div className="absolute bottom-4 right-4 text-5xl z-9999 group">
+        <div className="relative">
+          <FloatingButton
+            onClick={() => setIsOpen((state) => !state)}
+            className="h-auto rounded-full! w-10 aspect-square! p-0!"
+          >
+            <img
+              src="question.gif"
+              alt="hh"
+              className="w-full h-full rounded-full"
+            />
+          </FloatingButton>
+
+          {/* Tooltip */}
+          <div className="absolute text-xs right-full top-1/2 -translate-x-1 -translate-y-1/2 ml-2 hidden group-hover:block bg-gray-800 text-white text-sm px-2 py-1 rounded shadow whitespace-nowrap">
+            Need help?
+          </div>
+        </div>
       </div>
     </div>
   );
