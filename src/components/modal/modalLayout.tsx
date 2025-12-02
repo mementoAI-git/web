@@ -7,9 +7,15 @@ interface ModalLayoutProps extends PropsWithChildren {
   onClose: () => void;
 }
 
-export default function ModalLayout({ open, children, onClose }: ModalLayoutProps) {
+export default function ModalLayout({
+  open,
+  children,
+  onClose,
+}: ModalLayoutProps) {
   return (
-    <div className={`modal-overlay z-50 bg-[rgba(94,94,94,0.5)] ${open ? "flex" : "hidden"}`}>
+    <div
+      className={`modal-overlay z-50 bg-[rgba(94,94,94,0.5)] ${open ? "flex" : "hidden"}`}
+    >
       <div className="modal-container">
         <button
           type="button"
@@ -31,7 +37,13 @@ interface ModalWrapperProps extends PropsWithChildren {
   onClose?: () => void;
 }
 
-export function ModalWrapper({ isMobile = false, header, footer, children, onClose }: ModalWrapperProps) {
+export function ModalWrapper({
+  isMobile = false,
+  header,
+  footer,
+  children,
+  onClose,
+}: ModalWrapperProps) {
   if (isMobile) {
     return (
       <div className="modal-full-screen">
@@ -75,9 +87,17 @@ interface FullScreenModalProps extends PropsWithChildren {
   footer?: ReactNode;
 }
 
-export function FullScreenModal({ open, onClose, header, footer, children }: FullScreenModalProps) {
+export function FullScreenModal({
+  open,
+  onClose,
+  header,
+  footer,
+  children,
+}: FullScreenModalProps) {
   return (
-    <div className={`modal-overlay z-50 bg-[rgba(94,94,94,0.5)] ${open ? "flex" : "hidden"}`}>
+    <div
+      className={`modal-overlay z-50 bg-[rgba(94,94,94,0.5)] ${open ? "flex" : "hidden"}`}
+    >
       <div className="modal-full-screen">
         {header && (
           <div className="modal-header">
