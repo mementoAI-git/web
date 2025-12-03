@@ -45,7 +45,7 @@ export default function NicknamePage() {
       <div className="animate-fadeIn" style={{ animationDelay: "200ms" }}>
         <Textinput
           label="Name"
-          placeholder="Groot"
+          placeholder="e.g., Groot"
           className="flex-1"
           value={name}
           onChange={(e) => setName(e.target.value)}

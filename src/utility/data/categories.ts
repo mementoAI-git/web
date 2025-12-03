@@ -58,7 +58,7 @@ const categories = {
     "subtitle": "Your everyday rhythms — how you care for yourself, find balance, and make sense of the world around you. Small habits, big emotions, quiet moments that define your peace.",
     "image": wellbeingImg
   },
-  "identify": {
+  "identity": {
     "title": "Identity and self-discovery",
     "slug": "identity",
     "subtitle": "Reflections on who you are, what you believe, and how you’ve evolved. Trace your values, turning points, and the personal truths that continue to guide your journey.",

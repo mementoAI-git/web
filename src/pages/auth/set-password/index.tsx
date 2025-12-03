@@ -7,7 +7,6 @@ import { toast } from "sonner";
 import * as yup from "yup";
 import { Button } from "@/components/Buttons";
 import { Passwordinput } from "@/components/Form";
-import { LockIcon } from "@/components/icons";
 import StrengthIndicator from "@/components/strength-indicator";
 import endpoint from "@/api/endpoint";
 import useFetcher from "@/hooks/use-fetcher";
@@ -82,7 +81,6 @@ export default function SetPasswordPage() {
     <AuthLayout
       title="Set new password"
       can_go_back
-      icon={<LockIcon width={32} height={32} />}
       subtitle="Your new password must be different from previously used passwords on this platform."
     >
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
