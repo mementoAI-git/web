@@ -14,7 +14,7 @@ import {
 } from "react";
 import endpoint from "@/api/endpoint";
 import useSWRMutation from "swr/mutation";
-import { fileUploadFetcher } from "@/api/fetcher";
+import { postFetcher } from "@/api/fetcher";
 import { isEmpty } from "@/utility";
 import { toast } from "sonner";
 import { Sheet } from "react-modal-sheet";
@@ -26,6 +26,7 @@ import { SUPPORTED_FILE_TYPES } from "@/utility/constant";
 import { CloseWithFilesConfirmation } from "../memory/close-with-files-confirmation";
 import { Selectinput, Textinput } from "@/components/Form";
 import { useStore } from "@/hooks/use-store";
+import * as yup from "yup";
 
 const FEEDBACK_OPTIONS = [
   { label: "Bug", value: "Bug" },
@@ -35,30 +36,35 @@ const FEEDBACK_OPTIONS = [
   { label: "Other", value: "Other" },
 ];
 
+const schema = yup.object().shape({
+  type: yup.string().required(),
+  message: yup.string().required("Message is required"),
+  email: yup.string().email("Invalid email address"),
+  // screenshot: yup.mixed().nullable(),
+});
+
 interface IContentProps {
   data: any;
 }
 
 const Content = forwardRef(({ data }: IContentProps, ref) => {
-  const { payload, type: declaredType } = data;
-  const { open } = useModal();
+  const { payload } = data;
   const { user } = useStore();
+  const { close } = useModal();
 
   const initial = {
-    type: FEEDBACK_OPTIONS[0].label,
+    type: FEEDBACK_OPTIONS[0].value,
     email: user?.email ?? "",
     message: "",
-    screenshot: null,
   };
-
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [editMode, setEditMode] = useState(false);
 
   const { trigger, isMutating } = useSWRMutation(
     endpoint.feedback,
-    fileUploadFetcher,
+    postFetcher,
   );
+
   const { files, handleUpload, handleDeleteFile, setFiles } = useFileUpload();
 
   const {
@@ -71,33 +77,57 @@ const Content = forwardRef(({ data }: IContentProps, ref) => {
     getField,
   } = useForm({
     initial: { ...initial, ...payload },
+    schema,
     async onSubmit(p) {
       if (isEmpty(p.message)) {
         return toast.error("Message is required");
       }
 
-      console.log(p, "p");
-      // return;
+      const uploadedScreenshot = files.find((f) => f.uploadedFile);
 
-      const result = await trigger({ ...p });
-      console.log(result, "RESULT");
-      if (result?.success) {
-        mutate(
-          (key) => typeof key === "string" && key.startsWith(endpoint.feedback),
-        );
-        setFiles([]);
+      const payload = {
+        type: p.type,
+        message: p.message,
+        email: p.email || user?.email,
+        screenshot: uploadedScreenshot?.uploadedFile._id || null,
+      };
+
+      try {
+        const result = await trigger(payload);
+
+        if (result?.success) {
+          toast.success("Feedback sent successfully!");
+          mutate(
+            (key) =>
+              typeof key === "string" && key.startsWith(endpoint.feedback),
+          );
+          setFiles([]);
+          close("create-feedback");
+        }
+      } catch (error) {
+        console.error("Failed to send feedback:", error);
+        toast.error("Failed to send feedback");
       }
     },
   });
 
-  const handleScreenshot = (e: ChangeEvent<HTMLInputElement>) => {
+  const handleScreenshot = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      setValues((prev) => ({ ...prev, screenshot: file }));
-    }
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const payload = {
+        id: uuidv4(),
+        file,
+        base64: reader.result as string,
+        progress: 0,
+      };
+      handleUpload(payload);
+    };
+    reader.readAsDataURL(file);
   };
 
-  // Create delete all files function and assign to ref
   const handleDeleteAllFiles = useCallback(async () => {
     if (files.length === 0) return;
 
@@ -109,8 +139,7 @@ const Content = forwardRef(({ data }: IContentProps, ref) => {
     await Promise.all(deletePromises);
 
     setFiles([]);
-    handleValue("file", null);
-  }, [handleDeleteFile, handleValue, setFiles, files]);
+  }, [handleDeleteFile, setFiles, files]);
 
   useImperativeHandle(
     ref,
@@ -121,63 +150,25 @@ const Content = forwardRef(({ data }: IContentProps, ref) => {
     [handleDeleteAllFiles, files.length],
   );
 
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFiles = Array.from(e.target.files || []);
-    if (selectedFiles.length === 0) return;
-
-    for (const file of selectedFiles) {
-      // Convert to base64 for preview
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const payload = {
-          id: uuidv4(),
-          file,
-          base64: reader.result as string,
-          progress: 0,
-        };
-        handleUpload(payload);
-      };
-      reader.readAsDataURL(file);
-    }
-
-    // Reset file input
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
-  };
-
   const handleDiscard = () => {
     setEditMode(false);
     setValues(initial);
-    // setRecording(false);
     setFiles([]);
   };
 
   return (
     <div className="space-y-4">
-      {/* Hidden file input */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        multiple
-        accept={SUPPORTED_FILE_TYPES.join(",")}
-        onChange={handleFileSelect}
-        className="hidden"
-      />
-
       <div className="space-y-4">
         <div className="py-2">
           <h4 className="modal-title">Send Feedback</h4>
         </div>
 
-        <div className="flex gap-6 border-b border-gray-200 w-full">
-          <Selectinput
-            className="w-full"
-            label="Type"
-            data={FEEDBACK_OPTIONS}
-            {...getField("type")}
-          />
-        </div>
+        <Selectinput
+          className="w-full"
+          label="Type"
+          data={FEEDBACK_OPTIONS}
+          {...getField("type")}
+        />
 
         <div className="input-container">
           <label className="input-label">Message</label>
@@ -187,7 +178,6 @@ const Content = forwardRef(({ data }: IContentProps, ref) => {
             {...getField("message")}
             className="input-base w-full font-inter text-sm !h-24"
           />
-
           {errors.message && (
             <small className="text-xs text-danger">{errors.message}</small>
           )}
@@ -210,21 +200,34 @@ const Content = forwardRef(({ data }: IContentProps, ref) => {
             onChange={handleScreenshot}
             className="w-full font-inter text-sm text-grey-600 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-sand-2 file:text-sand-10 hover:file:bg-sand-3 file:cursor-pointer"
           />
-          {values.screenshot && (
-            <span className="font-inter text-xs text-grey-600 mt-1">
-              Selected: {values.screenshot.name}
-            </span>
+
+          {files.length > 0 && (
+            <div className="mt-2 space-y-1">
+              {files.map((file) => (
+                <div key={file.id} className="text-xs">
+                  {file.uploadedFile ? (
+                    <span className="text-green-600">
+                      ✓ {file.file.name} uploaded
+                    </span>
+                  ) : (
+                    <span className="text-grey-600">
+                      Uploading {file.file.name}... {file.progress}%
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
           )}
         </div>
       </div>
+
       <FooterBtnGroup
         cta="Send Feedback"
-        // onAddFileBtnClick={handleAddFileClick}
         onDiscard={handleDiscard}
         onSave={handleSubmit}
         disabled={files.some((f) => !f.uploadedFile)}
         saving={isMutating}
-        editMode={editMode || !isEmpty(values.body)}
+        editMode={editMode || !isEmpty(values.message)}
       />
     </div>
   );
