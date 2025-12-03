@@ -7,7 +7,6 @@ import { toast } from "sonner";
 import * as yup from "yup";
 import { Button } from "@/components/Buttons";
 import { Passwordinput } from "@/components/Form";
-import { LockIcon } from "@/components/icons";
 import StrengthIndicator from "@/components/strength-indicator";
 import endpoint from "@/api/endpoint";
 import useFetcher from "@/hooks/use-fetcher";
