@@ -20,6 +20,7 @@ interface SelectProps extends ITexinput {
   label: string | ReactNode;
   value?: string;
   data?: Option[];
+  className?: string;
 }
 
 export function Selectinput({
@@ -58,7 +59,7 @@ export function Selectinput({
   return (
     <div
       ref={ref}
-      className={`input-container relative group ${props.error ? "error" : ""}`}
+      className={`input-container relative group ${props.error ? "error" : ""} ${props.className}`}
     >
       <label className={`input-label ${labelClassName}`}>{label}</label>
       <div onClick={() => setShow((prev) => !prev)}>

@@ -1,27 +1,18 @@
 import { Outlet } from "react-router-dom";
-import { useState } from "react";
-import { FeedbackModal } from "./components/modal/feedback";
-import { FloatingButton } from "./components/Buttons";
+import { FloatingButton } from "./components/FloatingButton";
+import { useModal } from "./hooks/use-modal";
 
 function App() {
-  const [isOpen, setIsOpen] = useState(false);
+  const { open } = useModal();
 
   return (
     <div className="min-h-screen bg-background text-secondary">
       <Outlet />
 
-      {isOpen && (
-        <FeedbackModal
-          isOpen={isOpen}
-          onClose={() => setIsOpen(false)}
-          user={null}
-        />
-      )}
-
       <div className="absolute bottom-4 right-4 text-5xl z-9999 group animate-fade-in-up">
         <div className="relative">
           <FloatingButton
-            onClick={() => setIsOpen((state) => !state)}
+            onClick={() => open("create-feedback")}
             className="h-auto bg-transparent rounded-full! w-10 aspect-square! p-0!"
           >
             <img

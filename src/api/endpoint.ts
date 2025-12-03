@@ -68,5 +68,7 @@ export default {
   // activities
   activities: "/activities",
   feedback: "/feedback",
-};
 
+  // feedback
+  feedback: "/feedback",
+};
