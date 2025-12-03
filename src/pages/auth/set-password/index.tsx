@@ -82,7 +82,6 @@ export default function SetPasswordPage() {
     <AuthLayout
       title="Set new password"
       can_go_back
-      icon={<LockIcon width={32} height={32} />}
       subtitle="Your new password must be different from previously used passwords on this platform."
     >
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
