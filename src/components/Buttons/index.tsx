@@ -12,6 +12,7 @@ interface IButton extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 export function Button({
   title,
+  children,
   className,
   href = null,
   loading = false,
@@ -35,17 +36,14 @@ export function Button({
     <button
       {...props}
       disabled={loading || props.disabled}
-      className={cn("btn !rounded-lg mt-2 h-12 w-full", className, {
+      className={cn("btn rounded-lg! mt-2 h-12 w-full", className, {
         "bg-grey-100": props.disabled,
       })}
     >
       <span className="text-center font-inter text-base font-bold leading-6 text-white">
-        {title}
+        {title || children}
       </span>
       <Spinner loading={loading} className="!size-4" />
     </button>
   );
 }
-
-
-
