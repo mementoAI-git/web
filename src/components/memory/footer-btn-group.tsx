@@ -8,7 +8,7 @@ interface FooterBtnGroupProps {
   onAddFileBtnClick?: () => void;
   saving?: boolean;
   editMode?: boolean;
-  cta: string;
+  cta?: string;
 }
 
 export const inputTypes = {
