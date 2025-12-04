@@ -277,3 +277,13 @@ export const resolvePath = (endpoint: string, payload = {}) => {
   });
 };
 
+/**
+ * Helper function to replace path parameters in endpoint URLs
+ */
+export const replacePathParams = (path: string, params: Record<string, string | number>): string => {
+  let result = path;
+  Object.entries(params).forEach(([key, value]) => {
+    result = result.replace(`:${key}`, String(value));
+  });
+  return result;
+};

@@ -13,8 +13,6 @@ import {
   type ChangeEvent,
 } from "react";
 import endpoint from "@/api/endpoint";
-import useSWRMutation from "swr/mutation";
-import { postFetcher } from "@/api/fetcher";
 import { isEmpty } from "@/utility";
 import { toast } from "sonner";
 import { Sheet } from "react-modal-sheet";
@@ -22,11 +20,11 @@ import useFileUpload from "@/hooks/use-file-upload";
 import { v4 as uuidv4 } from "uuid";
 import { createPortal } from "react-dom";
 import { mutate } from "swr";
-import { SUPPORTED_FILE_TYPES } from "@/utility/constant";
 import { CloseWithFilesConfirmation } from "../memory/close-with-files-confirmation";
 import { Selectinput, Textinput } from "@/components/Form";
 import { useStore } from "@/hooks/use-store";
 import * as yup from "yup";
+import useFetcher from "@/hooks/use-fetcher";
 
 const FEEDBACK_OPTIONS = [
   { label: "Bug", value: "Bug" },
@@ -40,7 +38,6 @@ const schema = yup.object().shape({
   type: yup.string().required(),
   message: yup.string().required("Message is required"),
   email: yup.string().email("Invalid email address"),
-  // screenshot: yup.mixed().nullable(),
 });
 
 interface IContentProps {
@@ -60,10 +57,7 @@ const Content = forwardRef(({ data }: IContentProps, ref) => {
 
   const [editMode, setEditMode] = useState(false);
 
-  const { trigger, isMutating } = useSWRMutation(
-    endpoint.feedback,
-    postFetcher,
-  );
+  const { trigger, isMutating } = useFetcher(endpoint.feedback);
 
   const { files, handleUpload, handleDeleteFile, setFiles } = useFileUpload();
 
@@ -73,8 +67,6 @@ const Content = forwardRef(({ data }: IContentProps, ref) => {
     handleChange,
     setValues,
     handleSubmit,
-    handleValue,
-    getField,
   } = useForm({
     initial: { ...initial, ...payload },
     schema,
@@ -167,15 +159,19 @@ const Content = forwardRef(({ data }: IContentProps, ref) => {
           className="w-full"
           label="Type"
           data={FEEDBACK_OPTIONS}
-          {...getField("type")}
+          name="type"
+          value={values.type}
+          onChange={handleChange}
+          error={errors.type}
         />
 
         <div className="input-container">
           <label className="input-label">Message</label>
           <textarea
-            required
+            name="message"
+            value={values.message}
+            onChange={handleChange}
             placeholder="Tell us what happened…"
-            {...getField("message")}
             className="input-base w-full font-inter text-sm !h-24"
           />
           {errors.message && (
@@ -188,7 +184,10 @@ const Content = forwardRef(({ data }: IContentProps, ref) => {
             label="Email (optional)"
             type="email"
             placeholder="you@example.com"
-            {...getField("email")}
+            name="email"
+            value={values.email}
+            onChange={handleChange}
+            error={errors.email}
           />
         )}
 
