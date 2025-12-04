@@ -5,12 +5,17 @@ interface FooterBtnGroupProps {
   disabled?: boolean;
   onDiscard: () => void;
   onSave: () => void;
-  onAddFileBtnClick: () => void;
+  onAddFileBtnClick?: () => void;
   saving?: boolean;
   editMode?: boolean;
+  cta: string;
 }
 
-export const inputTypes = { text: "text", video: "video", audio: "audio" } as const;
+export const inputTypes = {
+  text: "text",
+  video: "video",
+  audio: "audio",
+} as const;
 
 export function FooterBtnGroup({
   onDiscard,
@@ -19,10 +24,18 @@ export function FooterBtnGroup({
   saving = false,
   editMode = false,
   disabled = false,
+  cta = "Continue",
 }: FooterBtnGroupProps) {
   return (
-    <div className={`mt-2 flex items-center justify-between ${disabled ? "cursor-not-allowed opacity-40" : ""}`}>
-      <AddFileButton disabled={disabled} onClick={onAddFileBtnClick} />
+    <div
+      className={`mt-2 flex items-center justify-between ${disabled ? "cursor-not-allowed opacity-40" : ""}`}
+    >
+      <div>
+        {onAddFileBtnClick && (
+          <AddFileButton disabled={disabled} onClick={onAddFileBtnClick} />
+        )}
+      </div>
+
       {editMode ? (
         <div className="flex items-center gap-2">
           <button
@@ -59,7 +72,7 @@ export function FooterBtnGroup({
             onClick={onSave}
             className="btn flex items-center gap-2 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            Continue
+            {cta}
             <Spinner loading={saving} className="size-4!" />
           </button>
         </div>
