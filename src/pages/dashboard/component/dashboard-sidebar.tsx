@@ -52,11 +52,11 @@ export function DashboardSideBar({ onClose }: DashboardSideBarProps) {
             />
           </div>
         </div>
-        <div className="flex py-8 px-4 w-full flex-col gap-1 sm:gap-2">
+        {/* <div className="flex py-8 px-4 w-full flex-col gap-1 sm:gap-2">
           {bottomNavigations.map((n, i) => (
             <SideBarItem {...n} active={n.link === pathname} key={i} onClick={onClose} />
           ))}
-        </div>
+        </div> */}
       </div>
     </div>
   );
