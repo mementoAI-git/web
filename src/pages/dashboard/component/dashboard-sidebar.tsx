@@ -3,7 +3,7 @@ import { SlideIcon } from "@/components/icons";
 import Logo from "@/components/logo";
 import { useModal } from "@/hooks/use-modal";
 import { useLocation, useNavigate } from "react-router-dom";
-import { bottomNavigations, topNavigations } from "./navigation";
+import { topNavigations } from "./navigation";
 import SideBarItem from "./sidebar-item";
 
 interface DashboardSideBarProps {
