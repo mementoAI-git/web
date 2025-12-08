@@ -2,11 +2,9 @@ import { useState } from "react";
 import endpoint from "@/api/endpoint";
 import { ModalCloseBtn } from "../modalLayout";
 import Spinner from "@/components/spinner";
-import useFetcher from "@/hooks/use-fetcher";
 import { useModal } from "@/hooks/use-modal";
-import { resolvePath } from "@/utility";
-import { mutate } from "swr";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useMutation } from "@/hooks/use-api";
 
 interface DeleteMemoryProps {
   data: { memory: { _id: string; status?: string } };
@@ -16,21 +14,26 @@ export function DeleteMemory({ data: { memory } }: DeleteMemoryProps) {
   const { close } = useModal();
   const navigate = useNavigate();
   const location = useLocation();
-  const { trigger, isMutating } = useFetcher(
-    resolvePath(endpoint.memory, { id: memory._id }),
-    "delete",
-  );
+  const { trigger, isLoading } = useMutation(
+    endpoint.memory, {
+    method: "DELETE",
+    invalidate: [endpoint.stories, endpoint.memories, endpoint.conversations],
+  });
   const [submitting, setSubmitting] = useState(false);
 
   const handleDelete = async () => {
     if (submitting) return;
     setSubmitting(true);
-    const result = await trigger({ delete_permanently: memory?.status === "deleted" });
-    if (result?.success) {
+
+    const result = await trigger(
+      { delete_permanently: memory?.status === "deleted" },
+      { id: memory._id }
+    );
+
+    if (result?.data) {
       if (location.pathname.includes(memory._id)) {
         navigate("/memories");
       }
-      mutate((key) => typeof key === "string" && key.startsWith(`${endpoint.stories}`));
       close("delete-memory");
     }
     setSubmitting(false);
@@ -56,12 +59,12 @@ export function DeleteMemory({ data: { memory } }: DeleteMemoryProps) {
           </button>
           <button
             type="button"
-            disabled={isMutating || submitting}
+            disabled={isLoading || submitting}
             onClick={handleDelete}
             className="flex h-10 cursor-pointer items-center justify-center gap-2 rounded-full bg-danger px-4 py-2.5 font-inter text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-70"
           >
             Yes, Delete
-            <Spinner loading={isMutating || submitting} className="!size-4" />
+            <Spinner loading={isLoading || submitting} className="!size-4" />
           </button>
         </div>
       </div>

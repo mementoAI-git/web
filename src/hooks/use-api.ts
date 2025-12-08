@@ -118,7 +118,7 @@ export function useMutation<TResponse = any, TRequest = any>(
 
         // Invalidate specified SWR keys to refetch data
         if (invalidate.length > 0) {
-          await Promise.all(invalidate.map(key => mutate(key)));
+          await Promise.all(invalidate.map(key => mutate(k => typeof k === "string" && k.startsWith(key))));
         }
 
         onSuccess?.(result);

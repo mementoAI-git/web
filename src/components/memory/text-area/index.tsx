@@ -33,6 +33,7 @@ export function TextArea({
 }: TextAreaProps) {
   const [showSlashMenu, setShowSlashMenu] = useState(false);
   const [slashPosition, setSlashPosition] = useState({ top: 0, left: 0 });
+  const [editorStateVersion, setEditorStateVersion] = useState(0);
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -84,6 +85,12 @@ export function TextArea({
           }
         }
       }
+    },
+    onSelectionUpdate: () => {
+      setEditorStateVersion((v) => v + 1);
+    },
+    onTransaction: () => {
+      setEditorStateVersion((v) => v + 1);
     },
   });
 
@@ -148,7 +155,7 @@ export function TextArea({
         />
       </div>
 
-      <EditorToolbar editor={editor} />
+      <EditorToolbar editor={editor} editorStateVersion={editorStateVersion} />
     </div>
   );
 }

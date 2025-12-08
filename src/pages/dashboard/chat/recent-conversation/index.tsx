@@ -169,44 +169,43 @@ export default function RecentConversation() {
 
         <div className="flex flex-col gap-6">
           {/* Show skeletons only when initial load is in progress */}
-          {isLoading && groupedMemories.length === 0 ? (
+          {isLoading && groupedMemories.length === 0 ?
             <>
               <SectionSkeleton />
               <SectionSkeleton />
-            </>
-          ) : groupedMemories.length === 0 ? (
-            <div className="text-center py-8">
-              <p className="text-gray-500">
-                {searchQuery ? "No conversations found matching your search." : "No conversations yet."}
-              </p>
-            </div>
-          ) : (
-            <>
-              {groupedMemories.map((group, index) => (
-                <div key={`${group.label}-${index}`} className="flex flex-col md:flex-row gap-4">
-                  <div className="flex flex-col min-w-30 shrink-0">
-                    <span className="font-bold text-sm font-inter text-gray-800">{group.label}</span>
-                    <span className="text-gray-500 text-sm font-inter font-normal">{group.date}</span>
+            </> :
+            groupedMemories.length === 0 ?
+              <div className="text-center py-8">
+                <p className="text-gray-500">
+                  {searchQuery ? "No conversations found matching your search." : "No conversations yet."}
+                </p>
+              </div> :
+              <>
+                {groupedMemories.map((group, index) => (
+                  <div key={`${group.label}-${index}`} className="flex flex-col md:flex-row gap-4">
+                    <div className="flex flex-col min-w-30 shrink-0">
+                      <span className="font-bold text-sm font-inter text-gray-800">{group.label}</span>
+                      <span className="text-gray-500 text-sm font-inter font-normal">{group.date}</span>
+                    </div>
+                    <div className="flex flex-col flex-1 gap-4">
+                      {group.memories.map((memory, i) => (
+                        <ConversationBar
+                          key={memory._id || i}
+                          size="lg"
+                          _id={memory._id}
+                          title={memory.title || "Untitled Conversation"}
+                        />
+                      ))}
+                    </div>
                   </div>
-                  <div className="flex flex-col flex-1 gap-4">
-                    {group.memories.map((memory, i) => (
-                      <ConversationBar
-                        key={memory._id || i}
-                        size="lg"
-                        _id={memory._id}
-                        title={memory.title || "Untitled Conversation"}
-                      />
-                    ))}
-                  </div>
-                </div>
-              ))}
+                ))}
 
-              {/* Loading indicator for pagination */}
-              {isLoadingMore && !isLoading && (
-                <SectionSkeleton />
-              )}
-            </>
-          )}
+                {/* Loading indicator for pagination */}
+                {isLoadingMore && !isLoading && (
+                  <SectionSkeleton />
+                )}
+              </>
+          }
         </div>
 
         {/* The sentinel element for infinite scroll */}

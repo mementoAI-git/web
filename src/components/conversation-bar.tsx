@@ -72,7 +72,7 @@ export default function ConversationBar({ title, _id, bookmarked = false, size =
           className="rounded-lg p-2 hover:bg-sand-2"
           footerItem={
             <li
-              onClick={() => open?.("delete-memory", _id)}
+              onClick={() => open?.("delete-memory", { memory: { _id } })}
               className="flex cursor-pointer items-center gap-2.5 rounded px-2.5 py-1.5 text-[#F97066] hover:bg-[#F97066]/8"
             >
               <TrashIcon width={16} height={16} />

@@ -140,6 +140,7 @@ export function useLiveAPI({ memoryId, turns = [] }: UseLiveAPIProps) {
   }, []);
 
   const updateTranscriptText = useCallback((role: "user" | "ai", text: string, finished = false) => {
+    console.log(role, text, finished);
     if (finished) {
       const messages = Object
         .entries(transcriptText.current)
@@ -213,7 +214,6 @@ export function useLiveAPI({ memoryId, turns = [] }: UseLiveAPIProps) {
     try {
       if (!ephemeralTokenRef.current) {
         const result = await fetchEphemeralToken();
-        console.log(result);
         if (result?.data?.token) {
           ephemeralTokenRef.current = result.data.token;
         }
@@ -286,6 +286,8 @@ export function useLiveAPI({ memoryId, turns = [] }: UseLiveAPIProps) {
               }
             }
 
+            console.log(message.serverContent);
+            console.log("outputTranscription", message.serverContent?.outputTranscription);
             const aiTranscription = message.serverContent?.outputTranscription;
             if (!isEmpty(aiTranscription) || message?.serverContent?.turnComplete) {
               updateTranscriptText(

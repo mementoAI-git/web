@@ -7,11 +7,12 @@ import { LinkInput } from "./link-input";
 
 interface EditorToolbarProps {
   editor: Editor;
+  editorStateVersion?: number;
 }
 
 const cn = (...classes: (string | boolean | undefined)[]) => classes.filter(Boolean).join(" ");
 
-export function EditorToolbar({ editor }: EditorToolbarProps) {
+export function EditorToolbar({ editor, editorStateVersion: _editorStateVersion }: EditorToolbarProps) {
   const [showLinkInput, setShowLinkInput] = useState(false);
   const [linkPosition, setLinkPosition] = useState({ top: 0, left: 0 });
 

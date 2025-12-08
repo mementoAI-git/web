@@ -30,7 +30,7 @@ client.interceptors.request.use(
     if (!requestConfig.skipAuth) {
       const token = await getAuthToken();
       if (token) {
-        config.headers.authorization = token;
+        config.headers.authorization = `Bearer ${token}`;
       }
     }
 
