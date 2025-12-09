@@ -26,7 +26,6 @@ export default function useFileUpload() {
     };
 
     const result = await uploadFile(payload as any);
-    console.log(result, "upload reault");
 
     if (!result?.data?.[0]) {
       toast.error("Upload unsuccessful");

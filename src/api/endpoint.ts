@@ -70,4 +70,7 @@ export default {
 
   // feedback
   feedback: "/feedback",
+
+  // sentry
+  tunnel: `${import.meta.env.VITE_API_BASE_URL}/sentry_tunnel`,
 };

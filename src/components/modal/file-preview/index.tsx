@@ -33,7 +33,9 @@ export default function FilePreview({ data }: FilePreviewProps) {
         setIndex((previous) => (previous <= 0 ? previous : previous - 1));
       }
       if (["ArrowRight", "ArrowDown"].includes(event.key)) {
-        setIndex((previous) => (previous >= lastIndex ? previous : previous + 1));
+        setIndex((previous) =>
+          previous >= lastIndex ? previous : previous + 1,
+        );
       }
     };
 
@@ -50,7 +52,9 @@ export default function FilePreview({ data }: FilePreviewProps) {
       return;
     }
     setFiles(remainingFiles);
-    setIndex((current) => (current >= remainingFiles.length ? remainingFiles.length - 1 : current));
+    setIndex((current) =>
+      current >= remainingFiles.length ? remainingFiles.length - 1 : current,
+    );
   };
 
   if (!files.length) {

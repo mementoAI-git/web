@@ -6,9 +6,11 @@ import type { IFile } from "@/utility/interface";
 function AudioFile({ file }: { file: IFile }) {
   const { mins, secs, hrs } = getDuration(file.duration || 0);
   return (
-    <div className="flex h-50 flex-col justify-between overflow-hidden rounded-lg bg-grey-400">
+    <div className="flex h-full w-full flex-col justify-between overflow-hidden rounded-lg bg-grey-400">
       <div className="flex flex-col p-3 font-inter">
-        <span className="text-sm font-medium text-[#050709]">{file.name}</span>
+        <span className="text-sm font-medium text-[#050709] text-ellipsis whitespace-nowrap overflow-hidden">
+          {file.name}
+        </span>
         <span className="text-xs text-grey-600">
           {hrs !== "00" && `${hrs}:`}
           {mins}:{secs}
@@ -22,9 +24,11 @@ function AudioFile({ file }: { file: IFile }) {
 function VideoFile({ file }: { file: IFile }) {
   const { mins, secs, hrs } = getDuration(file.duration || 0);
   return (
-    <div className="flex h-50 flex-col justify-between overflow-hidden rounded-lg bg-grey-400">
+    <div className="flex w-full h-full flex-col justify-between overflow-hidden rounded-lg bg-grey-400">
       <div className="flex flex-col p-3 font-inter">
-        <span className="truncate text-sm font-medium text-[#050709]">{file.name}</span>
+        <span className="truncate text-sm font-medium text-[#050709] text-ellipsis whitespace-nowrap overflow-hidden">
+          {file.name}
+        </span>
         <span className="text-xs text-grey-600">
           {hrs !== "00" && `${hrs}:`}
           {mins}:{secs}
@@ -45,7 +49,7 @@ function FileGalleryItem({ file }: { file: IFile }) {
   return (
     <img
       src={file.url}
-      className="size-full rounded-sm object-cover"
+      className="size-full! rounded-sm object-cover h-full"
       alt={file.name}
       loading="lazy"
     />
@@ -74,15 +78,15 @@ export default function FileGallery({ files }: { files: IFile[] }) {
   return (
     <div
       onClick={() => open?.("file-preview", files)}
-      className={`grid max-h-[266px] w-fit gap-1 rounded-xl bg-sand-3 p-4 ${gridLayout}`}
+      className={`grid max-h[266px] w-fit gap-1 rounded-xl bg-sand-3 p-4 ${gridLayout}!`}
     >
       {displayFiles.map((file, index) => (
-        <div key={index} className="h-[115px] max-w-[239.3333282470703px]">
+        <div key={index}>
           <FileGalleryItem file={file} />
         </div>
       ))}
       {overflowFile && (
-        <div className="h-[115px] max-w-[239.3333282470703px]">
+        <div className="h-[115px] max-w[239.3333282470703px]">
           <div className="relative h-full overflow-hidden">
             <div className="absolute inset-0 flex h-full w-full items-center justify-center rounded-lg bg-[rgba(94,94,94,0.5)] backdrop-blur-sm font-bricolage text-2xl font-semibold text-white">
               {files.length - maxFiles}+
@@ -94,4 +98,3 @@ export default function FileGallery({ files }: { files: IFile[] }) {
     </div>
   );
 }
-
