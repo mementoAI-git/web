@@ -23,13 +23,6 @@ export default function AudioPreview({ isActive, ...props }: AudioPreviewProps) 
     }
   }, [isActive]);
 
-  console.log("AudioPreview props:", {
-    url: props.url,
-    name: props.name,
-    _id: props._id,
-    // ...props,
-  });
-
   const { refs, floatingStyles } = useFloating({
     placement: "top-end",
     middleware: [offset(16), flip(), shift()],
