@@ -10,6 +10,7 @@ import {
   forwardRef,
   useImperativeHandle,
   useCallback,
+  useEffect,
   type ChangeEvent,
 } from "react";
 import endpoint from "@/api/endpoint";
@@ -56,37 +57,31 @@ const Content = forwardRef(({ data }: IContentProps, ref) => {
   };
 
   const [editMode, setEditMode] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const activeToastId = useRef<string | number | undefined>(undefined);
+  const isCheckingClipboard = useRef(false);
 
   const { trigger, isMutating } = useFetcher(endpoint.feedback);
-
   const { files, handleUpload, handleDeleteFile, setFiles } = useFileUpload();
-
-  const {
-    values,
-    errors,
-    handleChange,
-    setValues,
-    handleSubmit,
-  } = useForm({
+  const { values, errors, handleChange, setValues, handleSubmit } = useForm({
     initial: { ...initial, ...payload },
     schema,
     async onSubmit(p) {
-      if (isEmpty(p.message)) {
-        return toast.error("Message is required");
-      }
+      if (isEmpty(p.message)) return toast.error("Message is required");
 
-      const uploadedScreenshot = files.find((f) => f.uploadedFile);
+      const uploadedScreenshots = files
+        .filter((f) => f.uploadedFile)
+        .map((f) => f.uploadedFile._id);
 
       const payload = {
         type: p.type,
         message: p.message,
         email: p.email || user?.email,
-        screenshot: uploadedScreenshot?.uploadedFile._id || null,
+        screenshots: uploadedScreenshots,
       };
 
       try {
         const result = await trigger(payload);
-
         if (result?.success) {
           toast.success("Feedback sent successfully!");
           mutate(
@@ -103,42 +98,171 @@ const Content = forwardRef(({ data }: IContentProps, ref) => {
     },
   });
 
-  const handleScreenshot = async (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const uploadFileRef = useRef<((file: File) => Promise<void>) | undefined>(
+    undefined,
+  );
 
+  uploadFileRef.current = async (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please upload only image files");
+      return;
+    }
     const reader = new FileReader();
     reader.onloadend = () => {
-      const payload = {
+      handleUpload({
         id: uuidv4(),
         file,
         base64: reader.result as string,
         progress: 0,
-      };
-      handleUpload(payload);
+      });
     };
     reader.readAsDataURL(file);
   };
 
+  // Clipboard detection
+  useEffect(() => {
+    const checkAndShowToast = async () => {
+      // If already checking or toast exists or has files, exit immediately
+      if (
+        isCheckingClipboard.current ||
+        activeToastId.current ||
+        files.length > 0
+      ) {
+        return;
+      }
+
+      // Set flag to prevent concurrent checks
+      isCheckingClipboard.current = true;
+
+      try {
+        const items = await navigator.clipboard.read();
+        const hasImage = items.some((item) =>
+          item.types.some((t) => t.startsWith("image/")),
+        );
+
+        // Double check - maybe another call beat us to it
+        if (hasImage && !activeToastId.current) {
+          activeToastId.current = toast.info("Image detected in clipboard!", {
+            duration: 8000,
+            description: "Click Paste or press Ctrl+V (Cmd+V on Mac)",
+            position: "bottom-right",
+            classNames: {
+              actionButton:
+                "!bg-blue-6 hover:!bg-blue-7 !font-semibold !px-4 !py-2 !rounded-lg transition-colors",
+            },
+            action: {
+              label: "Paste",
+              onClick: async () => {
+                try {
+                  const clipboardItems = await navigator.clipboard.read();
+                  for (const item of clipboardItems) {
+                    for (const type of item.types) {
+                      if (type.startsWith("image/")) {
+                        const blob = await item.getType(type);
+                        const file = new File(
+                          [blob],
+                          `screenshot-${Date.now()}.png`,
+                          {
+                            type,
+                          },
+                        );
+                        await uploadFileRef.current?.(file);
+                        if (activeToastId.current) {
+                          toast.dismiss(activeToastId.current);
+                          activeToastId.current = undefined;
+                        }
+                        return;
+                      }
+                    }
+                  }
+                } catch (err) {
+                  console.error("Failed to paste:", err);
+                  toast.error("Failed to paste image.");
+                }
+              },
+            },
+          });
+        }
+      } catch {
+        // Ignore clipboard errors
+      } finally {
+        // Reset flag after a small delay
+        setTimeout(() => {
+          isCheckingClipboard.current = false;
+        }, 200);
+      }
+    };
+
+    checkAndShowToast();
+
+    const handleFocus = () => {
+      setTimeout(checkAndShowToast, 100);
+    };
+
+    window.addEventListener("focus", handleFocus);
+
+    return () => {
+      window.removeEventListener("focus", handleFocus);
+      if (activeToastId.current) {
+        toast.dismiss(activeToastId.current);
+        activeToastId.current = undefined;
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Separate effect to dismiss toast when files are added
+  useEffect(() => {
+    if (files.length > 0 && activeToastId.current) {
+      toast.dismiss(activeToastId.current);
+      activeToastId.current = undefined;
+    }
+  }, [files.length]);
+
+  // Keyboard paste listener
+  useEffect(() => {
+    const handlePaste = async (e: ClipboardEvent) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      for (const item of Array.from(items)) {
+        if (item.type.startsWith("image/")) {
+          e.preventDefault();
+          const file = item.getAsFile();
+          if (file) {
+            await uploadFileRef.current?.(file);
+            if (activeToastId.current) {
+              toast.dismiss(activeToastId.current);
+              activeToastId.current = undefined;
+            }
+          }
+        }
+      }
+    };
+    document.addEventListener("paste", handlePaste);
+    return () => document.removeEventListener("paste", handlePaste);
+  }, []);
+
+  const handleScreenshots = async (e: ChangeEvent<HTMLInputElement>) => {
+    const selectedFiles = e.target.files;
+    if (!selectedFiles) return;
+    for (const file of Array.from(selectedFiles))
+      await uploadFileRef.current?.(file);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
   const handleDeleteAllFiles = useCallback(async () => {
     if (files.length === 0) return;
-
-    const deletePromises = files.map(async (file) => {
-      if (file.uploadedFile) {
-        await handleDeleteFile(file);
-      }
-    });
-    await Promise.all(deletePromises);
-
+    await Promise.all(
+      files.map((file) =>
+        file.uploadedFile ? handleDeleteFile(file) : Promise.resolve(),
+      ),
+    );
     setFiles([]);
-  }, [handleDeleteFile, setFiles, files]);
+  }, [files, handleDeleteFile, setFiles]);
 
   useImperativeHandle(
     ref,
-    () => ({
-      handleDeleteAllFiles,
-      hasFiles: files.length > 0,
-    }),
+    () => ({ handleDeleteAllFiles, hasFiles: files.length > 0 }),
     [handleDeleteAllFiles, files.length],
   );
 
@@ -146,6 +270,7 @@ const Content = forwardRef(({ data }: IContentProps, ref) => {
     setEditMode(false);
     setValues(initial);
     setFiles([]);
+    close("create-feedback");
   };
 
   return (
@@ -192,27 +317,88 @@ const Content = forwardRef(({ data }: IContentProps, ref) => {
         )}
 
         <div className="input-container">
-          <label className="input-label">Screenshot (optional)</label>
+          <label className="input-label">Screenshots (optional)</label>
           <input
+            ref={fileInputRef}
             type="file"
             accept="image/*"
-            onChange={handleScreenshot}
+            multiple
+            onChange={handleScreenshots}
             className="w-full font-inter text-sm text-grey-600 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-sand-2 file:text-sand-10 hover:file:bg-sand-3 file:cursor-pointer"
           />
+          <p className="mt-1 text-xs text-grey-600">
+            Or press Ctrl+V (Cmd+V on Mac) to paste from clipboard
+          </p>
 
           {files.length > 0 && (
-            <div className="mt-2 space-y-1">
+            <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
               {files.map((file) => (
-                <div key={file.id} className="text-xs">
-                  {file.uploadedFile ? (
-                    <span className="text-green-600">
-                      ✓ {file.file.name} uploaded
-                    </span>
-                  ) : (
-                    <span className="text-grey-600">
-                      Uploading {file.file.name}... {file.progress}%
-                    </span>
-                  )}
+                <div
+                  key={file.id}
+                  className="relative group rounded-lg overflow-hidden border border-sand-6 bg-sand-2"
+                >
+                  <div className="aspect-video relative">
+                    <img
+                      src={file.base64}
+                      alt={file.file.name}
+                      className="w-full h-full object-cover"
+                    />
+                    {!file.uploadedFile && (
+                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                        <div className="text-center">
+                          <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto mb-1" />
+                          <span className="text-xs text-white font-medium">
+                            {file.progress}%
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                    {file.uploadedFile && (
+                      <div className="absolute top-1 right-1 bg-blue-6 rounded-full p-1">
+                        <svg
+                          className="w-3 h-3 text-white"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={3}
+                            d="M5 13l4 4L19 7"
+                          />
+                        </svg>
+                      </div>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteFile(file)}
+                      className="absolute top-1 left-1 bg-danger rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                      title="Remove"
+                    >
+                      <svg
+                        className="w-3 h-3 text-white"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M6 18L18 6M6 6l12 12"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                  {/*<div className="p-2 bg-sand-1">
+                    <p
+                      className="text-xs text-grey-600 truncate"
+                      title={file.file.name}
+                    >
+                      {file.file.name}
+                    </p>
+                  </div>*/}
                 </div>
               ))}
             </div>
@@ -232,10 +418,22 @@ const Content = forwardRef(({ data }: IContentProps, ref) => {
   );
 });
 
+Content.displayName = "Content";
+
 export function Feedback({ data }) {
   const { close } = useModal();
   const [showCloseConfirmation, setShowCloseConfirmation] = useState(false);
   const contentRef = useRef(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 640);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   const handleCloseWithConfirmation = () => {
     if (contentRef.current?.hasFiles) {
@@ -247,41 +445,39 @@ export function Feedback({ data }) {
 
   const handleConfirmClose = async () => {
     setShowCloseConfirmation(false);
-
-    if (contentRef.current) {
-      await contentRef.current?.handleDeleteAllFiles();
-    }
+    if (contentRef.current) await contentRef.current.handleDeleteAllFiles();
     close("create-feedback");
   };
 
   return (
     <div>
-      <div className="hidden min-w-[618px]! sm:block modal-container">
-        <ModalCloseBtn onClick={handleCloseWithConfirmation} />
-        <Content data={data} ref={contentRef} />
-      </div>
-      <Sheet
-        detent="content"
-        className="block sm:hidden"
-        isOpen
-        onClose={handleCloseWithConfirmation}
-        snapPoints={[0.5, 0.75, 1]}
-        initialSnap={1}
-      >
-        <Sheet.Container className="bg-sand-1">
-          <Sheet.Header className="bg-sand-1 rounded-3xl" />
-          <Sheet.Content className="bg-sand-1 px-4 pb-6">
-            <ModalCloseBtn
-              className="!relative ml-auto !right-0 !top-0 mb-2"
-              onClick={handleCloseWithConfirmation}
-            />
-            <Content data={data} ref={contentRef} />
-          </Sheet.Content>
-        </Sheet.Container>
-        <Sheet.Backdrop />
-      </Sheet>
+      {!isMobile ? (
+        <div className="modal-container" style={{ minWidth: "618px" }}>
+          <ModalCloseBtn onClick={handleCloseWithConfirmation} />
+          <Content data={data} ref={contentRef} />
+        </div>
+      ) : (
+        <Sheet
+          detent="content"
+          isOpen
+          onClose={handleCloseWithConfirmation}
+          snapPoints={[0.5, 0.75, 1]}
+          initialSnap={1}
+        >
+          <Sheet.Container className="bg-sand-1">
+            <Sheet.Header className="bg-sand-1 rounded-3xl" />
+            <Sheet.Content className="bg-sand-1 px-4 pb-6">
+              <ModalCloseBtn
+                className="!relative ml-auto !right-0 !top-0 mb-2"
+                onClick={handleCloseWithConfirmation}
+              />
+              <Content data={data} ref={contentRef} />
+            </Sheet.Content>
+          </Sheet.Container>
+          <Sheet.Backdrop />
+        </Sheet>
+      )}
 
-      {/* Confirmation Dialog */}
       {showCloseConfirmation &&
         createPortal(
           <CloseWithFilesConfirmation

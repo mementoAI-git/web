@@ -5,23 +5,31 @@ import VideoPreview from "./video";
 import AudioPreview from "./audio";
 import ImagePreview from "./image";
 
-export interface FilePreviewItem extends IFile {
+export interface FilePreviewItemBase extends IFile {
   onDelete: (id: string) => void;
 }
 
+export interface FilePreviewItem extends FilePreviewItemBase {
+  isActive?: boolean;
+}
+
 interface FilePreviewProps {
-  data: IFile[];
+  // data: IFile[];
+  data: {
+    files: IFile[];
+    startIndex?: number;
+  };
 }
 
 export default function FilePreview({ data }: FilePreviewProps) {
-  const [index, setIndex] = useState(0);
-  const [files, setFiles] = useState<IFile[]>(data);
+  const [index, setIndex] = useState(data.startIndex ?? 0);
+  const [files, setFiles] = useState<IFile[]>(data.files);
   const { close } = useModal();
 
   useEffect(() => {
-    setFiles(data);
-    setIndex(0);
-  }, [data]);
+    setFiles(data.files);
+    setIndex(data.startIndex ?? 0);
+  }, [data.files, data.startIndex]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -33,7 +41,9 @@ export default function FilePreview({ data }: FilePreviewProps) {
         setIndex((previous) => (previous <= 0 ? previous : previous - 1));
       }
       if (["ArrowRight", "ArrowDown"].includes(event.key)) {
-        setIndex((previous) => (previous >= lastIndex ? previous : previous + 1));
+        setIndex((previous) =>
+          previous >= lastIndex ? previous : previous + 1,
+        );
       }
     };
 
@@ -50,7 +60,9 @@ export default function FilePreview({ data }: FilePreviewProps) {
       return;
     }
     setFiles(remainingFiles);
-    setIndex((current) => (current >= remainingFiles.length ? remainingFiles.length - 1 : current));
+    setIndex((current) =>
+      current >= remainingFiles.length ? remainingFiles.length - 1 : current,
+    );
   };
 
   if (!files.length) {
@@ -65,9 +77,9 @@ export default function FilePreview({ data }: FilePreviewProps) {
           className={`w-full transition-opacity duration-700 ease-in-out ${index === currentIndex ? "block opacity-100" : "hidden opacity-0"}`}
         >
           {file.type.includes("video") ? (
-            <VideoPreview {...file} onDelete={handleDelete} />
+            <VideoPreview {...file} onDelete={handleDelete} isActive={index === currentIndex} />
           ) : file.type.includes("audio") ? (
-            <AudioPreview {...file} onDelete={handleDelete} />
+            <AudioPreview {...file} onDelete={handleDelete} isActive={index === currentIndex} />
           ) : (
             <ImagePreview {...file} onDelete={handleDelete} />
           )}

@@ -7,9 +7,9 @@ import { mutate } from "swr";
 import Spinner from "@/components/spinner";
 import { DownloadIcon, TimesIcon } from "@/components/icons";
 import DeleteMemoryAttachment from "./delete-attachment";
-import type { FilePreviewItem } from "./index";
+import type { FilePreviewItemBase } from "./index";
 
-export default function ActionBtn(props: FilePreviewItem) {
+export default function ActionBtn(props: FilePreviewItemBase) {
   const { close } = useModal();
   const [downloading, setDownloading] = useState(false);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
