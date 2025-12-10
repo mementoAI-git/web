@@ -58,7 +58,7 @@ const Content = forwardRef(({ data }: IContentProps, ref) => {
 
   const [editMode, setEditMode] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const activeToastId = useRef<string | number | undefined>();
+  const activeToastId = useRef<string | number | undefined>(undefined);
   const isCheckingClipboard = useRef(false);
 
   const { trigger, isMutating } = useFetcher(endpoint.feedback);
@@ -98,7 +98,9 @@ const Content = forwardRef(({ data }: IContentProps, ref) => {
     },
   });
 
-  const uploadFileRef = useRef<(file: File) => Promise<void>>();
+  const uploadFileRef = useRef<((file: File) => Promise<void>) | undefined>(
+    undefined,
+  );
 
   uploadFileRef.current = async (file: File) => {
     if (!file.type.startsWith("image/")) {

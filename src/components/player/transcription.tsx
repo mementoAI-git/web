@@ -123,7 +123,7 @@ export default function Transcription({
     return data.segments.map((segment, index) => {
       const isCurrent = index === currentSegmentIndex;
       const isPast = index < currentSegmentIndex;
-      const isFuture = index > currentSegmentIndex;
+      // const isFuture = index > currentSegmentIndex;
 
       let textColor = "text-[#6D7276]"; // future/default
       if (isCurrent) {
@@ -135,7 +135,11 @@ export default function Transcription({
       return (
         <div
           key={index}
-          ref={(el) => (segmentRefs.current[index] = el)}
+          ref={(el) => {
+            if (el) {
+              segmentRefs.current[index] = el;
+            }
+          }}
           className={`mb-3 transition-all duration-500 ${textColor}`}
           style={{ fontSize: getFontSize(segment.text.length) }}
         >
