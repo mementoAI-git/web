@@ -85,8 +85,8 @@ export default function RegisterPage() {
       }
     >
       <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-        <div className="flex w-full items-center justify-between gap-3">
-          <div className="flex-1">
+        <div className="flex flex-col gap-5 sm:flex-row w-full sm:items-center justify-between gap-3">
+          <div className="flex-1 w-full">
             <Textinput
               label="First name"
               placeholder="John"
@@ -94,7 +94,7 @@ export default function RegisterPage() {
               {...getField("first_name")}
             />
           </div>
-          <div className="flex-1">
+          <div className="flex-1 w-full">
             <Textinput
               label="Last name"
               placeholder="Doe"
