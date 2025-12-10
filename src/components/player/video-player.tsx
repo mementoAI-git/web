@@ -1,12 +1,18 @@
-import { useRef, type Ref } from "react";
+import { useRef, type Ref, type RefObject } from "react";
 import { PauseRecIcon, PlaySolidIcon } from "@/components/icons";
 import Spinner from "@/components/spinner";
 import usePlayer from "@/hooks/use-player";
 import { getDuration } from "@/utility";
 
-export default function VideoPlayer({ src }: { src: string }) {
+export default function VideoPlayer({
+  src,
+  videoRef,
+}: {
+  src: string;
+  videoRef?: RefObject<HTMLVideoElement>;
+}) {
   const { ref, media, togglePlay, seek, canPlay, playing, progress } =
-    usePlayer();
+    usePlayer({ src, externalRef: videoRef });
   const progressBar = useRef<HTMLDivElement | null>(null);
   const current = getDuration(media?.currentTime || 0);
   const end = getDuration(media?.duration || 0);

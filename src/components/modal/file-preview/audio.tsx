@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import AudioPlayer from "@/components/player/audio-player";
 import {
   useFloating,
@@ -9,7 +10,19 @@ import {
 import ActionBtn from "./action-btns";
 import type { FilePreviewItem } from "./index";
 
-export default function AudioPreview(props: FilePreviewItem) {
+export interface AudioPreviewProps extends FilePreviewItem {
+  isActive: boolean;
+}
+
+export default function AudioPreview({ isActive, ...props }: AudioPreviewProps) {
+  const audioRef = useRef<HTMLAudioElement>(null);
+
+  useEffect(() => {
+    if (!isActive && audioRef.current) {
+      audioRef.current.pause();
+    }
+  }, [isActive]);
+
   console.log("AudioPreview props:", {
     url: props.url,
     name: props.name,
@@ -34,6 +47,7 @@ export default function AudioPreview(props: FilePreviewItem) {
           alt={props.name}
           id={props._id}
           duration={props.duration}
+          audioRef={audioRef}
         />
       </div>
       <div

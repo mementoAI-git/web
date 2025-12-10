@@ -5,8 +5,12 @@ import VideoPreview from "./video";
 import AudioPreview from "./audio";
 import ImagePreview from "./image";
 
-export interface FilePreviewItem extends IFile {
+export interface FilePreviewItemBase extends IFile {
   onDelete: (id: string) => void;
+}
+
+export interface FilePreviewItem extends FilePreviewItemBase {
+  isActive?: boolean;
 }
 
 interface FilePreviewProps {
@@ -73,9 +77,9 @@ export default function FilePreview({ data }: FilePreviewProps) {
           className={`w-full transition-opacity duration-700 ease-in-out ${index === currentIndex ? "block opacity-100" : "hidden opacity-0"}`}
         >
           {file.type.includes("video") ? (
-            <VideoPreview {...file} onDelete={handleDelete} />
+            <VideoPreview {...file} onDelete={handleDelete} isActive={index === currentIndex} />
           ) : file.type.includes("audio") ? (
-            <AudioPreview {...file} onDelete={handleDelete} />
+            <AudioPreview {...file} onDelete={handleDelete} isActive={index === currentIndex} />
           ) : (
             <ImagePreview {...file} onDelete={handleDelete} />
           )}

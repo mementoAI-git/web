@@ -1,10 +1,17 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type RefObject } from "react";
 import { toast } from "sonner";
 
 type MediaElement = HTMLAudioElement | HTMLVideoElement;
 
-export default function usePlayer({ src, id }?: { string; string }) {
-  const ref = useRef<MediaElement | null>(null);
+export default function usePlayer({
+  src,
+  externalRef,
+}: {
+  src: string;
+  externalRef?: RefObject<MediaElement>;
+}) {
+  const internalRef = useRef<MediaElement | null>(null);
+  const ref = externalRef || internalRef;
   const [playing, setPlaying] = useState(false);
   const [canPlay, setCanPlay] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -110,7 +117,7 @@ export default function usePlayer({ src, id }?: { string; string }) {
         media.load();
       }
     };
-  }, [src, id]);
+  }, [src]);
 
   useEffect(() => {
     const media = ref.current;

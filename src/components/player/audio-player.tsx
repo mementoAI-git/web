@@ -1,4 +1,4 @@
-import { useRef, type Ref } from "react";
+import { useRef, type Ref, type RefObject } from "react";
 import {
   Backward15Icon,
   Forward15Icon,
@@ -17,6 +17,7 @@ export interface MediaPlayerProps {
   alt?: string;
   className?: string;
   duration?: number;
+  audioRef?: RefObject<HTMLAudioElement>;
 }
 
 export default function AudioPlayer({
@@ -25,6 +26,7 @@ export default function AudioPlayer({
   className = "",
   id = null,
   duration = 0,
+  audioRef,
 }: MediaPlayerProps) {
   const {
     ref,
@@ -40,7 +42,7 @@ export default function AudioPlayer({
     isMuted,
     setVolumeLevel,
     toggleMute,
-  } = usePlayer({ src, id });
+  } = usePlayer({ src, externalRef: audioRef });
   const progressBar = useRef<HTMLDivElement | null>(null);
   const current = getDuration(media?.currentTime || 0);
   const end = getDuration(media?.duration || duration);
