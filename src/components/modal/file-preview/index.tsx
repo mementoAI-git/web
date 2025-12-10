@@ -10,18 +10,22 @@ export interface FilePreviewItem extends IFile {
 }
 
 interface FilePreviewProps {
-  data: IFile[];
+  // data: IFile[];
+  data: {
+    files: IFile[];
+    startIndex?: number;
+  };
 }
 
 export default function FilePreview({ data }: FilePreviewProps) {
-  const [index, setIndex] = useState(0);
-  const [files, setFiles] = useState<IFile[]>(data);
+  const [index, setIndex] = useState(data.startIndex ?? 0);
+  const [files, setFiles] = useState<IFile[]>(data.files);
   const { close } = useModal();
 
   useEffect(() => {
-    setFiles(data);
-    setIndex(0);
-  }, [data]);
+    setFiles(data.files);
+    setIndex(data.startIndex ?? 0);
+  }, [data.files, data.startIndex]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {

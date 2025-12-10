@@ -23,7 +23,7 @@ export default function AudioPlayer({
   src,
   alt,
   className = "",
-  id = undefined,
+  id = null,
   duration = 0,
 }: MediaPlayerProps) {
   const {
@@ -40,7 +40,7 @@ export default function AudioPlayer({
     isMuted,
     setVolumeLevel,
     toggleMute,
-  } = usePlayer();
+  } = usePlayer({ src, id });
   const progressBar = useRef<HTMLDivElement | null>(null);
   const current = getDuration(media?.currentTime || 0);
   const end = getDuration(media?.duration || duration);
@@ -65,7 +65,12 @@ export default function AudioPlayer({
             {alt}
           </span>
         )}
-        <audio ref={ref as Ref<HTMLAudioElement>} src={src} preload="auto" />
+        <audio
+          ref={ref as Ref<HTMLAudioElement>}
+          preload="metadata"
+          src={src}
+          key={id}
+        />
         <div className="space-y-2">
           <div
             ref={progressBar}
@@ -141,8 +146,6 @@ export default function AudioPlayer({
             <Forward15Icon width={24} />
           </button>
         </div>
-      </div>
-      <div className="w-full">
         {id && <Transcription id={id} currentTime={media?.currentTime || 0} />}
       </div>
       <img

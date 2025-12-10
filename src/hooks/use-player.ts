@@ -3,7 +3,7 @@ import { toast } from "sonner";
 
 type MediaElement = HTMLAudioElement | HTMLVideoElement;
 
-export default function usePlayer() {
+export default function usePlayer({ src, id }?: { string; string }) {
   const ref = useRef<MediaElement | null>(null);
   const [playing, setPlaying] = useState(false);
   const [canPlay, setCanPlay] = useState(false);
@@ -14,7 +14,9 @@ export default function usePlayer() {
   const togglePlay = () => {
     const media = ref.current;
     if (!media || !media.src) {
-      toast("Media source is missing or not supported", { className: "!text-danger" });
+      toast("Media source is missing or not supported", {
+        className: "!text-danger",
+      });
       return;
     }
     if (!canPlay) return;
@@ -24,13 +26,32 @@ export default function usePlayer() {
     } else {
       media.play();
     }
-    setPlaying((prev) => !prev);
+    // setPlaying((prev) => !prev);
   };
+
+  useEffect(() => {
+    const media = ref.current;
+    if (!media) return () => undefined;
+
+    const handlePlay = () => setPlaying(true);
+    const handlePause = () => setPlaying(false);
+
+    media.addEventListener("play", handlePlay);
+    media.addEventListener("pause", handlePause);
+
+    return () => {
+      media.removeEventListener("play", handlePlay);
+      media.removeEventListener("pause", handlePause);
+    };
+  }, []);
 
   const forward = (seconds: number = 15) => {
     const media = ref.current;
     if (!media) return;
-    media.currentTime = Math.min(media.currentTime + seconds, media.duration || 0);
+    media.currentTime = Math.min(
+      media.currentTime + seconds,
+      media.duration || 0,
+    );
   };
 
   const backward = (seconds: number = -15) => {
@@ -74,6 +95,24 @@ export default function usePlayer() {
   };
 
   useEffect(() => {
+    setPlaying(false);
+    setCanPlay(false);
+    setProgress(0);
+
+    // const media = ref.current;
+    // if (!media) return;
+
+    return () => {
+      const media = ref.current;
+      if (media) {
+        media.pause();
+        media.removeAttribute("src");
+        media.load();
+      }
+    };
+  }, [src, id]);
+
+  useEffect(() => {
     const media = ref.current;
     if (!media) {
       return () => undefined;
@@ -96,7 +135,11 @@ export default function usePlayer() {
       setProgress(progressPercent);
     };
 
-    media.oncanplay = () => {
+    // media.oncanplay = () => {
+    //   setCanPlay(true);
+    // };
+
+    media.onloadedmetadata = () => {
       setCanPlay(true);
     };
 
@@ -104,7 +147,8 @@ export default function usePlayer() {
       media.onloadstart = null;
       media.onended = null;
       media.ontimeupdate = null;
-      media.oncanplay = null;
+      // media.oncanplay = null;
+      media.onloadedmetadata = null;
     };
   }, []);
 

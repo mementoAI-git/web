@@ -10,6 +10,13 @@ import ActionBtn from "./action-btns";
 import type { FilePreviewItem } from "./index";
 
 export default function AudioPreview(props: FilePreviewItem) {
+  console.log("AudioPreview props:", {
+    url: props.url,
+    name: props.name,
+    _id: props._id,
+    // ...props,
+  });
+
   const { refs, floatingStyles } = useFloating({
     placement: "top-end",
     middleware: [offset(16), flip(), shift()],

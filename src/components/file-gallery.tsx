@@ -75,13 +75,23 @@ export default function FileGallery({ files }: { files: IFile[] }) {
   const gridLayout = getGridLayout(totalItems);
   const overflowFile = hasOverflow ? files[maxFiles] : undefined;
 
+  const handleGalleryClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLElement;
+    const fileElement = target.closest("[data-file-index]") as HTMLElement;
+
+    if (fileElement) {
+      const clickedIndex = parseInt(fileElement.dataset.fileIndex || "0", 10);
+      open?.("file-preview", { files, startIndex: clickedIndex });
+    }
+  };
+
   return (
     <div
-      onClick={() => open?.("file-preview", files)}
+      onClick={handleGalleryClick}
       className={`grid max-h[266px] w-fit gap-1 rounded-xl bg-sand-3 p-4 ${gridLayout}!`}
     >
       {displayFiles.map((file, index) => (
-        <div key={index}>
+        <div key={index} data-file-index={index} className="cursor-pointer">
           <FileGalleryItem file={file} />
         </div>
       ))}
