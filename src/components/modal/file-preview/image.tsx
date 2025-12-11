@@ -1,8 +1,8 @@
 import { useFloating, offset, flip, shift, autoUpdate } from "@floating-ui/react";
 import ActionBtn from "./action-btns";
-import type { FilePreviewItem } from "./index";
+import type { FilePreviewItemBase } from "./index";
 
-export default function ImagePreview(props: FilePreviewItem) {
+export default function ImagePreview(props: FilePreviewItemBase) {
   const { refs, floatingStyles } = useFloating({
     placement: "top-end",
     middleware: [offset(16), flip(), shift()],
