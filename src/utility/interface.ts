@@ -144,10 +144,14 @@ export interface IPrompt {
   updated_at: string;
 }
 
+export interface IPromptWithAnswer extends IPrompt {
+  answered: boolean;
+}
+
 export interface IMessage {
-  _id?: string
-  user: string
-  text: string
-  role: string // user, ai
-  created_at: string
+  _id?: string;
+  user: string;
+  text: string;
+  role: string; // user, ai
+  created_at: string;
 }
