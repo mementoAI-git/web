@@ -34,8 +34,7 @@ function DailyPrompt({ title, _id, answered }: IPromptWithAnswer) {
             Replied
           </span>
         ) : (
-          <Link
-            to={`/chat/reply/${_id}`}
+          <button
             className={cn(
               "btn w-fit md:bg-blue-6! text-sm! md:text-base! px-4! sm:px-5! py-1.5! sm:py-2.5!",
               "absolute left-0 bottom-0 opacity-0 translate-y-full pointer-events-none",
@@ -45,7 +44,7 @@ function DailyPrompt({ title, _id, answered }: IPromptWithAnswer) {
           >
             <span className="whitespace-nowrap">Reply</span>
             <ArrowRightIcon className="size-4 transition-transform duration-300 ease-out group-hover:translate-x-0.5" />
-          </Link>
+          </button>
         )}
       </div>
     </>
