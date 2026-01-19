@@ -5,12 +5,9 @@ import folderIcon from "@/assets/image/folder.png";
 import type { IPromptWithAnswer } from "@/utility/interface";
 import { ArrowRightIcon } from "@/components/icons/arrow-right-icon";
 import { CircleCheckIcon } from "@/components/icons";
-import { useIsMobile } from "@/hooks/use-is-mobile";
 import { cn } from "@/utility";
 
 function DailyPrompt({ title, _id, answered }: IPromptWithAnswer) {
-  const isMobile = useIsMobile(640);
-
   const CardContent = () => (
     <>
       <img
@@ -31,21 +28,19 @@ function DailyPrompt({ title, _id, answered }: IPromptWithAnswer) {
             Replied
           </span>
         ) : (
-          !isMobile && (
-            <Link
-              to={`/chat/reply/${_id}`}
-              className={cn(
-                "btn w-fit md:bg-blue-6! text-sm! md:text-base! px-4! sm:px-5! py-1.5! sm:py-2.5!",
-                "transition-all duration-200 ease-out",
-                "md:opacity-0 md:translate-y-1",
-                "md:group-hover:opacity-100 md:group-hover:translate-y-0",
-                "md:hidden! md:group-hover:flex!",
-              )}
-            >
-              <span className="whitespace-nowrap">Reply</span>
-              <ArrowRightIcon className="size-4 transition-transform duration-200 ease-out group-hover:translate-x-0.5" />
-            </Link>
-          )
+          <Link
+            to={`/chat/reply/${_id}`}
+            className={cn(
+              "btn w-fit md:bg-blue-6! text-sm! md:text-base! px-4! sm:px-5! py-1.5! sm:py-2.5!",
+              "transition-all duration-200 ease-out",
+              "sm:opacity-0 sm:translate-y-1",
+              "sm:group-hover:opacity-100 sm:group-hover:translate-y-0",
+              "sm:hidden! sm:group-hover:flex!",
+            )}
+          >
+            <span className="whitespace-nowrap">Reply</span>
+            <ArrowRightIcon className="size-4 transition-transform duration-200 ease-out group-hover:translate-x-0.5" />
+          </Link>
         )}
       </div>
     </>
