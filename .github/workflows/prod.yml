@@ -1,20 +1,20 @@
-name: Memento
+name: Memento Prod
 
 on:
   push:
     branches: [ "main" ]
 
 jobs:
-  build:
-    name: Build
+  deploy-prod:
+    name: Deploy to Prod
     runs-on: ubuntu-latest
     steps:
-    - name: Deploy and restart application
+    - name: Deploy and restart application (Prod)
       uses: appleboy/ssh-action@v0.1.7
       with:
-        host: ${{ secrets.PROD_SSH_HOST }}
-        username: ${{ secrets.PROD_SSH_USERNAME }}
-        password: ${{ secrets.PROD_SSH_PASSWORD }}
+        host: ${{ secrets.SSH_HOST }}
+        username: ${{ secrets.SSH_USERNAME }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
         port: 22
         script: |
           export NVM_DIR="$HOME/.nvm"
@@ -37,5 +37,3 @@ jobs:
 
           # Copy the build files to the deployment directory
           cp -r dist/* $deploy_path/
-       
-
