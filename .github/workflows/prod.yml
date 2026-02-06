@@ -32,8 +32,8 @@ jobs:
           git pull origin main
           
           # Install dependencies and compile
-          yarn install --frozen-lockfile
-          yarn build
+          pnpm install --frozen-lockfile
+          pnpm build
 
           # Copy the build files to the deployment directory
           cp -r dist/* $deploy_path/
