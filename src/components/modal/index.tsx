@@ -50,6 +50,7 @@ const MODAL_COMPONENTS = {
   "resend-invite": ResendInvite,
   setup2fa: Setup2FA,
   "chat-settings": ChatSettings,
+  // "create-capsule": CreateCapsule,
   "create-capsule": CreateCapsule,
   "delete-capsule": DeleteCapsule,
   "pause-capsule": PauseCapsule,

@@ -19,6 +19,7 @@ export const topNavigations = [
   { Icon: AiIcon, title: "My conversations", link: "/chat" },
   { Icon: DoubleHeartIcon, title: "my stories", link: "/stories" },
   { Icon: CompassIcon, title: "explore", link: "/explore" },
+  { Icon: CompassIcon, title: "time capsule", link: "/capsule" },
 ];
 
 export const bottomNavigations = [

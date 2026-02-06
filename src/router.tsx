@@ -30,6 +30,8 @@ import {
   NotFoundPage,
   ErrorPage,
 } from "@/pages";
+import TimeCapsulePage from "./pages/dashboard/time-capsule-new";
+import TimeCapsulePageFinal from "./pages/dashboard/time-capsule-new";
 
 export const router = createBrowserRouter([
   {
@@ -67,15 +69,18 @@ export const router = createBrowserRouter([
           { path: "explore/categories/:id", element: <ExploreCategoryPage /> },
           { path: "chat", element: <ChatLandingPage /> },
           { path: "chat/conversations", element: <RecentConversationPage /> },
-          { path: "chat/conversations/suggested", element: <SuggestedConversationPage /> },
+          {
+            path: "chat/conversations/suggested",
+            element: <SuggestedConversationPage />,
+          },
           { path: "chat/reply/:id", element: <ReplyPage /> },
           { path: "chat/:id", element: <ChatPage /> },
           { path: "stories", element: <StoriesPage /> },
           { path: "stories/:id", element: <StoriesDetailsPage /> },
+          { path: "capsule", element: <TimeCapsulePage /> },
         ],
       },
       { path: "*", element: <NotFoundPage /> },
     ],
   },
 ]);
-
