@@ -1,9 +1,9 @@
 @import "tailwindcss";
-@import url('https://fonts.googleapis.com/css2?family=Averia+Serif+Libre:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&family=Azeret+Mono:ital,wght@0,100..900;1,100..900&family=Bricolage+Grotesque:opsz,wght@12..96,200..800&family=EB+Garamond:ital,wght@0,400..800;1,400..800&family=Geist:wght@100..900&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Averia+Serif+Libre:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&family=Azeret+Mono:ital,wght@0,100..900;1,100..900&family=Bricolage+Grotesque:opsz,wght@12..96,200..800&family=EB+Garamond:ital,wght@0,400..800;1,400..800&family=Geist:wght@100..900&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap");
 @config "../tailwind.config.ts";
 
 :root {
-  --color-primary: #52A1DD;
+  --color-primary: #52a1dd;
   --color-secondary: rgba(0, 6, 38, 0.9);
   --color-surface: #f5f6fa;
   --color-surfaces-100: #067a57;
@@ -21,37 +21,39 @@
 
   --color-background: #fefbf8;
 
-  --color-blue-1: #F1F6FD;
-  --color-blue-2: #E9F1FC;
-  --color-blue-3: #D8E7F9;
-  --color-blue-4: #ADCFF4;
-  --color-blue-6: #52A1DD;
-  --color-blue-7: #4284B6;
+  --color-blue-1: #f1f6fd;
+  --color-blue-2: #e9f1fc;
+  --color-blue-3: #d8e7f9;
+  --color-blue-4: #adcff4;
+  --color-blue-6: #52a1dd;
+  --color-blue-7: #4284b6;
 
-  --color-gray-50: #FAFAFA;
-  --color-gray-200: #EAECF0;
-  --color-gray-300: #D0D5DD;
+  --color-gray-50: #fafafa;
+  --color-gray-200: #eaecf0;
+  --color-gray-300: #d0d5dd;
   --color-gray-400: #667085;
   --color-gray-500: #667085;
   --color-gray-600: #475467;
   --color-gray-700: #344054;
-  --color-gray-800: #1D2939;
+  --color-gray-800: #1d2939;
   --color-gray-900: #101828;
-  --color-gray-950: #1E1E1E;
+  --color-gray-950: #1e1e1e;
 
-  --color-sand-1: #FEFBF8;
-  --color-sand-2: #FBF5EB;
-  --color-sand-3: #F5EEE3;
-  --color-sand-4: #F5E7D1;
-  --color-sand-5: #EBD2A9;
-  --color-sand-6: #DDBF8F;
-  --color-sand-7: #CFAB6F;
-  --color-sand-8: #B5955E;
+  --color-sand-1: #fefbf8;
+  --color-sand-2: #fbf5eb;
+  --color-sand-3: #f5eee3;
+  --color-sand-4: #f5e7d1;
+  --color-sand-5: #ebd2a9;
+  --color-sand-6: #ddbf8f;
+  --color-sand-7: #cfab6f;
+  --color-sand-8: #b5955e;
   --color-sand-10: #846633;
-  --color-sand-11: #5C4114;
-  --color-sand-12: #412C09;
+  --color-sand-11: #5c4114;
+  --color-sand-12: #412c09;
 
   --color-orange: #e26a24;
+
+  --accent-green-3: #2d574f;
 
   --shadow-sm: 0px 1px 2px 0px rgba(16, 24, 40, 0.05);
   --shadow-btn: 0px 2px 4px -2px #00000014, 0px 4px 8px -2px #0000000a;
@@ -64,13 +66,13 @@
   --rdp-day-selected-color: #fff;
   --rdp-day-selected-background: var(--color-blue-6);
 
-  --font-garamond: 'EB Garamond', serif;
-  --font-azeret: 'Azeret Mono', monospace;
-  --font-bricolage: 'Bricolage Grotesque', serif;
-  --font-averia: 'Averia Serif Libre', serif;
-  --font-georgia: 'Georgia', serif;
-  --font-inter: 'Inter', sans-serif;
-  --font-geist: 'Geist', sans-serif;
+  --font-garamond: "EB Garamond", serif;
+  --font-azeret: "Azeret Mono", monospace;
+  --font-bricolage: "Bricolage Grotesque", serif;
+  --font-averia: "Averia Serif Libre", serif;
+  --font-georgia: "Georgia", serif;
+  --font-inter: "Inter", sans-serif;
+  --font-geist: "Geist", sans-serif;
 }
 
 @theme {
@@ -123,6 +125,8 @@
 
   --color-orange: var(--color-orange);
 
+  --color-accent-green-3: var(--accent-green-3);
+
   --shadow-btn: var(--shadow-btn);
   --shadow-sm: var(--shadow-sm);
   --shadow-drop-down: var(--shadow-drop-down);
@@ -172,8 +176,12 @@ body {
 .dynamic-height-content {
   height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
   height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
-  min-height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
-  min-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  min-height: calc(
+    100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom)
+  );
+  min-height: calc(
+    100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom)
+  );
 }
 
 .chat-messages {
@@ -273,15 +281,23 @@ body {
   }
 
   .modal-container {
-    max-height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 2rem);
-    max-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 2rem);
+    max-height: calc(
+      100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 2rem
+    );
+    max-height: calc(
+      100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 2rem
+    );
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
   }
 
   .modal-body {
-    max-height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 8rem);
-    max-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 8rem);
+    max-height: calc(
+      100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 8rem
+    );
+    max-height: calc(
+      100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 8rem
+    );
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
   }
@@ -444,7 +460,6 @@ body {
   }
 
   @keyframes gradient-shift-1 {
-
     0%,
     100% {
       opacity: 1;
