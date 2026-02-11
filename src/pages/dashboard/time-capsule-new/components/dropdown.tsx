@@ -46,8 +46,10 @@ export function CapsuleItemActions({ capsule }: { capsule: ICapsule }) {
     if (value === "edit-memory") {
       open("edit-memory", memory);
     }
-    if (value === "bookmark") {
-      toggleBookmark();
+
+    if (value === "view-capsule") {
+      console.log("view");
+      open("view-capsule", capsule);
     }
     if (value === "restore") {
       restoreMemory();

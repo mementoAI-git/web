@@ -104,36 +104,83 @@ export default function CapsulePreviewCard({
         className="mx-[18.99px] flex-1 overflow-y-auto scrollbar-hide min-h-0"
         style={{ borderColor }}
       >
-        <p className={`${sizes.body} leading-relaxed whitespace-pre-wrap py-2`}>
-          {body ||
-            "Happy birthday, Katrina. I hope you're having a great day. Decided to send this video and audio clip to remind you of how much I cherish you."}
-        </p>
-        {/* Assets with external titles */}
-        {assets.length > 0 && (
-          <div className="pb-4">
-            <p className={`${sizes.label} opacity-70 mb-3`}>assets</p>
-            <div className="grid grid-cols-2 gap-x-4 gap-y-6">
-              {assets.map((asset) => (
-                <MediaCard
-                  key={asset.id}
-                  type={asset.type}
-                  src={asset.thumbnail}
-                  duration={asset.duration}
-                  title={asset.title}
-                  onClick={() => onAssetClick?.(asset)}
-                />
-              ))}
+        {/* Decorations - z-0 (background) */}
+        {currentTheme?.decorations?.map((decoration, index) =>
+          renderDecoration(decoration, index),
+        )}
+
+        <div className="py-4 z-10 ">
+          {/* Fixed Header: To + Recipients - z-10 (above decorations) */}
+          <div className="p-[18.99px] pb-3 shrink-0 flex items-center relative z-10">
+            <span className={`${sizes.label} opacity-70`}>To:</span>
+            <div className="flex flex-wrap gap-1">
+              {recipients.length > 0 ? (
+                recipients.map((recipient, index) => (
+                  <span
+                    key={index}
+                    className={`inline-flex items-center gap-1 px-3 py-1 rounded-full ${sizes.label} font-medium bg-black/5`}
+                    style={{ color: textColor }}
+                  >
+                    {recipient}
+                  </span>
+                ))
+              ) : (
+                <span className={`${sizes.label} opacity-50 italic`}>
+                  No recipients
+                </span>
+              )}
             </div>
           </div>
-        )}
-      </div>
 
-      {/* Fixed Footer: From */}
-      <div
-        className="p-[18.99px] pt-3 border-t shrink-0 text-end"
-        style={{ borderColor, color: textColor }}
-      >
-        <span className={sizes.label}>from {sender}</span>
+          {/* Fixed Title Section - z-10 */}
+          <div
+            className="mx-[18.99px] border-t py-3 shrink-0 relative z-10"
+            style={{ borderColor }}
+          >
+            <span
+              className={`${sizes.title} leading-tight font-semibold font-garamond block`}
+            >
+              {title}
+            </span>
+          </div>
+
+          {/* Scrollable Body - z-10 */}
+          <div
+            className="mx-[18.99px] flex-1 overflow-y-auto scrollbar-hide min-h-0 relative z-10"
+            style={{ borderColor }}
+          >
+            <p
+              className={`${sizes.body} overflow-hidden leading-relaxed whitespace-pre-wrap py-2 min-h-[600px]`}
+            >
+              {body}
+            </p>
+            {/* Assets with external titles */}
+            {assets.length > 0 && (
+              <div className="pb-4">
+                <div className="grid grid-cols-2 gap-x-4 gap-y-6">
+                  {assets.map((asset) => (
+                    <MediaCard
+                      key={asset.id}
+                      type={asset.type}
+                      src={asset.thumbnail}
+                      duration={asset.duration}
+                      title={asset.title}
+                      onClick={() => onAssetClick?.(asset)}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Fixed Footer: From - z-10 */}
+          <div
+            className="p-[18.99px] pt-3 border-t shrink-0 text-end relative z-10"
+            style={{ borderColor, color: textColor }}
+          >
+            <span className={sizes.label}>from {sender}</span>
+          </div>
+        </div>
       </div>
     </div>
   );
