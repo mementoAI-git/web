@@ -1,5 +1,5 @@
 import { useState, type KeyboardEvent } from "react";
-import type { ITexinput } from "./text-input";
+import type { ITexinput } from "@/components/Form/text-input";
 import { TimesIcon } from "@/components/icons";
 import { isEmpty } from "@/utility";
 

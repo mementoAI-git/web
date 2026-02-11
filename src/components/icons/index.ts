@@ -85,3 +85,4 @@ export { MenuIcon } from "./menu";
 export { UserCircleIcon } from "./user-circle";
 export { BookmarkSolidIcon } from "./bookmark-solid";
 export { ImagePlusIcon } from "./image-plus-icon";
+export { ClockStopwatch } from "./clock-stopwatch";

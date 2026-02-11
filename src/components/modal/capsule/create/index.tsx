@@ -1,7 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import * as yup from "yup";
-import dayjs from "dayjs";
-import { Dateinput, Taginput } from "@/components/Form";
+import { Taginput } from "@/components/Form";
 import { ModalCloseBtn } from "../../modalLayout";
 import { useModal } from "@/hooks/use-modal";
 import useFetcher from "@/hooks/use-fetcher";
@@ -13,9 +12,10 @@ import FileAttachment from "@/components/file-attachment";
 import useFileUpload from "@/hooks/use-file-upload";
 import { isEmpty, cn } from "@/utility";
 import useSWR, { mutate } from "swr";
-import type { IOnUploadPayload } from "@/utility/interface";
+import type { IOnUploadPayload, IMemory, IFile } from "@/utility/interface";
 import { ImagePlusIcon } from "@/components/icons";
 import SelectFromMemory from "../../select-from-memory";
+import SelectFromMedia from "../../select-from-media";
 import DateOptionsDropdown from "@/pages/dashboard/time-capsule-new/components/DateInputWithCustomDropdown";
 import DatePicker from "@/components/date-picker";
 import BrowseFileBtn from "./browse-file-btn";
@@ -30,6 +30,9 @@ import {
   CAPSULE_SUPPORTED_FILE_TYPES,
   EXTENSION_TO_MIME,
 } from "@/utility/constant";
+
+import TimeCapsuleBadge from "@/pages/dashboard/time-capsule-new/components/TimeCapsuleBadge";
+import { useStore } from "@/hooks/use-store";
 
 const schema = yup.object().shape({
   delivery_date: yup.date().required("Delivery date is required"),
@@ -49,6 +52,7 @@ const initial = {
 
 interface CreateCapsuleProps {
   data?: any;
+  mode?: "create" | "edit" | "view"; // NEW: support view mode
 }
 
 function DatePickerWrapper({
@@ -86,44 +90,59 @@ function DatePickerWrapper({
   );
 }
 
-export default function CreateCapsule({ data = null }: CreateCapsuleProps) {
+export default function CreateCapsule({
+  data = null,
+  mode = "create",
+}: CreateCapsuleProps) {
+  // NEW: State to track current mode (can toggle between view and edit)
+  const [currentMode, setCurrentMode] = useState<"view" | "edit">(
+    mode === "view" ? "view" : "edit",
+  );
+
+  const isEditMode = !isEmpty(data) && currentMode === "edit";
+  const isViewMode = currentMode === "view";
+
   const { close } = useModal();
+  const { user } = useStore();
   const { files, handleUpload, handleDeleteFile } = useFileUpload();
   const { trigger, isMutating } = useFetcher(
     isEmpty(data) ? endpoint.capsule : `${endpoint.capsule}/${data?._id}`,
     isEmpty(data) ? "post" : "put",
   );
   const [page] = useState(1);
-  const { data: beneficiaries, isLoading } = useSWR(
-    `${endpoint.beneficiaries}?page=${page}`,
+  const { data: beneficiaries } = useSWR(
+    endpoint.beneficiaries,
+    undefined,
+    {
+      revalidateIfStale: false,
+    },
   );
-
   const { data: recentMedia } = useSWR(`${endpoint.files}?page=${page}`);
-
-  // const { data: beneficiaries } = useFetcher(endpoint.beneficiaries);
-  // console.log(beneficiaries, "beneficiaries")
-  useEffect(() => {
-    // console.log(beneficiaries);
-    if (recentMedia) console.log(recentMedia);
-    // console.log(beneficiaries.data.docs);
-  }, [beneficiaries, recentMedia]);
+  const [selectedMedia, setSelectedMedia] = useState<any[]>([]);
 
   const [showMemoryList, setShowMemoryList] = useState(false);
+  const [showMediaList, setShowMediaList] = useState(false);
 
+  // Form setup
   const onSubmit = async (
     payload: any,
     { setValues }: { setValues: (values: typeof initial) => void },
   ) => {
     const submission = { ...payload };
-    if (!isEmpty(files)) {
-      submission.attachments = files
+
+    const uploadedIds = !isEmpty(files)
+      ? files
         .map((file) => file.uploadedFile?._id)
-        .filter((id): id is string => Boolean(id));
-    }
+        .filter((id): id is string => Boolean(id))
+      : [];
+
+    const selectedMediaIds = selectedMedia.map((m) => m.id || m._id);
+
+    submission.attachments = [...uploadedIds, ...selectedMediaIds];
 
     const result = await trigger(submission);
     if (result?.success) {
-      toast.success(result?.message);
+      toast.custom(() => <TimeCapsuleBadge />);
       mutate(`${endpoint.capsule}?page=1`);
       setValues(initial);
       close?.("create-capsule");
@@ -137,25 +156,13 @@ export default function CreateCapsule({ data = null }: CreateCapsuleProps) {
     handleSubmit,
     handleChange,
     handleValue,
-    getField,
   } = useForm({
     initial,
     schema,
     onSubmit,
   });
 
-  const handleSaveToDraft = (event: React.FormEvent<HTMLButtonElement>) => {
-    if (isMutating) return;
-    handleValue("status", "draft");
-    handleSubmit(event as unknown as React.FormEvent<HTMLFormElement>);
-  };
-
-  const handleSave = (event: React.FormEvent<HTMLFormElement>) => {
-    if (isMutating) return;
-    handleValue("status", "scheduled");
-    handleSubmit(event);
-  };
-
+  // Initialize form when data changes
   useEffect(() => {
     if (data) {
       setValues({
@@ -168,29 +175,92 @@ export default function CreateCapsule({ data = null }: CreateCapsuleProps) {
             (recipient: { email: string }) => recipient.email,
           ) || [],
       });
+
+      // Pre-populate attachments
+      if (data?.attachments && Array.isArray(data.attachments)) {
+        const mediaItems = data.attachments.map((attachment: any) => ({
+          id: attachment._id,
+          _id: attachment._id,
+          type: attachment.type?.split("/")[0] || "image",
+          thumbnail: attachment.url || attachment.thumbnail,
+          title: attachment.name || attachment.title,
+          url: attachment.url,
+          duration: attachment.duration,
+        }));
+        setSelectedMedia(mediaItems);
+      }
     }
   }, [data, setValues]);
 
-  const renderFileAttachment = (file: IOnUploadPayload) => (
-    <FileAttachment
-      key={file.id}
-      onDelete={handleDeleteFile}
-      progressType="text"
-      file={file}
-      className="max-w-67 bg-white"
-    />
-  );
+  // Card style state
+  const [cardStyle, setCardStyle] = useState<CardCustomization>({
+    backgroundColor: "#E2EADF",
+    fontFamily: "Geist Mono",
+    fontSize: "1x",
+    textColor: "#2C3E2F",
+    headerColor: "#1A2419",
+  });
 
-  // Handle file drop
+  // Build preview assets
+  const previewAssets = [
+    ...files.map((f) => ({
+      id: f.id,
+      type: (f.file?.type?.split("/")[0] || "image") as
+        | "image"
+        | "video"
+        | "audio",
+      thumbnail: f.base64 || "",
+      title: f.file?.name || "Uploaded file",
+    })),
+    ...selectedMedia.map((m) => ({
+      id: m.id || m._id,
+      type: (m.isMemory
+        ? "memory"
+        : m.type?.includes("video")
+          ? "video"
+          : m.type?.includes("audio")
+            ? "audio"
+            : "image") as "image" | "video" | "audio" | "memory",
+      thumbnail: m.url || m.thumbnail || m.attachments?.[0]?.url || "",
+      title: m.title || m.name || "Media file",
+      duration: m.duration,
+    })),
+  ];
+
+  // Map recipients to names for preview
+  const previewRecipients = values.recipients.map((email) => {
+    const beneficiary = beneficiaries?.data?.docs?.find(
+      (b: any) => b.email === email,
+    );
+    return beneficiary?.name || beneficiary?.user?.name || email;
+  });
+
+  // Handlers
+  const handleStyleChange = (updates: Partial<CardCustomization>) => {
+    setCardStyle((prev) => ({ ...prev, ...updates }));
+  };
+
+  const handleEditClick = () => {
+    if (!data) {
+      toast.error("No capsule data available to edit");
+      return;
+    }
+    setCurrentMode("edit");
+  };
+
+  const handleCloseClick = () => {
+    close?.("create-capsule");
+    close?.("view-capsule");
+    close?.("edit-capsule");
+  };
+
+  // File drop handler
   const handleFileDrop = useCallback(
     (droppedFiles: FileList) => {
       const MAX_FILE_SIZE = 120 * 1024 * 1024;
 
       Array.from(droppedFiles).forEach((file) => {
-        // Get extension from filename
         const extension = `.${file.name.split(".").pop()?.toLowerCase()}`;
-
-        // Check by MIME type first, then by extension fallback
         const isValidType =
           CAPSULE_SUPPORTED_FILE_TYPES.includes(file.type as any) ||
           (EXTENSION_TO_MIME[extension] &&
@@ -222,166 +292,222 @@ export default function CreateCapsule({ data = null }: CreateCapsuleProps) {
     onDrop: handleFileDrop,
   });
 
-  // const recipients = [
-  //   {
-  //     id: "1",
-  //     name: "Katrina",
-  //     relationship: "Daughter",
-  //     avatar: "/avatars/katrina.jpg",
-  //   },
-  //   {
-  //     id: "2",
-  //     name: "Frank",
-  //     relationship: "Brother",
-  //     avatar: "/avatars/frank.jpg",
-  //   },
-  //   {
-  //     id: "3",
-  //     name: "Aina",
-  //     relationship: "Friend",
-  //     avatar: "/avatars/aina.jpg",
-  //   },
-  //   {
-  //     id: "4",
-  //     name: "Eve",
-  //     relationship: "Daughter",
-  //     avatar: "/avatars/eve.jpg",
-  //   },
-  //   {
-  //     id: "5",
-  //     name: "John",
-  //     relationship: "Son",
-  //     avatar: "/avatars/john.jpg",
-  //   },
-  // ];
+  const handleRecipientSelect = (recipient: any) => {
+    const email = recipient.email;
+    if (!email) return;
 
-  // {
-  //     "_id": "69392e37f76458c1d4a66ef6",
-  //     "type": "audio/webm",
-  //     "size": 296030,
-  //     "name": "recorded_251210092400.webm",
-  //     "user": "692fd53a55d5c61cfb0b586a",
-  //     "duration": null,
-  //     "deleted": false,
-  //     "__v": 0,
-  //     "created_at": "2025-12-10T08:24:23.323Z",
-  //     "updated_at": "2025-12-10T08:25:10.555Z",
-  //     "transcription": {
-  //         "full_text": "All right, so I'm running my final tests now to check the transcription and also check the speed of response from the AI model. So, mic check, mic check.",
-  //         "segments": [
-  //             {
-  //                 "start": 0,
-  //                 "end": 6.2,
-  //                 "text": "All right, so I'm running my final tests now to check the transcription."
-  //             },
-  //             {
-  //                 "start": 6.2,
-  //                 "end": 12.3,
-  //                 "text": "And also check the speed of response from the AI model."
-  //             },
-  //             {
-  //                 "start": 12.3,
-  //                 "end": 14.8,
-  //                 "text": "So, mic check, mic check."
-  //             }
-  //         ]
-  //     },
-  //     "url": "http://localhost:5002/files/recorded_251210092400.webm",
-  //     "id": "69392e37f76458c1d4a66ef6"
-  // }
+    const currentRecipients = values.recipients || [];
+    const isSelected = currentRecipients.includes(email);
 
-  const mediaItems = [
-    { id: "1", type: "video", thumbnail: "/sunset-pier.jpg" },
-    { id: "2", type: "image", thumbnail: "/sunset-bird.jpg" },
-    { id: "3", type: "image", thumbnail: "/phone-screen.jpg" },
-    { id: "4", type: "audio", thumbnail: "/waveform-bg.jpg" },
-    { id: "5", type: "video", thumbnail: "/more-content.jpg" },
-  ];
-
-  const assets = [
-    {
-      id: "1",
-      type: "audio",
-      thumbnail: "/audio-waveform.jpg",
-      duration: "00:32:24",
-      title: "My advice on life and meaning",
-    },
-    {
-      id: "2",
-      type: "video",
-      thumbnail: "/katrina-walk.jpg",
-      title: "Katrina's first walk in the backyard",
-    },
-  ];
-
-  const [cardStyle, setCardStyle] = useState<CardCustomization>({
-    backgroundColor: "#E2EADF",
-    fontFamily: "Geist Mono",
-    fontSize: "2xl",
-  });
-
-  const handleStyleChange = (updates: Partial<CardCustomization>) => {
-    setCardStyle((prev) => ({ ...prev, ...updates }));
+    let newRecipients;
+    if (isSelected) {
+      newRecipients = currentRecipients.filter((r) => r !== email);
+    } else {
+      newRecipients = [...currentRecipients, email];
+    }
+    handleValue("recipients", newRecipients);
   };
+
+  const handleMediaSelect = (item: any) => {
+    const id = item.id || item._id;
+    const isSelected = selectedMedia.some((m) => (m.id || m._id) === id);
+
+    if (isSelected) {
+      setSelectedMedia((prev) => prev.filter((m) => (m.id || m._id) !== id));
+    } else {
+      setSelectedMedia((prev) => [...prev, item]);
+    }
+  };
+
+  const handleSaveToDraft = (event: React.FormEvent<HTMLButtonElement>) => {
+    if (isMutating) return;
+    handleValue("status", "draft");
+    handleSubmit(event as unknown as React.FormEvent<HTMLFormElement>);
+  };
+
+  const handleSave = (event: React.FormEvent<HTMLFormElement>) => {
+    if (isMutating) return;
+    handleValue("status", "scheduled");
+    handleSubmit(event);
+  };
+
+  const renderFileAttachment = (file: IOnUploadPayload) => (
+    <FileAttachment
+      key={file.id}
+      onDelete={handleDeleteFile}
+      progressType="text"
+      file={file}
+      className="max-w-67 bg-white"
+    />
+  );
 
   const handleMemoryClose = useCallback(() => {
     setShowMemoryList(false);
   }, []);
 
-  const handleMemoryAddRecipient = useCallback(
-    (recipients: string[]) => {
-      handleValue("recipients", recipients);
-    },
-    [handleValue],
-  );
+  const handleMediaListClose = useCallback(() => {
+    setShowMediaList(false);
+  }, []);
 
+  const handleMemorySelectionConfirm = useCallback((memories: IMemory[]) => {
+    setSelectedMedia((prev) => {
+      const mappedMemories = memories.map((m) => ({
+        id: m._id,
+        _id: m._id,
+        type: m.attachments?.[0]?.type?.includes("video") ? "video" : "image",
+        thumbnail: m.attachments?.[0]?.url || "",
+        title: m.title,
+        attachments: m.attachments,
+        isMemory: true,
+      }));
+
+      const existingIds = prev.map((p) => p.id || p._id);
+      const newItems = mappedMemories.filter(
+        (m) => !existingIds.includes(m.id),
+      );
+      return [...prev, ...newItems];
+    });
+  }, []);
+
+  const handleMediaSelectionConfirm = useCallback((files: IFile[]) => {
+    setSelectedMedia((prev) => {
+      const mappedFiles = files.map((f) => ({
+        id: f._id,
+        _id: f._id,
+        type: f.type.split("/")[0] || "image",
+        thumbnail: f.url,
+        title: f.name,
+        url: f.url,
+        duration: f.duration,
+      }));
+
+      const existingIds = prev.map((p) => p.id || p._id);
+      const newItems = mappedFiles.filter((m) => !existingIds.includes(m.id));
+      return [...prev, ...newItems];
+    });
+  }, []);
+
+  // Sub-views for memory/media selection
   if (showMemoryList) {
     return (
       <SelectFromMemory
-        value={values.recipients}
+        selectedIds={selectedMedia.map((m) => m.id || m._id)}
         handleClose={handleMemoryClose}
-        onAddRecipient={handleMemoryAddRecipient}
+        onConfirm={handleMemorySelectionConfirm}
       />
     );
   }
 
+  if (showMediaList) {
+    return (
+      <SelectFromMedia
+        selectedIds={selectedMedia.map((m) => m.id || m._id)}
+        handleClose={handleMediaListClose}
+        onConfirm={handleMediaSelectionConfirm}
+      />
+    );
+  }
+
+  const isFormValid =
+    values.delivery_date &&
+    values.title.trim() !== "" &&
+    values.body.trim() !== "" &&
+    values.recipients.length > 0;
+
+  // ==================== VIEW MODE ====================
+  if (isViewMode) {
+    return (
+      <>
+        <div className="max-w-[1440px] flex flex-col justify-center items-center max-h-[900px] h-full w-full relative">
+          <ModalCloseBtn onClick={handleCloseClick} />
+
+          <div className="flex flex-col items-center justify-center w-full">
+            <div className="bg-black/60 gap-6 h-fit mt-10 min-w-[560px] max-w-5xl w-full rounded-2xl py-8 px-6 lg:px-24 flex flex-col items-center">
+              <StyleControls
+                cardStyle={cardStyle}
+                onStyleChange={handleStyleChange}
+              />
+
+              <div className="h-[770px] w-full">
+                <CapsulePreviewCard
+                  style={cardStyle}
+                  recipients={previewRecipients}
+                  title={values.title}
+                  body={values.body}
+                  assets={previewAssets}
+                  sender={user}
+                  onAssetClick={(asset) => console.log("Clicked:", asset)}
+                  className="h-full w-full p-6"
+                />
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center justify-end gap-4 w-full">
+                <button
+                  type="button"
+                  onClick={handleCloseClick}
+                  className="btn-outline"
+                >
+                  Close
+                </button>
+
+                <button type="submit" onClick={handleEditClick} className="btn">
+                  Edit Capsule
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  // ==================== EDIT/CREATE MODE ====================
   return (
     <div className="max-w-[1440px] flex flex-col justify-center max-h-[900px] h-full w-full">
-      <div className="grid grid-cols-1 lg:grid-cols-[55%_45%] gap-3">
+      <div className="grid grid-cols-1 lg:grid-cols-[55%_45%] gap-10">
+        {/* Left: Preview Card (Smaller in edit mode) */}
         <div className="flex justify-center w-full">
-          <div className="bg-black/60 gap-6 h-fit mt-10 w-[640px] rounded-2xl py-8 px-6 lg:px-24 flex flex-col items-center">
+          <div className="bg-black/60 gap-6 h-fit mt-10 min-w-[560px] w-full rounded-2xl py-8 px-6 lg:px-24 flex flex-col items-center">
             <StyleControls
               cardStyle={cardStyle}
               onStyleChange={handleStyleChange}
             />
 
-            <div className="h-[770px]">
-              {/*<CapsulePreviewCard
-                className="h-full"
-                style={cardStyle}
-                recipients={values.recipients}
-                title={values.title}
-                body={values.body}
-                sender="Groot"
-              />*/}
-
+            <div className="h-[770px] w-full">
               <CapsulePreviewCard
                 style={cardStyle}
-                recipients={values.recipients}
+                recipients={previewRecipients}
                 title={values.title}
                 body={values.body}
-                assets={assets}
+                assets={previewAssets}
+                sender={user}
                 onAssetClick={(asset) => console.log("Clicked:", asset)}
-                className="h-full"
+                className="h-full w-full p-6"
               />
             </div>
           </div>
         </div>
 
+        {/* Right: Form */}
         <div className="modal-container overflow-auto scrollbar-hide">
-          <ModalCloseBtn onClick={() => close?.("create-capsule")} />
+          <ModalCloseBtn onClick={handleCloseClick} />
           <div className="space-y-6">
-            <h4 className="modal-title">Create Capsule</h4>
+            <div className="flex items-center justify-between">
+              <h4 className="modal-title">
+                {isEditMode ? "Edit Capsule" : "Create Capsule"}
+              </h4>
+              {/* Optional: Back to view button */}
+              {/*{data && (
+                <button
+                  onClick={() => setCurrentMode("view")}
+                  className="text-sm text-gray-500 hover:text-gray-700 underline"
+                >
+                  Preview
+                </button>
+              )}*/}
+            </div>
+
             <form onSubmit={handleSave} className="space-y-6">
               <Taginput
                 values={values.recipients}
@@ -401,7 +527,8 @@ export default function CreateCapsule({ data = null }: CreateCapsuleProps) {
                 <span className="mb-2 block">Beneficiaries</span>
                 <RecentRecipients
                   recipients={beneficiaries?.data?.docs}
-                  onSelect={(recipient) => console.log("Selected:", recipient)}
+                  selectedRecipients={values.recipients}
+                  onSelect={handleRecipientSelect}
                   onSeeAll={() => console.log("See all clicked")}
                 />
               </div>
@@ -460,12 +587,12 @@ export default function CreateCapsule({ data = null }: CreateCapsuleProps) {
               </div>
 
               <div>
-                <span className="bloc mb-2">Recent</span>
+                <span className="block mb-2">Recent</span>
                 <RecentMedia
-                  // items={mediaItems}
                   items={recentMedia?.data?.docs}
-                  onSelect={(item) => console.log("Selected:", item)}
-                  onSeeMore={() => console.log("See more clicked")}
+                  selectedItems={selectedMedia.map((m) => m.id || m._id)}
+                  onSelect={handleMediaSelect}
+                  onSeeMore={() => setShowMediaList(true)}
                 />
               </div>
 
@@ -518,18 +645,25 @@ export default function CreateCapsule({ data = null }: CreateCapsuleProps) {
 
               <div className="flex items-center justify-end">
                 <div className="flex items-center gap-3">
+                  {!isEditMode && (
+                    <button
+                      type="button"
+                      className="btn-outline"
+                      onClick={handleSaveToDraft}
+                    >
+                      Save to draft
+                      {values.status === "draft" && (
+                        <Spinner loading={isMutating} className="size-4!" />
+                      )}
+                    </button>
+                  )}
+
                   <button
-                    type="button"
-                    className="btn-outline"
-                    onClick={handleSaveToDraft}
+                    type="submit"
+                    className="btn"
+                    disabled={!isFormValid || isMutating}
                   >
-                    Save to draft
-                    {values.status === "draft" && (
-                      <Spinner loading={isMutating} className="size-4!" />
-                    )}
-                  </button>
-                  <button type="submit" className="btn">
-                    Schedule Capsule
+                    {isEditMode ? "Update Capsule" : "Schedule Capsule"}
                     {values.status === "scheduled" && (
                       <Spinner loading={isMutating} className="size-4!" />
                     )}

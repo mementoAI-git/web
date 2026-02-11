@@ -19,7 +19,7 @@ function ImageThumbnailItem({
   name,
   size = 68.78,
 }: IFile & { size: number }) {
-  if (type.includes("image")) {
+  if (type?.includes("image")) {
     return (
       <img
         width={size}
@@ -33,7 +33,7 @@ function ImageThumbnailItem({
   return (
     <div className="size-full justify-center items-center flex bg-grey-500">
       {
-        type.includes('video') ?
+        type?.includes('video') ?
           <PlayIcon width={size * 0.6} height={size * 0.6} /> :
           <QIcon width={size * 0.6} height={size * 0.6} />
       }

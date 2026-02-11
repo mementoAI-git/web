@@ -2,15 +2,18 @@
 import AudioCard from "./AudioCard";
 import VideoCard from "./VideoCard";
 import ImageCard from "./ImageCard";
+import MemoryCard from "./MemoryCard";
+import type { CardCustomization } from "../CapsulePreviewCard";
 
 interface MediaCardProps {
-  type: "audio" | "video" | "image";
+  type: "audio" | "video" | "image" | "memory";
   src?: string;
   thumbnail?: string;
   duration?: string;
   title: string;
   onClick?: () => void;
   className?: string;
+  style?: CardCustomization;
 }
 
 export default function MediaCard({
@@ -20,6 +23,7 @@ export default function MediaCard({
   duration,
   title,
   onClick,
+  style,
   className = "",
 }: MediaCardProps) {
   const mediaSrc = src || thumbnail || "";
@@ -31,7 +35,8 @@ export default function MediaCard({
           duration={duration || "00:00"}
           title={title}
           onClick={onClick}
-          className={className}
+          style={style}
+          className={`${className}`}
         />
       );
     case "video":
@@ -40,6 +45,7 @@ export default function MediaCard({
           thumbnail={mediaSrc}
           title={title}
           onClick={onClick}
+          style={style}
           className={className}
         />
       );
@@ -47,6 +53,16 @@ export default function MediaCard({
       return (
         <ImageCard
           src={mediaSrc}
+          title={title}
+          onClick={onClick}
+          style={style}
+          className={className}
+        />
+      );
+    case "memory":
+      return (
+        <MemoryCard
+          thumbnail={mediaSrc}
           title={title}
           onClick={onClick}
           className={className}

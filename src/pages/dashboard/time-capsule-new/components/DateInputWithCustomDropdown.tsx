@@ -100,7 +100,7 @@ export default function DateOptionsDropdown({
       {/* Trigger Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full px-4 py-2 text-left bg-white border border-gray-300 rounded-lg hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 flex items-center justify-between"
+        className="w-full px-4 py-2 text-left bg-white border border-gray-300 rounded-lg hover:border-gray-400 focus:outline-none focus:ring-1 focus:ring-green-0 flex items-center justify-between"
       >
         <span>{selectedLabel}</span>
         <svg

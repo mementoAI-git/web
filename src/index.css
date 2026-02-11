@@ -53,6 +53,8 @@
 
   --color-orange: #e26a24;
 
+  --color-green-0: #b1c6a9;
+
   --color-weak: #1e1e1eb2;
   --color-strong: #1e1e1ee5;
 
@@ -74,6 +76,28 @@
   --font-georgia: "Georgia", serif;
   --font-inter: "Inter", sans-serif;
   --font-geist: "Geist", sans-serif;
+
+  /* SHADCN */
+  --radius: 0.5rem;
+  --background: #fefbf8;
+  --foreground: rgba(0, 6, 38, 0.9);
+  --card: #ffffff;
+  --card-foreground: rgba(0, 6, 38, 0.9);
+  --popover: #ffffff;
+  --popover-foreground: rgba(0, 6, 38, 0.9);
+  --primary: #52a1dd;
+  --primary-foreground: #ffffff;
+  --secondary: #f5f6fa;
+  --secondary-foreground: rgba(0, 6, 38, 0.9);
+  --muted: #f5f6fa;
+  --muted-foreground: rgba(0, 9, 51, 0.65);
+  --accent: #0000000d;
+  --accent-foreground: #412c09;
+  --destructive: #f97066;
+  --destructive-foreground: #ffffff;
+  --border: rgba(0, 17, 102, 0.1);
+  --input: rgba(0, 17, 102, 0.1);
+  --ring: #52a1dd;
 }
 
 @theme {
@@ -126,6 +150,8 @@
 
   --color-orange: var(--color-orange);
 
+  --color-green-0: var(--color-green-0);
+
   --color-weak: var(--color-weak);
   --color-strong: var(--color-strong);
 
@@ -142,6 +168,31 @@
   --font-georgia: var(--font-georgia);
   --font-garamond: var(--font-garamond);
   --font-azeret: var(--font-azeret);
+
+  /* SHADCN */
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
 }
 
 body {
@@ -353,10 +404,6 @@ body {
 
   .animate-fadeIn {
     animation: fadeIn 0.3s ease-in-out;
-  }
-
-  .animate-slideIn {
-    animation: slideIn 0.4s ease-out;
   }
 
   @keyframes fadeIn {

@@ -1,15 +1,21 @@
+import TextHighlight from "../TextHighlight";
+import { getAdjustedBackground } from "./helpers";
+import type { CardCustomization } from "../CapsulePreviewCard";
+
 // components/media-cards/VideoCard.tsx
 interface VideoCardProps {
   thumbnail: string;
   title: string;
   onClick?: () => void;
   className?: string;
+  style?: CardCustomization;
 }
 
 export default function VideoCard({
   thumbnail,
   title,
   onClick,
+  style,
   className = "",
 }: VideoCardProps) {
   return (
@@ -44,11 +50,22 @@ export default function VideoCard({
       </div>
 
       {/* Title - Outside the card */}
-      <div className="mt-2">
+      {/*<div className="mt-2">
         <span className="inline-block text-center bg-white px-3 py-1.5 rounded-lg text-xs font-medium text-gray-900 shadow-sm line-clamp-2 max-w-full">
           {title}
         </span>
-      </div>
+      </div>*/}
+
+      <TextHighlight
+        style={{
+          backgroundColor: getAdjustedBackground(
+            style.backgroundColor,
+            style.textColor || "#ffffff",
+          ),
+        }}
+      >
+        {title}
+      </TextHighlight>
     </div>
   );
 }

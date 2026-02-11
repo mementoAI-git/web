@@ -3,57 +3,53 @@ import { CapsuleEmptyState } from "./CapsuleEmptyState";
 import { CalendarIcon } from "@/components/icons";
 import ImageThumbnail from "./ImageThumbnail";
 import { Link } from "react-router-dom";
-import { DotsVerticalIcon } from "./icons/DotsVerticalIcon";
 import StatusBadge from "./StatusBadge";
-import { useState } from "react";
 import dayjs from "dayjs";
 import { CapsuleItemActions } from "./dropdown";
 
 function CapsuleListItem({ capsule }: { capsule: ICapsule }) {
-  const [isHovered, setIsHovered] = useState(false);
-
   return (
     <div className="flex min-h-60 w-full flex-col gap-3 sm:gap-4 rounded-xl sm:rounded-2xl bg-gray-200 p-0.5 sm:p4 border-gray-200 border hover:border-sand-8">
       <div className=" bg-white rounded-xl p-2 flex  gap-4">
-        <div
-          className="relative  flex h-[120px] sm:h-[138px] overflow-hidden w-40 items-center justify-center rounded-lg bg-[#F3F3F3]"
-          onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={() => setIsHovered(false)}
-        >
-          {capsule?.attachments?.length === 1 &&
-          capsule?.attachments[0]?.type?.includes("image") ? (
-            <img
-              src={capsule?.attachments[0].url}
-              alt={capsule.title}
-              className="object-cover w-full h-full"
-            />
-          ) : capsule?.attachments?.length > 0 ? (
-            <Link to={`/capsules/${capsule?._id}`} className="size-fit">
-              <ImageThumbnail
-                images={capsule?.attachments}
-                size={68.78}
-                boxClassName="!border-[2px] !rounded-[11.96px]"
-              />
-            </Link>
-          ) : (
-            // Placeholder for capsules without attachments
-            <div className="flex items-center justify-center w-full h-full text-gray-400">
-              <span className="text-sm">No images</span>
-            </div>
-          )}
+        <div className="relative  flex h-[120px] sm:h-[138px] overflow-hidden w-40 items-center justify-center rounded-lg bg-[#F3F3F3]">
+          {(() => {
+            // Extract uploaded files from upload payloads
+            const uploadedFiles = capsule?.attachments
+              ?.map(a => a.uploadedFile)
+              .filter((f): f is NonNullable<typeof f> => f != null) || [];
 
-          {/*{isHovered && (
-            <div className="absolute top-4 right-4 bg-white rounded-md shadow-md">
-              <capsuleItemActions memory={memory} />
-            </div>
-          )}*/}
+            if (uploadedFiles.length === 1 && uploadedFiles[0]?.type?.includes("image")) {
+              return (
+                <img
+                  src={uploadedFiles[0].url}
+                  alt={capsule.title}
+                  className="object-cover w-full h-full"
+                />
+              );
+            } else if (uploadedFiles.length > 0) {
+              return (
+                <Link to={`/capsules/${capsule?._id}`} className="size-fit">
+                  <ImageThumbnail
+                    images={uploadedFiles}
+                    size={68.78}
+                    boxClassName="!border-[2px] !rounded-[11.96px]"
+                  />
+                </Link>
+              );
+            } else {
+              return (
+                <div className="flex items-center justify-center w-full h-full text-gray-400">
+                  <span className="text-sm">No images</span>
+                </div>
+              );
+            }
+          })()}
         </div>
 
-        <div className="flex-1">
+        <div className="flex-1 overflow-hidden">
           <div className="flex justify-between">
             <StatusBadge status={capsule.status || "draft"} />
             <div>
-              {/*<DotsVerticalIcon width={20} height={20} />*/}
               <CapsuleItemActions capsule={capsule} />
             </div>
           </div>
@@ -62,20 +58,60 @@ function CapsuleListItem({ capsule }: { capsule: ICapsule }) {
             {capsule.title}
           </span>
 
-          <div className="border-t border-gray-50 pt-2 pb-3">
+          <p className="line-clamp-2 border-t border-gray-50 pt-2 text-xs">
             {capsule.body}
-          </div>
+          </p>
 
           <div className="bg-gray-50 rounded-lg p-2 flex flex-col gap-1 mt-3">
-            <div className="flex justify-between">
+            <div className="flex justify-between text-xs">
               To:
-              <div>
-                {/*<img src={memory.recipients[0]}></img>*/}
-                {capsule.recipients[0].email}
+              <div className="flex items-center gap-1.5">
+                {capsule.recipients.length > 0 ? (
+                  <>
+                    {/* First recipient with avatar */}
+                    <div className="flex items-center gap-1.5">
+                      {capsule.recipients[0].picture_url ? (
+                        <img
+                          src={capsule.recipients[0].picture_url}
+                          alt={
+                            `${capsule.recipients[0].first_name} ${capsule.recipients[0].last_name}` ||
+                            capsule.recipients[0].email
+                          }
+                          className="w-5 h-5 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center text-xs font-medium text-gray-600">
+                          {(
+                            capsule.recipients[0].first_name ||
+                            capsule.recipients[0].email
+                          )
+                            .charAt(0)
+                            .toUpperCase()}
+                        </div>
+                      )}
+                      <span className="text-sm font-medium text-gray-900">
+                        {capsule.recipients[0].first_name ||
+                          capsule.recipients[0].email.split("@")[0]}
+                      </span>
+                    </div>
+
+                    {/* Additional recipients count */}
+                    {capsule.recipients.length > 1 && (
+                      <span className="text-sm text-gray-500">
+                        +{capsule.recipients.length - 1} other
+                        {capsule.recipients.length > 2 ? "s" : ""}
+                      </span>
+                    )}
+                  </>
+                ) : (
+                  <span className="text-sm text-gray-400 italic">
+                    No recipients
+                  </span>
+                )}
               </div>
             </div>
 
-            <div className="flex justify-between">
+            <div className="flex justify-between text-xs">
               Due Date:
               <div className="flex items-center text-weak">
                 <CalendarIcon width={16} height={16} />
@@ -91,21 +127,6 @@ function CapsuleListItem({ capsule }: { capsule: ICapsule }) {
     </div>
   );
 }
-
-// export default function CapsuleList({ data }: { data: IPagination<IMemory> }) {
-//   // Handle empty state
-//   if (!data?.docs || data.docs.length === 0) {
-//     return <CapsuleEmptyState />;
-//   }
-
-//   return (
-//     <div className="grid grid-cols-1 gap-4 sm:gap-6 auto-rows-fr">
-//       {data.docs.map((m, i) => (
-//         <CapsuleListItem key={i} capsule={m} />
-//       ))}
-//     </div>
-//   );
-// }
 
 export default function CapsuleList({
   data,
@@ -127,23 +148,3 @@ export default function CapsuleList({
     </div>
   );
 }
-
-// <>
-//   {!data?.data?.docs || data?.data?.docs.length === 0 ? (
-//     <CapsuleEmptyState showCreateButton={true} />
-//   ) : (
-//     <div className="w-full overflow-x-auto">
-//       <Table
-//         data={data?.data?.docs}
-//         columns={columns}
-//         loading={isLoading}
-//         loadingRow={<TableRowSekeleton />}
-//         onChangePage={setPage}
-//         renderRow={(r, i) => (
-//           <StoriesTableRow key={i} memory={r as IMemory} />
-//         )}
-//         emptyRow={<TableEmptyState />}
-//       />
-//     </div>
-//   )}
-// </>

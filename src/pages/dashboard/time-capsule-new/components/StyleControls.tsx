@@ -1,123 +1,192 @@
 import { useState, useRef, useEffect } from "react";
 import type { CardCustomization } from "./CapsulePreviewCard";
+import { themes, type Theme } from "../config/themes.config";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ChevronDownIcon } from "@/components/icons";
 
 interface StyleControlsProps {
   cardStyle: CardCustomization;
   onStyleChange: (updates: Partial<CardCustomization>) => void;
 }
 
+// Define your default theme ID here
+const DEFAULT_THEME_ID = themes[0].id;
+
 export default function StyleControls({
   cardStyle,
   onStyleChange,
 }: StyleControlsProps) {
-  const [showColorPicker, setShowColorPicker] = useState(false);
-  const colorPickerRef = useRef<HTMLDivElement>(null);
+  const [showThemePicker, setShowThemePicker] = useState(false);
+  const themePickerRef = useRef<HTMLDivElement>(null);
 
-  const colorPresets = [
-    { name: "Sage", color: "#E2EADF" },
-    { name: "Peach", color: "#FFE5D9" },
-    { name: "Lavender", color: "#E6E6FA" },
-    { name: "Mint", color: "#D5F4E6" },
-    { name: "Cream", color: "#FFF8E7" },
-  ];
+  const sizes = ["1x", "2x", "3x"];
 
-  const fonts = ["Geist Mono", "Garamond", "Inter", "Sans"];
-  const sizes = ["sm", "base", "lg", "xl", "2xl", "3xl"];
+  // Find current theme, fallback to default if none matches
+  const currentTheme =
+    themes.find(
+      (t) =>
+        t.color === cardStyle.backgroundColor &&
+        t.fontFamily === cardStyle.fontFamily,
+    ) ||
+    themes.find((t) => t.id === DEFAULT_THEME_ID) ||
+    themes[0];
 
-  // Close color picker when clicking outside
+  // Apply default theme on mount if no valid theme is set
+  useEffect(() => {
+    const hasValidTheme = themes.some(
+      (t) =>
+        t.color === cardStyle.backgroundColor &&
+        t.fontFamily === cardStyle.fontFamily,
+    );
+
+    if (!hasValidTheme) {
+      const defaultTheme =
+        themes.find((t) => t.id === DEFAULT_THEME_ID) || themes[0];
+      onStyleChange({
+        backgroundColor: defaultTheme.color,
+        fontFamily: defaultTheme.fontFamily,
+        textColor: defaultTheme.textColor,
+        headerColor: defaultTheme.headerColor,
+      });
+    }
+  }, []); // Run once on mount
+
+  // Close theme picker when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
-        colorPickerRef.current &&
-        !colorPickerRef.current.contains(event.target as Node)
+        themePickerRef.current &&
+        !themePickerRef.current.contains(event.target as Node)
       ) {
-        setShowColorPicker(false);
+        setShowThemePicker(false);
       }
     };
-
-    if (showColorPicker) {
+    if (showThemePicker) {
       document.addEventListener("mousedown", handleClickOutside);
     }
-
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [showColorPicker]);
+  }, [showThemePicker]);
+
+  const handleThemeSelect = (theme: Theme) => {
+    onStyleChange({
+      backgroundColor: theme.color,
+      fontFamily: theme.fontFamily,
+      textColor: theme.textColor,
+      headerColor: theme.headerColor,
+    });
+  };
 
   return (
-    <div className="bg-white max-w-[270px] rounded-full flex items-center gap-3 py-2 px-3">
-      {/* Color Selector */}
-      <div className="relative" ref={colorPickerRef}>
-        <button
-          type="button"
-          onClick={() => setShowColorPicker(!showColorPicker)}
-          className="rounded-full w-8 h-8 border-2 border-white shadow-sm hover:scale-105 transition-transform"
-          style={{ backgroundColor: cardStyle.backgroundColor }}
-        />
-
-        {/* Color Picker Dropdown */}
-        {showColorPicker && (
-          <div className="absolute top-12 left-0 bg-white rounded-lg shadow-lg p-3 z-50 border border-gray-200">
-            <div className="grid grid-cols-5 gap-2 mb-3">
-              {colorPresets.map((preset) => (
-                <button
-                  key={preset.name}
-                  type="button"
-                  onClick={() => {
-                    onStyleChange({ backgroundColor: preset.color });
-                    setShowColorPicker(false);
-                  }}
-                  className="w-8 h-8 rounded-full border-2 border-gray-200 hover:scale-110 hover:border-gray-400 transition-all"
-                  style={{ backgroundColor: preset.color }}
-                  title={preset.name}
-                />
-              ))}
-            </div>
-
-            {/* Custom Color Input */}
-            <div className="border-t pt-3">
-              <label className="text-xs text-gray-600 block mb-1">
-                Custom color
-              </label>
-              <input
-                type="color"
-                value={cardStyle.backgroundColor}
-                onChange={(e) =>
-                  onStyleChange({ backgroundColor: e.target.value })
-                }
-                className="w-full h-8 rounded cursor-pointer"
+    <div className="bg-white justify-between items-end w-full flex gap-3 py-2 px-3 rounded-xl">
+      {/* Theme Selector */}
+      <div
+        className="relative shrink-0 flex flex-col justify-between"
+        ref={themePickerRef}
+      >
+        <span className="text-sm text-gray-700 mb-1">Theme</span>
+        <div className="flex relative">
+          {themes.map((theme, index) => {
+            const isSelected = currentTheme?.id === theme.id;
+            return (
+              <button
+                key={theme.id}
+                type="button"
+                onClick={() => handleThemeSelect(theme)}
+                className="w-8 h-8 rounded-full border-2 border-white hover:scale-110 transition-all shadow-sm relative"
+                style={{
+                  backgroundColor: theme.color,
+                  marginLeft: index === 0 ? "0" : "-1.2rem",
+                  zIndex: isSelected ? 20 : 10 - index,
+                  transform: isSelected ? "scale(1.1)" : "scale(1)",
+                }}
+                title={`${theme.name} - ${theme.fontFamily}`}
               />
-            </div>
-          </div>
-        )}
+            );
+          })}
+        </div>
       </div>
 
-      <div className="flex gap-1 text-sm">
-        {/* Font Selector */}
-        <select
-          value={cardStyle.fontFamily}
-          onChange={(e) => onStyleChange({ fontFamily: e.target.value })}
-          className="rounded-l-full bg-black/5 py-2 pr-2 pl-3 outline-none cursor-pointer"
-        >
-          {fonts.map((font) => (
-            <option key={font} value={font}>
-              {font}
-            </option>
-          ))}
-        </select>
+      {/* Theme Dropdown */}
+      <div className="relative shrink-0 flex-1 flex flex-col justify-end">
+        <span className="text-sm text-gray-700 mb-1">Style</span>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="py-2 px-3 border border-border outline-none cursor-pointer rounded text-sm text-gray-700 w-full flex items-center justify-between hover:bg-black/10 transition-colors">
+              <span className="truncate">
+                {currentTheme?.name || "Select theme"}
+              </span>
+              <ChevronDownIcon className="w-4 h-4 ml-2 shrink-0" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="min-w-[var(--radix-dropdown-menu-trigger-width)] z-[999]">
+            {themes.map((theme) => {
+              const isSelected = currentTheme?.id === theme.id;
+              return (
+                <DropdownMenuItem
+                  key={theme.id}
+                  onClick={() => handleThemeSelect(theme)}
+                  className="cursor-pointer flex items-center justify-between"
+                >
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="w-4 h-4 rounded-full border border-gray-200"
+                      style={{ backgroundColor: theme.color }}
+                    />
+                    <span>{theme.name}</span>
+                  </div>
+                  {isSelected && (
+                    <img
+                      src="icon/check.svg"
+                      className="w-4 h-4"
+                      alt="Selected Theme"
+                    />
+                  )}
+                </DropdownMenuItem>
+              );
+            })}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
 
-        {/* Size Selector */}
-        <select
-          value={cardStyle.fontSize}
-          onChange={(e) => onStyleChange({ fontSize: e.target.value })}
-          className="rounded-r-full bg-black/5 py-2 pl-2 pr-3 outline-none cursor-pointer"
-        >
-          {sizes.map((size) => (
-            <option key={size} value={size}>
-              {size}
-            </option>
-          ))}
-        </select>
+      {/* Size Selector */}
+      <div className="relative shrink-0 flex flex-col justify-end">
+        <span className="text-sm text-gray-700 mb-1">Size</span>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="py-2 px-3 outline-none cursor-pointer rounded text-sm text-gray-700 w-full flex items-center justify-between hover:bg-black/10 transition-colors border border-border">
+              <span>{cardStyle.fontSize}</span>
+              <ChevronDownIcon className="w-4 h-4 ml-2 shrink-0" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="min-w-[var(--radix-dropdown-menu-trigger-width)] z-[999]">
+            {sizes.map((size) => {
+              const isSelected = cardStyle.fontSize === size;
+              return (
+                <DropdownMenuItem
+                  key={size}
+                  onClick={() => onStyleChange({ fontSize: size })}
+                  className="cursor-pointer flex items-center justify-between"
+                >
+                  <span>{size}</span>
+                  {isSelected && (
+                    <img
+                      src="icon/check.svg"
+                      className="w-4 h-4"
+                      alt="Selected Size"
+                    />
+                  )}
+                </DropdownMenuItem>
+              );
+            })}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
   );

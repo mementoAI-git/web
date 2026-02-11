@@ -1,8 +1,8 @@
-import type { IMemory } from "@/utility/interface";
+import type { ICapsule } from "@/utility/interface";
 
 export type CapsuleStatus = "draft" | "scheduled" | "delivered";
 
-export function getCapsuleStatus(capsule: IMemory): CapsuleStatus {
+export function getCapsuleStatus(capsule: ICapsule): CapsuleStatus {
   const now = new Date();
   const deliveryDate = new Date(capsule.delivery_date);
 
@@ -20,3 +20,10 @@ export function getCapsuleStatus(capsule: IMemory): CapsuleStatus {
 
   return "scheduled";
 }
+
+export const obfuscateEmail = (email: string): string => {
+  if (!email || !email.includes("@")) return email;
+
+  const [username, domain] = email.split("@");
+  return `${username.slice(0, 2)}***@${domain}`;
+};

@@ -3,7 +3,7 @@ import { useModal } from "@/hooks/use-modal";
 import { useEffect, useState } from "react";
 import useSWR from "swr";
 import { StatCard } from "./components/stat-card";
-import { DoubleHeartIcon, PlusIcon } from "@/components/icons";
+import { PlusIcon } from "@/components/icons";
 import { storageKeys } from "@/utility/constant";
 import { cn } from "@/utility";
 import CapsuleHeader from "./components/header";
@@ -13,15 +13,8 @@ import { ZapIcon } from "./components/icons/ZapIcon";
 import { UnpdfIcon } from "./components/icons/UnpdfIcon";
 import CapsuleList from "./components/list";
 
-const columns = [
-  { label: "topic" },
-  { label: "Date created" },
-  { label: "Tags", className: "min-w-32" },
-  { label: "" },
-];
-
 export default function TimeCapsulePage() {
-  const [page, setPage] = useState(1);
+  const [page] = useState(1);
   const [mode, setMode] = useState(
     localStorage.getItem(storageKeys.listmode) || "list",
   );
@@ -53,7 +46,7 @@ export default function TimeCapsulePage() {
     return "";
   };
 
-  const { data, isLoading } = useSWR(
+  const { data } = useSWR(
     `${endpoint.capsule}?page=${page}${getFilterQuery()}`,
   );
 

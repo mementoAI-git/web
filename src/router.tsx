@@ -31,7 +31,6 @@ import {
   ErrorPage,
 } from "@/pages";
 import TimeCapsulePage from "./pages/dashboard/time-capsule-new";
-import TimeCapsulePageFinal from "./pages/dashboard/time-capsule-new";
 
 export const router = createBrowserRouter([
   {

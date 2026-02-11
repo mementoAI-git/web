@@ -1,5 +1,4 @@
 import ImageThumbnail from "@/components/image-thumbnail";
-import { MemoryItemActions } from "./dropdown";
 import dayjs from "dayjs";
 import { useNavigate } from "react-router-dom";
 import { tagColors } from "@/utility/constant";
@@ -47,7 +46,8 @@ export default function StoriesTableRow({ memory }: { memory: IMemory }) {
         </div>
       </td>
       <td className="w-fit">
-        <MemoryItemActions memory={memory} />
+        {/* TODO: MemoryItemActions component needs to be created or imported */}
+        {/* <MemoryItemActions memory={memory} /> */}
       </td>
     </tr>
   );

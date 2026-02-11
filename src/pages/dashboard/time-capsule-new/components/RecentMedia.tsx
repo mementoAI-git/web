@@ -1,23 +1,27 @@
 type MediaItem = {
   id: string;
+  _id?: string;
   type: "video" | "image" | "audio";
   thumbnail: string;
   title?: string;
+  url?: string;
+  name?: string;
+  duration?: number;
 };
 
 interface RecentMediaProps {
   items: MediaItem[];
+  selectedItems?: string[];
   onSelect?: (item: MediaItem) => void;
   onSeeMore?: () => void;
 }
 
 export default function RecentMedia({
   items = [],
+  selectedItems = [],
   onSelect,
   onSeeMore,
 }: RecentMediaProps) {
-  console.log(items, "items");
-  // Show only first 4
   const displayedItems = items?.slice(0, 4) || [];
   const hasMore = (items?.length || 0) > 4;
 
@@ -63,22 +67,30 @@ export default function RecentMedia({
       style={{ gridTemplateColumns: `repeat(${totalSlots}, 1fr)` }}
     >
       {/* Media Items */}
-      {displayedItems.map((item) => (
-        <button
-          key={item.id}
-          onClick={() => onSelect?.(item)}
-          className="relative aspect-square rounded-2xl overflow-hidden group cursor-pointer hover:opacity-90 transition-opacity"
-        >
-          {/* Thumbnail */}
-          <img
-            src={item?.url}
-            alt={item?.title || "Media item"}
-            className="w-full h-full object-cover"
-          />
-          {/* Type-specific overlay */}
-          {renderOverlay(item?.type)}
-        </button>
-      ))}
+      {displayedItems.map((item) => {
+        const isSelected = selectedItems.includes(item.id);
+        return (
+          <button
+            key={item.id}
+            type="button"
+            onClick={() => onSelect?.(item)}
+            className={`relative aspect-square rounded-2xl overflow-hidden group cursor-pointer hover:opacity-90 transition-all ${
+              isSelected
+                ? "ring ring-green-0 ring-offset-2"
+                : "border border-black/5"
+            }`}
+          >
+            {/* Thumbnail */}
+            <img
+              src={item?.url}
+              alt={item?.title || "Media item"}
+              className="w-full h-full object-cover"
+            />
+            {/* Type-specific overlay */}
+            {renderOverlay(item?.type)}
+          </button>
+        );
+      })}
 
       {/* See More Button */}
       {hasMore && (

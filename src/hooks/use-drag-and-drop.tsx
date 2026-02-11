@@ -10,7 +10,7 @@ export function useDragAndDrop(options: UseDragAndDropOptions) {
   const [isDragging, setIsDragging] = useState(false);
 
   const handleDragEnter = useCallback(
-    (e: DragEvent) => {
+    (e: React.DragEvent<HTMLElement>) => {
       e.preventDefault();
       e.stopPropagation();
       setIsDragging(true);
@@ -20,7 +20,7 @@ export function useDragAndDrop(options: UseDragAndDropOptions) {
   );
 
   const handleDragLeave = useCallback(
-    (e: DragEvent) => {
+    (e: React.DragEvent<HTMLElement>) => {
       e.preventDefault();
       e.stopPropagation();
       setIsDragging(false);
@@ -29,13 +29,13 @@ export function useDragAndDrop(options: UseDragAndDropOptions) {
     [options],
   );
 
-  const handleDragOver = useCallback((e: DragEvent) => {
+  const handleDragOver = useCallback((e: React.DragEvent<HTMLElement>) => {
     e.preventDefault();
     e.stopPropagation();
   }, []);
 
   const handleDrop = useCallback(
-    (e: DragEvent) => {
+    (e: React.DragEvent<HTMLElement>) => {
       e.preventDefault();
       e.stopPropagation();
       setIsDragging(false);

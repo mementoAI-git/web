@@ -23,7 +23,7 @@
 import { useEffect, useRef } from "react";
 
 export default function useClickAway(cb: () => void) {
-  const ref = useRef<HTMLElement>(null);
+  const ref = useRef<HTMLDivElement>(null);
 
   // Store cb in a ref to avoid re-running effect when cb changes
   const callbackRef = useRef(cb);
