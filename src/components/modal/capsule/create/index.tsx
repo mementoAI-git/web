@@ -34,26 +34,26 @@ import {
 import TimeCapsuleBadge from "@/pages/dashboard/time-capsule-new/components/TimeCapsuleBadge";
 import { useStore } from "@/hooks/use-store";
 
-const schema = yup.object().shape({
-  // delivery_date: yup.date().required("Delivery date is required"),
-  schedule_date: yup.date().required("Delivery date is required"),
-  title: yup.string().required("Title is required"),
-  body: yup.string().required("Body is required"),
-  status: yup.string().default("scheduled").required("Status is required"),
-  recipients: yup.array().min(1, "At least one recipient is required"),
-});
-
 // const schema = yup.object().shape({
-//   // schedule_date: yup.date().when("status", {
-//   //   is: "scheduled",
-//   //   then: (schema) => schema.required("Delivery date is required"),
-//   //   otherwise: (schema) => schema.nullable(),
-//   // }),
+//   // delivery_date: yup.date().required("Delivery date is required"),
+//   schedule_date: yup.date().required("Delivery date is required"),
 //   title: yup.string().required("Title is required"),
 //   body: yup.string().required("Body is required"),
 //   status: yup.string().default("scheduled").required("Status is required"),
 //   recipients: yup.array().min(1, "At least one recipient is required"),
 // });
+
+const schema = yup.object().shape({
+  schedule_date: yup.date().when("status", {
+    is: "scheduled",
+    then: (schema) => schema.required("Delivery date is required"),
+    otherwise: (schema) => schema.nullable(),
+  }),
+  title: yup.string().required("Title is required"),
+  body: yup.string().required("Body is required"),
+  status: yup.string().default("scheduled").required("Status is required"),
+  recipients: yup.array().min(1, "At least one recipient is required"),
+});
 
 const initial = {
   // delivery_date: "",
@@ -667,7 +667,15 @@ export default function CreateCapsule({
                     <button
                       type="button"
                       className="btn-outline"
-                      onClick={handleSaveToDraft}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        e.nativeEvent.stopImmediatePropagation();
+                        e.nativeEvent.preventDefault();
+                        e.nativeEvent.stopPropagation();
+                        handleSaveToDraft(e);
+                        console.log("Save to draft clicked");
+                      }}
                     >
                       Save to draft
                       {values.status === "draft" && (
