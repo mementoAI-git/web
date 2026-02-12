@@ -2,13 +2,13 @@
 
 import { CalendarIcon } from "@/components/icons";
 import ImageThumbnail from "@/components/image-thumbnail";
-// import { MemoryItemActions } from "./dropdown";
 import type { ICapsule, IPagination } from "@/utility/interface";
 import dayjs from "dayjs";
 import { Link } from "react-router-dom";
 import { CapsuleEmptyState } from "./CapsuleEmptyState";
 import StatusBadge from "./StatusBadge";
 import { CapsuleItemActions } from "./dropdown";
+import { isImage } from "../utility/helpers";
 
 function CapsuleGridItem({ capsule }: { capsule: ICapsule }) {
   return (
@@ -33,13 +33,6 @@ function CapsuleGridItem({ capsule }: { capsule: ICapsule }) {
           {(() => {
             // Attachments from API are already the file objects
             const attachments = capsule?.attachments || [];
-
-            // Helper to check if file is an image (by type or extension)
-            const isImage = (file: typeof attachments[0]) => {
-              if (file?.type?.includes("image")) return true;
-              const ext = file?.name?.split('.').pop()?.toLowerCase();
-              return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext || '');
-            };
 
             if (attachments.length === 1 && isImage(attachments[0])) {
               return (
@@ -127,9 +120,6 @@ function CapsuleGridItem({ capsule }: { capsule: ICapsule }) {
           </div>
         </div>
       </div>
-      {/*<div className="text-center text-sm font-inter text-gray-950">
-      {capsule.delivery_date} delivered  Due in: {dayjs(capsule.delivery_date).fromNow()}
-      </div>*/}
 
       <div className="text-center text-sm font-inter text-gray-950">
         {capsule?.delivery_date

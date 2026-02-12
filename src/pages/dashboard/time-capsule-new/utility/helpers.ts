@@ -6,11 +6,6 @@ export function getCapsuleStatus(capsule: ICapsule): CapsuleStatus {
   const now = new Date();
   const deliveryDate = new Date(capsule.delivery_date);
 
-  // Check if it's a draft (you'll need to add this field to your API)
-  // Option 1: If API adds a status/is_draft field
-  // if (capsule.is_draft) return 'draft';
-
-  // Option 2: Derive from missing required fields
   if (!capsule.body || !capsule.recipients?.length) return "draft";
 
   // Check if delivery date has passed
@@ -26,4 +21,10 @@ export const obfuscateEmail = (email: string): string => {
 
   const [username, domain] = email.split("@");
   return `${username.slice(0, 2)}***@${domain}`;
+};
+
+export const isImage = (file) => {
+  if (file?.type?.includes("image")) return true;
+  const ext = file?.name?.split(".").pop()?.toLowerCase();
+  return ["jpg", "jpeg", "png", "gif", "webp", "svg"].includes(ext || "");
 };
