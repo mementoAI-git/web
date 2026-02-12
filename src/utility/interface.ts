@@ -118,7 +118,8 @@ export interface ICapsule {
   _id?: string;
   user: string;
   recipients: IUser[];
-  delivery_date: string;
+  // delivery_date: string;
+  schedule_date: string;
   title: string;
   body: string;
   attachments: IFile[];
@@ -145,9 +146,9 @@ export interface IPrompt {
 }
 
 export interface IMessage {
-  _id?: string
-  user: string
-  text: string
-  role: string // user, ai
-  created_at: string
+  _id?: string;
+  user: string;
+  text: string;
+  role: string; // user, ai
+  created_at: string;
 }

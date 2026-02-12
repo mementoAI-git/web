@@ -4,18 +4,16 @@ import { CalendarIcon } from "@/components/icons";
 import ImageThumbnail from "@/components/image-thumbnail";
 import type { ICapsule, IPagination } from "@/utility/interface";
 import dayjs from "dayjs";
-import { Link } from "react-router-dom";
 import { CapsuleEmptyState } from "./CapsuleEmptyState";
 import StatusBadge from "./StatusBadge";
 import { CapsuleItemActions } from "./dropdown";
-import { isImage } from "../utility/helpers";
 
 function CapsuleGridItem({ capsule }: { capsule: ICapsule }) {
   return (
     <div className="flex min-h-[308px] w-full flex-col gap-3 sm:gap-4 rounded-xl sm:rounded-2xl bg-gray-200 p-0.5 sm:p4 border-gray-200 border hover:border-sand-8">
       <div className="h-[262px] bg-white rounded-xl p-2 flex flex-col">
         <div className="flex justify-between">
-          <StatusBadge status={capsule.status || "draft"} />
+          <StatusBadge status={capsule.status} />
           <div>
             <CapsuleItemActions capsule={capsule} />
           </div>
@@ -29,32 +27,22 @@ function CapsuleGridItem({ capsule }: { capsule: ICapsule }) {
           {capsule.body}
         </p>
 
-        <div className="relative flex min-h-[50px] sm:min-h-[30px] overflow-hidden w-full items-center justify-start rounded-lg">
+        <div className="relative flex min-h[50px] sm:min-h[30px] overflow-hidden w-full items-center justify-start rounded-lg">
           {(() => {
-            // Attachments from API are already the file objects
             const attachments = capsule?.attachments || [];
-
-            if (attachments.length === 1 && isImage(attachments[0])) {
+            if (attachments.length > 0) {
               return (
-                <img
-                  src={attachments[0].url}
-                  alt={capsule.title}
-                  className="object-cover w-full h-full"
+                // <Link to={`/capsules/${capsule?._id}`} className="size-fit">
+                <ImageThumbnail
+                  images={attachments}
+                  size={68.78}
+                  boxClassName="!border-[2px] !rounded-[11.96px]"
                 />
-              );
-            } else if (attachments.length > 0) {
-              return (
-                <Link to={`/capsules/${capsule?._id}`} className="size-fit">
-                  <ImageThumbnail
-                    images={attachments}
-                    size={68.78}
-                    boxClassName="!border-[2px] !rounded-[11.96px]"
-                  />
-                </Link>
+                // </Link>
               );
             } else {
               return (
-                <div className="flex items-center w-full h-full text-gray-400">
+                <div className="flex py-20 items-center w-full h-full text-gray-400">
                   <span className="text-sm">No Assets</span>
                 </div>
               );
@@ -121,21 +109,70 @@ function CapsuleGridItem({ capsule }: { capsule: ICapsule }) {
         </div>
       </div>
 
-      <div className="text-center text-sm font-inter text-gray-950">
-        {capsule?.delivery_date
-          ? dayjs(capsule.delivery_date).format("MMM D, YYYY")
+      {/*<div className="text-center text-sm font-inter text-gray-950">
+        {capsule?.schedule_date
+          ? dayjs(capsule.schedule_date).format("MMM D, YYYY")
           : "No date"}
-        {capsule?.delivery_date &&
-          dayjs(capsule.delivery_date).isAfter(dayjs()) && (
-            <> • Due {dayjs(capsule.delivery_date).fromNow()}</>
+        {capsule?.schedule_date &&
+          dayjs(capsule.schedule_date).isAfter(dayjs()) && (
+            <> • Due {dayjs(capsule.schedule_date).fromNow()}</>
           )}
-        {capsule?.delivery_date &&
-          dayjs(capsule.delivery_date).isBefore(dayjs()) && (
+        {capsule?.schedule_date &&
+          dayjs(capsule.schedule_date).isBefore(dayjs()) && (
             <>
               {" "}
               • <span className="text-green-600">Delivered</span>
             </>
           )}
+      </div>*/}
+
+      <div className="text-center text-sm font-inter text-gray-950">
+        {(() => {
+          // Draft - no schedule date
+          if (capsule.status === "draft" || !capsule?.schedule_date) {
+            return "Due in: Undefined";
+          }
+
+          // Delivered - schedule date is in the past
+          if (dayjs(capsule.schedule_date).isBefore(dayjs())) {
+            return "Delivered";
+          }
+
+          // Scheduled - schedule date is in the future
+          const now = dayjs();
+          const scheduleDate = dayjs(capsule.schedule_date);
+          const diffInHours = scheduleDate.diff(now, "hour");
+
+          // Less than 24 hours - show hours and minutes
+          if (diffInHours < 24) {
+            const hours = scheduleDate.diff(now, "hour");
+            const minutes = scheduleDate.diff(now.add(hours, "hour"), "minute");
+
+            const parts = [];
+            if (hours > 0) parts.push(`${hours} hour${hours > 1 ? "s" : ""}`);
+            if (minutes > 0 || hours === 0)
+              parts.push(`${minutes} minute${minutes > 1 ? "s" : ""}`);
+
+            return `Due in: ${parts.join(", ")}`;
+          }
+
+          // More than 24 hours - show years, months, days
+          const years = scheduleDate.diff(now, "year");
+          const months = scheduleDate.diff(now.add(years, "year"), "month");
+          const days = scheduleDate.diff(
+            now.add(years, "year").add(months, "month"),
+            "day",
+          );
+
+          // Build the time string
+          const parts = [];
+          if (years > 0) parts.push(`${years} year${years > 1 ? "s" : ""}`);
+          if (months > 0) parts.push(`${months} month${months > 1 ? "s" : ""}`);
+          if (days > 0 && years === 0)
+            parts.push(`${days} day${days > 1 ? "s" : ""}`); // Only show days if less than a year
+
+          return `Due in: ${parts.join(", ") || "0 days"}`;
+        })()}
       </div>
     </div>
   );

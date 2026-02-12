@@ -24,7 +24,15 @@ export const obfuscateEmail = (email: string): string => {
 };
 
 export const isImage = (file) => {
-  if (file?.type?.includes("image")) return true;
+  // Handle string input (file path or URL)
+  if (typeof file === "string") {
+    const ext = file.split(".").pop()?.toLowerCase();
+    return ["jpg", "jpeg", "png", "gif", "webp", "svg"].includes(ext || "");
+  }
+
+  // Handle File object
+  if (file?.type?.includes("image") || file?.includes("image")) return true;
+  // if (file?.type?.includes("image")) return true;
   const ext = file?.name?.split(".").pop()?.toLowerCase();
   return ["jpg", "jpeg", "png", "gif", "webp", "svg"].includes(ext || "");
 };

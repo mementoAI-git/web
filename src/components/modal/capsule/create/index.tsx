@@ -35,15 +35,29 @@ import TimeCapsuleBadge from "@/pages/dashboard/time-capsule-new/components/Time
 import { useStore } from "@/hooks/use-store";
 
 const schema = yup.object().shape({
-  delivery_date: yup.date().required("Delivery date is required"),
+  // delivery_date: yup.date().required("Delivery date is required"),
+  schedule_date: yup.date().required("Delivery date is required"),
   title: yup.string().required("Title is required"),
   body: yup.string().required("Body is required"),
   status: yup.string().default("scheduled").required("Status is required"),
   recipients: yup.array().min(1, "At least one recipient is required"),
 });
 
+// const schema = yup.object().shape({
+//   // schedule_date: yup.date().when("status", {
+//   //   is: "scheduled",
+//   //   then: (schema) => schema.required("Delivery date is required"),
+//   //   otherwise: (schema) => schema.nullable(),
+//   // }),
+//   title: yup.string().required("Title is required"),
+//   body: yup.string().required("Body is required"),
+//   status: yup.string().default("scheduled").required("Status is required"),
+//   recipients: yup.array().min(1, "At least one recipient is required"),
+// });
+
 const initial = {
-  delivery_date: "",
+  // delivery_date: "",
+  schedule_date: "",
   title: "",
   body: "",
   status: "scheduled",
@@ -110,13 +124,9 @@ export default function CreateCapsule({
     isEmpty(data) ? "post" : "put",
   );
   const [page] = useState(1);
-  const { data: beneficiaries } = useSWR(
-    endpoint.beneficiaries,
-    undefined,
-    {
-      revalidateIfStale: false,
-    },
-  );
+  const { data: beneficiaries } = useSWR(endpoint.beneficiaries, undefined, {
+    revalidateIfStale: false,
+  });
   const { data: recentMedia } = useSWR(`${endpoint.files}?page=${page}`);
   const [selectedMedia, setSelectedMedia] = useState<any[]>([]);
 
@@ -132,8 +142,8 @@ export default function CreateCapsule({
 
     const uploadedIds = !isEmpty(files)
       ? files
-        .map((file) => file.uploadedFile?._id)
-        .filter((id): id is string => Boolean(id))
+          .map((file) => file.uploadedFile?._id)
+          .filter((id): id is string => Boolean(id))
       : [];
 
     const selectedMediaIds = selectedMedia.map((m) => m.id || m._id);
@@ -149,18 +159,12 @@ export default function CreateCapsule({
     }
   };
 
-  const {
-    setValues,
-    values,
-    errors,
-    handleSubmit,
-    handleChange,
-    handleValue,
-  } = useForm({
-    initial,
-    schema,
-    onSubmit,
-  });
+  const { setValues, values, errors, handleSubmit, handleChange, handleValue } =
+    useForm({
+      initial,
+      schema,
+      onSubmit,
+    });
 
   // Initialize form when data changes
   useEffect(() => {
@@ -168,7 +172,8 @@ export default function CreateCapsule({
       setValues({
         title: data?.title || "",
         body: data?.body || "",
-        delivery_date: data?.delivery_date || "",
+        // delivery_date: data?.delivery_date || "",
+        schedule_date: data?.schedule_date || "",
         status: data?.status || "scheduled",
         recipients:
           data?.recipients?.map(
@@ -319,6 +324,16 @@ export default function CreateCapsule({
     }
   };
 
+  const [shouldSubmit, setShouldSubmit] = useState(false);
+
+  // Trigger submission after status changes to draft
+  useEffect(() => {
+    if (shouldSubmit && values.status === "draft") {
+      handleSubmit();
+      setShouldSubmit(false);
+    }
+  }, [values.status, shouldSubmit, handleSubmit]);
+
   const handleSaveToDraft = (event: React.FormEvent<HTMLButtonElement>) => {
     if (isMutating) return;
     handleValue("status", "draft");
@@ -326,6 +341,7 @@ export default function CreateCapsule({
   };
 
   const handleSave = (event: React.FormEvent<HTMLFormElement>) => {
+    console.log(event, "Save");
     if (isMutating) return;
     handleValue("status", "scheduled");
     handleSubmit(event);
@@ -409,7 +425,8 @@ export default function CreateCapsule({
   }
 
   const isFormValid =
-    values.delivery_date &&
+    // values.delivery_date &&
+    values.schedule_date &&
     values.title.trim() !== "" &&
     values.body.trim() !== "" &&
     values.recipients.length > 0;
@@ -581,7 +598,7 @@ export default function CreateCapsule({
                   <BrowseFileBtn onUpload={handleUpload} />
 
                   <div className="w-full space-y-3">
-                    {files.map((file) => renderFileAttachment(file))}
+                    {/*{files.map((file) => renderFileAttachment(file))}*/}
                   </div>
                 </div>
               </div>
@@ -637,7 +654,8 @@ export default function CreateCapsule({
               </span>
               <DateOptionsDropdown
                 onDateSelect={(date) =>
-                  handleValue("delivery_date", date.toISOString())
+                  // handleValue("delivery_date", date.toISOString())
+                  handleValue("schedule_date", date.toISOString())
                 }
                 CustomCalendarComponent={DatePickerWrapper}
                 defaultLabel="In 3 days"

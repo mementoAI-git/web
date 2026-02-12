@@ -36,33 +36,38 @@ export default function TimeCapsulePage() {
     };
   }, [open]);
 
-  const getFilterQuery = () => {
-    if (filter === "all") return "";
-    if (filter === "scheduled") return "&status=scheduled";
-    if (filter === "delivered") return "&status=delivered";
-    if (filter === "draft") return "&status=draft";
-    if (filter === "paused") return "&status=pause";
-    if (filter === "failed") return "&status=failed";
+  // const getFilterQuery = () => {
+  //   if (filter === "all") return "";
+  //   if (filter === "scheduled") return "&status=scheduled";
+  //   if (filter === "delivered") return "&status=delivered";
+  //   if (filter === "draft") return "&status=draft";
+  //   if (filter === "paused") return "&status=pause";
+  //   if (filter === "failed") return "&status=failed";
+  //   return "";
+  // };
+
+  const getFilterQuery = (currentFilter = filter) => {
+    if (currentFilter === "all") return "";
+    if (currentFilter === "scheduled") return "&status=scheduled";
+    if (currentFilter === "delivered") return "&status=delivered";
+    if (currentFilter === "draft") return "&status=draft";
+    if (currentFilter === "paused") return "&status=pause";
+    if (currentFilter === "failed") return "&status=failed";
     return "";
   };
 
-  const { data } = useSWR(
+  const { data: capsule } = useSWR(
     `${endpoint.capsule}?page=${page}${getFilterQuery()}`,
   );
 
-  const { data: allCapsules } = useSWR(endpoint.capsule);
+  const { data: stats } = useSWR(endpoint.capsuleStats);
 
-  const scheduledCount =
-    allCapsules?.data?.docs?.filter((capsule) => capsule.status === "scheduled")
-      .length || 0;
-
-  const deliveredCount =
-    allCapsules?.data?.docs?.filter((capsule) => capsule.status === "delivered")
-      .length || 0;
-
-  const draftCount =
-    allCapsules?.data?.docs?.filter((capsule) => capsule.status === "draft")
-      .length || 0;
+  // Then access like this:
+  const scheduledCount = stats?.data?.scheduled_count || 0;
+  const deliveredCount = stats?.data?.delivered_count || 0;
+  // const pausedCount = stats?.data?.paused_count || 0;
+  // const failedCount = stats?.data?.failed_count || 0;
+  const draftCount = stats?.data?.draft_count || 0;
 
   const values = [
     {
@@ -127,16 +132,28 @@ export default function TimeCapsulePage() {
         </div>
         <div className="space-y-3 sm:space-y-4 lg:space-y-6 py-3 sm:py-4 lg:py-8">
           <CapsuleHeader
-            totalCapsuleCount={allCapsules?.data?.docs?.length || 0}
+            // totalCapsuleCount={allCapsules?.data?.docs?.length || 0}
+            totalCapsuleCount={
+              scheduledCount + deliveredCount + draftCount || 0
+            }
             mode={mode}
             onChangeMode={setMode}
             filter={filter}
-            onChangeFilter={setFilter}
+            // onChangeFilter={(filter) => {
+            //   setFilter(filter);
+            //   console.log(
+            //     `${endpoint.capsule}?page=${page}${getFilterQuery()}`,
+            //   );
+            //   console.log(filter);
+            // }}
+            onChangeFilter={(newFilter) => {
+              setFilter(newFilter);
+            }}
           />
           {mode === "grid" ? (
-            <CapsuleGrid data={data?.data} filter={filter} />
+            <CapsuleGrid data={capsule?.data} filter={filter} />
           ) : (
-            <CapsuleList data={data?.data} filter={filter} />
+            <CapsuleList data={capsule?.data} filter={filter} />
           )}
         </div>
       </div>

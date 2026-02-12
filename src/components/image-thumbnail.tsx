@@ -1,5 +1,6 @@
 import type { IFile } from "@/utility/interface";
 import { QIcon, PlayIcon } from "@/components/icons";
+import { isImage } from "@/pages/dashboard/time-capsule-new/utility/helpers";
 
 interface IImageThumbnail {
   size?: number;
@@ -19,7 +20,8 @@ function ImageThumbnailItem({
   name,
   size = 68.78,
 }: IFile & { size: number }) {
-  if (type?.includes("image")) {
+  // if (type?.includes("image")) {
+  if (isImage(name)) {
     return (
       <img
         width={size}
@@ -32,11 +34,11 @@ function ImageThumbnailItem({
   }
   return (
     <div className="size-full justify-center items-center flex bg-grey-500">
-      {
-        type?.includes('video') ?
-          <PlayIcon width={size * 0.6} height={size * 0.6} /> :
-          <QIcon width={size * 0.6} height={size * 0.6} />
-      }
+      {type?.includes("video") ? (
+        <PlayIcon width={size * 0.6} height={size * 0.6} />
+      ) : (
+        <QIcon width={size * 0.6} height={size * 0.6} />
+      )}
     </div>
   );
 }
@@ -47,7 +49,10 @@ export default function ImageThumbnail({
   boxClassName = "",
 }: IImageThumbnail) {
   return (
-    <div style={{ width: size, height: size }} className={`${images.length <= 1 && "flex items-center justify-center"} cursor-pointer`}>
+    <div
+      style={{ width: size, height: size }}
+      className={`${images.length <= 1 && "flex items-center justify-center"} cursor-pointer`}
+    >
       {images.length === 1 ? (
         <div className="flex items-center justify-center size-full overflow-hidden rounded-[5.83px]">
           <ImageThumbnailItem {...{ ...images[0], size }} />
