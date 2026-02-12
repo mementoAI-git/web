@@ -1,6 +1,7 @@
 interface Attachment {
   url: string;
-  type: string;
+  type?: string;
+  name?: string;
 }
 
 interface ImageThumbnailProps {
@@ -16,8 +17,12 @@ function ImageThumbnail({
   maxVisible = 3,
   boxClassName = "",
 }: ImageThumbnailProps) {
-  // Filter only image attachments
-  const imageAttachments = images.filter((img) => img.type?.includes("image"));
+  // Filter only image attachments (by type or extension)
+  const imageAttachments = images.filter((img) => {
+    if (img.type?.includes("image")) return true;
+    const ext = img.name?.split('.').pop()?.toLowerCase();
+    return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext || '');
+  });
 
   if (imageAttachments.length === 0) {
     return null;

@@ -8,29 +8,35 @@ import dayjs from "dayjs";
 import { CapsuleItemActions } from "./dropdown";
 
 function CapsuleListItem({ capsule }: { capsule: ICapsule }) {
+  console.log(capsule)
   return (
     <div className="flex min-h-60 w-full flex-col gap-3 sm:gap-4 rounded-xl sm:rounded-2xl bg-gray-200 p-0.5 sm:p4 border-gray-200 border hover:border-sand-8">
       <div className=" bg-white rounded-xl p-2 flex  gap-4">
         <div className="relative  flex h-[120px] sm:h-[138px] overflow-hidden w-40 items-center justify-center rounded-lg bg-[#F3F3F3]">
           {(() => {
-            // Extract uploaded files from upload payloads
-            const uploadedFiles = capsule?.attachments
-              ?.map(a => a.uploadedFile)
-              .filter((f): f is NonNullable<typeof f> => f != null) || [];
+            // Attachments from API are already the file objects
+            const attachments = capsule?.attachments || [];
 
-            if (uploadedFiles.length === 1 && uploadedFiles[0]?.type?.includes("image")) {
+            // Helper to check if file is an image (by type or extension)
+            const isImage = (file: typeof attachments[0]) => {
+              if (file?.type?.includes("image")) return true;
+              const ext = file?.name?.split('.').pop()?.toLowerCase();
+              return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext || '');
+            };
+
+            if (attachments.length === 1 && isImage(attachments[0])) {
               return (
                 <img
-                  src={uploadedFiles[0].url}
+                  src={attachments[0].url}
                   alt={capsule.title}
                   className="object-cover w-full h-full"
                 />
               );
-            } else if (uploadedFiles.length > 0) {
+            } else if (attachments.length > 0) {
               return (
                 <Link to={`/capsules/${capsule?._id}`} className="size-fit">
                   <ImageThumbnail
-                    images={uploadedFiles}
+                    images={attachments}
                     size={68.78}
                     boxClassName="!border-[2px] !rounded-[11.96px]"
                   />

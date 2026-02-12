@@ -31,24 +31,29 @@ function CapsuleGridItem({ capsule }: { capsule: ICapsule }) {
 
         <div className="relative flex min-h-[50px] sm:min-h-[30px] overflow-hidden w-full items-center justify-start rounded-lg">
           {(() => {
-            // Extract uploaded files from upload payloads
-            const uploadedFiles = capsule?.attachments
-              ?.map(a => a.uploadedFile)
-              .filter((f): f is NonNullable<typeof f> => f != null) || [];
+            // Attachments from API are already the file objects
+            const attachments = capsule?.attachments || [];
 
-            if (uploadedFiles.length === 1 && uploadedFiles[0]?.type?.includes("image")) {
+            // Helper to check if file is an image (by type or extension)
+            const isImage = (file: typeof attachments[0]) => {
+              if (file?.type?.includes("image")) return true;
+              const ext = file?.name?.split('.').pop()?.toLowerCase();
+              return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext || '');
+            };
+
+            if (attachments.length === 1 && isImage(attachments[0])) {
               return (
                 <img
-                  src={uploadedFiles[0].url}
+                  src={attachments[0].url}
                   alt={capsule.title}
                   className="object-cover w-full h-full"
                 />
               );
-            } else if (uploadedFiles.length > 0) {
+            } else if (attachments.length > 0) {
               return (
                 <Link to={`/capsules/${capsule?._id}`} className="size-fit">
                   <ImageThumbnail
-                    images={uploadedFiles}
+                    images={attachments}
                     size={68.78}
                     boxClassName="!border-[2px] !rounded-[11.96px]"
                   />

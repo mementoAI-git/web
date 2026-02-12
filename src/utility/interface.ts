@@ -2,8 +2,8 @@ export interface IFile {
   url: string;
   name: string;
   size: string | number;
-  duration: number;
-  type: string;
+  duration?: number;
+  type?: string;
   _id: string;
 }
 
@@ -121,7 +121,7 @@ export interface ICapsule {
   delivery_date: string;
   title: string;
   body: string;
-  attachments: IOnUploadPayload[];
+  attachments: IFile[];
   status: string;
   created_at: string;
   updated_at: string;

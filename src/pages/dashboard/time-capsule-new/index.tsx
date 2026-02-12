@@ -52,20 +52,6 @@ export default function TimeCapsulePage() {
 
   const { data: allCapsules } = useSWR(endpoint.capsule);
 
-  const { data: beneficiaries } = useSWR(endpoint.beneficiaries);
-  useEffect(() => {
-    // console.log(data, allCapsules, beneficiaries);
-    // console.log(beneficiaries);
-    // console.log(allCapsules);
-  }, [data, allCapsules, beneficiaries]);
-
-  // const { data: beneficiariesFullData } = useSWR(endpoint.beneficiary, { id: beneficiaries });
-  // useEffect(() => {
-  //   // console.log(data, allCapsules, beneficiaries);
-  //   // console.log(beneficiaries);
-  //   console.log(beneficiariesFullData);
-  // }, [data, allCapsules, beneficiariesFullData]);
-
   const scheduledCount =
     allCapsules?.data?.docs?.filter((capsule) => capsule.status === "scheduled")
       .length || 0;
