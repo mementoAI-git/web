@@ -19,7 +19,6 @@ export function CapsuleItemActions({ capsule }: { capsule: ICapsule }) {
   // });
 
   const handleSelect = async (value: string) => {
-    console.log(value, "VALUE");
     // if (value === "share-story") {
     //   open("share-memory", { memory });
     // }

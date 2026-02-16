@@ -119,11 +119,11 @@ export interface ICapsule {
   user: string;
   recipients: IUser[];
   // delivery_date: string;
-  schedule_date: string;
+  schedule_date?: string;
   title: string;
   body: string;
   attachments: IFile[];
-  status: string;
+  status: "draft" | "scheduled" | "delivered" | "paused" | "failed" | "deleted";
   created_at: string;
   updated_at: string;
 }

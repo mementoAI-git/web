@@ -138,17 +138,28 @@ export default function CreateCapsule({
     payload: any,
     { setValues }: { setValues: (values: typeof initial) => void },
   ) => {
+    console.log("Payload received:", JSON.stringify(payload, null, 2));
     const submission = { ...payload };
+
+    // Don't send schedule_date if status is 'draft'
+    if (submission.status === "draft") {
+      delete submission.schedule_date;
+      // Also make sure it's not in the payload at all
+      const { schedule_date, ...rest } = submission;
+      Object.assign(submission, rest);
+    }
 
     const uploadedIds = !isEmpty(files)
       ? files
-          .map((file) => file.uploadedFile?._id)
-          .filter((id): id is string => Boolean(id))
+        .map((file) => file.uploadedFile?._id)
+        .filter((id): id is string => Boolean(id))
       : [];
 
     const selectedMediaIds = selectedMedia.map((m) => m.id || m._id);
 
     submission.attachments = [...uploadedIds, ...selectedMediaIds];
+
+    console.log("Final submission payload:", JSON.stringify(submission, null, 2));
 
     const result = await trigger(submission);
     if (result?.success) {
@@ -325,26 +336,32 @@ export default function CreateCapsule({
   };
 
   const [shouldSubmit, setShouldSubmit] = useState(false);
+  const [pendingStatus, setPendingStatus] = useState<"draft" | "scheduled" | null>(null);
 
-  // Trigger submission after status changes to draft
+  // Trigger submission after status changes
   useEffect(() => {
-    if (shouldSubmit && values.status === "draft") {
+    if (shouldSubmit && pendingStatus && values.status === pendingStatus) {
       handleSubmit();
       setShouldSubmit(false);
+      setPendingStatus(null);
     }
-  }, [values.status, shouldSubmit, handleSubmit]);
+  }, [values.status, shouldSubmit, pendingStatus, handleSubmit]);
 
   const handleSaveToDraft = (event: React.FormEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
     if (isMutating) return;
+
     handleValue("status", "draft");
-    handleSubmit(event as unknown as React.FormEvent<HTMLFormElement>);
+    setPendingStatus("draft");
+    setShouldSubmit(true);
   };
 
   const handleSave = (event: React.FormEvent<HTMLFormElement>) => {
-    console.log(event, "Save");
     if (isMutating) return;
     handleValue("status", "scheduled");
-    handleSubmit(event);
+    setPendingStatus("scheduled");
+    setShouldSubmit(true);
   };
 
   const renderFileAttachment = (file: IOnUploadPayload) => (
@@ -425,11 +442,16 @@ export default function CreateCapsule({
   }
 
   const isFormValid =
-    // values.delivery_date &&
-    values.schedule_date &&
-    values.title.trim() !== "" &&
-    values.body.trim() !== "" &&
-    values.recipients.length > 0;
+    values.status === "draft"
+      ? // For draft: only require title, body, and recipients
+      values.title.trim() !== "" &&
+      values.body.trim() !== "" &&
+      values.recipients.length > 0
+      : // For scheduled: also require schedule_date
+      values.schedule_date &&
+      values.title.trim() !== "" &&
+      values.body.trim() !== "" &&
+      values.recipients.length > 0;
 
   // ==================== VIEW MODE ====================
   if (isViewMode) {
@@ -667,15 +689,7 @@ export default function CreateCapsule({
                     <button
                       type="button"
                       className="btn-outline"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        e.nativeEvent.stopImmediatePropagation();
-                        e.nativeEvent.preventDefault();
-                        e.nativeEvent.stopPropagation();
-                        handleSaveToDraft(e);
-                        console.log("Save to draft clicked");
-                      }}
+                      onClick={handleSaveToDraft}
                     >
                       Save to draft
                       {values.status === "draft" && (

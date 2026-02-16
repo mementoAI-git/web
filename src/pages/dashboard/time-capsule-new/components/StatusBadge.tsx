@@ -1,6 +1,6 @@
-import type { IMemory } from "@/utility/interface";
+type CapsuleStatus = "draft" | "scheduled" | "delivered" | "paused" | "failed" | "deleted";
 
-export default function StatusBadge({ status }: { status: IMemory["status"] }) {
+export default function StatusBadge({ status }: { status: CapsuleStatus }) {
   const config = {
     draft: {
       bg: "bg-gray-50",

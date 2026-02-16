@@ -158,9 +158,6 @@ function CapsuleListItem({ capsule }: { capsule: ICapsule }) {
           </div>
         </div>
       </div>
-      <div className="text-center text-sm font-inter text-gray-950">
-        Due in: {dayjs(capsule.delivery_date).fromNow()}
-      </div>
     </div>
   );
 }

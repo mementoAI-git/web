@@ -27,7 +27,7 @@ function CapsuleGridItem({ capsule }: { capsule: ICapsule }) {
           {capsule.body}
         </p>
 
-        <div className="relative flex min-h[50px] sm:min-h[30px] overflow-hidden w-full items-center justify-start rounded-lg">
+        <div className="relative flex min-h-[50px] sm:min-h-[30px] overflow-hidden w-full items-center justify-start rounded-lg">
           {(() => {
             const attachments = capsule?.attachments || [];
             if (attachments.length > 0) {
@@ -190,7 +190,6 @@ export default function CapsuleGrid({
     return <CapsuleEmptyState filterType={filter} showCreateButton={true} />;
   }
 
-  console.log(data, "DATA");
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 auto-rows-fr">
       {data.docs.map((m, i) => (
