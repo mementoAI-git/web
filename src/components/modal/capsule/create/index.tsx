@@ -34,12 +34,12 @@ import TimeCapsuleBadge from "@/pages/dashboard/time-capsule-new/components/Time
 import { useStore } from "@/hooks/use-store";
 
 // const schema = yup.object().shape({
-//   // delivery_date: yup.date().required("Delivery date is required"),
-//   schedule_date: yup.date().required("Delivery date is required"),
-//   title: yup.string().required("Title is required"),
-//   body: yup.string().required("Body is required"),
-//   status: yup.string().default("scheduled").required("Status is required"),
-//   recipients: yup.array().min(1, "At least one recipient is required"),
+// // delivery_date: yup.date().required("Delivery date is required"),
+// schedule_date: yup.date().required("Delivery date is required"),
+// title: yup.string().required("Title is required"),
+// body: yup.string().required("Body is required"),
+// status: yup.string().default("scheduled").required("Status is required"),
+// recipients: yup.array().min(1, "At least one recipient is required"),
 // });
 
 const schema = yup.object().shape({
@@ -532,16 +532,23 @@ export default function CreateCapsule({
               </h4>
               {/* Optional: Back to view button */}
               {/*{data && (
-                <button
-                  onClick={() => setCurrentMode("view")}
-                  className="text-sm text-gray-500 hover:text-gray-700 underline"
-                >
-                  Preview
-                </button>
-              )}*/}
+<button
+onClick={() => setCurrentMode("view")}
+className="text-sm text-gray-500 hover:text-gray-700 underline"
+>
+Preview
+</button>
+)}*/}
             </div>
 
-            <form onSubmit={handleSave} className="space-y-6">
+            {/*<form onSubmit={handleSave} className="space-y-6">*/}
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleSave();
+              }}
+              className="space-y-6"
+            >
               <Taginput
                 values={values.recipients}
                 placeholder="Enter recipients email address"
@@ -641,15 +648,11 @@ export default function CreateCapsule({
                       value={values.title}
                       className="h-9 w-full min-h-9 resize-none font-semibold font-garamond first-letter:capitalize outline-0 bg-transparent"
                     />
-                    {errors.title && (
-                      <small className="text-xs text-danger">
-                        {errors.title}
-                      </small>
-                    )}
                   </div>
-
-                  {errors.body && (
-                    <small className="text-xs text-danger">{errors.body}</small>
+                  {errors.title && (
+                    <small className="text-xs text-danger">
+                      {errors.title}
+                    </small>
                   )}
 
                   <div className="h-fit w-full rounded-xl border border-grey-100 bg-grey-700 px-3 py-1 focus-within:border-2 focus-within:border-primary">
@@ -662,15 +665,26 @@ export default function CreateCapsule({
                       rows={5}
                     />
                   </div>
+                  {errors.body && (
+                    <small className="text-xs text-danger">{errors.body}</small>
+                  )}
                 </div>
               </div>
 
               <span className="font-inter text-xs mb-2 font-normal text-[#667085] block">
                 Capsule delivery date:
               </span>
+              {/*<DateOptionsDropdown
+onDateSelect={(date) =>
+handleValue("schedule_date", date.toISOString())
+}
+CustomCalendarComponent={DatePickerWrapper}
+defaultLabel="In 3 days"
+/>*/}
+
               <DateOptionsDropdown
+                dropDirection="up"
                 onDateSelect={(date) =>
-                  // handleValue("delivery_date", date.toISOString())
                   handleValue("schedule_date", date.toISOString())
                 }
                 CustomCalendarComponent={DatePickerWrapper}
