@@ -3,7 +3,7 @@
 @config "../tailwind.config.ts";
 
 :root {
-  --color-primary: #52A1DD;
+  --color-primary: #E26A24;
   --color-secondary: rgba(0, 6, 38, 0.9);
   --color-surface: #f5f6fa;
   --color-surfaces-100: #067a57;
@@ -25,8 +25,8 @@
   --color-blue-2: #E9F1FC;
   --color-blue-3: #D8E7F9;
   --color-blue-4: #ADCFF4;
-  --color-blue-6: #52A1DD;
-  --color-blue-7: #4284B6;
+  --color-blue-6: #E26A24;
+  --color-blue-7: #C55A1D;
 
   --color-gray-50: #FAFAFA;
   --color-gray-200: #EAECF0;
@@ -57,12 +57,12 @@
   --shadow-btn: 0px 2px 4px -2px #00000014, 0px 4px 8px -2px #0000000a;
   --shadow-drop-down: 2px 4px 12px 0px #00000040;
 
-  --rdp-accent-color: var(--color-blue-6);
-  --rdp-range_start-background: var(--color-blue-2);
-  --rdp-range_middle-background: var(--color-blue-2);
-  --rdp-range_end-background: var(--color-blue-2);
+  --rdp-accent-color: #E26A24;
+  --rdp-range_start-background: #FBEFE9;
+  --rdp-range_middle-background: #FBEFE9;
+  --rdp-range_end-background: #FBEFE9;
   --rdp-day-selected-color: #fff;
-  --rdp-day-selected-background: var(--color-blue-6);
+  --rdp-day-selected-background: #E26A24;
 
   --font-garamond: 'EB Garamond', serif;
   --font-azeret: 'Azeret Mono', monospace;

@@ -1,146 +1,93 @@
-"use client";
-
-import { useState } from "react";
-import { Searchinput } from "@/components/Form";
-import { GridIcon, ListIcon, ChevronDownIcon, SearchIcon, FilterIcon } from "@/components/icons";
+import { GridIcon, ListIcon, SearchIcon } from "@/components/icons";
 import { useModal } from "@/hooks/use-modal";
 import { storageKeys } from "@/utility/constant";
-import { useEffect } from "react";
-
-import { StoriesListFilter } from "./filter";
+import { cn } from "@/utility";
 
 interface IStoriesHeader {
   mode?: string;
   onChangeMode: (m: string) => void;
   filter: string;
   onChangeFilter: (f: string) => void;
+  count?: number;
 }
 
 export default function StoriesHeader({
   mode = "list",
   onChangeMode,
   filter,
-  onChangeFilter
+  onChangeFilter,
+  count = 0
 }: IStoriesHeader) {
   const { open } = useModal()
-  const [showFilter, setShowFilter] = useState(false)
 
-  const [dateRange, setDateRange] = useState<{ from?: Date; to?: Date }>({});
-
-  const handleSetDateRange = (range: { from?: Date; to?: Date }) => {
-    setDateRange(range);
-    onChangeFilter("custom-date");
-  };
+  const filters = [
+    { label: "All", value: "all", count: count },
+    { label: "Bookmarked", value: "bookmarked" },
+    { label: "Deleted", value: "deleted" },
+  ];
 
   const handleChangeMode = (m: string) => {
     localStorage.setItem(storageKeys.listmode, m)
     onChangeMode(m)
   }
 
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if ((event.metaKey || event.ctrlKey) && event.key === "k") {
-        event.preventDefault();
-        open("search-memory");
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [open]);
-
-  const formatDate = (date?: Date) =>
-    date
-      ? date.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      })
-      : "";
-
-  const hasDateRange = dateRange.from && dateRange.to;
-
   return (
-    <div className="flex flex-1 flex-col gap-3">
-      <div className="flex flex-row items-center sm:items-center justify-between gap-2 sm:gap-0">
-        {/* <div className="flex items-center gap-2">
-          <span className="font-inter text-lg sm:text-xl leading-[30px] font-semibold text-grey-900">
-            My memories
-          </span>
-          <span className="block rounded-full bg-grey-500 px-3 py-0.5 font-inter text-xs text-grey-600">
-            {count} post{count > 1 && "s"}
-          </span>
-        </div> */}
+    <div className="flex flex-col gap-6 w-full">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        {/* Filter Pills */}
+        <div className="flex flex-wrap items-center gap-2">
+          {filters.map((f) => (
+            <button
+              key={f.value}
+              onClick={() => onChangeFilter(f.value)}
+              className={cn(
+                "px-4 py-2 rounded-full font-inter text-sm font-medium transition-all border",
+                filter === f.value
+                  ? "bg-[#1D2939] border-[#1D2939] text-white"
+                  : "bg-white border-[#EAECF0] text-[#344054] hover:bg-gray-50"
+              )}
+            >
+              {f.label} {f.count !== undefined && <span className="opacity-70 ml-1">({f.count})</span>}
+            </button>
+          ))}
+        </div>
 
-      </div>
-      <div className="flex flex-row items-center justify-between gap-2 md:gap-0">
-        <div className="flex flex-1 items-center gap-2 sm:gap-4">
-          <div className="flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-lg bg-white transition-colors cursor-pointer" onClick={() => setShowFilter(!showFilter)}>
-            <FilterIcon />
-            <span>Filter</span>
-            <ChevronDownIcon />
-          </div>
+        <div className="flex flex-1 items-center gap-3 max-w-2xl">
+          {/* Search Input */}
           <div
             onClick={() => open("search-memory")}
-            className="w-fit sm:w-full"
+            className="flex-1 group relative cursor-pointer"
           >
-            <div className="w-10 h-10 flex cursor-pointer bg-white items-center justify-center rounded-lg border border-gray-200 sm:hidden">
-              <SearchIcon />
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[#667085]">
+              <SearchIcon className="size-5" />
             </div>
-            <div className="hidden sm:block max-w-[489px]">
-              <Searchinput
-                className="bg-white !border-gray-200"
-                end={<div className="border-grey-500 border rounded py-[1px] px-1 text-[#717680] font-medium font-inter text-xs">⌘K</div>}
-              />
+            <div className="w-full pl-10 pr-12 py-2.5 bg-white border border-[#D0D5DD] rounded-xl text-sm text-[#101828] placeholder-[#667085] shadow-sm group-hover:border-gray-400 transition-colors flex items-center">
+              Search
+            </div>
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 border border-[#D0D5DD] rounded px-1.5 py-0.5 text-[#667085] font-medium text-[10px] bg-gray-50">
+              ⌘K
             </div>
           </div>
-        </div>
-        <div className="flex items-center gap-2 sm:gap-3">
-          {
-            ["grid", "list"].map(m => (
-              <div
+
+          {/* Mode Toggles */}
+          <div className="flex items-center p-1 bg-white border border-[#D0D5DD] rounded-xl shadow-sm">
+            {["grid", "list"].map(m => (
+              <button
                 key={m}
                 onClick={() => handleChangeMode(m)}
-                className={`${mode === m ? "border" : "border-0 hover:border-gray-900/20"} hover:border border-gray-900/40 rounded-[10px] flex items-center text-gray-500 cursor-pointer justify-center w-9 sm:w-10 aspect-square`}
+                className={cn(
+                  "p-2 rounded-lg transition-all",
+                  mode === m
+                    ? "bg-[#F9FAFB] text-[#1D2939] shadow-sm"
+                    : "text-[#667085] hover:text-[#1D2939]"
+                )}
               >
-                {m === "list" ?
-                  <ListIcon width={16} height={16} /> :
-                  <GridIcon width={16} height={16} />
-                }
-              </div>
-            ))
-          }
+                {m === "list" ? <ListIcon className="size-5" /> : <GridIcon className="size-5" />}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
-      {showFilter && (
-        <div className="flex flex-col md:flex-row gap-3">
-          <StoriesListFilter
-            value={filter}
-            onChange={onChangeFilter}
-            onSetDateRange={handleSetDateRange}
-          />
-
-          {hasDateRange && (
-            <div className="px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm text-gray-700 flex items-center justify-between">
-              <span>
-                {formatDate(dateRange.from)} - {formatDate(dateRange.to)}
-              </span>
-              <button
-                onClick={() => {
-                  setDateRange({});
-                  onChangeFilter("all");
-                }}
-                className="text-gray-500 hover:text-gray-700 text-xs ml-4"
-              >
-                Clear
-              </button>
-            </div>
-          )}
-        </div>
-      )}
     </div>
   );
 }

@@ -123,12 +123,11 @@ export default function RegisterPage() {
 
         <small className="px-3 text-center font-inter text-sm leading-5 text-gray-800">
           By clicking “Create account” you agree to the
-          <span className="text-blue-6 underline">Terms of Use</span> and
-          <span className="text-blue-6 underline"> Privacy Policy</span>
+          <span className="text-primary underline">Terms of Use</span> and
+          <span className="text-primary underline"> Privacy Policy</span>
         </small>
       </form>
     </AuthLayout>
   );
 }
-
 

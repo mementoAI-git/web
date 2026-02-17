@@ -84,4 +84,12 @@ export { ListIcon } from "./list";
 export { MenuIcon } from "./menu";
 export { UserCircleIcon } from "./user-circle";
 export { BookmarkSolidIcon } from "./bookmark-solid";
+export { SparklesIcon } from "./sparkles-icon";
+export { ArchiveIcon } from "./archive-icon";
+export { ClockIcon } from "./clock-icon";
+export { SlidersIcon } from "./sliders-icon";
+export { GiftIcon } from "./gift-icon";
+export { HelpCircleIcon } from "./help-circle-icon";
+export { ArrowUpCircleIcon } from "./arrow-up-circle-icon";
+export { CloudIcon } from "./cloud-icon";
 

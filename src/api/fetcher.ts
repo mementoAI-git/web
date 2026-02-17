@@ -98,7 +98,6 @@ export const fileUploadFetcher = async (url: string, { arg }: any) => {
 
   try {
     const res = await axios.post(url, formData, {
-      headers: { "Content-Type": "multipart/form-data" },
       onUploadProgress: (event) => {
         if (onProgress && event.total) {
           const percent = Math.round((event.loaded * 80) / event.total);
