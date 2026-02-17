@@ -8,11 +8,10 @@ import endpoint from "@/api/endpoint";
 import useForm from "@/hooks/use-form";
 import { toast } from "sonner";
 import Spinner from "@/components/spinner";
-import FileAttachment from "@/components/file-attachment";
 import useFileUpload from "@/hooks/use-file-upload";
 import { isEmpty, cn } from "@/utility";
 import useSWR, { mutate } from "swr";
-import type { IOnUploadPayload, IMemory, IFile } from "@/utility/interface";
+import type { IMemory, IFile } from "@/utility/interface";
 import { ImagePlusIcon } from "@/components/icons";
 import SelectFromMemory from "../../select-from-memory";
 import SelectFromMedia from "../../select-from-media";
@@ -118,7 +117,7 @@ export default function CreateCapsule({
 
   const { close } = useModal();
   const { user } = useStore();
-  const { files, handleUpload, handleDeleteFile } = useFileUpload();
+  const { files, handleUpload } = useFileUpload();
   const { trigger, isMutating } = useFetcher(
     isEmpty(data) ? endpoint.capsule : `${endpoint.capsule}/${data?._id}`,
     isEmpty(data) ? "post" : "put",
@@ -151,15 +150,18 @@ export default function CreateCapsule({
 
     const uploadedIds = !isEmpty(files)
       ? files
-        .map((file) => file.uploadedFile?._id)
-        .filter((id): id is string => Boolean(id))
+          .map((file) => file.uploadedFile?._id)
+          .filter((id): id is string => Boolean(id))
       : [];
 
     const selectedMediaIds = selectedMedia.map((m) => m.id || m._id);
 
     submission.attachments = [...uploadedIds, ...selectedMediaIds];
 
-    console.log("Final submission payload:", JSON.stringify(submission, null, 2));
+    console.log(
+      "Final submission payload:",
+      JSON.stringify(submission, null, 2),
+    );
 
     const result = await trigger(submission);
     if (result?.success) {
@@ -336,7 +338,9 @@ export default function CreateCapsule({
   };
 
   const [shouldSubmit, setShouldSubmit] = useState(false);
-  const [pendingStatus, setPendingStatus] = useState<"draft" | "scheduled" | null>(null);
+  const [pendingStatus, setPendingStatus] = useState<
+    "draft" | "scheduled" | null
+  >(null);
 
   // Trigger submission after status changes
   useEffect(() => {
@@ -357,22 +361,12 @@ export default function CreateCapsule({
     setShouldSubmit(true);
   };
 
-  const handleSave = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSave = () => {
     if (isMutating) return;
     handleValue("status", "scheduled");
     setPendingStatus("scheduled");
     setShouldSubmit(true);
   };
-
-  const renderFileAttachment = (file: IOnUploadPayload) => (
-    <FileAttachment
-      key={file.id}
-      onDelete={handleDeleteFile}
-      progressType="text"
-      file={file}
-      className="max-w-67 bg-white"
-    />
-  );
 
   const handleMemoryClose = useCallback(() => {
     setShowMemoryList(false);
@@ -444,14 +438,14 @@ export default function CreateCapsule({
   const isFormValid =
     values.status === "draft"
       ? // For draft: only require title, body, and recipients
-      values.title.trim() !== "" &&
-      values.body.trim() !== "" &&
-      values.recipients.length > 0
+        values.title.trim() !== "" &&
+        values.body.trim() !== "" &&
+        values.recipients.length > 0
       : // For scheduled: also require schedule_date
-      values.schedule_date &&
-      values.title.trim() !== "" &&
-      values.body.trim() !== "" &&
-      values.recipients.length > 0;
+        values.schedule_date &&
+        values.title.trim() !== "" &&
+        values.body.trim() !== "" &&
+        values.recipients.length > 0;
 
   // ==================== VIEW MODE ====================
   if (isViewMode) {
