@@ -1,22 +1,76 @@
-import React from "react";
+import { cn } from "@/utility";
 
 interface IStatCard {
-  icon: React.ReactElement;
-  title: string;
+  icon?: React.ReactElement;
+  title: string | number;
   subtitle: string;
+  unit?: string;
+  variant?: "blue" | "pink" | "orange" | "green" | "purple" | "yellow";
+  action?: React.ReactNode;
+  bgImage?: string;
 }
 
-export function StatCard({ title, icon, subtitle }: IStatCard) {
-  return (
-    <div className="flex max-h-37 flex-1 border border-gray-200 flex-col gap-3 rounded-2xl bg-sand-1 px-6 md:px-10 py-5 md:py-6">
-      <div className="flex flex-row gap-3 items-center">
-        <span className="text-gray-400">{icon}</span>
+const valueColors = {
+  blue: "text-[#0C71FF]",
+  pink: "text-[#D91DAA]",
+  orange: "text-[#FF7D0C]",
+  green: "text-[#25C971]",
+  purple: "text-[#6621F0]",
+  yellow: "text-[#FF8C00]",
+};
 
-        <span className="font-garamond font-semibold text-2xl text-gray-800">
-          {title}
+export function StatCard({ title, icon, subtitle, unit = "messages", variant = "blue", action, bgImage }: IStatCard) {
+  return (
+    <div
+      className={cn(
+        "flex flex-1 rounded-2xl h-[98px] relative overflow-hidden transition-all hover:scale-[1.02] cursor-default border border-black/5 bg-white",
+        !bgImage && "p-5 sm:p-6 shadow-sm"
+      )}
+    >
+      {bgImage && (
+        <img src={bgImage} alt="" className="absolute inset-0 size-full object-cover" />
+      )}
+
+      <div className={cn(
+        "flex flex-col justify-center h-full z-10",
+        bgImage ? "pl-4" : "gap-1"
+      )}>
+        <span className={cn(
+          "font-inter uppercase font-medium tracking-tight",
+          bgImage ? "text-[10px] text-gray-400" : "text-xs text-gray-600"
+        )}>
+          {subtitle}
         </span>
+        <div className="flex items-baseline gap-1.5">
+          <span className={cn(
+            "font-inter font-bold",
+            bgImage ? cn("text-base", valueColors[variant as keyof typeof valueColors]) : "text-sm text-[#101828]"
+          )}>
+            {title}
+          </span>
+          <span className={cn(
+            "font-inter",
+            bgImage ? "text-[13px] font-semibold text-gray-900" : "text-xs font-normal text-[#475467]"
+          )}>
+            {unit}
+          </span>
+        </div>
+        {action && (
+          <div className="mt-1">
+            {action}
+          </div>
+        )}
       </div>
-      <span className="font-inter text-sm text-gray-700">{subtitle}</span>
+
+      {!bgImage && icon && (
+        <div className="size-10 sm:size-12 flex items-center justify-center rounded-full bg-white shadow-sm z-10 ml-auto">
+          <span className="text-primary scale-110">{icon}</span>
+        </div>
+      )}
+
+      {!bgImage && (
+        <div className="absolute right-0 top-0 size-24 bg-white/50 blur-3xl -mr-10 -mt-10 rounded-full pointer-events-none" />
+      )}
     </div>
   );
 }

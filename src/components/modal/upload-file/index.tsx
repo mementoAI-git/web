@@ -86,7 +86,7 @@ export default function UploadFiles({ data: id }: UploadFilesProps) {
 
       const result = await uploadFile(payload as any);
 
-      const uploadedFile = result?.data?.[0];
+      const uploadedFile = Array.isArray(result?.data) ? result?.data[0] : result?.data;
       if (!uploadedFile) {
         toast.error("Upload unsuccessful");
         setFiles((previous) => previous.filter((item) => item.id !== file.id));

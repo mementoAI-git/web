@@ -97,7 +97,7 @@ export default function LoginPage() {
             checked={values.remember_for_30_days}
             onChange={handleChange}
           />
-          <Link to="/forget-password" className="cursor-pointer font-bold text-blue-6">
+          <Link to="/forget-password" className="cursor-pointer font-bold text-primary">
             Forgot password?
           </Link>
         </div>

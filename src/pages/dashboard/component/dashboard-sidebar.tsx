@@ -1,10 +1,7 @@
-
-import { SlideIcon } from "@/components/icons";
-import Logo from "@/components/logo";
-import { useModal } from "@/hooks/use-modal";
-import { useLocation, useNavigate } from "react-router-dom";
-import { topNavigations } from "./navigation";
+import { useLocation } from "react-router-dom";
+import { topNavigations, bottomNavigations } from "./navigation";
 import SideBarItem from "./sidebar-item";
+import { ProfileDropdown } from "./profile-dropdown";
 
 interface DashboardSideBarProps {
   onClose?: () => void;
@@ -12,51 +9,40 @@ interface DashboardSideBarProps {
 
 export function DashboardSideBar({ onClose }: DashboardSideBarProps) {
   const location = useLocation();
-  const navigate = useNavigate();
-  const { open } = useModal();
 
   const pathname = location.pathname;
 
-  const handleLogoClick = () => {
-    navigate("/overview");
-    onClose?.();
-  };
-
   return (
-    <div className="dynamic-height w-full min-h-screen overflow-x-hidden border-r border-gray-200 bg-background">
-      <div className="flex size-full max-h-300 flex-col justify-between">
-        <div className="w-full">
-          <div className="flex items-center justify-between p-5 pl-6">
-            <div onClick={handleLogoClick} className="cursor-pointer">
-              <Logo />
-            </div>
-          </div>
-          <div className="flex py-4 md:py-8 px-4 flex-col gap-1 sm:gap-2">
-            {topNavigations.map((n, i) => (
-              <SideBarItem
-                {...n}
-                active={
-                  n.link === pathname ||
-                  pathname.includes(n.link) ||
-                  (n.link === "/overview" && pathname === "/")
-                }
-                key={i}
-                onClick={onClose}
-              />
-            ))}
-            <SideBarItem
-              Icon={SlideIcon}
-              active={pathname.includes("settings")}
-              title="settings"
-              onClick={() => open("settings")}
-            />
-          </div>
-        </div>
-        {/* <div className="flex py-8 px-4 w-full flex-col gap-1 sm:gap-2">
-          {bottomNavigations.map((n, i) => (
-            <SideBarItem {...n} active={n.link === pathname} key={i} onClick={onClose} />
-          ))}
-        </div> */}
+    <div className="dynamic-height w-full min-h-screen overflow-x-hidden bg-white border-r border-black/5 flex flex-col">
+      <div className="p-4">
+        <ProfileDropdown />
+      </div>
+
+      <div className="flex-1 overflow-y-auto hide-scrollbar py-4 px-4 flex flex-col gap-1">
+        {topNavigations.map((n, i) => (
+          <SideBarItem
+            {...n}
+            active={
+              n.link === pathname ||
+              pathname.includes(n.link) ||
+              (n.link === "/overview" && pathname === "/")
+            }
+            key={i}
+            onClick={onClose}
+          />
+        ))}
+      </div>
+
+      <div className="mt-auto px-4 pb-6 flex flex-col gap-1">
+        <div className="h-px w-full my-4" />
+        {bottomNavigations.map((n, i) => (
+          <SideBarItem
+            {...n}
+            active={pathname.includes(n.link)}
+            key={i}
+            onClick={onClose}
+          />
+        ))}
       </div>
     </div>
   );

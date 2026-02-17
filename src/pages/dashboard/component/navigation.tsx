@@ -1,11 +1,13 @@
 import {
-  AiIcon,
-  ClockStopwatch,
+  ArchiveIcon,
+  ArrowUpCircleIcon,
   CompassIcon,
-  DollarIcon,
-  DoubleHeartIcon,
+  GiftIcon,
+  HelpCircleIcon,
   HomeIcon,
-  QuestionOctagonIcon,
+  SlidersIcon,
+  SparklesIcon,
+  ClockIcon,
 } from "@/components/icons";
 
 export const settingNavigations = [
@@ -16,14 +18,16 @@ export const settingNavigations = [
 ];
 
 export const topNavigations = [
-  { Icon: HomeIcon, title: "overview", link: "/overview" },
-  { Icon: AiIcon, title: "My conversations", link: "/chat" },
-  { Icon: DoubleHeartIcon, title: "my stories", link: "/stories" },
-  { Icon: CompassIcon, title: "explore", link: "/explore" },
-  { Icon: ClockStopwatch, title: "time capsule", link: "/capsule" },
+  { Icon: HomeIcon, title: "Overview", link: "/overview" },
+  { Icon: SparklesIcon, title: "My conversations", link: "/chat" },
+  { Icon: ArchiveIcon, title: "My Memories", link: "/stories" },
+  { Icon: CompassIcon, title: "Explore", link: "/explore" },
+  { Icon: ClockIcon, title: "Time capsule", link: "/capsule", color: "#F06037" },
+  { Icon: SlidersIcon, title: "Settings", link: "/settings" },
 ];
 
 export const bottomNavigations = [
-  { Icon: DollarIcon, title: "invite friends", link: "/invite-friends" },
-  { Icon: QuestionOctagonIcon, title: "support", link: "/support" },
+  { Icon: GiftIcon, title: "Invite friends", link: "/invite-friends" },
+  { Icon: HelpCircleIcon, title: "Feedback & support", link: "/feedback" },
+  { Icon: ArrowUpCircleIcon, title: "Upgrade plan", link: "/upgrade", color: "#6BB19E" },
 ];

@@ -3,7 +3,13 @@ import { useModal } from "@/hooks/use-modal";
 import { useEffect, useState } from "react";
 import useSWR from "swr";
 import { StatCard } from "../component/stat-card";
-import { BookmarkIcon, ConversationIcon, DoubleHeartIcon, PlusIcon } from "@/components/icons";
+import { DoubleHeartIcon, PlusIcon } from "@/components/icons";
+
+import totalMemoriesBg from "@/assets/icon/total-memories.svg";
+import mediaFilesBg from "@/assets/icon/media-files.svg";
+import favouritesCardBg from "@/assets/icon/favourites-card.svg";
+import storageCardBg from "@/assets/icon/storage-card.svg";
+
 import Table from "@/components/table";
 import { storageKeys } from "@/utility/constant";
 import { cn } from "@/utility";
@@ -90,30 +96,44 @@ export default function StoriesPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             <StatCard
-              icon={<DoubleHeartIcon width={23} />}
-              subtitle="Stories added"
+              bgImage={totalMemoriesBg as unknown as string}
+              subtitle="Total Memories"
               title={stats?.data?.stories_count || 0}
+              unit="items"
+              variant="blue"
             />
             <StatCard
-              icon={<ConversationIcon strokeWidth={2} width={22} height={20} />}
-              subtitle="Conversations"
-              title={stats?.data?.conversations_count || 0}
+              bgImage={mediaFilesBg as unknown as string}
+              subtitle="Media Files"
+              title={stats?.data?.attachments_count || 0}
+              unit="items"
+              variant="pink"
             />
             <StatCard
-              icon={<BookmarkIcon strokeWidth={2} width={14} height={18} />}
-              subtitle="Bookmarks"
+              bgImage={favouritesCardBg as unknown as string}
+              subtitle="Favourites"
               title={stats?.data?.bookmark_count || 0}
+              unit="items"
+              variant="orange"
+            />
+            <StatCard
+              bgImage={storageCardBg as unknown as string}
+              subtitle="Storage"
+              title="24/40GB"
+              unit="used"
+              variant="green"
             />
           </div>
         </div>
-        <div className="space-y-3 sm:space-y-4 lg:space-y-6 py-3 sm:py-4 lg:py-8">
+        <div className="space-y-6 sm:space-y-8 lg:space-y-10 py-3 sm:py-4 lg:py-8">
           <StoriesHeader
             mode={mode}
             onChangeMode={setMode}
             filter={filter}
             onChangeFilter={setFilter}
+            count={stats?.data?.stories_count || 0}
           />
           {
             mode === "grid" ?
