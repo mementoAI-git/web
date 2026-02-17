@@ -2,8 +2,8 @@ export interface IFile {
   url: string;
   name: string;
   size: string | number;
-  duration: number;
-  type: string;
+  duration?: number;
+  type?: string;
   _id: string;
 }
 
@@ -118,11 +118,12 @@ export interface ICapsule {
   _id?: string;
   user: string;
   recipients: IUser[];
-  delivery_date: string;
+  // delivery_date: string;
+  schedule_date?: string;
   title: string;
   body: string;
-  attachments: IOnUploadPayload[];
-  status: string;
+  attachments: IFile[];
+  status: "draft" | "scheduled" | "delivered" | "paused" | "failed" | "deleted";
   created_at: string;
   updated_at: string;
 }
@@ -144,10 +145,14 @@ export interface IPrompt {
   updated_at: string;
 }
 
+export interface IPromptWithAnswer extends IPrompt {
+  answered: boolean;
+}
+
 export interface IMessage {
-  _id?: string
-  user: string
-  text: string
-  role: string // user, ai
-  created_at: string
+  _id?: string;
+  user: string;
+  text: string;
+  role: string; // user, ai
+  created_at: string;
 }

@@ -92,4 +92,5 @@ export { GiftIcon } from "./gift-icon";
 export { HelpCircleIcon } from "./help-circle-icon";
 export { ArrowUpCircleIcon } from "./arrow-up-circle-icon";
 export { CloudIcon } from "./cloud-icon";
-
+export { ImagePlusIcon } from "./image-plus-icon";
+export { ClockStopwatch } from "./clock-stopwatch";

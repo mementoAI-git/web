@@ -64,6 +64,7 @@ export default {
   // capsule
   capsule: "/capsule",
   capsuleDelete: "/capsule/:id",
+  capsuleStats: "/capsule/stats",
 
   // activities
   activities: "/activities",
