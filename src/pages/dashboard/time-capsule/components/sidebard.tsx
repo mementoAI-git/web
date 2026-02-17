@@ -17,7 +17,7 @@ import { tagColors } from "@/utility/constant";
 export default function CapsulesSidebar({ data }: { data: ICapsule }) {
   const { open } = useModal();
 
-  if (isEmpty(data)) return <DetailsSideBarSkeleton />
+  if (isEmpty(data)) return <DetailsSideBarSkeleton />;
   return (
     <div className="size-full space-y-3 bg-[#FCFCFD] p-6">
       <div className="space-y-4 border-b border-grey-500 pb-14">
@@ -33,12 +33,16 @@ export default function CapsulesSidebar({ data }: { data: ICapsule }) {
           <PropsItem
             icon={<CalenderIcon width={13} />}
             title="Delivery date:"
-            subtitle={dayjs(data?.delivery_date).format("MMM DD, YYYY")}
+            subtitle={dayjs(data?.schedule_date).format("MMM DD, YYYY")}
           />
           <PropsItem
             icon={<LockIcon width={13} />}
             title="Status:"
-            subtitle={<span className={cn("mem-tags", tagColors[data?.status])}>{data?.status}</span>}
+            subtitle={
+              <span className={cn("mem-tags", tagColors[data?.status])}>
+                {data?.status}
+              </span>
+            }
           />
         </ul>
       </div>
@@ -50,12 +54,16 @@ export default function CapsulesSidebar({ data }: { data: ICapsule }) {
           <PropsItem
             icon={<TextIcon width={13} />}
             title="word count:"
-            subtitle={<span className="mem-tags">{data?.body.split(/\s+/).length}</span>}
+            subtitle={
+              <span className="mem-tags">{data?.body.split(/\s+/).length}</span>
+            }
           />
           <PropsItem
             icon={<ClipIcon width={13} />}
             title="attachment:"
-            subtitle={<span className="mem-tags">{data.attachments.length || 0}</span>}
+            subtitle={
+              <span className="mem-tags">{data.attachments.length || 0}</span>
+            }
           />
         </ul>
       </div>
