@@ -9,7 +9,6 @@ interface IStatCard {
 export function StatCard({ title, icon, subtitle }: IStatCard) {
   return (
     <div className="flex max-h-37 flex-1 border border-gray-200 flex-col gap-3 rounded-2xl bg-sand-1 px-6 md:px-10 py-5 md:py-6">
-
       <div className="flex flex-row gap-3 items-center">
         <span className="text-gray-400">{icon}</span>
 

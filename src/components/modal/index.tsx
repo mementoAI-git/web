@@ -53,6 +53,8 @@ const MODAL_COMPONENTS = {
   "create-capsule": CreateCapsule,
   "delete-capsule": DeleteCapsule,
   "pause-capsule": PauseCapsule,
+  "edit-capsule": CreateCapsule,
+  "view-capsule": (props) => <CreateCapsule {...props} mode="view" />,
   settings: Settings,
   // "date-picker-filter": DatePickerFilter,
   "share-memory": ShareMemory,
