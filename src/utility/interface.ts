@@ -82,6 +82,8 @@ export interface IMemory {
   updated_at: string;
   bookmarked?: boolean;
   category?: string;
+  summary?: string;
+  topics?: string[];
 }
 
 export interface IPagination<T> {

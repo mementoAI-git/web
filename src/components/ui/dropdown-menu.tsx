@@ -16,21 +16,6 @@ const DropdownMenuSub = DropdownMenuPrimitive.Sub;
 
 const DropdownMenuRadioGroup = DropdownMenuPrimitive.RadioGroup;
 
-// const DropdownMenuTrigger = React.forwardRef<
-//   React.ElementRef<typeof DropdownMenuPrimitive.Trigger>,
-//   React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Trigger>
-// >(({ className, children, ...props }, ref) => (
-//   <DropdownMenuPrimitive.Trigger
-//     ref={ref}
-//     asChild
-//     className={cn("rounded-sm border border-border", className)}
-//     {...props}
-//   >
-//     {children}
-//   </DropdownMenuPrimitive.Trigger>
-// ));
-// DropdownMenuTrigger.displayName = DropdownMenuPrimitive.Trigger.displayName;
-
 const DropdownMenuSubTrigger = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.SubTrigger>,
   React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.SubTrigger> & {
