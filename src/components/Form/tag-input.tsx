@@ -8,7 +8,13 @@ interface TaginputProps extends Omit<ITexinput, "value" | "onChange"> {
   setValue: (values: string[]) => void;
 }
 
-export default function Taginput({ values, setValue, label, placeholder, error }: TaginputProps) {
+export default function Taginput({
+  values,
+  setValue,
+  label,
+  placeholder,
+  error,
+}: TaginputProps) {
   const [input, setInput] = useState("");
 
   const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
@@ -39,7 +45,9 @@ export default function Taginput({ values, setValue, label, placeholder, error }
                 onClick={() => removeTag(value)}
                 className="mem-tags flex items-center gap-2 !lowercase !bg-transparent !font-normal !text-grey-600"
               >
-                <span className="block max-w-40 truncate whitespace-nowrap">{value}</span>
+                <span className="block max-w-40 truncate whitespace-nowrap">
+                  {value}
+                </span>
                 <TimesIcon width={7} height={7} />
               </span>
             ))}
@@ -57,4 +65,3 @@ export default function Taginput({ values, setValue, label, placeholder, error }
     </div>
   );
 }
-
