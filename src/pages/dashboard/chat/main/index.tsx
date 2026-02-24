@@ -35,7 +35,7 @@ export default function ChatLandingPage() {
               {user?.first_name && `Hey ${user?.first_name},`} What’s on your mind today?
             </h4>
             <h4 className="md:hidden font-medium font-garamond text-[40px] leading-[48px] text-sand-12">
-              Hey <span className="italic font-light gray-500">Groot</span>, <br />
+              Hey <span className="italic font-light gray-500">{user?.nickname || user?.first_name || user?.last_name || "User"}</span>, <br />
               What’s on your mind today?
             </h4>
             <Chatinput
