@@ -47,7 +47,10 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
               onClick={handleLogoClick}
               className="size-6 cursor-pointer flex items-center justify-center shrink-0"
             >
-              <MLogoIcon className="size-full object-contain" />
+              <MLogoIcon
+                className="size-full object-contain"
+                aria-label="Logo"
+              />
             </div>
             <div className="flex items-center gap-1.5">
               <ChevronRightIcon
