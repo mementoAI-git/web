@@ -20,6 +20,16 @@ export interface Theme {
   decorations?: ThemeDecoration[];
 }
 
+// --- SVG STRINGS ---
+// TODO: Paste your actual SVG code strings here.
+// Ensure your SVGs have viewBox and ideally preserveAspectRatio="xMidYMid slice" or similar to fill the card.
+
+const SageSvg = ``;
+const PeachSvg = `<svg viewBox="0 0 400 600" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%">...PASTE PEACH SVG CODE HERE...</svg>`;
+const LavenderSvg = `<svg viewBox="0 0 400 600" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%">...PASTE LAVENDER SVG CODE HERE...</svg>`;
+const MintSvg = `<svg viewBox="0 0 400 600" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%">...PASTE MINT SVG CODE HERE...</svg>`;
+const DarkSvg = `<svg viewBox="0 0 400 600" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%">...PASTE DARK SVG CODE HERE...</svg>`;
+
 export const themes: Theme[] = [
   {
     id: "sage",
