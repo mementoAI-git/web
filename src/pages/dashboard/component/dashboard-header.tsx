@@ -1,4 +1,4 @@
-import MLogoIcon from "@/assets/icon/letter M.svg";
+import MLogoIcon from "@/assets/icon/letterM.svg?react";
 import blueFire from "@/assets/image/blue-fire.png";
 import greenDiamond from "@/assets/image/green-diamond-full.png";
 import { useModal } from "@/hooks/use-modal";
@@ -36,7 +36,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
 
   const handleLogoClick = () => {
     navigate("/overview");
-  }
+  };
 
   return (
     <div className="w-full h-[60px] fixed top-0 left-0 right-0 sm:relative flex items-center bg-white border-b border-black/5 px-4 sm:px-8">
@@ -47,10 +47,14 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
               onClick={handleLogoClick}
               className="size-6 cursor-pointer flex items-center justify-center shrink-0"
             >
-              <img src={MLogoIcon} alt="Logo" className="size-full object-contain" />
+              <MLogoIcon className="size-full object-contain" />
             </div>
             <div className="flex items-center gap-1.5">
-              <ChevronRightIcon width={14} height={14} className="text-gray-400" />
+              <ChevronRightIcon
+                width={14}
+                height={14}
+                className="text-gray-400"
+              />
               <span className="font-inter font-medium text-sm text-gray-900 capitalize whitespace-nowrap">
                 {truncateText(defaultHeaderTitle[path] || headerTitle, 32)}
               </span>
@@ -75,18 +79,27 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
 
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer border border-transparent">
-              <img src={greenDiamond} alt="Diamond" className="size-4 object-contain" />
+              <img
+                src={greenDiamond}
+                alt="Diamond"
+                className="size-4 object-contain"
+              />
               <span className="font-semibold text-gray-700 text-[13px]">0</span>
             </div>
 
             <StreakTracker>
               <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer border border-transparent">
-                <img src={blueFire} alt="Streak" className="size-4 object-contain" />
-                <span className="font-semibold text-gray-700 text-[13px]">{user?.streak || 0}</span>
+                <img
+                  src={blueFire}
+                  alt="Streak"
+                  className="size-4 object-contain"
+                />
+                <span className="font-semibold text-gray-700 text-[13px]">
+                  {user?.streak || 0}
+                </span>
               </div>
             </StreakTracker>
           </div>
-
         </div>
 
         <button

@@ -127,7 +127,7 @@ export default function DateOptionsDropdown({
       {isOpen && !showCustomCalendar && (
         <div
           className={cn(
-            "absolute font-normal text-sm leading-5 z-10 w-full bg-white border border-gray-200 rounded-lg shadow-lg",
+            "absolute font-normal text-sm leading-5 z-200 w-full bg-white border border-gray-200 rounded-lg shadow-lg",
             positionClasses,
           )}
         >

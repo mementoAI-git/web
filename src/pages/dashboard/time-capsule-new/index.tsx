@@ -3,15 +3,14 @@ import { useModal } from "@/hooks/use-modal";
 import { useEffect, useState } from "react";
 import useSWR from "swr";
 import { StatCard } from "./components/stat-card";
-import { PlusIcon } from "@/components/icons";
 import { storageKeys } from "@/utility/constant";
-import { cn } from "@/utility";
 import CapsuleHeader from "./components/header";
 import CapsuleGrid from "./components/grid";
 import { TimerFillIcon } from "./components/icons/TimerFillIcon";
 import { ZapIcon } from "./components/icons/ZapIcon";
 import { UnpdfIcon } from "./components/icons/UnpdfIcon";
 import CapsuleList from "./components/list";
+import Button from "./components/Button";
 
 export default function TimeCapsulePage() {
   const [page] = useState(1);
@@ -105,15 +104,7 @@ export default function TimeCapsulePage() {
               </p>
             </div>
 
-            <div>
-              <button
-                onClick={() => open("create-capsule")}
-                className={cn("btn", "rounded-full! md:w-full w-fit")}
-              >
-                <PlusIcon width={15} />
-                <span>Create New</span>
-              </button>
-            </div>
+            <Button onClick={() => open("create-capsule")}>Create New</Button>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
@@ -132,7 +123,6 @@ export default function TimeCapsulePage() {
         </div>
         <div className="space-y-3 sm:space-y-4 lg:space-y-6 py-3 sm:py-4 lg:py-8">
           <CapsuleHeader
-            // totalCapsuleCount={allCapsules?.data?.docs?.length || 0}
             totalCapsuleCount={
               scheduledCount + deliveredCount + draftCount || 0
             }

@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import * as yup from "yup";
+import ReactDOM from "react-dom";
 import { Taginput } from "@/components/Form";
 import { ModalCloseBtn } from "../../modalLayout";
 import { useModal } from "@/hooks/use-modal";
@@ -29,18 +30,10 @@ import {
   CAPSULE_SUPPORTED_FILE_TYPES,
   EXTENSION_TO_MIME,
 } from "@/utility/constant";
-
+import { Sheet } from "react-modal-sheet";
 import TimeCapsuleBadge from "@/pages/dashboard/time-capsule-new/components/TimeCapsuleBadge";
 import { useStore } from "@/hooks/use-store";
-
-// const schema = yup.object().shape({
-// // delivery_date: yup.date().required("Delivery date is required"),
-// schedule_date: yup.date().required("Delivery date is required"),
-// title: yup.string().required("Title is required"),
-// body: yup.string().required("Body is required"),
-// status: yup.string().default("scheduled").required("Status is required"),
-// recipients: yup.array().min(1, "At least one recipient is required"),
-// });
+import { X } from "lucide-react";
 
 const schema = yup.object().shape({
   schedule_date: yup.date().when("status", {
@@ -55,7 +48,6 @@ const schema = yup.object().shape({
 });
 
 const initial = {
-  // delivery_date: "",
   schedule_date: "",
   title: "",
   body: "",
@@ -65,7 +57,26 @@ const initial = {
 
 interface CreateCapsuleProps {
   data?: any;
-  mode?: "create" | "edit" | "view"; // NEW: support view mode
+  mode?: "create" | "edit" | "view";
+}
+
+// ─── Portal — renders sheets directly into document.body to escape
+//     any parent stacking context (backdrop-filter, transform, overflow)
+function MobileSheetPortal({ children }: { children: React.ReactNode }) {
+  const [mounted, setMounted] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 640);
+    check();
+    window.addEventListener("resize", check);
+    setMounted(true);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
+  if (!mounted || !isMobile) return null;
+
+  return ReactDOM.createPortal(children, document.body);
 }
 
 function DatePickerWrapper({
@@ -76,13 +87,6 @@ function DatePickerWrapper({
   onClose: () => void;
 }) {
   const [show, setShow] = useState(true);
-
-  const handleDateChange = (selectedDate: Date) => {
-    onDateSelect(selectedDate);
-    setShow(false);
-    onClose();
-  };
-
   return (
     <div className="relative">
       <DatePicker
@@ -91,11 +95,13 @@ function DatePickerWrapper({
           setShow(value);
           if (!value) onClose();
         }}
-        onChange={handleDateChange}
-        position="bottom"
-        options={{
-          minDate: new Date(),
+        onChange={(date) => {
+          onDateSelect(date);
+          setShow(false);
+          onClose();
         }}
+        position="bottom"
+        options={{ minDate: new Date() }}
       >
         <div className="invisible h-0" />
       </DatePicker>
@@ -103,15 +109,570 @@ function DatePickerWrapper({
   );
 }
 
+// ─── Sheet header row (title + close btn) ────────────────────────────────────
+function SheetHeader({
+  title,
+  onClose,
+}: {
+  title: string;
+  onClose: () => void;
+}) {
+  return (
+    <div className="flex items-center justify-between mb-5">
+      <h4 className="text-lg font-semibold text-[#1D2939]">{title}</h4>
+      <button
+        type="button"
+        onClick={onClose}
+        className="w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50"
+      >
+        <X size={16} />
+      </button>
+    </div>
+  );
+}
+
+function PeekCard() {
+  return (
+    <div
+      aria-hidden="true"
+      style={{
+        position: "absolute",
+        top: "-10px", // Adjusted slightly for better overlap
+        left: "12px",
+        right: "12px",
+        height: "124px",
+        minWidth: "343px",
+        margin: "0 auto",
+        background: "#FBF5EB",
+        opacity: 0.8,
+        borderRadius: "20px 20px 0 0",
+        zIndex: 0, // Bottom-most layer
+      }}
+    />
+  );
+}
+
+const SheetBackground = () => (
+  <div
+    style={{
+      position: "absolute",
+      inset: 0,
+      background: "#ffffff",
+      borderRadius: "24px 24px 0 0",
+      zIndex: 1, // Sits above the PeekCard
+      boxShadow: "0 -8px 24px rgba(0,0,0,0.08)",
+    }}
+  />
+);
+
+// ─── Form sheet ───────────────────────────────────────────────────────────────
+function MobileFormSheet({
+  isOpen,
+  onClose,
+  values,
+  errors,
+  handleChange,
+  handleValue,
+  handleSave,
+  handleSaveToDraft,
+  isEditMode,
+  isFormValid,
+  isMutating,
+  beneficiaries,
+  recentMedia,
+  selectedMedia,
+  handleRecipientSelect,
+  handleMediaSelect,
+  onOpenMemory,
+  onOpenMedia,
+  onTapPreview,
+  dragHandlers,
+  isDragging,
+  handleUpload,
+  cardStyle,
+  onStyleChange,
+  previewRecipients,
+  previewAssets,
+  user,
+}: any) {
+  return (
+    <Sheet
+      isOpen={isOpen}
+      onClose={onClose}
+      snapPoints={[0, 1]}
+      initialSnap={1}
+      style={{ zIndex: 9995 }}
+    >
+      <Sheet.Container
+        style={{
+          background: "transparent", // Important: made transparent to show peek card behind
+          borderRadius: "24px 24px 0 0",
+          overflow: "visible",
+          boxShadow: "none",
+        }}
+      >
+        <PeekCard />
+        <SheetBackground />
+
+        {/* All content must be relative and higher z-index than SheetBackground */}
+        <Sheet.Header className="relative z-10">
+          <div className="flex justify-center pt-3 pb-1">
+            <div className="w-10 h-1 rounded-full bg-gray-300" />
+          </div>
+        </Sheet.Header>
+
+        <Sheet.Content className="relative z-10">
+          {/* Scrollable body */}
+          <div className="flex flex-col h-full">
+            <div className="flex-1 overflow-auto px-4 pb-4">
+              <SheetHeader
+                title={isEditMode ? "Edit Capsule" : "Create Capsule"}
+                onClose={onClose}
+              />
+
+              {/* ── Recipients ── */}
+              <div className="mb-5">
+                <p className="text-xs text-[#667085] mb-1.5">
+                  Select recipient(s)
+                </p>
+                <Taginput
+                  values={values.recipients}
+                  placeholder="Enter recipients email address"
+                  setValue={(recipients) =>
+                    handleValue("recipients", recipients)
+                  }
+                  error={errors.recipients as string}
+                />
+              </div>
+
+              {/* ── Recent beneficiaries ── */}
+              <div className="bg-[#F9FAFB] rounded-xl p-3 mb-5">
+                <p className="text-xs text-[#667085] mb-3">Recent</p>
+                <div className="overflow-x-auto">
+                  <RecentRecipients
+                    recipients={beneficiaries?.data?.docs}
+                    selectedRecipients={values.recipients}
+                    onSelect={handleRecipientSelect}
+                    onSeeAll={() => {}}
+                  />
+                </div>
+              </div>
+
+              {/* ── Upload media ── */}
+              <div className="mb-5">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-sm font-medium text-[#1D2939]">
+                    Upload media
+                  </span>
+                  <button
+                    type="button"
+                    onClick={onOpenMemory}
+                    className="text-sm font-medium text-orange"
+                  >
+                    Add from memory
+                  </button>
+                </div>
+
+                {/* Drag & drop zone */}
+                <div
+                  {...dragHandlers}
+                  className={cn(
+                    "flex flex-col items-center justify-center gap-3 border-2 border-dashed rounded-2xl py-8 px-4 transition-all duration-200",
+                    isDragging
+                      ? "border-orange bg-orange/5 scale-[1.02]"
+                      : "border-gray-200 bg-transparent",
+                  )}
+                >
+                  <ImagePlusIcon
+                    width={24}
+                    height={24}
+                    className={cn(
+                      "transition-colors",
+                      isDragging ? "text-orange" : "text-gray-400",
+                    )}
+                  />
+                  <p className="text-sm font-semibold text-center text-[#1D2939]">
+                    {isDragging ? (
+                      "Drop files here to upload"
+                    ) : (
+                      <>
+                        Drag and drop your file
+                        <br />
+                        here or click to upload
+                      </>
+                    )}
+                  </p>
+                  <p className="text-xs text-[#667085] text-center">
+                    Supports JPG, PNG, MP4, MP3, PDF,
+                    <br />
+                    DOC, TXT. Max file size: 120mb
+                  </p>
+                  <BrowseFileBtn onUpload={handleUpload} />
+                </div>
+              </div>
+
+              {/* ── Recent media strip ── */}
+              <div className="mb-5">
+                <p className="text-sm text-[#667085] mb-3">Recent</p>
+                <div className="bg-[#F9FAFB] rounded-xl p-3">
+                  <div className="flex items-center gap-2 overflow-x-auto">
+                    <RecentMedia
+                      items={recentMedia?.data?.docs}
+                      selectedItems={selectedMedia.map(
+                        (m: any) => m.id || m._id,
+                      )}
+                      onSelect={handleMediaSelect}
+                      onSeeMore={onOpenMedia}
+                    />
+                    {/* + add more button */}
+                    <button
+                      type="button"
+                      onClick={onOpenMedia}
+                      className="flex-shrink-0 w-14 h-14 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center text-orange"
+                    >
+                      <span className="text-2xl font-light">+</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* ── Write a message ── */}
+              <div className="border-t border-[#0011661A] pt-5 mb-5">
+                <p className="text-sm font-medium text-[#1D2939] mb-3">
+                  Write a message
+                </p>
+                <div className="flex flex-col gap-2">
+                  <div className="w-full rounded-xl border border-gray-200 bg-[#F9FAFB] px-3 py-2">
+                    <input
+                      placeholder="Header here"
+                      name="title"
+                      onChange={handleChange}
+                      value={values.title}
+                      className="w-full h-9 font-semibold font-garamond outline-none bg-transparent text-[#1D2939] placeholder:text-gray-400"
+                    />
+                  </div>
+                  {errors.title && (
+                    <small className="text-xs text-danger">
+                      {errors.title}
+                    </small>
+                  )}
+
+                  <div className="w-full rounded-xl border border-gray-200 bg-[#F9FAFB] px-3 py-2">
+                    <textarea
+                      placeholder="Message here..."
+                      name="body"
+                      onChange={handleChange}
+                      value={values.body}
+                      className="w-full resize-none font-garamond outline-none bg-transparent text-[#1D2939] placeholder:text-gray-400 leading-6"
+                      rows={5}
+                    />
+                  </div>
+                  {errors.body && (
+                    <small className="text-xs text-danger">{errors.body}</small>
+                  )}
+                </div>
+              </div>
+
+              {/* ── Delivery date ── */}
+              <div className="mb-5">
+                <p className="text-xs text-[#667085] mb-2">
+                  Capsule delivery date:
+                </p>
+                <DateOptionsDropdown
+                  onDateSelect={(date) =>
+                    handleValue("schedule_date", date.toISOString())
+                  }
+                  CustomCalendarComponent={DatePickerWrapper}
+                  defaultLabel="In 3 days"
+                />
+              </div>
+
+              {/* ── Preview section ── */}
+              <div className="mb-6">
+                <p className="text-sm font-medium text-[#1D2939] mb-3">
+                  Preview
+                </p>
+
+                {/* Style controls — Theme swatches + Style dropdown + Size dropdown */}
+                <div className="mb-3">
+                  <StyleControls
+                    cardStyle={cardStyle}
+                    onStyleChange={onStyleChange}
+                  />
+                </div>
+
+                {/* Mini preview card with "Tap to preview" overlay */}
+                <div
+                  className="relative w-full rounded-2xl overflow-hidden cursor-pointer h-[340px]"
+                  onClick={onTapPreview}
+                >
+                  {/* Centering wrapper */}
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <div className="relative w-[268px] h-[343px] scale-[0.85] origin-center">
+                      <CapsulePreviewCard
+                        style={cardStyle}
+                        recipients={previewRecipients}
+                        title={values.title}
+                        body={values.body}
+                        assets={previewAssets}
+                        sender={user}
+                        onAssetClick={() => {}}
+                        className="h-full w-full p-4 rounded-xl overflow-hidden"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Dark overlay */}
+                  <div className="absolute inset-0 bg-black/40 rounded-2xl" />
+
+                  {/* Tap to preview pill */}
+                  <div className="absolute inset-0 flex items-center justify-center z-10">
+                    <button
+                      type="button"
+                      className="flex items-center gap-2 bg-[#061528BA] text-white text-sm font-medium px-5 py-2.5 rounded-full"
+                    >
+                      {/* <Expand size={16} /> */}
+                      <svg
+                        width="24"
+                        height="24"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          d="M3 21L21 3M3 21H9M3 21L3 15M21 3H15M21 3V9"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        />
+                      </svg>
+                      Tap to preview
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* ── Sticky bottom action bar ── */}
+            <div className="flex-shrink-0 flex items-center gap-3 px-4 py-4 border-t border-gray-100 bg-white">
+              {!isEditMode && (
+                <button
+                  type="button"
+                  onClick={handleSaveToDraft}
+                  className="flex-1 h-12 rounded-full border border-gray-300 text-sm font-medium text-[#1D2939] flex items-center justify-center gap-2"
+                >
+                  Save as Draft
+                  {values.status === "draft" && (
+                    <Spinner loading={isMutating} className="size-4!" />
+                  )}
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={handleSave}
+                disabled={!isFormValid || isMutating}
+                className="flex-1 h-12 rounded-full bg-orange text-white text-sm font-medium flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                {isEditMode ? "Update Capsule" : "Schedule Capsule"}
+                {values.status === "scheduled" && (
+                  <Spinner loading={isMutating} className="size-4!" />
+                )}
+              </button>
+            </div>
+          </div>
+        </Sheet.Content>
+      </Sheet.Container>
+      {/* No backdrop — preview sheet is behind */}
+    </Sheet>
+  );
+}
+
+// ─── Preview sheet ────────────────────────────────────────────────────────────
+function MobilePreviewSheet({
+  isOpen,
+  onClose,
+  cardStyle,
+  onStyleChange,
+  previewRecipients,
+  values,
+  previewAssets,
+  user,
+}: any) {
+  return (
+    <Sheet
+      isOpen={isOpen}
+      onClose={onClose}
+      snapPoints={[0, 1]}
+      initialSnap={1}
+      style={{ zIndex: 9998 }}
+    >
+      <Sheet.Container
+        style={{
+          background: "transparent",
+          borderRadius: "24px 24px 0 0",
+          overflow: "visible",
+          boxShadow: "none",
+        }}
+      >
+        <PeekCard />
+        <SheetBackground />
+
+        <Sheet.Header className="relative z-10">
+          <div className="flex justify-center pt-3 pb-1">
+            <div className="w-10 h-1 rounded-full bg-gray-300" />
+          </div>
+        </Sheet.Header>
+        <Sheet.Content className="relative z-10">
+          <div className="flex flex-col h-full overflow-auto px-4 pb-8">
+            <SheetHeader title="Preview Capsule" onClose={onClose} />
+            {/* Style controls (Theme + Size) */}
+            <div className="mb-4">
+              <StyleControls
+                cardStyle={cardStyle}
+                onStyleChange={onStyleChange}
+              />
+            </div>
+            {/* Full capsule card */}
+            <div className="flex-1 rounded-2xl overflow-hidden">
+              <CapsulePreviewCard
+                style={cardStyle}
+                recipients={previewRecipients}
+                title={values.title}
+                body={values.body}
+                assets={previewAssets}
+                sender={user}
+                onAssetClick={() => {}}
+                className="h-full w-full p-6"
+              />
+            </div>
+          </div>
+        </Sheet.Content>
+      </Sheet.Container>
+      <Sheet.Backdrop onTap={onClose} />
+    </Sheet>
+  );
+}
+
+// ─── Memory sheet ─────────────────────────────────────────────────────────────
+function MobileMemorySheet({
+  isOpen,
+  onClose,
+  selectedIds,
+  onConfirm,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  selectedIds: string[];
+  onConfirm: (memories: IMemory[]) => void;
+}) {
+  return (
+    <Sheet
+      isOpen={isOpen}
+      onClose={onClose}
+      snapPoints={[0, 1]}
+      initialSnap={1}
+      style={{ zIndex: 9999 }}
+    >
+      <Sheet.Container
+        style={{
+          background: "transparent",
+          borderRadius: "24px 24px 0 0",
+          overflow: "visible",
+          boxShadow: "none",
+        }}
+      >
+        <PeekCard />
+        <SheetBackground />
+
+        <Sheet.Header className="relative z-10">
+          <div className="flex justify-center pt-3 pb-1">
+            <div className="w-10 h-1 rounded-full bg-gray-300" />
+          </div>
+        </Sheet.Header>
+        <Sheet.Content className="relative z-10">
+          <div className="h-full overflow-auto px-4 pb-8">
+            <SheetHeader title="Select item from memory" onClose={onClose} />
+            <SelectFromMemory
+              selectedIds={selectedIds}
+              handleClose={onClose}
+              onConfirm={onConfirm}
+              className="w-full flex-1"
+              hideHeader
+            />
+          </div>
+        </Sheet.Content>
+      </Sheet.Container>
+      <Sheet.Backdrop onTap={onClose} />
+    </Sheet>
+  );
+}
+
+// ─── Media sheet ──────────────────────────────────────────────────────────────
+function MobileMediaSheet({
+  isOpen,
+  onClose,
+  selectedIds,
+  onConfirm,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  selectedIds: string[];
+  onConfirm: (files: IFile[]) => void;
+}) {
+  return (
+    <Sheet
+      isOpen={isOpen}
+      onClose={onClose}
+      snapPoints={[0, 1]}
+      initialSnap={1}
+      style={{ zIndex: 9999 }}
+    >
+      <Sheet.Container
+        style={{
+          background: "transparent",
+          borderRadius: "24px 24px 0 0",
+          overflow: "visible",
+          boxShadow: "none",
+        }}
+      >
+        {/* Peek card */}
+        <PeekCard />
+        <SheetBackground />
+        <Sheet.Header className="relative z-10">
+          <div className="flex justify-center pt-3 pb-1">
+            <div className="w-10 h-1 rounded-full bg-gray-300" />
+          </div>
+        </Sheet.Header>
+        <Sheet.Content className="relative z-10">
+          <div className="h-full overflow-auto px-4 pb-8">
+            <SheetHeader
+              title="Select item from Recent Media"
+              onClose={onClose}
+            />
+            <SelectFromMedia
+              selectedIds={selectedIds}
+              handleClose={onClose}
+              onConfirm={onConfirm}
+              className="w-full flex-1"
+              hideHeader
+            />
+          </div>
+        </Sheet.Content>
+      </Sheet.Container>
+      <Sheet.Backdrop onTap={onClose} />
+    </Sheet>
+  );
+}
+
+// ─── Main component ───────────────────────────────────────────────────────────
 export default function CreateCapsule({
   data = null,
   mode = "create",
 }: CreateCapsuleProps) {
-  // NEW: State to track current mode (can toggle between view and edit)
   const [currentMode, setCurrentMode] = useState<"view" | "edit">(
     mode === "view" ? "view" : "edit",
   );
-
   const isEditMode = !isEmpty(data) && currentMode === "edit";
   const isViewMode = currentMode === "view";
 
@@ -129,40 +690,32 @@ export default function CreateCapsule({
   const { data: recentMedia } = useSWR(`${endpoint.files}?page=${page}`);
   const [selectedMedia, setSelectedMedia] = useState<any[]>([]);
 
-  const [showMemoryList, setShowMemoryList] = useState(false);
-  const [showMediaList, setShowMediaList] = useState(false);
+  // Desktop
+  const [desktopShowMemory, setDesktopShowMemory] = useState(false);
+  const [desktopShowMedia, setDesktopShowMedia] = useState(false);
 
-  // Form setup
+  // Mobile sheets
+  const [formSheetOpen] = useState(true);
+  const [previewSheetOpen, setPreviewSheetOpen] = useState(false);
+  const [memorySheetOpen, setMemorySheetOpen] = useState(false);
+  const [mediaSheetOpen, setMediaSheetOpen] = useState(false);
+
   const onSubmit = async (
     payload: any,
-    { setValues }: { setValues: (values: typeof initial) => void },
+    { setValues }: { setValues: (v: typeof initial) => void },
   ) => {
-    console.log("Payload received:", JSON.stringify(payload, null, 2));
     const submission = { ...payload };
-
-    // Don't send schedule_date if status is 'draft'
     if (submission.status === "draft") {
-      delete submission.schedule_date;
-      // Also make sure it's not in the payload at all
       const { schedule_date, ...rest } = submission;
       Object.assign(submission, rest);
     }
-
     const uploadedIds = !isEmpty(files)
-      ? files
-          .map((file) => file.uploadedFile?._id)
-          .filter((id): id is string => Boolean(id))
+      ? files.map((f: any) => f.uploadedFile?._id).filter(Boolean)
       : [];
-
-    const selectedMediaIds = selectedMedia.map((m) => m.id || m._id);
-
-    submission.attachments = [...uploadedIds, ...selectedMediaIds];
-
-    console.log(
-      "Final submission payload:",
-      JSON.stringify(submission, null, 2),
-    );
-
+    submission.attachments = [
+      ...uploadedIds,
+      ...selectedMedia.map((m) => m.id || m._id),
+    ];
     const result = await trigger(submission);
     if (result?.success) {
       toast.custom(() => <TimeCapsuleBadge />);
@@ -173,55 +726,45 @@ export default function CreateCapsule({
   };
 
   const { setValues, values, errors, handleSubmit, handleChange, handleValue } =
-    useForm({
-      initial,
-      schema,
-      onSubmit,
-    });
+    useForm({ initial, schema, onSubmit });
 
-  // Initialize form when data changes
   useEffect(() => {
     if (data) {
       setValues({
         title: data?.title || "",
         body: data?.body || "",
-        // delivery_date: data?.delivery_date || "",
         schedule_date: data?.schedule_date || "",
         status: data?.status || "scheduled",
         recipients:
-          data?.recipients?.map(
-            (recipient: { email: string }) => recipient.email,
-          ) || [],
+          data?.recipients?.map((r: { email: string }) => r.email) || [],
       });
-
-      // Pre-populate attachments
-      if (data?.attachments && Array.isArray(data.attachments)) {
-        const mediaItems = data.attachments.map((attachment: any) => ({
-          id: attachment._id,
-          _id: attachment._id,
-          type: attachment.type?.split("/")[0] || "image",
-          thumbnail: attachment.url || attachment.thumbnail,
-          title: attachment.name || attachment.title,
-          url: attachment.url,
-          duration: attachment.duration,
-        }));
-        setSelectedMedia(mediaItems);
+      if (data?.attachments?.length) {
+        setSelectedMedia(
+          data.attachments.map((a: any) => ({
+            id: a._id,
+            _id: a._id,
+            type: a.type?.split("/")[0] || "image",
+            thumbnail: a.url || a.thumbnail,
+            title: a.name || a.title,
+            url: a.url,
+            duration: a.duration,
+          })),
+        );
       }
     }
   }, [data, setValues]);
 
-  // Card style state
   const [cardStyle, setCardStyle] = useState<CardCustomization>({
-    backgroundColor: "#E2EADF",
+    themeId: "sage",
+    backgroundColor: "#F0FCD4",
     fontFamily: "Geist Mono",
     fontSize: "1x",
     textColor: "#2C3E2F",
     headerColor: "#1A2419",
   });
 
-  // Build preview assets
   const previewAssets = [
-    ...files.map((f) => ({
+    ...files.map((f: any) => ({
       id: f.id,
       type: (f.file?.type?.split("/")[0] || "image") as
         | "image"
@@ -238,33 +781,20 @@ export default function CreateCapsule({
           ? "video"
           : m.type?.includes("audio")
             ? "audio"
-            : "image") as "image" | "video" | "audio" | "memory",
+            : "image") as any,
       thumbnail: m.url || m.thumbnail || m.attachments?.[0]?.url || "",
       title: m.title || m.name || "Media file",
       duration: m.duration,
     })),
   ];
 
-  // Map recipients to names for preview
   const previewRecipients = values.recipients.map((email) => {
-    const beneficiary = beneficiaries?.data?.docs?.find(
-      (b: any) => b.email === email,
-    );
-    return beneficiary?.name || beneficiary?.user?.name || email;
+    const b = beneficiaries?.data?.docs?.find((b: any) => b.email === email);
+    return b?.name || b?.user?.name || email;
   });
 
-  // Handlers
-  const handleStyleChange = (updates: Partial<CardCustomization>) => {
+  const handleStyleChange = (updates: Partial<CardCustomization>) =>
     setCardStyle((prev) => ({ ...prev, ...updates }));
-  };
-
-  const handleEditClick = () => {
-    if (!data) {
-      toast.error("No capsule data available to edit");
-      return;
-    }
-    setCurrentMode("edit");
-  };
 
   const handleCloseClick = () => {
     close?.("create-capsule");
@@ -272,35 +802,26 @@ export default function CreateCapsule({
     close?.("edit-capsule");
   };
 
-  // File drop handler
   const handleFileDrop = useCallback(
     (droppedFiles: FileList) => {
-      const MAX_FILE_SIZE = 120 * 1024 * 1024;
-
+      const MAX = 120 * 1024 * 1024;
       Array.from(droppedFiles).forEach((file) => {
-        const extension = `.${file.name.split(".").pop()?.toLowerCase()}`;
-        const isValidType =
+        const ext = `.${file.name.split(".").pop()?.toLowerCase()}`;
+        const valid =
           CAPSULE_SUPPORTED_FILE_TYPES.includes(file.type as any) ||
-          (EXTENSION_TO_MIME[extension] &&
+          (EXTENSION_TO_MIME[ext] &&
             CAPSULE_SUPPORTED_FILE_TYPES.includes(
-              EXTENSION_TO_MIME[extension] as any,
+              EXTENSION_TO_MIME[ext] as any,
             ));
-
-        if (!isValidType) {
-          toast.error(`File type "${file.type || extension}" is not supported`);
+        if (!valid) {
+          toast.error(`File type "${file.type || ext}" is not supported`);
           return;
         }
-
-        if (file.size > MAX_FILE_SIZE) {
+        if (file.size > MAX) {
           toast.error(`${file.name} exceeds 120MB limit`);
           return;
         }
-
-        handleUpload({
-          id: uuidv4(),
-          file,
-          progress: 0,
-        });
+        handleUpload({ id: uuidv4(), file, progress: 0 });
       });
     },
     [handleUpload],
@@ -313,28 +834,20 @@ export default function CreateCapsule({
   const handleRecipientSelect = (recipient: any) => {
     const email = recipient.email;
     if (!email) return;
-
-    const currentRecipients = values.recipients || [];
-    const isSelected = currentRecipients.includes(email);
-
-    let newRecipients;
-    if (isSelected) {
-      newRecipients = currentRecipients.filter((r) => r !== email);
-    } else {
-      newRecipients = [...currentRecipients, email];
-    }
-    handleValue("recipients", newRecipients);
+    const curr = values.recipients || [];
+    handleValue(
+      "recipients",
+      curr.includes(email) ? curr.filter((r) => r !== email) : [...curr, email],
+    );
   };
 
   const handleMediaSelect = (item: any) => {
     const id = item.id || item._id;
-    const isSelected = selectedMedia.some((m) => (m.id || m._id) === id);
-
-    if (isSelected) {
-      setSelectedMedia((prev) => prev.filter((m) => (m.id || m._id) !== id));
-    } else {
-      setSelectedMedia((prev) => [...prev, item]);
-    }
+    setSelectedMedia((prev) =>
+      prev.some((m) => (m.id || m._id) === id)
+        ? prev.filter((m) => (m.id || m._id) !== id)
+        : [...prev, item],
+    );
   };
 
   const [shouldSubmit, setShouldSubmit] = useState(false);
@@ -342,7 +855,6 @@ export default function CreateCapsule({
     "draft" | "scheduled" | null
   >(null);
 
-  // Trigger submission after status changes
   useEffect(() => {
     if (shouldSubmit && pendingStatus && values.status === pendingStatus) {
       handleSubmit();
@@ -351,11 +863,10 @@ export default function CreateCapsule({
     }
   }, [values.status, shouldSubmit, pendingStatus, handleSubmit]);
 
-  const handleSaveToDraft = (event: React.FormEvent<HTMLButtonElement>) => {
-    event.preventDefault();
-    event.stopPropagation();
+  const handleSaveToDraft = (e: React.FormEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
     if (isMutating) return;
-
     handleValue("status", "draft");
     setPendingStatus("draft");
     setShouldSubmit(true);
@@ -368,17 +879,9 @@ export default function CreateCapsule({
     setShouldSubmit(true);
   };
 
-  const handleMemoryClose = useCallback(() => {
-    setShowMemoryList(false);
-  }, []);
-
-  const handleMediaListClose = useCallback(() => {
-    setShowMediaList(false);
-  }, []);
-
   const handleMemorySelectionConfirm = useCallback((memories: IMemory[]) => {
     setSelectedMedia((prev) => {
-      const mappedMemories = memories.map((m) => ({
+      const mapped = memories.map((m) => ({
         id: m._id,
         _id: m._id,
         type: m.attachments?.[0]?.type?.includes("video") ? "video" : "image",
@@ -387,18 +890,16 @@ export default function CreateCapsule({
         attachments: m.attachments,
         isMemory: true,
       }));
-
-      const existingIds = prev.map((p) => p.id || p._id);
-      const newItems = mappedMemories.filter(
-        (m) => !existingIds.includes(m.id),
-      );
-      return [...prev, ...newItems];
+      const existing = prev.map((p) => p.id || p._id);
+      return [...prev, ...mapped.filter((m) => !existing.includes(m.id))];
     });
+    setMemorySheetOpen(false);
+    setDesktopShowMemory(false);
   }, []);
 
   const handleMediaSelectionConfirm = useCallback((files: IFile[]) => {
     setSelectedMedia((prev) => {
-      const mappedFiles = files.map((f) => ({
+      const mapped = files.map((f) => ({
         id: f._id,
         _id: f._id,
         type: f.type.split("/")[0] || "image",
@@ -407,60 +908,94 @@ export default function CreateCapsule({
         url: f.url,
         duration: f.duration,
       }));
-
-      const existingIds = prev.map((p) => p.id || p._id);
-      const newItems = mappedFiles.filter((m) => !existingIds.includes(m.id));
-      return [...prev, ...newItems];
+      const existing = prev.map((p) => p.id || p._id);
+      return [...prev, ...mapped.filter((m) => !existing.includes(m.id))];
     });
+    setMediaSheetOpen(false);
+    setDesktopShowMedia(false);
   }, []);
-
-  // Sub-views for memory/media selection
-  if (showMemoryList) {
-    return (
-      <SelectFromMemory
-        selectedIds={selectedMedia.map((m) => m.id || m._id)}
-        handleClose={handleMemoryClose}
-        onConfirm={handleMemorySelectionConfirm}
-      />
-    );
-  }
-
-  if (showMediaList) {
-    return (
-      <SelectFromMedia
-        selectedIds={selectedMedia.map((m) => m.id || m._id)}
-        handleClose={handleMediaListClose}
-        onConfirm={handleMediaSelectionConfirm}
-      />
-    );
-  }
 
   const isFormValid =
     values.status === "draft"
-      ? // For draft: only require title, body, and recipients
-        values.title.trim() !== "" &&
+      ? values.title.trim() !== "" &&
         values.body.trim() !== "" &&
         values.recipients.length > 0
-      : // For scheduled: also require schedule_date
-        values.schedule_date &&
+      : !!values.schedule_date &&
         values.title.trim() !== "" &&
         values.body.trim() !== "" &&
         values.recipients.length > 0;
+
+  const sharedFormProps = {
+    values,
+    errors,
+    handleChange,
+    handleValue,
+    handleSave,
+    handleSaveToDraft,
+    isEditMode,
+    isFormValid,
+    isMutating,
+    beneficiaries,
+    recentMedia,
+    selectedMedia,
+    handleRecipientSelect,
+    handleMediaSelect,
+    dragHandlers,
+    isDragging,
+    handleUpload,
+    cardStyle,
+    onStyleChange: handleStyleChange,
+    previewRecipients,
+    previewAssets,
+    user,
+  };
+
+  const sharedPreviewProps = {
+    cardStyle,
+    onStyleChange: handleStyleChange,
+    previewRecipients,
+    values,
+    previewAssets,
+    user,
+  };
+
+  // Desktop sub-view overrides
+  if (desktopShowMemory) {
+    return (
+      <div className="hidden sm:block">
+        <SelectFromMemory
+          selectedIds={selectedMedia.map((m) => m.id || m._id)}
+          handleClose={() => setDesktopShowMemory(false)}
+          onConfirm={handleMemorySelectionConfirm}
+        />
+      </div>
+    );
+  }
+  if (desktopShowMedia) {
+    return (
+      <div className="hidden sm:block">
+        <SelectFromMedia
+          selectedIds={selectedMedia.map((m) => m.id || m._id)}
+          handleClose={() => setDesktopShowMedia(false)}
+          onConfirm={handleMediaSelectionConfirm}
+        />
+      </div>
+    );
+  }
 
   // ==================== VIEW MODE ====================
   if (isViewMode) {
     return (
       <>
-        <div className="max-w-[1440px] flex flex-col justify-center items-center max-h-[900px] h-full w-full relative">
+        {/* Desktop */}
+        <div className="hidden sm:flex max-w-[1440px] flex-col justify-center items-center max-h-[900px] h-full w-full relative">
           <ModalCloseBtn onClick={handleCloseClick} />
-
           <div className="flex flex-col items-center justify-center w-full">
             <div className="bg-black/60 gap-6 h-fit mt-10 min-w-[560px] max-w-5xl w-full rounded-2xl py-8 px-6 lg:px-24 flex flex-col items-center">
               <StyleControls
                 cardStyle={cardStyle}
                 onStyleChange={handleStyleChange}
               />
-
               <div className="h-[770px] w-full">
                 <CapsulePreviewCard
                   style={cardStyle}
@@ -469,12 +1004,10 @@ export default function CreateCapsule({
                   body={values.body}
                   assets={previewAssets}
                   sender={user}
-                  onAssetClick={(asset) => console.log("Clicked:", asset)}
+                  onAssetClick={() => {}}
                   className="h-full w-full p-6"
                 />
               </div>
-
-              {/* Action Buttons */}
               <div className="flex items-center justify-end gap-4 w-full">
                 <button
                   type="button"
@@ -483,216 +1016,189 @@ export default function CreateCapsule({
                 >
                   Close
                 </button>
-
-                <button type="submit" onClick={handleEditClick} className="btn">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!data) return;
+                    setCurrentMode("edit");
+                  }}
+                  className="btn"
+                >
                   Edit Capsule
                 </button>
               </div>
             </div>
           </div>
         </div>
+
+        {/* Mobile */}
+        <MobileSheetPortal>
+          <MobilePreviewSheet
+            isOpen
+            onClose={handleCloseClick}
+            {...sharedPreviewProps}
+          />
+        </MobileSheetPortal>
       </>
     );
   }
 
-  // ==================== EDIT/CREATE MODE ====================
+  // ==================== CREATE / EDIT MODE ====================
   return (
-    <div className="max-w-[1440px] flex flex-col justify-center max-h-[900px] h-full w-full">
-      <div className="grid grid-cols-1 lg:grid-cols-[55%_45%] gap-10">
-        {/* Left: Preview Card (Smaller in edit mode) */}
-        <div className="flex justify-center w-full">
-          <div className="bg-black/60 gap-6 h-fit mt-10 min-w-[560px] w-full rounded-2xl py-8 px-6 lg:px-24 flex flex-col items-center">
-            <StyleControls
-              cardStyle={cardStyle}
-              onStyleChange={handleStyleChange}
-            />
-
-            <div className="h-[770px] w-full">
-              <CapsulePreviewCard
-                style={cardStyle}
-                recipients={previewRecipients}
-                title={values.title}
-                body={values.body}
-                assets={previewAssets}
-                sender={user}
-                onAssetClick={(asset) => console.log("Clicked:", asset)}
-                className="h-full w-full p-6"
+    <>
+      {/* Desktop */}
+      <div className="hidden sm:flex max-w-[1440px] flex-col justify-center max-h-[900px] h-full w-full">
+        <div className="grid grid-cols-1 lg:grid-cols-[55%_45%] gap-10">
+          <div className="flex justify-center w-full">
+            <div className="bg-black/60 gap-6 h-fit mt-10 min-w-[560px] w-full rounded-2xl py-8 px-6 lg:px-24 flex flex-col items-center">
+              <StyleControls
+                cardStyle={cardStyle}
+                onStyleChange={handleStyleChange}
               />
+              <div className="h-[770px] w-full">
+                <CapsulePreviewCard
+                  style={cardStyle}
+                  recipients={previewRecipients}
+                  title={values.title}
+                  body={values.body}
+                  assets={previewAssets}
+                  sender={user}
+                  onAssetClick={() => {}}
+                  className="h-full max-h-[700px] w-full p-6"
+                />
+              </div>
             </div>
           </div>
-        </div>
-
-        {/* Right: Form */}
-        <div className="modal-container overflow-auto scrollbar-hide">
-          <ModalCloseBtn onClick={handleCloseClick} />
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
+          <div className="modal-container overflow-auto scrollbar-hide">
+            <ModalCloseBtn onClick={handleCloseClick} />
+            {/* Desktop form (existing layout, unchanged) */}
+            <div className="space-y-6">
               <h4 className="modal-title">
                 {isEditMode ? "Edit Capsule" : "Create Capsule"}
               </h4>
-              {/* Optional: Back to view button */}
-              {/*{data && (
-<button
-onClick={() => setCurrentMode("view")}
-className="text-sm text-gray-500 hover:text-gray-700 underline"
->
-Preview
-</button>
-)}*/}
-            </div>
-
-            {/*<form onSubmit={handleSave} className="space-y-6">*/}
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleSave();
-              }}
-              className="space-y-6"
-            >
-              <Taginput
-                values={values.recipients}
-                placeholder="Enter recipients email address"
-                label={
-                  <div className="mb-2 flex items-center justify-between text-xs">
-                    <span className="font-inter font-normal text-[#667085]">
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleSave();
+                }}
+                className="space-y-6"
+              >
+                <Taginput
+                  values={values.recipients}
+                  placeholder="Enter recipients email address"
+                  label={
+                    <div className="mb-2 text-xs text-[#667085]">
                       Select recipient(s)
+                    </div>
+                  }
+                  setValue={(r) => handleValue("recipients", r)}
+                  error={errors.recipients as string}
+                />
+                <div className="bg-black/2 rounded-xl text-sm text-weak/40 p-3">
+                  <span className="mb-2 block">Beneficiaries</span>
+                  <RecentRecipients
+                    recipients={beneficiaries?.data?.docs}
+                    selectedRecipients={values.recipients}
+                    onSelect={handleRecipientSelect}
+                    onSeeAll={() => {}}
+                  />
+                </div>
+                <div className="border-t border-[#0011661A] py-2 pt-8">
+                  <div className="flex justify-between mb-2">
+                    <span className="text-sm">Upload Media</span>
+                    <span
+                      className="cursor-pointer text-sm font-medium text-orange"
+                      onClick={() => setDesktopShowMemory(true)}
+                    >
+                      Select from memory
                     </span>
                   </div>
-                }
-                setValue={(recipients) => handleValue("recipients", recipients)}
-                error={errors.recipients as string}
-              />
-
-              <div className="bg-black/2 rounded-xl text-sm text-weak/40 p-3">
-                <span className="mb-2 block">Beneficiaries</span>
-                <RecentRecipients
-                  recipients={beneficiaries?.data?.docs}
-                  selectedRecipients={values.recipients}
-                  onSelect={handleRecipientSelect}
-                  onSeeAll={() => console.log("See all clicked")}
-                />
-              </div>
-
-              <div className="border-t border-[#0011661A] py-2 pt-8">
-                <div className="flex justify-between mb-2">
-                  <span className="text-sm">Upload Media</span>
-                  <span
-                    className="cursor-pointer text-sm font-medium text-orange"
-                    onClick={() => setShowMemoryList(true)}
-                  >
-                    Select from memory
-                  </span>
-                </div>
-
-                {/* Drag and Drop Zone */}
-                <div
-                  {...dragHandlers}
-                  className={cn(
-                    "h-56 justify-center flex flex-col items-center gap-6 border-2 border-dashed rounded-2xl p-3 transition-all duration-200",
-                    isDragging
-                      ? "border-orange bg-orange/5 scale-[1.02]"
-                      : "border-black/5 bg-transparent",
-                  )}
-                >
-                  <ImagePlusIcon
-                    width={24}
-                    height={24}
+                  <div
+                    {...dragHandlers}
                     className={cn(
-                      "transition-colors",
-                      isDragging ? "text-orange" : "text-gray-400",
+                      "h-56 justify-center flex flex-col items-center gap-6 border-2 border-dashed rounded-2xl p-3 transition-all",
+                      isDragging
+                        ? "border-orange bg-orange/5"
+                        : "border-black/5",
                     )}
+                  >
+                    <ImagePlusIcon
+                      width={24}
+                      height={24}
+                      className={isDragging ? "text-orange" : "text-gray-400"}
+                    />
+                    <span className="mt-6 text-sm font-semibold text-center">
+                      {isDragging ? (
+                        "Drop files here"
+                      ) : (
+                        <>
+                          {`Drag and drop your file`}
+                          <br />
+                          here or click to upload
+                        </>
+                      )}
+                    </span>
+                    <p className="mb-6 text-xs text-weak text-center">
+                      Supports JPG, PNG, MP4, MP3, PDF, DOC, TXT. Max 120mb
+                    </p>
+                    <BrowseFileBtn onUpload={handleUpload} />
+                  </div>
+                </div>
+                <div>
+                  <span className="block mb-2">Recent</span>
+                  <RecentMedia
+                    items={recentMedia?.data?.docs}
+                    selectedItems={selectedMedia.map((m) => m.id || m._id)}
+                    onSelect={handleMediaSelect}
+                    onSeeMore={() => setDesktopShowMedia(true)}
                   />
-
-                  <span className="mt-6 text-sm font-semibold leading-5 text-gray-950 text-center">
-                    {isDragging ? (
-                      "Drop files here to upload"
-                    ) : (
-                      <>
-                        Drag and drop your file <br /> here or click to upload
-                      </>
+                </div>
+                <div className="border-y border-[#0011661A] py-8">
+                  <span className="block mb-4">Write a message</span>
+                  <div className="flex flex-col gap-2">
+                    <div className="rounded-xl border border-grey-100 bg-grey-700 px-3 py-1 focus-within:border-2 focus-within:border-primary">
+                      <input
+                        placeholder="Header here"
+                        name="title"
+                        onChange={handleChange}
+                        value={values.title}
+                        className="h-9 w-full outline-0 bg-transparent font-semibold font-garamond"
+                      />
+                    </div>
+                    {errors.title && (
+                      <small className="text-xs text-danger">
+                        {errors.title}
+                      </small>
                     )}
-                  </span>
-
-                  <p className="mb-6 text-xs text-weak text-center">
-                    Supports JPG, PNG, MP4, MP3, PDF, <br /> DOC, TXT. Max file
-                    size: 120mb
-                  </p>
-
-                  <BrowseFileBtn onUpload={handleUpload} />
-
-                  <div className="w-full space-y-3">
-                    {/*{files.map((file) => renderFileAttachment(file))}*/}
+                    <div className="rounded-xl border border-grey-100 bg-grey-700 px-3 py-1 focus-within:border-2 focus-within:border-primary">
+                      <textarea
+                        placeholder="Message here..."
+                        name="body"
+                        onChange={handleChange}
+                        value={values.body}
+                        className="w-full resize-none outline-0 bg-transparent font-semibold font-garamond leading-9"
+                        rows={5}
+                      />
+                    </div>
+                    {errors.body && (
+                      <small className="text-xs text-danger">
+                        {errors.body}
+                      </small>
+                    )}
                   </div>
                 </div>
-              </div>
-
-              <div>
-                <span className="block mb-2">Recent</span>
-                <RecentMedia
-                  items={recentMedia?.data?.docs}
-                  selectedItems={selectedMedia.map((m) => m.id || m._id)}
-                  onSelect={handleMediaSelect}
-                  onSeeMore={() => setShowMediaList(true)}
+                <span className="text-xs text-[#667085] block">
+                  Capsule delivery date:
+                </span>
+                <DateOptionsDropdown
+                  dropDirection="up"
+                  onDateSelect={(date) =>
+                    handleValue("schedule_date", date.toISOString())
+                  }
+                  CustomCalendarComponent={DatePickerWrapper}
+                  defaultLabel="In 3 days"
                 />
-              </div>
-
-              <div className="border-y border-[#0011661A] py-8">
-                <span className="block mb-4">Write a message</span>
-
-                <div className="flex flex-col gap-2">
-                  <div className="h-fit w-full rounded-xl border border-grey-100 bg-grey-700 px-3 py-1 focus-within:border-2 focus-within:border-primary">
-                    <input
-                      placeholder="Header here"
-                      name="title"
-                      onChange={handleChange}
-                      value={values.title}
-                      className="h-9 w-full min-h-9 resize-none font-semibold font-garamond first-letter:capitalize outline-0 bg-transparent"
-                    />
-                  </div>
-                  {errors.title && (
-                    <small className="text-xs text-danger">
-                      {errors.title}
-                    </small>
-                  )}
-
-                  <div className="h-fit w-full rounded-xl border border-grey-100 bg-grey-700 px-3 py-1 focus-within:border-2 focus-within:border-primary">
-                    <textarea
-                      placeholder="Message here..."
-                      name="body"
-                      onChange={handleChange}
-                      value={values.body}
-                      className="flex-1 resize-none w-full font-semibold font-garamond outline-0 leading-9 overflow-hidden bg-transparent"
-                      rows={5}
-                    />
-                  </div>
-                  {errors.body && (
-                    <small className="text-xs text-danger">{errors.body}</small>
-                  )}
-                </div>
-              </div>
-
-              <span className="font-inter text-xs mb-2 font-normal text-[#667085] block">
-                Capsule delivery date:
-              </span>
-              {/*<DateOptionsDropdown
-onDateSelect={(date) =>
-handleValue("schedule_date", date.toISOString())
-}
-CustomCalendarComponent={DatePickerWrapper}
-defaultLabel="In 3 days"
-/>*/}
-
-              <DateOptionsDropdown
-                dropDirection="up"
-                onDateSelect={(date) =>
-                  handleValue("schedule_date", date.toISOString())
-                }
-                CustomCalendarComponent={DatePickerWrapper}
-                defaultLabel="In 3 days"
-              />
-
-              <div className="flex items-center justify-end">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center justify-end gap-3">
                   {!isEditMode && (
                     <button
                       type="button"
@@ -705,7 +1211,6 @@ defaultLabel="In 3 days"
                       )}
                     </button>
                   )}
-
                   <button
                     type="submit"
                     className="btn"
@@ -717,11 +1222,47 @@ defaultLabel="In 3 days"
                     )}
                   </button>
                 </div>
-              </div>
-            </form>
+              </form>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+
+      {/* ── Mobile sheets — portaled to document.body ── */}
+      <MobileSheetPortal>
+        {/* 1. Form sheet */}
+        <MobileFormSheet
+          isOpen={formSheetOpen}
+          onClose={handleCloseClick}
+          {...sharedFormProps}
+          onOpenMemory={() => setMemorySheetOpen(true)}
+          onOpenMedia={() => setMediaSheetOpen(true)}
+          onTapPreview={() => setPreviewSheetOpen(true)}
+        />
+
+        {/* 2. Preview sheet — opens over form on "Tap to preview" */}
+        <MobilePreviewSheet
+          isOpen={previewSheetOpen}
+          onClose={() => setPreviewSheetOpen(false)}
+          {...sharedPreviewProps}
+        />
+
+        {/* 3. Memory sheet */}
+        <MobileMemorySheet
+          isOpen={memorySheetOpen}
+          onClose={() => setMemorySheetOpen(false)}
+          selectedIds={selectedMedia.map((m) => m.id || m._id)}
+          onConfirm={handleMemorySelectionConfirm}
+        />
+
+        {/* 4. Media sheet */}
+        <MobileMediaSheet
+          isOpen={mediaSheetOpen}
+          onClose={() => setMediaSheetOpen(false)}
+          selectedIds={selectedMedia.map((m) => m.id || m._id)}
+          onConfirm={handleMediaSelectionConfirm}
+        />
+      </MobileSheetPortal>
+    </>
   );
 }

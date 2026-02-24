@@ -11,6 +11,8 @@ interface SelectFromMediaProps {
   selectedIds?: string[];
   handleClose: () => void;
   onConfirm: (items: IFile[]) => void;
+  className?: string;
+  hideHeader?: boolean;
 }
 
 function MediaItem({
@@ -75,6 +77,8 @@ export default function SelectFromMedia({
   selectedIds = [],
   onConfirm,
   handleClose,
+  className = "modal-container h-[600px]",
+  hideHeader = false,
 }: SelectFromMediaProps) {
   const [page] = useState(1);
   const [localSelectedIds, setLocalSelectedIds] =
@@ -101,15 +105,19 @@ export default function SelectFromMedia({
   };
 
   return (
-    <div className="modal-container h-[600px] flex flex-col">
+    <div className={cn("flex flex-col", className)}>
       <div className="flex-shrink-0">
-        <ModalCloseBtn onClick={handleClose} />
-        <div className="space-y-1 mb-6">
-          <h4 className="modal-title">Select from media</h4>
-          <p className="font-inter text-sm text-grey-600">
-            Add media files from your library
-          </p>
-        </div>
+        {!hideHeader && (
+          <>
+            <ModalCloseBtn onClick={handleClose} />
+            <div className="space-y-1 mb-6">
+              <h4 className="modal-title">Select from media</h4>
+              <p className="font-inter text-sm text-grey-600">
+                Add media files from your library
+              </p>
+            </div>
+          </>
+        )}
 
         <div className="mb-6">
           <div className="w-full relative">
