@@ -67,7 +67,7 @@ function MobileSheetPortal({ children }: { children: React.ReactNode }) {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < 640);
+    const check = () => setIsMobile(window.innerWidth < 1024);
     check();
     window.addEventListener("resize", check);
     setMounted(true);
@@ -1058,15 +1058,15 @@ export default function CreateCapsule({
   return (
     <>
       {/* Desktop */}
-      <div className="hidden sm:flex max-w-[1440px] flex-col justify-center max-h-[900px] h-full w-full">
-        <div className="grid grid-cols-1 lg:grid-cols-[55%_45%] gap-10">
-          <div className="flex justify-center w-full">
-            <div className="bg-black/60 gap-6 h-fit mt-10 min-w-[560px] w-full rounded-2xl py-8 px-6 lg:px-24 flex flex-col items-center">
+      <div className="hidden sm:flex max-w-[1440px] flex-col justify-center max-h-[900px] lg:h-[90vh]! h-full w-full">
+        <div className="grid grid-cols-1 lg:grid-cols-[55%_45%] gap-10 items-start oveflow-hidden">
+          <div className="flex justify-center w-full lg:pt-10">
+            <div className="bg-black/60 gap-6 w-full rounded-2xl py-8 px-6 lg:px-24 flex flex-col items-center">
               <StyleControls
                 cardStyle={cardStyle}
                 onStyleChange={handleStyleChange}
               />
-              <div className="h-[770px] w-full">
+              <div className="flex-1 w-full">
                 <CapsulePreviewCard
                   style={cardStyle}
                   recipients={previewRecipients}
@@ -1075,7 +1075,7 @@ export default function CreateCapsule({
                   assets={previewAssets}
                   sender={user}
                   onAssetClick={() => {}}
-                  className="h-full max-h-[700px] w-full p-6"
+                  className="h-full min-h-[700px] max-h[700px] w-full p-6"
                 />
               </div>
             </div>
