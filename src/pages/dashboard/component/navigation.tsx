@@ -22,7 +22,7 @@ export const topNavigations = [
   { Icon: SparklesIcon, title: "My conversations", link: "/chat" },
   { Icon: ArchiveIcon, title: "My Memories", link: "/stories" },
   { Icon: CompassIcon, title: "Explore", link: "/explore" },
-  { Icon: ClockIcon, title: "Time capsule", link: "/capsule", color: "#F06037" },
+  { Icon: ClockIcon, title: "Time capsule", link: "/capsule" },
   { Icon: SlidersIcon, title: "Settings", link: "/settings" },
 ];
 
