@@ -17,7 +17,7 @@ export default function SideBarItem({
   onClick,
   Icon,
   title,
-  color,
+  color = "#F06037",
 }: SideBarItemProps) {
   const navigate = useNavigate();
   const { open } = useModal();
