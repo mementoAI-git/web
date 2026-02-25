@@ -325,13 +325,13 @@ function MobileFormSheet({
                       onSeeMore={onOpenMedia}
                     />
                     {/* + add more button */}
-                    <button
+                    {/*<button
                       type="button"
                       onClick={onOpenMedia}
-                      className="flex-shrink-0 w-14 h-14 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center text-orange"
+                      className="shrink-0 w-14 h-14 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center text-orange"
                     >
                       <span className="text-2xl font-light">+</span>
-                    </button>
+                    </button>*/}
                   </div>
                 </div>
               </div>
@@ -442,9 +442,9 @@ function MobileFormSheet({
                         <path
                           d="M3 21L21 3M3 21H9M3 21L3 15M21 3H15M21 3V9"
                           stroke="currentColor"
-                          stroke-width="2"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
                         />
                       </svg>
                       Tap to preview
@@ -712,10 +712,20 @@ export default function CreateCapsule({
     const uploadedIds = !isEmpty(files)
       ? files.map((f: any) => f.uploadedFile?._id).filter(Boolean)
       : [];
-    submission.attachments = [
-      ...uploadedIds,
-      ...selectedMedia.map((m) => m.id || m._id),
-    ];
+
+    const attachmentIds = [...uploadedIds];
+    const memoryIds: string[] = [];
+
+    selectedMedia.forEach((m: any) => {
+      if (m.isMemory) {
+        memoryIds.push(m.id || m._id);
+      } else {
+        attachmentIds.push(m.id || m._id);
+      }
+    });
+
+    submission.attachments = Array.from(new Set(attachmentIds));
+    submission.memories = Array.from(new Set(memoryIds));
     const result = await trigger(submission);
     if (result?.success) {
       toast.custom(() => <TimeCapsuleBadge />);
@@ -832,6 +842,7 @@ export default function CreateCapsule({
   });
 
   const handleRecipientSelect = (recipient: any) => {
+    console.log(recipient, "Recipeint");
     const email = recipient.email;
     if (!email) return;
     const curr = values.recipients || [];
@@ -1091,7 +1102,10 @@ export default function CreateCapsule({
                       Select recipient(s)
                     </div>
                   }
-                  setValue={(r) => handleValue("recipients", r)}
+                  setValue={(r) => {
+                    console.log(r, "REcipeint");
+                    handleValue("recipients", r);
+                  }}
                   error={errors.recipients as string}
                 />
                 <div className="bg-black/2 rounded-xl text-sm text-weak/40 p-3">

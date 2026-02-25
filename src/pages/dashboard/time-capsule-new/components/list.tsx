@@ -12,17 +12,20 @@ function CapsuleListItem({ capsule }: { capsule: ICapsule }) {
       <div className=" bg-white rounded-xl p-2 flex  gap-4">
         <div className="relative  flex h-[120px] sm:h-[138px] overflow-hidden w-40 items-center justify-center rounded-lg bg-[#F3F3F3]">
           {(() => {
-            const attachments = capsule?.attachments || [];
-            if (attachments.length > 0) {
-              return (
-                // <Link to={`/capsules/${capsule?._id}`} className="size-fit">
-                <ImageThumbnail
-                  images={attachments}
-                  size={68.78}
-                  boxClassName="!border-[2px] !rounded-[11.96px]"
-                />
-                // </Link>
-              );
+            const directAttachments = capsule?.attachments || [];
+            const memoryAttachments =
+              capsule.memories?.flatMap((m) => m.attachments || []) || [];
+
+            // Combine and get unique attachments by ID/URL
+            const combined = [...directAttachments, ...memoryAttachments];
+            const uniqueAttachments = Array.from(
+              new Map(
+                combined.map((item) => [item._id || item.url, item]),
+              ).values(),
+            );
+
+            if (uniqueAttachments.length > 0) {
+              return <ImageThumbnail images={uniqueAttachments} single />;
             } else {
               return (
                 <div className="flex py-20 items-center w-full h-full text-gray-400">
@@ -97,7 +100,9 @@ function CapsuleListItem({ capsule }: { capsule: ICapsule }) {
               Due Date:
               <div className="flex items-center text-weak">
                 <CalendarIcon width={16} height={16} />
-                {dayjs(capsule.created_at).format("MMM DD, YYYY")}
+                {capsule.schedule_date
+                  ? dayjs(capsule.schedule_date).format("MMM DD, YYYY")
+                  : "No date"}
               </div>
             </div>
           </div>
@@ -111,8 +116,12 @@ function CapsuleListItem({ capsule }: { capsule: ICapsule }) {
             return "Due in: Undefined";
           }
 
-          // Delivered - schedule date is in the past
-          if (dayjs(capsule.schedule_date).isBefore(dayjs())) {
+          // Delivered - backend status or date in the past
+          if (
+            capsule.status === "delivered" ||
+            (capsule.schedule_date &&
+              dayjs(capsule.schedule_date).isBefore(dayjs()))
+          ) {
             return "Delivered";
           }
 

@@ -7,6 +7,8 @@ import { useEffect, useState } from "react";
 import useSWR from "swr";
 import { SearchIcon } from "../icons";
 import dayjs from "dayjs";
+import MediaCard from "@/pages/dashboard/time-capsule-new/components/media-cards/MediaCard";
+import type { CardCustomization } from "@/pages/dashboard/time-capsule-new/components/CapsulePreviewCard";
 
 interface SelectFromMemoryProps {
   selectedIds?: string[];
@@ -16,50 +18,19 @@ interface SelectFromMemoryProps {
   hideHeader?: boolean;
 }
 
-// Strip HTML tags for text preview
-const stripHtml = (html?: string): string => {
-  if (!html) return "";
-  const tmp = document.createElement("DIV");
-  tmp.innerHTML = html;
-  return tmp.textContent || tmp.innerText || "";
+// Default style for cards in selection modal
+const DEFAULT_CARD_STYLE: CardCustomization = {
+  backgroundColor: "#F8F7F3",
+  fontFamily: "Inter",
+  fontSize: "1x",
+  textColor: "#1A1A1A",
 };
-
-// Type icons for memory types
-const StoryIcon = () => (
-  <svg
-    width="20"
-    height="20"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-  >
-    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-    <polyline points="14 2 14 8 20 8" />
-    <line x1="16" y1="13" x2="8" y2="13" />
-    <line x1="16" y1="17" x2="8" y2="17" />
-    <polyline points="10 9 9 9 8 9" />
-  </svg>
-);
-
-const ConversationIcon = () => (
-  <svg
-    width="20"
-    height="20"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-  >
-    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-  </svg>
-);
 
 export default function SelectFromMemory({
   selectedIds = [],
   onConfirm,
   handleClose,
-  className = "modal-container h-[600px]",
+  className = "modal-container sm:max-w-4xl lg:max-w-7xl xl:max-w-8xl h-[600px]",
   hideHeader = false,
 }: SelectFromMemoryProps) {
   const [page] = useState(1);
@@ -90,22 +61,24 @@ export default function SelectFromMemory({
     handleClose();
   };
 
-  const getMemoryPreview = (memory: IMemory) => {
-    if (memory.type === "story") {
-      return {
-        title: memory.title || "Untitled Story",
-        subtitle: stripHtml(memory.body) || "No content",
-        icon: <StoryIcon />,
-        iconBg: "from-orange-100 to-orange-50 text-orange-500",
-      };
-    }
+  const mapMemoryToMediaCardProps = (memory: IMemory) => {
+    const attachment = memory.attachments?.[0];
+    const mimeType = attachment?.type || "";
 
-    // Conversation type
+    let type: "audio" | "video" | "image" | "memory" | "pdf" = "memory";
+
+    if (mimeType.startsWith("image/")) type = "image";
+    else if (mimeType.startsWith("video/")) type = "video";
+    else if (mimeType.startsWith("audio/")) type = "audio";
+    else if (mimeType === "application/pdf") type = "pdf";
+
     return {
-      title: memory.title || memory.prompt || "Untitled Conversation",
-      subtitle: memory.summary || "AI-guided conversation",
-      icon: <ConversationIcon />,
-      iconBg: "from-blue-100 to-blue-50 text-blue-500",
+      type,
+      title: memory.title || "Untitled",
+      src: attachment?.url,
+      duration: attachment?.duration
+        ? `${Math.floor(attachment.duration / 60)}:${String(Math.floor(attachment.duration % 60)).padStart(2, "0")}`
+        : undefined,
     };
   };
 
@@ -139,64 +112,59 @@ export default function SelectFromMemory({
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto min-h-0 pr-2">
-        <ul className="space-y-2 gap-1 grid grid-cols-2 lg:grid-cols-5">
+      <div className="flex-1 overflow-y-auto min-h-0 pr-2 pb-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
           {!isLoading && isEmpty(data?.data?.docs) ? (
-            <div className="text-center py-10 text-gray-500">
+            <div className="col-span-full text-center py-10 text-gray-500">
               You have no Memories
             </div>
           ) : (
             data?.data?.docs?.map((memory: IMemory) => {
-              const preview = getMemoryPreview(memory);
+              const cardProps = mapMemoryToMediaCardProps(memory);
+              const isSelected = localSelectedIds.includes(memory._id);
 
               return (
-                <li
-                  key={memory._id}
-                  className="flex items-center gap-3 p-3 rounded-xl border border-gray-100 hover:border-gray-200 transition-colors cursor-pointer"
-                  onClick={() => handleCheck(memory)}
-                >
-                  <Checkbox
-                    checked={localSelectedIds.includes(memory._id)}
-                    onChange={() => handleCheck(memory)}
-                    className="pointer-events-none"
+                <div key={memory._id} className="relative group">
+                  <MediaCard
+                    {...cardProps}
+                    style={DEFAULT_CARD_STYLE}
+                    onClick={() => handleCheck(memory)}
+                    className={cn(
+                      "transition-all duration-300 flex flex-col justify-between rounded-sm overflow-hidden h-full w-full",
+                      isSelected
+                        ? "scale95 opacity-90 border border-green-0"
+                        : "hover:scale[1.02]",
+                    )}
                   />
 
-                  <div
+                  {/* Selection Indicator */}
+                  {/* <div
                     className={cn(
-                      "shrink-0 w-12 h-12 rounded-lg bg-gradient-to-br flex items-center justify-center",
-                      preview.iconBg,
+                      "absolute top-2 right-2 z-20 transition-opacity duration-200",
+                      isSelected ? "opacity-100" : "opacity-0 group-hover:opacity-40"
                     )}
                   >
-                    {preview.icon}
-                  </div>
+                    <Checkbox
+                      checked={isSelected}
+                      onChange={() => handleCheck(memory)}
+                      className="scale-110 shadow-lg"
+                    />
+                  </div> */}
 
-                  <div className="flex-1 min-w-0">
-                    <h5 className="font-medium text-gray-900 truncate">
-                      {preview.title}
-                    </h5>
-                    <p className="text-xs text-gray-500 line-clamp-1">
-                      {preview.subtitle}
-                    </p>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-600 capitalize">
-                        {memory.type}
-                      </span>
-                      <span className="text-[10px] text-gray-400">
-                        {dayjs(memory.created_at).format("MMM D, YYYY")}
-                      </span>
-                      {memory.topics && memory.topics.length > 0 && (
-                        <span className="text-[10px] text-gray-400 truncate max-w-[100px]">
-                          • {memory.topics.slice(0, 2).join(", ")}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </li>
+                  {/* Date Tag */}
+                  {/* <div className="absolute top-2 left-2 z-20 pointer-events-none">
+                    <span className="text-[9px] bg-white/80 backdrop-blur-sm px-1.5 py-0.5 rounded-full text-gray-500 shadow-sm border border-gray-100">
+                      {dayjs(memory.created_at).format("MMM D")}
+                    </span>
+                  </div> */}
+                </div>
               );
             })
           )}
-          {isLoading && <div className="text-center py-10">Loading...</div>}
-        </ul>
+          {isLoading && (
+            <div className="col-span-full text-center py-10">Loading...</div>
+          )}
+        </div>
       </div>
 
       <div className="shrink-0 pt-4 mt-auto border-t border-gray-100 flex justify-end gap-3">

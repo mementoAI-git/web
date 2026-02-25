@@ -1,7 +1,7 @@
 "use client";
 
 import { CalendarIcon } from "@/components/icons";
-import ImageThumbnail from "@/components/image-thumbnail";
+import ImageThumbnail from "./ImageThumbnail";
 import type { ICapsule, IPagination } from "@/utility/interface";
 import dayjs from "dayjs";
 import { CapsuleEmptyState } from "./CapsuleEmptyState";
@@ -29,16 +29,26 @@ function CapsuleGridItem({ capsule }: { capsule: ICapsule }) {
 
         <div className="relative flex min-h-[50px] sm:min-h-[30px] overflow-hidden w-full items-center justify-start rounded-lg">
           {(() => {
-            const attachments = capsule?.attachments || [];
-            if (attachments.length > 0) {
+            const directAttachments = capsule?.attachments || [];
+            const memoryAttachments =
+              capsule.memories?.flatMap((m) => m.attachments || []) || [];
+
+            // Combine and get unique attachments by ID/URL
+            const combined = [...directAttachments, ...memoryAttachments];
+            const uniqueAttachments = Array.from(
+              new Map(
+                combined.map((item) => [item._id || item.url, item]),
+              ).values(),
+            );
+
+            if (uniqueAttachments.length > 0) {
               return (
-                // <Link to={`/capsules/${capsule?._id}`} className="size-fit">
                 <ImageThumbnail
-                  images={attachments}
+                  className="gap-px!"
+                  images={uniqueAttachments}
                   size={68.78}
                   boxClassName="!border-[2px] !rounded-[11.96px]"
                 />
-                // </Link>
               );
             } else {
               return (
@@ -103,7 +113,9 @@ function CapsuleGridItem({ capsule }: { capsule: ICapsule }) {
             Due Date:
             <div className="flex items-center text-weak">
               <CalendarIcon width={16} height={16} />
-              {dayjs(capsule.created_at).format("MMM DD, YYYY")}
+              {capsule.schedule_date
+                ? dayjs(capsule.schedule_date).format("MMM DD, YYYY")
+                : "No date"}
             </div>
           </div>
         </div>
@@ -133,8 +145,12 @@ function CapsuleGridItem({ capsule }: { capsule: ICapsule }) {
             return "Due in: Undefined";
           }
 
-          // Delivered - schedule date is in the past
-          if (dayjs(capsule.schedule_date).isBefore(dayjs())) {
+          // Delivered - backend status or date in the past
+          if (
+            capsule.status === "delivered" ||
+            (capsule.schedule_date &&
+              dayjs(capsule.schedule_date).isBefore(dayjs()))
+          ) {
             return "Delivered";
           }
 

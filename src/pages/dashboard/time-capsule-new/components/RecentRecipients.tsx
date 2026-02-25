@@ -31,7 +31,7 @@ export default function RecentRecipients({
 
   return (
     <div
-      className={`grid gap-4 w-full`}
+      className={`grid gap-4 w-full scrollbar-hide`}
       style={{ gridTemplateColumns: `repeat(${totalButtons}, 1fr)` }}
     >
       {/* First 4 Recipients */}

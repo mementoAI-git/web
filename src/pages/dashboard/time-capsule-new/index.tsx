@@ -11,6 +11,9 @@ import { ZapIcon } from "./components/icons/ZapIcon";
 import { UnpdfIcon } from "./components/icons/UnpdfIcon";
 import CapsuleList from "./components/list";
 import Button from "./components/Button";
+import ScheduledBg from "./components/assets/scheduled.svg";
+import DeliveredBg from "./components/assets/delivered.svg";
+import DraftsBg from "./components/assets/drafts.svg";
 
 export default function TimeCapsulePage() {
   const [page] = useState(1);
@@ -35,16 +38,6 @@ export default function TimeCapsulePage() {
     };
   }, [open]);
 
-  // const getFilterQuery = () => {
-  //   if (filter === "all") return "";
-  //   if (filter === "scheduled") return "&status=scheduled";
-  //   if (filter === "delivered") return "&status=delivered";
-  //   if (filter === "draft") return "&status=draft";
-  //   if (filter === "paused") return "&status=pause";
-  //   if (filter === "failed") return "&status=failed";
-  //   return "";
-  // };
-
   const getFilterQuery = (currentFilter = filter) => {
     if (currentFilter === "all") return "";
     if (currentFilter === "scheduled") return "&status=scheduled";
@@ -58,6 +51,8 @@ export default function TimeCapsulePage() {
   const { data: capsule } = useSWR(
     `${endpoint.capsule}?page=${page}${getFilterQuery()}`,
   );
+
+  useEffect(() => console.log("capsule", capsule?.data?.docs), [capsule]);
 
   const { data: stats } = useSWR(endpoint.capsuleStats);
 
@@ -74,18 +69,21 @@ export default function TimeCapsulePage() {
       iconProps: { width: 58 },
       message: `${scheduledCount} messages`,
       title: "scheduled",
+      bg: ScheduledBg,
     },
     {
       icon: ZapIcon,
       iconProps: { width: 58 },
       message: `${deliveredCount} messages`,
       title: "delivered/unlocked",
+      bg: DeliveredBg,
     },
     {
       icon: UnpdfIcon,
       iconProps: { width: 58 },
       message: `${draftCount} messages`,
       title: "drafts",
+      bg: DraftsBg,
     },
   ];
 
@@ -116,6 +114,7 @@ export default function TimeCapsulePage() {
                   icon={<IconComponent {...stat.iconProps} />}
                   message={stat.message}
                   title={stat.title}
+                  bgImage={stat.bg}
                 />
               );
             })}
@@ -129,13 +128,6 @@ export default function TimeCapsulePage() {
             mode={mode}
             onChangeMode={setMode}
             filter={filter}
-            // onChangeFilter={(filter) => {
-            //   setFilter(filter);
-            //   console.log(
-            //     `${endpoint.capsule}?page=${page}${getFilterQuery()}`,
-            //   );
-            //   console.log(filter);
-            // }}
             onChangeFilter={(newFilter) => {
               setFilter(newFilter);
             }}

@@ -57,7 +57,7 @@ export default function CapsulePreviewCard({
   // 2. Look up the theme object using the current style
   // This finds the SVG based on the themeId (primary) or background color and font family (fallback)
   const currentTheme = style.themeId
-    ? themes.find(t => t.id === style.themeId)
+    ? themes.find((t) => t.id === style.themeId)
     : getThemeByStyle(style.backgroundColor, style.fontFamily);
 
   // 3. Prioritize colors: Theme defined > style defined > calculated
@@ -128,7 +128,7 @@ export default function CapsulePreviewCard({
             {/* Center section - Logo Icon */}
             <div className="flex justify-center items-center shrink-0 w-8">
               {textColor.toLowerCase() === "#ffffff" ||
-                textColor === "white" ? (
+              textColor === "white" ? (
                 <svg
                   width="12"
                   height="12"
@@ -205,7 +205,10 @@ export default function CapsulePreviewCard({
                         duration={asset.duration}
                         title={asset.title}
                         style={style}
-                        className="overflow-hidden"
+                        // className="overflow-hidden"
+                        className={cn(
+                          "transition-all duration-300 flex flex-col justify-between rounded-sm overflow-hidden h-full w-full",
+                        )}
                         onClick={() => onAssetClick?.(asset)}
                       />
                     ))}

@@ -3,10 +3,11 @@ import AudioCard from "./AudioCard";
 import VideoCard from "./VideoCard";
 import ImageCard from "./ImageCard";
 import MemoryCard from "./MemoryCard";
+import PdfCard from "./PdfCard";
 import type { CardCustomization } from "../CapsulePreviewCard";
 
 interface MediaCardProps {
-  type: "audio" | "video" | "image" | "memory";
+  type: "audio" | "video" | "image" | "memory" | "pdf";
   src?: string;
   thumbnail?: string;
   duration?: string;
@@ -65,6 +66,15 @@ export default function MediaCard({
           thumbnail={mediaSrc}
           title={title}
           onClick={onClick}
+          className={className}
+        />
+      );
+    case "pdf":
+      return (
+        <PdfCard
+          title={title}
+          onClick={onClick}
+          style={style}
           className={className}
         />
       );
