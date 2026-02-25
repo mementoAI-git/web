@@ -74,17 +74,16 @@ export default function RecentMedia({
             key={item.id}
             type="button"
             onClick={() => onSelect?.(item)}
-            className={`relative aspect-square rounded-2xl overflow-hidden group cursor-pointer hover:opacity-90 transition-all ${
-              isSelected
-                ? "ring ring-green-0 ring-offset-2"
-                : "border border-black/5"
-            }`}
+            className={`relative aspect-square rounded-2xl overflow-hidden group cursor-pointer max-w-[90px] max-h-[86px] hover:opacity-90 transition-all ${isSelected
+              ? "ring ring-green-0 ring-offset-2"
+              : "border border-black/5"
+              }`}
           >
             {/* Thumbnail */}
             <img
               src={item?.url}
               alt={item?.title || "Media item"}
-              className="w-full h-full object-cover"
+              className="size-full object-cover"
             />
             {/* Type-specific overlay */}
             {renderOverlay(item?.type)}

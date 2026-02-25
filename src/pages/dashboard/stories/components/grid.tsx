@@ -67,7 +67,7 @@ function StoriesGridItem({ memory }: { memory: IMemory }) {
           {memory.title}
         </h4>
         <p className="font-inter text-sm text-[#412C09CC] line-clamp-6 leading-relaxed">
-          {memory.body}
+          <div dangerouslySetInnerHTML={{ __html: memory?.body }} />
         </p>
         <div className="mt-auto pointer-events-none bg-gradient-to-t from-[#FFF9F9] via-[#FFF9F9]/80 to-transparent h-16 w-full absolute bottom-0 left-0" />
       </div>
