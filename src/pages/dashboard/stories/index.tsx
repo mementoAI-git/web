@@ -107,7 +107,7 @@ export default function StoriesPage() {
             <StatCard
               bgImage={mediaFilesBg as unknown as string}
               subtitle="Media Files"
-              title={stats?.data?.attachments_count || 0}
+              title={stats?.data?.media_count || 0}
               unit="items"
               variant="pink"
             />
@@ -121,7 +121,7 @@ export default function StoriesPage() {
             <StatCard
               bgImage={storageCardBg as unknown as string}
               subtitle="Storage"
-              title="24/40GB"
+              title={stats?.data?.storage || "0/0GB"}
               unit="used"
               variant="green"
             />
