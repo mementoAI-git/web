@@ -39,7 +39,7 @@ export default function StatusBadge({ status }: { status: CapsuleStatus }) {
 
   return (
     <span
-      className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border ${style.bg} ${style.text} ${style.border}`}
+      className={`inline-flex items-center gap-1 px-3 py-0.5 rounded-full text-xs font-medium border ${style.bg} ${style.text} ${style.border}`}
     >
       {style.label}
     </span>

@@ -100,7 +100,7 @@ export function CapsuleItemActions({ capsule }: { capsule: ICapsule }) {
       }
       footerItem={
         <li
-          onClick={() => open("delete-capsule", { memory: capsule })}
+          onClick={() => open("delete-capsule", capsule._id)}
           className="flex cursor-pointer items-center rounded gap-2.5 px-2.5 py-1.5 hover:bg-[#F97066]/8 text-[#F97066]"
         >
           <TrashIcon width={16} />
