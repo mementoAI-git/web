@@ -7,6 +7,7 @@ import { TrashIcon } from "@/components/icons";
 import { resolvePath } from "@/utility";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { mutate } from "swr";
 
 interface DeleteCapsuleProps {
   data: string;
@@ -15,19 +16,29 @@ interface DeleteCapsuleProps {
 export function DeleteCapsule({ data: id }: DeleteCapsuleProps) {
   const { close } = useModal();
   const navigate = useNavigate();
-  const { trigger, isMutating } = useFetcher(resolvePath(endpoint.capsuleDelete, { id }), "delete");
+  const { trigger, isMutating } = useFetcher(
+    resolvePath(endpoint.capsuleDelete, { id }),
+    "delete",
+  );
 
   const handleDelete = async () => {
     const result = await trigger({});
     if (result?.success) {
+      // Revalidate all capsule list variations (different pages/filters)
+      await mutate(
+        (key) => typeof key === "string" && key.startsWith(endpoint.capsule),
+      );
+      // Revalidate capsule stats
+      await mutate(endpoint.capsuleStats);
+
       toast.success(result.message);
     }
     close?.("delete-capsule");
-    navigate("/time-capsule");
+    navigate("capsule");
   };
 
   return (
-    <div className="modal-container !max-w-120">
+    <div className="modal-container max-w-120!">
       <ModalCloseBtn onClick={() => close?.("delete-capsule")} />
       <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-[#FEE4E2] text-danger">
         <TrashIcon width={18} height={20} />
@@ -36,7 +47,8 @@ export function DeleteCapsule({ data: id }: DeleteCapsuleProps) {
         <div className="space-y-4">
           <h4 className="modal-title">Delete capsule</h4>
           <span className="font-inter text-sm text-grey-600">
-            Are you sure you want to delete this post? This action cannot be undone.
+            Are you sure you want to delete this post? This action cannot be
+            undone.
           </span>
         </div>
         <div className="flex items-center justify-between gap-4">
@@ -61,4 +73,3 @@ export function DeleteCapsule({ data: id }: DeleteCapsuleProps) {
     </div>
   );
 }
-

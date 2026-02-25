@@ -53,54 +53,58 @@ export function CapsuleItemActions({ capsule }: { capsule: ICapsule }) {
       items={
         capsule.status == "deleted"
           ? [
-            {
-              label: "Restore",
-              value: "restore",
-              startIcon: (
-                <RestoreIcon strokeWidth={1.5} width={20} height={20} />
-              ),
-            },
-          ]
-          : [
-            {
-              label: "Edit",
-              value: "edit-capsule",
-              startIcon: <EditIcon width={16} />,
-            },
-            {
-              label: "View",
-              value: "view-capsule",
-              startIcon: (
-                <LaunchIcon
-                  className="size-3.5"
-                  strokeWidth={1.5}
-                  width={14}
-                />
-              ),
-            },
-            {
-              // label: memory.bookmarked ? "Remove bookmark" : "Add bookmark",
-              label:
-                capsule.status === "draft"
-                  ? "Schedule"
-                  : capsule.status === "scheduled"
-                    ? "Freeze"
-                    : capsule.status === "paused"
-                      ? "Unfreeze"
-                      : "",
-              value: "capsule",
-              startIcon:
-                capsule.status === "scheduled" ? (
-                  <RemoveBookmarkIcon width={16} height={16} />
-                ) : (
-                  <AddBookmarkIcon width={16} height={16} />
+              {
+                label: "Restore",
+                value: "restore",
+                startIcon: (
+                  <RestoreIcon strokeWidth={1.5} width={20} height={20} />
                 ),
-            },
-          ]
+              },
+            ]
+          : [
+              {
+                label: "Edit",
+                value: "edit-capsule",
+                startIcon: <EditIcon width={16} />,
+              },
+              {
+                label: "View",
+                value: "view-capsule",
+                startIcon: (
+                  <LaunchIcon
+                    className="size-3.5"
+                    strokeWidth={1.5}
+                    width={14}
+                  />
+                ),
+              },
+              {
+                // label: memory.bookmarked ? "Remove bookmark" : "Add bookmark",
+                label:
+                  capsule.status === "draft"
+                    ? "Schedule"
+                    : capsule.status === "scheduled"
+                      ? "Freeze"
+                      : capsule.status === "paused"
+                        ? "Unfreeze"
+                        : "",
+                value: "capsule",
+                startIcon:
+                  capsule.status === "scheduled" ? (
+                    <RemoveBookmarkIcon width={16} height={16} />
+                  ) : (
+                    <AddBookmarkIcon width={16} height={16} />
+                  ),
+              },
+            ]
       }
       footerItem={
         <li
-          onClick={() => open("delete-capsule", { memory: capsule })}
+          onClick={() => {
+            // open("delete-capsule", { memory: capsule._id });
+            open("delete-capsule", capsule._id);
+            console.log(capsule._id);
+          }}
           className="flex cursor-pointer items-center rounded gap-2.5 px-2.5 py-1.5 hover:bg-[#F97066]/8 text-[#F97066]"
         >
           <TrashIcon width={16} />
