@@ -8,6 +8,7 @@ import { resolvePath } from "@/utility";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { mutate } from "swr";
+import type { IMemory } from "@/utility/interface";
 
 interface DeleteCapsuleProps {
   data: string;
@@ -24,11 +25,9 @@ export function DeleteCapsule({ data: id }: DeleteCapsuleProps) {
   const handleDelete = async () => {
     const result = await trigger({});
     if (result?.success) {
-      // Revalidate all capsule list variations (different pages/filters)
       await mutate(
         (key) => typeof key === "string" && key.startsWith(endpoint.capsule),
       );
-      // Revalidate capsule stats
       await mutate(endpoint.capsuleStats);
 
       toast.success(result.message);
