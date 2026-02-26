@@ -1,28 +1,46 @@
 import endpoint from "@/api/endpoint";
 import { Checkbox, Searchinput } from "@/components/Form";
 import { ModalCloseBtn } from "./modalLayout";
-import { isEmpty } from "@/utility";
+import { isEmpty, cn } from "@/utility";
 import type { IMemory } from "@/utility/interface";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import useSWR from "swr";
 import { SearchIcon } from "../icons";
-import ImageThumbnail from "@/components/image-thumbnail";
 import dayjs from "dayjs";
+import MediaCard from "@/pages/dashboard/time-capsule-new/components/media-cards/MediaCard";
+import type { CardCustomization } from "@/pages/dashboard/time-capsule-new/components/CapsulePreviewCard";
 
 interface SelectFromMemoryProps {
   selectedIds?: string[];
   handleClose: () => void;
   onConfirm: (items: IMemory[]) => void;
+  className?: string;
+  hideHeader?: boolean;
 }
+
+// Default style for cards in selection modal
+const DEFAULT_CARD_STYLE: CardCustomization = {
+  backgroundColor: "#F8F7F3",
+  fontFamily: "Inter",
+  fontSize: "1x",
+  textColor: "#1A1A1A",
+};
 
 export default function SelectFromMemory({
   selectedIds = [],
   onConfirm,
   handleClose,
+  className = "modal-container sm:max-w-4xl lg:max-w-7xl xl:max-w-8xl h-[600px]",
+  hideHeader = false,
 }: SelectFromMemoryProps) {
   const [page] = useState(1);
-  const [localSelectedIds, setLocalSelectedIds] = useState<string[]>(selectedIds);
+  const [localSelectedIds, setLocalSelectedIds] =
+    useState<string[]>(selectedIds);
   const { data, isLoading } = useSWR(`${endpoint.memories}?page=${page}`);
+
+  useEffect(() => {
+    console.log(data);
+  }, [data, isLoading]);
 
   const handleCheck = (memory: IMemory) => {
     setLocalSelectedIds((prev) => {
@@ -34,27 +52,50 @@ export default function SelectFromMemory({
   };
 
   const handleAdd = () => {
-    // Find objects for the selected IDs from the current data
-    // Note: This limits selection to currently visible items. 
-    // In a real paginated scenario, we'd need to track selected objects, not just IDs.
-    const selectedItems = data?.data?.docs?.filter((m: IMemory) => 
-      localSelectedIds.includes(m._id)
-    ) || [];
-    
+    const selectedItems =
+      data?.data?.docs?.filter((m: IMemory) =>
+        localSelectedIds.includes(m._id),
+      ) || [];
+
     onConfirm(selectedItems);
     handleClose();
   };
 
+  const mapMemoryToMediaCardProps = (memory: IMemory) => {
+    const attachment = memory.attachments?.[0];
+    const mimeType = attachment?.type || "";
+
+    let type: "audio" | "video" | "image" | "memory" | "pdf" = "memory";
+
+    if (mimeType.startsWith("image/")) type = "image";
+    else if (mimeType.startsWith("video/")) type = "video";
+    else if (mimeType.startsWith("audio/")) type = "audio";
+    else if (mimeType === "application/pdf") type = "pdf";
+
+    return {
+      type,
+      title: memory.title || "Untitled",
+      src: attachment?.url,
+      duration: attachment?.duration
+        ? `${Math.floor(attachment.duration / 60)}:${String(Math.floor(attachment.duration % 60)).padStart(2, "0")}`
+        : undefined,
+    };
+  };
+
   return (
-    <div className="modal-container h-[600px] flex flex-col">
-      <div className="flex-shrink-0">
-        <ModalCloseBtn onClick={handleClose} />
-        <div className="space-y-1 mb-6">
-          <h4 className="modal-title">Select item from memory</h4>
-          <p className="font-inter text-sm text-grey-600">
-            Share an entry from memory as a time capsule
-          </p>
-        </div>
+    <div className={cn("flex flex-col", className)}>
+      <div className="shrink-0">
+        {!hideHeader && (
+          <>
+            <ModalCloseBtn onClick={handleClose} />
+            <div className="space-y-1 mb-6">
+              <h4 className="modal-title">Select item from memory</h4>
+              <p className="font-inter text-sm text-grey-600">
+                Share an entry from memory as a time capsule
+              </p>
+            </div>
+          </>
+        )}
 
         <div className="mb-6">
           <div className="w-full relative">
@@ -62,54 +103,71 @@ export default function SelectFromMemory({
               <SearchIcon />
             </div>
             <div className="w-full">
-               <Searchinput className="bg-white border-gray-200 w-full" placeholder="Search memories..." />
+              <Searchinput
+                className="bg-white border-gray-200 w-full"
+                placeholder="Search memories..."
+              />
             </div>
           </div>
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto min-h-0 pr-2">
-        <ul className="space-y-2">
+      <div className="flex-1 overflow-y-auto min-h-0 pr-2 pb-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
           {!isLoading && isEmpty(data?.data?.docs) ? (
-            <div className="text-center py-10 text-gray-500">You have no Memories</div>
+            <div className="col-span-full text-center py-10 text-gray-500">
+              You have no Memories
+            </div>
           ) : (
-            data?.data?.docs?.map((memory: IMemory) => (
-              <li
-                key={memory._id}
-                className="flex items-center gap-3 p-3 rounded-xl border border-gray-100 hover:border-gray-200 transition-colors cursor-pointer"
-                onClick={() => handleCheck(memory)}
-              >
-                 <Checkbox
-                  checked={localSelectedIds.includes(memory._id)}
-                  onChange={() => handleCheck(memory)}
-                  className="pointer-events-none" // Let li click handle it
-                />
+            data?.data?.docs?.map((memory: IMemory) => {
+              const cardProps = mapMemoryToMediaCardProps(memory);
+              const isSelected = localSelectedIds.includes(memory._id);
 
-                <div className="shrink-0">
-                  <ImageThumbnail 
-                    images={memory.attachments || []} 
-                    size={48}
-                    boxClassName="rounded-lg"
+              return (
+                <div key={memory._id} className="relative group">
+                  <MediaCard
+                    {...cardProps}
+                    style={DEFAULT_CARD_STYLE}
+                    onClick={() => handleCheck(memory)}
+                    className={cn(
+                      "transition-all duration-300 flex flex-col justify-between rounded-sm overflow-hidden h-full w-full",
+                      isSelected
+                        ? "scale95 opacity-90 border border-green-0"
+                        : "hover:scale[1.02]",
+                    )}
                   />
-                </div>
 
-                <div className="flex-1 min-w-0">
-                  <h5 className="font-medium text-gray-900 truncate">{memory.title || "Untitled Memory"}</h5>
-                  <p className="text-xs text-gray-500 line-clamp-1">{memory.body}</p>
-                  <p className="text-[10px] text-gray-400 mt-0.5">
-                    {dayjs(memory.created_at).format("MMM D, YYYY")}
-                  </p>
+                  {/* Selection Indicator */}
+                  {/* <div
+                    className={cn(
+                      "absolute top-2 right-2 z-20 transition-opacity duration-200",
+                      isSelected ? "opacity-100" : "opacity-0 group-hover:opacity-40"
+                    )}
+                  >
+                    <Checkbox
+                      checked={isSelected}
+                      onChange={() => handleCheck(memory)}
+                      className="scale-110 shadow-lg"
+                    />
+                  </div> */}
+
+                  {/* Date Tag */}
+                  {/* <div className="absolute top-2 left-2 z-20 pointer-events-none">
+                    <span className="text-[9px] bg-white/80 backdrop-blur-sm px-1.5 py-0.5 rounded-full text-gray-500 shadow-sm border border-gray-100">
+                      {dayjs(memory.created_at).format("MMM D")}
+                    </span>
+                  </div> */}
                 </div>
-              </li>
-            ))
+              );
+            })
           )}
           {isLoading && (
-            <div className="text-center py-10">Loading...</div>
+            <div className="col-span-full text-center py-10">Loading...</div>
           )}
-        </ul>
+        </div>
       </div>
 
-      <div className="flex-shrink-0 pt-4 mt-auto border-t border-gray-100 flex justify-end gap-3">
+      <div className="shrink-0 pt-4 mt-auto border-t border-gray-100 flex justify-end gap-3">
         <button
           type="button"
           onClick={handleClose}
@@ -125,7 +183,7 @@ export default function SelectFromMemory({
           disabled={localSelectedIds.length === 0}
         >
           Add {localSelectedIds.length > 0 ? `${localSelectedIds.length} ` : ""}
-          {localSelectedIds.length === 1 ? "story" : "stories"}
+          {localSelectedIds.length === 1 ? "item" : "items"}
         </button>
       </div>
     </div>

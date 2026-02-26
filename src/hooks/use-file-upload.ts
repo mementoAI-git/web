@@ -27,14 +27,16 @@ export default function useFileUpload() {
 
     const result = await uploadFile(payload as any);
 
-    if (!result?.data?.[0]) {
+    const uploadedFile = Array.isArray(result?.data)
+      ? result?.data[0]
+      : result?.data;
+
+    if (!uploadedFile) {
       toast.error("Upload unsuccessful");
       setFiles((prev) => prev.filter((f) => f.id !== file.id));
     } else {
       setFiles((prev) =>
-        prev.map((f) =>
-          f.id === file.id ? { ...f, uploadedFile: result.data[0] } : f,
-        ),
+        prev.map((f) => (f.id === file.id ? { ...f, uploadedFile } : f)),
       );
     }
   };

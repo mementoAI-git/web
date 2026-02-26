@@ -3,15 +3,17 @@ import { useModal } from "@/hooks/use-modal";
 import { useEffect, useState } from "react";
 import useSWR from "swr";
 import { StatCard } from "./components/stat-card";
-import { PlusIcon } from "@/components/icons";
 import { storageKeys } from "@/utility/constant";
-import { cn } from "@/utility";
 import CapsuleHeader from "./components/header";
 import CapsuleGrid from "./components/grid";
 import { TimerFillIcon } from "./components/icons/TimerFillIcon";
 import { ZapIcon } from "./components/icons/ZapIcon";
 import { UnpdfIcon } from "./components/icons/UnpdfIcon";
 import CapsuleList from "./components/list";
+import Button from "./components/Button";
+import ScheduledBg from "./components/assets/scheduled.svg";
+import DeliveredBg from "./components/assets/delivered.svg";
+import DraftsBg from "./components/assets/drafts.svg";
 
 export default function TimeCapsulePage() {
   const [page] = useState(1);
@@ -36,16 +38,6 @@ export default function TimeCapsulePage() {
     };
   }, [open]);
 
-  // const getFilterQuery = () => {
-  //   if (filter === "all") return "";
-  //   if (filter === "scheduled") return "&status=scheduled";
-  //   if (filter === "delivered") return "&status=delivered";
-  //   if (filter === "draft") return "&status=draft";
-  //   if (filter === "paused") return "&status=pause";
-  //   if (filter === "failed") return "&status=failed";
-  //   return "";
-  // };
-
   const getFilterQuery = (currentFilter = filter) => {
     if (currentFilter === "all") return "";
     if (currentFilter === "scheduled") return "&status=scheduled";
@@ -59,6 +51,8 @@ export default function TimeCapsulePage() {
   const { data: capsule } = useSWR(
     `${endpoint.capsule}?page=${page}${getFilterQuery()}`,
   );
+
+  useEffect(() => console.log("capsule", capsule?.data?.docs), [capsule]);
 
   const { data: stats } = useSWR(endpoint.capsuleStats);
 
@@ -75,18 +69,21 @@ export default function TimeCapsulePage() {
       iconProps: { width: 58 },
       message: `${scheduledCount} messages`,
       title: "scheduled",
+      bg: ScheduledBg,
     },
     {
       icon: ZapIcon,
       iconProps: { width: 58 },
       message: `${deliveredCount} messages`,
       title: "delivered/unlocked",
+      bg: DeliveredBg,
     },
     {
       icon: UnpdfIcon,
       iconProps: { width: 58 },
       message: `${draftCount} messages`,
       title: "drafts",
+      bg: DraftsBg,
     },
   ];
 
@@ -105,15 +102,7 @@ export default function TimeCapsulePage() {
               </p>
             </div>
 
-            <div>
-              <button
-                onClick={() => open("create-capsule")}
-                className={cn("btn", "rounded-full! md:w-full w-fit")}
-              >
-                <PlusIcon width={15} />
-                <span>Create New</span>
-              </button>
-            </div>
+            <Button onClick={() => open("create-capsule")}>Create New</Button>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
@@ -125,6 +114,7 @@ export default function TimeCapsulePage() {
                   icon={<IconComponent {...stat.iconProps} />}
                   message={stat.message}
                   title={stat.title}
+                  bgImage={stat.bg}
                 />
               );
             })}
@@ -132,20 +122,12 @@ export default function TimeCapsulePage() {
         </div>
         <div className="space-y-3 sm:space-y-4 lg:space-y-6 py-3 sm:py-4 lg:py-8">
           <CapsuleHeader
-            // totalCapsuleCount={allCapsules?.data?.docs?.length || 0}
             totalCapsuleCount={
               scheduledCount + deliveredCount + draftCount || 0
             }
             mode={mode}
             onChangeMode={setMode}
             filter={filter}
-            // onChangeFilter={(filter) => {
-            //   setFilter(filter);
-            //   console.log(
-            //     `${endpoint.capsule}?page=${page}${getFilterQuery()}`,
-            //   );
-            //   console.log(filter);
-            // }}
             onChangeFilter={(newFilter) => {
               setFilter(newFilter);
             }}

@@ -19,12 +19,9 @@ export default function VideoCard({
   className = "",
 }: VideoCardProps) {
   return (
-    <div className={className}>
+    <div onClick={onClick} className={`${className} overflow-hidden`}>
       {/* Preview - Fixed 136×162 aspect ratio */}
-      <div
-        onClick={onClick}
-        className="relative w-full aspect-[68/81] rounded-2xl overflow-hidden cursor-pointer group"
-      >
+      <div className="relative w-full aspect-68/81 rounded-2xl mb-3 overflow-hidden cursor-pointer group">
         {/* Thumbnail */}
         <img
           src={thumbnail}
@@ -46,15 +43,8 @@ export default function VideoCard({
         </div>
 
         {/* Gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent pointer-events-none" />
+        <div className="absolute inset-0 bg-linear-to-t from-black/20 via-transparent to-transparent pointer-events-none" />
       </div>
-
-      {/* Title - Outside the card */}
-      {/*<div className="mt-2">
-        <span className="inline-block text-center bg-white px-3 py-1.5 rounded-lg text-xs font-medium text-gray-900 shadow-sm line-clamp-2 max-w-full">
-          {title}
-        </span>
-      </div>*/}
 
       <TextHighlight
         style={{

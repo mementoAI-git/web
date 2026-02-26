@@ -19,12 +19,9 @@ export default function AudioCard({
   className = "",
 }: AudioCardProps) {
   return (
-    <div className={`${className} overflow-hidden`}>
+    <div onClick={onClick} className={`${className} overflow-hidden`}>
       {/* Preview - Fixed 136×162 aspect ratio */}
-      <div
-        onClick={onClick}
-        className="relative w-full aspect-68/81 mb-3 bg-white rounded-2xl overflow-hidden cursor-pointer group"
-      >
+      <div className="relative w-full aspect-68/81 mb-3 bg-white rounded-2xl overflow-hidden cursor-pointer group">
         {/* Background decorative curves */}
         <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
           <svg
@@ -144,7 +141,6 @@ export default function AudioCard({
           ),
         }}
       >
-        {/*My thoughts on the meaning of life*/}
         {title}
       </TextHighlight>
     </div>

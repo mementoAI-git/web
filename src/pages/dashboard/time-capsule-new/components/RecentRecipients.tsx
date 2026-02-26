@@ -31,7 +31,7 @@ export default function RecentRecipients({
 
   return (
     <div
-      className={`grid gap-4 w-full`}
+      className={`grid gap-4 w-full scrollbar-hide`}
       style={{ gridTemplateColumns: `repeat(${totalButtons}, 1fr)` }}
     >
       {/* First 4 Recipients */}
@@ -42,14 +42,13 @@ export default function RecentRecipients({
             key={recipient._id}
             type="button"
             onClick={() => onSelect?.(recipient)}
-            className={`flex border rounded-lg py-2.5 px-3 flex-col items-center gap-2 group cursor-pointer hover:bg-gray-50 transition-all ${
-              isSelected
-                ? "border-green-0 ring-px ring-green-0"
-                : "border-black/5"
-            }`}
+            className={`inline-flex border max-w-[100px] rounded-lg py-2.5 px-3 flex-col items-center gap-2 group cursor-pointer hover:bg-gray-50 transition-all ${isSelected
+              ? "border-green-0 ring-px ring-green-0"
+              : "border-black/5"
+              }`}
           >
             {/* Avatar */}
-            <div className="w-6 h-6 rounded-full items-center flex justify-center bg-[#F5F5F5] overflow-hidden transition-transform group-hover:scale-105">
+            <div className="size-6 rounded-full items-center flex justify-center bg-[#F5F5F5] overflow-hidden transition-transform group-hover:scale-105">
               <img
                 src={
                   !isEmpty(recipient?.user?.picture_url)
@@ -57,14 +56,15 @@ export default function RecentRecipients({
                     : avatarPlaceholder
                 }
                 alt={recipient.name}
-                className="w-full h-full object-cover"
+                className="size-full object-cover"
               />
             </div>
             {/* Name */}
             <div className="text-center">
               <p className="text-sm font-medium text-gray-900 leading-[18px] text-ellipsis">
-                {recipient.name ||
-                  recipient.user?.name ||
+                {
+                  (recipient.name ? recipient.name.split(" ")[0] : "") ||
+                  (recipient.user?.name ? recipient.user.name.split(" ")[0] : "") ||
                   (recipient.email ? recipient.email.split("@")[0] : "")}
               </p>
               <p className="text-xs font-normal text-gray-500 leading-5">

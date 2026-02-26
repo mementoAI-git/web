@@ -104,14 +104,14 @@ export const formattedDate = (date: string) =>
   });
 
 export const concatStrings = (...args: any[]): string => {
-  if (args.length === 0) return '';
+  if (args.length === 0) return "";
 
   const separator = args[args.length - 1];
   const strings = args.slice(0, -1);
 
   return strings
-    .filter(str => str && typeof str === 'string' && str.trim() !== '')
-    .join(separator || '');
+    .filter((str) => str && typeof str === "string" && str.trim() !== "")
+    .join(separator || "");
 };
 
 export const highlightText = (text: string, searchTerm: string): string => {
@@ -232,29 +232,32 @@ USER INFORMATION:
 - Name: ${user?.fullname || "User"}
 - Email: ${user?.email || "Not provided"}
 - Gender: ${user?.gender || "Not specified"}
-- Date of birth: ${user?.dob ? dayjs(user?.dob).toDate().toLocaleDateString() : "Not specified"
-    }
+- Date of birth: ${
+    user?.dob ? dayjs(user?.dob).toDate().toLocaleDateString() : "Not specified"
+  }
 - Country: ${user?.country}
 - Member since: ${dayjs(user?.created_at).toDate().toLocaleDateString()}
 
 USER PREFERENCES:
 - Communication style: ${userPreferences.communication_style || "friendly"}
-- Topics of interest: ${userPreferences.topics_of_interest?.join(", ") ||
+- Topics of interest: ${
+    userPreferences.topics_of_interest?.join(", ") ||
     "Learning user interests..."
-    }
+  }
 - Conversation tone: ${userPreferences.conversation_tone || "warm"}
-- Response length preference: ${userPreferences.response_length || "medium"
-    }
+- Response length preference: ${userPreferences.response_length || "medium"}
 
 IMPORTANT USER NOTES:
-${userContext.important_notes?.map((note) => `- ${note}`).join("\n") ||
-    "Learning about user..."
-    }
+${
+  userContext.important_notes?.map((note) => `- ${note}`).join("\n") ||
+  "Learning about user..."
+}
 
 KEY PREFERENCES:
-${userContext.key_preferences?.map((pref) => `- ${pref}`).join("\n") ||
-    "Learning user preferences..."
-    }
+${
+  userContext.key_preferences?.map((pref) => `- ${pref}`).join("\n") ||
+  "Learning user preferences..."
+}
 
 IMPORTANT GUIDELINES:
 1. Always address the user by their name when appropriate
@@ -266,21 +269,34 @@ IMPORTANT GUIDELINES:
 7. Adjust your communication style to match user preferences
 8. Only greet occasionally - focus on natural conversation flow
 
-Remember: You're having a conversation with ${user?.fullname || "the user"
-    }. Be natural, helpful, and personalized.`;
+Remember: You're having a conversation with ${
+    user?.fullname || "the user"
+  }. Be natural, helpful, and personalized.`;
 }
+
+// export const resolvePath = (endpoint: string, payload = {}) => {
+//   return endpoint.replace(/:(\w+)/g, (match, key) => {
+//     const value = (payload as Record<string, string>)[key];
+//     return isEmpty(value) ? match : value;
+//   });
+// };
 
 export const resolvePath = (endpoint: string, payload = {}) => {
   return endpoint.replace(/:(\w+)/g, (match, key) => {
     const value = (payload as Record<string, string>)[key];
-    return isEmpty(value) ? match : value;
+    // ✅ Coerce to string + check for null/undefined/empty
+    if (value == null || value === "") return match;
+    return String(value);
   });
 };
 
 /**
  * Helper function to replace path parameters in endpoint URLs
  */
-export const replacePathParams = (path: string, params: Record<string, string | number>): string => {
+export const replacePathParams = (
+  path: string,
+  params: Record<string, string | number>,
+): string => {
   let result = path;
   Object.entries(params).forEach(([key, value]) => {
     result = result.replace(`:${key}`, String(value));

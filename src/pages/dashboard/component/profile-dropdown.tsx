@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { UserCircleIcon, LogoutIcon } from "@/components/icons";
 import { useModal } from "@/hooks/use-modal";
 
-export function ProfileDropdown() {
+export function ProfileDropdown({ hideName = false }: { hideName?: boolean }) {
   const { user, unsetAuth } = useStore();
   const navigate = useNavigate();
   const { open } = useModal();
@@ -44,7 +44,11 @@ export function ProfileDropdown() {
       >
         <div className="px-4 py-2.5 flex items-center gap-2 justify-center">
           <img src={avatar} alt="Avatar" className="size-5 object-contain" />
-          <span className="font-inter font-semibold text-sm text-gray-800">{user?.first_name ?? "User"}</span>
+          {!hideName && (
+            <span className="font-inter font-semibold text-sm text-gray-800">
+              {user?.first_name ?? "User"}
+            </span>
+          )}
         </div>
       </DropdowmIcon>
     </div>

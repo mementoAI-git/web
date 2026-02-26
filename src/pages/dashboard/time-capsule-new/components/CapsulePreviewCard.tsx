@@ -1,9 +1,10 @@
 import { getBorderColor, getContrastColor } from "../utility/ColorContrast";
 import MediaCard from "./media-cards/MediaCard";
-import { getThemeByStyle } from "../config/themes.config";
+import { themes, getThemeByStyle } from "../config/themes.config.tsx";
 import { cn } from "@/utility";
 
 export interface CardCustomization {
+  themeId?: string;
   backgroundColor: string;
   fontFamily: string;
   fontSize: string;
@@ -45,6 +46,7 @@ export default function CapsulePreviewCard({
     "2x": { title: "text-2xl", body: "text-lg", label: "text-sm" },
     "3x": { title: "text-4xl", body: "text-2xl", label: "text-base" },
   };
+
   const fontFamilyClasses = {
     "Geist Mono": "font-mono",
     Garamond: "font-garamond",
@@ -52,100 +54,61 @@ export default function CapsulePreviewCard({
     Sans: "font-sans",
   };
 
-  const textColor = getContrastColor(style.backgroundColor);
+  // 2. Look up the theme object using the current style
+  // This finds the SVG based on the themeId (primary) or background color and font family (fallback)
+  const currentTheme = style.themeId
+    ? themes.find((t) => t.id === style.themeId)
+    : getThemeByStyle(style.backgroundColor, style.fontFamily);
+
+  // 3. Prioritize colors: Theme defined > style defined > calculated
+  const textColor =
+    currentTheme?.textColor ||
+    style.textColor ||
+    getContrastColor(style.backgroundColor);
+  const headerColor =
+    currentTheme?.headerColor || style.headerColor || textColor;
+
   const borderColor = getBorderColor(style.backgroundColor);
   const sizes = typographyScale[style.fontSize as keyof typeof typographyScale];
 
-  // Get the current theme to access decorations
-  const currentTheme = getThemeByStyle(style.backgroundColor, style.fontFamily);
-
-  const renderDecoration = (decoration: any, index: number) => {
-    const positionClasses = {
-      "top-left": "top-0 left-0",
-      "top-right": "top-0 right-0",
-      "bottom-left": "bottom-0 left-0",
-      "bottom-right": "bottom-0 right-0",
-    };
-
-    if (decoration.type === "svg") {
-      return (
-        <div
-          key={`decoration-${index}`}
-          className={cn(
-            "absolute pointer-events-none z-0",
-            positionClasses[
-            decoration.position as keyof typeof positionClasses
-            ],
-            decoration.width || "w-32",
-            decoration.height || "h-64",
-            decoration.className,
-          )}
-          dangerouslySetInnerHTML={{ __html: decoration.content }}
-        />
-      );
-    }
-
-    if (decoration.type === "image") {
-      return (
-        <div
-          key={`decoration-${index}`}
-          className={cn(
-            "absolute pointer-events-none z-0",
-            positionClasses[
-            decoration.position as keyof typeof positionClasses
-            ],
-            decoration.width || "w-32",
-            decoration.height || "h-64",
-            decoration.className,
-          )}
-        >
-          <img
-            src={decoration.content}
-            alt=""
-            className="w-full h-full object-contain"
-          />
-        </div>
-      );
-    }
-
-    return null;
-  };
-
   return (
-    <div className="relative">
+    <div className="relative h-full w-full">
       {/* Main Card */}
       <div
-        className={`rounded-xl relative overflow-hidden px-6 flex flex-col min-w-[480px] ${fontFamilyClasses[style.fontFamily as keyof typeof fontFamilyClasses]} ${className}`}
+        className={cn(
+          "rounded-xl relative overflow-hidden px-6 flex flex-col h-full w-full max-h-[750px]",
+          fontFamilyClasses[style.fontFamily as keyof typeof fontFamilyClasses],
+          className,
+        )}
         style={{
           backgroundColor: style.backgroundColor,
           color: textColor,
         }}
       >
-        {/* Decorations - z-0 (background) */}
-        {currentTheme?.decorations?.map((decoration, index) =>
-          renderDecoration(decoration, index),
+        {/* 3. Render the SVG Background Layer */}
+        {currentTheme && (
+          <div className="absolute inset-0 w-full h-full z-0 pointer-events-none">
+            <currentTheme.Background className="w-full h-full object-cover" />
+          </div>
         )}
 
-        <div className="z-10">
-          {/* Fixed Header: To + Recipients - z-10 (above decorations) */}
+        <div className="z-10 h-full flex flex-col relative">
+          {/* Fixed Header: To + Recipients */}
           <div className="shrink-0 relative z-10 flex justify-between items-center gap-2">
-            {/* Left section - recipients (takes available space) */}
+            {/* Left section - recipients */}
             <div className="flex items-center gap-1 flex-1 min-w-0">
               <span className={`${sizes.label} opacity-70 shrink-0`}>to:</span>
               <div className="flex gap-1 items-center min-w-0 overflow-hidden">
                 {recipients.length > 0 ? (
                   <>
-                    {/* Show first recipient - truncate if too long */}
                     <span
                       className={`inline-flex items-center gap-1 px-3 py-1 rounded-full ${sizes.label} font-medium bg-black/5 shrink-0 max-w-[150px]`}
                       style={{ color: textColor }}
                     >
                       <span className="truncate overflow-hidden">
-                        {/*{obfuscateEmail(recipients[0])}*/}
                         {recipients[0]}
                       </span>
                     </span>
-                    {/* Show count of remaining recipients */}
                     {recipients.length > 1 && (
                       <span
                         className={`inline-flex items-center gap-1 px-3 py-1 rounded-full ${sizes.label} font-light bg-black/5 shrink-0 whitespace-nowrap`}
@@ -157,18 +120,15 @@ export default function CapsulePreviewCard({
                     )}
                   </>
                 ) : (
-                  <span className={`${sizes.label} opacity-50`}>
-                    {/*No recipients*/}
-                  </span>
+                  <span className={`${sizes.label} opacity-50`}></span>
                 )}
               </div>
             </div>
 
-            {/* Center section - SVG (minimal fixed width, always centered) */}
+            {/* Center section - Logo Icon */}
             <div className="flex justify-center items-center shrink-0 w-8">
               {textColor.toLowerCase() === "#ffffff" ||
-                textColor === "white" ? (
-                /* dark theme - light colored icon */
+              textColor === "white" ? (
                 <svg
                   width="12"
                   height="12"
@@ -182,7 +142,6 @@ export default function CapsulePreviewCard({
                   />
                 </svg>
               ) : (
-                /* light theme - dark colored icon */
                 <svg
                   width="12"
                   height="12"
@@ -198,43 +157,46 @@ export default function CapsulePreviewCard({
               )}
             </div>
 
-            {/* Right section - sender (takes available space) */}
+            {/* Right section - sender */}
             <div
               className={`flex items-center gap-1 justify-end text-end flex-1 min-w-0 ${sizes.label}`}
               style={{ borderColor, color: textColor }}
             >
               <span className={`${sizes.label} shrink-0`}>From:</span>
               <span className={`${sizes.label} truncate`}>
-                {typeof sender === 'string' ? sender : `${sender?.first_name || ''} ${sender?.last_name || ''}`}
+                {typeof sender === "string"
+                  ? sender
+                  : `${sender?.first_name || ""} ${sender?.last_name || ""}`}
               </span>
             </div>
           </div>
 
-          {/* Fixed Title Section - z-10 */}
+          {/* Title Section */}
           <div
             className="mx-[18.99px] py-3 shrink-0 relative z-10"
             style={{ borderColor }}
           >
             <span
               className={`${sizes.title} text-center leading-tight font-semibold font-garamond block`}
+              style={{ color: headerColor }}
             >
               {title}
             </span>
           </div>
 
-          {/* Scrollable Body - z-10 */}
+          {/* Scrollable Body */}
           <div
-            className="mx-[18.99px] flex-1 overflow-yauto scrollbarhide relative z-10"
+            className="mx-[18.99px] flex-1 min-h-0 overflow-y-auto scrollbar-hide relative z-10"
             style={{ borderColor }}
           >
             <div
-              className={`${sizes.body} mb-4 text-center overflow-y-auto scrollbar-hide leading-relaxed whitespace-pre-wrap py-2 h-[600px]`}
+              className={`${sizes.body} mb-4 text-center overflow-y-auto scrollbar-hide leading-relaxed whitespace-pre-wrap py-2 h-full`}
             >
               <p>{body}</p>
 
               {assets.length > 0 && (
                 <div className="pb-4">
-                  <div className="grid grid-cols-2 lg:grid-cols-3 gap-[5.41px]! placeitems-center">
+                  <div className="grid grid-cols-2 lg:grid-cols-3 gap-[5.41px]! place-items-center">
                     {assets.map((asset) => (
                       <MediaCard
                         key={asset.id}
@@ -243,7 +205,10 @@ export default function CapsulePreviewCard({
                         duration={asset.duration}
                         title={asset.title}
                         style={style}
-                        className="overflow-hidden"
+                        // className="overflow-hidden"
+                        className={cn(
+                          "transition-all duration-300 flex flex-col justify-between rounded-sm overflow-hidden h-full w-full",
+                        )}
                         onClick={() => onAssetClick?.(asset)}
                       />
                     ))}

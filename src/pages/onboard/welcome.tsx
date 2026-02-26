@@ -82,7 +82,7 @@ export default function WelcomePage() {
       <div>
         <Link
           to="/onboard/nickname"
-          className="inline-block rounded-full bg-blue-6 px-6 sm:px-8 py-4 sm:py-[18px] text-sm font-semibold leading-[20px] text-white transition-colors duration-200 hover:bg-blue-7 active:bg-blue-8"
+          className="inline-block rounded-full bg-primary px-6 sm:px-8 py-4 sm:py-[18px] text-sm font-semibold leading-[20px] text-white transition-colors duration-200 hover:bg-[#C55A1D] active:bg-[#A84D19]"
         >
           Continue
         </Link>

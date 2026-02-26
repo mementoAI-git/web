@@ -1,80 +1,106 @@
-"use client";
-
-import { CalendarIcon, DoubleHeartIcon } from "@/components/icons";
-import ImageThumbnail from "@/components/image-thumbnail";
+import { DoubleHeartIcon } from "@/components/icons";
 import { MemoryItemActions } from "./dropdown";
 import type { IMemory, IPagination } from "@/utility/interface";
 import dayjs from "dayjs";
 import { Link } from "react-router-dom";
 import { useState } from "react";
 
+import { PlaySolidIcon, WaveIcon } from "@/components/icons";
+import recordBanner from "@/assets/icon/record-banner.png";
+
 function StoriesGridItem({ memory }: { memory: IMemory }) {
   const [isHovered, setIsHovered] = useState(false);
 
-  return (
-    <div className="flex min-h-[250px] w-full flex-col gap-3 sm:gap-4 rounded-xl sm:rounded-2xl bg-sand-1 p-4 sm:p-6 border-gray-200 border hover:border-sand-8">
-      <div
-        className="relative flex h-[120px] sm:h-[138px] overflow-hidden w-full items-center justify-center rounded-lg bg-[#F3F3F3]"
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-      >
-        {
-          (memory?.attachments.length === 1 &&
-            memory?.attachments[0].type.includes("image")) ?
-            <img src={memory?.attachments[0].url} className="object-cover w-full h-full" /> :
-            <Link to={`/stories/${memory?._id}`} className="size-fit">
-              <ImageThumbnail
-                images={memory?.attachments}
-                size={68.78}
-                boxClassName="!border-[2px] !rounded-[11.96px]"
-              />
-            </Link>
-        }
+  // Find first image or video for banner
+  const bannerMedia = memory.attachments.find(a =>
+    a.type.includes("image") || a.type.includes("video")
+  );
 
-        {isHovered && (
-          <div className="absolute top-4 right-4 bg-white rounded-md shadow-md">
+  // Find audio if no banner media exists
+  const audioMedia = memory.attachments.find(a => a.type.includes("audio"));
+
+  const renderContent = () => {
+    // Priority 1: Image or Video Banner
+    if (bannerMedia) {
+      const isVideo = bannerMedia.type.includes("video");
+      return (
+        <div className="relative w-full overflow-hidden rounded-[32px] aspect-square bg-gray-50 border border-black/5">
+          <img
+            src={bannerMedia.url}
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            alt={memory.title}
+          />
+          {isVideo && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/10 transition-opacity group-hover:bg-black/20">
+              <div className="bg-white/30 backdrop-blur-md rounded-full p-3 border border-white/40 shadow-lg">
+                <PlaySolidIcon className="size-8 text-white" />
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // Priority 2: Audio Banner (Using record-banner.png)
+    if (audioMedia) {
+      return (
+        <div className="relative w-full overflow-hidden rounded-[32px] aspect-square bg-gray-900 flex items-center justify-center border border-black/5">
+          <img
+            src={recordBanner}
+            className="absolute inset-0 w-full h-full object-cover opacity-90 transition-transform duration-500 group-hover:scale-105"
+            alt="Recording Banner"
+          />
+          <div className="z-10 bg-white/10 backdrop-blur-md rounded-2xl p-5 border border-white/20 flex flex-col items-center gap-3">
+            <WaveIcon className="w-16 h-auto text-white opacity-80" />
+            <span className="font-inter text-sm font-semibold text-white tracking-widest">
+              {audioMedia.duration ? dayjs().startOf('day').add(audioMedia.duration, 'second').format('HH:mm:ss') : '00:00:00'}
+            </span>
+          </div>
+        </div>
+      );
+    }
+
+    // Default: Text Card (if no media)
+    return (
+      <div className="relative w-full overflow-hidden rounded-[32px] aspect-square bg-[#FFF9F9] border border-[#FEE4E2] p-6 flex flex-col gap-3 shadow-sm">
+        <h4 className="font-garamond font-bold text-xl text-[#412C09] line-clamp-2 leading-snug">
+          {memory.title}
+        </h4>
+        <p className="font-inter text-sm text-[#412C09CC] line-clamp-6 leading-relaxed">
+          <div dangerouslySetInnerHTML={{ __html: memory?.body }} />
+        </p>
+        <div className="mt-auto pointer-events-none bg-gradient-to-t from-[#FFF9F9] via-[#FFF9F9]/80 to-transparent h-16 w-full absolute bottom-0 left-0" />
+      </div>
+    );
+  };
+
+  return (
+    <div
+      className="group relative break-inside-avoid mb-8 flex w-full flex-col items-center"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <Link to={`/stories/${memory?._id}`} className="w-full">
+        {renderContent()}
+      </Link>
+
+      {/* Title Pill - Positioned 12px below the banner */}
+      <div className="mt-3 z-20 transition-transform duration-300 group-hover:translate-y-0.5 flex justify-center w-full">
+        <div className="bg-[#FAF6F1] border border-[#F2EBE3] rounded-lg p-1 shadow-sm max-w-[90%] w-fit">
+          <p className="font-inter text-center font-medium text-xs sm:text-[13px] text-[#412C09] line-clamp-2 tracking-tight leading-snug">
+            {memory.title}
+          </p>
+        </div>
+      </div>
+
+      {/* Actions (Hover) */}
+      {isHovered && (
+        <div className="absolute top-3 right-3 z-30 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+          <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-black/5 overflow-hidden">
             <MemoryItemActions memory={memory} />
           </div>
-        )}
-      </div>
-      <div className="flex flex-col gap-2 sm:gap-3 flex-1">
-        <div className="flex items-center gap-1">
-          <CalendarIcon className="w-4 h-4 sm:w-5 sm:h-5" />
-          <span className="font-inter text-xs sm:text-sm text-[#949494]">
-            {dayjs(memory.created_at).format("MMM DD, YYYY")}
-          </span>
         </div>
-        <Link to={`/stories/${memory?._id}`} className="truncate cursor-pointer font-inter font-semibold text-sm sm:text-base text-[#050709] line-clamp-2">
-          {memory.title}
-        </Link>
-        <div className="flex items-end justify-between text-[#949494] mt-auto">
-          <div className="flex flex-wrap items-center gap-1 sm:gap-2">
-            {memory.tags.slice(0, 3).map((tag, i) => {
-              const tagStyles = "rounded-full px-1 sm:px-1.5 py-0.5 font-inter text-xs sm:text-sm";
-
-              const colorClasses = [
-                "border border-[#D7DDF9] bg-[#EAECFC] text-[#4863E3]",
-                "border border-[#FEE4E2] bg-[#FDF3F3] text-[#F98079]",
-                "border border-[#12B76A] text-[#12B76A] bg-transparent font-medium",
-              ];
-
-              const colorClass = colorClasses[i % colorClasses.length];
-
-              return (
-                <span key={i} className={`${tagStyles} ${colorClass}`}>
-                  {tag}
-                </span>
-              );
-            })}
-            {
-              memory.tags.length > 3 &&
-              <span className="mem-tags text-xs sm:text-sm">+{memory.tags.length - 3}</span>
-            }
-          </div>
-
-          {/* <MemoryItemActions memory={memory} /> */}
-        </div>
-      </div>
+      )}
     </div>
   );
 }
@@ -83,22 +109,20 @@ export default function StoriesGrid({ data }: { data: IPagination<IMemory> }) {
   // Handle empty state
   if (!data?.docs || data.docs.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 px-4">
-        <div className="text-center">
-          <div className="w-16 h-16 mx-auto mb-4 bg-sand-3 rounded-full flex items-center justify-center">
-            <DoubleHeartIcon className="size-8 stroke-2 text-sand-10" />
-          </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">No stories yet</h3>
-          <p className="text-gray-500 text-sm">
-            Start creating your first story to see it here.
-          </p>
+      <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
+        <div className="w-16 h-16 mx-auto mb-4 bg-sand-3 rounded-full flex items-center justify-center">
+          <DoubleHeartIcon className="size-8 stroke-2 text-sand-10" />
         </div>
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">No stories yet</h3>
+        <p className="text-gray-500 text-sm max-w-xs">
+          Start creating your first story to see it here.
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 auto-rows-fr">
+    <div className="w-full columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-4 sm:gap-6 space-y-4 sm:space-y-6">
       {data.docs.map((m, i) => <StoriesGridItem key={i} memory={m} />)}
     </div>
   );

@@ -1,5 +1,6 @@
 import type { ComponentType, SVGProps } from "react";
 import { useNavigate } from "react-router-dom";
+import { useModal } from "@/hooks/use-modal";
 
 interface SideBarItemProps {
   Icon: ComponentType<SVGProps<SVGSVGElement>>;
@@ -7,27 +8,60 @@ interface SideBarItemProps {
   link?: string;
   active?: boolean;
   onClick?: () => void;
+  color?: string;
 }
 
-export default function SideBarItem({ link = null, active = false, onClick, Icon, title }: SideBarItemProps) {
+export default function SideBarItem({
+  link = null,
+  active = false,
+  onClick,
+  Icon,
+  title,
+  color = "#F06037",
+}: SideBarItemProps) {
   const navigate = useNavigate();
+  const { open } = useModal();
 
   const handleClick = () => {
     if (link) {
-      navigate(link);
+      if (link === "/settings") {
+        open("settings");
+      } else {
+        navigate(link);
+      }
     }
     onClick?.();
   };
 
+  const activeBg = "#F5EEE3";
+  const activeColor = color || "#D4A373"; // default active color if none provided
+
   return (
     <div
       onClick={handleClick}
-      className={`${active && "active"} flex items-center group/item gap-2 rounded-[8px] w-full h-10 bg-transparent [.active]:bg-[#F5EEE3] hover:bg-[#F5EEE3] cursor-pointer px-3 py-2`}
+      className={`${active && "active"} flex items-center group/item gap-3 rounded-[8px] w-full h-10 bg-transparent cursor-pointer px-3 py-2 transition-colors`}
+      style={{
+        backgroundColor: active ? activeBg : undefined,
+      }}
+      onMouseEnter={(e) => {
+        if (!active) e.currentTarget.style.backgroundColor = activeBg;
+      }}
+      onMouseLeave={(e) => {
+        if (!active) e.currentTarget.style.backgroundColor = "transparent";
+      }}
     >
-      <div className="text-gray-500 group-[.active]/item:text-sand-10 group-hover/item:text-sand-10">
+      <div
+        className="size-5 flex items-center justify-center transition-colors"
+        style={{ color: active ? activeColor : "#667085" }}
+      >
         <Icon className="size-5" />
       </div>
-      <span className="capitalize group-[.active]/item:text-sand-10 group-hover/item:text-sand-10 group-[.active]/item:font-bold group-hover/item:font-bold text-base font-inter font-medium text-gray-700"> {title} </span>
+      <span
+        className={`text-sm font-inter font-medium transition-colors ${active ? "font-semibold" : "text-[#344054]"}`}
+        style={{ color: active ? activeColor : undefined }}
+      >
+        {title}
+      </span>
     </div>
   );
 }
