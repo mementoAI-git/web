@@ -1,6 +1,7 @@
 import { cn, getDuration, isEmpty } from "@/utility";
 import { WaveIcon } from "@/components/icons";
 import Markdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 interface IBubbleProps {
@@ -54,7 +55,28 @@ export default function Bubble({
           })}
         >
           <span className="font-georgia md:text-xl text-sand-12 ">
-            <Markdown>{text || ""}</Markdown>
+            <Markdown
+              remarkPlugins={[remarkGfm]}
+              components={{
+                a: ({ href, children, ...props }) => (
+                  <a
+                    href={href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={cn(
+                      "mem-tags text-sm! inline-flex items-center max-w-full normal-case! cursor-pointer!",
+                      "text-primary dark:text-primary/80 hover:opacity-80",
+                      "truncate break-all"
+                    )}
+                    {...props}
+                  >
+                    <span className="truncate">{children}</span>
+                  </a>
+                ),
+              }}
+            >
+              {text || ""}
+            </Markdown>
           </span>
         </div>
         {

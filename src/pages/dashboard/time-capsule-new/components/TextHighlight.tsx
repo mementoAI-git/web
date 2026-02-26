@@ -13,7 +13,7 @@ export default function TextHighlight({
   lines,
   maxLines = 2,
 }: TextHighlightProps) {
-  const computedLines = lines || autoSplitLines(children);
+  const computedLines = lines || autoSplitLines(children, maxLines);
   const displayLines = computedLines.slice(0, maxLines);
   const hasMore = computedLines.length > maxLines;
 
@@ -23,51 +23,59 @@ export default function TextHighlight({
       style={{
         padding: 0,
         gap: 0,
+        minWidth: 0, // Allow flex item to shrink
       }}
     >
-      <div className="inline-flex flex-col items-center">
-        {displayLines.map((line, index) => (
-          <span
-            key={index}
-            className="inline-block px-1.5 py-0.5 text-[10px] font-medium text-gray-900 text-center"
-            style={{
-              backgroundColor: style.backgroundColor || "#E8E5DA",
-              borderRadius: "6px",
-              lineHeight: "1.2",
-              position: "relative",
-              marginTop: index > 0 ? "-2px" : "0",
-              zIndex: displayLines.length - index,
-              maxWidth: "150px",
-              wordWrap: "break-word",
-              ...style,
-            }}
-          >
-            {index === maxLines - 1 && hasMore ? `${line}...` : line}
-          </span>
-        ))}
+      <div className="inline-flex flex-col items-center w-full min-w-0">
+        {displayLines.map((line, index) => {
+          const isLastLine = index === displayLines.length - 1;
+          const showEllipsis = isLastLine && hasMore;
+
+          return (
+            <span
+              key={index}
+              className="inline-block px-1.5 py-0.5 text-[10px] font-medium text-gray-900 text-center bg-sand-2"
+              style={{
+                backgroundColor: style.backgroundColor || "#E8E5DA",
+                borderRadius: "6px",
+                lineHeight: "1.2",
+                position: "relative",
+                marginTop: index > 0 ? "-2px" : "0",
+                zIndex: displayLines.length - index,
+                maxWidth: "100%", // Respect parent width
+                minWidth: 0, // Allow shrinking
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+                ...style,
+              }}
+              title={line}
+            >
+              {showEllipsis ? line : line}
+            </span>
+          );
+        })}
       </div>
     </div>
   );
 }
 
-function autoSplitLines(text: string): string[] {
-  const words = text.split(" ");
+function autoSplitLines(text: string, maxLines: number = 2): string[] {
+  if (!text || text.trim().length === 0) return [];
+
+  const words = text.trim().split(/\s+/);
+
+  // If 2 words or less, return single line
   if (words.length <= 2) {
-    return [text];
+    return [text.trim()];
   }
 
-  let splitIndex = words.length - 1;
-  for (let i = words.length - 1; i >= 1; i--) {
-    const firstLine = words.slice(0, i).join(" ");
-    const secondLine = words.slice(i).join(" ");
-    if (firstLine.length >= secondLine.length) {
-      splitIndex = i;
-      break;
-    }
-  }
+  // For strict 2-line limit with ellipsis, we need to be smarter
+  // Return first half and second half (which may get truncated by CSS)
+  const midPoint = Math.ceil(words.length / 2);
 
   return [
-    words.slice(0, splitIndex).join(" "),
-    words.slice(splitIndex).join(" "),
+    words.slice(0, midPoint).join(" "),
+    words.slice(midPoint).join(" "),
   ].filter(Boolean);
 }

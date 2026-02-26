@@ -1,6 +1,5 @@
-import { PlusIcon } from "@/components/icons";
 import { useModal } from "@/hooks/use-modal";
-import { cn } from "@/utility";
+import Button from "./Button";
 
 interface CapsuleEmptyStateProps {
   showCreateButton?: boolean;
@@ -11,7 +10,7 @@ const emptyStateContent = {
   all: {
     title: "No time capsules yet",
     description:
-      "Send a time capsule to someone from your inner circle (or to yourself).",
+      "You haven't created any time capsules yet. Send one to someone from your inner circle, or to yourself.",
   },
   scheduled: {
     title: "No scheduled capsules",
@@ -21,7 +20,7 @@ const emptyStateContent = {
   delivered: {
     title: "No delivered capsules",
     description:
-      "You haven't delivered any capsules yet. Scheduled capsules will appear here once delivered.",
+      "You don't have any delivered capsules yet. Capsules you've sent will appear here once they've been delivered.",
   },
   draft: {
     title: "No draft capsules",
@@ -50,15 +49,9 @@ export function CapsuleEmptyState({
           {content.description}
         </p>
         {showCreateButton && (
-          <div>
-            <button
-              onClick={() => open("create-capsule")}
-              className={cn("btn", "rounded-full! md:w-full w-fit bg-orange!")}
-            >
-              <PlusIcon width={15} />
-              <span>Create New</span>
-            </button>
-          </div>
+          <Button onClick={() => open("create-capsule")}>
+            Create a Capsule
+          </Button>
         )}
       </div>
     </div>

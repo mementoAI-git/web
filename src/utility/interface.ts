@@ -82,6 +82,8 @@ export interface IMemory {
   updated_at: string;
   bookmarked?: boolean;
   category?: string;
+  summary?: string;
+  topics?: string[];
 }
 
 export interface IPagination<T> {
@@ -123,6 +125,7 @@ export interface ICapsule {
   title: string;
   body: string;
   attachments: IFile[];
+  memories?: IMemory[];
   status: "draft" | "scheduled" | "delivered" | "paused" | "failed" | "deleted";
   created_at: string;
   updated_at: string;

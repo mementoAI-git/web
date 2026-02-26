@@ -13,16 +13,8 @@ import {
 
 export function CapsuleItemActions({ capsule }: { capsule: ICapsule }) {
   const { open } = useModal();
-  // const { toggleBookmark } = useBookmark({
-  //   memoryId: memory?._id,
-  //   isBookmarked: memory.bookmarked,
-  // });
 
   const handleSelect = async (value: string) => {
-    // if (value === "share-story") {
-    //   open("share-memory", { memory });
-    // }
-
     if (value === "edit-capsule") {
       open("edit-capsule", capsule);
     }
@@ -34,17 +26,6 @@ export function CapsuleItemActions({ capsule }: { capsule: ICapsule }) {
     if (value === "pause-capsule") {
       open("pause-capsule", capsule);
     }
-    // if (value === "bookmark") {
-    //   toggleBookmark();
-    // }
-    // if (value === "restore") {
-    //   restoreMemory();
-    //   await mutate(
-    //     (key) =>
-    //       typeof key === "string" && key.startsWith(`${endpoint.stories}`),
-    //   );
-    //   toast.success("Memory restored successfully");
-    // }
   };
 
   return (
@@ -100,7 +81,7 @@ export function CapsuleItemActions({ capsule }: { capsule: ICapsule }) {
       }
       footerItem={
         <li
-          onClick={() => open("delete-capsule", { memory: capsule })}
+          onClick={() => open("delete-capsule", capsule._id)}
           className="flex cursor-pointer items-center rounded gap-2.5 px-2.5 py-1.5 hover:bg-[#F97066]/8 text-[#F97066]"
         >
           <TrashIcon width={16} />
@@ -112,33 +93,3 @@ export function CapsuleItemActions({ capsule }: { capsule: ICapsule }) {
     />
   );
 }
-
-// function MemoryListFilter({
-//   value = "all",
-//   onChange,
-// }: {
-//   value: string;
-//   onChange: (v: string) => void;
-// }) {
-//   return (
-//     <DropdownButton
-//       title={
-//         <div className="flex items-center gap-1">
-//           <FilterIcon />
-//           <span>filter: {FILTER_LABELS[value] || value}</span>
-//         </div>
-//       }
-//       onSelect={onChange}
-//       ItemLayout={({ onClick, item }) => (
-//         <CheckboxOption {...{ onClick, item, value }} />
-//       )}
-//       items={[
-//         { label: "All", value: "all" },
-//         { label: "Bookmarked", value: "bookmarked" },
-//         { label: "Deleted", value: "deleted" },
-//         { label: "Custom date", value: "custom-date" },
-//       ]}
-//       value={value}
-//     />
-//   );
-// }

@@ -26,11 +26,12 @@ export default function StyleControls({
 
   const sizes = ["1x", "2x", "3x"];
 
-  // Find current theme, fallback to default if none matches
+  // Find current theme, prioritize themeId then fallback to style-based lookup
   const currentTheme =
+    (cardStyle.themeId ? themes.find((t) => t.id === cardStyle.themeId) : undefined) ||
     themes.find(
       (t) =>
-        t.color === cardStyle.backgroundColor &&
+        t.color.toUpperCase() === cardStyle.backgroundColor.toUpperCase() &&
         t.fontFamily === cardStyle.fontFamily,
     ) ||
     themes.find((t) => t.id === DEFAULT_THEME_ID) ||
@@ -40,14 +41,16 @@ export default function StyleControls({
   useEffect(() => {
     const hasValidTheme = themes.some(
       (t) =>
-        t.color === cardStyle.backgroundColor &&
-        t.fontFamily === cardStyle.fontFamily,
+        (cardStyle.themeId && t.id === cardStyle.themeId) ||
+        (t.color.toUpperCase() === cardStyle.backgroundColor.toUpperCase() &&
+          t.fontFamily === cardStyle.fontFamily),
     );
 
     if (!hasValidTheme) {
       const defaultTheme =
         themes.find((t) => t.id === DEFAULT_THEME_ID) || themes[0];
       onStyleChange({
+        themeId: defaultTheme.id,
         backgroundColor: defaultTheme.color,
         fontFamily: defaultTheme.fontFamily,
         textColor: defaultTheme.textColor,
@@ -76,6 +79,7 @@ export default function StyleControls({
 
   const handleThemeSelect = (theme: Theme) => {
     onStyleChange({
+      themeId: theme.id,
       backgroundColor: theme.color,
       fontFamily: theme.fontFamily,
       textColor: theme.textColor,
@@ -125,7 +129,7 @@ export default function StyleControls({
               <ChevronDownIcon className="w-4 h-4 ml-2 shrink-0" />
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="min-w-[var(--radix-dropdown-menu-trigger-width)] z-[999]">
+          <DropdownMenuContent className="min-w-[var(--radix-dropdown-menu-trigger-width)] z-[100000]">
             {themes.map((theme) => {
               const isSelected = currentTheme?.id === theme.id;
               return (
@@ -165,7 +169,7 @@ export default function StyleControls({
               <ChevronDownIcon className="w-4 h-4 ml-2 shrink-0" />
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="min-w-[var(--radix-dropdown-menu-trigger-width)] z-[999]">
+          <DropdownMenuContent className="min-w-[var(--radix-dropdown-menu-trigger-width)] z-[100000]">
             {sizes.map((size) => {
               const isSelected = cardStyle.fontSize === size;
               return (

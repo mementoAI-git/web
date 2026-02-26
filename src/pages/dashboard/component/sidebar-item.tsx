@@ -17,7 +17,7 @@ export default function SideBarItem({
   onClick,
   Icon,
   title,
-  color,
+  color = "#F06037",
 }: SideBarItemProps) {
   const navigate = useNavigate();
   const { open } = useModal();
@@ -33,7 +33,7 @@ export default function SideBarItem({
     onClick?.();
   };
 
-  const activeBg = title.toLowerCase() === "time capsule" ? "#FFF2ED" : "#F5EEE3";
+  const activeBg = "#F5EEE3";
   const activeColor = color || "#D4A373"; // default active color if none provided
 
   return (
