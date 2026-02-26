@@ -20,7 +20,7 @@ import {
 } from "./beneficiary";
 import Setup2FA from "./setup-2fa";
 import ChatSettings from "./chat-settings";
-import { SearchMemories } from "./memory/search";
+import { SearchMemoriesV2 } from "./memory/search/search-modal-v2";
 import CreateCapsule from "./capsule/create";
 import { DeleteCapsule } from "./capsule/delete";
 import { PauseCapsule } from "./capsule/pause";
@@ -37,7 +37,7 @@ const MODAL_COMPONENTS = {
   "file-preview": FilePreview,
   "file-upload": UploadFiles,
   "edit-memory": UpdateMemory,
-  "search-memory": SearchMemories,
+  "search-memory": SearchMemoriesV2,
   "create-memory": CreateMemory,
   "delete-memory": DeleteMemory,
   "bookmark-memory": BookmarkMemory,
