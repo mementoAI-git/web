@@ -1058,15 +1058,21 @@ export default function CreateCapsule({
   return (
     <>
       {/* Desktop */}
-      <div className="hidden sm:flex max-w-[1440px] flex-col justify-center max-h-[900px] lg:h-[90vh]! h-full w-full">
+      <div className="hidden sm:flex max-w-[1440px] flex-col justify-center lg:max-h-[900px] h-full w-full">
         <div className="grid grid-cols-1 lg:grid-cols-[55%_45%] gap-10 items-start oveflow-hidden">
           <div className="flex justify-center w-full lg:pt-10">
-            <div className="bg-black/60 gap-6 w-full rounded-2xl py-8 px-6 lg:px-24 flex flex-col items-center">
+            <div
+              className="bg-black/60 gap-6 w-full rounded-2xl py-8 px-6 lg:px-24 flex flex-col items-center"
+              style={{ height: "min(780px, 80vh)" }}
+            >
               <StyleControls
                 cardStyle={cardStyle}
                 onStyleChange={handleStyleChange}
               />
-              <div className="flex-1 w-full">
+              <div
+                className="w-full"
+                style={{ flex: "1 1 0", minHeight: 0, overflow: "hidden" }}
+              >
                 <CapsulePreviewCard
                   style={cardStyle}
                   recipients={previewRecipients}
@@ -1075,7 +1081,7 @@ export default function CreateCapsule({
                   assets={previewAssets}
                   sender={user}
                   onAssetClick={() => {}}
-                  className="h-full min-h-[700px] max-h[700px] w-full p-6"
+                  className="h-full min-h[700px] max-h[700px] w-full p-6"
                 />
               </div>
             </div>
