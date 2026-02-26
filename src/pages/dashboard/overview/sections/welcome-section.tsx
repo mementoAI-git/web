@@ -1,6 +1,4 @@
 import { Link } from "react-router-dom";
-import Slider from "@/components/slider";
-import StreakTracker from "@/components/streak-tracker";
 import { PlusIcon } from "@/components/icons";
 import { useModal } from "@/hooks/use-modal";
 import { useStore } from "@/hooks/use-store";
@@ -14,8 +12,7 @@ import trophyIcon from "@/assets/icon/noto_trophy.svg";
 // deprecated backgrounds — kept for reference
 // import _bg2 from "@/assets/icon/folder/side cards for streak.png";
 // import _bg3 from "@/assets/icon/folder/green side cards for streak.png";
-import memoryContextBg from "@/assets/icon/memory context bg.svg";
-import { isEmpty } from "@/utility";
+import memoryContextBgPng from "@/assets/icon/memory context bg.png";
 
 function getGreeting(): string {
   const hour = new Date().getHours();
@@ -32,47 +29,6 @@ function getGreeting(): string {
               ? ["Keeping a late night,", "Night owl mode,", "Burning the midnight oil,"]
               : ["Still going,", "Can't sleep,", "Late night session,"];
   return greetings[Math.floor(Math.random() * greetings.length)];
-}
-
-function StreakCount() {
-  const { user } = useStore();
-  return (
-    <StreakTracker>
-      <div className="w-full flex-1 flex items-center relative border border-black/5 rounded-2xl overflow-hidden p-4 gap-2">
-        <img src={memoryContextBg} alt="" className="absolute top-0 right-0 left-0 object-cover size-full" />
-        <div className="relative z-10 flex flex-col max-w-[216.86px] gap-2 font-inter">
-          <span className="text-gray-500 font-inter font-normal uppercase text-xs">Streak count</span>
-          <span className="text-sm text-gray-700 font-inter font-bold">
-            {isEmpty(user?.streak) ? (
-              "You have no streak"
-            ) : (
-              <>You’re on a <span style={{ color: "#F06037" }}>{user?.streak}-day</span> streak</>
-            )}
-          </span>
-          <span className="text-gray-600 font-normal font-inter text-sm">Complete reflections each day so your streak won’t reset</span>
-        </div>
-        <div className="absolute right-4 top-1/2 -translate-y-1/2 z-10">
-          <img src={zapIcon} alt="streak" className="size-12 object-contain opacity-80" />
-        </div>
-      </div>
-    </StreakTracker>
-  );
-}
-
-function Leaderboard() {
-  return (
-    <div className="w-full flex-1 flex items-center border border-black/5 rounded-2xl overflow-hidden relative p-4 gap-2">
-      <img src={memoryContextBg} alt="" className="absolute top-0 right-0 left-0 object-cover size-full" />
-      <div className="relative z-10 flex flex-col gap-2 font-inter">
-        <span className="text-gray-400 uppercase text-xs">XP leaderboard</span>
-        <span className="text-sm text-gray-700 font-bold">Global ranking coming soon</span>
-        <span className="text-gray-600 text-sm">Coming soon</span>
-      </div>
-      <div className="absolute right-4 top-1/2 -translate-y-1/2 z-10">
-        <img src={trophyIcon} alt="trophy" className="size-12 object-contain" />
-      </div>
-    </div>
-  );
 }
 
 export default function WelcomeSection() {
@@ -133,15 +89,8 @@ export default function WelcomeSection() {
             </div>
           </div>
         </div>
-        <div className="block md:hidden">
-          <Slider>
-            <StreakCount />
-            <Leaderboard />
-          </Slider>
-        </div>
-        <div className="w-full hidden md:flex flex-rol items-stretch gap-3 md:flex-col md:flex-1 lg:max-w-[335px]">
-          <StreakCount />
-          <Leaderboard />
+        <div className="w-full lg:max-w-[335px] relative rounded-2xl overflow-hidden min-h-[144px] sm:min-h-[200px] flex-1">
+          <img src={memoryContextBgPng} alt="" className="absolute inset-0 object-cover size-full" />
         </div>
       </div>
     </div>
