@@ -4,12 +4,30 @@ import StreakTracker from "@/components/streak-tracker";
 import { BlueFolderIcon, PlusIcon } from "@/components/icons";
 import { useModal } from "@/hooks/use-modal";
 import { useStore } from "@/hooks/use-store";
-import bg1 from "@/assets/image/bg/1.png";
-import bg2 from "@/assets/image/bg/2.png";
-import bg3 from "@/assets/image/bg/3.png";
-import orangeDiamond from "@/assets/image/orange-diamond.png";
-import greenDiamond from "@/assets/image/green-diamond-full.png";
+import { useMemo } from "react";
+import useSWR from "swr";
+import endpoint from "@/api/endpoint";
+import bgCard from "@/assets/icon/folder/empty-get-started.png";
+import bg2 from "@/assets/icon/folder/side cards for streak.png";
+import bg3 from "@/assets/icon/folder/green side cards for streak.png";
 import { isEmpty } from "@/utility";
+
+function getGreeting(): string {
+  const hour = new Date().getHours();
+  const greetings =
+    hour >= 4 && hour < 7
+      ? ["Up early today,", "Starting the day early,", "Rise and shine,"]
+      : hour >= 7 && hour < 12
+        ? ["Good morning,", "Back at it,", "Morning,"]
+        : hour >= 12 && hour < 17
+          ? ["Good afternoon,", "Welcome back,", "Afternoon,"]
+          : hour >= 17 && hour < 21
+            ? ["Good evening,", "Evening,", "Ready to reflect,"]
+            : hour >= 21
+              ? ["Keeping a late night,", "Night owl mode,", "Burning the midnight oil,"]
+              : ["Still going,", "Can't sleep,", "Late night session,"];
+  return greetings[Math.floor(Math.random() * greetings.length)];
+}
 
 function StreakCount() {
   const { user } = useStore();
@@ -17,21 +35,16 @@ function StreakCount() {
     <StreakTracker>
       <div className="w-full flex-1 flex items-center relative border border-black/5 rounded-2xl overflow-hidden p-4 gap-2">
         <img src={bg2} alt="1" className="absolute top-0 right-0 left-0 object-cover size-full" />
-        <div className="flex flex-col max-w-[216.86px] gap-2 font-inter">
+        <div className="relative z-10 flex flex-col max-w-[216.86px] gap-2 font-inter">
           <span className="text-gray-500 font-inter font-normal uppercase text-xs">Streak count</span>
-
           <span className="text-sm text-gray-700 font-inter font-bold">
-            {
-              isEmpty(user?.streak) ?
-                "You have no streak" :
-                `You’re on a ${user?.streak}-day streak`
-            }
-
+            {isEmpty(user?.streak) ? (
+              "You have no streak"
+            ) : (
+              <>You’re on a <span style={{ color: "#F06037" }}>{user?.streak}-day</span> streak</>
+            )}
           </span>
-          <span className="text-gray-600 font-normal font-inter text-sm ">Complete reflections each day so your streak won’t reset</span>
-        </div>
-        <div className="size-full absolute bottom-0 right-0 max-w-[105.31px] max-h-[100px] flex items-center justify-center">
-          <img src={orangeDiamond} className="size-full object-cover" width={105.31} alt="Orange diamond" />
+          <span className="text-gray-600 font-normal font-inter text-sm">Complete reflections each day so your streak won’t reset</span>
         </div>
       </div>
     </StreakTracker>
@@ -46,13 +59,10 @@ function Leaderboard() {
         alt="3"
         className="absolute top-0 right-0 left-0 object-cover size-full"
       />
-      <div className="flex flex-col gap-2 font-inter">
+      <div className="relative z-10 flex flex-col gap-2 font-inter">
         <span className="text-gray-400 uppercase text-xs">XP leaderboard</span>
         <span className="text-sm text-gray-700 font-bold">Global ranking coming soon</span>
-        <span className="text-gray-600 text-sm ">Coming soon</span>
-      </div>
-      <div className="size-full max-w-[135.64px] max-h-[148.38px] absolute -bottom-0 right-0 flex items-center justify-center">
-        <img src={greenDiamond} className="size-full object-cover" alt="Green diamond" />
+        <span className="text-gray-600 text-sm">Coming soon</span>
       </div>
     </div>
   );
@@ -61,12 +71,17 @@ function Leaderboard() {
 export default function WelcomeSection() {
   const { user } = useStore();
   const { open } = useModal();
+  const greeting = useMemo(() => getGreeting(), []);
+  const { data: statsData } = useSWR(endpoint.userStats);
+  const stats = statsData?.data ?? {};
+  const streakCount = Number(user?.streak) || Number(stats.streak_count) || 0;
+  const xpCount = Number(stats.xp_count) || 0;
 
   return (
     <div className="w-full space-y-6 sm:space-y-8 lg:space-y-10 py-6 sm:py-9 lg:py-12">
       <div className="space-y-2">
         <h2 className="font-garamond text-gray-800 font-medium text-[24px] sm:text-[32px] leading-[32px] sm:leading-[38px]">
-          Back at it,
+          {greeting}
           {
             user?.first_name &&
             <i className="text-gray-500"> {user?.first_name}.</i>
@@ -74,25 +89,31 @@ export default function WelcomeSection() {
         </h2>
       </div>
       <div className="flex flex-col lg:flex-row gap-6 items-stretch">
-        <div className="relative rounded-2xl overflow-hidden flex-1 min-h-[144px] sm:min-h-[254px]">
-          <img src={bg1} alt="" className="absolute top-0 right-0 left-0 object-cover size-full" />
-          <div className="absolute border border-sand-3 rounded-2xl p-5 sm:p-8 lg:p-10 bg-[linear-gradient(266.6deg,rgba(254,251,248,0)_10.3%,#FEFBF8_80.25%)] flex flex-col justify-between size-full top-0 right-0 left-0">
-            <h2 className="font-georgia text-base sm:text-lg md:text-xl lg:text-2xl text-[#475467]">What’s on your mind today?</h2>
-            <div className="flex gap-3 items-stretch">
-              <button onClick={() => open("create-memory")} className="btn md:!bg-blue-6 !text-sm !md:text-base !px-4 !sm:px-5 !py-1.5 !sm:py-2.5">
-                <PlusIcon className="size-4 hidden md:block" />
-                <span className="whitespace-nowrap">
-                  Add a memory
+        <div className="relative rounded-2xl overflow-hidden flex-1 min-h-[144px] sm:min-h-[200px]">
+          <img src={bgCard} alt="" className="absolute top-0 right-0 left-0 object-cover size-full" />
+          <div className="absolute flex flex-col justify-between size-full top-0 right-0 left-0 p-5 sm:p-7 lg:p-8">
+            <div className="flex items-start justify-between gap-4">
+              <h2 className="font-georgia text-base sm:text-lg md:text-xl lg:text-2xl text-[#475467]">What’s on your mind today?</h2>
+              <div className="flex items-center gap-3 shrink-0">
+                <span className="flex items-center gap-1 font-inter text-sm font-semibold text-gray-700">
+                  ⚡ {streakCount}
                 </span>
+                <span className="flex items-center gap-1 font-inter text-sm font-semibold text-gray-700">
+                  🏆 {xpCount}
+                </span>
+              </div>
+            </div>
+            <div className="flex gap-3 items-center">
+              <button onClick={() => open("create-memory")} className="btn !text-sm !px-4 !py-2">
+                <PlusIcon className="size-4" />
+                <span className="whitespace-nowrap">Add story/item</span>
               </button>
               <Link
                 to="/chat/new"
-                className="bg-white flex items-center gap-1.5 cursor-pointer hover:scale-[97%] border border-white rounded-full px-4 sm:px-5 py-1.5 sm:py-2.5"
+                className="bg-white flex items-center gap-1.5 cursor-pointer hover:scale-[97%] border border-white rounded-full px-4 py-2"
               >
-                <span className="size-5 hidden md:block">
-                  <BlueFolderIcon className="size-5" />
-                </span>
-                <span className="text-[#101828] text-sm  font-inter font-semibold whitespace-nowrap">Start a conversation</span>
+                <BlueFolderIcon className="size-4 hidden sm:block" />
+                <span className="text-[#101828] text-sm font-inter font-semibold whitespace-nowrap">Start a conversation</span>
               </Link>
             </div>
           </div>

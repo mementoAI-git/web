@@ -3,7 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { useModal } from "@/hooks/use-modal";
 
 interface SideBarItemProps {
-  Icon: ComponentType<SVGProps<SVGSVGElement>>;
+  Icon?: ComponentType<SVGProps<SVGSVGElement>>;
+  icon?: string;
   title: string;
   link?: string;
   active?: boolean;
@@ -16,6 +17,7 @@ export default function SideBarItem({
   active = false,
   onClick,
   Icon,
+  icon,
   title,
   color = "#F06037",
 }: SideBarItemProps) {
@@ -33,8 +35,9 @@ export default function SideBarItem({
     onClick?.();
   };
 
-  const activeBg = "#F5EEE3";
-  const activeColor = color || "#D4A373"; // default active color if none provided
+  const activeBg = "#F5F3F2";
+  const activeBorder = "#FCFCFC";
+  const activeTextColor = "#1E1E1E";
 
   return (
     <div
@@ -42,6 +45,7 @@ export default function SideBarItem({
       className={`${active && "active"} flex items-center group/item gap-3 rounded-[8px] w-full h-10 bg-transparent cursor-pointer px-3 py-2 transition-colors`}
       style={{
         backgroundColor: active ? activeBg : undefined,
+        border: active ? `1px solid ${activeBorder}` : "1px solid transparent",
       }}
       onMouseEnter={(e) => {
         if (!active) e.currentTarget.style.backgroundColor = activeBg;
@@ -50,15 +54,16 @@ export default function SideBarItem({
         if (!active) e.currentTarget.style.backgroundColor = "transparent";
       }}
     >
-      <div
-        className="size-5 flex items-center justify-center transition-colors"
-        style={{ color: active ? activeColor : "#667085" }}
-      >
-        <Icon className="size-5" />
+      <div className="size-5 flex items-center justify-center transition-colors">
+        {icon ? (
+          <img src={icon} alt={title} className="size-5 object-contain" />
+        ) : Icon ? (
+          <Icon className="size-5" style={{ color: active ? activeColor : "#667085" }} />
+        ) : null}
       </div>
       <span
         className={`text-sm font-inter font-medium transition-colors ${active ? "font-semibold" : "text-[#344054]"}`}
-        style={{ color: active ? activeColor : undefined }}
+        style={{ color: active ? activeTextColor : undefined }}
       >
         {title}
       </span>

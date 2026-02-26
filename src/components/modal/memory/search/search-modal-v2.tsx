@@ -7,7 +7,6 @@ import Spinner from "@/components/spinner";
 import { getRecentMemories, isEmpty } from "@/utility";
 import { useModal } from "@/hooks/use-modal";
 import { useStore } from "@/hooks/use-store";
-import { ModalCloseBtn } from "@/components/modal/modalLayout";
 import useSWR from "swr";
 import SearchItem from "./search-item";
 
@@ -229,10 +228,17 @@ export function SearchMemoriesV2() {
   const { close } = useModal();
 
   return (
-    <div>
-      <div className="hidden w-full !min-w-[640px] !max-w-[640px] sm:block modal-container !bg-white !p-0 !rounded-2xl overflow-hidden">
-        <ModalCloseBtn onClick={() => close?.("search-memory")} className="!absolute !top-4 !right-4 !z-10" />
-        <SearchModalContent />
+    <div className="w-full h-full">
+      <div
+        className="hidden sm:flex w-full h-full items-center justify-center"
+        onClick={() => close?.("search-memory")}
+      >
+        <div
+          className="w-full !min-w-[640px] !max-w-[640px] modal-container !bg-white !p-0 !rounded-2xl overflow-hidden"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <SearchModalContent />
+        </div>
       </div>
       <Sheet
         detent="content"
@@ -244,7 +250,6 @@ export function SearchMemoriesV2() {
         <Sheet.Container className="bg-white">
           <Sheet.Header className="bg-white rounded-3xl" />
           <Sheet.Content className="bg-white px-0 pb-6">
-            <ModalCloseBtn className="!relative ml-auto !right-4 !top-0 mb-2" onClick={() => close?.("search-memory")} />
             <SearchModalContent />
           </Sheet.Content>
         </Sheet.Container>

@@ -2,7 +2,7 @@ import avatar from "@/assets/image/avatar.png";
 import { DropdowmIcon } from "@/components/Dropdown";
 import { useStore } from "@/hooks/use-store";
 import { useNavigate } from "react-router-dom";
-import { UserCircleIcon, LogoutIcon } from "@/components/icons";
+import { UserCircleIcon, LogoutIcon, ChevronDownIcon } from "@/components/icons";
 import { useModal } from "@/hooks/use-modal";
 
 export function ProfileDropdown({ hideName = false }: { hideName?: boolean }) {
@@ -45,9 +45,12 @@ export function ProfileDropdown({ hideName = false }: { hideName?: boolean }) {
         <div className="px-4 py-2.5 flex items-center gap-2 justify-center">
           <img src={avatar} alt="Avatar" className="size-5 object-contain" />
           {!hideName && (
-            <span className="font-inter font-semibold text-sm text-gray-800">
-              {user?.first_name ?? "User"}
-            </span>
+            <>
+              <span className="font-inter font-semibold text-sm text-gray-800">
+                {user?.first_name ?? "User"}
+              </span>
+              <ChevronDownIcon className="size-3.5 text-gray-400" />
+            </>
           )}
         </div>
       </DropdowmIcon>

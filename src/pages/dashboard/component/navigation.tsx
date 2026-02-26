@@ -1,14 +1,12 @@
-import {
-  ArchiveIcon,
-  ArrowUpCircleIcon,
-  CompassIcon,
-  GiftIcon,
-  HelpCircleIcon,
-  HomeIcon,
-  SlidersIcon,
-  SparklesIcon,
-  ClockIcon,
-} from "@/components/icons";
+// Updated: 2026-02-26
+import globeIcon from "@/assets/icon/folder/noto_globe-showing-asia-australia.png";
+import chatsIcon from "@/assets/icon/folder/chats icon.png";
+import cardFileBoxIcon from "@/assets/icon/folder/noto_card-file-box.png";
+import compassIcon from "@/assets/icon/folder/compass.png";
+import hourglassIcon from "@/assets/icon/folder/noto_hourglass-not-done.png";
+import gearIcon from "@/assets/icon/folder/noto_gear.png";
+import upgradeIcon from "@/assets/icon/folder/noto_upwards-button.png";
+import inviteIcon from "@/assets/icon/folder/noto_couple-with-heart-woman-man-light-skin-tone-medium-light-skin-tone.png";
 
 export const settingNavigations = [
   { title: "my profile", link: "/settings/profile" },
@@ -18,16 +16,15 @@ export const settingNavigations = [
 ];
 
 export const topNavigations = [
-  { Icon: HomeIcon, title: "Overview", link: "/overview" },
-  { Icon: SparklesIcon, title: "My conversations", link: "/chat" },
-  { Icon: ArchiveIcon, title: "My Memories", link: "/stories" },
-  { Icon: CompassIcon, title: "Explore", link: "/explore" },
-  { Icon: ClockIcon, title: "Time capsule", link: "/capsule" },
-  { Icon: SlidersIcon, title: "Settings", link: "/settings" },
+  { icon: globeIcon, title: "Overview", link: "/overview" },
+  { icon: chatsIcon, title: "Chats", link: "/chat" },
+  { icon: cardFileBoxIcon, title: "My Memories", link: "/stories" },
+  { icon: compassIcon, title: "Explore", link: "/explore" },
+  { icon: hourglassIcon, title: "Time capsule", link: "/capsule" },
 ];
 
 export const bottomNavigations = [
-  { Icon: GiftIcon, title: "Invite friends", link: "/invite-friends" },
-  { Icon: HelpCircleIcon, title: "Feedback & support", link: "/feedback" },
-  { Icon: ArrowUpCircleIcon, title: "Upgrade plan", link: "/upgrade", color: "#6BB19E" },
+  { icon: gearIcon, title: "Settings", link: "/settings" },
+  { icon: inviteIcon, title: "Invite friends", link: "/invite-friends" },
+  { icon: upgradeIcon, title: "Upgrade plan", link: "/upgrade" },
 ];
