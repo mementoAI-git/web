@@ -76,7 +76,7 @@ export default function CapsulePreviewCard({
       {/* Main Card */}
       <div
         className={cn(
-          "rounded-xl relative overflow-hidden px-6 flex flex-col h-full w-full max-h-[750px]",
+          "rounded-xl relative overflow-hidden px-6 flex flex-col h-full w-full",
           fontFamilyClasses[style.fontFamily as keyof typeof fontFamilyClasses],
           className,
         )}

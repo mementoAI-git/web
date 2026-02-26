@@ -1060,10 +1060,10 @@ export default function CreateCapsule({
       {/* Desktop */}
       <div className="hidden sm:flex max-w-[1440px] flex-col justify-center lg:max-h-[900px] h-full w-full">
         <div className="grid grid-cols-1 lg:grid-cols-[55%_45%] gap-10 items-start oveflow-hidden">
-          <div className="flex justify-center w-full lg:pt-10">
+          <div className="flex justify-center items-center w-full h-full">
             <div
-              className="bg-black/60 gap-6 w-full rounded-2xl py-8 px-6 lg:px-24 flex flex-col items-center"
-              style={{ height: "min(780px, 80vh)" }}
+              className="bg-black/60 gap-6 w-full rounded-2xl h-full py-8 px-6 lg:px-24 flex flex-col justify-center items-center"
+              style={{ height: "100%" }}
             >
               <StyleControls
                 cardStyle={cardStyle}
@@ -1081,7 +1081,7 @@ export default function CreateCapsule({
                   assets={previewAssets}
                   sender={user}
                   onAssetClick={() => {}}
-                  className="h-full min-h[700px] max-h[700px] w-full p-6"
+                  className="h-full bg-orange-500 w-full p-6 pb-0"
                 />
               </div>
             </div>
