@@ -76,10 +76,7 @@ export default function useForm<T extends Record<string, any>>({
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
 
-    console.log("Submitting form...");
-    console.log(values);
     try {
-      throw new Error("Form submission failed");
       let payload = values;
       if (validation) {
         payload = (await validation.validate(values, {

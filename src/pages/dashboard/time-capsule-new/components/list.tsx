@@ -1,6 +1,5 @@
 import type { IPagination, ICapsule } from "@/utility/interface";
 import { CapsuleEmptyState } from "./CapsuleEmptyState";
-import { CalendarIcon } from "@/components/icons";
 import ImageThumbnail from "./ImageThumbnail";
 import StatusBadge from "./StatusBadge";
 import dayjs from "dayjs";

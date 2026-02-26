@@ -4,7 +4,7 @@ export type CapsuleStatus = "draft" | "scheduled" | "delivered";
 
 export function getCapsuleStatus(capsule: ICapsule): CapsuleStatus {
   const now = new Date();
-  const deliveryDate = new Date(capsule.delivery_date);
+  const deliveryDate = new Date(capsule.schedule_date);
 
   if (!capsule.body || !capsule.recipients?.length) return "draft";
 
