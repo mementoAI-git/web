@@ -1,13 +1,14 @@
+// Updated: 2026-02-26
 import {
-  ArchiveIcon,
   ArrowUpCircleIcon,
+  ChatIcon,
   CompassIcon,
+  FolderIcon,
+  GearIcon,
   GiftIcon,
   HelpCircleIcon,
   HomeIcon,
-  SlidersIcon,
-  SparklesIcon,
-  ClockIcon,
+  ClockStopwatch,
 } from "@/components/icons";
 
 export const settingNavigations = [
@@ -19,11 +20,11 @@ export const settingNavigations = [
 
 export const topNavigations = [
   { Icon: HomeIcon, title: "Overview", link: "/overview" },
-  { Icon: SparklesIcon, title: "My conversations", link: "/chat" },
-  { Icon: ArchiveIcon, title: "My Memories", link: "/stories" },
+  { Icon: ChatIcon, title: "Chats", link: "/chat" },
+  { Icon: FolderIcon, title: "My Memories", link: "/stories" },
   { Icon: CompassIcon, title: "Explore", link: "/explore" },
-  { Icon: ClockIcon, title: "Time capsule", link: "/capsule" },
-  { Icon: SlidersIcon, title: "Settings", link: "/settings" },
+  { Icon: ClockStopwatch, title: "Time capsule", link: "/capsule" },
+  { Icon: GearIcon, title: "Settings", link: "/settings" },
 ];
 
 export const bottomNavigations = [
