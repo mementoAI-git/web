@@ -1,6 +1,6 @@
 import MLogoIcon from "@/assets/icon/letterM.svg?react";
-import blueFire from "@/assets/image/blue-fire.png";
-import greenDiamond from "@/assets/image/green-diamond-full.png";
+import trophyIcon from "@/assets/icon/noto_trophy.svg";
+import zapIcon from "@/assets/icon/zap.svg";
 import { useModal } from "@/hooks/use-modal";
 import { useStore } from "@/hooks/use-store";
 import StreakTracker from "@/components/streak-tracker";
@@ -81,19 +81,19 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
           </div>
 
           <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer border border-transparent">
+            <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer" style={{ backgroundColor: "#FAF8F5" }}>
               <img
-                src={greenDiamond}
-                alt="Diamond"
+                src={trophyIcon}
+                alt="XP"
                 className="size-4 object-contain"
               />
               <span className="font-semibold text-gray-700 text-[13px]">0</span>
             </div>
 
             <StreakTracker>
-              <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer border border-transparent">
+              <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer" style={{ backgroundColor: "#FAF8F5" }}>
                 <img
-                  src={blueFire}
+                  src={zapIcon}
                   alt="Streak"
                   className="size-4 object-contain"
                 />
