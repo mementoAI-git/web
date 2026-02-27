@@ -1,7 +1,9 @@
-import { GridIcon, ListIcon, SearchIcon } from "@/components/icons";
+import { SearchIcon } from "@/components/icons";
 import { useModal } from "@/hooks/use-modal";
 import { storageKeys } from "@/utility/constant";
 import { cn } from "@/utility";
+import gridIconSvg from "@/assets/icon/Stories/grid-icon.svg";
+import listIconSvg from "@/assets/icon/Stories/list-icon.svg";
 
 interface IStoriesHeader {
   mode?: string;
@@ -70,19 +72,21 @@ export default function StoriesHeader({
           </div>
 
           {/* Mode Toggles */}
-          <div className="flex items-center p-1 bg-white border border-[#D0D5DD] rounded-xl shadow-sm">
+          <div className="flex items-center p-1 rounded-[64px]" style={{ backgroundColor: "rgba(0,0,0,0.1)" }}>
             {["grid", "list"].map(m => (
               <button
                 key={m}
                 onClick={() => handleChangeMode(m)}
                 className={cn(
-                  "p-2 rounded-lg transition-all",
-                  mode === m
-                    ? "bg-[#F9FAFB] text-[#1D2939] shadow-sm"
-                    : "text-[#667085] hover:text-[#1D2939]"
+                  "p-2 rounded-[64px] transition-all",
+                  mode === m ? "bg-white shadow-sm" : ""
                 )}
               >
-                {m === "list" ? <ListIcon className="size-5" /> : <GridIcon className="size-5" />}
+                <img
+                  src={m === "grid" ? gridIconSvg : listIconSvg}
+                  alt={m}
+                  className={cn("size-5 object-contain", mode !== m && "opacity-40")}
+                />
               </button>
             ))}
           </div>
