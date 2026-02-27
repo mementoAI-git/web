@@ -78,20 +78,28 @@ export default function StoriesPage() {
         <div className="space-y-6 sm:space-y-16 py-3 sm:py-4 lg:py-8">
           <div className="flex flex-col md:items-end md:flex-row md:justify-between gap-2">
             <div>
-              <p className="font-garamond font-medium text-[32px] md:text-4xl lg:text-[40px] leading-tight sm:leading-snug md:leading-[48px]">
-                <span>My</span>
-                <span className="text-[#412C0966] px-2 italic">stories</span>
+              <p className="font-garamond font-medium text-[32px] md:text-4xl lg:text-[40px] leading-tight sm:leading-snug md:leading-[48px] text-gray-900">
+                My Memories
               </p>
-
-              <p className="font-garamond font-normal text-base sm:text-[20px] leading-[24px] tracking-[0px] text-gray-700 pt-3 rounded-md">
-                Your personal journal. Add stories, images, audios - whatever, to your Memento
+              <p className="font-inter font-normal text-base text-gray-500 pt-2">
+                Add stories, images, audios - whatever, to your Memento
               </p>
             </div>
 
-            <div>
-              <button onClick={() => open("create-memory")} className={cn("btn", "!rounded-full md:w-full w-fit")}>
-                <PlusIcon width={15} />
-                <span>Add Memory</span>
+            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+              <button
+                className="flex items-center h-9 sm:h-12 px-3 sm:px-5 rounded-full font-inter font-semibold text-xs sm:text-sm text-[#101828] cursor-pointer transition-opacity hover:opacity-90 whitespace-nowrap"
+                style={{ backgroundColor: "#F9F9F9", border: "1px solid rgba(0,0,0,0.05)" }}
+              >
+                View insights
+              </button>
+              <button
+                onClick={() => open("create-memory")}
+                className="flex items-center gap-1.5 sm:gap-2 h-9 sm:h-12 px-3 sm:px-5 rounded-full font-inter font-semibold text-xs sm:text-sm text-white cursor-pointer transition-opacity hover:opacity-90"
+                style={{ backgroundColor: "#FF5E00" }}
+              >
+                <PlusIcon className="size-3 sm:size-4 shrink-0" />
+                <span className="whitespace-nowrap">Add memory</span>
               </button>
             </div>
           </div>
