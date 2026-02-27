@@ -30,6 +30,7 @@ import Settings from "./settings";
 import ShareMemory from "./memory/share-memory";
 import SelectBeneficiary from "./select-beneficiary";
 import { Feedback } from "./feedback";
+import MemoryInsights from "./memory-insights";
 
 const MODAL_COMPONENTS = {
   "share-post": SharePost,
@@ -59,6 +60,7 @@ const MODAL_COMPONENTS = {
   // "date-picker-filter": DatePickerFilter,
   "share-memory": ShareMemory,
   "create-feedback": Feedback,
+  "memory-insights": MemoryInsights,
 };
 
 export default function Modal() {

@@ -88,6 +88,7 @@ export default function StoriesPage() {
 
             <div className="flex items-center gap-2 sm:gap-3 shrink-0">
               <button
+                onClick={() => open("memory-insights")}
                 className="flex items-center h-9 sm:h-12 px-3 sm:px-5 rounded-full font-inter font-semibold text-xs sm:text-sm text-[#101828] cursor-pointer transition-opacity hover:opacity-90 whitespace-nowrap"
                 style={{ backgroundColor: "#F9F9F9", border: "1px solid rgba(0,0,0,0.05)" }}
               >
