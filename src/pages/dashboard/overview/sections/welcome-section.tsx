@@ -1,16 +1,25 @@
 import { Link } from "react-router-dom";
-import Slider from "@/components/slider";
-import StreakTracker from "@/components/streak-tracker";
-import { BlueFolderIcon, PlusIcon } from "@/components/icons";
+import { PlusIcon } from "@/components/icons";
 import { useModal } from "@/hooks/use-modal";
 import { useStore } from "@/hooks/use-store";
 import { useMemo } from "react";
 import useSWR from "swr";
 import endpoint from "@/api/endpoint";
 import bgCard from "@/assets/icon/folder/empty-get-started.png";
-import bg2 from "@/assets/icon/folder/side cards for streak.png";
-import bg3 from "@/assets/icon/folder/green side cards for streak.png";
-import { isEmpty } from "@/utility";
+import brightButtonIcon from "@/assets/icon/noto_bright-button.svg";
+import zapIcon from "@/assets/icon/zap.svg";
+import trophyIcon from "@/assets/icon/noto_trophy.svg";
+// deprecated backgrounds — kept for reference
+// import _bg2 from "@/assets/icon/folder/side cards for streak.png";
+// import _bg3 from "@/assets/icon/folder/green side cards for streak.png";
+import enrichmentBgPng from "@/assets/icon/enrichment bg.png";
+import memoriesCardBg from "@/assets/icon/backgrounds/dash memories card.png";
+import benefiCardBg from "@/assets/icon/backgrounds/dash benefi card.png";
+import timeCapCardBg from "@/assets/icon/backgrounds/dash time cap card.png";
+import streakCardBg from "@/assets/icon/backgrounds/side cards for streak.png";
+import blueFolderIcon from "@/assets/icon/blue folder 2.svg";
+import surferIcon from "@/assets/icon/noto_man-surfing-medium-skin-tone.svg";
+import hourglassIcon from "@/assets/icon/noto_hourglass-not-done.svg";
 
 function getGreeting(): string {
   const hour = new Date().getHours();
@@ -29,104 +38,183 @@ function getGreeting(): string {
   return greetings[Math.floor(Math.random() * greetings.length)];
 }
 
-function StreakCount() {
-  const { user } = useStore();
-  return (
-    <StreakTracker>
-      <div className="w-full flex-1 flex items-center relative border border-black/5 rounded-2xl overflow-hidden p-4 gap-2">
-        <img src={bg2} alt="1" className="absolute top-0 right-0 left-0 object-cover size-full" />
-        <div className="relative z-10 flex flex-col max-w-[216.86px] gap-2 font-inter">
-          <span className="text-gray-500 font-inter font-normal uppercase text-xs">Streak count</span>
-          <span className="text-sm text-gray-700 font-inter font-bold">
-            {isEmpty(user?.streak) ? (
-              "You have no streak"
-            ) : (
-              <>You’re on a <span style={{ color: "#F06037" }}>{user?.streak}-day</span> streak</>
-            )}
-          </span>
-          <span className="text-gray-600 font-normal font-inter text-sm">Complete reflections each day so your streak won’t reset</span>
-        </div>
-      </div>
-    </StreakTracker>
-  );
-}
-
-function Leaderboard() {
-  return (
-    <div className="w-full flex-1 flex items-center border border-black/5 rounded-2xl overflow-hidden relative p-4 gap-2">
-      <img
-        src={bg3}
-        alt="3"
-        className="absolute top-0 right-0 left-0 object-cover size-full"
-      />
-      <div className="relative z-10 flex flex-col gap-2 font-inter">
-        <span className="text-gray-400 uppercase text-xs">XP leaderboard</span>
-        <span className="text-sm text-gray-700 font-bold">Global ranking coming soon</span>
-        <span className="text-gray-600 text-sm">Coming soon</span>
-      </div>
-    </div>
-  );
-}
-
 export default function WelcomeSection() {
   const { user } = useStore();
   const { open } = useModal();
   const greeting = useMemo(() => getGreeting(), []);
   const { data: statsData } = useSWR(endpoint.userStats);
+  const { data: memoriesStatsData } = useSWR(endpoint.memoriesStats);
+  const { data: beneficiariesData } = useSWR(`${endpoint.beneficiaries}?page=1`);
+  const { data: capsuleStatsData } = useSWR(endpoint.capsuleStats);
   const stats = statsData?.data ?? {};
   const streakCount = Number(user?.streak) || Number(stats.streak_count) || 0;
   const xpCount = Number(stats.xp_count) || 0;
+  const memoriesCount = memoriesStatsData?.data?.stories_count || 0;
+  const weeklyMemories = memoriesStatsData?.data?.week_count || 0;
+  const beneficiariesCount = beneficiariesData?.data?.totalDocs || 0;
+  const capsuleCount = capsuleStatsData?.data?.scheduled_count || 0;
 
   return (
     <div className="w-full space-y-6 sm:space-y-8 lg:space-y-10 py-6 sm:py-9 lg:py-12">
       <div className="space-y-2">
-        <h2 className="font-garamond text-gray-800 font-medium text-[24px] sm:text-[32px] leading-[32px] sm:leading-[38px]">
-          {greeting}
-          {
-            user?.first_name &&
-            <i className="text-gray-500"> {user?.first_name}.</i>
-          }
-        </h2>
+        <div className="flex items-center gap-3">
+          <img src={brightButtonIcon} alt="" className="size-7 sm:size-10 shrink-0" />
+          <h2 className="font-garamond text-gray-800 font-normal text-[24px] sm:text-[32px] lg:text-[40px] leading-[1.2]">
+            {greeting}
+            {
+              user?.first_name &&
+              <i style={{ color: "#376B59" }}> {user?.first_name}.</i>
+            }
+          </h2>
+        </div>
       </div>
       <div className="flex flex-col lg:flex-row gap-6 items-stretch">
-        <div className="relative rounded-2xl overflow-hidden flex-1 min-h-[144px] sm:min-h-[200px]">
+        <div className="relative rounded-[24px] overflow-hidden flex-1 min-h-[159px] sm:min-h-[200px]">
           <img src={bgCard} alt="" className="absolute top-0 right-0 left-0 object-cover size-full" />
           <div className="absolute flex flex-col justify-between size-full top-0 right-0 left-0 p-5 sm:p-7 lg:p-8">
-            <div className="flex items-start justify-between gap-4">
-              <h2 className="font-georgia text-base sm:text-lg md:text-xl lg:text-2xl text-[#475467]">What’s on your mind today?</h2>
+            <div className="flex items-center justify-between gap-4">
+              <h2 className="font-garamond text-[20px] lg:text-[24px] font-normal text-[#353434]">What’s on your mind today?</h2>
               <div className="flex items-center gap-3 shrink-0">
-                <span className="flex items-center gap-1 font-inter text-sm font-semibold text-gray-700">
-                  ⚡ {streakCount}
+                <span className="flex items-center gap-1.5 font-inter text-sm font-semibold text-gray-700">
+                  <img src={zapIcon} alt="streak" className="size-5" />
+                  {streakCount}
                 </span>
-                <span className="flex items-center gap-1 font-inter text-sm font-semibold text-gray-700">
-                  🏆 {xpCount}
+                <span className="flex items-center gap-1.5 font-inter text-sm font-semibold text-gray-700">
+                  <img src={trophyIcon} alt="xp" className="size-5" />
+                  {xpCount}
                 </span>
               </div>
             </div>
-            <div className="flex gap-3 items-center">
-              <button onClick={() => open("create-memory")} className="btn !text-sm !px-4 !py-2">
-                <PlusIcon className="size-4" />
+            <div className="flex gap-2 sm:gap-3 items-center">
+              <button
+                onClick={() => open("create-memory")}
+                className="flex items-center gap-1.5 sm:gap-2 h-9 sm:h-12 px-3 sm:px-5 rounded-full font-inter font-semibold text-xs sm:text-sm text-white cursor-pointer transition-opacity hover:opacity-90"
+                style={{ backgroundColor: "#FF5E00" }}
+              >
+                <PlusIcon className="size-3 sm:size-4 shrink-0" />
                 <span className="whitespace-nowrap">Add story/item</span>
               </button>
               <Link
                 to="/chat/new"
-                className="bg-white flex items-center gap-1.5 cursor-pointer hover:scale-[97%] border border-white rounded-full px-4 py-2"
+                className="flex items-center gap-1.5 sm:gap-2 h-9 sm:h-12 px-3 sm:px-5 bg-white border border-gray-200 rounded-full cursor-pointer hover:opacity-90 transition-opacity"
               >
-                <BlueFolderIcon className="size-4 hidden sm:block" />
-                <span className="text-[#101828] text-sm font-inter font-semibold whitespace-nowrap">Start a conversation</span>
+                <span className="text-[#101828] text-xs sm:text-sm font-inter font-semibold whitespace-nowrap">Start a conversation</span>
               </Link>
             </div>
           </div>
         </div>
-        <div className="block md:hidden">
-          <Slider>
-            <StreakCount />
-            <Leaderboard />
-          </Slider>
+        <div className="w-full lg:max-w-[335px] relative rounded-[24px] overflow-hidden flex-1">
+          <img src={enrichmentBgPng} alt="" className="absolute inset-0 object-cover w-full h-full" />
+          <div className="relative flex flex-col justify-between gap-4 p-5 sm:p-6 min-h-[200px]">
+            <div className="space-y-3">
+              <div className="flex items-center gap-3">
+                <span
+                  className="font-garamond font-normal leading-none"
+                  style={{
+                    fontSize: 60,
+                    background: "linear-gradient(180deg, #5B9BD5 0%, #A8D4F5 100%)",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                    backgroundClip: "text",
+                  }}
+                >
+                  {Number(stats.enrichment_score) || 0}%
+                </span>
+                <span className="font-inter text-sm font-semibold text-gray-600 bg-white/70 rounded-full px-3 py-1.5 whitespace-nowrap">
+                  Enrichment score
+                </span>
+              </div>
+              <p className="font-inter text-sm text-gray-700 leading-relaxed">
+                Share stories &amp; files to build context. Link apps to enrich your Memento.
+              </p>
+            </div>
+            <div className="flex gap-2 items-center">
+              <Link
+                to="/stories"
+                className="flex items-center h-10 px-5 rounded-full font-inter font-semibold text-sm text-white whitespace-nowrap transition-opacity hover:opacity-90"
+                style={{ backgroundColor: "#1A1A1A" }}
+              >
+                See memory
+              </Link>
+              <Link
+                to="/explore"
+                className="flex items-center gap-1.5 h-10 px-4 bg-white/80 rounded-full font-inter font-semibold text-sm text-gray-800 whitespace-nowrap transition-opacity hover:opacity-90"
+              >
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="shrink-0">
+                  <circle cx="8" cy="3" r="2" stroke="#1A1A1A" strokeWidth="1.5"/>
+                  <circle cx="3" cy="12" r="2" stroke="#1A1A1A" strokeWidth="1.5"/>
+                  <circle cx="13" cy="12" r="2" stroke="#1A1A1A" strokeWidth="1.5"/>
+                  <line x1="8" y1="5" x2="3" y2="10" stroke="#1A1A1A" strokeWidth="1.5" strokeLinecap="round"/>
+                  <line x1="8" y1="5" x2="13" y2="10" stroke="#1A1A1A" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+                Connect apps
+              </Link>
+            </div>
+          </div>
         </div>
-        <div className="w-full hidden md:flex flex-rol items-stretch gap-3 md:flex-col md:flex-1 lg:max-w-[335px]">
-          <StreakCount />
-          <Leaderboard />
+      </div>
+
+      {/* Stat cards row */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* All Memories */}
+        <Link to="/stories" className="relative rounded-[16px] overflow-hidden h-[99px] block hover:opacity-95 transition-opacity col-span-2 lg:col-span-1">
+          <img src={memoriesCardBg} alt="" className="absolute inset-0 object-cover w-full h-full" />
+          <div className="relative flex items-center justify-between h-full px-5">
+            <div className="flex flex-col gap-1">
+              <span className="font-inter text-[12px] font-normal uppercase tracking-widest text-gray-500">All Memories</span>
+              <span className="font-inter text-[14px] font-semibold leading-tight" style={{ color: "#293039" }}>
+                <span className="font-bold" style={{ color: "#2D6BC4" }}>{memoriesCount}</span> items
+              </span>
+              {weeklyMemories > 0 && (
+                <span className="font-inter text-[12px] font-normal text-gray-500">+{weeklyMemories} this week</span>
+              )}
+            </div>
+            <img src={blueFolderIcon} alt="" className="size-11 object-contain shrink-0" />
+          </div>
+        </Link>
+
+        {/* Beneficiaries */}
+        <Link to="/settings/beneficiaries" className="relative rounded-[16px] overflow-hidden h-[99px] block hover:opacity-95 transition-opacity col-span-2 lg:col-span-1">
+          <img src={benefiCardBg} alt="" className="absolute inset-0 object-cover w-full h-full" />
+          <div className="relative flex items-center justify-between h-full px-5">
+            <div className="flex flex-col gap-1">
+              <span className="font-inter text-[12px] font-normal uppercase tracking-widest text-gray-500">Beneficiaries</span>
+              <span className="font-inter text-[14px] font-semibold leading-tight" style={{ color: "#293039" }}>
+                <span className="font-bold" style={{ color: "#DB2777" }}>{beneficiariesCount}</span> {beneficiariesCount === 1 ? "person" : "people"}
+              </span>
+            </div>
+            <img src={surferIcon} alt="" className="size-12 object-contain shrink-0" />
+          </div>
+        </Link>
+
+        {/* Time Capsules */}
+        <Link to="/capsule" className="relative rounded-[16px] overflow-hidden h-[99px] block hover:opacity-95 transition-opacity col-span-2 lg:col-span-1">
+          <img src={timeCapCardBg} alt="" className="absolute inset-0 object-cover w-full h-full" />
+          <div className="relative flex items-center justify-between h-full px-5">
+            <div className="flex flex-col gap-1">
+              <span className="font-inter text-[12px] font-normal uppercase tracking-widest text-gray-500">Time Capsules</span>
+              <span className="font-inter text-[14px] font-semibold leading-tight" style={{ color: "#293039" }}>
+                <span className="font-bold" style={{ color: "#EA580C" }}>{capsuleCount}</span> {capsuleCount === 1 ? "post" : "posts"} scheduled
+              </span>
+            </div>
+            <img src={hourglassIcon} alt="" className="size-12 object-contain shrink-0" />
+          </div>
+        </Link>
+
+        {/* Streak Count */}
+        <div className="relative rounded-[16px] overflow-hidden h-[99px] col-span-2 lg:col-span-1">
+          <img src={streakCardBg} alt="" className="absolute inset-0 object-cover w-full h-full" />
+          <div className="relative flex items-center justify-between h-full px-5">
+            <div className="flex flex-col gap-1">
+              <span className="font-inter text-[12px] font-normal uppercase tracking-widest text-gray-500">Streak Count</span>
+              <p className="font-inter text-[14px] font-semibold leading-tight" style={{ color: "#293039" }}>
+                You're on a{" "}
+                <span className="font-bold" style={{ color: "#EA580C" }}>{streakCount}-day</span>{" "}
+                streak
+              </p>
+            </div>
+            <img src={zapIcon} alt="" className="size-11 object-contain shrink-0" />
+          </div>
         </div>
       </div>
     </div>

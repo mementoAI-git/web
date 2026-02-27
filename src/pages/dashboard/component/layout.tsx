@@ -26,7 +26,7 @@ export default function DashboardLayout() {
         </div>
         <main className="flex-1 flex flex-col overflow-hidden dynamic-height-content w-full md:w-auto">
           <DashboardHeader onMenuClick={() => setSidebarOpen(true)} />
-          <div className="flex-1 overflow-hidden">
+          <div className="flex-1 overflow-hidden pt-[60px] sm:pt-0">
             <Outlet />
           </div>
         </main>
