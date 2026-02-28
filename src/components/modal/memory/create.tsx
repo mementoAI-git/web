@@ -27,7 +27,6 @@ import { CloseWithFilesConfirmation } from "./close-with-files-confirmation";
 import { Sheet } from "react-modal-sheet";
 import { LinkInput } from "@/components/memory/text-area/link-input";
 import { VideoRecorder } from "@/components/recorder/video";
-import useRecorder from "@/hooks/use-recorder";
 
 import addPlusSvg from "@/assets/icon/Add-plus.svg";
 import smileySvg from "@/assets/icon/noto_slightly-smiling-face.svg";
@@ -44,12 +43,6 @@ function formatFileSize(bytes: number): string {
   if (bytes >= 1024 * 1024) return `${Math.round(bytes / (1024 * 1024))} MB`;
   if (bytes >= 1024) return `${Math.round(bytes / 1024)} KB`;
   return `${bytes} B`;
-}
-
-function formatTimer(s: number) {
-  const m = Math.floor(s / 60).toString().padStart(2, "0");
-  const sec = (s % 60).toString().padStart(2, "0");
-  return `${m}:${sec}`;
 }
 
 function getFileThumbSvg(mimeType: string): string | null {
@@ -71,203 +64,6 @@ const chipColors = [
 const ACTIVE_BG = "bg-[rgba(23,11,0,0.1)]";
 const initial = { title: "", body: "", attachments: [] as string[] };
 
-// ─── Audio Recorder Popup ────────────────────────────────────────────────────
-
-function AudioRecorderPopup({
-  onClose,
-  onAddFile,
-  recordingNumber,
-}: {
-  onClose: () => void;
-  onAddFile: (file: File) => void;
-  recordingNumber: number;
-}) {
-  const [stream, setStream] = useState<MediaStream | null>(null);
-  const rec = useRecorder(stream, "audio/webm");
-
-  const handleStart = () => {
-    navigator.mediaDevices
-      .getUserMedia({ audio: true })
-      .then((mediaStream) => {
-        setStream(mediaStream);
-        setTimeout(() => rec.start(), 500);
-      })
-      .catch(() => toast.error("Mic access denied or not available."));
-  };
-
-  const handleReset = () => {
-    rec.reset();
-    setStream(null);
-  };
-
-  const handleAddToPost = () => {
-    if (rec.url) {
-      // Already stopped — use the blob URL
-      fetch(rec.url)
-        .then((r) => r.blob())
-        .then((blob) => {
-          const file = new File([blob], `recording-${recordingNumber}.webm`, { type: "audio/webm" });
-          onAddFile(file);
-          onClose();
-        });
-    } else if (rec.chunks.length > 0) {
-      // Paused — build file from accumulated chunks directly
-      const blob = new Blob(rec.chunks, { type: "audio/webm" });
-      const file = new File([blob], `recording-${recordingNumber}.webm`, { type: "audio/webm" });
-      rec.stop(); // clean up stream
-      onAddFile(file);
-      onClose();
-    }
-  };
-
-  const isIdle = rec.timer === 0 && !rec.url;
-  const isRecording = rec.recording;
-  const isPaused = !rec.recording && rec.timer > 0 && !rec.url;
-  const isDone = !!rec.url;
-
-  const barHeights = [6, 12, 18, 10, 22, 14, 20, 8, 16, 12, 24, 10, 15];
-  const barColor = isRecording ? "#7C3AED" : isPaused ? "#F97316" : isDone ? "#22C55E" : "#D1D5DB";
-
-  return createPortal(
-    <div
-      className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 px-4"
-      onClick={(e) => e.stopPropagation()}
-    >
-      <div className="bg-white rounded-[28px] w-full max-w-[380px] overflow-hidden shadow-2xl" onClick={(e) => e.stopPropagation()}>
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 pt-6 pb-2">
-          <div className="flex items-center gap-2">
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-              <path d="M6 0L7.2 4H11L8 6.5L9.2 10.5L6 8L2.8 10.5L4 6.5L1 4H4.8L6 0Z" fill="#7C3AED" />
-            </svg>
-            <span className="font-inter text-xs font-bold text-purple-600 tracking-widest uppercase">Record Audio</span>
-          </div>
-          <button
-            onClick={() => { handleReset(); onClose(); }}
-            className="size-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
-          >
-            <TimesIcon width={10} height={10} />
-          </button>
-        </div>
-
-        {/* Waveform card */}
-        <div className="mx-6 mt-4 mb-5 bg-gray-50 rounded-2xl px-4 py-4">
-          <div className="flex items-center justify-between mb-3">
-            <span className="font-inter text-[10px] font-semibold text-gray-400 uppercase tracking-wider">
-              New Recording #{String(recordingNumber).padStart(2, "0")}
-            </span>
-            <span className="font-mono text-[11px] text-gray-400">{formatTimer(rec.timer)}</span>
-          </div>
-          <div className="flex items-end justify-center gap-1 h-10">
-            {barHeights.map((h, i) => (
-              <div
-                key={i}
-                className="w-1.5 rounded-full transition-colors duration-300"
-                style={{ height: h, backgroundColor: barColor }}
-              />
-            ))}
-          </div>
-        </div>
-
-        {/* Controls */}
-        <div className="px-6 pb-7">
-          {/* Idle */}
-          {isIdle && (
-            <div className="flex flex-col items-center gap-4">
-              <p className="font-inter text-xs font-semibold text-gray-400 tracking-widest uppercase">Click to record</p>
-              <button
-                onClick={handleStart}
-                className="w-full h-12 rounded-full bg-[#170B00] text-white font-inter font-semibold text-sm hover:opacity-90 transition-opacity"
-              >
-                Start talking
-              </button>
-            </div>
-          )}
-
-          {/* Recording */}
-          {isRecording && (
-            <div className="flex flex-col items-center gap-5">
-              <div className="flex items-center gap-2">
-                <div className="size-2 rounded-full bg-red-500 animate-pulse" />
-                <span className="font-inter text-sm font-bold text-red-500 tracking-widest uppercase">Recording</span>
-              </div>
-              <div className="flex items-center justify-center gap-12">
-                <div className="flex flex-col items-center gap-2">
-                  <button
-                    onClick={rec.pause}
-                    className="size-14 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center transition-colors"
-                  >
-                    <svg width="14" height="18" viewBox="0 0 14 18" fill="none">
-                      <rect x="0" y="0" width="4.5" height="18" rx="2" fill="#374151" />
-                      <rect x="9.5" y="0" width="4.5" height="18" rx="2" fill="#374151" />
-                    </svg>
-                  </button>
-                  <span className="font-inter text-xs text-gray-500">Pause</span>
-                </div>
-                <div className="flex flex-col items-center gap-2">
-                  <button
-                    onClick={() => rec.stop()}
-                    className="size-14 rounded-full bg-red-500 hover:bg-red-600 flex items-center justify-center transition-colors"
-                  >
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                      <rect x="2" y="2" width="12" height="12" rx="3" fill="white" />
-                    </svg>
-                  </button>
-                  <span className="font-inter text-xs text-gray-500">Stop</span>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Paused or Done */}
-          {(isPaused || isDone) && (
-            <div className="flex flex-col items-center gap-4">
-              {isPaused && (
-                <div className="flex items-center gap-2">
-                  <svg width="12" height="14" viewBox="0 0 12 14" fill="none">
-                    <rect x="0" y="0" width="4" height="14" rx="2" fill="#EF4444" />
-                    <rect x="8" y="0" width="4" height="14" rx="2" fill="#EF4444" />
-                  </svg>
-                  <span className="font-inter text-sm font-bold text-red-500 tracking-widest uppercase">Paused</span>
-                </div>
-              )}
-              {isDone && (
-                <div className="flex items-center gap-2">
-                  <div className="size-2 rounded-full bg-green-500" />
-                  <span className="font-inter text-sm font-semibold text-green-600">Recording ready</span>
-                </div>
-              )}
-              <div className="flex items-center gap-3 w-full">
-                <button
-                  onClick={handleReset}
-                  className="flex-1 h-10 rounded-full bg-gray-100 text-gray-600 font-inter font-semibold text-sm hover:bg-gray-200 transition-colors"
-                >
-                  Reset
-                </button>
-                {isPaused && (
-                  <button
-                    onClick={rec.resume}
-                    className="flex-1 h-10 rounded-full bg-orange-100 text-orange-600 font-inter font-semibold text-sm hover:bg-orange-200 transition-colors"
-                  >
-                    Resume
-                  </button>
-                )}
-                <button
-                  onClick={handleAddToPost}
-                  className="flex-1 h-10 rounded-full bg-[#170B00] text-white font-inter font-semibold text-sm hover:opacity-90 transition-opacity"
-                >
-                  Add to post
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>,
-    document.body,
-  );
-}
-
 // ─── CreateMemory ─────────────────────────────────────────────────────────────
 
 interface CreateMemoryProps {
@@ -276,7 +72,7 @@ interface CreateMemoryProps {
 }
 
 export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
-  const { close, open } = useModal();
+  const { close, open, push } = useModal();
   const fileInputMediaRef = useRef<HTMLInputElement>(null);
   const fileInputAllRef = useRef<HTMLInputElement>(null);
   const videoRecorderRef = useRef<any>(null);
@@ -292,7 +88,6 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
 
-  const [showAudioRecorder, setShowAudioRecorder] = useState(false);
   const [showVideoRecorder, setShowVideoRecorder] = useState(false);
   const [videoRecordedFile, setVideoRecordedFile] = useState<File | null>(null);
   const [isUsingVideo, setIsUsingVideo] = useState(false);
@@ -690,9 +485,9 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
 
         {/* Icons bar */}
         <div className="mt-6 mx-4 mb-4" onClick={(e) => e.stopPropagation()}>
-          <div className="bg-[#F4F4F4] rounded-2xl flex items-center gap-3 px-[12px] py-[10px]">
+          <div className="bg-[#F4F4F4] rounded-2xl flex items-center justify-start gap-3 px-[12px] py-[9px]">
             {/* Plus menu */}
-            <div className="relative">
+            <div className="relative h-[40px]">
               <button
                 type="button"
                 onClick={() => {
@@ -752,7 +547,7 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
             {/* Record audio */}
             <button
               type="button"
-              onClick={() => setShowAudioRecorder(true)}
+              onClick={() => push("audio-recorder", { onFinish: handleAddAudioFile, recordingNumber: audioRecordingCount })}
               className="size-10 flex items-center justify-center rounded-xl hover:bg-black/5 transition-colors"
               title="Record audio"
             >
@@ -871,7 +666,7 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
             type="button"
             onClick={handleAutogenerateTags}
             disabled={isGeneratingTags}
-            className="shrink-0 flex items-center gap-1.5 bg-[#EEEAF8] hover:bg-[#E5DFFF] text-[#6941C6] font-inter font-semibold text-sm px-3 py-2 mx-2 rounded-lg transition-colors disabled:opacity-60"
+            className="shrink-0 flex items-center gap-1.5 bg-[#EEEAF8] hover:bg-[#E5DFFF] text-[#6941C6] font-inter font-semibold text-sm px-3 py-1 mx-2 rounded-lg transition-colors disabled:opacity-60"
           >
             {isGeneratingTags ? (
               <Spinner loading className="size-4!" />
@@ -1017,13 +812,6 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
           <Sheet.Backdrop onTap={handleClose} />
         </Sheet>
         {closeConfirmationPortal}
-        {showAudioRecorder && (
-          <AudioRecorderPopup
-            onClose={() => setShowAudioRecorder(false)}
-            onAddFile={handleAddAudioFile}
-            recordingNumber={audioRecordingCount}
-          />
-        )}
         {videoRecorderPortal}
       </>
     );
@@ -1051,13 +839,6 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
       </div>
 
       {closeConfirmationPortal}
-      {showAudioRecorder && (
-        <AudioRecorderPopup
-          onClose={() => setShowAudioRecorder(false)}
-          onAddFile={handleAddAudioFile}
-          recordingNumber={audioRecordingCount}
-        />
-      )}
       {videoRecorderPortal}
     </>
   );

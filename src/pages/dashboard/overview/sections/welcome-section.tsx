@@ -120,7 +120,7 @@ export default function WelcomeSection() {
                 >
                   {Number(stats.enrichment_score) || 0}%
                 </span>
-                <span className="font-inter text-sm font-semibold text-gray-600 bg-white/70 rounded-full px-3 py-1.5 whitespace-nowrap">
+                <span className="font-inter text-sm font-normal text-[#413a2f] bg-white/70 rounded-full px-3 py-1.5 whitespace-nowrap">
                   Enrichment score
                 </span>
               </div>
@@ -159,7 +159,7 @@ export default function WelcomeSection() {
         {/* All Memories */}
         <Link to="/stories" className="relative rounded-[16px] overflow-hidden h-[99px] block hover:opacity-95 transition-opacity col-span-2 lg:col-span-1">
           <img src={memoriesCardBg} alt="" className="absolute inset-0 object-cover w-full h-full" />
-          <div className="relative flex items-center justify-between h-full px-5">
+          <div className="relative flex items-center justify-between h-full px-5 font-inter">
             <div className="flex flex-col gap-1">
               <span className="font-inter text-[12px] font-normal uppercase tracking-widest text-gray-500">All Memories</span>
               <span className="font-inter text-[14px] font-semibold leading-tight" style={{ color: "#293039" }}>

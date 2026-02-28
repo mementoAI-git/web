@@ -15,7 +15,7 @@ export default function BrowseTopics() {
           Browse conversations
           <i className="text-gray-500"> by topics</i>
         </h2>
-        <Link className="text-blue-6 font-semibold text-lg underline" to="/explore">See all</Link>
+        <Link className="font-inter text-[#FF5E00] font-semibold text-lg underline" to="/explore">See all</Link>
       </div>
       <div className="relative w-full">
         <div className="relative w-full">

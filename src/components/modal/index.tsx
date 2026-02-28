@@ -95,40 +95,54 @@ export default function Modal() {
     return null;
   }
 
-  const modal = state[0];
-  const ModalComponent = modal ? MODAL_COMPONENTS[modal.name] : null;
-
-  if (!ModalComponent) return null;
-
-  const isRightPanel = RIGHT_PANEL_MODALS.includes(modal.name) && !isMobile;
+  const topModal = state[0];
 
   return (
     <div
-      className={`modal-overlay z-[100] bg-[rgba(94,94,94,0.5)] ${state ? "flex" : "hidden"}`}
-      onClick={isRightPanel ? () => close(modal.name) : undefined}
+      className={`modal-overlay relative z-[100] bg-[rgba(94,94,94,0.5)] ${state ? "flex" : "hidden"}`}
+      onClick={() => close(topModal.name)}
     >
-      {isRightPanel ? (
-        <>
-          {/* Floating Cancel button — 20px from top-left of viewport */}
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); close(modal.name); }}
-            className="absolute top-5 left-5 z-10 flex items-center gap-2 bg-white rounded-full pl-4 pr-3 py-2.5 shadow-md font-inter font-semibold text-sm text-gray-800 hover:bg-gray-50 transition-colors"
+      {/* Render full stack so underlying modals (e.g. Create Memory) stay visible */}
+      {[...state].reverse().map((modal, i) => {
+        const ModalComponent = MODAL_COMPONENTS[modal.name];
+        if (!ModalComponent) return null;
+
+        const isRightPanel = RIGHT_PANEL_MODALS.includes(modal.name) && !isMobile;
+        const isTop = modal.name === topModal.name;
+
+        return (
+          <div
+            key={`${modal.name}-${i}`}
+            className="absolute inset-0 flex items-center justify-center"
+            style={{ zIndex: isTop ? 10 : 0 }}
           >
-            Cancel
-            <span className="inline-flex items-center bg-gray-100 text-gray-500 text-[10px] px-1.5 py-0.5 rounded font-mono leading-none">
-              ESC
-            </span>
-          </button>
-          <ModalComponent data={modal.props || {}} isMobile={isMobile} />
-        </>
-      ) : (
-        <div className="w-full h-full flex items-center justify-center p-4">
-          {ModalComponent && (
-            <ModalComponent data={modal.props || {}} isMobile={isMobile} />
-          )}
-        </div>
-      )}
+            {isRightPanel ? (
+              <>
+                {isTop && (
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); close(modal.name); }}
+                    className="absolute top-5 left-5 z-10 flex items-center gap-2 bg-white rounded-full pl-4 pr-3 py-2.5 shadow-md font-inter font-semibold text-sm text-gray-800 hover:bg-gray-50 transition-colors"
+                  >
+                    Cancel
+                    <span className="inline-flex items-center bg-gray-100 text-gray-500 text-[10px] px-1.5 py-0.5 rounded font-mono leading-none">
+                      ESC
+                    </span>
+                  </button>
+                )}
+                <ModalComponent data={modal.props || {}} isMobile={isMobile} />
+              </>
+            ) : (
+              <div
+                className="p-4"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <ModalComponent data={modal.props || {}} isMobile={isMobile} />
+              </div>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }
