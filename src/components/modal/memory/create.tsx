@@ -26,19 +26,38 @@ import { createPortal } from "react-dom";
 import { CloseWithFilesConfirmation } from "./close-with-files-confirmation";
 import { Sheet } from "react-modal-sheet";
 import { LinkInput } from "@/components/memory/text-area/link-input";
-import { AudioRecorder } from "@/components/recorder/audio";
 import { VideoRecorder } from "@/components/recorder/video";
+import useRecorder from "@/hooks/use-recorder";
 
 import addPlusSvg from "@/assets/icon/Add-plus.svg";
 import smileySvg from "@/assets/icon/noto_slightly-smiling-face.svg";
 import micSvg from "@/assets/icon/microphone-01.svg";
 import videoRecorderSvg from "@/assets/icon/video-recorder.svg";
+import recUploadSvg from "@/assets/icon/rec upload - short.svg";
+import videoUploadSvg from "@/assets/icon/Video Upload.svg";
+import docUploadSvg from "@/assets/icon/Document Upload.svg";
+import musicUploadSvg from "@/assets/icon/music upload - short.svg";
+import imageUploadSvg from "@/assets/icon/Image Upload.svg";
 
 function formatFileSize(bytes: number): string {
   if (bytes >= 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
   if (bytes >= 1024 * 1024) return `${Math.round(bytes / (1024 * 1024))} MB`;
   if (bytes >= 1024) return `${Math.round(bytes / 1024)} KB`;
   return `${bytes} B`;
+}
+
+function formatTimer(s: number) {
+  const m = Math.floor(s / 60).toString().padStart(2, "0");
+  const sec = (s % 60).toString().padStart(2, "0");
+  return `${m}:${sec}`;
+}
+
+function getFileThumbSvg(mimeType: string): string | null {
+  if (mimeType.startsWith("image/")) return null;
+  if (mimeType === "audio/webm" || mimeType === "audio/ogg") return recUploadSvg;
+  if (mimeType.startsWith("audio/")) return musicUploadSvg;
+  if (mimeType.startsWith("video/")) return videoUploadSvg;
+  return docUploadSvg;
 }
 
 const chipColors = [
@@ -50,8 +69,206 @@ const chipColors = [
 ];
 
 const ACTIVE_BG = "bg-[rgba(23,11,0,0.1)]";
-
 const initial = { title: "", body: "", attachments: [] as string[] };
+
+// ─── Audio Recorder Popup ────────────────────────────────────────────────────
+
+function AudioRecorderPopup({
+  onClose,
+  onAddFile,
+  recordingNumber,
+}: {
+  onClose: () => void;
+  onAddFile: (file: File) => void;
+  recordingNumber: number;
+}) {
+  const [stream, setStream] = useState<MediaStream | null>(null);
+  const rec = useRecorder(stream, "audio/webm");
+
+  const handleStart = () => {
+    navigator.mediaDevices
+      .getUserMedia({ audio: true })
+      .then((mediaStream) => {
+        setStream(mediaStream);
+        setTimeout(() => rec.start(), 500);
+      })
+      .catch(() => toast.error("Mic access denied or not available."));
+  };
+
+  const handleReset = () => {
+    rec.reset();
+    setStream(null);
+  };
+
+  const handleAddToPost = () => {
+    if (rec.url) {
+      // Already stopped — use the blob URL
+      fetch(rec.url)
+        .then((r) => r.blob())
+        .then((blob) => {
+          const file = new File([blob], `recording-${recordingNumber}.webm`, { type: "audio/webm" });
+          onAddFile(file);
+          onClose();
+        });
+    } else if (rec.chunks.length > 0) {
+      // Paused — build file from accumulated chunks directly
+      const blob = new Blob(rec.chunks, { type: "audio/webm" });
+      const file = new File([blob], `recording-${recordingNumber}.webm`, { type: "audio/webm" });
+      rec.stop(); // clean up stream
+      onAddFile(file);
+      onClose();
+    }
+  };
+
+  const isIdle = rec.timer === 0 && !rec.url;
+  const isRecording = rec.recording;
+  const isPaused = !rec.recording && rec.timer > 0 && !rec.url;
+  const isDone = !!rec.url;
+
+  const barHeights = [6, 12, 18, 10, 22, 14, 20, 8, 16, 12, 24, 10, 15];
+  const barColor = isRecording ? "#7C3AED" : isPaused ? "#F97316" : isDone ? "#22C55E" : "#D1D5DB";
+
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 px-4"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <div className="bg-white rounded-[28px] w-full max-w-[380px] overflow-hidden shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 pt-6 pb-2">
+          <div className="flex items-center gap-2">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+              <path d="M6 0L7.2 4H11L8 6.5L9.2 10.5L6 8L2.8 10.5L4 6.5L1 4H4.8L6 0Z" fill="#7C3AED" />
+            </svg>
+            <span className="font-inter text-xs font-bold text-purple-600 tracking-widest uppercase">Record Audio</span>
+          </div>
+          <button
+            onClick={() => { handleReset(); onClose(); }}
+            className="size-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
+          >
+            <TimesIcon width={10} height={10} />
+          </button>
+        </div>
+
+        {/* Waveform card */}
+        <div className="mx-6 mt-4 mb-5 bg-gray-50 rounded-2xl px-4 py-4">
+          <div className="flex items-center justify-between mb-3">
+            <span className="font-inter text-[10px] font-semibold text-gray-400 uppercase tracking-wider">
+              New Recording #{String(recordingNumber).padStart(2, "0")}
+            </span>
+            <span className="font-mono text-[11px] text-gray-400">{formatTimer(rec.timer)}</span>
+          </div>
+          <div className="flex items-end justify-center gap-1 h-10">
+            {barHeights.map((h, i) => (
+              <div
+                key={i}
+                className="w-1.5 rounded-full transition-colors duration-300"
+                style={{ height: h, backgroundColor: barColor }}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* Controls */}
+        <div className="px-6 pb-7">
+          {/* Idle */}
+          {isIdle && (
+            <div className="flex flex-col items-center gap-4">
+              <p className="font-inter text-xs font-semibold text-gray-400 tracking-widest uppercase">Click to record</p>
+              <button
+                onClick={handleStart}
+                className="w-full h-12 rounded-full bg-[#170B00] text-white font-inter font-semibold text-sm hover:opacity-90 transition-opacity"
+              >
+                Start talking
+              </button>
+            </div>
+          )}
+
+          {/* Recording */}
+          {isRecording && (
+            <div className="flex flex-col items-center gap-5">
+              <div className="flex items-center gap-2">
+                <div className="size-2 rounded-full bg-red-500 animate-pulse" />
+                <span className="font-inter text-sm font-bold text-red-500 tracking-widest uppercase">Recording</span>
+              </div>
+              <div className="flex items-center justify-center gap-12">
+                <div className="flex flex-col items-center gap-2">
+                  <button
+                    onClick={rec.pause}
+                    className="size-14 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center transition-colors"
+                  >
+                    <svg width="14" height="18" viewBox="0 0 14 18" fill="none">
+                      <rect x="0" y="0" width="4.5" height="18" rx="2" fill="#374151" />
+                      <rect x="9.5" y="0" width="4.5" height="18" rx="2" fill="#374151" />
+                    </svg>
+                  </button>
+                  <span className="font-inter text-xs text-gray-500">Pause</span>
+                </div>
+                <div className="flex flex-col items-center gap-2">
+                  <button
+                    onClick={() => rec.stop()}
+                    className="size-14 rounded-full bg-red-500 hover:bg-red-600 flex items-center justify-center transition-colors"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                      <rect x="2" y="2" width="12" height="12" rx="3" fill="white" />
+                    </svg>
+                  </button>
+                  <span className="font-inter text-xs text-gray-500">Stop</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Paused or Done */}
+          {(isPaused || isDone) && (
+            <div className="flex flex-col items-center gap-4">
+              {isPaused && (
+                <div className="flex items-center gap-2">
+                  <svg width="12" height="14" viewBox="0 0 12 14" fill="none">
+                    <rect x="0" y="0" width="4" height="14" rx="2" fill="#EF4444" />
+                    <rect x="8" y="0" width="4" height="14" rx="2" fill="#EF4444" />
+                  </svg>
+                  <span className="font-inter text-sm font-bold text-red-500 tracking-widest uppercase">Paused</span>
+                </div>
+              )}
+              {isDone && (
+                <div className="flex items-center gap-2">
+                  <div className="size-2 rounded-full bg-green-500" />
+                  <span className="font-inter text-sm font-semibold text-green-600">Recording ready</span>
+                </div>
+              )}
+              <div className="flex items-center gap-3 w-full">
+                <button
+                  onClick={handleReset}
+                  className="flex-1 h-10 rounded-full bg-gray-100 text-gray-600 font-inter font-semibold text-sm hover:bg-gray-200 transition-colors"
+                >
+                  Reset
+                </button>
+                {isPaused && (
+                  <button
+                    onClick={rec.resume}
+                    className="flex-1 h-10 rounded-full bg-orange-100 text-orange-600 font-inter font-semibold text-sm hover:bg-orange-200 transition-colors"
+                  >
+                    Resume
+                  </button>
+                )}
+                <button
+                  onClick={handleAddToPost}
+                  className="flex-1 h-10 rounded-full bg-[#170B00] text-white font-inter font-semibold text-sm hover:opacity-90 transition-opacity"
+                >
+                  Add to post
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
+// ─── CreateMemory ─────────────────────────────────────────────────────────────
 
 interface CreateMemoryProps {
   data: any;
@@ -62,7 +279,6 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
   const { close, open } = useModal();
   const fileInputMediaRef = useRef<HTMLInputElement>(null);
   const fileInputAllRef = useRef<HTMLInputElement>(null);
-  const audioRecorderRef = useRef<any>(null);
   const videoRecorderRef = useRef<any>(null);
 
   const [showEmoji, setShowEmoji] = useState(false);
@@ -76,14 +292,12 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
 
-  // Inline recorder state — keeps the panel mounted so form data is preserved
   const [showAudioRecorder, setShowAudioRecorder] = useState(false);
   const [showVideoRecorder, setShowVideoRecorder] = useState(false);
-  const [audioRecordedFile, setAudioRecordedFile] = useState<File | null>(null);
   const [videoRecordedFile, setVideoRecordedFile] = useState<File | null>(null);
-  const [isUsingAudio, setIsUsingAudio] = useState(false);
   const [isUsingVideo, setIsUsingVideo] = useState(false);
   const [isGeneratingTags, setIsGeneratingTags] = useState(false);
+  const [audioRecordingCount, setAudioRecordingCount] = useState(1);
 
   const { trigger, isMutating } = useSWRMutation(endpoint.memories, fileUploadFetcher);
   const { files, handleUpload, handleDeleteFile, setFiles } = useFileUpload();
@@ -94,7 +308,6 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
     initial: { ...initial, ...data?.payload },
     async onSubmit(p) {
       if (isEmpty(p.title)) return toast.error("Title is required");
-      // Require at least body text or one file
       const bodyText = editor?.getText()?.trim() || "";
       if (!bodyText && files.length === 0) {
         return toast.error("Please add some content or a media file before continuing");
@@ -104,7 +317,6 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
       const result = await trigger({ ...p, status: "draft", tags });
       if (result?.success) {
         mutate((key) => typeof key === "string" && key.startsWith(endpoint.stories));
-        // Skip set-tag-permission — go straight to success
         open("share-post", { id: result.data?._id || result.data?.id });
         setValues(initial);
         setFiles([]);
@@ -134,7 +346,6 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
     },
   });
 
-  // Paste handler for clipboard images/files
   const handlePaste = useCallback(
     (e: ClipboardEvent) => {
       const items = Array.from(e.clipboardData?.items || []);
@@ -159,7 +370,6 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
     return () => document.removeEventListener("paste", handlePaste);
   }, [handlePaste]);
 
-  // Close dropdowns on outside click
   useEffect(() => {
     const handle = () => {
       setShowEmoji(false);
@@ -192,6 +402,33 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
     },
     [files, handleDeleteFile, setFiles],
   );
+
+  const handleAddAudioFile = (file: File) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      handleUpload({ id: uuidv4(), file, base64: reader.result as string, progress: 0 });
+    };
+    reader.readAsDataURL(file);
+    setAudioRecordingCount((c) => c + 1);
+  };
+
+  const handleUseVideo = () => {
+    if (!videoRecordedFile) return;
+    setIsUsingVideo(true);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      handleUpload({
+        id: uuidv4(),
+        file: videoRecordedFile,
+        base64: reader.result as string,
+        progress: 0,
+      });
+      setVideoRecordedFile(null);
+      setShowVideoRecorder(false);
+      setIsUsingVideo(false);
+    };
+    reader.readAsDataURL(videoRecordedFile);
+  };
 
   const handleClose = () => {
     if (files.length > 0) {
@@ -239,56 +476,6 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
     }
   };
 
-  // Audio recorder handlers (inline — panel stays mounted, state preserved)
-  const handleUseAudio = async () => {
-    if (!audioRecordedFile) return;
-    setIsUsingAudio(true);
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      handleUpload({
-        id: uuidv4(),
-        file: audioRecordedFile,
-        base64: reader.result as string,
-        progress: 0,
-      });
-      setAudioRecordedFile(null);
-      setShowAudioRecorder(false);
-      setIsUsingAudio(false);
-    };
-    reader.readAsDataURL(audioRecordedFile);
-  };
-
-  const handleReRecordAudio = () => {
-    setAudioRecordedFile(null);
-    if (audioRecorderRef.current?.reset) audioRecorderRef.current.reset();
-  };
-
-  // Video recorder handlers (inline — panel stays mounted, state preserved)
-  const handleUseVideo = async () => {
-    if (!videoRecordedFile) return;
-    setIsUsingVideo(true);
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      handleUpload({
-        id: uuidv4(),
-        file: videoRecordedFile,
-        base64: reader.result as string,
-        progress: 0,
-      });
-      setVideoRecordedFile(null);
-      setShowVideoRecorder(false);
-      setIsUsingVideo(false);
-    };
-    reader.readAsDataURL(videoRecordedFile);
-  };
-
-  const handleReRecordVideo = () => {
-    setVideoRecordedFile(null);
-    if (videoRecorderRef.current?.reset) videoRecorderRef.current.reset();
-    if (videoRecorderRef.current?.resetStream) videoRecorderRef.current.resetStream();
-  };
-
-  // AI tag autogeneration
   const handleAutogenerateTags = async () => {
     const content = editor?.getText()?.trim() || "";
     if (!content) return toast.error("Add some story content first to autogenerate tags");
@@ -300,11 +487,7 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
         },
       });
       const tagsText =
-        result?.data?.message ||
-        result?.data?.content ||
-        result?.data?.text ||
-        result?.message ||
-        "";
+        result?.data?.message || result?.data?.content || result?.data?.text || result?.message || "";
       const newTags = tagsText
         .split(/[,\n]/)
         .map((t: string) => t.trim().replace(/^#/, "").replace(/['"]/g, ""))
@@ -360,7 +543,6 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
 
   const formContent = (
     <>
-      {/* Hidden file inputs */}
       <input
         ref={fileInputMediaRef}
         type="file"
@@ -378,7 +560,7 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
         className="hidden"
       />
 
-      {/* Title — placeholder 45% opacity via CSS, typed text 90% opacity */}
+      {/* Title */}
       <input
         placeholder="Enter title here"
         value={values.title}
@@ -390,7 +572,6 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
 
       {/* Editor box */}
       <div className="rounded-[24px] border border-gray-200 flex flex-col overflow-hidden">
-
         {/* Formatting toolbar */}
         <div className="flex items-center gap-0.5 pt-4 px-4 pb-3">
           {toolbarBtn(
@@ -420,12 +601,7 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
 
           <div className="w-px h-5 bg-gray-200 mx-1.5" />
 
-          {toolbarBtn(
-            !!editor?.isActive("link"),
-            handleLinkClick,
-            <LinkIcon width={16} height={11} />,
-            "Link",
-          )}
+          {toolbarBtn(!!editor?.isActive("link"), handleLinkClick, <LinkIcon width={16} height={11} />, "Link")}
           {toolbarBtn(
             !!editor?.isActive("bulletList"),
             () => editor?.chain().focus().toggleBulletList().run(),
@@ -441,7 +617,7 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
           </button>
         </div>
 
-        {/* TipTap editor */}
+        {/* Editor */}
         <div className="relative flex-1">
           <EditorContent editor={editor} className="tiptap-editor" />
           {showLinkInput && (
@@ -457,49 +633,50 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
           )}
         </div>
 
-        {/* File previews — horizontal scroll */}
+        {/* File thumbnails */}
         {files.length > 0 && (
-          <div className="mt-8 px-4 overflow-x-auto hide-scrollbar">
+          <div className="mt-6 px-4 overflow-x-auto hide-scrollbar">
             <div className="flex gap-3 pb-1">
               {files.map((f) => {
-                const url = f.base64 || f.uploadedFile?.url || "";
-                const type = f.uploadedFile?.type || f.file?.type || "";
+                const mimeType = f.file?.type || f.uploadedFile?.type || "";
+                const thumbSvg = getFileThumbSvg(mimeType);
+                const isImage = mimeType.startsWith("image/");
+                const imgSrc = isImage ? (f.base64 || f.uploadedFile?.url || "") : (thumbSvg ?? imageUploadSvg);
                 const sizeBytes =
-                  f.file?.size ||
-                  (typeof f.uploadedFile?.size === "number" ? f.uploadedFile.size : 0);
-                const size = sizeBytes ? formatFileSize(sizeBytes) : "";
+                  f.file?.size ?? (typeof f.uploadedFile?.size === "number" ? f.uploadedFile.size : 0);
+                const sizeLabel = sizeBytes ? formatFileSize(sizeBytes) : "";
+                const isUpl = f.progress !== undefined && f.progress !== 100;
 
                 return (
                   <div key={f.id} className="relative shrink-0">
+                    {/* X button */}
                     <button
                       type="button"
                       onClick={() => handleRemoveFile(f.id)}
-                      className="absolute -top-2 -right-2 z-10 size-6 rounded-full bg-gray-400 hover:bg-gray-500 flex items-center justify-center transition-colors shadow-sm"
+                      className="absolute -top-2 -right-2 z-10 size-6 rounded-full bg-gray-500 hover:bg-gray-700 flex items-center justify-center transition-colors shadow"
                     >
                       <TimesIcon width={8} height={8} />
                     </button>
 
-                    <div className="w-[140px] h-[112px] rounded-xl overflow-hidden bg-gray-100 relative">
-                      {type.includes("image") ? (
-                        <img src={url} className="size-full object-cover" alt="" />
-                      ) : (
-                        <div className="size-full flex items-center justify-center bg-gray-200 text-4xl">
-                          {type.includes("video") ? "🎬" : type.includes("audio") ? "🎵" : "📄"}
+                    <div className="w-24 h-24 rounded-xl overflow-hidden relative bg-gray-100">
+                      <img
+                        src={imgSrc}
+                        className="w-full h-full object-cover"
+                        alt=""
+                      />
+
+                      {/* Upload progress overlay */}
+                      {isUpl && (
+                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                          <span className="font-inter text-white text-xs font-semibold">{f.progress}%</span>
                         </div>
                       )}
 
-                      {f.progress !== 100 && f.progress !== undefined && (
-                        <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-                          <span className="font-inter text-white text-sm font-semibold">
-                            {f.progress}%
-                          </span>
-                        </div>
-                      )}
-
-                      {size && (
-                        <div className="absolute bottom-2 left-2 bg-black/50 rounded-full px-2.5 py-1">
-                          <span className="font-inter text-white text-[10px] font-semibold whitespace-nowrap">
-                            {size}
+                      {/* Size pill */}
+                      {sizeLabel && (
+                        <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 bg-black/55 rounded-full px-2 py-0.5">
+                          <span className="font-inter text-white text-[9px] font-semibold whitespace-nowrap">
+                            {sizeLabel}
                           </span>
                         </div>
                       )}
@@ -512,7 +689,7 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
         )}
 
         {/* Icons bar */}
-        <div className="mt-8 mx-4 mb-4" onClick={(e) => e.stopPropagation()}>
+        <div className="mt-6 mx-4 mb-4" onClick={(e) => e.stopPropagation()}>
           <div className="bg-[#F4F4F4] rounded-2xl flex items-center gap-3 px-[12px] py-[10px]">
             {/* Plus menu */}
             <div className="relative">
@@ -530,20 +707,14 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
                 <div className="absolute bottom-12 left-0 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-20 min-w-[180px]">
                   <button
                     type="button"
-                    onClick={() => {
-                      fileInputMediaRef.current?.click();
-                      setShowPlusMenu(false);
-                    }}
+                    onClick={() => { fileInputMediaRef.current?.click(); setShowPlusMenu(false); }}
                     className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 text-left"
                   >
                     <span className="text-base">📷</span> Photos & Videos
                   </button>
                   <button
                     type="button"
-                    onClick={() => {
-                      fileInputAllRef.current?.click();
-                      setShowPlusMenu(false);
-                    }}
+                    onClick={() => { fileInputAllRef.current?.click(); setShowPlusMenu(false); }}
                     className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 text-left"
                   >
                     <span className="text-base">📎</span> Files
@@ -556,10 +727,7 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
             <div className="relative">
               <button
                 type="button"
-                onClick={() => {
-                  setShowEmoji((p) => !p);
-                  setShowPlusMenu(false);
-                }}
+                onClick={() => { setShowEmoji((p) => !p); setShowPlusMenu(false); }}
                 className="size-10 flex items-center justify-center rounded-xl hover:bg-black/5 transition-colors"
               >
                 <img src={smileySvg} alt="Emoji" width={20} height={20} />
@@ -579,29 +747,22 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
               )}
             </div>
 
-            {/* Separator */}
             <div className="w-px h-6 bg-gray-300 shrink-0" />
 
-            {/* Record audio — opens inline overlay, panel stays mounted */}
+            {/* Record audio */}
             <button
               type="button"
-              onClick={() => {
-                setAudioRecordedFile(null);
-                setShowAudioRecorder(true);
-              }}
+              onClick={() => setShowAudioRecorder(true)}
               className="size-10 flex items-center justify-center rounded-xl hover:bg-black/5 transition-colors"
               title="Record audio"
             >
               <img src={micSvg} alt="Record audio" width={20} height={20} />
             </button>
 
-            {/* Record video — opens inline overlay, panel stays mounted */}
+            {/* Record video */}
             <button
               type="button"
-              onClick={() => {
-                setVideoRecordedFile(null);
-                setShowVideoRecorder(true);
-              }}
+              onClick={() => { setVideoRecordedFile(null); setShowVideoRecorder(true); }}
               className="size-10 flex items-center justify-center rounded-xl hover:bg-black/5 transition-colors"
               title="Record video"
             >
@@ -645,9 +806,7 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
               setAccessInput(e.target.value);
               setShowAccessDropdown(e.target.value.length > 0);
             }}
-            onKeyDown={(e) => {
-              if (e.key === "Escape") setShowAccessDropdown(false);
-            }}
+            onKeyDown={(e) => { if (e.key === "Escape") setShowAccessDropdown(false); }}
             placeholder={selectedAccess.length === 0 ? "Type @ to tag someone..." : ""}
             className="flex-1 min-w-[100px] outline-none font-inter text-sm text-gray-700 placeholder:text-gray-400"
           />
@@ -676,11 +835,9 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
         </div>
       </div>
 
-      {/* Tags — new design with inline autogenerate */}
+      {/* Tags */}
       <div>
         <p className="font-inter text-sm font-medium text-gray-700 mb-2">Tags</p>
-
-        {/* Existing tags as removable chips */}
         {tags.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-2">
             {tags.map((t) => (
@@ -700,17 +857,12 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
             ))}
           </div>
         )}
-
-        {/* Input + Autogenerate */}
         <div className="flex items-center border border-gray-200 rounded-xl overflow-hidden bg-white">
           <input
             value={tagInput}
             onChange={(e) => setTagInput(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === ",") {
-                e.preventDefault();
-                addTag(tagInput);
-              }
+              if (e.key === "Enter" || e.key === ",") { e.preventDefault(); addTag(tagInput); }
             }}
             placeholder="Manually add tags or click to autogenerate"
             className="flex-1 outline-none font-inter text-sm text-gray-500 placeholder:text-gray-400 px-4 py-3"
@@ -724,8 +876,7 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
             {isGeneratingTags ? (
               <Spinner loading className="size-4!" />
             ) : (
-              /* AI sparkle icon */
-              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
                 <defs>
                   <linearGradient id="sparkle-grad" x1="0" y1="0" x2="18" y2="18" gradientUnits="userSpaceOnUse">
                     <stop offset="0%" stopColor="#9E77ED" />
@@ -777,106 +928,75 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
       )
     : null;
 
-  // Inline audio recorder overlay — absolute inside the panel so CreateMemory stays mounted
-  const audioRecorderOverlay = (
-    <div className="absolute inset-0 bg-white rounded-[24px] z-20 flex flex-col">
-      <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100 shrink-0">
-        <h3 className="font-garamond text-xl font-medium text-gray-900">Record Audio</h3>
-        <button
-          type="button"
-          onClick={() => {
-            setShowAudioRecorder(false);
-            setAudioRecordedFile(null);
-            if (audioRecorderRef.current?.reset) audioRecorderRef.current.reset();
-          }}
-          className="size-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
+  // Video recorder portal popup
+  const videoRecorderPortal = showVideoRecorder
+    ? createPortal(
+        <div
+          className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 px-4"
+          onClick={(e) => e.stopPropagation()}
         >
-          <TimesIcon width={10} height={10} />
-        </button>
-      </div>
-      <div className="flex-1 p-4 overflow-y-auto">
-        <AudioRecorder ref={audioRecorderRef} onStart={() => {}} onFinish={setAudioRecordedFile} />
-        {audioRecordedFile && (
-          <div className="flex items-center justify-end gap-2 mt-4 pt-3 border-t border-gray-100">
-            <button
-              type="button"
-              onClick={handleReRecordAudio}
-              className="h-10 px-5 rounded-full font-inter font-semibold text-sm text-gray-700 border border-gray-200 hover:bg-gray-50 transition-colors"
-            >
-              Re-record
-            </button>
-            <button
-              type="button"
-              onClick={handleUseAudio}
-              disabled={isUsingAudio}
-              className="h-10 px-5 rounded-full font-inter font-semibold text-sm text-white hover:opacity-90 disabled:opacity-50 flex items-center gap-2 transition-opacity"
-              style={{ backgroundColor: "#FF5E00" }}
-            >
-              Use recording
-              <Spinner loading={isUsingAudio} className="size-4!" />
-            </button>
+          <div className="bg-white rounded-[28px] w-full max-w-[480px] overflow-hidden shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-6 pt-6 pb-4">
+              <div className="flex items-center gap-2">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                  <path d="M6 0L7.2 4H11L8 6.5L9.2 10.5L6 8L2.8 10.5L4 6.5L1 4H4.8L6 0Z" fill="#7C3AED" />
+                </svg>
+                <span className="font-inter text-xs font-bold text-purple-600 tracking-widest uppercase">Record Video</span>
+              </div>
+              <button
+                onClick={() => {
+                  if (videoRecorderRef.current?.reset) videoRecorderRef.current.reset();
+                  if (videoRecorderRef.current?.resetStream) videoRecorderRef.current.resetStream();
+                  setVideoRecordedFile(null);
+                  setShowVideoRecorder(false);
+                }}
+                className="size-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
+              >
+                <TimesIcon width={10} height={10} />
+              </button>
+            </div>
+            <div className="px-6 pb-6">
+              <VideoRecorder
+                ref={videoRecorderRef}
+                onStart={() => {}}
+                onFinish={setVideoRecordedFile}
+              />
+              {videoRecordedFile && (
+                <div className="flex items-center gap-3 mt-4">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setVideoRecordedFile(null);
+                      if (videoRecorderRef.current?.reset) videoRecorderRef.current.reset();
+                      if (videoRecorderRef.current?.resetStream) videoRecorderRef.current.resetStream();
+                    }}
+                    className="flex-1 h-10 rounded-full bg-gray-100 text-gray-600 font-inter font-semibold text-sm hover:bg-gray-200 transition-colors"
+                  >
+                    Re-record
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleUseVideo}
+                    disabled={isUsingVideo}
+                    className="flex-1 h-10 rounded-full bg-[#170B00] text-white font-inter font-semibold text-sm hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2 transition-opacity"
+                  >
+                    Add to post
+                    <Spinner loading={isUsingVideo} className="size-4!" />
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
-        )}
-      </div>
-    </div>
-  );
+        </div>,
+        document.body,
+      )
+    : null;
 
-  // Inline video recorder overlay
-  const videoRecorderOverlay = (
-    <div className="absolute inset-0 bg-white rounded-[24px] z-20 flex flex-col">
-      <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100 shrink-0">
-        <h3 className="font-garamond text-xl font-medium text-gray-900">Record Video</h3>
-        <button
-          type="button"
-          onClick={() => {
-            setShowVideoRecorder(false);
-            setVideoRecordedFile(null);
-            if (videoRecorderRef.current?.reset) videoRecorderRef.current.reset();
-            if (videoRecorderRef.current?.resetStream) videoRecorderRef.current.resetStream();
-          }}
-          className="size-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
-        >
-          <TimesIcon width={10} height={10} />
-        </button>
-      </div>
-      <div className="flex-1 p-4 overflow-y-auto">
-        <VideoRecorder ref={videoRecorderRef} onStart={() => {}} onFinish={setVideoRecordedFile} />
-        {videoRecordedFile && (
-          <div className="flex items-center justify-end gap-2 mt-4 pt-3 border-t border-gray-100">
-            <button
-              type="button"
-              onClick={handleReRecordVideo}
-              className="h-10 px-5 rounded-full font-inter font-semibold text-sm text-gray-700 border border-gray-200 hover:bg-gray-50 transition-colors"
-            >
-              Re-record
-            </button>
-            <button
-              type="button"
-              onClick={handleUseVideo}
-              disabled={isUsingVideo}
-              className="h-10 px-5 rounded-full font-inter font-semibold text-sm text-white hover:opacity-90 disabled:opacity-50 flex items-center gap-2 transition-opacity"
-              style={{ backgroundColor: "#FF5E00" }}
-            >
-              Use recording
-              <Spinner loading={isUsingVideo} className="size-4!" />
-            </button>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-
-  // Mobile: bottom sheet
+  // Mobile
   if (isMobile) {
     return (
       <>
-        <Sheet
-          detent="content"
-          isOpen
-          onClose={handleClose}
-          snapPoints={[0.5, 0.75, 1]}
-          initialSnap={1}
-        >
+        <Sheet detent="content" isOpen onClose={handleClose} snapPoints={[0.5, 0.75, 1]} initialSnap={1}>
           <Sheet.Container className="bg-white">
             <Sheet.Header className="bg-white rounded-t-3xl" />
             <Sheet.Content className="bg-white px-4 pb-6 overflow-y-auto">
@@ -897,21 +1017,25 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
           <Sheet.Backdrop onTap={handleClose} />
         </Sheet>
         {closeConfirmationPortal}
+        {showAudioRecorder && (
+          <AudioRecorderPopup
+            onClose={() => setShowAudioRecorder(false)}
+            onAddFile={handleAddAudioFile}
+            recordingNumber={audioRecordingCount}
+          />
+        )}
+        {videoRecorderPortal}
       </>
     );
   }
 
-  // Desktop: floating panel — positioned absolutely within fixed modal-overlay
+  // Desktop
   return (
     <>
       <div
         className="absolute top-5 right-5 bottom-5 w-full max-w-[520px] bg-white flex flex-col shadow-2xl rounded-[24px] overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Inline recorder overlays — cover the panel without unmounting CreateMemory */}
-        {showAudioRecorder && audioRecorderOverlay}
-        {showVideoRecorder && videoRecorderOverlay}
-
         {/* Header */}
         <div className="flex items-center px-6 py-5 border-b border-gray-100 shrink-0">
           <h2 className="font-garamond text-2xl font-medium text-gray-900">Add New Story</h2>
@@ -925,7 +1049,16 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
         {/* Sticky footer */}
         <div className="shrink-0 border-t border-gray-100 px-6 py-4">{footer}</div>
       </div>
+
       {closeConfirmationPortal}
+      {showAudioRecorder && (
+        <AudioRecorderPopup
+          onClose={() => setShowAudioRecorder(false)}
+          onAddFile={handleAddAudioFile}
+          recordingNumber={audioRecordingCount}
+        />
+      )}
+      {videoRecorderPortal}
     </>
   );
 }
