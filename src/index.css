@@ -622,10 +622,14 @@ body {
     min-height: 300px;
   }
 
+  .create-memory-title::placeholder {
+    color: rgba(23, 11, 0, 0.45);
+  }
+
   .tiptap-editor .ProseMirror p.is-editor-empty:first-child::before {
     content: attr(data-placeholder);
     float: left;
-    color: #c7c9c8;
+    color: rgba(23, 11, 0, 0.45);
     pointer-events: none;
     height: 0;
   }

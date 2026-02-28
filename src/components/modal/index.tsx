@@ -31,6 +31,9 @@ import ShareMemory from "./memory/share-memory";
 import SelectBeneficiary from "./select-beneficiary";
 import { Feedback } from "./feedback";
 import MemoryInsights from "./memory-insights";
+import { AudioRecorderModal, VideoRecorderModal } from "./memory/recorder-modal";
+
+const RIGHT_PANEL_MODALS = ["create-memory"];
 
 const MODAL_COMPONENTS = {
   "share-post": SharePost,
@@ -61,10 +64,12 @@ const MODAL_COMPONENTS = {
   "share-memory": ShareMemory,
   "create-feedback": Feedback,
   "memory-insights": MemoryInsights,
+  "audio-recorder": AudioRecorderModal,
+  "video-recorder": VideoRecorderModal,
 };
 
 export default function Modal() {
-  const { state } = useModal();
+  const { state, close } = useModal();
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -73,6 +78,18 @@ export default function Modal() {
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
+
+  // ESC key dismissal for right-panel modals
+  useEffect(() => {
+    const modal = state?.[0];
+    if (!modal || !RIGHT_PANEL_MODALS.includes(modal.name)) return;
+    const modalName = modal.name;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") close(modalName);
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [state, close]);
 
   if (isEmpty(state)) {
     return null;
@@ -83,15 +100,35 @@ export default function Modal() {
 
   if (!ModalComponent) return null;
 
+  const isRightPanel = RIGHT_PANEL_MODALS.includes(modal.name) && !isMobile;
+
   return (
     <div
       className={`modal-overlay z-[100] bg-[rgba(94,94,94,0.5)] ${state ? "flex" : "hidden"}`}
+      onClick={isRightPanel ? () => close(modal.name) : undefined}
     >
-      <div className="w-full h-full flex items-center justify-center p-4">
-        {ModalComponent && (
+      {isRightPanel ? (
+        <>
+          {/* Floating Cancel button — 20px from top-left of viewport */}
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); close(modal.name); }}
+            className="absolute top-5 left-5 z-10 flex items-center gap-2 bg-white rounded-full pl-4 pr-3 py-2.5 shadow-md font-inter font-semibold text-sm text-gray-800 hover:bg-gray-50 transition-colors"
+          >
+            Cancel
+            <span className="inline-flex items-center bg-gray-100 text-gray-500 text-[10px] px-1.5 py-0.5 rounded font-mono leading-none">
+              ESC
+            </span>
+          </button>
           <ModalComponent data={modal.props || {}} isMobile={isMobile} />
-        )}
-      </div>
+        </>
+      ) : (
+        <div className="w-full h-full flex items-center justify-center p-4">
+          {ModalComponent && (
+            <ModalComponent data={modal.props || {}} isMobile={isMobile} />
+          )}
+        </div>
+      )}
     </div>
   );
 }
