@@ -98,7 +98,7 @@ export default function FileGallery({ files }: { files: IFile[] }) {
       {overflowFile && (
         <div className="h-[115px] max-w[239.3333282470703px]">
           <div className="relative h-full overflow-hidden">
-            <div className="absolute inset-0 flex h-full w-full items-center justify-center rounded-lg bg-[rgba(94,94,94,0.5)] backdrop-blur-sm font-bricolage text-2xl font-semibold text-white">
+            <div className="absolute inset-0 flex h-full w-full items-center justify-center rounded-lg bg-[rgba(94,94,94,0.5)] backdrop-blur-sm font-inter text-2xl font-semibold text-white">
               {files.length - maxFiles}+
             </div>
             <FileGalleryItem file={overflowFile} />

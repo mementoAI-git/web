@@ -13,7 +13,7 @@ export default function UserItem({ email, image, name, imageClassName = "" }: Us
     <div className="flex items-center gap-3">
       <div className={cn("flex size-10 items-center justify-center rounded-full bg-grey-500 text-xl", imageClassName)}>
         {image ?? (
-          <span className="font-bricolage font-bold uppercase">
+          <span className="font-inter font-bold uppercase">
             {(isEmpty(name.trim()) ? email : name)[0]}
           </span>
         )}

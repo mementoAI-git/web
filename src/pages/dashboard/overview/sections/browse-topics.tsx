@@ -13,9 +13,9 @@ export default function BrowseTopics() {
       <div className="flex items-center justify-between">
         <h2 className="font-garamond font-medium text-sand-12 text-xl sm:text-2xl lg:text-[32px] leading-[38px]">
           Browse conversations
-          <i className="text-gray-500"> by topics</i>
+          <i className="text-[rgba(176,169,156,0.9)]"> by topics</i>
         </h2>
-        <Link className="text-blue-6 font-semibold text-lg underline" to="/explore">See all</Link>
+        <Link className="font-inter text-[#FF5E00] font-semibold text-base underline" to="/explore">See all</Link>
       </div>
       <div className="relative w-full">
         <div className="relative w-full">

@@ -88,7 +88,7 @@ export default function WelcomeSection() {
             <div className="flex gap-2 sm:gap-3 items-center">
               <button
                 onClick={() => open("create-memory")}
-                className="flex items-center gap-1.5 sm:gap-2 h-9 sm:h-12 px-3 sm:px-5 rounded-full font-inter font-semibold text-xs sm:text-sm text-white cursor-pointer transition-opacity hover:opacity-90"
+                className="flex items-center gap-1.5 sm:gap-2 h-9 sm:h-12 px-3 sm:px-5 rounded-full font-inter font-medium text-xs sm:text-sm text-white cursor-pointer transition-opacity hover:opacity-90"
                 style={{ backgroundColor: "#FF5E00" }}
               >
                 <PlusIcon className="size-3 sm:size-4 shrink-0" />
@@ -98,7 +98,7 @@ export default function WelcomeSection() {
                 to="/chat/new"
                 className="flex items-center gap-1.5 sm:gap-2 h-9 sm:h-12 px-3 sm:px-5 bg-white border border-gray-200 rounded-full cursor-pointer hover:opacity-90 transition-opacity"
               >
-                <span className="text-[#101828] text-xs sm:text-sm font-inter font-semibold whitespace-nowrap">Start a conversation</span>
+                <span className="text-[#101828] text-xs sm:text-sm font-inter font-medium whitespace-nowrap">Start a conversation</span>
               </Link>
             </div>
           </div>
@@ -120,7 +120,7 @@ export default function WelcomeSection() {
                 >
                   {Number(stats.enrichment_score) || 0}%
                 </span>
-                <span className="font-inter text-sm font-semibold text-gray-600 bg-white/70 rounded-full px-3 py-1.5 whitespace-nowrap">
+                <span className="font-inter text-sm font-normal text-[#413a2f] bg-white/70 rounded-full px-3 py-1.5 whitespace-nowrap">
                   Enrichment score
                 </span>
               </div>
@@ -138,7 +138,7 @@ export default function WelcomeSection() {
               </Link>
               <Link
                 to="/explore"
-                className="flex items-center gap-1.5 h-10 px-4 bg-white/80 rounded-full font-inter font-semibold text-sm text-gray-800 whitespace-nowrap transition-opacity hover:opacity-90"
+                className="flex items-center gap-1.5 h-10 px-4 bg-white/80 rounded-full font-inter font-semibold text-sm text-gray-800 whitespace-nowrap transition-opacity hover:opacity-90 border border-black/10"
               >
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="shrink-0">
                   <circle cx="8" cy="3" r="2" stroke="#1A1A1A" strokeWidth="1.5"/>
@@ -157,9 +157,9 @@ export default function WelcomeSection() {
       {/* Stat cards row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {/* All Memories */}
-        <Link to="/stories" className="relative rounded-[16px] overflow-hidden h-[99px] block hover:opacity-95 transition-opacity col-span-2 lg:col-span-1">
-          <img src={memoriesCardBg} alt="" className="absolute inset-0 object-cover w-full h-full" />
-          <div className="relative flex items-center justify-between h-full px-5">
+        <Link to="/stories" className="relative rounded-[16px] overflow-hidden h-[99px] block hover:opacity-95 transition-opacity col-span-2 lg:col-span-1 border border-[#E3E3E3]">
+          <img src={memoriesCardBg} alt="" className="absolute inset-0 object-cover w-full h-full rounded-[16px]" />
+          <div className="relative flex items-center justify-between h-full px-5 font-inter rounded-[16px]">
             <div className="flex flex-col gap-1">
               <span className="font-inter text-[12px] font-normal uppercase tracking-widest text-gray-500">All Memories</span>
               <span className="font-inter text-[14px] font-semibold leading-tight" style={{ color: "#293039" }}>
@@ -174,13 +174,13 @@ export default function WelcomeSection() {
         </Link>
 
         {/* Beneficiaries */}
-        <Link to="/settings/beneficiaries" className="relative rounded-[16px] overflow-hidden h-[99px] block hover:opacity-95 transition-opacity col-span-2 lg:col-span-1">
-          <img src={benefiCardBg} alt="" className="absolute inset-0 object-cover w-full h-full" />
-          <div className="relative flex items-center justify-between h-full px-5">
+        <Link to="/settings/beneficiaries" className="relative rounded-[16px] overflow-hidden h-[99px] block hover:opacity-95 transition-opacity col-span-2 lg:col-span-1 border border-[#E3E3E3]">
+          <img src={benefiCardBg} alt="" className="absolute inset-0 object-cover w-full h-full rounded-[16px]" />
+          <div className="relative flex items-center justify-between h-full px-5" style={{ color: "rgba(255, 255, 255, 0.9)" }}>
             <div className="flex flex-col gap-1">
-              <span className="font-inter text-[12px] font-normal uppercase tracking-widest text-gray-500">Beneficiaries</span>
-              <span className="font-inter text-[14px] font-semibold leading-tight" style={{ color: "#293039" }}>
-                <span className="font-bold" style={{ color: "#DB2777" }}>{beneficiariesCount}</span> {beneficiariesCount === 1 ? "person" : "people"}
+              <span className="font-inter text-[12px] font-normal uppercase tracking-widest text-[rgba(102,112,133,0.7)]">Beneficiaries</span>
+              <span className="font-inter text-[14px] font-semibold leading-tight" style={{ color: "rgba(41, 48, 57, 1)" }}>
+                <span className="font-bold" style={{ color: "rgba(255, 46, 88, 1)" }}>{beneficiariesCount}</span> {beneficiariesCount === 1 ? "person" : "people"}
               </span>
             </div>
             <img src={surferIcon} alt="" className="size-12 object-contain shrink-0" />
@@ -188,11 +188,11 @@ export default function WelcomeSection() {
         </Link>
 
         {/* Time Capsules */}
-        <Link to="/capsule" className="relative rounded-[16px] overflow-hidden h-[99px] block hover:opacity-95 transition-opacity col-span-2 lg:col-span-1">
-          <img src={timeCapCardBg} alt="" className="absolute inset-0 object-cover w-full h-full" />
+        <Link to="/capsule" className="relative rounded-[16px] overflow-hidden h-[99px] block hover:opacity-95 transition-opacity col-span-2 lg:col-span-1 border border-[#E3E3E3]">
+          <img src={timeCapCardBg} alt="" className="absolute inset-0 object-cover w-full h-full rounded-[16px]" />
           <div className="relative flex items-center justify-between h-full px-5">
             <div className="flex flex-col gap-1">
-              <span className="font-inter text-[12px] font-normal uppercase tracking-widest text-gray-500">Time Capsules</span>
+              <span className="font-inter text-[12px] font-normal uppercase tracking-widest text-gray-500/70">Time Capsules</span>
               <span className="font-inter text-[14px] font-semibold leading-tight" style={{ color: "#293039" }}>
                 <span className="font-bold" style={{ color: "#EA580C" }}>{capsuleCount}</span> {capsuleCount === 1 ? "post" : "posts"} scheduled
               </span>
@@ -202,8 +202,8 @@ export default function WelcomeSection() {
         </Link>
 
         {/* Streak Count */}
-        <div className="relative rounded-[16px] overflow-hidden h-[99px] col-span-2 lg:col-span-1">
-          <img src={streakCardBg} alt="" className="absolute inset-0 object-cover w-full h-full" />
+        <div className="relative rounded-[16px] overflow-hidden h-[99px] col-span-2 lg:col-span-1 border border-[#E3E3E3]">
+          <img src={streakCardBg} alt="" className="absolute inset-0 object-cover w-full h-full rounded-[16px]" />
           <div className="relative flex items-center justify-between h-full px-5">
             <div className="flex flex-col gap-1">
               <span className="font-inter text-[12px] font-normal uppercase tracking-widest text-gray-500">Streak Count</span>

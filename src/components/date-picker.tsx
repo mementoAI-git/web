@@ -6,7 +6,7 @@ import { cn } from "@/utility";
 const baseOptions = {
   theme: {
     background: "!bg-white !top-2 !border !border-[#E9EAEB] !shadow-drop-down",
-    todayBtn: "!bg-blue-6",
+    todayBtn: "!bg-orange",
     clearBtn:
       "!bg-transparent !text-[#414651] !font-semibold !text-sm !border-[#D5D7DA] border",
     icons:
@@ -16,7 +16,7 @@ const baseOptions = {
       "!text-[#717680] !font-inter !font-normal !rounded-full hover:!bg-[#F3F3F3]/50",
     input: "",
     inputIcon: "",
-    selected: "!rounded-full !bg-blue-6 !hover:bg-[#050709] !text-white",
+    selected: "!rounded-full !bg-orange !hover:!bg-[#C55A1D] !text-white",
   },
   icons: {
     next() {

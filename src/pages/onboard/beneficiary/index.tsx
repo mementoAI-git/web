@@ -56,7 +56,7 @@ export default function BeneficiaryPage() {
           </Link>
           <Link
             to="/overview"
-            className="rounded-full bg-blue-6 px-8 py-[18px] text-sm font-semibold leading-[20px] text-white transition-colors duration-200 hover:bg-blue-7"
+            className="rounded-full bg-orange px-8 py-[18px] text-sm font-semibold leading-[20px] text-white transition-colors duration-200 hover:bg-[#C55A1D]"
           >
             Continue
           </Link>

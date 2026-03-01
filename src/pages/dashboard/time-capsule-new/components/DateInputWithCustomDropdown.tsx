@@ -48,7 +48,7 @@ export default function DateOptionsDropdown({
     dropDirection === "up" ? "bottom-full mb-2" : "top-full mt-2";
 
   const chevronClasses = cn("w-5 h-5 text-gray-400 transition-transform", {
-    "rotate-180": dropDirection === "down" ? isOpen : !isOpen,
+    "rotate-180": isOpen,
   });
 
   const calculateDate = (option: DateOption): Date => {

@@ -1,5 +1,5 @@
 @import "tailwindcss";
-@import url("https://fonts.googleapis.com/css2?family=Averia+Serif+Libre:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&family=Azeret+Mono:ital,wght@0,100..900;1,100..900&family=Bricolage+Grotesque:opsz,wght@12..96,200..800&family=EB+Garamond:ital,wght@0,400..800;1,400..800&family=Geist:wght@100..900&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Averia+Serif+Libre:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&family=Azeret+Mono:ital,wght@0,100..900;1,100..900&family=EB+Garamond:ital,wght@0,400..800;1,400..800&family=Geist:wght@100..900&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap");
 @config "../tailwind.config.ts";
 
 :root {
@@ -71,7 +71,7 @@
 
   --font-garamond: "EB Garamond", serif;
   --font-azeret: "Azeret Mono", monospace;
-  --font-bricolage: "Bricolage Grotesque", serif;
+  --font-bricolage: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
   --font-averia: "Averia Serif Libre", serif;
   --font-georgia: "Georgia", serif;
   --font-inter: "Inter", sans-serif;
@@ -202,7 +202,7 @@ body {
   font-size: 16px;
   overflow: hidden;
   font-family:
-    var(--font-bricolage), var(--font-geist), var(--font-inter), sans-serif;
+    var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 .rdp-day_range_start,
@@ -265,7 +265,7 @@ body {
   }
 
   .page-title {
-    @apply shrink-0 text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bricolage text-secondary font-medium leading-11 capitalize truncate max-w-full;
+    @apply shrink-0 text-xl sm:text-2xl md:text-3xl lg:text-4xl font-inter text-secondary font-medium leading-11 capitalize truncate max-w-full;
   }
 
   .page-viewport {
@@ -367,19 +367,19 @@ body {
   }
 
   .modal-close-btn {
-    @apply absolute top-4 right-4 sm:top-8 sm:right-8 flex aspect-square w-8 sm:w-9 cursor-pointer items-center justify-center rounded-full bg-sand-3;
+    @apply absolute top-4 right-4 sm:top-6 sm:right-[26px] flex aspect-square w-8 sm:w-9 cursor-pointer items-center justify-center rounded-full border-none bg-[#d6d6d6];
   }
 
   .modal-title {
-    @apply font-garamond text-2xl md:text-3xl leading-7 sm:leading-8 md:leading-9 text-sand-12;
+    @apply font-garamond text-2xl md:text-3xl leading-7 sm:leading-8 md:leading-9 text-gray-900;
   }
 
   .btn {
-    @apply flex cursor-pointer items-center justify-center gap-2 rounded-full bg-blue-6 hover:bg-blue-7 shadow-btn hover:scale-[97%] px-5 py-2 font-inter font-semibold text-white disabled:bg-[#c7c9c8] disabled:cursor-not-allowed transition-all duration-150;
+    @apply flex h-fit cursor-pointer items-center justify-center gap-2 rounded-full bg-orange hover:bg-[#C55A1D] shadow-btn hover:scale-[97%] px-5 py-[11px] font-inter text-sm font-medium text-white disabled:bg-[#c7c9c8] disabled:cursor-not-allowed transition-all duration-150;
   }
 
   .btn-outline {
-    @apply flex cursor-pointer items-center justify-center gap-2 rounded-full border border-[#84663366] hover:scale-[97%] px-5 py-2 font-inter font-semibold text-sand-10 disabled:border-[#c7c9c8] disabled:text-[#c7c9c8] transition-all duration-150;
+    @apply flex h-fit cursor-pointer items-center justify-center gap-2 rounded-full border border-[#84663366] hover:scale-[97%] px-5 py-[11px] font-inter text-sm font-medium text-sand-10 disabled:border-[#c7c9c8] disabled:text-[#c7c9c8] transition-all duration-150;
   }
 
   .scrollbar-hide::-webkit-scrollbar {
@@ -622,10 +622,14 @@ body {
     min-height: 300px;
   }
 
+  .create-memory-title::placeholder {
+    color: rgba(23, 11, 0, 0.45);
+  }
+
   .tiptap-editor .ProseMirror p.is-editor-empty:first-child::before {
     content: attr(data-placeholder);
     float: left;
-    color: #c7c9c8;
+    color: rgba(23, 11, 0, 0.45);
     pointer-events: none;
     height: 0;
   }

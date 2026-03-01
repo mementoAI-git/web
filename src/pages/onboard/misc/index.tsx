@@ -154,7 +154,7 @@ export default function MiscPage() {
         <button
           type="submit"
           disabled={isMutating}
-          className="flex items-center gap-2 rounded-full bg-blue-6 px-6 sm:px-8 py-4 sm:py-[18px] text-sm font-semibold leading-[20px] text-white transition-colors duration-200 hover:bg-blue-7 active:bg-blue-8 disabled:cursor-not-allowed disabled:bg-blue-6/40"
+          className="flex items-center gap-2 rounded-full bg-orange px-6 sm:px-8 py-4 sm:py-[18px] text-sm font-semibold leading-[20px] text-white transition-colors duration-200 hover:bg-[#C55A1D] active:bg-[#A84D19] disabled:cursor-not-allowed disabled:bg-orange/40"
         >
           <span>Continue</span>
           <Spinner loading={isMutating} className="!size-4" />

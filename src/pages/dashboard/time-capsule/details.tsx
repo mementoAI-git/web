@@ -18,7 +18,7 @@ export default function CapsulePage({ params }) {
             <ChevronLeftIcon width={10} height={10} />
             <span className="font-inter text-sm text-grey-600">Back</span>
           </button>
-          <span className="font-bricolage capitalize text-4xl font-medium text-[#101828]">
+          <span className="font-inter capitalize text-4xl font-medium text-[#101828]">
             {capsuleData?.title}
           </span>
           <div className="flex items-center mt-6 gap-3">

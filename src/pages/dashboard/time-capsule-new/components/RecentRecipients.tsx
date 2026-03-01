@@ -17,12 +17,14 @@ interface RecentRecipientsProps {
   selectedRecipients?: string[];
   onSelect?: (recipient: Recipient) => void;
   onSeeAll?: () => void;
+  hideRelationship?: boolean;
 }
 export default function RecentRecipients({
   recipients = [],
   selectedRecipients = [],
   onSelect,
   onSeeAll,
+  hideRelationship = false,
 }: RecentRecipientsProps) {
   const displayedRecipients = recipients.slice(0, 4);
   const hasMore = recipients.length > 4;
@@ -42,9 +44,9 @@ export default function RecentRecipients({
             key={recipient._id}
             type="button"
             onClick={() => onSelect?.(recipient)}
-            className={`inline-flex border max-w-[100px] rounded-lg py-2.5 px-3 flex-col items-center gap-2 group cursor-pointer hover:bg-gray-50 transition-all ${isSelected
+            className={`inline-flex max-w-[100px] rounded-lg py-2 px-3 flex-col items-center gap-1 group cursor-pointer hover:bg-gray-50 transition-all border border-solid ${isSelected
               ? "border-green-0 ring-px ring-green-0"
-              : "border-black/5"
+              : "border-[#EBEBEB]"
               }`}
           >
             {/* Avatar */}
@@ -61,15 +63,17 @@ export default function RecentRecipients({
             </div>
             {/* Name */}
             <div className="text-center">
-              <p className="text-sm font-medium text-gray-900 leading-[18px] text-ellipsis">
+              <p className="text-xs font-medium text-[var(--color-gray-900)] leading-[18px] text-ellipsis">
                 {
                   (recipient.name ? recipient.name.split(" ")[0] : "") ||
                   (recipient.user?.name ? recipient.user.name.split(" ")[0] : "") ||
                   (recipient.email ? recipient.email.split("@")[0] : "")}
               </p>
-              <p className="text-xs font-normal text-gray-500 leading-5">
-                {recipient.relationship}
-              </p>
+              {!hideRelationship && (
+                <p className="text-xs font-light text-[var(--color-gray-500)] leading-5">
+                  {recipient.relationship}
+                </p>
+              )}
             </div>
           </button>
         );

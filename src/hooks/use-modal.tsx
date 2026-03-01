@@ -36,14 +36,11 @@ export function ModalProvider({ children }: PropsWithChildren) {
   }, []);
 
   const close = useCallback((name?: string) => {
-    if (!name && state[0]) {
-      name = state[0].name;
-    }
     setState((p) => {
-      if (name && p.some((a) => a.name === name)) {
-        return p.filter((n) => n.name !== name);
+      const modalName = name ?? p[0]?.name;
+      if (modalName && p.some((a) => a.name === modalName)) {
+        return p.filter((n) => n.name !== modalName);
       }
-
       return p;
     });
   }, []);

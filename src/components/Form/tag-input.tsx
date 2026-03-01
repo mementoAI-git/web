@@ -1,11 +1,14 @@
-import { useState, type KeyboardEvent } from "react";
+import { useState, type KeyboardEvent, type ReactNode } from "react";
 import type { ITexinput } from "./text-input";
 import { TimesIcon } from "@/components/icons";
-import { isEmpty } from "@/utility";
+import { isEmpty, cn } from "@/utility";
 
 interface TaginputProps extends Omit<ITexinput, "value" | "onChange"> {
   values: string[];
   setValue: (values: string[]) => void;
+  className?: string;
+  inputClassName?: string;
+  children?: ReactNode;
 }
 
 export default function Taginput({
@@ -14,6 +17,9 @@ export default function Taginput({
   label,
   placeholder,
   error,
+  className,
+  inputClassName,
+  children,
 }: TaginputProps) {
   const [input, setInput] = useState("");
 
@@ -34,9 +40,9 @@ export default function Taginput({
   };
 
   return (
-    <div>
-      {label && <label className="input-label">{label}</label>}
-      <div className="input-base !h-fit !flex-wrap !justify-start">
+    <div className={cn("flex flex-col gap-2", className)}>
+      {label && <label className="input-label flex justify-start items-start h-6">{label}</label>}
+      <div className={cn("input-base !h-fit !flex-wrap !justify-start", inputClassName)}>
         <div className="flex items-center gap-2">
           <div className="flex flex-wrap gap-2">
             {values.map((value) => (
@@ -54,13 +60,14 @@ export default function Taginput({
           </div>
           <input
             placeholder={isEmpty(values) ? placeholder : ""}
-            className="flex-1 outline-0 placeholder:text-[#000D4D73]"
+            className="flex-1 outline-0 text-sm text-gray-700 placeholder:text-[#000D4D73]"
             onKeyDown={onKeyDown}
             value={input}
             onChange={(event) => setInput(event.target.value)}
           />
         </div>
       </div>
+      {children}
       {error && <small className="text-xs text-danger">{error}</small>}
     </div>
   );
