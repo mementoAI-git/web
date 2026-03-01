@@ -99,10 +99,9 @@ export default function Modal() {
 
   return (
     <div
-      className={`modal-overlay relative z-[100] w-full h-full bg-[rgba(94,94,94,0.5)] ${state ? "flex" : "hidden"}`}
+      className={`modal-overlay relative z-[100] w-full h-full flex flex-col justify-start items-center bg-[rgba(94,94,94,0.5)] ${state ? "flex" : "hidden"}`}
       onClick={() => close(topModal.name)}
     >
-      {/* Render full stack so underlying modals (e.g. Create Memory) stay visible */}
       {[...state].reverse().map((modal, i) => {
         const ModalComponent = MODAL_COMPONENTS[modal.name];
         if (!ModalComponent) return null;
@@ -113,7 +112,7 @@ export default function Modal() {
         return (
           <div
             key={`${modal.name}-${i}`}
-            className="absolute inset-0 flex items-center justify-center m-1.5"
+            className="absolute inset-1.5 flex flex-row justify-start items-start"
             style={{ zIndex: isTop ? 10 : 0 }}
             onClick={!isRightPanel ? (e) => e.stopPropagation() : undefined}
           >
@@ -121,7 +120,7 @@ export default function Modal() {
               <button
                 type="button"
                 onClick={(e) => { e.stopPropagation(); close(modal.name); }}
-                className="absolute top-5 left-5 z-10 flex items-center gap-2 bg-white rounded-full pl-4 pr-3 py-2.5 shadow-md font-inter font-semibold text-sm text-gray-800 hover:bg-gray-50 transition-colors"
+                className="absolute top-0 left-0 z-10 flex items-center gap-2 bg-white rounded-full pl-4 pr-3 py-2.5 shadow-md font-inter font-semibold text-sm text-gray-800 hover:bg-gray-50 transition-colors"
               >
                 Cancel
                 <span className="inline-flex items-center bg-gray-100 text-gray-500 text-[10px] px-1.5 py-0.5 rounded font-mono leading-none">

@@ -2,23 +2,30 @@ import { Outlet } from "react-router-dom";
 import { FloatingButton } from "./components/FloatingButton";
 import { useModal } from "./hooks/use-modal";
 
+const SIDE_MODALS = ["create-memory"];
+
 function App() {
-  const { open } = useModal();
+  const { open, state } = useModal();
+  const isSideModalOpen = state?.some((m) => SIDE_MODALS.includes(m.name));
 
   return (
     <div className="min-h-screen bg-background text-secondary">
       <Outlet />
 
-      <div className="absolute bottom-4 right-4 text-5xl z-9999 group animate-fade-in-up">
+      <div
+        className={`absolute text-5xl z-9999 group animate-fade-in-up transition-all ${
+          isSideModalOpen ? "left-[6px] bottom-[6px]" : "right-4 bottom-4"
+        }`}
+      >
         <div className="relative">
           <FloatingButton
             onClick={() => open("create-feedback")}
-            className="h-auto bg-transparent rounded-full! w-10 aspect-square! p-0!"
+            className="h-10 w-10 min-w-10 min-h-10 bg-orange rounded-full! p-0!"
           >
             <img
               src="/question.gif"
-              alt="hh"
-              className="w-full h-full rounded-full"
+              alt="Need help?"
+              className="size-10 w-10 h-10 object-contain rounded-full brightness-0 invert"
             />
           </FloatingButton>
 

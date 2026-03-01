@@ -821,7 +821,7 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
   return (
     <>
       <div
-        className="absolute top-5 right-5 bottom-5 w-full max-w-[520px] bg-white flex flex-col shadow-2xl rounded-[24px] overflow-hidden"
+        className="absolute top-0 right-0 bottom-0 w-full max-w-[520px] bg-white flex flex-col shadow-2xl rounded-[24px] overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
