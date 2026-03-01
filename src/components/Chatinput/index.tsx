@@ -186,12 +186,12 @@ export default function Chatinput({
 
         {
           typing ?
-            <button onClick={onStop} className="btn !bg-blue-6 text-white">Stop</button> :
+            <button onClick={onStop} className="btn text-white">Stop</button> :
             (text.length > 0 || files.length > 0 || loading) ?
               <button
                 onClick={handleSend}
                 disabled={loading || typing || (!isEmpty(files) && files.every(f => f.progress < 100))}
-                className="btn !bg-blue-6 space-x-2 disabled:opacity-60 text-white"
+                className="btn space-x-2 disabled:opacity-60 text-white"
               >
                 {
                   loading ?

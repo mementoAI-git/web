@@ -9,7 +9,7 @@ export default function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   return (
     <AuthCheck>
-      <div className="bg-white w-full min-h-screen flex flex-col md:flex-row overflow-hidden hide-scrollbar dynamic-height">
+      <div className="bg-white w-full h-full min-h-screen flex flex-col md:flex-row overflow-hidden hide-scrollbar dynamic-height">
         <Modal />
         {sidebarOpen && (
           <div

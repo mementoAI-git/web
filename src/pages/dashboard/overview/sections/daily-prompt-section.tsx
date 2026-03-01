@@ -36,7 +36,7 @@ function DailyPrompt({ title, _id, answered }: IPromptWithAnswer) {
         ) : (
           <button
             className={cn(
-              "btn w-fit md:bg-blue-6! text-sm! md:text-base! px-4! sm:px-5! py-1.5! sm:py-2.5!",
+              "btn w-fit text-sm! md:text-base! px-4! sm:px-5! py-1.5! sm:py-2.5!",
               "absolute left-0 bottom-0 opacity-0 translate-y-full pointer-events-none",
               "sm:group-hover:relative sm:group-hover:opacity-100 sm:group-hover:translate-y-0 sm:group-hover:pointer-events-auto",
               "transition-all duration-300 ease-out",

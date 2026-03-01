@@ -94,7 +94,7 @@ export function LinkInput({
           </button>
           <button
             type="submit"
-            className="rounded-lg bg-blue-6 px-3 py-1.5 text-sm text-white transition-colors hover:bg-blue-3"
+            className="rounded-lg bg-orange px-3 py-1.5 text-sm text-white transition-colors hover:bg-[#C55A1D]"
           >
             {initialUrl ? "Update" : "Insert"}
           </button>

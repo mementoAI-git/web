@@ -13,7 +13,6 @@ import useFileUpload from "@/hooks/use-file-upload";
 import { isEmpty, cn } from "@/utility";
 import useSWR, { mutate } from "swr";
 import type { IMemory, IFile } from "@/utility/interface";
-import { ImagePlusIcon } from "@/components/icons";
 import SelectFromMemory from "../../select-from-memory";
 import SelectFromMedia from "../../select-from-media";
 import DateOptionsDropdown from "@/pages/dashboard/time-capsule-new/components/DateInputWithCustomDropdown";
@@ -254,6 +253,7 @@ function MobileFormSheet({
                     selectedRecipients={values.recipients}
                     onSelect={handleRecipientSelect}
                     onSeeAll={() => {}}
+                    hideRelationship
                   />
                 </div>
               </div>
@@ -283,14 +283,6 @@ function MobileFormSheet({
                       : "border-gray-200 bg-transparent",
                   )}
                 >
-                  <ImagePlusIcon
-                    width={24}
-                    height={24}
-                    className={cn(
-                      "transition-colors",
-                      isDragging ? "text-orange" : "text-gray-400",
-                    )}
-                  />
                   <p className="text-sm font-semibold text-center text-[#1D2939]">
                     {isDragging ? (
                       "Drop files here to upload"
@@ -1058,38 +1050,38 @@ export default function CreateCapsule({
   return (
     <>
       {/* Desktop */}
-      <div className="hidden sm:flex max-w-[1440px] flex-col justify-center lg:max-h-[900px] h-full w-full">
-        <div className="grid grid-cols-1 lg:grid-cols-[55%_45%] gap-10 items-start oveflow-hidden">
-          <div className="flex justify-center items-center w-full h-full">
-            <div
-              className="bg-black/60 gap-6 w-full rounded-2xl h-full py-8 px-6 lg:px-24 flex flex-col justify-center items-center"
-              style={{ height: "100%" }}
-            >
+      <div className="hidden sm:flex flex-row gap-3 w-full h-full items-stretch overflow-hidden">
+        <div className="flex-1 min-w-0 flex justify-center items-center h-full">
+          <div
+            className="bg-black/60 gap-6 w-full rounded-2xl h-full py-8 px-6 lg:px-24 flex flex-col justify-center items-center"
+            style={{ height: "100%" }}
+          >
+            <div className="w-full max-w-[560px]">
               <StyleControls
                 cardStyle={cardStyle}
                 onStyleChange={handleStyleChange}
               />
-              <div
-                className="w-full"
-                style={{ flex: "1 1 0", minHeight: 0, overflow: "hidden" }}
-              >
-                <CapsulePreviewCard
-                  style={cardStyle}
-                  recipients={previewRecipients}
-                  title={values.title}
-                  body={values.body}
-                  assets={previewAssets}
-                  sender={user}
-                  onAssetClick={() => {}}
-                  className="h-full bg-orange-500 w-full p-6 pb-0"
-                />
-              </div>
+            </div>
+            <div
+              className="w-full max-w-[560px]"
+              style={{ flex: "1 1 0", minHeight: 0, overflow: "hidden", height: 300 }}
+            >
+              <CapsulePreviewCard
+                style={cardStyle}
+                recipients={previewRecipients}
+                title={values.title}
+                body={values.body}
+                assets={previewAssets}
+                sender={user}
+                onAssetClick={() => {}}
+                className="h-full bg-orange-500 w-full p-6 pb-0"
+              />
             </div>
           </div>
-          <div className="modal-container overflow-auto scrollbar-hide">
-            <ModalCloseBtn onClick={handleCloseClick} />
-            {/* Desktop form (existing layout, unchanged) */}
-            <div className="space-y-6">
+        </div>
+        <div className="modal-container overflow-hidden scrollbar-hide !w-[500px] !max-w-[500px] !h-full !max-h-full !p-6 !rounded-3xl shrink-0 !bg-white">
+          <ModalCloseBtn onClick={handleCloseClick} />
+          <div className="flex flex-col gap-8 w-full h-full">
               <h4 className="modal-title">
                 {isEditMode ? "Edit Capsule" : "Create Capsule"}
               </h4>
@@ -1098,91 +1090,91 @@ export default function CreateCapsule({
                   e.preventDefault();
                   handleSave();
                 }}
-                className="space-y-6"
+                className="flex flex-col gap-8 pb-6"
               >
-                <Taginput
-                  values={values.recipients}
-                  placeholder="Enter recipients email address"
-                  label={
-                    <div className="mb-2 text-xs text-[#667085]">
-                      Select recipient(s)
-                    </div>
-                  }
-                  setValue={(r) => {
-                    console.log(r, "REcipeint");
-                    handleValue("recipients", r);
-                  }}
-                  error={errors.recipients as string}
-                />
-                <div className="bg-black/2 rounded-xl text-sm text-weak/40 p-3">
-                  <span className="mb-2 block">Beneficiaries</span>
-                  <RecentRecipients
-                    recipients={beneficiaries?.data?.docs}
-                    selectedRecipients={values.recipients}
-                    onSelect={handleRecipientSelect}
-                    onSeeAll={() => {}}
+                <div className="flex flex-col gap-2">
+                  <Taginput
+                    values={values.recipients}
+                    placeholder="Enter recipients email address"
+                    inputClassName="!px-2"
+                    label={
+                      <div className="mb-2 text-base text-[var(--color-gray-800)] normal-case">
+                        Select recipient(s)
+                      </div>
+                    }
+                    setValue={(r) => {
+                      console.log(r, "REcipeint");
+                      handleValue("recipients", r);
+                    }}
+                    error={errors.recipients as string}
                   />
-                </div>
-                <div className="border-t border-[#0011661A] py-2 pt-8">
-                  <div className="flex justify-between mb-2">
-                    <span className="text-sm">Upload Media</span>
-                    <span
-                      className="cursor-pointer text-sm font-medium text-orange"
-                      onClick={() => setDesktopShowMemory(true)}
-                    >
-                      Select from memory
-                    </span>
-                  </div>
-                  <div
-                    {...dragHandlers}
-                    className={cn(
-                      "h-56 justify-center flex flex-col items-center gap-6 border-2 border-dashed rounded-2xl p-3 transition-all",
-                      isDragging
-                        ? "border-orange bg-orange/5"
-                        : "border-black/5",
-                    )}
-                  >
-                    <ImagePlusIcon
-                      width={24}
-                      height={24}
-                      className={isDragging ? "text-orange" : "text-gray-400"}
+                  <div className="flex flex-col gap-1 rounded-xl text-sm text-white p-0">
+                    <RecentRecipients
+                      recipients={beneficiaries?.data?.docs}
+                      selectedRecipients={values.recipients}
+                      onSelect={handleRecipientSelect}
+                      onSeeAll={() => {}}
+                      hideRelationship
                     />
-                    <span className="mt-6 text-sm font-semibold text-center">
-                      {isDragging ? (
-                        "Drop files here"
-                      ) : (
-                        <>
-                          {`Drag and drop your file`}
-                          <br />
-                          here or click to upload
-                        </>
-                      )}
-                    </span>
-                    <p className="mb-6 text-xs text-weak text-center">
-                      Supports JPG, PNG, MP4, MP3, PDF, DOC, TXT. Max 120mb
-                    </p>
-                    <BrowseFileBtn onUpload={handleUpload} />
                   </div>
                 </div>
-                <div>
-                  <span className="block mb-2">Recent</span>
-                  <RecentMedia
-                    items={recentMedia?.data?.docs}
-                    selectedItems={selectedMedia.map((m) => m.id || m._id)}
-                    onSelect={handleMediaSelect}
-                    onSeeMore={() => setDesktopShowMedia(true)}
-                  />
+                <div className="flex flex-col gap-2">
+                  <div className="flex flex-col">
+                    <div className="flex justify-between mb-2">
+                      <span className="text-base text-[var(--color-gray-800)]">Upload Media</span>
+                      <span
+                        className="cursor-pointer text-sm font-medium text-orange"
+                        onClick={() => setDesktopShowMemory(true)}
+                      >
+                        Select from memory
+                      </span>
+                    </div>
+                    <div
+                      {...dragHandlers}
+                      className={cn(
+                        "h-fit justify-center flex flex-col items-center gap-1 border-2 border-dashed rounded-2xl py-5 px-3 transition-all",
+                        isDragging
+                          ? "border-orange bg-orange/5"
+                          : "border-black/5",
+                      )}
+                    >
+                      <span className="mt-6 text-sm font-medium text-center text-[var(--color-gray-900)]">
+                        {isDragging ? (
+                          "Drop files here"
+                        ) : (
+                          <>
+                            {`Drag and drop your file`}
+                            <br />
+                            here or click to upload
+                          </>
+                        )}
+                      </span>
+                      <p className="mb-6 text-xs font-light text-center max-w-[240px] text-[var(--color-gray-600)]">
+                        Supports JPG, PNG, MP4, MP3, PDF, DOC, TXT. Max 120mb
+                      </p>
+                      <BrowseFileBtn onUpload={handleUpload} />
+                    </div>
+                  </div>
+                  <div className="flex flex-col border-t-0 rounded-2xl bg-[#f5f5f5] p-3">
+                    <span className="block mb-2 text-xs text-[var(--color-gray-600)] font-medium">Recently uploaded</span>
+                    <RecentMedia
+                      items={recentMedia?.data?.docs}
+                      selectedItems={selectedMedia.map((m) => m.id || m._id)}
+                      onSelect={handleMediaSelect}
+                      onSeeMore={() => setDesktopShowMedia(true)}
+                    />
+                  </div>
                 </div>
-                <div className="border-y border-[#0011661A] py-8">
+                <div className="flex flex-col gap-0 justify-start items-start pt-8 h-fit">
                   <span className="block mb-4">Write a message</span>
-                  <div className="flex flex-col gap-2">
-                    <div className="rounded-xl border border-grey-100 bg-grey-700 px-3 py-1 focus-within:border-2 focus-within:border-primary">
+                  <div className="flex flex-col gap-2 w-full">
+                    <div className="w-full rounded-xl border border-[rgba(150,150,150,0.1)] bg-grey-700 px-3 py-1 focus-within:border-2 focus-within:border-primary">
                       <input
                         placeholder="Header here"
                         name="title"
                         onChange={handleChange}
                         value={values.title}
-                        className="h-9 w-full outline-0 bg-transparent font-semibold font-garamond"
+                        className="h-9 w-full outline-0 bg-transparent font-medium text-sm"
                       />
                     </div>
                     {errors.title && (
@@ -1190,13 +1182,13 @@ export default function CreateCapsule({
                         {errors.title}
                       </small>
                     )}
-                    <div className="rounded-xl border border-grey-100 bg-grey-700 px-3 py-1 focus-within:border-2 focus-within:border-primary">
+                    <div className="w-full rounded-xl border border-[rgba(150,150,150,0.1)] bg-grey-700 px-3 py-1 focus-within:border-2 focus-within:border-primary">
                       <textarea
                         placeholder="Message here..."
                         name="body"
                         onChange={handleChange}
                         value={values.body}
-                        className="w-full resize-none outline-0 bg-transparent font-semibold font-garamond leading-9"
+                        className="w-full resize-none outline-0 bg-transparent font-medium text-lg leading-9 font-garamond"
                         rows={5}
                       />
                     </div>
@@ -1207,18 +1199,20 @@ export default function CreateCapsule({
                     )}
                   </div>
                 </div>
-                <span className="text-xs text-[#667085] block">
-                  Capsule delivery date:
-                </span>
-                <DateOptionsDropdown
-                  dropDirection="up"
-                  onDateSelect={(date) =>
-                    handleValue("schedule_date", date.toISOString())
-                  }
-                  CustomCalendarComponent={DatePickerWrapper}
-                  defaultLabel="In 3 days"
-                />
-                <div className="flex items-center justify-end gap-3">
+                <div className="flex flex-col gap-2">
+                  <span className="text-base text-[var(--color-gray-800)] block">
+                    Capsule delivery date:
+                  </span>
+                  <DateOptionsDropdown
+                    dropDirection="up"
+                    onDateSelect={(date) =>
+                      handleValue("schedule_date", date.toISOString())
+                    }
+                    CustomCalendarComponent={DatePickerWrapper}
+                    defaultLabel="In 3 days"
+                  />
+                </div>
+                <div className="flex items-center justify-end gap-3 mb-8 h-fit">
                   {!isEditMode && (
                     <button
                       type="button"
@@ -1246,7 +1240,6 @@ export default function CreateCapsule({
             </div>
           </div>
         </div>
-      </div>
 
       {/* ── Mobile sheets — portaled to document.body ── */}
       <MobileSheetPortal>

@@ -367,19 +367,19 @@ body {
   }
 
   .modal-close-btn {
-    @apply absolute top-4 right-4 sm:top-8 sm:right-8 flex aspect-square w-8 sm:w-9 cursor-pointer items-center justify-center rounded-full bg-sand-3;
+    @apply absolute top-4 right-4 sm:top-6 sm:right-[26px] flex aspect-square w-8 sm:w-9 cursor-pointer items-center justify-center rounded-full border-none bg-[#d6d6d6];
   }
 
   .modal-title {
-    @apply font-garamond text-2xl md:text-3xl leading-7 sm:leading-8 md:leading-9 text-sand-12;
+    @apply font-garamond text-2xl md:text-3xl leading-7 sm:leading-8 md:leading-9 text-gray-900;
   }
 
   .btn {
-    @apply flex cursor-pointer items-center justify-center gap-2 rounded-full bg-blue-6 hover:bg-blue-7 shadow-btn hover:scale-[97%] px-5 py-2 font-inter font-semibold text-white disabled:bg-[#c7c9c8] disabled:cursor-not-allowed transition-all duration-150;
+    @apply flex h-fit cursor-pointer items-center justify-center gap-2 rounded-full bg-orange hover:bg-[#C55A1D] shadow-btn hover:scale-[97%] px-5 py-[11px] font-inter text-sm font-medium text-white disabled:bg-[#c7c9c8] disabled:cursor-not-allowed transition-all duration-150;
   }
 
   .btn-outline {
-    @apply flex cursor-pointer items-center justify-center gap-2 rounded-full border border-[#84663366] hover:scale-[97%] px-5 py-2 font-inter font-semibold text-sand-10 disabled:border-[#c7c9c8] disabled:text-[#c7c9c8] transition-all duration-150;
+    @apply flex h-fit cursor-pointer items-center justify-center gap-2 rounded-full border border-[#84663366] hover:scale-[97%] px-5 py-[11px] font-inter text-sm font-medium text-sand-10 disabled:border-[#c7c9c8] disabled:text-[#c7c9c8] transition-all duration-150;
   }
 
   .scrollbar-hide::-webkit-scrollbar {
