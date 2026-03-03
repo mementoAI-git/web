@@ -66,6 +66,7 @@ export default {
   transcription: "/ai/transcribe-audio",
   startConversation: "/ai/conversation/new",
   ephemeralToken: "/ai/ephemeral-token",
+  generateTags: "/ai/generate-tags",
 
   // capsule
   capsule: "/capsule",

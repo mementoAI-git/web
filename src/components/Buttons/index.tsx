@@ -3,6 +3,8 @@ import type { ButtonHTMLAttributes } from "react";
 import Spinner from "@/components/spinner";
 import { cn } from "@/utility";
 
+export { AutogenerateTagsButton } from "./AutogenerateTagsButton";
+
 interface IButton extends ButtonHTMLAttributes<HTMLButtonElement> {
   title: string;
   className?: string;
