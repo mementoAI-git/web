@@ -18,6 +18,13 @@ import {
   ResendInvite,
   UpdateBeneficiary,
 } from "./beneficiary";
+import {
+  AddGroup,
+  UpdateGroup,
+  DeleteGroup,
+  GroupDetail,
+  AddGroupMembers,
+} from "./group";
 import Setup2FA from "./setup-2fa";
 import ChatSettings from "./chat-settings";
 import { SearchMemoriesV2 } from "./memory/search/search-modal-v2";
@@ -52,6 +59,11 @@ const MODAL_COMPONENTS = {
   "update-beneficiary": UpdateBeneficiary,
   "select-beneficiary": SelectBeneficiary,
   "resend-invite": ResendInvite,
+  "add-group": AddGroup,
+  "update-group": UpdateGroup,
+  "delete-group": DeleteGroup,
+  "group-detail": GroupDetail,
+  "add-group-members": AddGroupMembers,
   setup2fa: Setup2FA,
   "chat-settings": ChatSettings,
   "create-capsule": CreateCapsule,

@@ -29,6 +29,12 @@ export default {
   getInvite: "/beneficiaries/invite/",
   acceptInvite: "/beneficiaries/invite/accept",
 
+  // groups
+  groups: "/groups",
+  group: "/groups/:id",
+  groupMembers: "/groups/:id/members",
+  groupMember: "/groups/:id/members/:beneficiaryId",
+
   // files
   upload: "/files/upload",
   files: "/files",

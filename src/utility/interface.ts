@@ -116,6 +116,29 @@ export interface IBeneficiary {
   status?: string;
 }
 
+/** Populated member in group.members from API */
+export interface IGroupMember {
+  _id?: string;
+  name: string;
+  email: string;
+  relationship?: string;
+  status?: string;
+}
+
+export interface IGroup {
+  _id: string;
+  name: string;
+  description: string;
+  user: string;
+  members: Array<string | IGroupMember>;
+  created_at: string;
+  updated_at: string;
+}
+
+export type CreateGroupBody = { name: string; description?: string };
+export type UpdateGroupBody = { name?: string; description?: string };
+export type AddGroupMembersBody = { beneficiaryIds: string[] };
+
 export interface ICapsule {
   _id?: string;
   user: string;

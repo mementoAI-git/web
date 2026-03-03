@@ -19,12 +19,21 @@ interface TableProps<T> {
   renderRow: (item: T, index: number) => React.ReactNode;
 }
 
+const defaultEmptyRow = (colSpan: number) => (
+  <tr>
+    <td colSpan={colSpan} className="py-12 text-center">
+      <p className="font-inter text-sm text-gray-500">No data yet</p>
+    </td>
+  </tr>
+);
+
 export default function Table<T>({
   data,
   columns,
   renderRow,
   onChangePage,
   loadingRow = null,
+  emptyRow = null,
   loading = false,
   className = "",
   headerClassName = "",
@@ -38,6 +47,9 @@ export default function Table<T>({
     if (!data?.hasPrevPage || !onChangePage) return;
     onChangePage(data.prevPage);
   };
+
+  const hasNoDocs = !data?.docs?.length;
+  const showEmpty = !loading && !isEmpty(data) && hasNoDocs;
 
   return (
     <div className={cn("mem-table h-fit w-full rounded-xl border border-[rgba(233,234,235,1)] bg-white shadow-sm shadow-[rgba(10,13,18,0.05)]", className)}>
@@ -55,7 +67,9 @@ export default function Table<T>({
           <tbody className="border-y border-[rgba(233,234,235,1)] text-xs text-[#535862] sm:text-sm">
             {loading || isEmpty(data)
               ? loadingRow || <TableRowSkeleton col={columns.length} />
-              : data?.docs?.map((row, index) => renderRow(row, index))}
+              : showEmpty
+                ? emptyRow || defaultEmptyRow(columns.length)
+                : data?.docs?.map((row, index) => renderRow(row, index))}
           </tbody>
         </table>
       </div>

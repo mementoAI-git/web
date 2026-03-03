@@ -4,7 +4,7 @@ import { useModal } from "@/hooks/use-modal";
 import { cn } from "@/utility";
 import General from "./general";
 import Security from "./security";
-import Beneficiary from "./beneficiary";
+import Beneficiary from "./beneficiary&group";
 import Privacy from "./privacy";
 import { GearIcon, Lock2Icon, ShieldIcon, UsersIcon } from "@/components/icons";
 import { Sheet } from "react-modal-sheet";
@@ -21,7 +21,7 @@ const settings = {
     component: <Security />,
   },
   beneficiary: {
-    label: "Beneficiary",
+    label: "Beneficiary & Group",
     icon: <UsersIcon strokeWidth={1.5} width={16} height={15} />,
     component: <Beneficiary />,
   },
