@@ -14,6 +14,8 @@ import Button from "./components/Button";
 import ScheduledBg from "./components/assets/scheduled.svg";
 import DeliveredBg from "./components/assets/delivered.svg";
 import DraftsBg from "./components/assets/drafts.svg";
+import FrozenBg from "./components/assets/frozen.svg";
+import { PauseIcon } from "./components/icons/PauseIcon";
 
 export default function TimeCapsulePage() {
   const [page] = useState(1);
@@ -52,13 +54,12 @@ export default function TimeCapsulePage() {
     `${endpoint.capsule}?page=${page}${getFilterQuery()}`,
   );
 
-  useEffect(() => console.log("capsule", capsule?.data?.docs), [capsule]);
-
   const { data: stats } = useSWR(endpoint.capsuleStats);
 
   // Then access like this:
   const scheduledCount = stats?.data?.scheduled_count || 0;
   const deliveredCount = stats?.data?.delivered_count || 0;
+  const pausedCount = stats?.data?.paused_count || 0;
   // const pausedCount = stats?.data?.paused_count || 0;
   // const failedCount = stats?.data?.failed_count || 0;
   const draftCount = stats?.data?.draft_count || 0;
@@ -85,6 +86,13 @@ export default function TimeCapsulePage() {
       title: "drafts",
       bg: DraftsBg,
     },
+    {
+      icon: PauseIcon,
+      iconProps: { width: 58 },
+      message: `${pausedCount} messages`,
+      title: "Frozen",
+      bg: FrozenBg,
+    },
   ];
 
   return (
@@ -105,7 +113,7 @@ export default function TimeCapsulePage() {
             <Button onClick={() => open("create-capsule")}>Create New</Button>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
             {values.map((stat, index) => {
               const IconComponent = stat.icon;
               return (
@@ -123,7 +131,7 @@ export default function TimeCapsulePage() {
         <div className="space-y-3 sm:space-y-4 lg:space-y-6 py-3 sm:py-4 lg:py-8">
           <CapsuleHeader
             totalCapsuleCount={
-              scheduledCount + deliveredCount + draftCount || 0
+              scheduledCount + deliveredCount + draftCount + pausedCount || 0
             }
             mode={mode}
             onChangeMode={setMode}

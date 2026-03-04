@@ -31,7 +31,11 @@ import ShareMemory from "./memory/share-memory";
 import SelectBeneficiary from "./select-beneficiary";
 import { Feedback } from "./feedback";
 import MemoryInsights from "./memory-insights";
-import { AudioRecorderModal, VideoRecorderModal } from "./memory/recorder-modal";
+import {
+  AudioRecorderModal,
+  VideoRecorderModal,
+} from "./memory/recorder-modal";
+import { UnpauseCapsule } from "./capsule";
 
 const RIGHT_PANEL_MODALS = ["create-memory"];
 
@@ -57,6 +61,7 @@ const MODAL_COMPONENTS = {
   "create-capsule": CreateCapsule,
   "delete-capsule": DeleteCapsule,
   "pause-capsule": PauseCapsule,
+  "unpause-capsule": UnpauseCapsule,
   "edit-capsule": CreateCapsule,
   "view-capsule": (props) => <CreateCapsule {...props} mode="view" />,
   settings: Settings,
@@ -106,7 +111,8 @@ export default function Modal() {
         const ModalComponent = MODAL_COMPONENTS[modal.name];
         if (!ModalComponent) return null;
 
-        const isRightPanel = RIGHT_PANEL_MODALS.includes(modal.name) && !isMobile;
+        const isRightPanel =
+          RIGHT_PANEL_MODALS.includes(modal.name) && !isMobile;
         const isTop = modal.name === topModal.name;
 
         return (
@@ -119,7 +125,10 @@ export default function Modal() {
             {isRightPanel && isTop && (
               <button
                 type="button"
-                onClick={(e) => { e.stopPropagation(); close(modal.name); }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  close(modal.name);
+                }}
                 className="absolute top-0 left-0 z-10 flex items-center gap-2 bg-white rounded-full pl-4 pr-3 py-2.5 shadow-md font-inter font-semibold text-sm text-gray-800 hover:bg-gray-50 transition-colors"
               >
                 Cancel

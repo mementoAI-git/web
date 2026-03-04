@@ -4,6 +4,8 @@ import Spinner from "@/components/spinner";
 import useFetcher from "@/hooks/use-fetcher";
 import { useModal } from "@/hooks/use-modal";
 import { PauseSquareIcon } from "@/components/icons";
+import { toast } from "sonner";
+import { mutate } from "swr";
 
 interface PauseCapsuleProps {
   data: string;
@@ -11,15 +13,25 @@ interface PauseCapsuleProps {
 
 export function PauseCapsule({ data: id }: PauseCapsuleProps) {
   const { close } = useModal();
-  const { trigger, isMutating } = useFetcher(`${endpoint.capsule}/${id}`, "put");
+  const { trigger, isMutating } = useFetcher(
+    `${endpoint.capsule}/${id}`,
+    "put",
+  );
 
   const handlePause = async () => {
-    await trigger({ status: "pause" });
+    const result = await trigger({ status: "pause" });
+    if (result?.success) {
+      await mutate(
+        (key) => typeof key === "string" && key.startsWith(endpoint.capsule),
+      );
+      await mutate(endpoint.capsuleStats);
+      toast.success(result.message);
+    }
     close?.("pause-capsule");
   };
 
   return (
-    <div className="modal-container !max-w-120">
+    <div className="modal-container max-w-120!">
       <ModalCloseBtn onClick={() => close?.("pause-capsule")} />
       <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-[#EFE5FF] text-primary">
         <PauseSquareIcon width={18} height={20} />
@@ -28,8 +40,8 @@ export function PauseCapsule({ data: id }: PauseCapsuleProps) {
         <div className="space-y-4">
           <h4 className="modal-title">Pause Delivery</h4>
           <span className="font-inter text-sm text-grey-600">
-            If you pause delivery, your time capsule will not be delivered on the scheduled day unless you resume schedule
-            again.
+            If you pause delivery, your time capsule will not be delivered on
+            the scheduled date unless you resume it again.
           </span>
         </div>
         <div className="flex items-center justify-between gap-4">
@@ -44,7 +56,7 @@ export function PauseCapsule({ data: id }: PauseCapsuleProps) {
             type="button"
             disabled={isMutating}
             onClick={handlePause}
-            className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-secondary py-2.5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-70"
+            className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-primary py-2.5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-70"
           >
             Yes, Pause
             <Spinner loading={isMutating} className="!size-4" />
@@ -54,4 +66,3 @@ export function PauseCapsule({ data: id }: PauseCapsuleProps) {
     </div>
   );
 }
-
