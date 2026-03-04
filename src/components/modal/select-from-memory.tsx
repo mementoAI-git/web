@@ -1,12 +1,11 @@
 import endpoint from "@/api/endpoint";
-import { Checkbox, Searchinput } from "@/components/Form";
+import { Searchinput } from "@/components/Form";
 import { ModalCloseBtn } from "./modalLayout";
 import { isEmpty, cn } from "@/utility";
 import type { IMemory } from "@/utility/interface";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import useSWR from "swr";
 import { SearchIcon } from "../icons";
-import dayjs from "dayjs";
 import MediaCard from "@/pages/dashboard/time-capsule-new/components/media-cards/MediaCard";
 import type { CardCustomization } from "@/pages/dashboard/time-capsule-new/components/CapsulePreviewCard";
 
@@ -21,7 +20,7 @@ interface SelectFromMemoryProps {
 // Default style for cards in selection modal
 const DEFAULT_CARD_STYLE: CardCustomization = {
   backgroundColor: "#F8F7F3",
-  fontFamily: "Inter",
+  // fontFamily: "Inter",
   fontSize: "1x",
   textColor: "#1A1A1A",
 };
