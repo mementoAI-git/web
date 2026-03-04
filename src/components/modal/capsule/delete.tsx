@@ -8,7 +8,6 @@ import { resolvePath } from "@/utility";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { mutate } from "swr";
-import type { IMemory } from "@/utility/interface";
 
 interface DeleteCapsuleProps {
   data: string;

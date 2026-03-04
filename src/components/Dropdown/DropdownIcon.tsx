@@ -7,19 +7,18 @@ import useClickAway from "@/hooks/use-clickaway";
 import { createPortal } from "react-dom";
 import { cn, isEmpty } from "@/utility";
 
-export function DropdowmIcon({
+export function DropdownIcon({
   icon = null,
   children = null,
   className = "",
   ...props
-}: IDropdownIcon & { children?: React.ReactElement }
-) {
+}: IDropdownIcon & { children?: React.ReactElement }) {
   const [open, setOpen] = useState(false);
   const [position, setPosition] = useState({
     top: 0,
     left: 0,
     width: 0,
-    placement: 'bottom' as 'top' | 'bottom',
+    placement: "bottom" as "top" | "bottom",
   });
   const buttonRef = useRef<HTMLButtonElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -31,7 +30,7 @@ export function DropdowmIcon({
       const rect = buttonRef.current.getBoundingClientRect();
       const viewport = {
         width: window.innerWidth,
-        height: window.innerHeight
+        height: window.innerHeight,
       };
 
       // Estimate dropdown dimensions
@@ -41,7 +40,8 @@ export function DropdowmIcon({
       // Determine vertical placement
       const spaceBelow = viewport.height - rect.bottom;
       const spaceAbove = rect.top;
-      const shouldPlaceAbove = spaceBelow < dropdownHeight && spaceAbove > spaceBelow;
+      const shouldPlaceAbove =
+        spaceBelow < dropdownHeight && spaceAbove > spaceBelow;
 
       // Calculate horizontal position - align with button's left edge
       let left = rect.left;
@@ -64,7 +64,7 @@ export function DropdowmIcon({
         top: shouldPlaceAbove ? rect.top - dropdownHeight - 8 : rect.bottom + 8,
         left,
         width: rect.width,
-        placement: shouldPlaceAbove ? 'top' : 'bottom',
+        placement: shouldPlaceAbove ? "top" : "bottom",
       });
     }
   }, []);
@@ -83,12 +83,15 @@ export function DropdowmIcon({
     const handleScroll = () => updatePosition();
     const handleResize = () => updatePosition();
 
-    document.addEventListener('scroll', handleScroll, { passive: true, capture: true });
-    window.addEventListener('resize', handleResize, { passive: true });
+    document.addEventListener("scroll", handleScroll, {
+      passive: true,
+      capture: true,
+    });
+    window.addEventListener("resize", handleResize, { passive: true });
 
     return () => {
-      document.removeEventListener('scroll', handleScroll, { capture: true });
-      window.removeEventListener('resize', handleResize);
+      document.removeEventListener("scroll", handleScroll, { capture: true });
+      window.removeEventListener("resize", handleResize);
     };
   }, [open, updatePosition]);
 
@@ -104,33 +107,32 @@ export function DropdowmIcon({
         onClick={() => setOpen((p) => !p)}
         className={cn("", {
           [className]: !isEmpty(className),
-          ["aspect-square size-8 shrink-0 flex items-center justify-center rounded-lg p-2 hover:bg-sand-2"]: !isEmpty(icon)
+          ["aspect-square size-8 shrink-0 flex items-center justify-center rounded-lg p-2 hover:bg-sand-2"]:
+            !isEmpty(icon),
         })}
       >
         {children || icon}
       </button>
-      {
-        open &&
+      {open &&
         createPortal(
           <div
             ref={dropdownRef}
             style={{
-              position: 'fixed',
+              position: "fixed",
               top: position.top,
               left: position.left,
               zIndex: 40,
               minWidth: position.width,
-              pointerEvents: 'auto'
+              pointerEvents: "auto",
             }}
           >
             <DropdowmMenu
               {...{ ...props, onSelect: handleSelect }}
-              className={`${position.placement === 'top' ? 'bottom-full mb-2' : 'top-full mt-2'} left-0`}
+              className={`${position.placement === "top" ? "bottom-full mb-2" : "top-full mt-2"} left-0`}
             />
           </div>,
-          document.body
-        )
-      }
-    </div >
+          document.body,
+        )}
+    </div>
   );
 }

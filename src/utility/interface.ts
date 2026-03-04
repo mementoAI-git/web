@@ -149,7 +149,7 @@ export interface ICapsule {
   body: string;
   attachments: IFile[];
   memories?: IMemory[];
-  status: "draft" | "scheduled" | "delivered" | "paused" | "failed" | "deleted";
+  status: "draft" | "scheduled" | "delivered" | "pause" | "failed" | "deleted";
   created_at: string;
   updated_at: string;
 }

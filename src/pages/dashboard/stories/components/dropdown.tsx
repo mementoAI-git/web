@@ -1,6 +1,6 @@
 import {
   CheckboxOption,
-  DropdowmIcon,
+  DropdownIcon,
   DropdownButton,
 } from "@/components/Dropdown";
 import { useModal } from "@/hooks/use-modal";
@@ -19,74 +19,86 @@ import {
   RemoveBookmarkIcon,
   TrashIcon,
   FilterIcon,
-  RestoreIcon
+  RestoreIcon,
 } from "@/components/icons";
 
 const FILTER_LABELS = {
   all: "All",
   bookmarked: "Bookmarked",
-  deleted: "Deleted"
+  deleted: "Deleted",
 };
 
 export function MemoryItemActions({ memory }: { memory: IMemory }) {
-  const { open } = useModal()
-  const { trigger: restoreMemory } = useFetcher(resolvePath(endpoint.restoreMemory, { id: memory._id }))
+  const { open } = useModal();
+  const { trigger: restoreMemory } = useFetcher(
+    resolvePath(endpoint.restoreMemory, { id: memory._id }),
+  );
   const { toggleBookmark } = useBookmark({
     memoryId: memory._id,
-    isBookmarked: memory.bookmarked
+    isBookmarked: memory.bookmarked,
   });
 
   const handleSelect = async (value: string) => {
     if (value === "share-story") {
-      open("share-memory", { memory })
+      open("share-memory", { memory });
     }
     if (value === "edit-memory") {
-      open("edit-memory", memory)
+      open("edit-memory", memory);
     }
     if (value === "bookmark") {
-      toggleBookmark()
+      toggleBookmark();
     }
     if (value === "restore") {
-      restoreMemory()
-      await mutate((key) =>
-        typeof key === 'string' &&
-        key.startsWith(`${endpoint.stories}`)
+      restoreMemory();
+      await mutate(
+        (key) =>
+          typeof key === "string" && key.startsWith(`${endpoint.stories}`),
       );
-      toast.success("Memory restored successfully")
+      toast.success("Memory restored successfully");
     }
-  }
+  };
 
   return (
-    <DropdowmIcon
+    <DropdownIcon
       icon={<VerticalEllipseIcon className="w-1 h-3" />}
       items={
-        memory.status == "deleted" ?
-          [
-            {
-              label: "Restore",
-              value: "restore",
-              startIcon: <RestoreIcon strokeWidth={1.5} width={20} height={20} />
-            }
-          ] :
-          [
-            {
-              label: "Edit story",
-              value: "edit-memory",
-              startIcon: <EditIcon width={16} />,
-            },
-            {
-              label: "Share story",
-              value: "share-story",
-              startIcon: <LaunchIcon className="size-[14px]" strokeWidth={1.5} width={14} />,
-            },
-            {
-              label: memory.bookmarked ? "Remove bookmark" : "Add bookmark",
-              value: "bookmark",
-              startIcon: memory.bookmarked ?
-                <RemoveBookmarkIcon width={16} height={16} />
-                : <AddBookmarkIcon width={16} height={16} />
-            },
-          ]
+        memory.status == "deleted"
+          ? [
+              {
+                label: "Restore",
+                value: "restore",
+                startIcon: (
+                  <RestoreIcon strokeWidth={1.5} width={20} height={20} />
+                ),
+              },
+            ]
+          : [
+              {
+                label: "Edit story",
+                value: "edit-memory",
+                startIcon: <EditIcon width={16} />,
+              },
+              {
+                label: "Share story",
+                value: "share-story",
+                startIcon: (
+                  <LaunchIcon
+                    className="size-[14px]"
+                    strokeWidth={1.5}
+                    width={14}
+                  />
+                ),
+              },
+              {
+                label: memory.bookmarked ? "Remove bookmark" : "Add bookmark",
+                value: "bookmark",
+                startIcon: memory.bookmarked ? (
+                  <RemoveBookmarkIcon width={16} height={16} />
+                ) : (
+                  <AddBookmarkIcon width={16} height={16} />
+                ),
+              },
+            ]
       }
       footerItem={
         <li
@@ -96,7 +108,6 @@ export function MemoryItemActions({ memory }: { memory: IMemory }) {
           <TrashIcon width={16} />
           <span className="font-inter text-sm">Delete</span>
         </li>
-
       }
       onSelect={handleSelect}
       className="!right-0 !bottom-8"
@@ -104,7 +115,13 @@ export function MemoryItemActions({ memory }: { memory: IMemory }) {
   );
 }
 
-export function MemoryListFilter({ value = "all", onChange }: { value: string, onChange: (v: string) => void }) {
+export function MemoryListFilter({
+  value = "all",
+  onChange,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+}) {
   return (
     <DropdownButton
       title={
@@ -114,7 +131,9 @@ export function MemoryListFilter({ value = "all", onChange }: { value: string, o
         </div>
       }
       onSelect={onChange}
-      ItemLayout={({ onClick, item }) => <CheckboxOption {...{ onClick, item, value }} />}
+      ItemLayout={({ onClick, item }) => (
+        <CheckboxOption {...{ onClick, item, value }} />
+      )}
       items={[
         { label: "All", value: "all" },
         { label: "Bookmarked", value: "bookmarked" },

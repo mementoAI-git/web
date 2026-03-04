@@ -28,7 +28,7 @@ function CapsuleListItem({ capsule }: { capsule: ICapsule }) {
               return <ImageThumbnail images={uniqueAttachments} single />;
             } else {
               return (
-                <div className="flex py-20 items-center w-full h-full text-gray-400">
+                <div className="flex py-20 items-center justify-center w-full h-full text-gray-400">
                   <span className="text-sm">No Assets</span>
                 </div>
               );

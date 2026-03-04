@@ -61,6 +61,19 @@ export default function RecentMedia({
     return null;
   };
 
+  if (!items.length) {
+    return (
+      <div className="flex flex-col items-center justify-center py-6 gap-2">
+        <img
+          src="/icon/plus.svg"
+          alt="No media"
+          className="w-10 h-10 opacity-30"
+        />
+        <p className="text-xs text-gray-400">No recent media</p>
+      </div>
+    );
+  }
+
   return (
     <div
       className="grid gap-3 w-full"
@@ -74,10 +87,11 @@ export default function RecentMedia({
             key={item.id}
             type="button"
             onClick={() => onSelect?.(item)}
-            className={`relative aspect-square rounded-2xl overflow-hidden group cursor-pointer max-w-[90px] max-h-[86px] hover:opacity-90 transition-all ${isSelected
-              ? "ring ring-green-0 ring-offset-2"
-              : "border border-black/5"
-              }`}
+            className={`relative aspect-square rounded-2xl overflow-hidden group cursor-pointer max-w-[90px] max-h-[86px] hover:opacity-90 transition-all ${
+              isSelected
+                ? "ring ring-green-0 ring-offset-2"
+                : "border border-black/5"
+            }`}
           >
             {/* Thumbnail */}
             <img

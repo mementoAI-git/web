@@ -2,20 +2,24 @@
 
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/utility";
-import { DropdowmIcon } from "@/components/Dropdown";
+import { DropdownIcon } from "@/components/Dropdown";
 import { useModal } from "@/hooks/use-modal";
 import { useBookmark } from "@/hooks/use-bookmark";
 import chatIcon from "@/assets/image/chat.png";
-import {
-  InfoIcon,
-  TrashIcon,
-  VerticalEllipseIcon,
-} from "@/components/icons";
+import { InfoIcon, TrashIcon, VerticalEllipseIcon } from "@/components/icons";
 import { BookmarkIcon } from "./icons/bookmark";
 
 const dropdownItems = [
-  { label: "Bookmark", value: "bookmark", startIcon: <BookmarkIcon className="size-4" /> },
-  { label: "View details", value: "details", startIcon: <InfoIcon className="size-4" /> },
+  {
+    label: "Bookmark",
+    value: "bookmark",
+    startIcon: <BookmarkIcon className="size-4" />,
+  },
+  {
+    label: "View details",
+    value: "details",
+    startIcon: <InfoIcon className="size-4" />,
+  },
 ];
 
 interface ConversationBarProps {
@@ -25,11 +29,19 @@ interface ConversationBarProps {
   size?: "sm" | "lg";
 }
 
-export default function ConversationBar({ title, _id, bookmarked = false, size = "sm" }: ConversationBarProps) {
+export default function ConversationBar({
+  title,
+  _id,
+  bookmarked = false,
+  size = "sm",
+}: ConversationBarProps) {
   const isLarge = size === "lg";
   const navigate = useNavigate();
   const { open } = useModal();
-  const { toggleBookmark } = useBookmark({ memoryId: _id, isBookmarked: bookmarked });
+  const { toggleBookmark } = useBookmark({
+    memoryId: _id,
+    isBookmarked: bookmarked,
+  });
 
   const handleDropdownSelect = (value: string) => {
     switch (value) {
@@ -59,16 +71,28 @@ export default function ConversationBar({ title, _id, bookmarked = false, size =
       <div className="flex items-center gap-4">
         <img
           alt="Chat icon"
-          className={cn("size-[35px]", { "size-[25px] sm:size-[56px]": isLarge })}
+          className={cn("size-[35px]", {
+            "size-[25px] sm:size-[56px]": isLarge,
+          })}
           src={chatIcon}
         />
-        <span className={cn("font-georgia text-sand-12", { "text-sand-12 sm:text-xl": isLarge })}>{title}</span>
+        <span
+          className={cn("font-georgia text-sand-12", {
+            "text-sand-12 sm:text-xl": isLarge,
+          })}
+        >
+          {title}
+        </span>
       </div>
       <div onClick={(event) => event.stopPropagation()}>
-        <DropdowmIcon
+        <DropdownIcon
           items={dropdownItems}
           onSelect={handleDropdownSelect}
-          icon={<VerticalEllipseIcon className={cn("size-4", { "size-3 sm:size-4": isLarge })} />}
+          icon={
+            <VerticalEllipseIcon
+              className={cn("size-4", { "size-3 sm:size-4": isLarge })}
+            />
+          }
           className="rounded-lg p-2 hover:bg-sand-2"
           footerItem={
             <li
@@ -85,7 +109,11 @@ export default function ConversationBar({ title, _id, bookmarked = false, size =
   );
 }
 
-export function ConversationBarSkeleton({ size = "sm" }: { size?: "sm" | "lg" }) {
+export function ConversationBarSkeleton({
+  size = "sm",
+}: {
+  size?: "sm" | "lg";
+}) {
   const isLarge = size === "lg";
   return (
     <div
@@ -97,8 +125,16 @@ export function ConversationBarSkeleton({ size = "sm" }: { size?: "sm" | "lg" })
       )}
     >
       <div className="flex flex-1 items-center gap-4">
-        <div className={cn("size-10 rounded bg-sand-3", { "size-20 sm:size-30": isLarge })} />
-        <div className={cn("h-4 w-full max-w-50 rounded bg-sand-3", { "max-w-60": isLarge })} />
+        <div
+          className={cn("size-10 rounded bg-sand-3", {
+            "size-20 sm:size-30": isLarge,
+          })}
+        />
+        <div
+          className={cn("h-4 w-full max-w-50 rounded bg-sand-3", {
+            "max-w-60": isLarge,
+          })}
+        />
       </div>
       <div className="size-4 shrink-0 rounded bg-sand-3" />
     </div>

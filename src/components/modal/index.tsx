@@ -38,7 +38,11 @@ import ShareMemory from "./memory/share-memory";
 import SelectBeneficiary from "./select-beneficiary";
 import { Feedback } from "./feedback";
 import MemoryInsights from "./memory-insights";
-import { AudioRecorderModal, VideoRecorderModal } from "./memory/recorder-modal";
+import {
+  AudioRecorderModal,
+  VideoRecorderModal,
+} from "./memory/recorder-modal";
+import { UnpauseCapsule } from "./capsule";
 
 const RIGHT_PANEL_MODALS = ["create-memory"];
 
@@ -69,6 +73,7 @@ const MODAL_COMPONENTS = {
   "create-capsule": CreateCapsule,
   "delete-capsule": DeleteCapsule,
   "pause-capsule": PauseCapsule,
+  "unpause-capsule": UnpauseCapsule,
   "edit-capsule": CreateCapsule,
   "view-capsule": (props) => <CreateCapsule {...props} mode="view" />,
   settings: Settings,
@@ -111,27 +116,35 @@ export default function Modal() {
 
   return (
     <div
-      className={`modal-overlay relative z-[100] w-full h-full flex flex-col justify-start items-center bg-[rgba(94,94,94,0.5)] ${state ? "flex" : "hidden"}`}
+      className={`modal-overlay relative z-100 w-full h-full flex flex-col justify-start items-center bg-[rgba(94,94,94,0.5)] ${state ? "flex" : "hidden"}`}
       onClick={() => close(topModal.name)}
     >
       {[...state].reverse().map((modal, i) => {
         const ModalComponent = MODAL_COMPONENTS[modal.name];
         if (!ModalComponent) return null;
 
-        const isRightPanel = RIGHT_PANEL_MODALS.includes(modal.name) && !isMobile;
+        const isRightPanel =
+          RIGHT_PANEL_MODALS.includes(modal.name) && !isMobile;
         const isTop = modal.name === topModal.name;
 
         return (
           <div
             key={`${modal.name}-${i}`}
-            className="absolute inset-1.5 flex flex-row justify-start items-start"
+            className={`absolute inset-1.5 flex ${
+              isRightPanel
+                ? "flex-row justify-start items-start"
+                : "flex-row justify-center items-center"
+            }`}
             style={{ zIndex: isTop ? 10 : 0 }}
             onClick={!isRightPanel ? (e) => e.stopPropagation() : undefined}
           >
             {isRightPanel && isTop && (
               <button
                 type="button"
-                onClick={(e) => { e.stopPropagation(); close(modal.name); }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  close(modal.name);
+                }}
                 className="absolute top-0 left-0 z-10 flex items-center gap-2 bg-white rounded-full pl-4 pr-3 py-2.5 shadow-md font-inter font-semibold text-sm text-gray-800 hover:bg-gray-50 transition-colors"
               >
                 Cancel
