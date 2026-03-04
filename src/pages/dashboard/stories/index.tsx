@@ -12,7 +12,6 @@ import storageCardBg from "@/assets/icon/storage-card.svg";
 
 import Table from "@/components/table";
 import { storageKeys } from "@/utility/constant";
-import { cn } from "@/utility";
 import StoriesHeader from "./components/header";
 import StoriesGrid from "./components/grid";
 import { TableRowSekeleton } from "./components/skeleton";
@@ -23,8 +22,8 @@ const columns = [
   { label: "topic" },
   { label: "Date created" },
   { label: "Tags", className: "min-w-32" },
-  { label: "" }
-]
+  { label: "" },
+];
 
 const TableEmptyState = () => (
   <tr>
@@ -34,7 +33,9 @@ const TableEmptyState = () => (
           <div className="w-16 h-16 mx-auto mb-4 bg-sand-3 rounded-full flex items-center justify-center">
             <DoubleHeartIcon className="size-8 stroke-2 text-sand-10" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">No stories yet</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            No stories yet
+          </h3>
           <p className="text-gray-500 text-sm">
             Start creating your first story to see it here.
           </p>
@@ -45,10 +46,12 @@ const TableEmptyState = () => (
 );
 
 export default function StoriesPage() {
-  const [page, setPage] = useState(1)
-  const [mode, setMode] = useState(localStorage.getItem(storageKeys.listmode) || "list");
+  const [page, setPage] = useState(1);
+  const [mode, setMode] = useState(
+    localStorage.getItem(storageKeys.listmode) || "list",
+  );
   const [filter, setFilter] = useState("all");
-  const { open } = useModal()
+  const { open } = useModal();
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -65,11 +68,13 @@ export default function StoriesPage() {
     };
   }, [open]);
 
-  let filterQuery = '';
+  let filterQuery = "";
   if (filter === "bookmarked") filterQuery = "&bookmarked=true";
   if (filter === "deleted") filterQuery = "&deleted=true";
 
-  const { data, isLoading } = useSWR(`${endpoint.stories}?page=${page}${filterQuery}`);
+  const { data, isLoading } = useSWR(
+    `${endpoint.stories}?page=${page}${filterQuery}`,
+  );
   const { data: stats } = useSWR(endpoint.memoriesStats);
 
   return (
@@ -90,7 +95,10 @@ export default function StoriesPage() {
               <button
                 onClick={() => open("memory-insights")}
                 className="flex items-center h-9 sm:h-12 px-3 sm:px-5 rounded-full font-inter font-semibold text-xs sm:text-sm text-[#101828] cursor-pointer transition-opacity hover:opacity-90 whitespace-nowrap"
-                style={{ backgroundColor: "#F9F9F9", border: "1px solid rgba(0,0,0,0.05)" }}
+                style={{
+                  backgroundColor: "#F9F9F9",
+                  border: "1px solid rgba(0,0,0,0.05)",
+                }}
               >
                 View insights
               </button>
@@ -144,23 +152,25 @@ export default function StoriesPage() {
             onChangeFilter={setFilter}
             count={stats?.data?.stories_count || 0}
           />
-          {
-            mode === "grid" ?
-              <StoriesGrid data={data?.data} /> :
-              <div className="w-full overflow-x-auto">
-                <Table
-                  data={data?.data}
-                  columns={columns}
-                  loading={isLoading}
-                  loadingRow={<TableRowSekeleton />}
-                  onChangePage={setPage}
-                  renderRow={(r, i) => <StoriesTableRow key={i} memory={r as IMemory} />}
-                  emptyRow={<TableEmptyState />}
-                />
-              </div>
-          }
+          {mode === "grid" ? (
+            <StoriesGrid data={data?.data} />
+          ) : (
+            <div className="w-full overflow-x-auto">
+              <Table
+                data={data?.data}
+                columns={columns}
+                loading={isLoading}
+                loadingRow={<TableRowSekeleton />}
+                onChangePage={setPage}
+                renderRow={(r, i) => (
+                  <StoriesTableRow key={i} memory={r as IMemory} />
+                )}
+                emptyRow={<TableEmptyState />}
+              />
+            </div>
+          )}
         </div>
-      </div >
+      </div>
     </div>
   );
 }
