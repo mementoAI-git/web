@@ -1,8 +1,12 @@
 import avatar from "@/assets/image/avatar.png";
-import { DropdowmIcon } from "@/components/Dropdown";
+import { DropdownIcon } from "@/components/Dropdown";
 import { useStore } from "@/hooks/use-store";
 import { useNavigate } from "react-router-dom";
-import { UserCircleIcon, LogoutIcon, ChevronDownIcon } from "@/components/icons";
+import {
+  UserCircleIcon,
+  LogoutIcon,
+  ChevronDownIcon,
+} from "@/components/icons";
 import { useModal } from "@/hooks/use-modal";
 
 export function ProfileDropdown({ hideName = false }: { hideName?: boolean }) {
@@ -23,13 +27,13 @@ export function ProfileDropdown({ hideName = false }: { hideName?: boolean }) {
 
   return (
     <div>
-      <DropdowmIcon
+      <DropdownIcon
         items={[
           {
             label: "My Profile",
             value: "profile",
-            startIcon: <UserCircleIcon strokeWidth={2} width={16} />
-          }
+            startIcon: <UserCircleIcon strokeWidth={2} width={16} />,
+          },
         ]}
         onSelect={handleSelect}
         footerItem={
@@ -53,7 +57,7 @@ export function ProfileDropdown({ hideName = false }: { hideName?: boolean }) {
             </>
           )}
         </div>
-      </DropdowmIcon>
+      </DropdownIcon>
     </div>
   );
 }
