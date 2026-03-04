@@ -104,7 +104,7 @@ export default function Modal() {
 
   return (
     <div
-      className={`modal-overlay relative z-[100] w-full h-full flex flex-col justify-start items-center bg-[rgba(94,94,94,0.5)] ${state ? "flex" : "hidden"}`}
+      className={`modal-overlay relative z-100 w-full h-full flex flex-col justify-start items-center bg-[rgba(94,94,94,0.5)] ${state ? "flex" : "hidden"}`}
       onClick={() => close(topModal.name)}
     >
       {[...state].reverse().map((modal, i) => {
@@ -118,7 +118,11 @@ export default function Modal() {
         return (
           <div
             key={`${modal.name}-${i}`}
-            className="absolute inset-1.5 flex flex-row justify-start items-start"
+            className={`absolute inset-1.5 flex ${
+              isRightPanel
+                ? "flex-row justify-start items-start"
+                : "flex-row justify-center items-center"
+            }`}
             style={{ zIndex: isTop ? 10 : 0 }}
             onClick={!isRightPanel ? (e) => e.stopPropagation() : undefined}
           >
