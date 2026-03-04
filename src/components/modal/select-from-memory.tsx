@@ -38,10 +38,6 @@ export default function SelectFromMemory({
     useState<string[]>(selectedIds);
   const { data, isLoading } = useSWR(`${endpoint.memories}?page=${page}`);
 
-  useEffect(() => {
-    console.log(data);
-  }, [data, isLoading]);
-
   const handleCheck = (memory: IMemory) => {
     setLocalSelectedIds((prev) => {
       if (prev.includes(memory._id)) {

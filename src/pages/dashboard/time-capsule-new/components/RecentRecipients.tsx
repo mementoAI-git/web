@@ -31,23 +31,43 @@ export default function RecentRecipients({
 
   const totalButtons = displayedRecipients.length + (hasMore ? 1 : 0);
 
+  if (!recipients.length) {
+    return (
+      <div className="flex flex-col items-center justify-center py-6 gap-2">
+        <img
+          src={avatarPlaceholder}
+          alt="No recipients"
+          className="w-10 h-10 opacity-30"
+        />
+        <p className="text-xs text-gray-400">No recent recipients</p>
+      </div>
+    );
+  }
+
   return (
     <div
-      className={`grid gap-4 w-full scrollbar-hide`}
+      className={`grid gap-1 w-full scrollbar-hide`}
       style={{ gridTemplateColumns: `repeat(${totalButtons}, 1fr)` }}
     >
       {/* First 4 Recipients */}
       {displayedRecipients.map((recipient) => {
+        const displayName = (
+          recipient.name ||
+          recipient.user?.name ||
+          recipient.email ||
+          ""
+        ).split(/[@\s]/)[0];
         const isSelected = selectedRecipients.includes(recipient.email);
         return (
           <button
             key={recipient._id}
             type="button"
             onClick={() => onSelect?.(recipient)}
-            className={`inline-flex max-w-[100px] rounded-lg py-2 px-3 flex-col items-center gap-1 group cursor-pointer hover:bg-gray-50 transition-all border border-solid ${isSelected
-              ? "border-green-0 ring-px ring-green-0"
-              : "border-[#EBEBEB]"
-              }`}
+            className={`inline-flex max-w[100px] rounded-lg py-2 px-3 flex-col items-center gap-1 group cursor-pointer hover:bg-gray-50 transition-all border border-solid ${
+              isSelected
+                ? "border-green-0 ring-px ring-green-0"
+                : "border-[#EBEBEB]"
+            }`}
           >
             {/* Avatar */}
             <div className="size-6 rounded-full items-center flex justify-center bg-[#F5F5F5] overflow-hidden transition-transform group-hover:scale-105">
@@ -63,14 +83,17 @@ export default function RecentRecipients({
             </div>
             {/* Name */}
             <div className="text-center">
-              <p className="text-xs font-medium text-[var(--color-gray-900)] leading-[18px] text-ellipsis">
-                {
-                  (recipient.name ? recipient.name.split(" ")[0] : "") ||
-                  (recipient.user?.name ? recipient.user.name.split(" ")[0] : "") ||
-                  (recipient.email ? recipient.email.split("@")[0] : "")}
+              <p className="text-xs font-medium text-gray-800 leading-[18px] text-ellipsis">
+                {/*{(recipient.name ? recipient.name.split(" ")[0] : "") ||
+                  (recipient.user?.name
+                    ? recipient.user.name.split(" ")[0]
+                    : "") ||
+                  (recipient.email ? recipient.email.split("@")[0] : "")
+                }*/}
+                {displayName}
               </p>
               {!hideRelationship && (
-                <p className="text-xs font-light text-[var(--color-gray-500)] leading-5">
+                <p className="text-xs font-light text-gray-800 leading-5">
                   {recipient.relationship}
                 </p>
               )}
