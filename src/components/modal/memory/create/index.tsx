@@ -9,7 +9,6 @@ import { useModal } from "@/hooks/use-modal";
 import useForm from "@/hooks/use-form";
 import useFileUpload from "@/hooks/use-file-upload";
 import useSWRMutation from "swr/mutation";
-import useSWR from "swr";
 import { fileUploadFetcher } from "@/api/fetcher";
 import endpoint from "@/api/endpoint";
 import { cn, isEmpty } from "@/utility";
@@ -18,13 +17,13 @@ import { mutate } from "swr";
 import { v4 as uuidv4 } from "uuid";
 import { SUPPORTED_FILE_TYPES } from "@/utility/constant";
 import { TimesIcon, LinkIcon, UnorderedListIcon } from "@/components/icons";
-import { AutogenerateTagsButton } from "@/components/Buttons";
+import { AccessField, buildCreateMemoryPayload } from "./access-field";
+import { TagsField } from "./tags-field";
 import Picker from "@emoji-mart/react";
 import emojiData from "@emoji-mart/data";
 import Spinner from "@/components/spinner";
-import type { IBeneficiary } from "@/utility/interface";
 import { createPortal } from "react-dom";
-import { CloseWithFilesConfirmation } from "./close-with-files-confirmation";
+import { CloseWithFilesConfirmation } from "../close-with-files-confirmation";
 import { Sheet } from "react-modal-sheet";
 import { LinkInput } from "@/components/memory/text-area/link-input";
 import { VideoRecorder } from "@/components/recorder/video";
@@ -54,14 +53,6 @@ function getFileThumbSvg(mimeType: string): string | null {
   return docUploadSvg;
 }
 
-const chipColors = [
-  "bg-blue-50 text-blue-600 border-blue-100",
-  "bg-green-50 text-green-600 border-green-100",
-  "bg-orange-50 text-orange-600 border-orange-100",
-  "bg-purple-50 text-purple-600 border-purple-100",
-  "bg-pink-50 text-pink-600 border-pink-100",
-];
-
 const ACTIVE_BG = "bg-[rgba(23,11,0,0.1)]";
 const initial = { title: "", body: "", attachments: [] as string[] };
 
@@ -80,14 +71,13 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
 
   const [showEmoji, setShowEmoji] = useState(false);
   const [showPlusMenu, setShowPlusMenu] = useState(false);
-  const [showAccessDropdown, setShowAccessDropdown] = useState(false);
   const [showLinkInput, setShowLinkInput] = useState(false);
   const [linkPosition, setLinkPosition] = useState({ top: 0, left: 0 });
   const [showCloseConfirmation, setShowCloseConfirmation] = useState(false);
-  const [accessInput, setAccessInput] = useState("");
-  const [selectedAccess, setSelectedAccess] = useState<Array<{ id: string; name: string }>>([]);
+  const [selectedAccess, setSelectedAccess] = useState<
+    Array<{ id: string; name: string; source: "group" | "beneficiary" }>
+  >([]);
   const [tags, setTags] = useState<string[]>([]);
-  const [tagInput, setTagInput] = useState("");
 
   const [showVideoRecorder, setShowVideoRecorder] = useState(false);
   const [videoRecordedFile, setVideoRecordedFile] = useState<File | null>(null);
@@ -96,8 +86,6 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
 
   const { trigger, isMutating } = useSWRMutation(endpoint.memories, fileUploadFetcher);
   const { files, handleUpload, handleDeleteFile, setFiles } = useFileUpload();
-  const { data: beneficiariesData } = useSWR(`${endpoint.beneficiaries}?page=1`);
-  const beneficiaries: IBeneficiary[] = beneficiariesData?.data?.docs || [];
 
   const { values, handleChange, handleSubmit, handleValue, setValues } = useForm({
     initial: { ...initial, ...data?.payload },
@@ -108,14 +96,22 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
         return toast.error("Please add some content or a media file before continuing");
       }
       const uploadedFiles = files.filter((f) => f.uploadedFile).map((f) => f.uploadedFile._id);
-      if (uploadedFiles.length > 0) p.attachments = uploadedFiles;
-      const result = await trigger({ ...p, status: "draft", tags });
+      const payload = buildCreateMemoryPayload(
+        p.title,
+        bodyText,
+        tags,
+        "save",
+        selectedAccess,
+        uploadedFiles.length > 0 ? { attachments: uploadedFiles } : {}
+      );
+      const result = await trigger(payload as Parameters<typeof trigger>[0]);
       if (result?.success) {
         mutate((key) => typeof key === "string" && key.startsWith(endpoint.stories));
         open("share-post", { id: result.data?._id || result.data?.id });
         setValues(initial);
         setFiles([]);
         setTags([]);
+        setSelectedAccess([]);
       }
     },
   });
@@ -169,7 +165,6 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
     const handle = () => {
       setShowEmoji(false);
       setShowPlusMenu(false);
-      setShowAccessDropdown(false);
     };
     document.addEventListener("click", handle);
     return () => document.removeEventListener("click", handle);
@@ -271,24 +266,6 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
     }
   };
 
-  const filteredBeneficiaries = beneficiaries.filter(
-    (b) =>
-      !selectedAccess.find((a) => a.id === b._id) &&
-      b.name.toLowerCase().includes(accessInput.replace("@", "").toLowerCase()),
-  );
-
-  const addAccess = (b: IBeneficiary) => {
-    setSelectedAccess((prev) => [...prev, { id: b._id!, name: b.name }]);
-    setAccessInput("");
-    setShowAccessDropdown(false);
-  };
-
-  const addTag = (tag: string) => {
-    const t = tag.trim();
-    if (t && !tags.includes(t)) setTags((prev) => [...prev, t]);
-    setTagInput("");
-  };
-
   const { from, to } = editor?.state.selection || { from: 0, to: 0 };
   const selectedText = editor?.state.doc.textBetween(from, to, " ") || "";
   const previousUrl = editor?.getAttributes("link").href || "";
@@ -361,7 +338,7 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
           )}
           {toolbarBtn(
             false,
-            () => {},
+            () => { },
             <span className="underline text-sm text-gray-800 leading-none">U</span>,
             "Underline",
           )}
@@ -539,108 +516,14 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
         </div>
       </div>
 
-      {/* Who has access */}
-      <div>
-        <p className="font-inter text-sm font-medium text-gray-700 mb-2">
-          Who has access to this story?{" "}
-          <span className="text-gray-400 font-normal">(tag a user with @)</span>
-        </p>
-        <div
-          className="relative flex flex-wrap gap-2 min-h-[48px] px-3 py-2 border border-gray-200 rounded-xl bg-white"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {selectedAccess.map((a, i) => (
-            <span
-              key={a.id}
-              className={cn(
-                "flex items-center gap-1 px-2.5 py-1 rounded-full border font-inter text-xs font-medium",
-                chipColors[i % chipColors.length],
-              )}
-            >
-              @{a.name}
-              <button
-                type="button"
-                onClick={() => setSelectedAccess((prev) => prev.filter((x) => x.id !== a.id))}
-                className="opacity-60 hover:opacity-100 ml-0.5 leading-none"
-              >
-                ×
-              </button>
-            </span>
-          ))}
-          <input
-            value={accessInput}
-            onChange={(e) => {
-              setAccessInput(e.target.value);
-              setShowAccessDropdown(e.target.value.length > 0);
-            }}
-            onKeyDown={(e) => { if (e.key === "Escape") setShowAccessDropdown(false); }}
-            placeholder={selectedAccess.length === 0 ? "Type @ to tag someone..." : ""}
-            className="flex-1 min-w-[100px] outline-none font-inter text-sm text-gray-700 placeholder:text-gray-400"
-          />
-          {showAccessDropdown && filteredBeneficiaries.length > 0 && (
-            <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-20 py-1 max-h-40 overflow-y-auto">
-              {filteredBeneficiaries.map((b) => (
-                <button
-                  type="button"
-                  key={b._id}
-                  onClick={() => addAccess(b)}
-                  className="flex items-center gap-2 w-full px-3 py-2 hover:bg-gray-50 text-sm text-gray-700 text-left"
-                >
-                  <div className="size-7 rounded-full bg-gray-100 flex items-center justify-center text-xs font-semibold text-gray-600 shrink-0">
-                    {b.name[0]?.toUpperCase()}
-                  </div>
-                  <div>
-                    <p className="font-medium leading-tight">{b.name}</p>
-                    {b.relationship && (
-                      <p className="text-xs text-gray-400 capitalize">{b.relationship}</p>
-                    )}
-                  </div>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
+      <AccessField value={selectedAccess} onChange={setSelectedAccess} />
 
-      {/* Tags */}
-      <div>
-        <p className="font-inter text-sm font-medium text-gray-700 mb-2">Tags</p>
-        {tags.length > 0 && (
-          <div className="flex flex-wrap gap-2 mb-2">
-            {tags.map((t) => (
-              <span
-                key={t}
-                className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-gray-100 border border-gray-200 font-inter text-xs text-gray-700"
-              >
-                {t}
-                <button
-                  type="button"
-                  onClick={() => setTags((prev) => prev.filter((x) => x !== t))}
-                  className="opacity-60 hover:opacity-100 leading-none ml-0.5"
-                >
-                  ×
-                </button>
-              </span>
-            ))}
-          </div>
-        )}
-        <div className="flex items-center border border-gray-200 rounded-xl overflow-hidden bg-white">
-          <input
-            value={tagInput}
-            onChange={(e) => setTagInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === ",") { e.preventDefault(); addTag(tagInput); }
-            }}
-            placeholder="Manually add tags or click to autogenerate"
-            className="flex-1 outline-none font-inter text-sm text-gray-500 placeholder:text-gray-400 px-4 py-3"
-          />
-          <AutogenerateTagsButton
-            title={values.title ?? ""}
-            body={editor?.getText() ?? ""}
-            onTagsGenerated={(newTags) => setTags((prev) => [...new Set([...prev, ...newTags])])}
-          />
-        </div>
-      </div>
+      <TagsField
+        tags={tags}
+        setTags={setTags}
+        title={values.title ?? ""}
+        body={editor?.getText() ?? ""}
+      />
     </>
   );
 
@@ -668,77 +551,77 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
 
   const closeConfirmationPortal = showCloseConfirmation
     ? createPortal(
-        <CloseWithFilesConfirmation
-          open={showCloseConfirmation}
-          close={() => setShowCloseConfirmation(false)}
-          onConfirm={handleConfirmClose}
-        />,
-        document.body,
-      )
+      <CloseWithFilesConfirmation
+        open={showCloseConfirmation}
+        close={() => setShowCloseConfirmation(false)}
+        onConfirm={handleConfirmClose}
+      />,
+      document.body,
+    )
     : null;
 
   // Video recorder portal popup
   const videoRecorderPortal = showVideoRecorder
     ? createPortal(
-        <div
-          className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 px-4"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div className="bg-white rounded-[28px] w-full max-w-[480px] overflow-hidden shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-6 pt-6 pb-4">
-              <div className="flex items-center gap-2">
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                  <path d="M6 0L7.2 4H11L8 6.5L9.2 10.5L6 8L2.8 10.5L4 6.5L1 4H4.8L6 0Z" fill="#7C3AED" />
-                </svg>
-                <span className="font-inter text-xs font-bold text-purple-600 tracking-widest uppercase">Record Video</span>
-              </div>
-              <button
-                onClick={() => {
-                  if (videoRecorderRef.current?.reset) videoRecorderRef.current.reset();
-                  if (videoRecorderRef.current?.resetStream) videoRecorderRef.current.resetStream();
-                  setVideoRecordedFile(null);
-                  setShowVideoRecorder(false);
-                }}
-                className="size-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
-              >
-                <TimesIcon width={10} height={10} />
-              </button>
+      <div
+        className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 px-4"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="bg-white rounded-[28px] w-full max-w-[480px] overflow-hidden shadow-2xl" onClick={(e) => e.stopPropagation()}>
+          <div className="flex items-center justify-between px-6 pt-6 pb-4">
+            <div className="flex items-center gap-2">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <path d="M6 0L7.2 4H11L8 6.5L9.2 10.5L6 8L2.8 10.5L4 6.5L1 4H4.8L6 0Z" fill="#7C3AED" />
+              </svg>
+              <span className="font-inter text-xs font-bold text-purple-600 tracking-widest uppercase">Record Video</span>
             </div>
-            <div className="px-6 pb-6">
-              <VideoRecorder
-                ref={videoRecorderRef}
-                onStart={() => {}}
-                onFinish={setVideoRecordedFile}
-              />
-              {videoRecordedFile && (
-                <div className="flex items-center gap-3 mt-4">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setVideoRecordedFile(null);
-                      if (videoRecorderRef.current?.reset) videoRecorderRef.current.reset();
-                      if (videoRecorderRef.current?.resetStream) videoRecorderRef.current.resetStream();
-                    }}
-                    className="flex-1 h-10 rounded-full bg-gray-100 text-gray-600 font-inter font-semibold text-sm hover:bg-gray-200 transition-colors"
-                  >
-                    Re-record
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleUseVideo}
-                    disabled={isUsingVideo}
-                    className="flex-1 h-10 rounded-full bg-[#170B00] text-white font-inter font-semibold text-sm hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2 transition-opacity"
-                  >
-                    Add to post
-                    <Spinner loading={isUsingVideo} className="size-4!" />
-                  </button>
-                </div>
-              )}
-            </div>
+            <button
+              onClick={() => {
+                if (videoRecorderRef.current?.reset) videoRecorderRef.current.reset();
+                if (videoRecorderRef.current?.resetStream) videoRecorderRef.current.resetStream();
+                setVideoRecordedFile(null);
+                setShowVideoRecorder(false);
+              }}
+              className="size-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
+            >
+              <TimesIcon width={10} height={10} />
+            </button>
           </div>
-        </div>,
-        document.body,
-      )
+          <div className="px-6 pb-6">
+            <VideoRecorder
+              ref={videoRecorderRef}
+              onStart={() => { }}
+              onFinish={setVideoRecordedFile}
+            />
+            {videoRecordedFile && (
+              <div className="flex items-center gap-3 mt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setVideoRecordedFile(null);
+                    if (videoRecorderRef.current?.reset) videoRecorderRef.current.reset();
+                    if (videoRecorderRef.current?.resetStream) videoRecorderRef.current.resetStream();
+                  }}
+                  className="flex-1 h-10 rounded-full bg-gray-100 text-gray-600 font-inter font-semibold text-sm hover:bg-gray-200 transition-colors"
+                >
+                  Re-record
+                </button>
+                <button
+                  type="button"
+                  onClick={handleUseVideo}
+                  disabled={isUsingVideo}
+                  className="flex-1 h-10 rounded-full bg-[#170B00] text-white font-inter font-semibold text-sm hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2 transition-opacity"
+                >
+                  Add to post
+                  <Spinner loading={isUsingVideo} className="size-4!" />
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>,
+      document.body,
+    )
     : null;
 
   // Mobile

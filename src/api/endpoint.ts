@@ -32,6 +32,7 @@ export default {
   // groups
   groups: "/groups",
   group: "/groups/:id",
+  groupsSearch: "/groups/search",
   groupMembers: "/groups/:id/members",
   groupMember: "/groups/:id/members/:beneficiaryId",
 
