@@ -1,0 +1,26 @@
+@import url("https://fonts.googleapis.com/css2?family=Patrick+Hand+SC&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Cutive+Mono&family=Handlee&display=swap");
+
+.font-patrick {
+  font-family: "Patrick Hand SC", cursive;
+}
+
+.font-handlee {
+  font-family: "Handlee", cursive;
+  /*font-style: normal;*/
+}
+
+.font-cutive {
+  font-family: "Cutive Mono", monospace;
+}
+
+@font-face {
+  font-family: "Portrait Script";
+  src: url("../fonts/Portrait-script-regular.ttf") format("truetype");
+  /* font-weight: normal; */
+  /* font-style: normal; */
+}
+
+.font-portrait {
+  font-family: "Portrait Script", cursive;
+}

@@ -30,9 +30,7 @@ export default function StyleControls({
   const currentTheme =
     (cardStyle.themeId ? themes.find((t) => t.id === cardStyle.themeId) : undefined) ||
     themes.find(
-      (t) =>
-        t.color.toUpperCase() === cardStyle.backgroundColor.toUpperCase() &&
-        t.fontFamily === cardStyle.fontFamily,
+      (t) => t.color.toUpperCase() === cardStyle.backgroundColor.toUpperCase()
     ) ||
     themes.find((t) => t.id === DEFAULT_THEME_ID) ||
     themes[0];
@@ -42,8 +40,7 @@ export default function StyleControls({
     const hasValidTheme = themes.some(
       (t) =>
         (cardStyle.themeId && t.id === cardStyle.themeId) ||
-        (t.color.toUpperCase() === cardStyle.backgroundColor.toUpperCase() &&
-          t.fontFamily === cardStyle.fontFamily),
+        (t.color.toUpperCase() === cardStyle.backgroundColor.toUpperCase()),
     );
 
     if (!hasValidTheme) {
@@ -52,7 +49,6 @@ export default function StyleControls({
       onStyleChange({
         themeId: defaultTheme.id,
         backgroundColor: defaultTheme.color,
-        fontFamily: defaultTheme.fontFamily,
         textColor: defaultTheme.textColor,
         headerColor: defaultTheme.headerColor,
       });
@@ -81,7 +77,6 @@ export default function StyleControls({
     onStyleChange({
       themeId: theme.id,
       backgroundColor: theme.color,
-      fontFamily: theme.fontFamily,
       textColor: theme.textColor,
       headerColor: theme.headerColor,
     });
@@ -110,7 +105,7 @@ export default function StyleControls({
                   zIndex: isSelected ? 20 : 10 - index,
                   transform: isSelected ? "scale(1.1)" : "scale(1)",
                 }}
-                title={`${theme.name} - ${theme.fontFamily}`}
+                title={theme.name}
               />
             );
           })}

@@ -63,7 +63,6 @@ export default function useForm<T extends Record<string, any>>({
     if (!touchedFields.includes(name)) {
       setTouchedfields((p) => [...p, name]);
     }
-    console.log(`Value changed for ${name}: ${value}`);
     setValues((p: any) => ({ ...p, [name]: value }));
   };
 

@@ -2,7 +2,7 @@ type CapsuleStatus =
   | "draft"
   | "scheduled"
   | "delivered"
-  | "paused"
+  | "pause"
   | "failed"
   | "deleted";
 
@@ -30,6 +30,12 @@ export default function StatusBadge({ status }: { status: CapsuleStatus }) {
       text: "text-[#067647]",
       border: "border-[#ABEFC6]",
       label: "Delivered",
+    },
+    pause: {
+      bg: "bg-gray-50/40",
+      text: "text-gray-800",
+      border: "border-gray-50",
+      label: "Paused",
     },
   };
 
