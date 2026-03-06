@@ -461,6 +461,15 @@ function MobileFormSheet({
                   )}
                 </button>
               )}
+              {isEditMode && (
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="flex-1 h-12 rounded-full border border-gray-300 text-sm font-medium text-[#1D2939] flex items-center justify-center gap-2"
+                >
+                  Cancel
+                </button>
+              )}
               <button
                 type="button"
                 onClick={handleSave}
@@ -671,7 +680,7 @@ export default function CreateCapsule({
   const isEditMode = !isEmpty(data) && currentMode === "edit";
   const isViewMode = currentMode === "view";
 
-  const { close } = useModal();
+  const { close, push } = useModal();
   const { user } = useStore();
   const { files, handleUpload } = useFileUpload();
   const { trigger, isMutating } = useFetcher(
@@ -830,6 +839,18 @@ export default function CreateCapsule({
     close?.("create-capsule");
     close?.("view-capsule");
     close?.("edit-capsule");
+  };
+
+  const handleAttemptClose = () => {
+    if (isDirty) {
+      push?.("exit-confirmation", {
+        onConfirm: () => {
+          handleCloseClick();
+        },
+      });
+    } else {
+      handleCloseClick();
+    }
   };
 
   const handleFileDrop = useCallback(
@@ -1113,7 +1134,7 @@ export default function CreateCapsule({
           </div>
         </div>
         <div className="modal-container overflow-hidden scrollbar-hide !w-[500px] !max-w-[500px] !h-full !max-h-full !p-6 !rounded-3xl shrink-0 !bg-white">
-          <ModalCloseBtn onClick={handleCloseClick} />
+          <ModalCloseBtn onClick={handleAttemptClose} />
           <div className="flex flex-col gap-8 w-full h-full">
             <h4 className="modal-title">
               {isEditMode ? "Edit Capsule" : "Create Capsule"}
@@ -1259,6 +1280,16 @@ export default function CreateCapsule({
                     )}
                   </button>
                 )}
+                {isEditMode && (
+                  <button
+                    type="button"
+                    disabled={!isDirty}
+                    className="btn-outline"
+                    onClick={handleAttemptClose}
+                  >
+                    Cancel
+                  </button>
+                )}
                 <button
                   type="submit"
                   className="btn"
@@ -1282,7 +1313,7 @@ export default function CreateCapsule({
         {/* 1. Form sheet */}
         <MobileFormSheet
           isOpen={formSheetOpen}
-          onClose={handleCloseClick}
+          onClose={handleAttemptClose}
           {...sharedFormProps}
           onOpenMemory={() => setMemorySheetOpen(true)}
           onOpenMedia={() => setMediaSheetOpen(true)}
