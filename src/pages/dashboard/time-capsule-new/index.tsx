@@ -1,9 +1,13 @@
 import endpoint from "@/api/endpoint";
 import { useModal } from "@/hooks/use-modal";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import useSWR from "swr";
+import useSWRInfinite from "swr/infinite";
 import { StatCard } from "./components/stat-card";
 import { storageKeys } from "@/utility/constant";
+import useIntersectionObserver from "@/hooks/use-intersection-observer";
+import Spinner from "@/components/spinner";
+import { fetcher } from "@/api/fetcher";
 import CapsuleHeader from "./components/header";
 import CapsuleGrid from "./components/grid";
 import { TimerFillIcon } from "./components/icons/TimerFillIcon";
@@ -18,7 +22,6 @@ import FrozenBg from "./components/assets/frozen.svg";
 import { PauseIcon } from "./components/icons/PauseIcon";
 
 export default function TimeCapsulePage() {
-  const [page] = useState(1);
   const [mode, setMode] = useState(
     localStorage.getItem(storageKeys.listmode) || "list",
   );
@@ -50,9 +53,34 @@ export default function TimeCapsulePage() {
     return "";
   };
 
-  const { data: capsule } = useSWR(
-    `${endpoint.capsule}?page=${page}${getFilterQuery()}`,
+  const getKey = useCallback(
+    (pageIndex: number, previousPageData: any) => {
+      if (previousPageData && !previousPageData.data.docs.length) return null;
+      return `${endpoint.capsule}?page=${pageIndex + 1}${getFilterQuery(filter)}`;
+    },
+    [filter],
   );
+
+  const {
+    data,
+    size,
+    setSize,
+    isLoading,
+  } = useSWRInfinite(getKey, fetcher, { revalidateOnFocus: false });
+
+  const capsules = data ? data.flatMap((page) => page.data.docs) : [];
+  const isLoadingMore =
+    isLoading || (size > 0 && data && typeof data[size - 1] === "undefined");
+  const hasMore = data?.[data.length - 1]?.data?.hasNextPage || false;
+
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
+  const isIntersecting = useIntersectionObserver(loadMoreRef);
+
+  useEffect(() => {
+    if (isIntersecting && !isLoadingMore && hasMore) {
+      setSize(size + 1);
+    }
+  }, [hasMore, isIntersecting, isLoadingMore, setSize, size]);
 
   const { data: stats } = useSWR(endpoint.capsuleStats);
 
@@ -140,10 +168,24 @@ export default function TimeCapsulePage() {
               setFilter(newFilter);
             }}
           />
-          {mode === "grid" ? (
-            <CapsuleGrid data={capsule?.data} filter={filter} />
+          {isLoading && capsules.length === 0 ? (
+            <div className="flex justify-center py-20">
+              <Spinner loading className="!size-20 !text-blue-600" />
+            </div>
+          ) : mode === "grid" ? (
+            <CapsuleGrid
+              data={capsules}
+              filter={filter}
+              loadMoreRef={loadMoreRef}
+              isLoadingMore={isLoadingMore}
+            />
           ) : (
-            <CapsuleList data={capsule?.data} filter={filter} />
+            <CapsuleList
+              data={capsules}
+              filter={filter}
+              loadMoreRef={loadMoreRef}
+              isLoadingMore={isLoadingMore}
+            />
           )}
         </div>
       </div>
