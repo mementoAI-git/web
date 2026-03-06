@@ -193,6 +193,8 @@ function MobileFormSheet({
   previewRecipients,
   previewAssets,
   user,
+  isDirty,
+  pendingStatus,
 }: any) {
   return (
     <Sheet
@@ -225,7 +227,7 @@ function MobileFormSheet({
           <div className="flex flex-col h-full">
             <div className="flex-1 overflow-auto px-4 pb-4">
               <SheetHeader
-                title={isEditMode ? "Edit Capsule" : "Create Capsule"}
+                title={isEditMode ? "Edit Time Capsule" : "Create Time Capsule"}
                 onClose={onClose}
               />
 
@@ -252,7 +254,7 @@ function MobileFormSheet({
                     recipients={beneficiaries?.data?.docs}
                     selectedRecipients={values.recipients}
                     onSelect={handleRecipientSelect}
-                    onSeeAll={() => {}}
+                    onSeeAll={() => { }}
                     hideRelationship
                   />
                 </div>
@@ -400,7 +402,7 @@ function MobileFormSheet({
                 >
                   {/* Centering wrapper */}
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <div className="relative w-[268px] h-[343px] scale-[0.85] origin-center">
+                    <div className="relative scale-[0.85] origin-center">
                       <CapsulePreviewCard
                         style={cardStyle}
                         recipients={previewRecipients}
@@ -408,7 +410,7 @@ function MobileFormSheet({
                         body={values.body}
                         assets={previewAssets}
                         sender={user}
-                        onAssetClick={() => {}}
+                        onAssetClick={() => { }}
                         className="h-full w-full p-4 rounded-xl overflow-hidden"
                       />
                     </div>
@@ -455,19 +457,30 @@ function MobileFormSheet({
                   className="flex-1 h-12 rounded-full border border-gray-300 text-sm font-medium text-[#1D2939] flex items-center justify-center gap-2"
                 >
                   Save as Draft
-                  {values.status === "draft" && (
-                    <Spinner loading={isMutating} className="size-4!" />
+                  {pendingStatus === "draft" && (
+                    <Spinner loading={isMutating} className="size-4! !text-[#1D2939]" />
                   )}
+                </button>
+              )}
+              {isEditMode && (
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="flex-1 h-12 rounded-full border border-gray-300 text-sm font-medium text-[#1D2939] flex items-center justify-center gap-2"
+                >
+                  Cancel
                 </button>
               )}
               <button
                 type="button"
                 onClick={handleSave}
-                disabled={!isFormValid || isMutating}
+                disabled={
+                  !isFormValid || isMutating || (isEditMode && !isDirty)
+                }
                 className="flex-1 h-12 rounded-full bg-orange text-white text-sm font-medium flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 {isEditMode ? "Update Capsule" : "Schedule Capsule"}
-                {values.status === "scheduled" && (
+                {pendingStatus === "scheduled" && (
                   <Spinner loading={isMutating} className="size-4!" />
                 )}
               </button>
@@ -526,7 +539,7 @@ function MobilePreviewSheet({
               />
             </div>
             {/* Full capsule card */}
-            <div className="flex-1 rounded-2xl overflow-hidden">
+            <div className="flex-1 rounded-2xl w-full">
               <CapsulePreviewCard
                 style={cardStyle}
                 recipients={previewRecipients}
@@ -534,7 +547,7 @@ function MobilePreviewSheet({
                 body={values.body}
                 assets={previewAssets}
                 sender={user}
-                onAssetClick={() => {}}
+                onAssetClick={() => { }}
                 className="h-full w-full p-6"
               />
             </div>
@@ -668,7 +681,7 @@ export default function CreateCapsule({
   const isEditMode = !isEmpty(data) && currentMode === "edit";
   const isViewMode = currentMode === "view";
 
-  const { close } = useModal();
+  const { close, push } = useModal();
   const { user } = useStore();
   const { files, handleUpload } = useFileUpload();
   const { trigger, isMutating } = useFetcher(
@@ -677,10 +690,15 @@ export default function CreateCapsule({
   );
   const [page] = useState(1);
   const { data: beneficiaries } = useSWR(endpoint.beneficiaries, undefined, {
-    revalidateIfStale: false,
+    revalidateIfStale: true,
   });
   const { data: recentMedia } = useSWR(`${endpoint.files}?page=${page}`);
   const [selectedMedia, setSelectedMedia] = useState<any[]>([]);
+
+  const [originalValues, setOriginalValues] = useState<typeof initial | null>(
+    null,
+  );
+  const [originalMedia, setOriginalMedia] = useState<any[]>([]);
 
   // Desktop
   const [desktopShowMemory, setDesktopShowMemory] = useState(false);
@@ -698,8 +716,7 @@ export default function CreateCapsule({
   ) => {
     const submission = { ...payload };
     if (submission.status === "draft") {
-      const { schedule_date, ...rest } = submission;
-      Object.assign(submission, rest);
+      delete submission.schedule_date;
     }
     const uploadedIds = !isEmpty(files)
       ? files.map((f: any) => f.uploadedFile?._id).filter(Boolean)
@@ -720,41 +737,68 @@ export default function CreateCapsule({
     submission.memories = Array.from(new Set(memoryIds));
     const result = await trigger(submission);
     if (result?.success) {
-      toast.custom(() => <TimeCapsuleBadge />);
+      if (isEditMode) {
+        toast.success("Time Capsule Updated Successfully");
+      } else if (submission.status === "draft") {
+        toast.success("Time Capsule Saved to Draft");
+      } else {
+        toast.custom(() => <TimeCapsuleBadge />);
+      }
       mutate(`${endpoint.capsule}?page=1`);
       setValues(initial);
-      close?.("create-capsule");
+      handleCloseClick();
     }
   };
 
-  const { setValues, values, errors, handleSubmit, handleChange, handleValue } =
+  const { setValues, values, errors, handleChange, handleValue } =
     useForm({ initial, schema, onSubmit });
 
   useEffect(() => {
     if (data) {
-      setValues({
+      const populated = {
         title: data?.title || "",
         body: data?.body || "",
-        schedule_date: data?.schedule_date || "",
+        // schedule_date: data?.schedule_date || "",
+        schedule_date: data?.schedule_date
+          ? new Date(data.schedule_date).toISOString()
+          : "",
         status: data?.status || "scheduled",
         recipients:
           data?.recipients?.map((r: { email: string }) => r.email) || [],
-      });
+      };
+      setValues(populated);
+      setOriginalValues(populated);
+
       if (data?.attachments?.length) {
-        setSelectedMedia(
-          data.attachments.map((a: any) => ({
-            id: a._id,
-            _id: a._id,
-            type: a.type?.split("/")[0] || "image",
-            thumbnail: a.url || a.thumbnail,
-            title: a.name || a.title,
-            url: a.url,
-            duration: a.duration,
-          })),
-        );
+        const mapped = data.attachments.map((a: any) => ({
+          id: a._id,
+          _id: a._id,
+          type: a.type?.split("/")[0] || "image",
+          thumbnail: a.url || a.thumbnail,
+          title: a.name || a.title,
+          url: a.url,
+          duration: a.duration,
+        })); // same as before
+
+        setSelectedMedia(mapped);
+        setOriginalMedia(mapped);
       }
     }
   }, [data, setValues]);
+
+  const isDirty =
+    isEditMode &&
+    (JSON.stringify({
+      ...values,
+      recipients: [...values.recipients].sort(),
+    }) !==
+      JSON.stringify({
+        ...originalValues,
+        recipients: [...(originalValues?.recipients ?? [])].sort(),
+      }) ||
+      JSON.stringify(selectedMedia.map((m) => m.id || m._id).sort()) !==
+      JSON.stringify(originalMedia.map((m) => m.id || m._id).sort()) ||
+      files.length > 0);
 
   const [cardStyle, setCardStyle] = useState<CardCustomization>({
     themeId: "sage",
@@ -801,6 +845,18 @@ export default function CreateCapsule({
     close?.("create-capsule");
     close?.("view-capsule");
     close?.("edit-capsule");
+  };
+
+  const handleAttemptClose = () => {
+    if (isDirty) {
+      push?.("exit-confirmation", {
+        onConfirm: () => {
+          handleCloseClick();
+        },
+      });
+    } else {
+      handleCloseClick();
+    }
   };
 
   const handleFileDrop = useCallback(
@@ -851,33 +907,28 @@ export default function CreateCapsule({
     );
   };
 
-  const [shouldSubmit, setShouldSubmit] = useState(false);
+  // Removed shouldSubmit / pendingStatus useEffect since we submit directly
+
   const [pendingStatus, setPendingStatus] = useState<
     "draft" | "scheduled" | null
   >(null);
 
-  useEffect(() => {
-    if (shouldSubmit && pendingStatus && values.status === pendingStatus) {
-      handleSubmit();
-      setShouldSubmit(false);
-      setPendingStatus(null);
-    }
-  }, [values.status, shouldSubmit, pendingStatus, handleSubmit]);
-
-  const handleSaveToDraft = (e: React.FormEvent<HTMLButtonElement>) => {
+  const handleSaveToDraft = async (e: React.FormEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
     if (isMutating) return;
-    handleValue("status", "draft");
     setPendingStatus("draft");
-    setShouldSubmit(true);
+    handleValue("status", "draft");
+    await onSubmit({ ...values, status: "draft" }, { setValues });
+    setPendingStatus(null);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (isMutating) return;
-    handleValue("status", "scheduled");
     setPendingStatus("scheduled");
-    setShouldSubmit(true);
+    handleValue("status", "scheduled");
+    await onSubmit({ ...values, status: "scheduled" }, { setValues });
+    setPendingStatus(null);
   };
 
   const handleMemorySelectionConfirm = useCallback((memories: IMemory[]) => {
@@ -919,18 +970,20 @@ export default function CreateCapsule({
   const isFormValid =
     values.status === "draft"
       ? values.title.trim() !== "" &&
-        values.body.trim() !== "" &&
-        values.recipients.length > 0
+      values.body.trim() !== "" &&
+      values.recipients.length > 0
       : !!values.schedule_date &&
-        values.title.trim() !== "" &&
-        values.body.trim() !== "" &&
-        values.recipients.length > 0;
+      values.title.trim() !== "" &&
+      values.body.trim() !== "" &&
+      values.recipients.length > 0;
 
   const sharedFormProps = {
     values,
     errors,
     handleChange,
     handleValue,
+    isDirty,
+    pendingStatus,
     handleSave,
     handleSaveToDraft,
     isEditMode,
@@ -989,15 +1042,15 @@ export default function CreateCapsule({
     return (
       <>
         {/* Desktop */}
-        <div className="hidden sm:flex max-w-[1440px] flex-col justify-center items-center max-h-[900px] h-full w-full relative">
-          <ModalCloseBtn onClick={handleCloseClick} />
-          <div className="flex flex-col items-center justify-center w-full">
-            <div className="bg-black/60 gap-6 h-fit mt-10 min-w-[560px] max-w-5xl w-full rounded-2xl py-8 px-6 lg:px-24 flex flex-col items-center">
+        <div className="hidden sm:flex flex-col justify-center items-center h-full w-full relative">
+          <div className="flex flexcol items-center justify-center wfull">
+            <div className="bg-black/60 gap-6 hfit mt10 min-w-[560px] max-w-5xl aspect-560/697!  rounded-2xl py-8 px-6 lg:px-24 flex flex-col items-center">
+              <ModalCloseBtn onClick={handleCloseClick} />
               <StyleControls
                 cardStyle={cardStyle}
                 onStyleChange={handleStyleChange}
               />
-              <div className="h-[770px] w-full">
+              <div className=" max-w-[560px]">
                 <CapsulePreviewCard
                   style={cardStyle}
                   recipients={previewRecipients}
@@ -1005,8 +1058,8 @@ export default function CreateCapsule({
                   body={values.body}
                   assets={previewAssets}
                   sender={user}
-                  onAssetClick={() => {}}
-                  className="h-full w-full p-6"
+                  onAssetClick={() => { }}
+                  className="hfull wfull p-6 bg-pink-500"
                 />
               </div>
               <div className="flex items-center justify-end gap-4 w-full">
@@ -1025,7 +1078,7 @@ export default function CreateCapsule({
                   }}
                   className="btn"
                 >
-                  Edit Capsule
+                  Edit Time Capsule
                 </button>
               </div>
             </div>
@@ -1061,12 +1114,12 @@ export default function CreateCapsule({
               />
             </div>
             <div
-              className="w-full max-w-[560px]"
+              className="w-full h-fit! max-w-[560px]"
               style={{
-                flex: "1 1 0",
+                // flex: "1 1 0",
                 minHeight: 0,
                 overflow: "hidden",
-                height: 300,
+                // height: 300,
               }}
             >
               <CapsulePreviewCard
@@ -1076,22 +1129,21 @@ export default function CreateCapsule({
                 body={values.body}
                 assets={previewAssets}
                 sender={user}
-                onAssetClick={() => {}}
-                className="h-full bg-orange-500 w-full p-6 pb-0"
+                onAssetClick={() => { }}
+                className="h-full w-full p-6 pb-0"
               />
             </div>
           </div>
         </div>
         <div className="modal-container overflow-hidden scrollbar-hide !w-[500px] !max-w-[500px] !h-full !max-h-full !p-6 !rounded-3xl shrink-0 !bg-white">
-          <ModalCloseBtn onClick={handleCloseClick} />
+          <ModalCloseBtn onClick={handleAttemptClose} />
           <div className="flex flex-col gap-8 w-full h-full">
             <h4 className="modal-title">
-              {isEditMode ? "Edit Capsule" : "Create Capsule"}
+              {isEditMode ? "Edit Time Capsule" : "Create Time Capsule"}
             </h4>
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                handleSave();
               }}
               className="flex flex-col gap-8 pb-6"
             >
@@ -1101,7 +1153,7 @@ export default function CreateCapsule({
                   placeholder="Enter recipients email address"
                   inputClassName="!px-2"
                   label={
-                    <div className="mb-2 text-base text-[var(--color-gray-800)] normal-case">
+                    <div className="mb-2 text-base text-gray-800 normal-case">
                       Select recipient(s)
                     </div>
                   }
@@ -1115,7 +1167,7 @@ export default function CreateCapsule({
                     recipients={beneficiaries?.data?.docs}
                     selectedRecipients={values.recipients}
                     onSelect={handleRecipientSelect}
-                    onSeeAll={() => {}}
+                    onSeeAll={() => { }}
                     hideRelationship
                   />
                 </div>
@@ -1142,7 +1194,7 @@ export default function CreateCapsule({
                         : "border-black/5",
                     )}
                   >
-                    <span className="mt-6 text-sm font-medium text-center text-[var(--color-gray-900)]">
+                    <span className="mt-6 text-sm font-medium text-center text-gray-900">
                       {isDragging ? (
                         "Drop files here"
                       ) : (
@@ -1153,14 +1205,14 @@ export default function CreateCapsule({
                         </>
                       )}
                     </span>
-                    <p className="mb-6 text-xs font-light text-center max-w-[240px] text-[var(--color-gray-600)]">
+                    <p className="mb-6 text-xs font-light text-center max-w-60 text-gray-600">
                       Supports JPG, PNG, MP4, MP3, PDF, DOC, TXT. Max 120mb
                     </p>
                     <BrowseFileBtn onUpload={handleUpload} />
                   </div>
                 </div>
                 <div className="flex flex-col border-t-0 rounded-2xl bg-[#f5f5f5] p-3">
-                  <span className="block mb-2 text-xs text-[var(--color-gray-600)] font-medium">
+                  <span className="block mb-2 text-xs text-gray-600 font-medium">
                     Recently uploaded
                   </span>
                   <RecentMedia
@@ -1204,7 +1256,7 @@ export default function CreateCapsule({
                 </div>
               </div>
               <div className="flex flex-col gap-2">
-                <span className="text-base text-[var(--color-gray-800)] block">
+                <span className="text-base text-gray-800 block">
                   Capsule delivery date:
                 </span>
                 <DateOptionsDropdown
@@ -1224,18 +1276,31 @@ export default function CreateCapsule({
                     onClick={handleSaveToDraft}
                   >
                     Save to draft
-                    {values.status === "draft" && (
-                      <Spinner loading={isMutating} className="size-4!" />
+                    {pendingStatus === "draft" && (
+                      <Spinner loading={isMutating} className="size-4! !text-[#1D2939]" />
                     )}
                   </button>
                 )}
+                {isEditMode && (
+                  <button
+                    type="button"
+                    disabled={!isDirty}
+                    className="btn-outline"
+                    onClick={handleAttemptClose}
+                  >
+                    Cancel
+                  </button>
+                )}
                 <button
-                  type="submit"
+                  type="button"
+                  onClick={handleSave}
                   className="btn"
-                  disabled={!isFormValid || isMutating}
+                  disabled={
+                    !isFormValid || isMutating || (isEditMode && !isDirty)
+                  }
                 >
-                  {isEditMode ? "Update Capsule" : "Schedule Capsule"}
-                  {values.status === "scheduled" && (
+                  {isEditMode ? "Save Changes" : "Schedule Capsule"}
+                  {pendingStatus === "scheduled" && (
                     <Spinner loading={isMutating} className="size-4!" />
                   )}
                 </button>
@@ -1250,7 +1315,7 @@ export default function CreateCapsule({
         {/* 1. Form sheet */}
         <MobileFormSheet
           isOpen={formSheetOpen}
-          onClose={handleCloseClick}
+          onClose={handleAttemptClose}
           {...sharedFormProps}
           onOpenMemory={() => setMemorySheetOpen(true)}
           onOpenMedia={() => setMediaSheetOpen(true)}

@@ -36,3 +36,9 @@ export const isImage = (file) => {
   const ext = file?.name?.split(".").pop()?.toLowerCase();
   return ["jpg", "jpeg", "png", "gif", "webp", "svg"].includes(ext || "");
 };
+
+export function getDisplayName(recipient) {
+  const name =
+    `${recipient.first_name || ""} ${recipient.last_name || ""}`.trim();
+  return name || recipient.email;
+}

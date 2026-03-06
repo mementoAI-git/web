@@ -43,6 +43,7 @@ import {
   VideoRecorderModal,
 } from "./memory/recorder-modal";
 import { UnpauseCapsule } from "./capsule";
+import { ExitConfirmation } from "./capsule/create/exit-confirmation";
 
 const RIGHT_PANEL_MODALS = ["create-memory"];
 
@@ -83,6 +84,7 @@ const MODAL_COMPONENTS = {
   "memory-insights": MemoryInsights,
   "audio-recorder": AudioRecorderModal,
   "video-recorder": VideoRecorderModal,
+  "exit-confirmation": ExitConfirmation,
 };
 
 export default function Modal() {
@@ -130,11 +132,10 @@ export default function Modal() {
         return (
           <div
             key={`${modal.name}-${i}`}
-            className={`absolute inset-1.5 flex ${
-              isRightPanel
+            className={`absolute inset-1.5 flex ${isRightPanel
                 ? "flex-row justify-start items-start"
                 : "flex-row justify-center items-center"
-            }`}
+              }`}
             style={{ zIndex: isTop ? 10 : 0 }}
             onClick={!isRightPanel ? (e) => e.stopPropagation() : undefined}
           >

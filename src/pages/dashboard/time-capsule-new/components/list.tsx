@@ -1,10 +1,11 @@
-import type { IPagination, ICapsule } from "@/utility/interface";
+import type { ICapsule } from "@/utility/interface";
 import { CapsuleEmptyState } from "./CapsuleEmptyState";
 import ImageThumbnail from "./ImageThumbnail";
 import StatusBadge from "./StatusBadge";
 import dayjs from "dayjs";
 import { CapsuleItemActions } from "./dropdown";
 import { CalendarIcon } from "@/components/icons";
+import { getDisplayName } from "../utility/helpers";
 
 function CapsuleListItem({ capsule }: { capsule: ICapsule }) {
   return (
@@ -59,10 +60,7 @@ function CapsuleListItem({ capsule }: { capsule: ICapsule }) {
                       {capsule.recipients[0].picture_url ? (
                         <img
                           src={capsule.recipients[0].picture_url}
-                          alt={
-                            `${capsule.recipients[0].first_name} ${capsule.recipients[0].last_name}` ||
-                            capsule.recipients[0].email
-                          }
+                          alt={getDisplayName(capsule.recipients[0])}
                           className="w-5 h-5 rounded-full object-cover"
                         />
                       ) : (
@@ -165,23 +163,35 @@ function CapsuleListItem({ capsule }: { capsule: ICapsule }) {
   );
 }
 
+import Spinner from "@/components/spinner";
+
 export default function CapsuleList({
   data,
   filter = "all",
+  loadMoreRef,
+  isLoadingMore,
 }: {
-  data: IPagination<ICapsule>;
+  data: ICapsule[];
   filter?: string;
+  loadMoreRef?: React.MutableRefObject<HTMLDivElement | null>;
+  isLoadingMore?: boolean;
 }) {
   // Handle empty state
-  if (!data?.docs || data.docs.length === 0) {
+  if (!data || data.length === 0) {
     return <CapsuleEmptyState filterType={filter} showCreateButton={true} />;
   }
 
   return (
-    <div className="grid grid-cols-1 gap-4 sm:gap-6 auto-rows-fr">
-      {data.docs.map((m, i) => (
-        <CapsuleListItem key={i} capsule={m} />
-      ))}
+    <div className="flex flex-col gap-6">
+      <div className="grid grid-cols-1 gap-4 sm:gap-6 auto-rows-fr">
+        {data.map((m, i) => (
+          <CapsuleListItem key={m._id || i} capsule={m} />
+        ))}
+      </div>
+      {/* Infinite Scroll Loader */}
+      <div ref={loadMoreRef} className="flex justify-center py-4">
+        {isLoadingMore && <Spinner loading className="!size-8 !text-blue-600" />}
+      </div>
     </div>
   );
 }

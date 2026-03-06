@@ -23,11 +23,11 @@ export function CapsuleItemActions({ capsule }: { capsule: ICapsule }) {
   };
 
   const STATUS_ACTION_MAP = {
-    draft: {
-      label: "Schedule",
-      value: "schedule-capsule",
-      startIcon: <AddBookmarkIcon width={16} height={16} />,
-    },
+    // draft: {
+    //   label: "Schedule",
+    //   value: "schedule-capsule",
+    //   startIcon: <AddBookmarkIcon width={16} height={16} />,
+    // },
     scheduled: {
       label: "Freeze",
       value: "pause-capsule",
@@ -44,7 +44,7 @@ export function CapsuleItemActions({ capsule }: { capsule: ICapsule }) {
     <DropdownIcon
       icon={<VerticalEllipseIcon className="w-1 h-3" />}
       items={
-        capsule.status == "deleted"
+        capsule.status === "deleted"
           ? [
               {
                 label: "Restore",
@@ -55,11 +55,15 @@ export function CapsuleItemActions({ capsule }: { capsule: ICapsule }) {
               },
             ]
           : [
-              {
-                label: "Edit",
-                value: "edit-capsule",
-                startIcon: <EditIcon width={16} />,
-              },
+              ...(capsule.status !== "delivered"
+                ? [
+                    {
+                      label: "Edit",
+                      value: "edit-capsule",
+                      startIcon: <EditIcon width={16} />,
+                    },
+                  ]
+                : []),
               {
                 label: "View",
                 value: "view-capsule",
@@ -77,7 +81,7 @@ export function CapsuleItemActions({ capsule }: { capsule: ICapsule }) {
             ]
       }
       footerItem={
-        capsule.status !== "deleted" ? (
+        capsule.status !== "deleted" && capsule.status !== "delivered" ? (
           <li
             onClick={() => open("delete-capsule", capsule._id)}
             className="flex cursor-pointer items-center rounded gap-2.5 px-2.5 py-1.5 hover:bg-[#F97066]/8 text-[#F97066]"
