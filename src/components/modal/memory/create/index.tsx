@@ -27,31 +27,12 @@ import { CloseWithFilesConfirmation } from "../close-with-files-confirmation";
 import { Sheet } from "react-modal-sheet";
 import { LinkInput } from "@/components/memory/text-area/link-input";
 import { VideoRecorder } from "@/components/recorder/video";
+import { FileThumbnails } from "./file-thumbnails";
 
 import addPlusSvg from "@/assets/icon/Add-plus.svg";
 import smileySvg from "@/assets/icon/noto_slightly-smiling-face.svg";
 import micSvg from "@/assets/icon/microphone-01.svg";
 import videoRecorderSvg from "@/assets/icon/video-recorder.svg";
-import recUploadSvg from "@/assets/icon/rec upload - short.svg";
-import videoUploadSvg from "@/assets/icon/Video Upload.svg";
-import docUploadSvg from "@/assets/icon/Document Upload.svg";
-import musicUploadSvg from "@/assets/icon/music upload - short.svg";
-import imageUploadSvg from "@/assets/icon/Image Upload.svg";
-
-function formatFileSize(bytes: number): string {
-  if (bytes >= 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
-  if (bytes >= 1024 * 1024) return `${Math.round(bytes / (1024 * 1024))} MB`;
-  if (bytes >= 1024) return `${Math.round(bytes / 1024)} KB`;
-  return `${bytes} B`;
-}
-
-function getFileThumbSvg(mimeType: string): string | null {
-  if (mimeType.startsWith("image/")) return null;
-  if (mimeType === "audio/webm" || mimeType === "audio/ogg") return recUploadSvg;
-  if (mimeType.startsWith("audio/")) return musicUploadSvg;
-  if (mimeType.startsWith("video/")) return videoUploadSvg;
-  return docUploadSvg;
-}
 
 const ACTIVE_BG = "bg-[rgba(23,11,0,0.1)]";
 const initial = { title: "", body: "", attachments: [] as string[] };
@@ -104,6 +85,7 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
         selectedAccess,
         uploadedFiles.length > 0 ? { attachments: uploadedFiles } : {}
       );
+
       const result = await trigger(payload as Parameters<typeof trigger>[0]);
       if (result?.success) {
         mutate((key) => typeof key === "string" && key.startsWith(endpoint.stories));
@@ -378,59 +360,7 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
         </div>
 
         {/* File thumbnails */}
-        {files.length > 0 && (
-          <div className="mt-6 px-4 overflow-x-auto hide-scrollbar">
-            <div className="flex gap-3 pb-1">
-              {files.map((f) => {
-                const mimeType = f.file?.type || f.uploadedFile?.type || "";
-                const thumbSvg = getFileThumbSvg(mimeType);
-                const isImage = mimeType.startsWith("image/");
-                const imgSrc = isImage ? (f.base64 || f.uploadedFile?.url || "") : (thumbSvg ?? imageUploadSvg);
-                const sizeBytes =
-                  f.file?.size ?? (typeof f.uploadedFile?.size === "number" ? f.uploadedFile.size : 0);
-                const sizeLabel = sizeBytes ? formatFileSize(sizeBytes) : "";
-                const isUpl = f.progress !== undefined && f.progress !== 100;
-
-                return (
-                  <div key={f.id} className="relative shrink-0">
-                    {/* X button */}
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveFile(f.id)}
-                      className="absolute -top-2 -right-2 z-10 size-6 rounded-full bg-gray-500 hover:bg-gray-700 flex items-center justify-center transition-colors shadow"
-                    >
-                      <TimesIcon width={8} height={8} />
-                    </button>
-
-                    <div className="w-24 h-24 rounded-xl overflow-hidden relative bg-gray-100">
-                      <img
-                        src={imgSrc}
-                        className="w-full h-full object-cover"
-                        alt=""
-                      />
-
-                      {/* Upload progress overlay */}
-                      {isUpl && (
-                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                          <span className="font-inter text-white text-xs font-semibold">{f.progress}%</span>
-                        </div>
-                      )}
-
-                      {/* Size pill */}
-                      {sizeLabel && (
-                        <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 bg-black/55 rounded-full px-2 py-0.5">
-                          <span className="font-inter text-white text-[9px] font-semibold whitespace-nowrap">
-                            {sizeLabel}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
+        <FileThumbnails files={files} onRemove={handleRemoveFile} />
 
         {/* Icons bar */}
         <div className="mt-6 mx-4 mb-4" onClick={(e) => e.stopPropagation()}>
