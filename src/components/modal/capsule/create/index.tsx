@@ -193,6 +193,7 @@ function MobileFormSheet({
   previewRecipients,
   previewAssets,
   user,
+  isDirty,
 }: any) {
   return (
     <Sheet
@@ -463,7 +464,9 @@ function MobileFormSheet({
               <button
                 type="button"
                 onClick={handleSave}
-                disabled={!isFormValid || isMutating}
+                disabled={
+                  !isFormValid || isMutating || (isEditMode && !isDirty)
+                }
                 className="flex-1 h-12 rounded-full bg-orange text-white text-sm font-medium flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 {isEditMode ? "Update Capsule" : "Schedule Capsule"}
@@ -677,10 +680,15 @@ export default function CreateCapsule({
   );
   const [page] = useState(1);
   const { data: beneficiaries } = useSWR(endpoint.beneficiaries, undefined, {
-    revalidateIfStale: false,
+    revalidateIfStale: true,
   });
   const { data: recentMedia } = useSWR(`${endpoint.files}?page=${page}`);
   const [selectedMedia, setSelectedMedia] = useState<any[]>([]);
+
+  const [originalValues, setOriginalValues] = useState<typeof initial | null>(
+    null,
+  );
+  const [originalMedia, setOriginalMedia] = useState<any[]>([]);
 
   // Desktop
   const [desktopShowMemory, setDesktopShowMemory] = useState(false);
@@ -732,29 +740,50 @@ export default function CreateCapsule({
 
   useEffect(() => {
     if (data) {
-      setValues({
+      const populated = {
         title: data?.title || "",
         body: data?.body || "",
-        schedule_date: data?.schedule_date || "",
+        // schedule_date: data?.schedule_date || "",
+        schedule_date: data?.schedule_date
+          ? new Date(data.schedule_date).toISOString()
+          : "",
         status: data?.status || "scheduled",
         recipients:
           data?.recipients?.map((r: { email: string }) => r.email) || [],
-      });
+      };
+      setValues(populated);
+      setOriginalValues(populated);
+
       if (data?.attachments?.length) {
-        setSelectedMedia(
-          data.attachments.map((a: any) => ({
-            id: a._id,
-            _id: a._id,
-            type: a.type?.split("/")[0] || "image",
-            thumbnail: a.url || a.thumbnail,
-            title: a.name || a.title,
-            url: a.url,
-            duration: a.duration,
-          })),
-        );
+        const mapped = data.attachments.map((a: any) => ({
+          id: a._id,
+          _id: a._id,
+          type: a.type?.split("/")[0] || "image",
+          thumbnail: a.url || a.thumbnail,
+          title: a.name || a.title,
+          url: a.url,
+          duration: a.duration,
+        })); // same as before
+
+        setSelectedMedia(mapped);
+        setOriginalMedia(mapped);
       }
     }
   }, [data, setValues]);
+
+  const isDirty =
+    isEditMode &&
+    (JSON.stringify({
+      ...values,
+      recipients: [...values.recipients].sort(),
+    }) !==
+      JSON.stringify({
+        ...originalValues,
+        recipients: [...(originalValues?.recipients ?? [])].sort(),
+      }) ||
+      JSON.stringify(selectedMedia.map((m) => m.id || m._id).sort()) !==
+        JSON.stringify(originalMedia.map((m) => m.id || m._id).sort()) ||
+      files.length > 0);
 
   const [cardStyle, setCardStyle] = useState<CardCustomization>({
     themeId: "sage",
@@ -931,6 +960,7 @@ export default function CreateCapsule({
     errors,
     handleChange,
     handleValue,
+    isDirty,
     handleSave,
     handleSaveToDraft,
     isEditMode,
@@ -989,15 +1019,15 @@ export default function CreateCapsule({
     return (
       <>
         {/* Desktop */}
-        <div className="hidden sm:flex max-w-[1440px] flex-col justify-center items-center max-h-[900px] h-full w-full relative">
-          <ModalCloseBtn onClick={handleCloseClick} />
-          <div className="flex flex-col items-center justify-center w-full">
-            <div className="bg-black/60 gap-6 h-fit mt-10 min-w-[560px] max-w-5xl w-full rounded-2xl py-8 px-6 lg:px-24 flex flex-col items-center">
+        <div className="hidden sm:flex flex-col justify-center items-center h-full w-full relative">
+          <div className="flex flexcol items-center justify-center wfull">
+            <div className="bg-black/60 gap-6 hfit mt10 min-w-[560px] max-w-5xl aspect-560/697!  rounded-2xl py-8 px-6 lg:px-24 flex flex-col items-center">
+              <ModalCloseBtn onClick={handleCloseClick} />
               <StyleControls
                 cardStyle={cardStyle}
                 onStyleChange={handleStyleChange}
               />
-              <div className="w-full">
+              <div className=" max-w-[560px]">
                 <CapsulePreviewCard
                   style={cardStyle}
                   recipients={previewRecipients}
@@ -1006,7 +1036,7 @@ export default function CreateCapsule({
                   assets={previewAssets}
                   sender={user}
                   onAssetClick={() => {}}
-                  className="h-full w-full p-6"
+                  className="hfull wfull p-6 bg-pink-500"
                 />
               </div>
               <div className="flex items-center justify-end gap-4 w-full">
@@ -1061,7 +1091,7 @@ export default function CreateCapsule({
               />
             </div>
             <div
-              className="w-full h-fit!"
+              className="w-full h-fit! max-w-[560px]"
               style={{
                 // flex: "1 1 0",
                 minHeight: 0,
@@ -1232,9 +1262,11 @@ export default function CreateCapsule({
                 <button
                   type="submit"
                   className="btn"
-                  disabled={!isFormValid || isMutating}
+                  disabled={
+                    !isFormValid || isMutating || (isEditMode && !isDirty)
+                  }
                 >
-                  {isEditMode ? "Update Capsule" : "Schedule Capsule"}
+                  {isEditMode ? "Save Changes" : "Schedule Capsule"}
                   {values.status === "scheduled" && (
                     <Spinner loading={isMutating} className="size-4!" />
                   )}

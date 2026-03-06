@@ -79,7 +79,7 @@ export default function CapsulePreviewCard({
   const isLightText = lightTextColors.includes(textColor.toLowerCase());
 
   return (
-    <div className="relative hfull wfull aspect-560/697!">
+    <div className="relative aspect-560/697!">
       {/* Main Card */}
       <div
         className={cn(
