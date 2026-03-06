@@ -194,6 +194,7 @@ function MobileFormSheet({
   previewAssets,
   user,
   isDirty,
+  pendingStatus,
 }: any) {
   return (
     <Sheet
@@ -226,7 +227,7 @@ function MobileFormSheet({
           <div className="flex flex-col h-full">
             <div className="flex-1 overflow-auto px-4 pb-4">
               <SheetHeader
-                title={isEditMode ? "Edit Capsule" : "Create Capsule"}
+                title={isEditMode ? "Edit Time Capsule" : "Create Time Capsule"}
                 onClose={onClose}
               />
 
@@ -456,8 +457,8 @@ function MobileFormSheet({
                   className="flex-1 h-12 rounded-full border border-gray-300 text-sm font-medium text-[#1D2939] flex items-center justify-center gap-2"
                 >
                   Save as Draft
-                  {values.status === "draft" && (
-                    <Spinner loading={isMutating} className="size-4!" />
+                  {pendingStatus === "draft" && (
+                    <Spinner loading={isMutating} className="size-4! !text-[#1D2939]" />
                   )}
                 </button>
               )}
@@ -479,7 +480,7 @@ function MobileFormSheet({
                 className="flex-1 h-12 rounded-full bg-orange text-white text-sm font-medium flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 {isEditMode ? "Update Capsule" : "Schedule Capsule"}
-                {values.status === "scheduled" && (
+                {pendingStatus === "scheduled" && (
                   <Spinner loading={isMutating} className="size-4!" />
                 )}
               </button>
@@ -538,7 +539,7 @@ function MobilePreviewSheet({
               />
             </div>
             {/* Full capsule card */}
-            <div className="flex-1 rounded-2xl w-full overflowhidden">
+            <div className="flex-1 rounded-2xl w-full">
               <CapsulePreviewCard
                 style={cardStyle}
                 recipients={previewRecipients}
@@ -715,8 +716,7 @@ export default function CreateCapsule({
   ) => {
     const submission = { ...payload };
     if (submission.status === "draft") {
-      const { schedule_date, ...rest } = submission;
-      Object.assign(submission, rest);
+      delete submission.schedule_date;
     }
     const uploadedIds = !isEmpty(files)
       ? files.map((f: any) => f.uploadedFile?._id).filter(Boolean)
@@ -739,6 +739,8 @@ export default function CreateCapsule({
     if (result?.success) {
       if (isEditMode) {
         toast.success("Time Capsule Updated Successfully");
+      } else if (submission.status === "draft") {
+        toast.success("Time Capsule Saved to Draft");
       } else {
         toast.custom(() => <TimeCapsuleBadge />);
       }
@@ -748,7 +750,7 @@ export default function CreateCapsule({
     }
   };
 
-  const { setValues, values, errors, handleSubmit, handleChange, handleValue } =
+  const { setValues, values, errors, handleChange, handleValue } =
     useForm({ initial, schema, onSubmit });
 
   useEffect(() => {
@@ -905,33 +907,28 @@ export default function CreateCapsule({
     );
   };
 
-  const [shouldSubmit, setShouldSubmit] = useState(false);
+  // Removed shouldSubmit / pendingStatus useEffect since we submit directly
+
   const [pendingStatus, setPendingStatus] = useState<
     "draft" | "scheduled" | null
   >(null);
 
-  useEffect(() => {
-    if (shouldSubmit && pendingStatus && values.status === pendingStatus) {
-      handleSubmit();
-      setShouldSubmit(false);
-      setPendingStatus(null);
-    }
-  }, [values.status, shouldSubmit, pendingStatus, handleSubmit]);
-
-  const handleSaveToDraft = (e: React.FormEvent<HTMLButtonElement>) => {
+  const handleSaveToDraft = async (e: React.FormEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
     if (isMutating) return;
-    handleValue("status", "draft");
     setPendingStatus("draft");
-    setShouldSubmit(true);
+    handleValue("status", "draft");
+    await onSubmit({ ...values, status: "draft" }, { setValues });
+    setPendingStatus(null);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (isMutating) return;
-    handleValue("status", "scheduled");
     setPendingStatus("scheduled");
-    setShouldSubmit(true);
+    handleValue("status", "scheduled");
+    await onSubmit({ ...values, status: "scheduled" }, { setValues });
+    setPendingStatus(null);
   };
 
   const handleMemorySelectionConfirm = useCallback((memories: IMemory[]) => {
@@ -986,6 +983,7 @@ export default function CreateCapsule({
     handleChange,
     handleValue,
     isDirty,
+    pendingStatus,
     handleSave,
     handleSaveToDraft,
     isEditMode,
@@ -1080,7 +1078,7 @@ export default function CreateCapsule({
                   }}
                   className="btn"
                 >
-                  Edit Capsule
+                  Edit Time Capsule
                 </button>
               </div>
             </div>
@@ -1141,12 +1139,11 @@ export default function CreateCapsule({
           <ModalCloseBtn onClick={handleAttemptClose} />
           <div className="flex flex-col gap-8 w-full h-full">
             <h4 className="modal-title">
-              {isEditMode ? "Edit Capsule" : "Create Capsule"}
+              {isEditMode ? "Edit Time Capsule" : "Create Time Capsule"}
             </h4>
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                handleSave();
               }}
               className="flex flex-col gap-8 pb-6"
             >
@@ -1279,8 +1276,8 @@ export default function CreateCapsule({
                     onClick={handleSaveToDraft}
                   >
                     Save to draft
-                    {values.status === "draft" && (
-                      <Spinner loading={isMutating} className="size-4!" />
+                    {pendingStatus === "draft" && (
+                      <Spinner loading={isMutating} className="size-4! !text-[#1D2939]" />
                     )}
                   </button>
                 )}
@@ -1295,14 +1292,15 @@ export default function CreateCapsule({
                   </button>
                 )}
                 <button
-                  type="submit"
+                  type="button"
+                  onClick={handleSave}
                   className="btn"
                   disabled={
                     !isFormValid || isMutating || (isEditMode && !isDirty)
                   }
                 >
                   {isEditMode ? "Save Changes" : "Schedule Capsule"}
-                  {values.status === "scheduled" && (
+                  {pendingStatus === "scheduled" && (
                     <Spinner loading={isMutating} className="size-4!" />
                   )}
                 </button>

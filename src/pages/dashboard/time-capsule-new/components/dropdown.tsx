@@ -23,11 +23,11 @@ export function CapsuleItemActions({ capsule }: { capsule: ICapsule }) {
   };
 
   const STATUS_ACTION_MAP = {
-    draft: {
-      label: "Schedule",
-      value: "schedule-capsule",
-      startIcon: <AddBookmarkIcon width={16} height={16} />,
-    },
+    // draft: {
+    //   label: "Schedule",
+    //   value: "schedule-capsule",
+    //   startIcon: <AddBookmarkIcon width={16} height={16} />,
+    // },
     scheduled: {
       label: "Freeze",
       value: "pause-capsule",
