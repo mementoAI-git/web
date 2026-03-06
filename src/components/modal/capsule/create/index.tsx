@@ -253,7 +253,7 @@ function MobileFormSheet({
                     recipients={beneficiaries?.data?.docs}
                     selectedRecipients={values.recipients}
                     onSelect={handleRecipientSelect}
-                    onSeeAll={() => {}}
+                    onSeeAll={() => { }}
                     hideRelationship
                   />
                 </div>
@@ -409,7 +409,7 @@ function MobileFormSheet({
                         body={values.body}
                         assets={previewAssets}
                         sender={user}
-                        onAssetClick={() => {}}
+                        onAssetClick={() => { }}
                         className="h-full w-full p-4 rounded-xl overflow-hidden"
                       />
                     </div>
@@ -546,7 +546,7 @@ function MobilePreviewSheet({
                 body={values.body}
                 assets={previewAssets}
                 sender={user}
-                onAssetClick={() => {}}
+                onAssetClick={() => { }}
                 className="h-full w-full p-6"
               />
             </div>
@@ -737,10 +737,14 @@ export default function CreateCapsule({
     submission.memories = Array.from(new Set(memoryIds));
     const result = await trigger(submission);
     if (result?.success) {
-      toast.custom(() => <TimeCapsuleBadge />);
+      if (isEditMode) {
+        toast.success("Time Capsule Updated Successfully");
+      } else {
+        toast.custom(() => <TimeCapsuleBadge />);
+      }
       mutate(`${endpoint.capsule}?page=1`);
       setValues(initial);
-      close?.("create-capsule");
+      handleCloseClick();
     }
   };
 
@@ -791,7 +795,7 @@ export default function CreateCapsule({
         recipients: [...(originalValues?.recipients ?? [])].sort(),
       }) ||
       JSON.stringify(selectedMedia.map((m) => m.id || m._id).sort()) !==
-        JSON.stringify(originalMedia.map((m) => m.id || m._id).sort()) ||
+      JSON.stringify(originalMedia.map((m) => m.id || m._id).sort()) ||
       files.length > 0);
 
   const [cardStyle, setCardStyle] = useState<CardCustomization>({
@@ -969,12 +973,12 @@ export default function CreateCapsule({
   const isFormValid =
     values.status === "draft"
       ? values.title.trim() !== "" &&
-        values.body.trim() !== "" &&
-        values.recipients.length > 0
+      values.body.trim() !== "" &&
+      values.recipients.length > 0
       : !!values.schedule_date &&
-        values.title.trim() !== "" &&
-        values.body.trim() !== "" &&
-        values.recipients.length > 0;
+      values.title.trim() !== "" &&
+      values.body.trim() !== "" &&
+      values.recipients.length > 0;
 
   const sharedFormProps = {
     values,
@@ -1056,7 +1060,7 @@ export default function CreateCapsule({
                   body={values.body}
                   assets={previewAssets}
                   sender={user}
-                  onAssetClick={() => {}}
+                  onAssetClick={() => { }}
                   className="hfull wfull p-6 bg-pink-500"
                 />
               </div>
@@ -1127,7 +1131,7 @@ export default function CreateCapsule({
                 body={values.body}
                 assets={previewAssets}
                 sender={user}
-                onAssetClick={() => {}}
+                onAssetClick={() => { }}
                 className="h-full w-full p-6 pb-0"
               />
             </div>
@@ -1166,7 +1170,7 @@ export default function CreateCapsule({
                     recipients={beneficiaries?.data?.docs}
                     selectedRecipients={values.recipients}
                     onSelect={handleRecipientSelect}
-                    onSeeAll={() => {}}
+                    onSeeAll={() => { }}
                     hideRelationship
                   />
                 </div>
