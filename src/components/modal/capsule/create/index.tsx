@@ -400,7 +400,7 @@ function MobileFormSheet({
                 >
                   {/* Centering wrapper */}
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <div className="relative w-[268px] h-[343px] scale-[0.85] origin-center">
+                    <div className="relative scale-[0.85] origin-center">
                       <CapsulePreviewCard
                         style={cardStyle}
                         recipients={previewRecipients}
@@ -526,7 +526,7 @@ function MobilePreviewSheet({
               />
             </div>
             {/* Full capsule card */}
-            <div className="flex-1 rounded-2xl overflow-hidden">
+            <div className="flex-1 rounded-2xl w-full overflowhidden">
               <CapsulePreviewCard
                 style={cardStyle}
                 recipients={previewRecipients}
@@ -997,7 +997,7 @@ export default function CreateCapsule({
                 cardStyle={cardStyle}
                 onStyleChange={handleStyleChange}
               />
-              <div className="h-[770px] w-full">
+              <div className="w-full">
                 <CapsulePreviewCard
                   style={cardStyle}
                   recipients={previewRecipients}
@@ -1061,12 +1061,12 @@ export default function CreateCapsule({
               />
             </div>
             <div
-              className="w-full max-w-[560px]"
+              className="w-full h-fit!"
               style={{
-                flex: "1 1 0",
+                // flex: "1 1 0",
                 minHeight: 0,
                 overflow: "hidden",
-                height: 300,
+                // height: 300,
               }}
             >
               <CapsulePreviewCard
@@ -1077,7 +1077,7 @@ export default function CreateCapsule({
                 assets={previewAssets}
                 sender={user}
                 onAssetClick={() => {}}
-                className="h-full bg-orange-500 w-full p-6 pb-0"
+                className="h-full w-full p-6 pb-0"
               />
             </div>
           </div>
@@ -1101,7 +1101,7 @@ export default function CreateCapsule({
                   placeholder="Enter recipients email address"
                   inputClassName="!px-2"
                   label={
-                    <div className="mb-2 text-base text-[var(--color-gray-800)] normal-case">
+                    <div className="mb-2 text-base text-gray-800 normal-case">
                       Select recipient(s)
                     </div>
                   }
@@ -1142,7 +1142,7 @@ export default function CreateCapsule({
                         : "border-black/5",
                     )}
                   >
-                    <span className="mt-6 text-sm font-medium text-center text-[var(--color-gray-900)]">
+                    <span className="mt-6 text-sm font-medium text-center text-gray-900">
                       {isDragging ? (
                         "Drop files here"
                       ) : (
@@ -1153,14 +1153,14 @@ export default function CreateCapsule({
                         </>
                       )}
                     </span>
-                    <p className="mb-6 text-xs font-light text-center max-w-[240px] text-[var(--color-gray-600)]">
+                    <p className="mb-6 text-xs font-light text-center max-w-60 text-gray-600">
                       Supports JPG, PNG, MP4, MP3, PDF, DOC, TXT. Max 120mb
                     </p>
                     <BrowseFileBtn onUpload={handleUpload} />
                   </div>
                 </div>
                 <div className="flex flex-col border-t-0 rounded-2xl bg-[#f5f5f5] p-3">
-                  <span className="block mb-2 text-xs text-[var(--color-gray-600)] font-medium">
+                  <span className="block mb-2 text-xs text-gray-600 font-medium">
                     Recently uploaded
                   </span>
                   <RecentMedia
@@ -1204,7 +1204,7 @@ export default function CreateCapsule({
                 </div>
               </div>
               <div className="flex flex-col gap-2">
-                <span className="text-base text-[var(--color-gray-800)] block">
+                <span className="text-base text-gray-800 block">
                   Capsule delivery date:
                 </span>
                 <DateOptionsDropdown

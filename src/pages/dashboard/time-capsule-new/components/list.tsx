@@ -5,6 +5,7 @@ import StatusBadge from "./StatusBadge";
 import dayjs from "dayjs";
 import { CapsuleItemActions } from "./dropdown";
 import { CalendarIcon } from "@/components/icons";
+import { getDisplayName } from "../utility/helpers";
 
 function CapsuleListItem({ capsule }: { capsule: ICapsule }) {
   return (
@@ -59,10 +60,7 @@ function CapsuleListItem({ capsule }: { capsule: ICapsule }) {
                       {capsule.recipients[0].picture_url ? (
                         <img
                           src={capsule.recipients[0].picture_url}
-                          alt={
-                            `${capsule.recipients[0].first_name} ${capsule.recipients[0].last_name}` ||
-                            capsule.recipients[0].email
-                          }
+                          alt={getDisplayName(capsule.recipients[0])}
                           className="w-5 h-5 rounded-full object-cover"
                         />
                       ) : (
