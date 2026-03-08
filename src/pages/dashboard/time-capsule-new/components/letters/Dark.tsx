@@ -4,7 +4,7 @@ export const Dark = (props: SVGProps<SVGSVGElement>) => (
   <svg
     width="100%"
     height="100%"
-    preserveAspectRatio="xMidYMid slice"
+    // preserveAspectRatio="xMidYMid slice"
     viewBox="0 0 560 697"
     fill="none"
     xmlns="http://www.w3.org/2000/svg"

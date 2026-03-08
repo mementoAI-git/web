@@ -79,7 +79,7 @@ export default function CapsulePreviewCard({
   const isLightText = lightTextColors.includes(textColor.toLowerCase());
 
   return (
-    <div className="relative h-full w-full">
+    <div className="relative aspect-560/697!">
       {/* Main Card */}
       <div
         className={cn(
@@ -94,7 +94,7 @@ export default function CapsulePreviewCard({
         {/* 3. Render the SVG Background Layer */}
         {currentTheme && (
           <div className="absolute inset-0 w-full h-full z-0 pointer-events-none">
-            <currentTheme.Background className="w-full h-full object-cover" />
+            <currentTheme.Background className="w-full h-full aspect-560/697 object-cover" />
           </div>
         )}
 
