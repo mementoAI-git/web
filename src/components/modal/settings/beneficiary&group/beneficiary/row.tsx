@@ -3,11 +3,11 @@ import { useModal } from "@/hooks/use-modal";
 import UserItem from "@/components/user-item";
 import { cn, isEmpty } from "@/utility";
 import { tagColors } from "@/utility/constant";
-import type { IBeneficiary } from "@/utility/interface";
 import { EditIcon, RefreshIcon, TrashIcon } from "@/components/icons";
+import type { IBeneficiaryWithGroups } from ".";
 
 interface BeneficiaryRowProps {
-  beneficiary: IBeneficiary;
+  beneficiary: IBeneficiaryWithGroups;
 }
 
 export default function BeneficiaryRow({ beneficiary }: BeneficiaryRowProps) {
@@ -43,7 +43,11 @@ export default function BeneficiaryRow({ beneficiary }: BeneficiaryRowProps) {
       </td>
       <td className="capitalize">{beneficiary?.relationship || ""}</td>
       <td>
-        <span className="mem-tags !text-xs">Level {beneficiary?.level}</span>
+        {(beneficiary?.groups ?? []).slice(0, 3).map((group) => (
+          <span key={group._id} className="mem-tags text-xs!">
+            {group.name}
+          </span>
+        ))}
       </td>
       <td>
         <div className="flex items-center justify-end gap-3 text-secondary">

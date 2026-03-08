@@ -11,17 +11,21 @@ const columns = [
   { label: "recipient", className: "w-[22%] max-w-[170px]" },
   { label: "date added", className: "!w-[15%]" },
   { label: "relationship", className: "!w-[19%]" },
-  { label: "permission level", className: "!w-[23%]" },
+  { label: "groups", className: "!w-[23%]" },
   { label: "actions", className: "text-right" },
 ];
 
+export interface IBeneficiaryWithGroups extends IBeneficiary {
+  groups: { _id: string, name: string }[];
+}
+
 export default function Beneficiary() {
   const [page, setPage] = useState(1);
-  const { data, isLoading } = useSWR<{ data?: IPagination<IBeneficiary> }>(
+  const { data, isLoading } = useSWR<{ data?: IPagination<IBeneficiaryWithGroups> }>(
     `${endpoint.beneficiaries}?page=${page}`
   );
 
-  const tableData: IPagination<IBeneficiary> | undefined = data?.data;
+  const tableData: IPagination<IBeneficiaryWithGroups> | undefined = data?.data;
 
   return (
     <div className="space-y-6">

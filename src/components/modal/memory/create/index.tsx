@@ -344,19 +344,21 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
         </div>
 
         {/* Editor */}
-        <div className="relative flex-1">
-          <EditorContent editor={editor} className="tiptap-editor" />
-          {showLinkInput && (
-            <LinkInput
-              show={showLinkInput}
-              position={linkPosition}
-              initialText={selectedText}
-              initialUrl={previousUrl}
-              onSubmit={handleLinkSubmit}
-              onRemove={() => editor?.chain().focus().extendMarkRange("link").unsetLink().run()}
-              onClose={() => setShowLinkInput(false)}
-            />
-          )}
+        <div className="h-[300px] overflow-y-auto">
+          <div className="relative flex-1">
+            <EditorContent editor={editor} className="tiptap-editor" />
+            {showLinkInput && (
+              <LinkInput
+                show={showLinkInput}
+                position={linkPosition}
+                initialText={selectedText}
+                initialUrl={previousUrl}
+                onSubmit={handleLinkSubmit}
+                onRemove={() => editor?.chain().focus().extendMarkRange("link").unsetLink().run()}
+                onClose={() => setShowLinkInput(false)}
+              />
+            )}
+          </div>
         </div>
 
         {/* File thumbnails */}

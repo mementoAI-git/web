@@ -1,5 +1,6 @@
-import { Selectinput, Textinput } from "@/components/Form";
-import { ModalCloseBtn } from "../modalLayout";
+import { useState } from "react";
+import { Textinput } from "@/components/Form";
+import { ModalCloseBtn } from "../../modalLayout";
 import useForm from "@/hooks/use-form";
 import * as yup from "yup";
 import { useModal } from "@/hooks/use-modal";
@@ -9,29 +10,32 @@ import endpoint from "@/api/endpoint";
 import { toast } from "sonner";
 import { mutate } from "swr";
 import { LightBulbIcon } from "@/components/icons";
+import { SelectGroup, type GroupSearchResultItem } from "./select-group";
 
 const initial = {
   email: "",
   name: "",
   relationship: "",
-  level: 1,
 };
 
 const schema = yup.object().shape({
   email: yup.string().required("Email is required").email("Invalid email address").trim(),
   name: yup.string().required("Name is required"),
   relationship: yup.string().required("Relationship is required"),
-  level: yup.number().required("Level is required").default(1),
 });
 
 export function AddBeneficiary() {
   const { close } = useModal();
   const { trigger, isMutating } = useFetcher(endpoint.beneficiaries);
-  const { values, handleSubmit, isValid, getField } = useForm({
+  const [selectedGroups, setSelectedGroups] = useState<GroupSearchResultItem[]>([]);
+  const { handleSubmit, isValid, getField } = useForm({
     initial,
     schema,
     async onSubmit(payload) {
-      const result = await trigger(payload);
+      const result = await trigger({
+        ...payload,
+        groups: selectedGroups.map((g) => g.id),
+      });
       if (result.success) {
         await mutate(`${endpoint.beneficiaries}?page=1`);
         toast.success(result?.message);
@@ -79,17 +83,12 @@ export function AddBeneficiary() {
             inputClassName="!h-[50px]"
             labelClassName="!text-[rgba(0,9,51,0.65)] !text-xs !font-normal"
           />
-          <Selectinput
-            label={<span className="font-inter text-sm font-normal text-gray-950/70">Permission level</span>}
-            labelClassName="!text-[rgba(0,9,51,0.65)] !text-xs !font-normal"
-            placeholder="Set permission level"
-            data={[
-              { label: "Level 1", value: "1" },
-              { label: "Level 2", value: "2" },
-              { label: "Level 3", value: "3" },
-            ]}
-            {...getField("level")}
-            value={String(values.level)}
+          <SelectGroup
+            value={selectedGroups}
+            onChange={setSelectedGroups}
+            label={<span className="font-inter text-sm font-normal text-gray-950/70">Group</span>}
+            labelHint="(add beneficiary to groups)"
+            placeholder="Type to search groups..."
           />
           <div className="flex w-full items-center justify-end gap-4">
             <button type="button" className="btn-outline">
