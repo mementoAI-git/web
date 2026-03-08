@@ -33,8 +33,8 @@ export function FileThumbnails({ files, onRemove }: FileThumbnailsProps) {
   if (files.length === 0) return null;
 
   return (
-    <div className="mt-6 px-4 overflow-x-auto pt-2 hide-scrollbar">
-      <div className="flex gap-3 pb-1">
+    <div className="mt-6 flex justify-start items-start overflow-x-auto pt-2 px-4 hide-scrollbar">
+      <div className="flex gap-3 pb-1 w-full">
         {files.map((f) => {
           const mimeType = f.file?.type || f.uploadedFile?.type || "";
           const thumbSvg = getFileThumbSvg(mimeType);
@@ -51,15 +51,15 @@ export function FileThumbnails({ files, onRemove }: FileThumbnailsProps) {
               <button
                 type="button"
                 onClick={() => onRemove(f.id)}
-                className="absolute -top-2 -right-2 z-50 size-6 rounded-full bg-gray-100 hover:bg-gray-700 flex items-center justify-center transition-colors shadow"
+                className="absolute -top-2 -right-2 z-50 size-6 rounded-full bg-gray-100 hover:bg-gray-700 flex items-center justify-center transition-colors shadow border-2 border-white"
               >
                 <TimesIcon width={8} height={8} />
               </button>
 
-              <div className="w-24 h-24 rounded-xl overflow-hidden relative bg-gray-100">
+              <div className="w-[70px] h-[70px] rounded-xl overflow-visible relative bg-gray-100">
                 <img
                   src={imgSrc}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover rounded-xl"
                   alt=""
                 />
 
@@ -72,7 +72,7 @@ export function FileThumbnails({ files, onRemove }: FileThumbnailsProps) {
 
                 {/* Size pill */}
                 {sizeLabel && (
-                  <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 bg-black/55 rounded-full px-2 py-0.5">
+                  <div className="absolute bottom-1 left-1 bg-black/55 rounded-full px-1.5 py-0 w-fit overflow-hidden">
                     <span className="font-inter text-white text-[9px] font-semibold whitespace-nowrap">
                       {sizeLabel}
                     </span>

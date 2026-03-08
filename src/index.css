@@ -319,7 +319,7 @@ body {
   }
 
   .modal-container {
-    @apply relative !w-[95%] sm:w-full max-w-[95vw] sm:max-w-[480px] md:max-w-[618px] rounded-2xl bg-sand-1 p-4 sm:p-8 md:p-10;
+    @apply relative !w-[95%] sm:w-full max-w-[95vw] sm:max-w-[480px] md:max-w-[618px] rounded-2xl bg-white p-4 sm:p-8 md:p-10;
   }
 
   .modal-overlay {
@@ -617,9 +617,18 @@ body {
     top: 0;
   }
 
+  .tiptap-editor {
+    height: 100%;
+  }
+
   .tiptap-editor .ProseMirror {
     outline: none;
-    min-height: 300px;
+    height: 200px;
+    overflow-y: auto;
+  }
+
+  .editor-fill-500 .tiptap-editor .ProseMirror {
+    height: 100% !important;
   }
 
   .create-memory-title::placeholder {
@@ -650,6 +659,24 @@ body {
     color: var(--color-gray-800);
     font-weight: 500;
     margin-bottom: 16px;
+  }
+
+  .tiptap-editor h3 {
+    font-family: var(--font-garamond);
+    font-size: 22px;
+    line-height: 28px;
+    color: var(--color-gray-800);
+    font-weight: 500;
+    margin-bottom: 12px;
+  }
+
+  .tiptap-editor h4 {
+    font-family: var(--font-garamond);
+    font-size: 20px;
+    line-height: 26px;
+    color: var(--color-gray-800);
+    font-weight: 500;
+    margin-bottom: 12px;
   }
 
   .tiptap-editor p {

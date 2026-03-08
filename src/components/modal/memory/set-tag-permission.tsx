@@ -207,9 +207,9 @@ export default function SetTagPermissions({ data }: ISetTagPermissionsProps) {
         snapPoints={[0.5, 0.75, 1]}
         initialSnap={1}
       >
-        <Sheet.Container className="bg-sand-1" >
-          <Sheet.Header className="bg-sand-1 rounded-3xl" />
-          <Sheet.Content className="bg-sand-1 px-4 pb-6">
+        <Sheet.Container className="bg-white" >
+          <Sheet.Header className="bg-white rounded-3xl" />
+          <Sheet.Content className="bg-white px-4 pb-6">
             <ModalCloseBtn className="relative! ml-auto mb-2 right-0! top-0!" onClick={() => close?.("set-tag-permission")} />
             <Content {...{ data }} />
           </Sheet.Content>

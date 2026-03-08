@@ -11,6 +11,8 @@ import {
   CreateMemory,
   DeleteMemory,
   UpdateMemory,
+  ViewMemory,
+  ViewMemoryDetails,
 } from "./memory";
 import {
   AddBeneficiary,
@@ -45,7 +47,7 @@ import {
 import { UnpauseCapsule } from "./capsule";
 import { ExitConfirmation } from "./capsule/create/exit-confirmation";
 
-const RIGHT_PANEL_MODALS = ["create-memory"];
+const RIGHT_PANEL_MODALS = ["create-memory", "view-memory"];
 
 const MODAL_COMPONENTS = {
   "share-post": SharePost,
@@ -85,6 +87,8 @@ const MODAL_COMPONENTS = {
   "audio-recorder": AudioRecorderModal,
   "video-recorder": VideoRecorderModal,
   "exit-confirmation": ExitConfirmation,
+  "view-memory": ViewMemory,
+  "view-memory-details": ViewMemoryDetails,
 };
 
 export default function Modal() {
@@ -98,10 +102,10 @@ export default function Modal() {
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
-  // ESC key dismissal for right-panel modals
+  // ESC key dismissal: always closes the topmost modal
   useEffect(() => {
     const modal = state?.[0];
-    if (!modal || !RIGHT_PANEL_MODALS.includes(modal.name)) return;
+    if (!modal) return;
     const modalName = modal.name;
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") close(modalName);
@@ -128,6 +132,9 @@ export default function Modal() {
         const isRightPanel =
           RIGHT_PANEL_MODALS.includes(modal.name) && !isMobile;
         const isTop = modal.name === topModal.name;
+        const stackIndex = state.length - 1 - i;
+        const hasModalsBehind = i > 0;
+        const needsOverlay = !isRightPanel && hasModalsBehind;
 
         return (
           <div
@@ -136,10 +143,16 @@ export default function Modal() {
                 ? "flex-row justify-start items-start"
                 : "flex-row justify-center items-center"
               }`}
-            style={{ zIndex: isTop ? 10 : 0 }}
-            onClick={!isRightPanel ? (e) => e.stopPropagation() : undefined}
+            style={{ zIndex: isTop ? 10 : stackIndex + 1 }}
+            onClick={!isRightPanel ? (e) => {
+              e.stopPropagation();
+              if (e.target === e.currentTarget) close(modal.name);
+            } : undefined}
           >
-            {isRightPanel && isTop && (
+            {needsOverlay && (
+              <div className="absolute -inset-1.5 bg-[rgba(94,94,94,0.5)] backdrop-blur-sm pointer-events-none" />
+            )}
+            {isTop && !isMobile && (
               <button
                 type="button"
                 onClick={(e) => {

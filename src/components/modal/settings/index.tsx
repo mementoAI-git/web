@@ -39,7 +39,7 @@ export default function Settings({ isMobile }: { isMobile: boolean }) {
   const [active, setActive] = useState<SettingKey>("general");
   return (
     <>
-      <div className="relative hidden h-full max-h-[640px] w-full max-w-[953px] items-stretch rounded-3xl bg-sand-1 sm:flex">
+      <div className="relative hidden h-full max-h-[640px] w-full max-w-[953px] items-stretch rounded-3xl bg-white sm:flex">
         <ModalCloseBtn onClick={() => close?.("settings")} />
         <div className="flex max-w-[260px] flex-col gap-6 border-r border-black/5 px-6 py-[30px]">
           <span className="font-inter text-sm font-bold text-[#1E1E1E66]">Settings</span>
@@ -83,9 +83,9 @@ export default function Settings({ isMobile }: { isMobile: boolean }) {
         snapPoints={[1]}
         initialSnap={1}
       >
-        <Sheet.Container className="relative bg-sand-1 hide-scrollbar">
-          <Sheet.Header className="rounded-3xl bg-sand-1" />
-          <Sheet.Content className="hide-scrollbar bg-sand-1 px-4 pb-6">
+        <Sheet.Container className="relative bg-white hide-scrollbar">
+          <Sheet.Header className="rounded-3xl bg-white" />
+          <Sheet.Content className="hide-scrollbar bg-white px-4 pb-6">
             <ModalCloseBtn
               className="!relative ml-auto mb-2 !right-0 !top-0"
               onClick={() => close?.("settings")}

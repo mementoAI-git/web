@@ -12,14 +12,18 @@ export function MemoryDropdown({
   memory,
   onViewDetails,
 }: IMemoryDropdownProps) {
-  const { open } = useModal();
+  const { push } = useModal();
 
   const handleSelect = (value: string) => {
     if (value === "share-story") {
-      open("share-memory", { memory });
+      push("share-memory", { memory });
     }
     if (value === "view-details") {
-      onViewDetails();
+      if (onViewDetails) {
+        onViewDetails();
+      } else {
+        push("view-memory-details", { memory });
+      }
     }
   };
 
@@ -38,7 +42,7 @@ export function MemoryDropdown({
       ]}
       footerItem={
         <li
-          onClick={() => open("delete-memory", memory._id)}
+          onClick={() => push("delete-memory", { memory })}
           className="flex cursor-pointer items-center rounded gap-2.5 px-2.5 py-1.5 hover:bg-[#F97066]/8 text-[#F97066]"
         >
           <TrashIcon width={16} height={16} />

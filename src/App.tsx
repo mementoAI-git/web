@@ -2,7 +2,7 @@ import { Outlet } from "react-router-dom";
 import { FloatingButton } from "./components/FloatingButton";
 import { useModal } from "./hooks/use-modal";
 
-const SIDE_MODALS = ["create-memory"];
+const SIDE_MODALS = ["create-memory", "view-memory"];
 
 function App() {
   const { open, state } = useModal();

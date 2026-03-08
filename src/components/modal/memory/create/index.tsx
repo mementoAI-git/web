@@ -16,7 +16,7 @@ import { toast } from "sonner";
 import { mutate } from "swr";
 import { v4 as uuidv4 } from "uuid";
 import { SUPPORTED_FILE_TYPES } from "@/utility/constant";
-import { TimesIcon, LinkIcon, UnorderedListIcon } from "@/components/icons";
+import { HeadingIcon, TimesIcon, LinkIcon, UnorderedListIcon } from "@/components/icons";
 import { AccessField, buildCreateMemoryPayload } from "./access-field";
 import { TagsField } from "./tags-field";
 import Picker from "@emoji-mart/react";
@@ -55,6 +55,8 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
   const [showLinkInput, setShowLinkInput] = useState(false);
   const [linkPosition, setLinkPosition] = useState({ top: 0, left: 0 });
   const [showCloseConfirmation, setShowCloseConfirmation] = useState(false);
+  const plusMenuRef = useRef<HTMLDivElement>(null);
+  const emojiPickerRef = useRef<HTMLDivElement>(null);
   const [selectedAccess, setSelectedAccess] = useState<
     Array<{ id: string; name: string; source: "group" | "beneficiary" }>
   >([]);
@@ -144,12 +146,16 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
   }, [handlePaste]);
 
   useEffect(() => {
-    const handle = () => {
+    const handle = (e: MouseEvent) => {
+      const target = e.target as Node;
+      if (plusMenuRef.current?.contains(target) || emojiPickerRef.current?.contains(target)) {
+        return;
+      }
       setShowEmoji(false);
       setShowPlusMenu(false);
     };
-    document.addEventListener("click", handle);
-    return () => document.removeEventListener("click", handle);
+    document.addEventListener("click", handle, true);
+    return () => document.removeEventListener("click", handle, true);
   }, []);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -301,6 +307,12 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
         {/* Formatting toolbar */}
         <div className="flex items-center gap-0.5 pt-4 px-4 pb-3">
           {toolbarBtn(
+            !!editor?.isActive("heading", { level: 3 }),
+            () => editor?.chain().focus().toggleHeading({ level: 3 }).run(),
+            <HeadingIcon width={11} height={14} />,
+            "Heading",
+          )}
+          {toolbarBtn(
             !!editor?.isActive("bold"),
             () => editor?.chain().focus().toggleBold().run(),
             <span className="font-bold text-sm text-gray-800 leading-none">B</span>,
@@ -366,7 +378,7 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
         <div className="mt-6 mx-4 mb-4" onClick={(e) => e.stopPropagation()}>
           <div className="bg-[#F4F4F4] rounded-2xl flex items-center justify-start gap-3 px-[12px] py-[9px]">
             {/* Plus menu */}
-            <div className="relative h-[40px]">
+            <div ref={plusMenuRef} className="relative h-[40px]">
               <button
                 type="button"
                 onClick={() => {
@@ -398,7 +410,7 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
             </div>
 
             {/* Emoji */}
-            <div className="relative">
+            <div ref={emojiPickerRef} className="relative">
               <button
                 type="button"
                 onClick={() => { setShowEmoji((p) => !p); setShowPlusMenu(false); }}

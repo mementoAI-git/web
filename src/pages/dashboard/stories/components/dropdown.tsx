@@ -43,7 +43,7 @@ export function MemoryItemActions({ memory }: { memory: IMemory }) {
       open("share-memory", { memory });
     }
     if (value === "edit-memory") {
-      open("edit-memory", memory);
+      open("edit-memory", { memory });
     }
     if (value === "bookmark") {
       toggleBookmark();

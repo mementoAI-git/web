@@ -2,9 +2,11 @@
 
 import { useState, useEffect, useRef } from "react";
 import useSWR from "swr";
+import { useModal } from "@/hooks/use-modal";
 import { cn } from "@/utility";
 import endpoint from "@/api/endpoint";
 import { fetcher } from "@/api/fetcher";
+import { PlusIcon } from "@/components/icons";
 
 const DEBOUNCE_MS = 500;
 const QUERY_MIN = 1;
@@ -36,6 +38,7 @@ interface AccessFieldProps {
 }
 
 export function AccessField({ value: selectedAccess, onChange }: AccessFieldProps) {
+  const { push } = useModal();
   const [accessInput, setAccessInput] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [showAccessDropdown, setShowAccessDropdown] = useState(false);
@@ -70,8 +73,8 @@ export function AccessField({ value: selectedAccess, onChange }: AccessFieldProp
         setShowAccessDropdown(false);
       }
     };
-    document.addEventListener("click", handleClickOutside);
-    return () => document.removeEventListener("click", handleClickOutside);
+    document.addEventListener("click", handleClickOutside, true);
+    return () => document.removeEventListener("click", handleClickOutside, true);
   }, []);
 
   const addAccess = (item: SearchResultItem) => {
@@ -133,46 +136,58 @@ export function AccessField({ value: selectedAccess, onChange }: AccessFieldProp
           className="flex-1 min-w-[120px] outline-none font-inter text-sm text-gray-700 placeholder:text-gray-400"
         />
         {showDropdown && (
-          <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-20 py-1 max-h-48 overflow-y-auto">
-            {!hasQuery ? (
-              <div className="px-3 py-4 text-gray-500 text-sm">
-                Type to search people or groups...
+          <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-20 overflow-hidden">
+            <div className="flex items-center justify-between gap-3 px-3 py-2 border-b border-gray-100">
+              <div className="flex-1 min-w-0 text-gray-500 text-sm">
+                {!hasQuery ? (
+                  "Type to search people or groups..."
+                ) : isSearchLoading ? (
+                  "Searching..."
+                ) : searchResults.length === 0 ? (
+                  "No groups or beneficiaries found"
+                ) : null}
               </div>
-            ) : isSearchLoading ? (
-              <div className="flex items-center justify-center py-4 text-gray-500 text-sm">
-                Searching...
+              <button
+                type="button"
+                onClick={() => {
+                  setShowAccessDropdown(false);
+                  push?.("add-group");
+                }}
+                className="shrink-0 flex items-center gap-1.5 px-2 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+              >
+                <PlusIcon width={12} height={12} />
+                New Group
+              </button>
+            </div>
+            {searchResults.length > 0 && (
+              <div className="max-h-40 overflow-y-auto py-1">
+                {searchResults.map((item) => (
+                  <button
+                    type="button"
+                    key={item.id}
+                    onClick={() => addAccess(item)}
+                    disabled={selectedAccess.some((a) => a.id === item.id)}
+                    className="flex items-center gap-2 w-full px-3 py-2 hover:bg-gray-50 disabled:opacity-50 disabled:pointer-events-none text-sm text-gray-700 text-left"
+                  >
+                    <div className="size-8 rounded-full bg-gray-100 flex items-center justify-center text-xs font-semibold text-gray-600 shrink-0">
+                      {item.name[0]?.toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium leading-tight truncate">{item.name}</p>
+                      <span
+                        className={cn(
+                          "text-[10px] font-medium uppercase tracking-wide",
+                          item.source === "group"
+                            ? "text-purple-600"
+                            : "text-blue-600"
+                        )}
+                      >
+                        {item.source === "group" ? "Group" : "Beneficiary"}
+                      </span>
+                    </div>
+                  </button>
+                ))}
               </div>
-            ) : searchResults.length === 0 ? (
-              <div className="px-3 py-4 text-gray-500 text-sm">
-                No people or groups found. Try a different search.
-              </div>
-            ) : (
-              searchResults.map((item) => (
-                <button
-                  type="button"
-                  key={item.id}
-                  onClick={() => addAccess(item)}
-                  disabled={selectedAccess.some((a) => a.id === item.id)}
-                  className="flex items-center gap-2 w-full px-3 py-2 hover:bg-gray-50 disabled:opacity-50 disabled:pointer-events-none text-sm text-gray-700 text-left"
-                >
-                  <div className="size-8 rounded-full bg-gray-100 flex items-center justify-center text-xs font-semibold text-gray-600 shrink-0">
-                    {item.name[0]?.toUpperCase()}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium leading-tight truncate">{item.name}</p>
-                    <span
-                      className={cn(
-                        "text-[10px] font-medium uppercase tracking-wide",
-                        item.source === "group"
-                          ? "text-purple-600"
-                          : "text-blue-600"
-                      )}
-                    >
-                      {item.source === "group" ? "Group" : "Beneficiary"}
-                    </span>
-                  </div>
-                </button>
-              ))
             )}
           </div>
         )}

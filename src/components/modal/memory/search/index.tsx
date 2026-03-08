@@ -40,7 +40,7 @@ function Content() {
   const showEmpty = debouncedSearch.trim() ? (!isLoading && isEmpty(searchResults)) : isEmpty(recentMemories);
 
   return (
-    <div className="size-full bg-sand-1 space-y-6">
+    <div className="size-full bg-white space-y-6">
       <div className="space-y-4">
         <h4 className="text-2xl sm:text-[32px] sm:leading-[38px] font-garamond text-gray-800">Search Memento</h4>
         <span className="text-gray-600 text-sm sm:text-base font-inter block">Find anything on Memento</span>
@@ -124,9 +124,9 @@ export function SearchMemories() {
         onClose={() => close?.("search-memory")}
         snapPoints={[0.5, 0.75, 1]}
       >
-        <Sheet.Container className="bg-sand-1">
-          <Sheet.Header className="bg-sand-1 rounded-3xl" />
-          <Sheet.Content className="bg-sand-1 px-4 pb-6">
+        <Sheet.Container className="bg-white">
+          <Sheet.Header className="bg-white rounded-3xl" />
+          <Sheet.Content className="bg-white px-4 pb-6">
             <ModalCloseBtn className="!relative ml-auto !right-0 !top-0 mb-2" onClick={() => close?.("search-memory")} />
             <Content />
           </Sheet.Content>
