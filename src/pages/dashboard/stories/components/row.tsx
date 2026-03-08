@@ -6,12 +6,24 @@ import { tagColors } from "@/utility/constant";
 import { isEmpty } from "@/utility";
 import { DocsClipIcon } from "@/components/icons";
 import type { IMemory } from "@/utility/interface";
+import { useModal } from "@/hooks/use-modal";
 
 export default function StoriesTableRow({ memory }: { memory: IMemory }) {
   const navigate = useNavigate();
+  const { open } = useModal();
+
+  const handleClick = () => {
+    const isMobile = window.innerWidth < 640;
+    if (isMobile) {
+      navigate(`/stories/${memory?._id}`);
+    } else {
+      open("view-memory", { memoryId: memory._id });
+    }
+  };
+
   return (
     <tr>
-      <td onClick={() => navigate(`/stories/${memory?._id}`)}>
+      <td onClick={handleClick}>
         <div className="flex cursor-pointer items-center gap-2">
           <div className="h-10 flex items-center justify-center w-[46.87px] min-w-[33.53px]">
             {

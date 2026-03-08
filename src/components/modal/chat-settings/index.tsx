@@ -10,7 +10,7 @@ import Voices from "./voices";
 
 function Content({ onClose }: { onClose: () => void }) {
   return (
-    <div className="bg-sand-1 px-4 py-4 sm:px-6 sm:py-6">
+    <div className="bg-white px-4 py-4 sm:px-6 sm:py-6">
       <div className="mb-4 flex w-full items-center justify-between text-secondary sm:mb-6">
         <span className="modal-title !text-2xl sm:text-[32px]">Chat settings</span>
         <button type="button" onClick={onClose} className="cursor-pointer p-1">
@@ -38,9 +38,9 @@ export default function ChatSettings({ children }: PropsWithChildren) {
         <div>
           <div className="block sm:hidden">
             <Sheet detent="content" className="block sm:hidden" isOpen={isOpen} onClose={() => setIsOpen(false)}>
-              <Sheet.Container className="bg-sand-1">
-                <Sheet.Header className="rounded-3xl bg-sand-1" />
-                <Sheet.Content className="bg-sand-1">
+              <Sheet.Container className="bg-white">
+                <Sheet.Header className="rounded-3xl bg-white" />
+                <Sheet.Content className="bg-white">
                   <Content onClose={() => setIsOpen(false)} />
                 </Sheet.Content>
               </Sheet.Container>
@@ -48,7 +48,7 @@ export default function ChatSettings({ children }: PropsWithChildren) {
             </Sheet>
           </div>
           {createPortal(
-            <div className="absolute bottom-5 right-5 hidden h-full max-h-[95%] w-full max-w-[400px] flex-col gap-4 rounded-2xl border border-sand-3 bg-sand-1 py-4 shadow-[0px_75px_150px_0px_#34405424] sm:flex md:w-120">
+            <div className="absolute bottom-5 right-5 hidden h-full max-h-[95%] w-full max-w-[400px] flex-col gap-4 rounded-2xl border border-sand-3 bg-white py-4 shadow-[0px_75px_150px_0px_#34405424] sm:flex md:w-120">
               <Content onClose={() => setIsOpen(false)} />
             </div>,
             document.body,

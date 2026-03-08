@@ -49,7 +49,7 @@ function FileGalleryItem({ file }: { file: IFile }) {
   return (
     <img
       src={file.url}
-      className="size-full! rounded-sm object-cover h-full"
+      className="w-full h-full rounded-sm object-cover"
       alt={file.name}
       loading="lazy"
     />
@@ -57,22 +57,11 @@ function FileGalleryItem({ file }: { file: IFile }) {
 }
 
 export default function FileGallery({ files }: { files: IFile[] }) {
-  const { open } = useModal();
+  const { push } = useModal();
 
   const maxFiles = 6;
   const displayFiles = files.slice(0, maxFiles);
   const hasOverflow = files.length > maxFiles;
-
-  const getGridLayout = (count: number) => {
-    if (count <= 1) return "grid-cols-1";
-    if (count <= 2) return "grid-cols-2";
-    if (count <= 3) return "grid-cols-3";
-    if (count <= 6) return "grid-cols-3 grid-rows-2";
-    return "grid-cols-3 grid-rows-2";
-  };
-
-  const totalItems = displayFiles.length + (hasOverflow ? 1 : 0);
-  const gridLayout = getGridLayout(totalItems);
   const overflowFile = hasOverflow ? files[maxFiles] : undefined;
 
   const handleGalleryClick = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -81,28 +70,33 @@ export default function FileGallery({ files }: { files: IFile[] }) {
 
     if (fileElement) {
       const clickedIndex = parseInt(fileElement.dataset.fileIndex || "0", 10);
-      open?.("file-preview", { files, startIndex: clickedIndex });
+      push?.("file-preview", { files, startIndex: clickedIndex });
     }
   };
 
   return (
     <div
       onClick={handleGalleryClick}
-      className={`grid max-h[266px] w-fit gap-1 rounded-xl bg-sand-3 p-4 ${gridLayout}!`}
+      className="flex flex-wrap gap-2 rounded-xl"
     >
       {displayFiles.map((file, index) => (
-        <div key={index} data-file-index={index} className="cursor-pointer">
+        <div
+          key={index}
+          data-file-index={index}
+          className="cursor-pointer w-[100px] h-[100px] overflow-hidden rounded-lg"
+        >
           <FileGalleryItem file={file} />
         </div>
       ))}
       {overflowFile && (
-        <div className="h-[115px] max-w[239.3333282470703px]">
-          <div className="relative h-full overflow-hidden">
-            <div className="absolute inset-0 flex h-full w-full items-center justify-center rounded-lg bg-[rgba(94,94,94,0.5)] backdrop-blur-sm font-inter text-2xl font-semibold text-white">
-              {files.length - maxFiles}+
-            </div>
-            <FileGalleryItem file={overflowFile} />
+        <div
+          data-file-index={maxFiles}
+          className="cursor-pointer w-[100px] h-[100px] overflow-hidden rounded-lg relative"
+        >
+          <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-[rgba(94,94,94,0.5)] backdrop-blur-sm font-inter text-2xl font-semibold text-white z-10">
+            {files.length - maxFiles}+
           </div>
+          <FileGalleryItem file={overflowFile} />
         </div>
       )}
     </div>

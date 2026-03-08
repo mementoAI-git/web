@@ -104,9 +104,9 @@ export default function ShareMemory({ data }: ShareMemoryProps) {
         onClose={handleClose}
         snapPoints={[0.5, 0.75, 1]}
       >
-        <Sheet.Container className="bg-sand-1">
-          <Sheet.Header className="rounded-3xl bg-sand-1" />
-          <Sheet.Content className="bg-sand-1 px-4 pb-6">
+        <Sheet.Container className="bg-white">
+          <Sheet.Header className="rounded-3xl bg-white" />
+          <Sheet.Content className="bg-white px-4 pb-6">
             <ModalCloseBtn className="!relative ml-auto mb-1 !right-0 !top-0" onClick={handleClose} />
             <Content data={data} />
           </Sheet.Content>

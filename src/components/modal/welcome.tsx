@@ -61,7 +61,7 @@ export default function Welcome() {
   };
 
   return (
-    <div className="modal-container h-[672px] overflow-y-hidden relative bg-sand-1 !max-w-[618px] flex flex-col">
+    <div className="modal-container h-[672px] overflow-y-hidden relative bg-white !max-w-[618px] flex flex-col">
       <ModalCloseBtn onClick={handleClose} />
       <div className="overflow-y-auto hide-scrollbar flex-1 !space-y-[20px]">
         <div className="flex flex-col gap-1">
@@ -111,7 +111,7 @@ export default function Welcome() {
         </p>
         <div className="h-22" />
       </div>
-      <div className="absolute pt-6 px-10 pb-10 bottom-0 bg-sand-1 left-0 right-0 w-full border-t border-[#0011661A] flex items-center gap-4 justify-center" style={{ boxShadow: '1px -12px 24px 3px #3535351A' }}>
+      <div className="absolute pt-6 px-10 pb-10 bottom-0 bg-white left-0 right-0 w-full border-t border-[#0011661A] flex items-center gap-4 justify-center" style={{ boxShadow: '1px -12px 24px 3px #3535351A' }}>
         <button
           onClick={handleStartConversation}
           className="btn flex-1 !py-[18px] !px-[32px] text-sm font-semibold font-inter text-white"

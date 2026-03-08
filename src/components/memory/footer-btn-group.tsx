@@ -9,6 +9,8 @@ interface FooterBtnGroupProps {
   saving?: boolean;
   editMode?: boolean;
   cta?: string;
+  discardLabel?: string;
+  discardDisabled?: boolean;
 }
 
 export const inputTypes = {
@@ -25,10 +27,14 @@ export function FooterBtnGroup({
   editMode = false,
   disabled = false,
   cta = "Continue",
+  discardLabel = "Cancel",
+  discardDisabled,
 }: FooterBtnGroupProps) {
+  const isDiscardDisabled = discardDisabled ?? disabled;
+  const dimWhenDisabled = disabled && (discardDisabled === undefined || discardDisabled);
   return (
     <div
-      className={`mt-2 flex items-center justify-between ${disabled ? "cursor-not-allowed opacity-40" : ""}`}
+      className={`mt-2 flex items-center justify-between ${dimWhenDisabled ? "cursor-not-allowed opacity-40" : ""}`}
     >
       <div>
         {onAddFileBtnClick && (
@@ -40,11 +46,11 @@ export function FooterBtnGroup({
         <div className="flex items-center gap-2">
           <button
             type="button"
-            disabled={disabled}
+            disabled={isDiscardDisabled}
             onClick={onDiscard}
             className="btn-outline border-[#C7C9C8]!"
           >
-            Cancel
+            {discardLabel}
           </button>
           <button
             type="button"
@@ -60,11 +66,11 @@ export function FooterBtnGroup({
         <div className="flex items-center gap-2">
           <button
             type="button"
-            disabled={disabled}
+            disabled={isDiscardDisabled}
             onClick={onDiscard}
             className="btn-outline border-[#C7C9C8]!"
           >
-            Cancel
+            {discardLabel}
           </button>
           <button
             type="button"
