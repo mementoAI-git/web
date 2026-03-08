@@ -28,7 +28,7 @@ export function DeleteBeneficiary({ data: id }: DeleteBeneficiaryProps) {
   return (
     <div className="modal-container !max-w-120">
       <ModalCloseBtn onClick={() => close?.("delete-beneficiary")} />
-      <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-[#FEE4E2] text-danger">
+      <div className="flex size-12 items-center justify-center rounded-full bg-[#FEE4E2] text-danger">
         <TrashIcon width={18} height={20} />
       </div>
       <div className="mt-5 space-y-6">
