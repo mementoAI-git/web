@@ -6,24 +6,12 @@ import { CircleCheckIcon, CopyIcon } from "@/components/icons";
 import { ModalCloseBtn } from "../modalLayout";
 import { useModal } from "@/hooks/use-modal";
 import useCopy from "@/hooks/use-copy";
+import { getSocialShareLinks } from "@/utility";
 import type { IMemory } from "@/utility/interface";
 import facebook from "@/assets/image/Facebook.png";
 import twitter from "@/assets/image/twitter.png";
 import instagram from "@/assets/image/instagram.png";
 import linkedin from "@/assets/image/linkedin.png";
-
-const SHARE_POPUP_WIDTH = 600;
-const SHARE_POPUP_HEIGHT = 400;
-
-function openSharePopup(url: string) {
-  const left = Math.round((window.screen.width - SHARE_POPUP_WIDTH) / 2);
-  const top = Math.round((window.screen.height - SHARE_POPUP_HEIGHT) / 2);
-  window.open(
-    url,
-    "share",
-    `width=${SHARE_POPUP_WIDTH},height=${SHARE_POPUP_HEIGHT},left=${left},top=${top},scrollbars=yes`
-  );
-}
 
 interface ShareMemoryProps {
   data: {
@@ -42,39 +30,12 @@ function Content({ data }: ShareMemoryProps) {
     }
   }, [memory?._id]);
 
-  const shareUrl = link;
-  const shareText = memory?.title ?? "Check out this story";
-
-  const socialPlatforms: { name: string; img: string; onClick: () => void }[] = [
-    {
-      name: "Facebook",
-      img: facebook,
-      onClick: () =>
-        openSharePopup(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`),
-    },
-    {
-      name: "LinkedIn",
-      img: linkedin,
-      onClick: () =>
-        openSharePopup(
-          `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`
-        ),
-    },
-    {
-      name: "Twitter",
-      img: twitter,
-      onClick: () =>
-        openSharePopup(
-          `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`
-        ),
-    },
-    {
-      name: "Instagram",
-      img: instagram,
-      onClick: () =>
-        handleCopy(shareUrl, "Link copied — paste it in the Instagram app to share"),
-    },
-  ];
+  const socialPlatforms = getSocialShareLinks({
+    shareUrl: link,
+    shareText: memory?.title ?? "Check out this story",
+    onCopy: handleCopy,
+    images: { facebook, linkedin, twitter, instagram },
+  });
 
   return (
     <div className="w-full !max-w-120">

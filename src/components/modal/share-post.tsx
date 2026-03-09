@@ -6,7 +6,7 @@ import { CircleCheckIcon, CopyIcon, PlusIcon } from "@/components/icons";
 import { ModalCloseBtn } from "./modalLayout";
 import { useModal } from "@/hooks/use-modal";
 import useCopy from "@/hooks/use-copy";
-import { cn } from "@/utility";
+import { cn, getSocialShareLinks } from "@/utility";
 import confetti from "@/assets/image/confetti.png";
 import facebook from "@/assets/image/Facebook.png";
 import twitter from "@/assets/image/twitter.png";
@@ -25,6 +25,14 @@ function Content({ data }: SharePostProps) {
   useEffect(() => {
     setLink(`${window.location.origin}/post/${data.id}`);
   }, [data.id]);
+
+  const socialPlatforms = getSocialShareLinks({
+    shareUrl: link,
+    shareText: "Check out this story",
+    onCopy: handleCopy,
+    images: { facebook, linkedin, twitter, instagram },
+    // platforms: ["facebook", "twitter"], // optional: pass to limit to specific platforms
+  });
 
   return (
     <div className="w-full !max-w-120">
@@ -72,13 +80,21 @@ function Content({ data }: SharePostProps) {
           </div>
 
           <div className="flex items-center justify-center gap-3 md:justify-between md:gap-11">
-            {[facebook, linkedin, twitter, instagram].map((img, index) => (
-              <div
-                key={index}
-                className="flex size-[56px] cursor-pointer items-center justify-center rounded-full border border-grey-400"
+            {socialPlatforms.map((platform) => (
+              <button
+                key={platform.name}
+                type="button"
+                onClick={platform.onClick}
+                className="flex size-[56px] shrink-0 cursor-pointer items-center justify-center rounded-full border border-grey-400 transition-colors hover:border-grey-500 hover:bg-gray-50"
+                aria-label={`Share on ${platform.name}`}
               >
-                <img className="size-[28px] object-contain" src={img} alt="social logo" />
-              </div>
+                <img
+                  className="size-[28px] object-contain"
+                  src={platform.img}
+                  alt=""
+                  aria-hidden
+                />
+              </button>
             ))}
           </div>
         </div>

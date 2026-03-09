@@ -39,6 +39,90 @@ export const openMailBox = (email: string) => {
   return link;
 };
 
+const SHARE_POPUP_WIDTH = 600;
+const SHARE_POPUP_HEIGHT = 400;
+
+export const openSharePopup = (url: string) => {
+  const left = Math.round((window.screen.width - SHARE_POPUP_WIDTH) / 2);
+  const top = Math.round((window.screen.height - SHARE_POPUP_HEIGHT) / 2);
+  window.open(
+    url,
+    "share",
+    `width=${SHARE_POPUP_WIDTH},height=${SHARE_POPUP_HEIGHT},left=${left},top=${top},scrollbars=yes`
+  );
+};
+
+export type SocialPlatformKey = "facebook" | "linkedin" | "twitter" | "instagram";
+
+export interface SocialShareLinkItem {
+  name: string;
+  img: string;
+  onClick: () => void;
+}
+
+const ALL_SOCIAL_PLATFORMS: SocialPlatformKey[] = [
+  "facebook",
+  "linkedin",
+  "twitter",
+  "instagram",
+];
+
+export interface GetSocialShareLinksParams {
+  shareUrl: string;
+  shareText: string;
+  onCopy: (text: string, message?: string) => void;
+  images: Record<SocialPlatformKey, string>;
+  /** If provided, only these platforms are returned. Default: all. */
+  platforms?: SocialPlatformKey[] | readonly SocialPlatformKey[];
+}
+
+export const getSocialShareLinks = (
+  params: GetSocialShareLinksParams
+): SocialShareLinkItem[] => {
+  const { shareUrl, shareText, onCopy, images, platforms } = params;
+  const selected = platforms ?? ALL_SOCIAL_PLATFORMS;
+
+  const config: Record<
+    SocialPlatformKey,
+    { name: string; onClick: () => void }
+  > = {
+    facebook: {
+      name: "Facebook",
+      onClick: () => {
+        onCopy(shareUrl, "Link copied — paste it into your post if it doesn't appear");
+        openSharePopup(
+          `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`
+        );
+      },
+    },
+    linkedin: {
+      name: "LinkedIn",
+      onClick: () =>
+        openSharePopup(
+          `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`
+        ),
+    },
+    twitter: {
+      name: "Twitter",
+      onClick: () =>
+        openSharePopup(
+          `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`
+        ),
+    },
+    instagram: {
+      name: "Instagram",
+      onClick: () =>
+        onCopy(shareUrl, "Link copied — paste it in the Instagram app to share"),
+    },
+  };
+
+  return selected.map((key) => ({
+    name: config[key].name,
+    img: images[key],
+    onClick: config[key].onClick,
+  }));
+};
+
 export const clearCache = () =>
   mutate(() => true, undefined, { revalidate: false });
 
