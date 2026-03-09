@@ -1,15 +1,19 @@
 import { useRef, useState, useCallback, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { Sheet } from "react-modal-sheet";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
 import Link from "@tiptap/extension-link";
+import Underline from "@tiptap/extension-underline";
 import Picker from "@emoji-mart/react";
 import emojiData from "@emoji-mart/data";
 import endpoint from "@/api/endpoint";
 import { ModalCloseBtn } from "../modalLayout";
 import { FooterBtnGroup } from "@/components/memory";
 import { LinkInput } from "@/components/memory/text-area/link-input";
+import { SlashCommandPopup } from "@/components/memory/text-area/slash-command-popup";
+import { SLASH_COMMANDS } from "@/components/memory/text-area/slash-commands";
 import useFetcher from "@/hooks/use-fetcher";
 import useFileUpload from "@/hooks/use-file-upload";
 import { useModal } from "@/hooks/use-modal";
@@ -35,15 +39,15 @@ interface ContentProps {
 }
 
 function toSearchItems(
-  groups: { _id?: string; name: string }[] = [],
+  groups: { _id?: string; name: string; color?: number }[] = [],
   beneficiaries: { _id?: string; name: string }[] = []
 ): SearchResultItem[] {
   const groupItems: SearchResultItem[] = (groups || [])
     .filter((g) => g._id)
-    .map((g) => ({ id: g._id!, name: g.name, source: "group" as const }));
+    .map((g) => ({ id: g._id!, name: g.name, source: "group" as const, color: g.color ?? 0 }));
   const beneficiaryItems: SearchResultItem[] = (beneficiaries || [])
     .filter((b) => b._id)
-    .map((b) => ({ id: b._id!, name: b.name, source: "beneficiary" as const }));
+    .map((b) => ({ id: b._id!, name: b.name, source: "beneficiary" as const, color: 0 }));
   return [...groupItems, ...beneficiaryItems];
 }
 
@@ -52,6 +56,7 @@ function Content({ data }: ContentProps) {
   const { push, close } = useModal();
   const fileInputMediaRef = useRef<HTMLInputElement>(null);
   const fileInputAllRef = useRef<HTMLInputElement>(null);
+  const fileInputAudioRef = useRef<HTMLInputElement>(null);
   const [text, setText] = useState(memory.body || "");
   const [title, setTitle] = useState(memory?.title || "");
   const [removedAttachmentIds, setRemovedAttachmentIds] = useState<string[]>([]);
@@ -67,9 +72,13 @@ function Content({ data }: ContentProps) {
   const [showPlusMenu, setShowPlusMenu] = useState(false);
   const [showLinkInput, setShowLinkInput] = useState(false);
   const [linkPosition, setLinkPosition] = useState({ top: 0, left: 0 });
+  const [showSlashMenu, setShowSlashMenu] = useState(false);
+  const [slashPosition, setSlashPosition] = useState({ top: 0, left: 0 });
   const [audioRecordingCount, setAudioRecordingCount] = useState(1);
   const plusMenuRef = useRef<HTMLDivElement>(null);
+  const plusMenuPortalRef = useRef<HTMLDivElement>(null);
   const emojiPickerRef = useRef<HTMLDivElement>(null);
+  const emojiPickerPortalRef = useRef<HTMLDivElement>(null);
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -78,11 +87,16 @@ function Content({ data }: ContentProps) {
         heading: { levels: [1, 2, 3, 4] },
         link: false,
       }),
-      Placeholder.configure({ placeholder: "What's on your mind today?" }),
+      Placeholder.configure({ placeholder: "What's on your mind today? Type / for formatting options" }),
       Link.configure({
         openOnClick: false,
-        HTMLAttributes: { class: "text-blue-500 underline cursor-pointer" },
+        HTMLAttributes: {
+          class: "text-blue-500 underline cursor-pointer",
+          target: "_blank",
+          rel: "noopener noreferrer",
+        },
       }),
+      Underline,
     ],
     content: memory.body || "",
     editorProps: {
@@ -92,13 +106,37 @@ function Content({ data }: ContentProps) {
     },
     onUpdate: ({ editor }) => {
       setText(editor.getHTML());
+
+      const { state } = editor;
+      const { selection } = state;
+      const { $anchor } = selection;
+      const textBefore = $anchor.parent.textContent.slice(0, $anchor.parentOffset);
+
+      if (textBefore.endsWith("/")) {
+        const coords = editor.view.coordsAtPos(selection.from);
+        setSlashPosition({ top: coords.top + 20, left: coords.left });
+        setShowSlashMenu(true);
+      } else {
+        const lastSlashIndex = textBefore.lastIndexOf("/");
+        if (lastSlashIndex !== -1) {
+          const query = textBefore.slice(lastSlashIndex + 1);
+          if (query.includes(" ") || query.includes("\n")) {
+            setShowSlashMenu(false);
+          }
+        }
+      }
     },
   });
 
   useEffect(() => {
     const handle = (e: MouseEvent) => {
       const target = e.target as Node;
-      if (plusMenuRef.current?.contains(target) || emojiPickerRef.current?.contains(target)) {
+      if (
+        plusMenuRef.current?.contains(target) ||
+        plusMenuPortalRef.current?.contains(target) ||
+        emojiPickerRef.current?.contains(target) ||
+        emojiPickerPortalRef.current?.contains(target)
+      ) {
         return;
       }
       setShowEmoji(false);
@@ -188,20 +226,24 @@ function Content({ data }: ContentProps) {
     if (!selectedFiles.length) return;
 
     selectedFiles.forEach((file) => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        handleUpload({
-          id: uuidv4(),
-          file,
-          base64: reader.result as string,
-          progress: 0,
-        });
-      };
-      reader.readAsDataURL(file);
+      const isImage = file.type.startsWith("image/");
+      if (isImage) {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          handleUpload({
+            id: uuidv4(),
+            file,
+            base64: reader.result as string,
+            progress: 0,
+          });
+        };
+        reader.readAsDataURL(file);
+      } else {
+        handleUpload({ id: uuidv4(), file, progress: 0 });
+      }
     });
 
-    if (fileInputMediaRef.current) fileInputMediaRef.current.value = "";
-    if (fileInputAllRef.current) fileInputAllRef.current.value = "";
+    event.target.value = "";
   };
 
   const handleAddAudioFile = (file: File) => {
@@ -241,6 +283,33 @@ function Content({ data }: ContentProps) {
         .focus()
         .run();
     }
+  };
+
+  const handleSlashCommandSelect = (command: (typeof SLASH_COMMANDS)[0]) => {
+    if (!editor) return;
+    const { state } = editor;
+    const { selection } = state;
+    const { $anchor } = selection;
+    const textBefore = $anchor.parent.textContent.slice(0, $anchor.parentOffset);
+    const lastSlashIndex = textBefore.lastIndexOf("/");
+
+    if (lastSlashIndex !== -1) {
+      const from = selection.from - (textBefore.length - lastSlashIndex);
+      const to = selection.from;
+
+      editor
+        .chain()
+        .focus()
+        .deleteRange({ from, to })
+        .run();
+
+      command.command({
+        editor,
+        range: { from, to },
+      });
+    }
+
+    setShowSlashMenu(false);
   };
 
   const attachmentsAsPayloads: IOnUploadPayload[] = currentAttachments.map((att) => ({
@@ -320,6 +389,14 @@ function Content({ data }: ContentProps) {
         onChange={handleFileSelect}
         className="hidden"
       />
+      <input
+        ref={fileInputAudioRef}
+        type="file"
+        multiple
+        accept="audio/*"
+        onChange={handleFileSelect}
+        className="hidden"
+      />
       <div className="space-y-6">
         <textarea
           value={title}
@@ -356,8 +433,8 @@ function Content({ data }: ContentProps) {
               "Strikethrough",
             )}
             {toolbarBtn(
-              false,
-              () => {},
+              !!editor?.isActive("underline"),
+              () => editor?.chain().focus().toggleUnderline().run(),
               <span className="underline text-sm text-gray-800 leading-none">U</span>,
               "Underline",
             )}
@@ -375,6 +452,12 @@ function Content({ data }: ContentProps) {
 
           <div className="editor-fill-500 relative flex min-h-[350px] h-[350px] shrink-0 flex-col overflow-hidden">
             <EditorContent editor={editor} className="tiptap-editor size-full min-h-0" />
+            <SlashCommandPopup
+              show={showSlashMenu}
+              position={slashPosition}
+              onCommandSelect={handleSlashCommandSelect}
+              onClose={() => setShowSlashMenu(false)}
+            />
             {showLinkInput && (
               <LinkInput
                 show={showLinkInput}
@@ -405,24 +488,45 @@ function Content({ data }: ContentProps) {
                 >
                   <img src={addPlusSvg} alt="Add" width={40} height={40} />
                 </button>
-                {showPlusMenu && (
-                  <div className="absolute bottom-12 left-0 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-20 min-w-[180px]">
-                    <button
-                      type="button"
-                      onClick={() => { fileInputMediaRef.current?.click(); setShowPlusMenu(false); }}
-                      className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 text-left"
+                {showPlusMenu &&
+                  createPortal(
+                    <div
+                      ref={plusMenuPortalRef}
+                      className="fixed z-[9999] bg-white rounded-xl shadow-lg border border-gray-100 py-1 min-w-[180px]"
+                      style={(() => {
+                        const rect = plusMenuRef.current?.getBoundingClientRect();
+                        return rect
+                          ? {
+                              left: rect.left,
+                              bottom: window.innerHeight - rect.top + 12,
+                            }
+                          : { left: 0, bottom: 0 };
+                      })()}
                     >
-                      <span className="text-base">📷</span> Photos & Videos
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => { fileInputAllRef.current?.click(); setShowPlusMenu(false); }}
-                      className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 text-left"
-                    >
-                      <span className="text-base">📎</span> Files
-                    </button>
-                  </div>
-                )}
+                      <button
+                        type="button"
+                        onClick={() => { fileInputMediaRef.current?.click(); setShowPlusMenu(false); }}
+                        className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 text-left"
+                      >
+                        <span className="text-base">📷</span> Photos & Videos
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { fileInputAudioRef.current?.click(); setShowPlusMenu(false); }}
+                        className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 text-left"
+                      >
+                        <span className="text-base">🎵</span> Audio
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { fileInputAllRef.current?.click(); setShowPlusMenu(false); }}
+                        className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 text-left"
+                      >
+                        <span className="text-base">📎</span> Files
+                      </button>
+                    </div>,
+                    document.body,
+                  )}
               </div>
 
               <div ref={emojiPickerRef} className="relative">
@@ -433,19 +537,33 @@ function Content({ data }: ContentProps) {
                 >
                   <img src={smileySvg} alt="Emoji" width={20} height={20} />
                 </button>
-                {showEmoji && (
-                  <div className="absolute bottom-12 left-0 z-20 shadow-xl">
-                    <Picker
-                      data={emojiData}
-                      onEmojiSelect={(e: any) => {
-                        editor?.chain().focus().insertContent(e.native).run();
-                        setShowEmoji(false);
-                      }}
-                      theme="light"
-                      previewPosition="none"
-                    />
-                  </div>
-                )}
+                {showEmoji &&
+                  createPortal(
+                    <div
+                      ref={emojiPickerPortalRef}
+                      className="fixed z-[9999] shadow-xl"
+                      style={(() => {
+                        const rect = emojiPickerRef.current?.getBoundingClientRect();
+                        return rect
+                          ? {
+                              left: rect.left,
+                              bottom: window.innerHeight - rect.top + 12,
+                            }
+                          : { left: 0, bottom: 0 };
+                      })()}
+                    >
+                      <Picker
+                        data={emojiData}
+                        onEmojiSelect={(e: any) => {
+                          editor?.chain().focus().insertContent(e.native).run();
+                          setShowEmoji(false);
+                        }}
+                        theme="light"
+                        previewPosition="none"
+                      />
+                    </div>,
+                    document.body,
+                  )}
               </div>
 
               <div className="w-px h-6 bg-gray-300 shrink-0" />
@@ -478,16 +596,16 @@ function Content({ data }: ContentProps) {
             </div>
           </div>
         </div>
+
+        <AccessField value={selectedAccess} onChange={setSelectedAccess} />
+
+        <TagsField
+          tags={tags}
+          setTags={setTags}
+          title={title}
+          body={editor?.getText() ?? ""}
+        />
       </div>
-
-      <AccessField value={selectedAccess} onChange={setSelectedAccess} />
-
-      <TagsField
-        tags={tags}
-        setTags={setTags}
-        title={title}
-        body={editor?.getText() ?? ""}
-      />
       <FooterBtnGroup
         onDiscard={() => close("edit-memory")}
         onSave={handleContinueBtn}

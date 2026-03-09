@@ -16,7 +16,7 @@ const columns = [
 ];
 
 export interface IBeneficiaryWithGroups extends IBeneficiary {
-  groups: { _id: string, name: string }[];
+  groups: { _id: string; name: string; color?: number }[];
 }
 
 export default function Beneficiary() {

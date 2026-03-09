@@ -79,7 +79,7 @@ export default function ActionBtn(props: FilePreviewItemBase) {
       )}
       <button
         type="button"
-        className="flex items-center gap-2 rounded-full bg-[#F3F3F3] px-4 py-[9px] font-geist text-sm font-medium text-[#98A2B3]"
+        className="flex items-center gap-2 rounded-full bg-white px-4 py-[9px] font-geist text-sm font-medium text-[#98A2B3]"
         onClick={handleDownload}
         disabled={downloading}
       >

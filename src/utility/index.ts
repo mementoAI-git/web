@@ -76,6 +76,17 @@ export const truncateFileName = (name: string, max_len = 50) => {
   return `${name.slice(0, Math.min(index, 30))}..${name.slice(index)}`;
 };
 
+/** Ensures all links in HTML open in a new tab (for memory body display) */
+export function ensureLinksOpenInNewTab(html: string): string {
+  if (!html || typeof html !== "string") return html;
+  return html.replace(/<a\s+([^>]*?)>/gi, (_match, attrs) => {
+    const withoutTarget = attrs.replace(/\s*target\s*=\s*["'][^"']*["']/gi, "").trim();
+    const withoutRel = withoutTarget.replace(/\s*rel\s*=\s*["'][^"']*["']/gi, "").trim();
+    const rest = withoutRel ? `${withoutRel} ` : "";
+    return `<a ${rest}target="_blank" rel="noopener noreferrer">`;
+  });
+}
+
 export const formatFileSize = (size: number) => {
   if (size === 0) return "0B";
 

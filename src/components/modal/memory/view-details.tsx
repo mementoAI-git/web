@@ -4,8 +4,9 @@ import { useModal } from "@/hooks/use-modal";
 import { ModalCloseBtn } from "../modalLayout";
 import PropsItem from "@/components/props-item";
 import endpoint from "@/api/endpoint";
-import type { IMemory } from "@/utility/interface";
+import type { IMemory, IMemoryAccessItem } from "@/utility/interface";
 import { getPostTypeLabel } from "@/utility/memory";
+import { GROUP_COLORS } from "@/utility/constant";
 import dayjs from "dayjs";
 import {
   FolderIcon,
@@ -19,18 +20,28 @@ interface ViewMemoryDetailsProps {
   data: { memory: IMemory };
 }
 
+function getGroupColorClass(item: IMemoryAccessItem): string {
+  const idx = item.color ?? 0;
+  return GROUP_COLORS[Math.min(idx, GROUP_COLORS.length - 1)];
+}
+
 function formatUserAccess(memory: IMemory | undefined): ReactNode {
   const groups = memory?.groups ?? [];
   const beneficiaries = memory?.beneficiaries ?? [];
-  const items = [...groups.map((g) => ({ name: g.name, type: "group" as const })), ...beneficiaries.map((b) => ({ name: b.name, type: "beneficiary" as const }))];
+  const groupItems = groups.map((g, i) => ({ ...g, type: "group" as const }));
+  const beneficiaryItems = beneficiaries.map((b) => ({ ...b, type: "beneficiary" as const }));
+  const items = [...groupItems, ...beneficiaryItems];
 
   if (items.length === 0) return "None";
 
   return (
     <div className="flex flex-wrap gap-1.5">
       {items.map((item, i) => (
-        <span key={`${item.type}-${i}`} className="mem-tags text-xs">
-          {item.name}
+        <span
+          key={`${item.type}-${i}`}
+          className={`flex items-center gap-1 px-2.5 py-1 rounded-full border font-inter text-xs font-medium ${item.type === "group" ? getGroupColorClass(item) : "bg-blue-50 text-blue-600 border-blue-100"}`}
+        >
+          @{item.name}
           {item.type === "group" && (
             <span className="ml-0.5 text-[10px] text-gray-400">(group)</span>
           )}

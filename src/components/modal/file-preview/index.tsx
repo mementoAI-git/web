@@ -70,7 +70,7 @@ export default function FilePreview({ data }: FilePreviewProps) {
   }
 
   return (
-    <div className="relative z-50 flex w-full flex-col items-center justify-center p-4 sm:w-[90%] sm:p-6 md:w-[80%] lg:w-[80%]">
+    <div className="relative z-50 flex w-fit flex-col items-center justify-center p-0 sm:w-[90%] sm:p-0 md:w-[80%] lg:w-[80%]">
       {files.map((file, currentIndex) => (
         <div
           key={file._id ?? currentIndex}

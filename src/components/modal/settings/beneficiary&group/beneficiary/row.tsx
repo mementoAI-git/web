@@ -2,7 +2,7 @@ import dayjs from "dayjs";
 import { useModal } from "@/hooks/use-modal";
 import UserItem from "@/components/user-item";
 import { cn, isEmpty } from "@/utility";
-import { tagColors } from "@/utility/constant";
+import { tagColors, GROUP_COLORS } from "@/utility/constant";
 import { EditIcon, RefreshIcon, TrashIcon } from "@/components/icons";
 import type { IBeneficiaryWithGroups } from ".";
 
@@ -43,11 +43,19 @@ export default function BeneficiaryRow({ beneficiary }: BeneficiaryRowProps) {
       </td>
       <td className="capitalize">{beneficiary?.relationship || ""}</td>
       <td>
-        {(beneficiary?.groups ?? []).slice(0, 3).map((group) => (
-          <span key={group._id} className="mem-tags text-xs!">
-            {group.name}
-          </span>
-        ))}
+        <div className="flex flex-wrap gap-1.5">
+          {(beneficiary?.groups ?? []).slice(0, 3).map((group) => {
+            const colorClass = GROUP_COLORS[Math.min(group.color ?? 0, GROUP_COLORS.length - 1)];
+            return (
+              <span
+                key={group._id}
+                className={cn("flex items-center gap-1 px-2.5 py-1 rounded-full border font-inter text-xs font-medium", colorClass)}
+              >
+                @{group.name}
+              </span>
+            );
+          })}
+        </div>
       </td>
       <td>
         <div className="flex items-center justify-end gap-3 text-secondary">

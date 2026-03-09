@@ -5,6 +5,7 @@ import useSWR from "swr";
 import { cn } from "@/utility";
 import endpoint from "@/api/endpoint";
 import { fetcher } from "@/api/fetcher";
+import { GROUP_COLORS } from "@/utility/constant";
 
 const DEBOUNCE_MS = 500;
 const QUERY_MIN = 1;
@@ -14,15 +15,8 @@ export type GroupSearchResultItem = {
   id: string;
   name: string;
   source: "group" | "beneficiary";
+  color?: number;
 };
-
-const chipColors = [
-  "bg-blue-50 text-blue-600 border-blue-100",
-  "bg-green-50 text-green-600 border-green-100",
-  "bg-orange-50 text-orange-600 border-orange-100",
-  "bg-purple-50 text-purple-600 border-purple-100",
-  "bg-pink-50 text-pink-600 border-pink-100",
-];
 
 interface SearchApiResponse {
   data?: GroupSearchResultItem[];
@@ -122,12 +116,14 @@ export function SelectGroup({
         ref={containerRef}
         className="relative flex flex-wrap gap-2 min-h-[48px] px-3 py-2 border border-gray-200 rounded-xl bg-white"
       >
-        {selectedGroups.map((g, i) => (
+        {selectedGroups.map((g) => {
+          const colorClass = GROUP_COLORS[Math.min(g.color ?? 0, GROUP_COLORS.length - 1)];
+          return (
           <span
             key={g.id}
             className={cn(
               "flex items-center gap-1 px-2.5 py-1 rounded-full border font-inter text-xs font-medium",
-              chipColors[i % chipColors.length]
+              colorClass
             )}
           >
             @{g.name}
@@ -139,7 +135,8 @@ export function SelectGroup({
               ×
             </button>
           </span>
-        ))}
+          );
+        })}
         <input
           value={input}
           onChange={(e) => {

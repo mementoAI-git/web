@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { Calendar1Icon } from "@/components/icons";
 import { useModal } from "@/hooks/use-modal";
-import { getCategory, highlightText } from "@/utility";
+import { ensureLinksOpenInNewTab, getCategory, highlightText } from "@/utility";
 import dayjs from "dayjs";
 import type { IMemory } from "@/utility/interface";
 
@@ -63,7 +63,7 @@ export default function SearchItem({ memory, searchTerm = "", isActive = false, 
         />
         <span
           className="font-inter text-xs text-gray-500 line-clamp-1"
-          dangerouslySetInnerHTML={{ __html: truncatedBody }}
+          dangerouslySetInnerHTML={{ __html: ensureLinksOpenInNewTab(truncatedBody) }}
         />
       </div>
       <span className="flex items-center gap-1.5 text-xs text-gray-400 shrink-0">
