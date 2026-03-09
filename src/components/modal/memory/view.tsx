@@ -7,7 +7,7 @@ import {
 import { useBookmark } from "@/hooks/use-bookmark";
 import { useModal } from "@/hooks/use-modal";
 import { useStore } from "@/hooks/use-store";
-import { addToRecentMemories, isEmpty } from "@/utility";
+import { addToRecentMemories, ensureLinksOpenInNewTab, isEmpty } from "@/utility";
 import type { IMemory } from "@/utility/interface";
 import { useEffect } from "react";
 import useSWR from "swr";
@@ -99,7 +99,7 @@ export function ViewMemory({ data, isMobile }: ViewMemoryProps) {
             <div
               className="tiptap-editor prose prose-sm max-w-none text-gray-800 mt-4 leading-relaxed font-garamond"
               dangerouslySetInnerHTML={{
-                __html: DOMPurify.sanitize(ensureHtmlFormat(memory?.body || "")),
+                __html: ensureLinksOpenInNewTab(DOMPurify.sanitize(ensureHtmlFormat(memory?.body || ""))),
               }}
             />
           </>

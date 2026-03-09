@@ -36,7 +36,9 @@ export default function useFileUpload() {
       setFiles((prev) => prev.filter((f) => f.id !== file.id));
     } else {
       setFiles((prev) =>
-        prev.map((f) => (f.id === file.id ? { ...f, uploadedFile } : f)),
+        prev.map((f) =>
+          f.id === file.id ? { ...f, uploadedFile, progress: 100 } : f,
+        ),
       );
     }
   };

@@ -1,4 +1,6 @@
+import DOMPurify from "isomorphic-dompurify";
 import { DoubleHeartIcon } from "@/components/icons";
+import { ensureLinksOpenInNewTab } from "@/utility";
 import { MemoryItemActions } from "./dropdown";
 import type { IMemory, IPagination } from "@/utility/interface";
 import dayjs from "dayjs";
@@ -77,7 +79,7 @@ function StoriesGridItem({ memory, isMobile }: { memory: IMemory; isMobile: bool
           {memory.title}
         </h4>
         <p className="font-inter text-sm text-[#412C09CC] line-clamp-6 leading-relaxed">
-          <div className="text-xs" dangerouslySetInnerHTML={{ __html: memory?.body }} />
+          <div className="text-xs" dangerouslySetInnerHTML={{ __html: ensureLinksOpenInNewTab(DOMPurify.sanitize(memory?.body || "")) }} />
         </p>
         <div className="mt-auto pointer-events-none bg-gradient-to-t from-gray-50 via-gray-50/80 to-transparent h-16 w-full absolute bottom-0 left-0" />
       </div>

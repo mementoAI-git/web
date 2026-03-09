@@ -8,6 +8,7 @@ import endpoint from "@/api/endpoint";
 import { fetcher } from "@/api/fetcher";
 import { PlusIcon } from "@/components/icons";
 import type { IGroup, IBeneficiary } from "@/utility/interface";
+import { GROUP_COLORS } from "@/utility/constant";
 
 const LIST_LIMIT = 100;
 
@@ -15,15 +16,11 @@ export type SearchResultItem = {
   id: string;
   name: string;
   source: "group" | "beneficiary";
+  /** Color index (0-6) for groups; beneficiaries use 0 (blue) as default */
+  color?: number;
 };
 
-const chipColors = [
-  "bg-blue-50 text-blue-600 border-blue-100",
-  "bg-green-50 text-green-600 border-green-100",
-  "bg-orange-50 text-orange-600 border-orange-100",
-  "bg-purple-50 text-purple-600 border-purple-100",
-  "bg-pink-50 text-pink-600 border-pink-100",
-];
+const BENEFICIARY_DEFAULT_COLOR = 0;
 
 interface AccessFieldProps {
   value: SearchResultItem[];
@@ -31,11 +28,16 @@ interface AccessFieldProps {
 }
 
 function toSearchItem(g: IGroup): SearchResultItem {
-  return { id: g._id, name: g.name, source: "group" };
+  return { id: g._id, name: g.name, source: "group", color: g.color ?? 0 };
 }
 
 function toSearchItemFromBeneficiary(b: IBeneficiary): SearchResultItem {
-  return { id: b._id ?? "", name: b.name, source: "beneficiary" };
+  return { id: b._id ?? "", name: b.name, source: "beneficiary", color: BENEFICIARY_DEFAULT_COLOR };
+}
+
+function getColorClass(item: SearchResultItem): string {
+  const idx = item.color ?? 0;
+  return GROUP_COLORS[Math.min(idx, GROUP_COLORS.length - 1)];
 }
 
 export function AccessField({ value: selectedAccess, onChange }: AccessFieldProps) {
@@ -106,12 +108,12 @@ export function AccessField({ value: selectedAccess, onChange }: AccessFieldProp
           setShowAccessDropdown(true);
         }}
       >
-        {selectedAccess.map((a, i) => (
+        {selectedAccess.map((a) => (
           <span
             key={a.id}
             className={cn(
               "flex items-center gap-1 px-2.5 py-1 rounded-full border font-inter text-xs font-medium",
-              chipColors[i % chipColors.length]
+              getColorClass(a)
             )}
           >
             @{a.name}
@@ -141,7 +143,35 @@ export function AccessField({ value: selectedAccess, onChange }: AccessFieldProp
         />
         {showAccessDropdown && (
           <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-20 overflow-hidden">
-            <div className="flex items-center justify-between gap-3 px-3 py-2 border-b border-gray-100">
+            <div className="flex flex-wrap gap-2 p-3 max-h-48 overflow-y-auto">
+              {filteredOptions.length === 0 ? (
+                <p className="text-sm text-gray-400 py-1">
+                  {allOptions.length === 0
+                    ? "No groups or beneficiaries yet. Create a group to get started."
+                    : "No matches"}
+                </p>
+              ) : (
+                filteredOptions.map((item) => {
+                const isSelected = selectedAccess.some((a) => a.id === item.id);
+                const colorClass = getColorClass(item);
+                return (
+                  <button
+                    type="button"
+                    key={item.id}
+                    onClick={() => addAccess(item)}
+                    disabled={isSelected}
+                    className={cn(
+                      "flex items-center gap-1 px-2.5 py-1 rounded-full border font-inter text-xs font-medium transition-opacity hover:opacity-90 disabled:opacity-50 disabled:pointer-events-none",
+                      colorClass
+                    )}
+                  >
+                    @{item.name}
+                  </button>
+                );
+              })
+              )}
+            </div>
+            <div className="flex items-center justify-between gap-3 px-3 py-[3px] border-t border-gray-100 bg-[#fafafa]">
               <div className="flex-1 min-w-0 text-gray-500 text-sm">
                 {accessInput.trim() && filteredOptions.length === 0
                   ? "No matches"
@@ -160,37 +190,6 @@ export function AccessField({ value: selectedAccess, onChange }: AccessFieldProp
                 <PlusIcon width={12} height={12} />
                 New Group
               </button>
-            </div>
-            <div className="flex flex-wrap gap-2 p-3 max-h-48 overflow-y-auto">
-              {filteredOptions.length === 0 ? (
-                <p className="text-sm text-gray-400 py-1">
-                  {allOptions.length === 0
-                    ? "No groups or beneficiaries yet. Create a group to get started."
-                    : "No matches"}
-                </p>
-              ) : (
-                filteredOptions.map((item) => {
-                const isSelected = selectedAccess.some((a) => a.id === item.id);
-                const colorClass =
-                  item.source === "group"
-                    ? "bg-purple-50 text-purple-600 border-purple-100"
-                    : "bg-blue-50 text-blue-600 border-blue-100";
-                return (
-                  <button
-                    type="button"
-                    key={item.id}
-                    onClick={() => addAccess(item)}
-                    disabled={isSelected}
-                    className={cn(
-                      "flex items-center gap-1 px-2.5 py-1 rounded-full border font-inter text-xs font-medium transition-opacity hover:opacity-90 disabled:opacity-50 disabled:pointer-events-none",
-                      colorClass
-                    )}
-                  >
-                    @{item.name}
-                  </button>
-                );
-              })
-              )}
             </div>
           </div>
         )}

@@ -3,7 +3,7 @@ import DOMPurify from "isomorphic-dompurify";
 import FileGallery from "@/components/file-gallery";
 import PropsItem from "@/components/props-item";
 import { Calendar1Icon, ClipIcon, TagIcon } from "@/components/icons";
-import { isEmpty } from "@/utility";
+import { ensureLinksOpenInNewTab, isEmpty } from "@/utility";
 import type { IMemory } from "@/utility/interface";
 
 export default function Post({ memory }: { memory: IMemory }) {
@@ -45,7 +45,7 @@ export default function Post({ memory }: { memory: IMemory }) {
       <div className="tiptap-editor">
         <div
           className="tiptap-editor mt-4 font-inter text-sm leading-relaxed text-grey-600 sm:mt-6 sm:text-base"
-          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(memory?.body || "") }}
+          dangerouslySetInnerHTML={{ __html: ensureLinksOpenInNewTab(DOMPurify.sanitize(memory?.body || "")) }}
         />
       </div>
     </div>

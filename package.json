@@ -40,6 +40,8 @@
     "lodash": "^4.17.21",
     "lucide-react": "^0.563.0",
     "motion": "^12.23.15",
+    "music-metadata": "^11.12.1",
+    "pdfjs-dist": "^5.5.207",
     "radix-ui": "^1.4.3",
     "react": "^19.1.0",
     "react-day-picker": "^9.11.0",

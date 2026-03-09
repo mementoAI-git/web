@@ -5,8 +5,10 @@ import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
 import Link from "@tiptap/extension-link";
+import Underline from "@tiptap/extension-underline";
 import type { IFile, IOnUploadPayload } from "@/utility/interface";
 import { EditorToolbar } from "./editor-toolbar";
+import { LinkInput } from "./link-input";
 import { SlashCommandPopup } from "./slash-command-popup";
 import { SLASH_COMMANDS } from "./slash-commands";
 import { FilePreview } from "./file-preview";
@@ -33,6 +35,8 @@ export function TextArea({
 }: TextAreaProps) {
   const [showSlashMenu, setShowSlashMenu] = useState(false);
   const [slashPosition, setSlashPosition] = useState({ top: 0, left: 0 });
+  const [showLinkInput, setShowLinkInput] = useState(false);
+  const [linkPosition, setLinkPosition] = useState({ top: 0, left: 0 });
   const [editorStateVersion, setEditorStateVersion] = useState(0);
 
   const editor = useEditor({
@@ -44,14 +48,17 @@ export function TextArea({
         },
       }),
       Placeholder.configure({
-        placeholder: "Tap to start typing... (Type / for formatting)",
+        placeholder: "Type / to search for formatting options",
       }),
       Link.configure({
         openOnClick: false,
         HTMLAttributes: {
           class: "text-blue-6 underline cursor-pointer",
+          target: "_blank",
+          rel: "noopener noreferrer",
         },
       }),
+      Underline,
     ],
     content: value || "",
     editorProps: {
@@ -100,6 +107,36 @@ export function TextArea({
     }
   }, [editor, value]);
 
+  const handleLinkSubmit = (text: string, url: string) => {
+    if (!editor) return;
+    if (!editor.state.selection.empty) {
+      editor
+        .chain()
+        .focus()
+        .deleteSelection()
+        .insertContent({
+          type: "text",
+          marks: [{ type: "link", attrs: { href: url } }],
+          text,
+        })
+        .insertContent(" ")
+        .focus()
+        .run();
+    } else {
+      editor
+        .chain()
+        .focus()
+        .insertContent({
+          type: "text",
+          marks: [{ type: "link", attrs: { href: url } }],
+          text,
+        })
+        .insertContent(" ")
+        .focus()
+        .run();
+    }
+  };
+
   const handleCommandSelect = (command: (typeof SLASH_COMMANDS)[0]) => {
     if (!editor) return;
 
@@ -119,10 +156,15 @@ export function TextArea({
         .deleteRange({ from, to })
         .run();
 
-      command.command({
-        editor,
-        range: { from, to },
-      });
+      if (command.label === "Link") {
+        setLinkPosition({ top: slashPosition.top + 40, left: slashPosition.left });
+        setShowLinkInput(true);
+      } else {
+        command.command({
+          editor,
+          range: { from, to },
+        });
+      }
     }
 
     setShowSlashMenu(false);
@@ -152,6 +194,13 @@ export function TextArea({
           position={slashPosition}
           onCommandSelect={handleCommandSelect}
           onClose={() => setShowSlashMenu(false)}
+        />
+
+        <LinkInput
+          show={showLinkInput}
+          position={linkPosition}
+          onSubmit={handleLinkSubmit}
+          onClose={() => setShowLinkInput(false)}
         />
       </div>
 

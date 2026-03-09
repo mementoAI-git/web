@@ -68,6 +68,8 @@ export interface IUser {
 export interface IMemoryAccessItem {
   _id?: string;
   name: string;
+  /** Group color index (0-6) when item is a group */
+  color?: number;
 }
 
 export interface IMemory {
@@ -142,10 +144,12 @@ export interface IGroup {
   members: Array<string | IGroupMember>;
   created_at: string;
   updated_at: string;
+  /** Color index (0-6) for group display */
+  color?: number;
 }
 
-export type CreateGroupBody = { name: string; description?: string };
-export type UpdateGroupBody = { name?: string; description?: string };
+export type CreateGroupBody = { name: string; description?: string; color?: number };
+export type UpdateGroupBody = { name?: string; description?: string; color?: number };
 export type AddGroupMembersBody = { beneficiaryIds: string[] };
 
 export interface ICapsule {

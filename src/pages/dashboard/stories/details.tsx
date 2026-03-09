@@ -7,7 +7,7 @@ import {
 import { useBookmark } from "@/hooks/use-bookmark";
 import { useModal } from "@/hooks/use-modal";
 import { useStore } from "@/hooks/use-store";
-import { addToRecentMemories, isEmpty } from "@/utility";
+import { addToRecentMemories, ensureLinksOpenInNewTab, isEmpty } from "@/utility";
 import type { IMemory } from "@/utility/interface";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -94,7 +94,7 @@ export default function StoriesDetails() {
               <div
                 className="font-inter text-sm sm:text-base text-grey-600 mt-4 sm:mt-6 leading-relaxed tiptap-editor"
                 dangerouslySetInnerHTML={{
-                  __html: DOMPurify.sanitize(memory?.body || ""),
+                  __html: ensureLinksOpenInNewTab(DOMPurify.sanitize(memory?.body || "")),
                 }}
               />
             </div>
