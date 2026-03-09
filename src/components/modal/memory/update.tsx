@@ -20,6 +20,8 @@ import { cn, resolvePath } from "@/utility";
 import type { IFile, IOnUploadPayload } from "@/utility/interface";
 import { SUPPORTED_FILE_TYPES } from "@/utility/constant";
 import { FileThumbnails } from "./create/file-thumbnails";
+import { AccessField, type SearchResultItem } from "./create/access-field";
+import { TagsField } from "./create/tags-field";
 import { HeadingIcon, LinkIcon, UnorderedListIcon } from "@/components/icons";
 import addPlusSvg from "@/assets/icon/Add-plus.svg";
 import smileySvg from "@/assets/icon/noto_slightly-smiling-face.svg";
@@ -32,6 +34,19 @@ interface ContentProps {
   data: any;
 }
 
+function toSearchItems(
+  groups: { _id?: string; name: string }[] = [],
+  beneficiaries: { _id?: string; name: string }[] = []
+): SearchResultItem[] {
+  const groupItems: SearchResultItem[] = (groups || [])
+    .filter((g) => g._id)
+    .map((g) => ({ id: g._id!, name: g.name, source: "group" as const }));
+  const beneficiaryItems: SearchResultItem[] = (beneficiaries || [])
+    .filter((b) => b._id)
+    .map((b) => ({ id: b._id!, name: b.name, source: "beneficiary" as const }));
+  return [...groupItems, ...beneficiaryItems];
+}
+
 function Content({ data }: ContentProps) {
   const memory = data.memory ?? data;
   const { push, close } = useModal();
@@ -41,6 +56,10 @@ function Content({ data }: ContentProps) {
   const [title, setTitle] = useState(memory?.title || "");
   const [removedAttachmentIds, setRemovedAttachmentIds] = useState<string[]>([]);
   const [currentAttachments, setCurrentAttachments] = useState<IFile[]>(memory?.attachments || []);
+  const [selectedAccess, setSelectedAccess] = useState<SearchResultItem[]>(() =>
+    toSearchItems(memory?.groups, memory?.beneficiaries)
+  );
+  const [tags, setTags] = useState<string[]>(memory?.tags || []);
   const { trigger, isMutating } = useFetcher(`${endpoint.memories}/${memory._id}`, "put");
   const { files, handleUpload, handleDeleteFile, setFiles } = useFileUpload();
 
@@ -111,6 +130,23 @@ function Content({ data }: ContentProps) {
 
     if (removedAttachmentIds.length > 0) {
       payload.removeAttachments = removedAttachmentIds;
+    }
+
+    const groupIds = selectedAccess.filter((a) => a.source === "group").map((a) => a.id);
+    const beneficiaryIds = selectedAccess.filter((a) => a.source === "beneficiary").map((a) => a.id);
+    const currentGroupIds = (memory?.groups || []).filter((g) => g._id).map((g) => g._id!);
+    const currentBeneficiaryIds = (memory?.beneficiaries || []).filter((b) => b._id).map((b) => b._id!);
+    const accessChanged =
+      JSON.stringify([...groupIds].sort()) !== JSON.stringify([...currentGroupIds].sort()) ||
+      JSON.stringify([...beneficiaryIds].sort()) !== JSON.stringify([...currentBeneficiaryIds].sort());
+    if (accessChanged) {
+      payload.groups = groupIds;
+      payload.beneficiaries = beneficiaryIds;
+    }
+
+    const tagsChanged = JSON.stringify([...tags].sort()) !== JSON.stringify([...(memory?.tags || [])].sort());
+    if (tagsChanged) {
+      payload.tags = tags;
     }
 
     if (Object.keys(payload).length > 0) {
@@ -245,11 +281,25 @@ function Content({ data }: ContentProps) {
     </button>
   );
 
+  const accessChanged =
+    JSON.stringify(
+      selectedAccess.map((a) => a.id).sort()
+    ) !==
+    JSON.stringify(
+      [
+        ...(memory?.groups || []).filter((g) => g._id).map((g) => g._id!),
+        ...(memory?.beneficiaries || []).filter((b) => b._id).map((b) => b._id!),
+      ].sort()
+    );
+  const tagsChanged =
+    JSON.stringify([...tags].sort()) !== JSON.stringify([...(memory?.tags || [])].sort());
   const hasChanges =
     title !== (memory?.title ?? "") ||
     text !== (memory.body ?? "") ||
     removedAttachmentIds.length > 0 ||
-    files.some((f) => f.uploadedFile);
+    files.some((f) => f.uploadedFile) ||
+    accessChanged ||
+    tagsChanged;
   const hasUploadingFiles = files.some((file) => !file.uploadedFile);
 
   return (
@@ -429,6 +479,15 @@ function Content({ data }: ContentProps) {
           </div>
         </div>
       </div>
+
+      <AccessField value={selectedAccess} onChange={setSelectedAccess} />
+
+      <TagsField
+        tags={tags}
+        setTags={setTags}
+        title={title}
+        body={editor?.getText() ?? ""}
+      />
       <FooterBtnGroup
         onDiscard={() => close("edit-memory")}
         onSave={handleContinueBtn}
