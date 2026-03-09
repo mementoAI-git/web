@@ -1,4 +1,5 @@
 import { Outlet } from "react-router-dom";
+import { Agentation } from "agentation";
 import { FloatingButton } from "./components/FloatingButton";
 import { useModal } from "./hooks/use-modal";
 
@@ -35,6 +36,7 @@ function App() {
           </div>
         </div>
       </div>
+      {import.meta.env.DEV && <Agentation />}
     </div>
   );
 }

@@ -48,6 +48,7 @@ export default function WelcomeSection() {
   const greeting = useMemo(() => getGreeting(), []);
   const { data: statsData } = useSWR(endpoint.userStats);
   const { data: memoriesStatsData } = useSWR(endpoint.memoriesStats);
+  const { data: storiesListData } = useSWR(`${endpoint.stories}?page=1&limit=1`);
   const { data: beneficiariesData } = useSWR(
     `${endpoint.beneficiaries}?page=1`,
   );
@@ -55,8 +56,13 @@ export default function WelcomeSection() {
   const stats = statsData?.data ?? {};
   const streakCount = Number(user?.streak) || Number(stats.streak_count) || 0;
   const xpCount = Number(stats.xp_count) || 0;
-  const memoriesCount = memoriesStatsData?.data?.stories_count || 0;
-  const weeklyMemories = memoriesStatsData?.data?.week_count || 0;
+  const memoriesCount =
+    memoriesStatsData?.data?.stories_count ??
+    memoriesStatsData?.stories_count ??
+    storiesListData?.data?.totalDocs ??
+    0;
+  const weeklyMemories =
+    memoriesStatsData?.data?.week_count ?? memoriesStatsData?.week_count ?? 0;
   const beneficiariesCount = beneficiariesData?.data?.totalDocs || 0;
   const capsuleCount = capsuleStatsData?.data?.scheduled_count || 0;
 
@@ -259,9 +265,10 @@ export default function WelcomeSection() {
         </Link>
 
         {/* Beneficiaries */}
-        <Link
-          to="/settings/beneficiaries"
-          className="relative rounded-2xl overflow-hidden h-[99px] block hover:opacity-95 transition-opacity col-span-2 lg:col-span-1 border border-[#E3E3E3]"
+        <button
+          type="button"
+          onClick={() => open("settings", { activeTab: "beneficiary" })}
+          className="relative rounded-2xl overflow-hidden h-[99px] block hover:opacity-95 transition-opacity col-span-2 lg:col-span-1 border border-[#E3E3E3] w-full text-left"
         >
           <img
             src={benefiCardBg}
@@ -295,7 +302,7 @@ export default function WelcomeSection() {
               className="size-12 object-contain shrink-0"
             />
           </div>
-        </Link>
+        </button>
 
         {/* Time Capsules */}
         <Link

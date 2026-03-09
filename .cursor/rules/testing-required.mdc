@@ -1,0 +1,29 @@
+---
+alwaysApply: true
+---
+
+# Testing is mandatory for every feature
+
+Every time you build, modify, or add a feature, component, hook, utility, or page — you MUST write tests for it before considering the work complete.
+
+## Rules
+
+1. **Write tests alongside the code.** After implementing a feature, immediately write the corresponding test file before moving on.
+2. **Run the tests.** After writing tests, run `npm test` (or `npx vitest run`) to verify they pass. Do not consider work done until tests are green.
+3. **Test file placement.** Place test files next to the source file they test, using the `.test.tsx` or `.test.ts` suffix (e.g., `button.tsx` → `button.test.tsx`).
+4. **Test types by scope:**
+   - **Unit tests** for pure components, hooks, and utility functions — use `render()` from `@testing-library/react` directly.
+   - **Integration tests** for pages or components that depend on providers, routing, or API calls — use `renderWithProviders()` from `@/test` and MSW for API mocking.
+5. **What to test:**
+   - Component renders correctly with expected content
+   - User interactions trigger the right behavior (clicks, input, form submission)
+   - Conditional rendering based on props, state, or API responses
+   - Error and empty states
+   - Accessibility (elements findable by role, label, or semantic queries)
+6. **Use the test infrastructure.** The project has a full setup at `src/test/`:
+   - `renderWithProviders()` — wraps components in Store, Modal, Chat, SWR, and Router providers
+   - `seedAuth()` / `clearAuth()` — set up authenticated state
+   - `mockUser`, `mockAuth` — reusable fixture data
+   - `server` from `src/test/mocks/server.ts` — MSW server; use `server.use()` to override handlers per test
+   - Default API handlers in `src/test/mocks/handlers.ts` — add new defaults as new endpoints are used
+7. **Never skip tests.** If a task feels too small to test, test it anyway. The only exceptions are pure markup/styling changes with no logic.

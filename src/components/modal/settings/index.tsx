@@ -34,9 +34,21 @@ const settings = {
 
 type SettingKey = keyof typeof settings;
 
-export default function Settings({ isMobile }: { isMobile: boolean }) {
+const VALID_TABS: SettingKey[] = ["general", "security", "beneficiary", "privacy"];
+
+export default function Settings({
+  data,
+  isMobile,
+}: {
+  data?: { activeTab?: string };
+  isMobile: boolean;
+}) {
   const { close } = useModal();
-  const [active, setActive] = useState<SettingKey>("general");
+  const initialTab =
+    data?.activeTab && VALID_TABS.includes(data.activeTab as SettingKey)
+      ? (data.activeTab as SettingKey)
+      : "general";
+  const [active, setActive] = useState<SettingKey>(initialTab);
   return (
     <>
       <div className="relative hidden h-full max-h-[640px] w-full max-w-[953px] items-stretch rounded-3xl bg-white sm:flex">

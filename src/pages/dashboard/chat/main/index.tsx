@@ -30,7 +30,7 @@ export default function ChatLandingPage() {
     <div className="flex h-screen flex-col">
       <div className="flex overflow-y-auto page-viewport flex-1 hide-scrollbar">
         <div className="space-y-10 md:space-y-16 w-full pb-8">
-          <div className="container space-y-10 md:space-y-16 py-3 sm:py-6 md:py-12">
+          <div className="container max-w-full w-full space-y-10 md:space-y-16 py-3 sm:py-6 md:py-12">
             <h4 className="hidden md:block text-center font-medium font-garamond text-[30px] sm:text-[40px] leading-[34px] sm:leading-[48px] text-sand-12">
               {user?.first_name && `Hey ${user?.first_name},`} What’s on your mind today?
             </h4>

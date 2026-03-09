@@ -144,7 +144,7 @@ export default function Chatinput({
     <div
       className={
         cn(
-          "w-full h-fit flex focus-within:border-sand-8 flex-col gap-3 md:gap-4 rounded-xl md:rounded-2xl border border-sand-4 py-3 px-4 md:p-6 bg-white mx-auto shadow-[0px_4px_8px_0px_#AB7E2B1C]",
+          "w-full h-fit flex focus-within:border-sand-8 flex-col gap-3 md:gap-4 rounded-xl md:rounded-2xl border border-[var(--border)] py-3 px-4 md:p-6 bg-white mx-auto shadow-[0px_4px_8px_0px_#AB7E2B1C]",
           className
         )
       }

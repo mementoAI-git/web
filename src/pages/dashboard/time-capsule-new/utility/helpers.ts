@@ -31,7 +31,7 @@ export const isImage = (file) => {
   }
 
   // Handle File object
-  if (file?.type?.includes("image") || file?.includes("image")) return true;
+  if (file?.type?.includes("image")) return true;
   // if (file?.type?.includes("image")) return true;
   const ext = file?.name?.split(".").pop()?.toLowerCase();
   return ["jpg", "jpeg", "png", "gif", "webp", "svg"].includes(ext || "");
