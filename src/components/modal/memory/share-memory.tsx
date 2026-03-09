@@ -12,6 +12,19 @@ import twitter from "@/assets/image/twitter.png";
 import instagram from "@/assets/image/instagram.png";
 import linkedin from "@/assets/image/linkedin.png";
 
+const SHARE_POPUP_WIDTH = 600;
+const SHARE_POPUP_HEIGHT = 400;
+
+function openSharePopup(url: string) {
+  const left = Math.round((window.screen.width - SHARE_POPUP_WIDTH) / 2);
+  const top = Math.round((window.screen.height - SHARE_POPUP_HEIGHT) / 2);
+  window.open(
+    url,
+    "share",
+    `width=${SHARE_POPUP_WIDTH},height=${SHARE_POPUP_HEIGHT},left=${left},top=${top},scrollbars=yes`
+  );
+}
+
 interface ShareMemoryProps {
   data: {
     memory: IMemory;
@@ -28,6 +41,40 @@ function Content({ data }: ShareMemoryProps) {
       setLink(`${window.location.origin}/post/${memory?._id}`);
     }
   }, [memory?._id]);
+
+  const shareUrl = link;
+  const shareText = memory?.title ?? "Check out this story";
+
+  const socialPlatforms: { name: string; img: string; onClick: () => void }[] = [
+    {
+      name: "Facebook",
+      img: facebook,
+      onClick: () =>
+        openSharePopup(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`),
+    },
+    {
+      name: "LinkedIn",
+      img: linkedin,
+      onClick: () =>
+        openSharePopup(
+          `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`
+        ),
+    },
+    {
+      name: "Twitter",
+      img: twitter,
+      onClick: () =>
+        openSharePopup(
+          `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`
+        ),
+    },
+    {
+      name: "Instagram",
+      img: instagram,
+      onClick: () =>
+        handleCopy(shareUrl, "Link copied — paste it in the Instagram app to share"),
+    },
+  ];
 
   return (
     <div className="w-full !max-w-120">
@@ -71,13 +118,21 @@ function Content({ data }: ShareMemoryProps) {
           </div>
 
           <div className="mt-4 flex items-center justify-center gap-3 md:justify-between md:gap-11">
-            {[facebook, linkedin, twitter, instagram].map((img, index) => (
-              <div
-                key={index}
-                className="flex size-[56px] cursor-pointer items-center justify-center rounded-full border border-grey-400"
+            {socialPlatforms.map((platform) => (
+              <button
+                key={platform.name}
+                type="button"
+                onClick={platform.onClick}
+                className="flex size-[56px] shrink-0 cursor-pointer items-center justify-center rounded-full border border-grey-400 transition-colors hover:border-grey-500 hover:bg-gray-50"
+                aria-label={`Share on ${platform.name}`}
               >
-                <img className="size-[28px] object-contain" src={img} alt="social logo" />
-              </div>
+                <img
+                  className="size-[28px] object-contain"
+                  src={platform.img}
+                  alt=""
+                  aria-hidden
+                />
+              </button>
             ))}
           </div>
         </div>
