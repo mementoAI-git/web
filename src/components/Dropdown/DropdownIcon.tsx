@@ -1,9 +1,8 @@
 "use client";
 
-import React, { useState, useRef, useLayoutEffect, useCallback } from "react";
+import React, { useState, useRef, useLayoutEffect, useCallback, useEffect } from "react";
 import { DropdowmMenu } from "./DropdownMenu";
 import { type IDropdownIcon } from "./interface";
-import useClickAway from "@/hooks/use-clickaway";
 import { createPortal } from "react-dom";
 import { cn, isEmpty } from "@/utility";
 
@@ -22,7 +21,21 @@ export function DropdownIcon({
   });
   const buttonRef = useRef<HTMLButtonElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const ref = useClickAway(() => setOpen(false));
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Node;
+      const isInsideButton = containerRef.current?.contains(target);
+      const isInsideDropdown = dropdownRef.current?.contains(target);
+      if (!isInsideButton && !isInsideDropdown) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("click", handleClickOutside, true);
+    return () => document.removeEventListener("click", handleClickOutside, true);
+  }, [open]);
 
   // Function to calculate and update position with viewport boundary detection
   const updatePosition = useCallback(() => {
@@ -101,7 +114,7 @@ export function DropdownIcon({
   }
 
   return (
-    <div ref={ref} className="relative">
+    <div ref={containerRef} className="relative">
       <button
         ref={buttonRef}
         onClick={() => setOpen((p) => !p)}
@@ -121,7 +134,7 @@ export function DropdownIcon({
               position: "fixed",
               top: position.top,
               left: position.left,
-              zIndex: 40,
+              zIndex: 9999,
               minWidth: position.width,
               pointerEvents: "auto",
             }}

@@ -232,6 +232,7 @@ export default function Conversation({ id, type = "memory" }) {
           memory={memory}
           onClose={handleCloseSidebar}
           isOpen={isSidebarOpen}
+          source={type === "prompt" ? "prompt" : "conversation"}
         />
       }
     </div>

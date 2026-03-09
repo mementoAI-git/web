@@ -2,6 +2,7 @@
 
 import PropsItem from "@/components/props-item";
 import type { IMemory } from "@/utility/interface";
+import { getPostTypeLabel, type PostTypeSource } from "@/utility/memory";
 
 // import FolderIcon from "@/public/icon/folder.svg";
 // import CalenderIcon from "@/public/icon/calendar-1.svg";
@@ -29,15 +30,17 @@ interface SidebarDetailsProps {
   memory: IMemory;
   onClose: () => void;
   isOpen: boolean;
+  source?: PostTypeSource;
 }
 
 interface ContentProps {
   memory: IMemory;
   onClose: () => void;
   isMobile?: boolean;
+  source?: PostTypeSource;
 }
 
-function Content({ memory, onClose, isMobile = false }: ContentProps) {
+function Content({ memory, onClose, isMobile = false, source }: ContentProps) {
   const { open } = useModal();
 
   const handleEditPermission = () => {
@@ -65,7 +68,7 @@ function Content({ memory, onClose, isMobile = false }: ContentProps) {
           <PropsItem
             icon={<FolderIcon width={16} />}
             title="post type:"
-            subtitle="story"
+            subtitle={getPostTypeLabel(memory, source)}
           />
           <PropsItem
             icon={<Calendar1Icon width={13} />}
@@ -129,7 +132,7 @@ function Content({ memory, onClose, isMobile = false }: ContentProps) {
   );
 }
 
-export default function SidebarDetails({ memory, onClose, isOpen }: SidebarDetailsProps) {
+export default function SidebarDetails({ memory, onClose, isOpen, source }: SidebarDetailsProps) {
   return (
     <>
       <Sheet
@@ -142,7 +145,7 @@ export default function SidebarDetails({ memory, onClose, isOpen }: SidebarDetai
         <Sheet.Container className="bg-sand-1">
           <Sheet.Header className="bg-sand-1 rounded-3xl" />
           <Sheet.Content className="bg-sand-1">
-            <Content memory={memory} onClose={onClose} isMobile />
+            <Content memory={memory} onClose={onClose} isMobile source={source} />
           </Sheet.Content>
         </Sheet.Container>
         <Sheet.Backdrop />
@@ -152,7 +155,7 @@ export default function SidebarDetails({ memory, onClose, isOpen }: SidebarDetai
         className={`h-full hidden md:block border-l border-[#EAECF0] transition-all duration-300 ease-in-out overflow-hidden ${isOpen ? 'w-60' : 'w-0'
           }`}
       >
-        <Content memory={memory} onClose={onClose} isMobile={false} />
+        <Content memory={memory} onClose={onClose} isMobile={false} source={source} />
       </div>
     </>
   );

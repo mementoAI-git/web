@@ -55,7 +55,10 @@ function Content({ data }: ContentProps) {
   const editor = useEditor({
     immediatelyRender: false,
     extensions: [
-      StarterKit,
+      StarterKit.configure({
+        heading: { levels: [1, 2, 3, 4] },
+        link: false,
+      }),
       Placeholder.configure({ placeholder: "What's on your mind today?" }),
       Link.configure({
         openOnClick: false,
@@ -230,6 +233,7 @@ function Content({ data }: ContentProps) {
   const toolbarBtn = (isActive: boolean, onClick: () => void, children: React.ReactNode, title?: string) => (
     <button
       type="button"
+      onMouseDown={(e) => e.preventDefault()}
       onClick={onClick}
       title={title}
       className={cn(
@@ -278,8 +282,8 @@ function Content({ data }: ContentProps) {
         <div className="rounded-[16px] border border-gray-200 flex flex-col overflow-hidden">
           <div className="flex items-center gap-0.5 pt-4 px-4 pb-3">
             {toolbarBtn(
-              !!editor?.isActive("heading", { level: 3 }),
-              () => editor?.chain().focus().toggleHeading({ level: 3 }).run(),
+              !!editor?.isActive("heading", { level: 2 }),
+              () => editor?.chain().focus().toggleHeading({ level: 2 }).run(),
               <HeadingIcon width={11} height={14} />,
               "Heading",
             )}

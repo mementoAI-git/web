@@ -1,7 +1,11 @@
+import type { ReactNode } from "react";
+import useSWR from "swr";
 import { useModal } from "@/hooks/use-modal";
 import { ModalCloseBtn } from "../modalLayout";
 import PropsItem from "@/components/props-item";
+import endpoint from "@/api/endpoint";
 import type { IMemory } from "@/utility/interface";
+import { getPostTypeLabel } from "@/utility/memory";
 import dayjs from "dayjs";
 import {
   FolderIcon,
@@ -15,19 +19,45 @@ interface ViewMemoryDetailsProps {
   data: { memory: IMemory };
 }
 
-export function ViewMemoryDetails({ data: { memory } }: ViewMemoryDetailsProps) {
+function formatUserAccess(memory: IMemory | undefined): ReactNode {
+  const groups = memory?.groups ?? [];
+  const beneficiaries = memory?.beneficiaries ?? [];
+  const items = [...groups.map((g) => ({ name: g.name, type: "group" as const })), ...beneficiaries.map((b) => ({ name: b.name, type: "beneficiary" as const }))];
+
+  if (items.length === 0) return "None";
+
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {items.map((item, i) => (
+        <span key={`${item.type}-${i}`} className="mem-tags text-xs">
+          {item.name}
+          {item.type === "group" && (
+            <span className="ml-0.5 text-[10px] text-gray-400">(group)</span>
+          )}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+export function ViewMemoryDetails({ data: { memory: initialMemory } }: ViewMemoryDetailsProps) {
   const { close } = useModal();
+
+  const { data: fetched } = useSWR(
+    initialMemory?._id ? `${endpoint.memories}/${initialMemory._id}` : null
+  );
+  const memory = (fetched?.data as IMemory) ?? initialMemory;
 
   return (
     <div
-      className="modal-container !max-w-md"
+      className="modal-container !max-w-md !p-5 !h-fit"
       onClick={(e) => e.stopPropagation()}
     >
       <ModalCloseBtn onClick={() => close("view-memory-details")} />
-      <div className="mt-5 space-y-6">
+      <div className="space-y-6">
         <div className="space-y-1">
           <h4 className="modal-title">Story Details</h4>
-          <p className="font-inter text-sm text-gray-500 truncate">
+          <p className="font-inter text-sm text-gray-500 truncate border-b border-gray-100 pb-3">
             {memory?.title}
           </p>
         </div>
@@ -40,7 +70,7 @@ export function ViewMemoryDetails({ data: { memory } }: ViewMemoryDetailsProps) 
             <PropsItem
               icon={<FolderIcon width={16} />}
               title="Post type:"
-              subtitle="Story"
+              subtitle={getPostTypeLabel(memory)}
             />
             <PropsItem
               icon={<Calendar1Icon width={13} />}
@@ -54,8 +84,9 @@ export function ViewMemoryDetails({ data: { memory } }: ViewMemoryDetailsProps) 
             />
             <PropsItem
               icon={<LockIcon width={13} />}
-              title="Permission level:"
-              subtitle={`Level ${memory?.level ?? 0}`}
+              title="User access:"
+              className="!items-start"
+              subtitle={formatUserAccess(memory)}
             />
           </ul>
         </div>

@@ -34,14 +34,15 @@ export default function useClickAway(cb: () => void) {
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (ref.current && !ref.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      if (ref.current && !ref.current.contains(target)) {
         callbackRef.current();
       }
     };
 
-    document.addEventListener("click", handleClickOutside);
+    document.addEventListener("click", handleClickOutside, true);
     return () => {
-      document.removeEventListener("click", handleClickOutside);
+      document.removeEventListener("click", handleClickOutside, true);
     };
   }, []);
 

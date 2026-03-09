@@ -74,14 +74,15 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
     initial: { ...initial, ...data?.payload },
     async onSubmit(p) {
       if (isEmpty(p.title)) return toast.error("Title is required");
-      const bodyText = editor?.getText()?.trim() || "";
-      if (!bodyText && files.length === 0) {
+      const bodyHtml = editor?.getHTML() || "";
+      const hasContent = editor?.getText()?.trim() || files.length > 0;
+      if (!hasContent) {
         return toast.error("Please add some content or a media file before continuing");
       }
       const uploadedFiles = files.filter((f) => f.uploadedFile).map((f) => f.uploadedFile._id);
       const payload = buildCreateMemoryPayload(
         p.title,
-        bodyText,
+        bodyHtml,
         tags,
         "save",
         selectedAccess,
@@ -103,7 +104,10 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
   const editor = useEditor({
     immediatelyRender: false,
     extensions: [
-      StarterKit,
+      StarterKit.configure({
+        heading: { levels: [1, 2, 3, 4] },
+        link: false,
+      }),
       Placeholder.configure({ placeholder: "What's on your mind today?" }),
       Link.configure({
         openOnClick: false,
@@ -262,6 +266,7 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
   const toolbarBtn = (isActive: boolean, onClick: () => void, children: React.ReactNode, title?: string) => (
     <button
       type="button"
+      onMouseDown={(e) => e.preventDefault()}
       onClick={onClick}
       title={title}
       className={cn(
@@ -307,8 +312,8 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
         {/* Formatting toolbar */}
         <div className="flex items-center gap-0.5 pt-4 px-4 pb-3">
           {toolbarBtn(
-            !!editor?.isActive("heading", { level: 3 }),
-            () => editor?.chain().focus().toggleHeading({ level: 3 }).run(),
+            !!editor?.isActive("heading", { level: 2 }),
+            () => editor?.chain().focus().toggleHeading({ level: 2 }).run(),
             <HeadingIcon width={11} height={14} />,
             "Heading",
           )}
@@ -356,9 +361,9 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
         </div>
 
         {/* Editor */}
-        <div className="h-[300px] overflow-y-auto">
-          <div className="relative flex-1">
-            <EditorContent editor={editor} className="tiptap-editor" />
+        <div className="flex h-[300px] flex-col overflow-hidden">
+          <div className="editor-fill-500 relative flex min-h-0 flex-1 flex-col overflow-hidden">
+            <EditorContent editor={editor} className="tiptap-editor size-full min-h-0" />
             {showLinkInput && (
               <LinkInput
                 show={showLinkInput}

@@ -40,16 +40,16 @@ export function DeleteMemory({ data: { memory } }: DeleteMemoryProps) {
   };
 
   return (
-    <div className="modal-container !max-w-120">
+    <div className="modal-container !max-w-120 !p-5">
       <ModalCloseBtn onClick={() => close("delete-memory")} />
-      <div className="mt-5 space-y-6">
+      <div className="space-y-6">
         <div className="space-y-4">
           <h4 className="modal-title">Delete memory</h4>
           <span className="font-inter text-sm text-grey-600">
             Are you sure you want to delete this post? This action cannot be undone.
           </span>
         </div>
-        <div className="flex items-center justify-end gap-4">
+        <div className="flex items-center justify-end gap-3">
           <button
             type="button"
             className="h-10 cursor-pointer rounded-full border border-[#0011661A] bg-white/1 px-4 py-2.5 font-inter text-sm font-semibold shadow"

@@ -65,6 +65,11 @@ export interface IUser {
   created_at: string;
 }
 
+export interface IMemoryAccessItem {
+  _id?: string;
+  name: string;
+}
+
 export interface IMemory {
   _id: string;
   title: string;
@@ -84,6 +89,10 @@ export interface IMemory {
   category?: string;
   summary?: string;
   topics?: string[];
+  /** Groups with access to this story (from Add memory modal) */
+  groups?: IMemoryAccessItem[];
+  /** Beneficiaries with access to this story (from Add memory modal) */
+  beneficiaries?: IMemoryAccessItem[];
 }
 
 export interface IPagination<T> {

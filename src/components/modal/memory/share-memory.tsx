@@ -45,7 +45,7 @@ function Content({ data }: ShareMemoryProps) {
               <button
                 type="button"
                 onClick={() => handleCopy(link, "Link copied successfully")}
-                className="cursor-pointer border-l border-gray-200 text-blue-6"
+                className="cursor-pointer border-l border-gray-200 text-orange hover:text-[#C55A1D] transition-colors"
               >
                 <div className="flex items-center justify-center gap-1 px-3 py-2">
                   {copied ? (
@@ -93,7 +93,7 @@ export default function ShareMemory({ data }: ShareMemoryProps) {
 
   return (
     <div>
-      <div className="modal-container hidden sm:flex">
+      <div className="modal-container hidden sm:flex !p-5">
         <ModalCloseBtn onClick={handleClose} />
         <Content data={data} />
       </div>

@@ -108,6 +108,7 @@ export default function StoriesDetails() {
             memory,
             onClose: () => setIsOpen(false),
             isOpen,
+            source: "story",
           }}
         />
       )}

@@ -15,6 +15,17 @@ import { MemoryDropdown } from "@/pages/dashboard/chat/conversation/dropdown";
 import FileGallery from "@/components/file-gallery";
 import DOMPurify from "isomorphic-dompurify";
 
+/** Converts plain text to HTML with paragraphs for display when body has no HTML structure */
+function ensureHtmlFormat(body: string): string {
+  const trimmed = (body || "").trim();
+  if (!trimmed) return "";
+  // If it already contains HTML tags, return as-is (after sanitization)
+  if (/<[a-z][\s\S]*>/i.test(trimmed)) return trimmed;
+  // Plain text: wrap in paragraphs, preserving line breaks
+  const paragraphs = trimmed.split(/\n\n+/).filter(Boolean);
+  return paragraphs.map((p) => `<p>${p.replace(/\n/g, "<br>")}</p>`).join("");
+}
+
 interface ViewMemoryProps {
   data: { memoryId?: string; memory?: IMemory };
   isMobile?: boolean;
@@ -86,9 +97,9 @@ export function ViewMemory({ data, isMobile }: ViewMemoryProps) {
               <FileGallery files={memory?.attachments || []} />
             )}
             <div
-              className="tiptap-editor text-grey-600 mt-4 leading-relaxed font-garamond text-xl"
+              className="tiptap-editor prose prose-sm max-w-none text-gray-800 mt-4 leading-relaxed font-garamond"
               dangerouslySetInnerHTML={{
-                __html: DOMPurify.sanitize(memory?.body || ""),
+                __html: DOMPurify.sanitize(ensureHtmlFormat(memory?.body || "")),
               }}
             />
           </>
