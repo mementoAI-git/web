@@ -89,7 +89,6 @@ export const getSocialShareLinks = (
     facebook: {
       name: "Facebook",
       onClick: () => {
-        onCopy(shareUrl, "Link copied — paste it into your post if it doesn't appear");
         openSharePopup(
           `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`
         );
@@ -316,32 +315,28 @@ USER INFORMATION:
 - Name: ${user?.fullname || "User"}
 - Email: ${user?.email || "Not provided"}
 - Gender: ${user?.gender || "Not specified"}
-- Date of birth: ${
-    user?.dob ? dayjs(user?.dob).toDate().toLocaleDateString() : "Not specified"
-  }
+- Date of birth: ${user?.dob ? dayjs(user?.dob).toDate().toLocaleDateString() : "Not specified"
+    }
 - Country: ${user?.country}
 - Member since: ${dayjs(user?.created_at).toDate().toLocaleDateString()}
 
 USER PREFERENCES:
 - Communication style: ${userPreferences.communication_style || "friendly"}
-- Topics of interest: ${
-    userPreferences.topics_of_interest?.join(", ") ||
+- Topics of interest: ${userPreferences.topics_of_interest?.join(", ") ||
     "Learning user interests..."
-  }
+    }
 - Conversation tone: ${userPreferences.conversation_tone || "warm"}
 - Response length preference: ${userPreferences.response_length || "medium"}
 
 IMPORTANT USER NOTES:
-${
-  userContext.important_notes?.map((note) => `- ${note}`).join("\n") ||
-  "Learning about user..."
-}
+${userContext.important_notes?.map((note) => `- ${note}`).join("\n") ||
+    "Learning about user..."
+    }
 
 KEY PREFERENCES:
-${
-  userContext.key_preferences?.map((pref) => `- ${pref}`).join("\n") ||
-  "Learning user preferences..."
-}
+${userContext.key_preferences?.map((pref) => `- ${pref}`).join("\n") ||
+    "Learning user preferences..."
+    }
 
 IMPORTANT GUIDELINES:
 1. Always address the user by their name when appropriate
@@ -353,9 +348,8 @@ IMPORTANT GUIDELINES:
 7. Adjust your communication style to match user preferences
 8. Only greet occasionally - focus on natural conversation flow
 
-Remember: You're having a conversation with ${
-    user?.fullname || "the user"
-  }. Be natural, helpful, and personalized.`;
+Remember: You're having a conversation with ${user?.fullname || "the user"
+    }. Be natural, helpful, and personalized.`;
 }
 
 // export const resolvePath = (endpoint: string, payload = {}) => {
