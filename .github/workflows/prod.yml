@@ -17,6 +17,8 @@ jobs:
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         port: 22
         script: |
+          set -e
+
           export NVM_DIR="$HOME/.nvm"
           [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
           
@@ -32,7 +34,7 @@ jobs:
           git pull origin main
           
           # Install dependencies and compile
-          pnpm install --frozen-lockfile
+          pnpm install
           pnpm build
 
           # Copy the build files to the deployment directory

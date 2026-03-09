@@ -17,6 +17,8 @@ jobs:
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         port: 22
         script: |
+          set -e
+
           export NVM_DIR="$HOME/.nvm"
           [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
           
@@ -32,8 +34,8 @@ jobs:
           git pull origin dev
           
           # Install dependencies and compile
-          npm ci
-          npm run build
+          pnpm install
+          pnpm build
 
           # Copy the build files to the deployment directory
           cp -r dist/* $deploy_path/
