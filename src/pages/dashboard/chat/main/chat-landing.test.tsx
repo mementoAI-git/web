@@ -6,16 +6,18 @@ import ChatLandingPage from "./index";
 const BASE_URL = "http://localhost:3000/api";
 
 describe("ChatLandingPage", () => {
-  it("renders the greeting headings", () => {
+  it("renders the greeting headings with time-based message", () => {
     renderWithProviders(<ChatLandingPage />, {
       auth: true,
       route: "/chat",
     });
 
-    const headings = screen.getAllByText((_, el) =>
-      (el?.tagName === "H4" && el.textContent?.includes("on your mind today")) || false,
+    const headings = screen.getAllByRole("heading", { level: 3 });
+    const greetingHeading = headings.find(
+      (el) => (el.textContent?.length ?? 0) > 10 && el.textContent?.includes("?"),
     );
-    expect(headings.length).toBeGreaterThanOrEqual(1);
+    expect(greetingHeading).toBeInTheDocument();
+    expect(greetingHeading?.textContent?.length).toBeGreaterThan(10);
   });
 
   it("renders the chat input", () => {
@@ -25,7 +27,7 @@ describe("ChatLandingPage", () => {
     });
 
     expect(
-      screen.getByPlaceholderText("Type text here..."),
+      screen.getByPlaceholderText("Type text here... Type / for formatting"),
     ).toBeInTheDocument();
   });
 
@@ -97,6 +99,8 @@ describe("ChatLandingPage", () => {
       route: "/chat",
     });
 
-    expect(screen.getByText("User")).toBeInTheDocument();
+    const headingsWithUser = screen.getAllByText(/User/);
+    expect(headingsWithUser.length).toBeGreaterThan(0);
+    expect(headingsWithUser[0]).toBeInTheDocument();
   });
 });

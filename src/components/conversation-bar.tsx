@@ -5,7 +5,7 @@ import { cn } from "@/utility";
 import { DropdownIcon } from "@/components/Dropdown";
 import { useModal } from "@/hooks/use-modal";
 import { useBookmark } from "@/hooks/use-bookmark";
-import chatIcon from "@/assets/image/chat.png";
+import recentActivitiesIcon from "@/assets/icon/homepage/recent activities icon.svg";
 import { InfoIcon, TrashIcon, VerticalEllipseIcon } from "@/components/icons";
 import { BookmarkIcon } from "./icons/bookmark";
 
@@ -27,6 +27,8 @@ interface ConversationBarProps {
   _id: string;
   bookmarked?: boolean;
   size?: "sm" | "lg";
+  /** When true, no radius/border; use bottom border only (e.g. in list layout) */
+  variant?: "default" | "compact";
 }
 
 export default function ConversationBar({
@@ -34,8 +36,10 @@ export default function ConversationBar({
   _id,
   bookmarked = false,
   size = "sm",
+  variant = "default",
 }: ConversationBarProps) {
   const isLarge = size === "lg";
+  const isCompact = variant === "compact";
   const navigate = useNavigate();
   const { open } = useModal();
   const { toggleBookmark } = useBookmark({
@@ -64,21 +68,25 @@ export default function ConversationBar({
     <div
       onClick={handleClick}
       className={cn(
-        "flex w-full cursor-pointer items-center justify-between rounded-xl border border-sand-4 px-3 py-2",
+        "flex w-full cursor-pointer items-center justify-between px-2 py-2 transition-colors duration-150",
+        "hover:bg-[rgba(251,248,244,0.7)]",
+        isCompact
+          ? "rounded-[8px] border-b border-[#f2f2f2]"
+          : "rounded-xl border border-[#f2f2f2]",
         { "p-3 sm:p-6": isLarge },
       )}
     >
       <div className="flex items-center gap-4">
         <img
-          alt="Chat icon"
+          alt="Recent activities"
           className={cn("size-[35px]", {
             "size-[25px] sm:size-[56px]": isLarge,
           })}
-          src={chatIcon}
+          src={recentActivitiesIcon}
         />
         <span
-          className={cn("font-georgia text-sand-12", {
-            "text-sand-12 sm:text-xl": isLarge,
+          className={cn("font-georgia text-accent-foreground", {
+            "sm:text-xl": isLarge,
           })}
         >
           {title}
@@ -111,14 +119,20 @@ export default function ConversationBar({
 
 export function ConversationBarSkeleton({
   size = "sm",
+  variant = "default",
 }: {
   size?: "sm" | "lg";
+  variant?: "default" | "compact";
 }) {
   const isLarge = size === "lg";
+  const isCompact = variant === "compact";
   return (
     <div
       className={cn(
-        "flex w-full animate-pulse items-center justify-between rounded-2xl border border-sand-4 px-3 py-2",
+        "flex w-full animate-pulse items-center justify-between px-2 py-2",
+        isCompact
+          ? "rounded-[8px] border-b border-sand-4"
+          : "rounded-2xl border border-sand-4",
         {
           "p-3 sm:p-6": isLarge,
         },

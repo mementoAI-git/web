@@ -74,6 +74,7 @@ function Content({ data }: ContentProps) {
   const [linkPosition, setLinkPosition] = useState({ top: 0, left: 0 });
   const [showSlashMenu, setShowSlashMenu] = useState(false);
   const [slashPosition, setSlashPosition] = useState({ top: 0, left: 0 });
+  const [slashSelectedIndex, setSlashSelectedIndex] = useState(0);
   const [audioRecordingCount, setAudioRecordingCount] = useState(1);
   const plusMenuRef = useRef<HTMLDivElement>(null);
   const plusMenuPortalRef = useRef<HTMLDivElement>(null);
@@ -111,18 +112,19 @@ function Content({ data }: ContentProps) {
       const { selection } = state;
       const { $anchor } = selection;
       const textBefore = $anchor.parent.textContent.slice(0, $anchor.parentOffset);
+      const lastSlashIndex = textBefore.lastIndexOf("/");
 
-      if (textBefore.endsWith("/")) {
-        const coords = editor.view.coordsAtPos(selection.from);
-        setSlashPosition({ top: coords.top + 20, left: coords.left });
-        setShowSlashMenu(true);
+      if (lastSlashIndex === -1) {
+        setShowSlashMenu(false);
       } else {
-        const lastSlashIndex = textBefore.lastIndexOf("/");
-        if (lastSlashIndex !== -1) {
-          const query = textBefore.slice(lastSlashIndex + 1);
-          if (query.includes(" ") || query.includes("\n")) {
-            setShowSlashMenu(false);
-          }
+        const query = textBefore.slice(lastSlashIndex + 1);
+        if (query.includes(" ") || query.includes("\n")) {
+          setShowSlashMenu(false);
+        } else {
+          const coords = editor.view.coordsAtPos(selection.from);
+          setSlashPosition({ top: coords.top + 20, left: coords.left });
+          setShowSlashMenu(true);
+          setSlashSelectedIndex(0);
         }
       }
     },
@@ -455,6 +457,9 @@ function Content({ data }: ContentProps) {
             <SlashCommandPopup
               show={showSlashMenu}
               position={slashPosition}
+              commands={SLASH_COMMANDS}
+              selectedIndex={slashSelectedIndex}
+              onSelectedIndexChange={setSlashSelectedIndex}
               onCommandSelect={handleSlashCommandSelect}
               onClose={() => setShowSlashMenu(false)}
             />

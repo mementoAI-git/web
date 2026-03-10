@@ -34,8 +34,11 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
   const { user, headerTitle } = useStore();
   const { open } = useModal();
 
+  /** Navigate to the "home" of the current section (e.g. /chat when in a conversation, /overview when on overview). */
   const handleLogoClick = () => {
-    navigate("/overview");
+    const segment = location.pathname.split("/").filter(Boolean)[0];
+    const sectionRoot = segment ? `/${segment}` : "/overview";
+    navigate(sectionRoot);
   };
 
   return (

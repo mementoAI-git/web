@@ -1,27 +1,68 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { useEffect } from "react";
 import useClickAway from "@/hooks/use-clickaway";
 import { SLASH_COMMANDS } from "./slash-commands";
 
+export interface SlashCommandDisplayItem {
+  icon: ReactNode;
+  label: string;
+  shortcut?: string;
+}
+
 interface SlashCommandPopupProps {
   show: boolean;
   position: { top: number; left: number };
-  onCommandSelect: (command: (typeof SLASH_COMMANDS)[0]) => void;
+  /** Commands to show (e.g. SLASH_COMMANDS or filtered list). Defaults to SLASH_COMMANDS when omitted. */
+  commands?: SlashCommandDisplayItem[];
+  onCommandSelect: (command: SlashCommandDisplayItem & Record<string, unknown>) => void;
   onClose: () => void;
+  /** Highlighted index for keyboard nav. When set with onSelectedIndexChange, Arrow Up/Down and Enter are handled. */
+  selectedIndex?: number;
+  onSelectedIndexChange?: (index: number) => void;
 }
 
-export function SlashCommandPopup({ show, position, onCommandSelect, onClose }: SlashCommandPopupProps) {
+export function SlashCommandPopup({
+  show,
+  position,
+  commands = SLASH_COMMANDS,
+  onCommandSelect,
+  onClose,
+  selectedIndex = 0,
+  onSelectedIndexChange,
+}: SlashCommandPopupProps) {
   const slashMenuRef = useClickAway(onClose);
+  const length = commands.length;
 
   useEffect(() => {
     if (!show) return;
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") {
+        onClose();
+        return;
+      }
+      if (onSelectedIndexChange && length > 0) {
+        if (e.key === "ArrowDown") {
+          e.preventDefault();
+          onSelectedIndexChange((selectedIndex + 1) % length);
+          return;
+        }
+        if (e.key === "ArrowUp") {
+          e.preventDefault();
+          onSelectedIndexChange((selectedIndex - 1 + length) % length);
+          return;
+        }
+        if (e.key === "Enter") {
+          e.preventDefault();
+          onCommandSelect(commands[selectedIndex] as SlashCommandDisplayItem & Record<string, unknown>);
+          onClose();
+        }
+      }
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [show, onClose]);
+  }, [show, onClose, length, selectedIndex, onSelectedIndexChange, onCommandSelect, commands]);
 
   if (!show) return null;
 
@@ -38,11 +79,13 @@ export function SlashCommandPopup({ show, position, onCommandSelect, onClose }: 
         <span className="text-xs font-medium text-gray-500">Basic blocks</span>
       </div>
       <div className="flex flex-col">
-        {SLASH_COMMANDS.map((cmd, index) => (
+        {commands.map((cmd, index) => (
           <button
             key={index}
-            onClick={() => onCommandSelect(cmd)}
-            className="flex cursor-pointer items-center gap-3 px-3 py-0.5 text-left text-xs text-gray-800 transition-colors hover:bg-gray-100"
+            onClick={() => onCommandSelect(cmd as SlashCommandDisplayItem & Record<string, unknown>)}
+            className={`flex cursor-pointer items-center gap-3 px-3 py-0.5 text-left text-xs text-gray-800 transition-colors hover:bg-gray-100 ${
+              index === selectedIndex ? "bg-gray-100" : ""
+            }`}
             type="button"
           >
             <span className="flex size-8 shrink-0 items-center justify-center text-gray-800 [&>svg]:size-4 [&>span]:text-xs">

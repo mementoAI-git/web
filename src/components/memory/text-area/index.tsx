@@ -35,6 +35,7 @@ export function TextArea({
 }: TextAreaProps) {
   const [showSlashMenu, setShowSlashMenu] = useState(false);
   const [slashPosition, setSlashPosition] = useState({ top: 0, left: 0 });
+  const [slashSelectedIndex, setSlashSelectedIndex] = useState(0);
   const [showLinkInput, setShowLinkInput] = useState(false);
   const [linkPosition, setLinkPosition] = useState({ top: 0, left: 0 });
   const [editorStateVersion, setEditorStateVersion] = useState(0);
@@ -76,20 +77,21 @@ export function TextArea({
       const { $anchor } = selection;
       const textBefore = $anchor.parent.textContent.slice(0, $anchor.parentOffset);
 
-      if (textBefore.endsWith("/")) {
-        const coords = editor.view.coordsAtPos(selection.from);
-        setSlashPosition({
-          top: coords.top + 20,
-          left: coords.left,
-        });
-        setShowSlashMenu(true);
-      } else if (showSlashMenu) {
-        const lastSlashIndex = textBefore.lastIndexOf("/");
-        if (lastSlashIndex !== -1) {
-          const query = textBefore.slice(lastSlashIndex + 1);
-          if (query.includes(" ") || query.includes("\n")) {
-            setShowSlashMenu(false);
-          }
+      const lastSlashIndex = textBefore.lastIndexOf("/");
+      if (lastSlashIndex === -1) {
+        setShowSlashMenu(false);
+      } else {
+        const query = textBefore.slice(lastSlashIndex + 1);
+        if (query.includes(" ") || query.includes("\n")) {
+          setShowSlashMenu(false);
+        } else {
+          const coords = editor.view.coordsAtPos(selection.from);
+          setSlashPosition({
+            top: coords.top + 20,
+            left: coords.left,
+          });
+          setShowSlashMenu(true);
+          setSlashSelectedIndex(0);
         }
       }
     },
@@ -192,6 +194,9 @@ export function TextArea({
         <SlashCommandPopup
           show={showSlashMenu}
           position={slashPosition}
+          commands={SLASH_COMMANDS}
+          selectedIndex={slashSelectedIndex}
+          onSelectedIndexChange={setSlashSelectedIndex}
           onCommandSelect={handleCommandSelect}
           onClose={() => setShowSlashMenu(false)}
         />

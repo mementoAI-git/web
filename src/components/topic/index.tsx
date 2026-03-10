@@ -25,18 +25,18 @@ export default function Topic({
     }
   };
 
-  const containerClassName = cn("border border-sand-4 space-y-6 rounded-2xl w-full max-w-[240px] sm:max-w-[270px] p-3 sm:p-6 flex-shrink-0 transition-all duration-300 ease-in-out hover:scale-105 hover:shadow-xl hover:shadow-sand-4/20 hover:-translate-y-1 cursor-pointer block", className)
+  const containerClassName = cn("border border-sand-4 space-y-6 rounded-2xl w-fit h-[250px] max-w-[240px] sm:max-w-[270px] p-3 flex-shrink-0 transition-all duration-300 ease-in-out hover:scale-105 hover:shadow-xl hover:shadow-sand-4/20 hover:-translate-y-1 cursor-pointer block", className)
 
   const content = (
     <>
-      <div className="h-30 relative rounded-lg overflow-hidden">
+      <div className="h-30 w-[220px] relative rounded-lg overflow-hidden">
         <div className="absolute top-2 left-2 rounded-full bg-gray-50 w-fit max-w-[90%] py-0.5 px-2 border border-gray-200">
           <span className="font-inter block capitalize font-medium text-xs text-gray-700 truncate">{tag}</span>
         </div>
         <img alt="" width={120} height={120} className="size-full object-cover transition-transform duration-300 ease-in-out hover:scale-110" src={image || careerImage} />
       </div>
-      <div>
-        <span className="font-georgia md:text-xl text-sand-12 font-normal">{title}</span>
+      <div className="w-[220px]">
+        <span className="font-georgia text-base text-sand-12 font-light w-full block">{title}</span>
       </div>
     </>
   );

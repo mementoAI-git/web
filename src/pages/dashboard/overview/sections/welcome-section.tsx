@@ -21,6 +21,19 @@ import blueFolderIcon from "@/assets/icon/blue folder 2.svg";
 import surferIcon from "@/assets/icon/noto_man-surfing-medium-skin-tone.svg";
 import hourglassIcon from "@/assets/icon/noto_hourglass-not-done.svg";
 
+/** Greetings that are implied questions; use "?" after the name instead of "." */
+const QUESTION_GREETINGS = new Set([
+  "Can't sleep,",
+  "Burning the midnight oil,",
+  "Keeping a late night,",
+  "Late night session,",
+  "Still going,",
+]);
+
+export function getGreetingPunctuation(greeting: string): "." | "?" {
+  return QUESTION_GREETINGS.has(greeting) ? "?" : ".";
+}
+
 function getGreeting(): string {
   const hour = new Date().getHours();
   const greetings =
@@ -77,8 +90,12 @@ export default function WelcomeSection() {
           />
           <h2 className="font-garamond text-gray-800 font-normal text-[24px] sm:text-[32px] lg:text-[40px] leading-[1.2]">
             {greeting}
-            {user?.first_name && (
-              <i style={{ color: "#376B59" }}> {user?.first_name}.</i>
+            {(user?.nickname || user?.first_name || user?.last_name) && (
+              <i style={{ color: "#376B59" }}>
+                {" "}
+                {user?.nickname || user?.first_name || user?.last_name}
+                {getGreetingPunctuation(greeting)}
+              </i>
             )}
           </h2>
         </div>
