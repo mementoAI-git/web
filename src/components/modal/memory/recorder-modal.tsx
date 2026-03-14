@@ -1,8 +1,9 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useModal } from "@/hooks/use-modal";
-import { TimesIcon } from "@/components/icons";
+import { MicIcon, TimesIcon, RefreshIcon, PlanePaperIcon, PauseRecIcon, PlayIcon } from "@/components/icons";
+import { useAudioLevels } from "@/hooks/use-audio-levels";
 import { VideoRecorder } from "@/components/recorder";
 import useRecorder from "@/hooks/use-recorder";
 import { toast } from "sonner";
@@ -13,6 +14,11 @@ function formatTimer(s: number) {
   const sec = (s % 60).toString().padStart(2, "0");
   return `${m}:${sec}`;
 }
+
+const WAVEFORM_BAR_COUNT = 24;
+const WAVEFORM_BAR_HEIGHTS = [16, 28, 40, 24, 36, 44, 32, 20, 48, 28, 36, 24, 40, 32, 44, 20, 28, 36, 40, 24, 32, 44, 28, 36];
+const BARS_PER_SECOND = 7;
+const MIN_BAR_HEIGHT_PX = 8;
 
 interface RecorderModalProps {
   data: {
@@ -27,6 +33,31 @@ export function AudioRecorderModal({ data }: RecorderModalProps) {
 
   const [stream, setStream] = useState<MediaStream | null>(null);
   const rec = useRecorder(stream, "audio/webm");
+  const audioLevels = useAudioLevels(stream, !!rec.recording);
+  const [smoothProgress, setSmoothProgress] = useState(0);
+  const lastSecondAtRef = useRef(0);
+
+  // Sub-second progress when recording so bars and line move smoothly
+  useEffect(() => {
+    if (!rec.recording) {
+      setSmoothProgress((rec.timer || 0) * BARS_PER_SECOND);
+      return;
+    }
+    lastSecondAtRef.current = performance.now();
+    const tick = () => {
+      const elapsed = (performance.now() - lastSecondAtRef.current) / 1000;
+      const progress = (rec.timer || 0) + Math.min(elapsed, 1);
+      setSmoothProgress(progress * BARS_PER_SECOND);
+    };
+    const id = setInterval(tick, 50);
+    return () => clearInterval(id);
+  }, [rec.recording, rec.timer]);
+
+  useEffect(() => {
+    if (rec.recording && rec.timer !== undefined) {
+      lastSecondAtRef.current = performance.now();
+    }
+  }, [rec.recording, rec.timer]);
 
   const handleStart = () => {
     navigator.mediaDevices
@@ -71,142 +102,149 @@ export function AudioRecorderModal({ data }: RecorderModalProps) {
   const isPaused = !rec.recording && rec.timer > 0 && !rec.url;
   const isDone = !!rec.url;
 
-  const barHeights = [6, 12, 18, 10, 22, 14, 20, 8, 16, 12, 24, 10, 15];
-  const barColor = isRecording ? "#7C3AED" : isPaused ? "#F97316" : isDone ? "#22C55E" : "#D1D5DB";
+  // When recording, loop so the waveform keeps animating; when paused/stopped, show final position (capped at 24)
+  const progress =
+    rec.recording && smoothProgress >= WAVEFORM_BAR_COUNT
+      ? smoothProgress % WAVEFORM_BAR_COUNT
+      : Math.min(WAVEFORM_BAR_COUNT, Math.max(0, smoothProgress));
 
   return (
     <div
       className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 px-4"
       onClick={(e) => e.stopPropagation()}
     >
-      <div className="bg-white rounded-[28px] w-full max-w-[380px] overflow-hidden shadow-2xl" onClick={(e) => e.stopPropagation()}>
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 pt-6 pb-2">
-          <div className="flex items-center gap-2">
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-              <path d="M6 0L7.2 4H11L8 6.5L9.2 10.5L6 8L2.8 10.5L4 6.5L1 4H4.8L6 0Z" fill="#7C3AED" />
-            </svg>
-            <span className="font-inter text-xs font-bold text-purple-600 tracking-widest uppercase">Record Audio</span>
-          </div>
+      {/* Card with gradient border (orange/pink left, teal bottom) */}
+      <div
+        className="relative w-full max-w-[380px] rounded-3xl p-[2px] shadow-2xl"
+        style={{
+          background: "linear-gradient(135deg, rgba(234,179,168,0.6) 0%, transparent 40%, transparent 60%, rgba(94,192,191,0.5) 100%)",
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="relative rounded-2xl bg-white/95 backdrop-blur-sm overflow-hidden">
           <button
+            type="button"
             onClick={handleClose}
-            className="size-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
+            className="absolute top-3 right-3 size-8 flex items-center justify-center rounded-full bg-gray-100/80 hover:bg-gray-200 transition-colors text-gray-500 z-10"
+            aria-label="Close"
           >
             <TimesIcon width={10} height={10} />
           </button>
-        </div>
 
-        {/* Waveform card */}
-        <div className="mx-6 mt-4 mb-5 bg-gray-50 rounded-2xl px-4 py-4">
-          <div className="flex items-center justify-between mb-3">
-            <span className="font-inter text-[10px] font-semibold text-gray-400 uppercase tracking-wider">
-              New Recording #{String(recordingNumber).padStart(2, "0")}
+          <div className="px-8 pt-8 pb-6 flex flex-col items-center">
+            {/* Main control: Mic (start) / Pause / Play (continue) */}
+            <button
+              type="button"
+              onClick={
+                isIdle
+                  ? handleStart
+                  : isRecording
+                    ? rec.pause
+                    : isPaused
+                      ? rec.resume
+                      : undefined
+              }
+              disabled={isDone}
+              className="size-20 rounded-full bg-gray-100 flex items-center justify-center mb-1 border border-gray-200/80 transition-opacity hover:opacity-90 disabled:pointer-events-none disabled:opacity-100"
+              aria-label={
+                isIdle
+                  ? "Start recording"
+                  : isRecording
+                    ? "Pause"
+                    : isPaused
+                      ? "Continue recording"
+                      : "Recording"
+              }
+            >
+              {isIdle && <MicIcon className="size-9 shrink-0 text-gray-600" />}
+              {isRecording && <PauseRecIcon className="size-9 shrink-0 text-gray-600" />}
+              {isPaused && <PlayIcon className="size-9 shrink-0 text-gray-600" />}
+              {isDone && <MicIcon className="size-9 shrink-0 text-gray-400" />}
+            </button>
+            <p className="font-inter text-xs text-gray-500 mb-4" aria-live="polite">
+              {isIdle && "Click to record"}
+              {isRecording && "Pause"}
+              {isPaused && "Continue recording"}
+              {isDone && "Recording ready"}
+            </p>
+
+            {/* Timer */}
+            <span className="font-mono text-lg text-gray-500 tabular-nums mb-5">
+              {formatTimer(rec.timer)}
             </span>
-            <span className="font-mono text-[11px] text-gray-400">{formatTimer(rec.timer)}</span>
-          </div>
-          <div className="flex items-end justify-center gap-1 h-10">
-            {barHeights.map((h, i) => (
-              <div
-                key={i}
-                className="w-1.5 rounded-full transition-colors duration-300"
-                style={{ height: h, backgroundColor: barColor }}
-              />
-            ))}
-          </div>
-        </div>
 
-        {/* Controls */}
-        <div className="px-6 pb-7">
-          {/* Idle */}
-          {isIdle && (
-            <div className="flex flex-col items-center gap-4">
-              <p className="font-inter text-xs font-semibold text-gray-400 tracking-widest uppercase">Click to record</p>
-              <button
-                onClick={handleStart}
-                className="w-full h-12 rounded-full bg-[#170B00] text-white font-inter font-semibold text-sm hover:opacity-90 transition-opacity"
-              >
-                Start talking
-              </button>
-            </div>
-          )}
-
-          {/* Recording */}
-          {isRecording && (
-            <div className="flex flex-col items-center gap-5">
-              <div className="flex items-center gap-2">
-                <div className="size-2 rounded-full bg-red-500 animate-pulse" />
-                <span className="font-inter text-sm font-bold text-red-500 tracking-widest uppercase">Recording</span>
-              </div>
-              <div className="flex items-center justify-center gap-12">
-                <div className="flex flex-col items-center gap-2">
-                  <button
-                    onClick={rec.pause}
-                    className="size-14 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center transition-colors"
-                  >
-                    <svg width="14" height="18" viewBox="0 0 14 18" fill="none">
-                      <rect x="0" y="0" width="4.5" height="18" rx="2" fill="#374151" />
-                      <rect x="9.5" y="0" width="4.5" height="18" rx="2" fill="#374151" />
-                    </svg>
-                  </button>
-                  <span className="font-inter text-xs text-gray-500">Pause</span>
-                </div>
-                <div className="flex flex-col items-center gap-2">
-                  <button
-                    onClick={() => rec.stop()}
-                    className="size-14 rounded-full bg-red-500 hover:bg-red-600 flex items-center justify-center transition-colors"
-                  >
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                      <rect x="2" y="2" width="12" height="12" rx="3" fill="white" />
-                    </svg>
-                  </button>
-                  <span className="font-inter text-xs text-gray-500">Stop</span>
-                </div>
+            {/* Waveform: bars in brand orange; animate with voice when recording, else show progress */}
+            <div className="flex justify-center w-full mb-6">
+              <div className="relative flex items-center gap-0.5 h-20 w-fit">
+                {Array.from({ length: WAVEFORM_BAR_COUNT }).map((_, i) => {
+                  if (rec.recording) {
+                    const heightPx = audioLevels[i];
+                    const isFilled = heightPx > MIN_BAR_HEIGHT_PX;
+                    if (!isFilled) {
+                      return (
+                        <div
+                          key={i}
+                          className="size-1 rounded-full shrink-0 self-center bg-orange/35 transition-all duration-75 ease-out"
+                          aria-hidden
+                        />
+                      );
+                    }
+                    return (
+                      <div
+                        key={i}
+                        className="w-1 rounded-sm bg-orange transition-all duration-75 ease-out"
+                        style={{ height: `${heightPx}px` }}
+                        aria-hidden
+                      />
+                    );
+                  }
+                  const fill = Math.min(1, Math.max(0, progress - i));
+                  const heightPx =
+                    MIN_BAR_HEIGHT_PX +
+                    (WAVEFORM_BAR_HEIGHTS[i] - MIN_BAR_HEIGHT_PX) * fill;
+                  if (fill <= 0) {
+                    return (
+                      <div
+                        key={i}
+                        className="size-1 rounded-full shrink-0 self-center bg-orange/35 transition-all duration-75 ease-out"
+                        aria-hidden
+                      />
+                    );
+                  }
+                  return (
+                    <div
+                      key={i}
+                      className="w-1 rounded-sm bg-orange transition-all duration-75 ease-out"
+                      style={{ height: `${heightPx}px` }}
+                      aria-hidden
+                    />
+                  );
+                })}
               </div>
             </div>
-          )}
 
-          {/* Paused or Done */}
-          {(isPaused || isDone) && (
-            <div className="flex flex-col items-center gap-4">
-              {isPaused && (
-                <div className="flex items-center gap-2">
-                  <svg width="12" height="14" viewBox="0 0 12 14" fill="none">
-                    <rect x="0" y="0" width="4" height="14" rx="2" fill="#EF4444" />
-                    <rect x="8" y="0" width="4" height="14" rx="2" fill="#EF4444" />
-                  </svg>
-                  <span className="font-inter text-sm font-bold text-red-500 tracking-widest uppercase">Paused</span>
-                </div>
-              )}
-              {isDone && (
-                <div className="flex items-center gap-2">
-                  <div className="size-2 rounded-full bg-green-500" />
-                  <span className="font-inter text-sm font-semibold text-green-600">Recording ready</span>
-                </div>
-              )}
-              <div className="flex items-center gap-3 w-full">
+            {/* Undo and Send – only when paused or stopped */}
+            {(isPaused || isDone) && (
+              <div className="flex items-center justify-center gap-6">
                 <button
+                  type="button"
                   onClick={handleReset}
-                  className="flex-1 h-10 rounded-full bg-gray-100 text-gray-600 font-inter font-semibold text-sm hover:bg-gray-200 transition-colors"
+                  className="size-12 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center hover:bg-gray-200 transition-colors"
+                  aria-label="Undo / Re-record"
                 >
-                  Reset
+                  <RefreshIcon className="size-5" />
                 </button>
-                {isPaused && (
-                  <button
-                    onClick={rec.resume}
-                    className="flex-1 h-10 rounded-full bg-orange-100 text-orange-600 font-inter font-semibold text-sm hover:bg-orange-200 transition-colors"
-                  >
-                    Resume
-                  </button>
-                )}
                 <button
+                  type="button"
                   onClick={handleAddToPost}
-                  className="flex-1 h-10 rounded-full bg-[#170B00] text-white font-inter font-semibold text-sm hover:opacity-90 transition-opacity"
+                  className="size-12 rounded-full bg-gray-200 text-gray-700 flex items-center justify-center hover:bg-gray-300 transition-colors"
+                  aria-label="Send"
                 >
-                  Add to post
+                  <PlanePaperIcon className="size-5" />
                 </button>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
     </div>
