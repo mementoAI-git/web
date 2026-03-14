@@ -57,7 +57,36 @@ git push origin dev
 
 After the next push to `dev` or `main`, GitHub Actions will run and send a message to your Discord channel. You can see runs under: **Actions** tab in the repo.
 
-If no message appears:
+---
 
-- Check that the secret name is exactly `DISCORD_WEBHOOK_URL`.
-- In GitHub → **Actions**, open the latest "Notify Discord on push" run and check the logs for errors.
+## Troubleshooting: No notifications in Discord
+
+### 1. Check if the workflow runs
+
+1. Go to **https://github.com/mementoAI-git/web** → **Actions** tab.
+2. Look for **"Notify Discord on push"** in the left sidebar.
+3. Click it and check the latest runs. Do you see runs for your recent pushes?
+
+- **No runs at all** → The workflow might be disabled or the push didn’t trigger it. Ensure you pushed to `dev` or `main` (not another branch).
+- **Runs exist** → Go to step 2.
+
+### 2. Check if the workflow succeeds or fails
+
+Open the latest run and look at the steps:
+
+- **"Check Discord webhook secret"** fails with "DISCORD_WEBHOOK_URL secret is not set"  
+  → Add the secret: **Settings** → **Secrets and variables** → **Actions** → **New repository secret** → Name: `DISCORD_WEBHOOK_URL`, Value: your webhook URL.
+
+- **"Send message to Discord"** fails with "Discord webhook failed (HTTP 404)"  
+  → The webhook URL is invalid or was deleted. Create a new webhook in Discord and update the secret.
+
+- **"Send message to Discord"** fails with "Discord webhook failed (HTTP 4xx)"  
+  → Check the error body in the logs. Discord may reject the payload (e.g. invalid format).
+
+- **All steps succeed** but no message in Discord  
+  → You may be looking in the wrong channel. The webhook posts only to the channel where it was created. Check that channel’s **Integrations** → **Webhooks** to confirm.
+
+### 3. Verify the webhook URL
+
+- Format: `https://discord.com/api/webhooks/1234567890/abcdef...` (no trailing slash).
+- Create a new webhook in Discord if unsure, then update the `DISCORD_WEBHOOK_URL` secret.

@@ -11,15 +11,28 @@ jobs:
   notify:
     runs-on: ubuntu-latest
     steps:
+      - name: Check Discord webhook secret
+        run: |
+          if [ -z "${{ secrets.DISCORD_WEBHOOK_URL }}" ]; then
+            echo "::error::DISCORD_WEBHOOK_URL secret is not set. Add it in repo Settings → Secrets and variables → Actions."
+            exit 1
+          fi
+          echo "Webhook URL is configured (secret present)"
+
       - name: Send message to Discord
         env:
-          TITLE: "Push to ${{ github.ref_name }}"
-          DESC: "**${{ github.actor }}** pushed to branch \`${{ github.ref_name }}\`\n\n**Commit:** \`${{ github.sha }}\`\n\n**Message:** ${{ github.event.head_commit.message }}"
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          MSG: ${{ format('**Push to {0}**\n\n**{1}** pushed to branch `{2}`\n\n**Commit:** `{3}`\n\n**Message:** {4}', github.ref_name, github.actor, github.ref_name, github.sha, github.event.head_commit.message || '(no message)') }}
         run: |
-          payload=$(jq -n \
-            --arg title "$TITLE" \
-            --arg desc "$DESC" \
-            '{ content: null, embeds: [{ title: $title, description: $desc, color: 5814783 }] }')
-          curl -s -X POST "${{ secrets.DISCORD_WEBHOOK_URL }}" \
+          payload=$(jq -n --arg content "$MSG" '{ content: $content }')
+          echo "Sending notification..."
+          response=$(curl -s -w "\n%{http_code}" -X POST "$DISCORD_WEBHOOK_URL" \
             -H "Content-Type: application/json" \
-            -d "$payload"
+            -d "$payload")
+          http_code=$(echo "$response" | tail -n1)
+          body=$(echo "$response" | sed '$d')
+          if [ "$http_code" -ge 400 ]; then
+            echo "::error::Discord webhook failed (HTTP $http_code): $body"
+            exit 1
+          fi
+          echo "Posted to Discord successfully (HTTP $http_code)"
