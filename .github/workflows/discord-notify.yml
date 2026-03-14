@@ -12,14 +12,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Send message to Discord
+        env:
+          TITLE: "Push to ${{ github.ref_name }}"
+          DESC: "**${{ github.actor }}** pushed to branch \`${{ github.ref_name }}\`\n\n**Commit:** \`${{ github.sha }}\`\n\n**Message:** ${{ github.event.head_commit.message }}"
         run: |
+          payload=$(jq -n \
+            --arg title "$TITLE" \
+            --arg desc "$DESC" \
+            '{ content: null, embeds: [{ title: $title, description: $desc, color: 5814783 }] }')
           curl -s -X POST "${{ secrets.DISCORD_WEBHOOK_URL }}" \
             -H "Content-Type: application/json" \
-            -d '{
-              "content": null,
-              "embeds": [{
-                "title": "Push to ${{ github.ref_name }}",
-                "description": "**${{ github.actor }}** pushed to branch `${{ github.ref_name }}`\n\n**Commit:** `${{ github.sha }}`\n\n**Message:** ${{ github.event.head_commit.message }}",
-                "color": 5814783
-              }]
-            }'
+            -d "$payload"
