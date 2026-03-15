@@ -35,7 +35,7 @@ export default function SideBarItem({
     onClick?.();
   };
 
-  const activeBg = "#F5F3F2";
+  const activeBg = "var(--v3-fill-weak)";
   const activeBorder = "#FCFCFC";
   const activeTextColor = "#1E1E1E";
 
@@ -58,7 +58,7 @@ export default function SideBarItem({
         {icon ? (
           <img src={icon} alt={title} className="size-5 object-contain" />
         ) : Icon ? (
-          <Icon className="size-5" style={{ color: active ? activeColor : "#667085" }} />
+          <Icon className="size-5" style={{ color: active ? activeTextColor : "#667085" }} />
         ) : null}
       </div>
       <span

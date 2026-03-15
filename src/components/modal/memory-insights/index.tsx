@@ -5,9 +5,36 @@ import { useStore } from "@/hooks/use-store";
 import { TimesIcon, PlusIcon } from "@/components/icons";
 import endpoint from "@/api/endpoint";
 import { cn } from "@/utility";
-import type { IBeneficiary } from "@/utility/interface";
+import type { IBeneficiary, IUser } from "@/utility/interface";
+
+function buildSummaryFromContext(ctx: IUser["context"] | undefined): string | null {
+  if (!ctx) return null;
+  const parts: string[] = [];
+  if (ctx.conversation_history_summary?.trim()) {
+    parts.push(ctx.conversation_history_summary.trim());
+  }
+  if (ctx.self_description?.trim()) {
+    parts.push(ctx.self_description.trim());
+  }
+  if (ctx.current_priority?.trim()) {
+    parts.push(`Currently focused on: ${ctx.current_priority.trim()}`);
+  }
+  if (ctx.join_reasons?.length) {
+    parts.push(`Joined Memento to: ${ctx.join_reasons.join(", ")}`);
+  }
+  const bullets: string[] = [];
+  if (ctx.important_notes?.length) bullets.push(...ctx.important_notes);
+  if (ctx.key_preferences?.length) bullets.push(...ctx.key_preferences);
+  if (ctx.goals_and_aspirations?.length) bullets.push(...ctx.goals_and_aspirations);
+  if (ctx.emotional_state_trends?.length) bullets.push(...ctx.emotional_state_trends);
+  if (bullets.length) {
+    parts.push(bullets.map((b) => `• ${b}`).join("\n"));
+  }
+  return parts.length ? parts.join("\n\n") : null;
+}
 
 const CATEGORIES = [
+  { label: "Summary", key: "summary" },
   { label: "All", key: "all" },
   { label: "Key Preferences", key: "key_preferences" },
   { label: "Important Notes", key: "important_notes" },
@@ -27,13 +54,14 @@ function getInitials(name: string) {
 export default function MemoryInsightsModal() {
   const { close, open } = useModal();
   const { user } = useStore();
-  const [activeCategory, setActiveCategory] = useState("all");
+  const [activeCategory, setActiveCategory] = useState("summary");
 
   const { data: beneficiariesData } = useSWR(`${endpoint.beneficiaries}?page=1`);
   const { data: contextData } = useSWR(endpoint.userContext);
 
   const beneficiaries: IBeneficiary[] = beneficiariesData?.data?.docs || [];
   const ctx = contextData?.data || user?.context || {};
+  const summary = buildSummaryFromContext(ctx);
 
   const allInsights = [
     ...(ctx.important_notes || []).map((text: string) => ({ text, category: "important_notes" })),
@@ -45,7 +73,9 @@ export default function MemoryInsightsModal() {
   const filtered =
     activeCategory === "all"
       ? allInsights
-      : allInsights.filter((i) => i.category === activeCategory);
+      : activeCategory === "summary"
+        ? []
+        : allInsights.filter((i) => i.category === activeCategory);
 
   return (
     <div className="bg-white rounded-[24px] w-full max-w-3xl max-h-[88vh] flex flex-col overflow-hidden shadow-xl">
@@ -146,13 +176,29 @@ export default function MemoryInsightsModal() {
           {/* Divider */}
           <div className="border-t border-gray-100" />
 
-          {/* Insights list */}
+          {/* Insights list / Summary */}
           <div>
             <p className="font-inter text-[11px] font-semibold uppercase tracking-widest text-gray-400 mb-4">
               {CATEGORIES.find((c) => c.key === activeCategory)?.label}
             </p>
 
-            {filtered.length === 0 ? (
+            {activeCategory === "summary" ? (
+              summary ? (
+                <p className="font-inter text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
+                  {summary}
+                </p>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-16 text-center">
+                  <div className="size-12 rounded-full bg-gray-100 flex items-center justify-center mb-3">
+                    <span className="text-xl">📝</span>
+                  </div>
+                  <p className="font-inter text-sm font-medium text-gray-500">Your summary is being built</p>
+                  <p className="font-inter text-xs text-gray-400 mt-1 max-w-[220px]">
+                    Add memories and chat to build your personal summary over time.
+                  </p>
+                </div>
+              )
+            ) : filtered.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16 text-center">
                 <div className="size-12 rounded-full bg-gray-100 flex items-center justify-center mb-3">
                   <span className="text-xl">🧠</span>

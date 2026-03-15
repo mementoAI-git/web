@@ -9,9 +9,9 @@ export default function BrowseTopics() {
   const { data, isLoading } = useSWR(endpoint.overviewPrompt);
 
   return (
-    <div className="w-full space-y-6 py-6 sm:py-9 lg:py-12">
+    <div className="flex w-full flex-col gap-6 py-0 pb-16">
       <div className="flex items-center justify-between">
-        <h2 className="font-garamond font-medium text-sand-12 text-xl sm:text-2xl lg:text-[32px] leading-[38px]">
+        <h2 className="font-garamond font-normal text-sand-12 text-xl sm:text-2xl lg:text-[32px] leading-[38px]">
           Browse conversations
           <i className="text-[rgba(176,169,156,0.9)]"> by topics</i>
         </h2>
@@ -32,12 +32,12 @@ export default function BrowseTopics() {
                   ?.map((t, i) => {
                     const category = getCategory(t?.category)
                     return (
-                      <div className="w-full max-w-[240px] flex shrink-0" key={i}>
+                      <div className="w-full max-w-[220px] flex flex-col shrink-0" key={i}>
                         <CategoryCard
                           subtitle={t?.title}
                           href={`/chat/reply/${t?._id}`}
                           image={category?.image}
-                          className="w-full max-w-[240px]"
+                          className="w-full max-w-[220px]"
                         />
                       </div>
                     )

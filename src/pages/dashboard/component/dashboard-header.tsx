@@ -1,10 +1,13 @@
 import MLogoIcon from "@/assets/icon/letterM.svg?react";
+import mementoAvatar from "@/assets/image/memento Avatar.svg";
 import trophyIcon from "@/assets/icon/noto_trophy.svg";
 import zapIcon from "@/assets/icon/zap.svg";
+import { Bell, MessageCircle } from "lucide-react";
 import { useModal } from "@/hooks/use-modal";
 import { useStore } from "@/hooks/use-store";
 import StreakTracker from "@/components/streak-tracker";
 import { useLocation, useNavigate } from "react-router-dom";
+import { cn } from "@/utility";
 import { ChevronRightIcon, MenuIcon, SearchIcon } from "@/components/icons";
 
 const defaultHeaderTitle: Record<string, string> = {
@@ -25,9 +28,11 @@ const truncateText = (text: string, maxLength = 32): string => {
 
 interface DashboardHeaderProps {
   onMenuClick?: () => void;
+  chatOpen?: boolean;
+  onChatToggle?: () => void;
 }
 
-export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
+export function DashboardHeader({ onMenuClick, chatOpen, onChatToggle }: DashboardHeaderProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const path = location.pathname.replace("/", "");
@@ -84,7 +89,37 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
           </div>
 
           <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer" style={{ backgroundColor: "#FAF8F5" }}>
+            <button
+              type="button"
+              onClick={() => open("recent-activities")}
+              className="flex items-center justify-center size-9 rounded-lg bg-v3-fill-weak transition-colors cursor-pointer hover:bg-gray-100"
+              aria-label="Recent activities"
+            >
+              <Bell className="size-5 text-v3-icon-neutral" />
+            </button>
+            <button
+              type="button"
+              onClick={onChatToggle}
+              className={cn(
+                "flex items-center justify-center size-9 rounded-lg transition-colors cursor-pointer",
+                chatOpen
+                  ? "bg-gradient-to-br from-[#FF8944] to-[#FF3CDF] hover:opacity-90"
+                  : "bg-v3-fill-weak hover:opacity-90",
+              )}
+              aria-label={chatOpen ? "Close chat" : "Open chat"}
+              aria-pressed={chatOpen}
+            >
+              {chatOpen ? (
+                <img
+                  src={mementoAvatar}
+                  alt="Memento"
+                  className="size-5 object-contain"
+                />
+              ) : (
+                <MessageCircle className="size-4 text-v3-icon-neutral" />
+              )}
+            </button>
+            <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-v3-fill-weak transition-colors cursor-pointer">
               <img
                 src={trophyIcon}
                 alt="XP"
@@ -94,11 +129,11 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
             </div>
 
             <StreakTracker>
-              <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg transition-colors cursor-pointer" style={{ backgroundColor: "#FAF8F5" }}>
+              <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-v3-fill-weak transition-colors cursor-pointer">
                 <img
                   src={zapIcon}
                   alt="Streak"
-                  className="size-4 object-contain"
+                  className="size-4 object-contain opacity-70"
                 />
                 <span className="font-semibold text-gray-700 text-[13px]">
                   {user?.streak || 0}

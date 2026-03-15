@@ -10,6 +10,8 @@ interface IBubbleProps {
   text?: string
   duration?: number
   is_voice?: boolean
+  /** Compact variant for sidebar: 16px regular text, user messages use bg-black/5 */
+  compact?: boolean
 }
 
 interface ITypingBubbleProps extends Pick<IBubbleProps, "text"> {
@@ -21,7 +23,8 @@ export default function Bubble({
   attatchments = [],
   duration = 0,
   text = "",
-  is_voice = false
+  is_voice = false,
+  compact = false,
 }: IBubbleProps) {
 
   const isUser = role === "user"
@@ -30,10 +33,10 @@ export default function Bubble({
     return getDuration(duration)
   }, [is_voice, duration])
   return (
-    <div className="space-y-1">
+    <div className={cn("flex flex-col space-y-1", isUser && "items-end")}>
       {
         !isEmpty(attatchments) &&
-        <div className="bg-sand-3 ml-auto px-4 py-3 rounded-xl flex gap-2 w-fit max-w-[520px]">
+        <div className={cn("px-4 py-3 rounded-xl flex gap-2 w-fit max-w-[85%]", compact ? "bg-black/5" : "bg-sand-3")}>
           {
             attatchments.map(({ url, name }, i) => (
               <img
@@ -48,13 +51,23 @@ export default function Bubble({
           }
         </div>
       }
-      <div>
+      <div className={cn(isUser && "w-fit max-w-[85%]")}>
         <div
-          className={cn("w-full py-1 md:py-3", {
-            "ml-auto w-fit bg-sand-3 px-2 md:px-4 max-w-[520px] rounded-lg md:rounded-xl": isUser
-          })}
+          className={cn(
+            "w-full",
+            isUser && compact && "py-1 px-2 rounded-lg md:rounded-xl",
+            isUser && !compact && "py-1 md:py-3 px-2 md:px-4 rounded-lg md:rounded-xl",
+            !isUser && "py-1 md:py-3",
+            {
+              "bg-black/5": isUser && compact,
+              "bg-sand-3": isUser && !compact,
+            }
+          )}
         >
-          <span className="font-georgia md:text-xl text-sand-12 ">
+          <span className={cn(
+            "text-sand-12",
+            compact ? "font-georgia text-base font-normal" : "font-georgia md:text-xl"
+          )}>
             <Markdown
               remarkPlugins={[remarkGfm]}
               components={{

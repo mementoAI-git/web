@@ -21,7 +21,7 @@ export default function CategoryCard({
   return (
     <Link
       to={href}
-      className={cn("group flex overflow-hidden flex-col gap-4 size-full cursor-pointer", { [className]: !isEmpty(className) })}
+      className={cn("group flex overflow-hidden flex-col gap-3 size-full cursor-pointer", { [className]: !isEmpty(className) })}
     >
       <img
         src={image}
@@ -34,7 +34,7 @@ export default function CategoryCard({
             <h5 className="font-semibold  text-2xl">{title}</h5>
           )
         }
-        <span className="text-xl font-normal text-gray-950/90 line-clamp-3">{subtitle}</span>
+        <span className="font-georgia text-[18px] font-normal text-gray-950/90 line-clamp-3">{subtitle}</span>
       </div>
     </Link>
   );

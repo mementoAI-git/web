@@ -55,6 +55,20 @@
 
   --color-green-0: #b1c6a9;
 
+  /* v3 design system — base #170B00 */
+  --v3-base: #170B00;
+  --v3-fill-weak: rgba(23, 11, 0, 0.04);
+  --v3-fill-strong: rgba(23, 11, 0, 0.9);
+  --v3-fill-weaker: rgba(23, 11, 0, 0.02);
+  --v3-stroke-weak: rgba(23, 11, 0, 0.1);
+  --v3-stroke-strong: rgba(23, 11, 0, 0.45);
+  --v3-icon-neutral: rgba(23, 11, 0, 0.45);
+  --v3-text-strong: rgba(23, 11, 0, 0.9);
+  --v3-text-weak: rgba(23, 11, 0, 0.65);
+  --v3-text-weaker: rgba(23, 11, 0, 0.45);
+  --v3-text-disabled: rgba(23, 11, 0, 0.1);
+  --v3-icon-disabled: rgba(23, 11, 0, 0.1);
+
   --color-weak: #1e1e1eb2;
   --color-strong: #1e1e1ee5;
 
@@ -166,6 +180,20 @@
   --color-orange: var(--color-orange);
 
   --color-green-0: var(--color-green-0);
+
+  /* v3 design system */
+  --color-v3-base: var(--v3-base);
+  --color-v3-fill-weak: var(--v3-fill-weak);
+  --color-v3-fill-strong: var(--v3-fill-strong);
+  --color-v3-fill-weaker: var(--v3-fill-weaker);
+  --color-v3-stroke-weak: var(--v3-stroke-weak);
+  --color-v3-stroke-strong: var(--v3-stroke-strong);
+  --color-v3-icon-neutral: var(--v3-icon-neutral);
+  --color-v3-text-strong: var(--v3-text-strong);
+  --color-v3-text-weak: var(--v3-text-weak);
+  --color-v3-text-weaker: var(--v3-text-weaker);
+  --color-v3-text-disabled: var(--v3-text-disabled);
+  --color-v3-icon-disabled: var(--v3-icon-disabled);
 
   --color-weak: var(--color-weak);
   --color-strong: var(--color-strong);

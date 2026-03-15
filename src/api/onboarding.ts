@@ -14,11 +14,13 @@ export interface SaveOnboardingBody {
   ageBand: string;
   whereFrom?: string;
   mementoFor: string[];
+  mementoForFreetext?: string;
   passions: string[];
   passionsFreetext?: string;
   lifeContext: string[];
   motivationType: string;
   priorityDimensions: string[];
+  dimensionsFreetext?: string;
   expressionMode: string[];
   isComplete: boolean;
   stepReached: number;
@@ -36,11 +38,13 @@ export interface SaveProgressBody {
   ageBand?: string;
   whereFrom?: string;
   mementoFor?: string[];
+  mementoForFreetext?: string;
   passions?: string[];
   passionsFreetext?: string;
   lifeContext?: string[];
   motivationType?: string;
   priorityDimensions?: string[];
+  dimensionsFreetext?: string;
   expressionMode?: string[];
 }
 

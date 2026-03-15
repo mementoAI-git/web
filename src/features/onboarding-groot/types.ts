@@ -17,7 +17,8 @@ export type MementoFor =
   | "partner_spouse"
   | "close_friends"
   | "future_generations"
-  | "myself";
+  | "myself"
+  | "something_else";
 
 export type PassionKey =
   | "food_cooking"
@@ -53,7 +54,8 @@ export type DimensionKey =
   | "wishes_letters"
   | "everyday_life"
   | "hardships_resilience"
-  | "humour_personality";
+  | "humour_personality"
+  | "something_else";
 
 export type ExpressionMode = "voice" | "writing" | "media" | "guided";
 
@@ -159,6 +161,7 @@ export const MEMENTO_FOR_OPTIONS: MementoForOption[] = [
   { value: "close_friends", label: "Close friends", icon: "🤝" },
   { value: "future_generations", label: "Future generations I'll never meet", icon: "🌍" },
   { value: "myself", label: "Mostly for myself", icon: "✨" },
+  { value: "something_else", label: "Add something else", icon: "" },
 ];
 
 export const PASSION_OPTIONS: PassionOption[] = [
@@ -174,7 +177,7 @@ export const PASSION_OPTIONS: PassionOption[] = [
   { value: "business_entrepreneurship", label: "Business & entrepreneurship", icon: "💼" },
   { value: "community_service", label: "Community & service", icon: "🤲" },
   { value: "technology", label: "Technology", icon: "💻" },
-  { value: "something_else", label: "Something else", icon: "✨" },
+  { value: "something_else", label: "Add something else", icon: "" },
 ];
 
 export const LIFE_CONTEXT_OPTIONS: LifeContextOption[] = [
@@ -313,6 +316,12 @@ export const DIMENSION_OPTIONS: DimensionOption[] = [
     label: "Humour & personality",
     sublabel: "How you laugh, what makes you you",
     icon: "😄",
+  },
+  {
+    value: "something_else",
+    label: "Add something else",
+    sublabel: "",
+    icon: "",
   },
 ];
 

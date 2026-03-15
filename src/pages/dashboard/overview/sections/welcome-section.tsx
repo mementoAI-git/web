@@ -175,13 +175,13 @@ export default function WelcomeSection() {
               </p>
             </div>
             <div className="flex gap-2 items-center">
-              <Link
-                to="/stories"
-                className="flex items-center h-10 px-5 rounded-full font-inter font-semibold text-sm text-white whitespace-nowrap transition-opacity hover:opacity-90"
-                style={{ backgroundColor: "#1A1A1A" }}
+              <button
+                type="button"
+                onClick={() => open("memory-insights")}
+                className="flex items-center h-10 px-5 rounded-full font-inter font-semibold text-sm text-white whitespace-nowrap transition-opacity hover:opacity-90 bg-v3-fill-strong"
               >
-                See memory
-              </Link>
+                View insights
+              </button>
               <Link
                 to="/explore"
                 className="flex items-center gap-1.5 h-10 px-4 bg-white/80 rounded-full font-inter font-semibold text-sm text-gray-800 whitespace-nowrap transition-opacity hover:opacity-90 border border-black/10"
@@ -254,8 +254,8 @@ export default function WelcomeSection() {
             className="absolute inset-0 object-cover w-full h-full rounded-[16px]"
           />
           <div className="relative flex items-center justify-between h-full px-5 font-inter rounded-[16px]">
-            <div className="flex flex-col gap-1">
-              <span className="font-inter text-[12px] font-normal uppercase tracking-widest text-gray-500">
+            <div className="flex min-w-0 flex-col gap-1">
+              <span className="font-inter text-[12px] font-normal uppercase tracking-widest text-gray-500 md:truncate">
                 All Memories
               </span>
               <span
@@ -296,8 +296,8 @@ export default function WelcomeSection() {
             className="relative flex items-center justify-between h-full px-5"
             style={{ color: "rgba(255, 255, 255, 0.9)" }}
           >
-            <div className="flex flex-col gap-1">
-              <span className="font-inter text-[12px] font-normal uppercase tracking-widest text-[rgba(102,112,133,0.7)]">
+            <div className="flex min-w-0 flex-col gap-1">
+              <span className="font-inter text-[12px] font-normal uppercase tracking-widest text-[rgba(102,112,133,0.7)] md:truncate">
                 Beneficiaries
               </span>
               <span
@@ -332,8 +332,8 @@ export default function WelcomeSection() {
             className="absolute inset-0 object-cover w-full h-full rounded-[16px]"
           />
           <div className="relative flex items-center justify-between h-full px-5">
-            <div className="flex flex-col gap-1">
-              <span className="font-inter text-[12px] font-normal uppercase tracking-widest text-gray-500/70">
+            <div className="flex min-w-0 flex-col gap-1">
+              <span className="font-inter text-[12px] font-normal uppercase tracking-widest text-gray-500/70 md:truncate">
                 Time Capsules
               </span>
               <span
@@ -362,8 +362,8 @@ export default function WelcomeSection() {
             className="absolute inset-0 object-cover w-full h-full rounded-[16px]"
           />
           <div className="relative flex items-center justify-between h-full px-5">
-            <div className="flex flex-col gap-1">
-              <span className="font-inter text-[12px] font-normal uppercase tracking-widest text-gray-500">
+            <div className="flex min-w-0 flex-col gap-1">
+              <span className="font-inter text-[12px] font-normal uppercase tracking-widest text-gray-500 md:truncate">
                 Streak Count
               </span>
               <p

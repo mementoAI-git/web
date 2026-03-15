@@ -12,6 +12,14 @@ export const handlers = [
     });
   }),
 
+  http.get(`${BASE_URL}/users/context`, () => {
+    return HttpResponse.json({
+      success: true,
+      data: mockUser.context || {},
+      message: "User context fetched",
+    });
+  }),
+
   http.get(`${BASE_URL}/users/stats`, () => {
     return HttpResponse.json({
       success: true,
@@ -32,6 +40,30 @@ export const handlers = [
       success: true,
       data: [],
       message: "Conversations fetched",
+    });
+  }),
+
+  http.get(`${BASE_URL}/prompts`, () => {
+    return HttpResponse.json({
+      success: true,
+      data: [
+        {
+          prompt: {
+            _id: "prompt-1",
+            title:
+              "Think of a recent happy memory with your family. What happened and why is it meaningful?",
+            answered: false,
+          },
+        },
+        {
+          prompt: {
+            _id: "prompt-2",
+            title: "What's one thing you're grateful for today?",
+            answered: false,
+          },
+        },
+      ],
+      message: "Prompts fetched",
     });
   }),
 
@@ -82,10 +114,14 @@ export const handlers = [
     });
   }),
 
-  http.post(`${BASE_URL}/ai/conversation/new`, () => {
+  http.post(`${BASE_URL}/ai/conversation/new`, async ({ request }) => {
+    const body = (await request.json()) as { text?: string };
     return HttpResponse.json({
       success: true,
-      data: { memory_id: "mock-memory-id" },
+      data: {
+        memory_id: "mock-memory-id",
+        response: body?.text ? `Reply to: ${body.text}` : "Hello!",
+      },
     });
   }),
 

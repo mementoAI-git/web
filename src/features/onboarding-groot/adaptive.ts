@@ -61,7 +61,7 @@ export function getPrimaryCTA(
   modes: ExpressionMode[]
 ): CTAConfig {
   if (!motivation) {
-    return { label: "Take me to my dashboard", action: "dashboard" };
+    return { label: "Go to dashboard", action: "dashboard" };
   }
 
   const hasVoice = modes.includes("voice");
@@ -73,7 +73,7 @@ export function getPrimaryCTA(
     return { label: "Create your first time capsule", action: "time_capsule" };
   }
   if (motivation === "explorer") {
-    return { label: "Take me to my dashboard", action: "dashboard" };
+    return { label: "Go to dashboard", action: "dashboard" };
   }
   if (motivation === "memory_preservation" && hasMedia) {
     return { label: "Upload something precious", action: "file_upload" };
@@ -87,5 +87,5 @@ export function getPrimaryCTA(
   if (hasMedia) {
     return { label: "Upload something precious", action: "file_upload" };
   }
-  return { label: "Take me to my dashboard", action: "dashboard" };
+  return { label: "Go to dashboard", action: "dashboard" };
 }

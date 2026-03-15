@@ -18,7 +18,7 @@ export default function OnboardLayout() {
   return (
     <div className="flex h-dvh w-screen flex-col bg-white">
       {/* Header: always visible, outside AuthCheck so it shows immediately */}
-      <header className="sticky top-0 z-[100] flex shrink-0 items-center justify-between border-b border-[#E4D9CC] bg-white px-4 py-6 sm:px-6 shadow-sm">
+      <header className="sticky top-0 z-[100] flex shrink-0 items-center justify-between bg-white px-4 py-6 sm:px-6">
         <Link
           to="/"
           className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C8956C] focus-visible:ring-offset-2 rounded"

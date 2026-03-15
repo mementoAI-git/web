@@ -88,7 +88,7 @@ describe("getPrimaryCTA", () => {
   it("returns dashboard for explorer motivation", () => {
     const result = getPrimaryCTA("explorer", ["voice", "media"]);
     expect(result.action).toBe("dashboard");
-    expect(result.label).toBe("Take me to my dashboard");
+    expect(result.label).toBe("Go to dashboard");
   });
 
   it("returns file_upload for memory_preservation + media", () => {
@@ -133,7 +133,7 @@ describe("getPrimaryCTA", () => {
   it("returns dashboard as fallback for empty modes", () => {
     const result = getPrimaryCTA("emotional_depth", [] as ExpressionMode[]);
     expect(result.action).toBe("dashboard");
-    expect(result.label).toBe("Take me to my dashboard");
+    expect(result.label).toBe("Go to dashboard");
   });
 
   it("returns dashboard for null motivation", () => {

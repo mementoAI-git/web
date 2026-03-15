@@ -95,7 +95,7 @@ export default function General() {
       </div>
 
       <Link
-        to="/onboarding?mode=revisit"
+        to="/onboard/misc"
         className="flex items-center justify-between rounded-2xl border border-gray-200 p-4 text-left font-inter text-sm text-gray-950/90 hover:bg-gray-50/50 transition-colors"
         onClick={() => close?.("settings")}
       >

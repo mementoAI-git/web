@@ -1,5 +1,14 @@
 import { describe, it, expect } from "vitest";
-import { getGreetingPunctuation } from "./welcome-section";
+import { screen } from "@testing-library/react";
+import { renderWithProviders } from "@/test";
+import { getGreetingPunctuation, default as WelcomeSection } from "./welcome-section";
+
+describe("WelcomeSection", () => {
+  it("renders View insights button", () => {
+    renderWithProviders(<WelcomeSection />, { route: "/overview", auth: true });
+    expect(screen.getByRole("button", { name: /view insights/i })).toBeInTheDocument();
+  });
+});
 
 describe("getGreetingPunctuation", () => {
   it("returns '?' for question-style greetings", () => {

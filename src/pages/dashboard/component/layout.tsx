@@ -1,16 +1,19 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { cn } from "@/utility";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import AuthCheck from "@/components/layouts/auth-check";
 import OnboardingGuard from "@/components/layouts/onboarding-guard";
 import { OnboardingNudgeBanner } from "@/features/onboarding-groot";
 import { useModal } from "@/hooks/use-modal";
+import { useChatSidebar } from "@/contexts/chat-sidebar";
 import { DashboardHeader } from "./dashboard-header";
-import { useState } from "react";
 import { DashboardSideBar } from "./dashboard-sidebar";
+import { DashboardChatSidebar } from "./dashboard-chat-sidebar";
 import Modal from "@/components/modal";
 
 export default function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { chatOpen, setChatOpen } = useChatSidebar();
   const location = useLocation();
   const navigate = useNavigate();
   const { open } = useModal();
@@ -22,6 +25,8 @@ export default function DashboardLayout() {
       navigate(location.pathname, { replace: true, state: {} });
     }
   }, [location.state, location.pathname, open, navigate]);
+
+  useEffect(() => () => setChatOpen(false), [setChatOpen]);
 
   return (
     <AuthCheck>
@@ -41,13 +46,29 @@ export default function DashboardLayout() {
         `}>
           <DashboardSideBar onClose={() => setSidebarOpen(false)} />
         </div>
-        <main className="flex-1 flex flex-col overflow-hidden dynamic-height-content w-full md:w-auto">
-          <DashboardHeader onMenuClick={() => setSidebarOpen(true)} />
-          <div className="flex-1 overflow-hidden pt-[60px] sm:pt-0 flex flex-col">
-            <div className="shrink-0 px-4 py-4 sm:px-6">
-              <OnboardingNudgeBanner />
+        <main className="flex min-w-0 flex-1 flex-col overflow-hidden dynamic-height-content">
+          <DashboardHeader
+            onMenuClick={() => setSidebarOpen(true)}
+            chatOpen={chatOpen}
+            onChatToggle={() => setChatOpen(!chatOpen)}
+          />
+          <div className="flex flex-1 flex-col overflow-hidden pt-[60px] sm:pt-0 md:flex-row">
+            <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+              <div className="shrink-0 px-4 py-2 sm:px-6">
+                <OnboardingNudgeBanner />
+              </div>
+              <div className="flex-1 overflow-hidden">
+                <Outlet />
+              </div>
             </div>
-            <Outlet />
+            <aside
+              className={cn(
+                "flex w-full flex-shrink-0 flex-col overflow-hidden rounded-[16px] md:mx-2 md:my-2 md:w-[300px] md:max-w-[315px] lg:w-[315px] bg-v3-fill-weak",
+                !chatOpen && "hidden",
+              )}
+            >
+              <DashboardChatSidebar onClose={() => setChatOpen(false)} />
+            </aside>
           </div>
         </main>
       </div>

@@ -1,8 +1,8 @@
 import { describe, it, expect } from "vitest";
 import {
   ARCHETYPE_OPTIONS,
-  MOTIVATION_OPTIONS,
   DIMENSION_OPTIONS,
+  MOTIVATION_OPTIONS,
   EXPRESSION_OPTIONS,
   STEP_LABELS,
   ADVANCE_LABELS,
@@ -45,8 +45,8 @@ describe("onboarding-groot types", () => {
     });
   });
 
-  it("DIMENSION_OPTIONS has 10 entries", () => {
-    expect(DIMENSION_OPTIONS).toHaveLength(10);
+  it("DIMENSION_OPTIONS has 11 entries", () => {
+    expect(DIMENSION_OPTIONS).toHaveLength(11);
     const expectedValues: DimensionKey[] = [
       "people_relationships",
       "memories_stories",
@@ -58,6 +58,7 @@ describe("onboarding-groot types", () => {
       "everyday_life",
       "hardships_resilience",
       "humour_personality",
+      "something_else",
     ];
     DIMENSION_OPTIONS.forEach((opt, i) => {
       expect(opt.value).toBe(expectedValues[i]);
@@ -65,6 +66,12 @@ describe("onboarding-groot types", () => {
       expect(typeof opt.sublabel).toBe("string");
       expect(typeof opt.icon).toBe("string");
     });
+  });
+
+  it("DIMENSION_OPTIONS something_else has empty icon", () => {
+    const somethingElse = DIMENSION_OPTIONS.find((o) => o.value === "something_else");
+    expect(somethingElse).toBeDefined();
+    expect(somethingElse?.icon).toBe("");
   });
 
   it("EXPRESSION_OPTIONS has 4 entries", () => {

@@ -20,7 +20,7 @@ export function OnboardingNudgeBanner() {
 
   return (
     <div
-      className="mb-4 flex items-center justify-between gap-4 rounded-xl border-l-4 border-[#C8956C] bg-[#F5E6DA] px-4 py-3"
+      className="mb-4 flex items-center justify-between gap-4 rounded border-l-4 border-primary bg-[#F5F2F0] px-4 py-3"
       role="banner"
     >
       <p className="text-sm text-[#2C1F15]">
