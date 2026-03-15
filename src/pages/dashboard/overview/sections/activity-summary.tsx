@@ -1,4 +1,5 @@
 import DailyPromptSection from "./daily-prompt-section";
+import RecentActivitiesSection from "./recent-activities-section";
 
 export default function ActivitySummary() {
   return (
@@ -8,7 +9,12 @@ export default function ActivitySummary() {
         <i className="text-[rgba(176,169,156,0.9)]"> reflecting</i>
       </h2>
       <div className="flex flex-col lg:flex-row gap-6 items-stretch">
-        <DailyPromptSection />
+        <div className="flex-1 min-w-0">
+          <DailyPromptSection />
+        </div>
+        <div className="flex-1 min-w-0 lg:max-w-[400px]">
+          <RecentActivitiesSection />
+        </div>
       </div>
     </div>
   );

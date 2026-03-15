@@ -12,7 +12,7 @@ const API_BASE = "http://localhost:3000/api";
 describe("MemoryInsightsModal", () => {
   it("shows Summary as default category", () => {
     renderWithProviders(<MemoryInsightsModal />, { route: "/overview", auth: true });
-    expect(screen.getByRole("button", { name: /summary/i })).toHaveClass(/bg-\[#1D2939\]/);
+    expect(screen.getByRole("button", { name: /summary/i })).toHaveClass(/bg-v3-fill-weak/);
   });
 
   it("shows empty state when no context and Summary selected", () => {

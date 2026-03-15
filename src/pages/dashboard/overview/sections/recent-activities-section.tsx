@@ -1,24 +1,31 @@
+import { Link } from "react-router-dom";
 import { useMemo } from "react";
 import useSWR from "swr";
 import dayjs from "dayjs";
-import relativeTime from "dayjs/plugin/relativeTime";
+import calendar from "dayjs/plugin/calendar";
 import endpoint from "@/api/endpoint";
 import { isEmpty } from "@/utility";
-import { QIcon } from "@/components/icons";
+import recentActivityIcon from "@/assets/icon/homepage/recent activities icon.svg";
 
-dayjs.extend(relativeTime);
+dayjs.extend(calendar);
 
 const formatActivityDate = (date: string) => {
-  const activityDate = dayjs(date);
-  const timeStr = activityDate.format("h:mm A");
-  const relativeStr = activityDate.fromNow();
-  return `${relativeStr} ${timeStr}`;
+  const d = dayjs(date);
+  const now = dayjs();
+  return d.isSame(now, "day")
+    ? "Today"
+    : d.isSame(now.subtract(1, "day"), "day")
+      ? "Yesterday"
+      : d.isAfter(now.subtract(7, "day"))
+        ? `${now.diff(d, "day")} days ago`
+        : d.format("MMM D");
 };
 
 interface Activity {
   _id: string;
   description: string;
   created_at: string;
+  type?: string;
 }
 
 interface ActivitiesResponse {
@@ -27,38 +34,50 @@ interface ActivitiesResponse {
   };
 }
 
-function RecentActivityItem({ activity }: { activity: Activity }) {
+function RecentActivityItem({
+  activity,
+  isFirst,
+}: {
+  activity: Activity;
+  isFirst?: boolean;
+}) {
   const formattedDate = useMemo(
     () => formatActivityDate(activity.created_at),
     [activity.created_at],
   );
 
   return (
-    <div className="flex w-full items-start space-x-2 pb-3">
-      <div className="relative mt-1.5 inline-flex size-8">
-        <div className="absolute top-0 size-[19.2px] origin-bottom-left translate-x-1 -translate-y-0.5 rotate-[6.76deg] rounded-[3.21px] bg-sand-6" />
-        <div className="absolute top-0 z-30 flex size-[19.2px] items-center justify-center rounded-[3.21px] bg-sand-2">
-          <QIcon width={7} height={10} />
-        </div>
+    <div
+      className={`flex w-full items-start gap-3 py-3 ${!isFirst ? "border-t border-v3-stroke-weak" : ""}`}
+    >
+      <div className="flex size-9 shrink-0 items-center justify-center">
+        <img
+          src={recentActivityIcon}
+          alt=""
+          className="size-9 object-contain"
+        />
       </div>
-      <div className="flex min-w-0 flex-1 flex-col">
-        <p className="truncate font-georgia text-base text-gray-800">{activity.description}</p>
-        <span className="font-inter text-sm text-[#000933A6]">{formattedDate}</span>
+      <div className="min-w-0 flex-1">
+        <p className="truncate font-inter text-sm font-medium text-v3-text-strong">
+          {activity.description}
+        </p>
+        <p className="font-inter text-xs text-v3-text-weak">
+          {formattedDate}
+        </p>
       </div>
     </div>
   );
 }
 
-function RecentActivitySkeleton() {
+function RecentActivitySkeleton({ isFirst }: { isFirst?: boolean }) {
   return (
-    <div className="flex w-full items-start space-x-2 pb-3 animate-pulse">
-      <div className="relative mt-1.5 inline-flex size-8">
-        <div className="absolute top-0 size-[19.2px] origin-bottom-left translate-x-1 -translate-y-0.5 rotate-[6.76deg] rounded-[3.21px] bg-sand-3" />
-        <div className="absolute top-0 z-30 flex size-[19.2px] items-center justify-center rounded-[3.21px] bg-sand-3" />
-      </div>
-      <div className="flex min-w-0 flex-1 flex-col space-y-2">
-        <div className="h-4 w-full rounded bg-sand-3" />
-        <div className="h-3 w-24 rounded bg-sand-3" />
+    <div
+      className={`flex w-full items-start gap-3 py-3 animate-pulse ${!isFirst ? "border-t border-v3-stroke-weak" : ""}`}
+    >
+      <div className="size-9 shrink-0 rounded bg-v3-fill-weak" />
+      <div className="flex-1 space-y-2">
+        <div className="h-4 w-full rounded bg-v3-fill-weak" />
+        <div className="h-3 w-24 rounded bg-v3-fill-weak" />
       </div>
     </div>
   );
@@ -71,29 +90,42 @@ export default function RecentActivitiesSection() {
   const activities = data?.data?.docs ?? [];
 
   return (
-    <div className="flex w-full flex-1 flex-col gap-6 lg:max-w-[335px]">
-      <div className="flex w-full items-center justify-between font-inter">
-        <span className="text-sm font-semibold text-gray-800">Recent activities</span>
+    <div className="flex flex-1 flex-col gap-4 p-5">
+      <div className="flex w-full items-center justify-between">
+        <h3 className="font-inter text-base font-semibold text-v3-text-strong">
+          Recent <i className="font-garamond font-normal italic">activities</i>
+        </h3>
+        <Link
+          to="/stories"
+          className="font-inter text-sm font-medium text-orange underline hover:no-underline"
+        >
+          See all
+        </Link>
       </div>
-      <div className="flex w-full flex-col gap-2">
+      <div className="flex flex-col">
         {isLoading
-          ? Array.from({ length: 3 }).map((_, index) => (
-              <RecentActivitySkeleton key={`activity-skeleton-${index}`} />
+          ? Array.from({ length: 4 }).map((_, i) => (
+              <RecentActivitySkeleton
+                key={`skeleton-${i}`}
+                isFirst={i === 0}
+              />
             ))
           : !isEmpty(activities)
             ? activities.map((activity, index) => (
                 <RecentActivityItem
                   key={activity._id ?? `activity-${index}`}
                   activity={activity}
+                  isFirst={index === 0}
                 />
               ))
             : (
-                <div className="flex items-center justify-center p-4">
-                  <p className="text-sm text-gray-500">No recent activities</p>
-                </div>
-              )}
+              <div className="py-8 text-center">
+                <p className="font-inter text-sm text-v3-text-weak">
+                  No recent activities
+                </p>
+              </div>
+            )}
       </div>
     </div>
   );
 }
-

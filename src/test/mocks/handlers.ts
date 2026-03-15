@@ -30,7 +30,34 @@ export const handlers = [
   http.get(`${BASE_URL}/activities`, () => {
     return HttpResponse.json({
       success: true,
-      data: [],
+      data: {
+        docs: [
+          {
+            _id: "act-1",
+            description: "What are your thoughts on the...",
+            created_at: new Date().toISOString(),
+            type: "chat",
+          },
+          {
+            _id: "act-2",
+            description: "My trip to the United States ba...",
+            created_at: new Date(Date.now() - 172800000).toISOString(),
+            type: "story",
+          },
+          {
+            _id: "act-3",
+            description: "How do I make a paper plane...",
+            created_at: new Date(Date.now() - 172800000).toISOString(),
+            type: "prompt",
+          },
+          {
+            _id: "act-4",
+            description: 'The one time i "woke up"',
+            created_at: new Date(Date.now() - 172800000).toISOString(),
+            type: "memo",
+          },
+        ],
+      },
       message: "Activities fetched",
     });
   }),
@@ -40,6 +67,52 @@ export const handlers = [
       success: true,
       data: [],
       message: "Conversations fetched",
+    });
+  }),
+
+  http.get(`${BASE_URL}/memories`, () => {
+    return HttpResponse.json({
+      success: true,
+      data: {
+        docs: [
+          {
+            _id: "mem-1",
+            title: "Family reunion, Lagos 1990",
+            attachments: [{ type: "image/jpeg", duration: undefined, _id: "f1", name: "photo.jpg", size: 0, url: "" }],
+            beneficiaries: [{ _id: "b1", name: "Alice" }, { _id: "b2", name: "Bob" }, { _id: "b3", name: "Carol" }, { _id: "b4", name: "Dave" }],
+            groups: [],
+            created_at: new Date().toISOString(),
+          },
+          {
+            _id: "mem-2",
+            title: "Wedding anniversary message",
+            attachments: [{ type: "video/mp4", duration: 154, _id: "f2", name: "video.mp4", size: 0, url: "" }],
+            beneficiaries: [],
+            groups: [],
+            created_at: new Date(Date.now() - 86400000).toISOString(),
+          },
+          {
+            _id: "mem-3",
+            title: "Jollof rice recipe",
+            attachments: [{ type: "application/pdf", _id: "f3", name: "doc.pdf", size: 0, url: "" }],
+            beneficiaries: [{ _id: "b1", name: "Alice" }, { _id: "b2", name: "Bob" }, { _id: "b3", name: "Carol" }],
+            groups: [],
+            created_at: new Date(Date.now() - 172800000).toISOString(),
+          },
+          {
+            _id: "mem-4",
+            title: "Favourite hymn recording",
+            attachments: [{ type: "audio/mpeg", duration: 252, _id: "f4", name: "audio.mp3", size: 0, url: "" }],
+            beneficiaries: [{ _id: "b1", name: "Alice" }, { _id: "b2", name: "Bob" }],
+            groups: [],
+            created_at: new Date(Date.now() - 259200000).toISOString(),
+          },
+        ],
+        totalDocs: 4,
+        hasNextPage: false,
+        page: 1,
+      },
+      message: "Memories fetched",
     });
   }),
 
