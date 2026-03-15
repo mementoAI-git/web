@@ -15,6 +15,8 @@ import {
   MiscPage,
   NicknamePage,
   OnboardLayout,
+  OnboardingGrootLayout,
+  OnboardingGrootPage,
   WelcomePage,
   OnboardPage,
   OverviewPage,
@@ -47,6 +49,11 @@ export const router = createBrowserRouter([
       { path: "set-password", element: <SetPasswordPage /> },
       { path: "accept-invite/:id", element: <AcceptInvitePage /> },
       { path: "post/:id", element: <PostPage /> },
+      {
+        path: "onboarding",
+        element: <OnboardingGrootLayout />,
+        children: [{ index: true, element: <OnboardingGrootPage /> }],
+      },
       {
         path: "onboard",
         element: <OnboardLayout />,

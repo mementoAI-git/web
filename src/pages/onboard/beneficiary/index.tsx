@@ -1,6 +1,7 @@
 "use client";
 
 import { Link, useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 import useSWR from "swr";
 import endpoint from "@/api/endpoint";
 import { isEmpty } from "@/utility";
@@ -54,12 +55,12 @@ export default function BeneficiaryPage() {
           >
             Skip for now
           </Link>
-          <Link
-            to="/overview"
-            className="rounded-full bg-orange px-8 py-[18px] text-sm font-semibold leading-[20px] text-white transition-colors duration-200 hover:bg-[#C55A1D]"
+          <Button
+            asChild
+            className="rounded-full !bg-orange hover:!bg-[#C55A1D] px-8 py-[18px] text-sm font-semibold leading-[20px] text-white"
           >
-            Continue
-          </Link>
+            <Link to="/overview">Continue</Link>
+          </Button>
         </div>
       </div>
     </div>

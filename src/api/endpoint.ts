@@ -80,6 +80,11 @@ export default {
   // feedback
   feedback: "/feedback",
 
+  // host onboarding (Groot) - backend not yet implemented
+  hostOnboarding: "/host/onboarding",
+  hostOnboardingProgress: "/host/onboarding/progress",
+  hostProfile: "/host/profile",
+
   // sentry
   tunnel: `${import.meta.env.VITE_API_BASE_URL}/sentry_tunnel`,
 };

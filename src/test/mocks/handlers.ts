@@ -88,4 +88,32 @@ export const handlers = [
       data: { memory_id: "mock-memory-id" },
     });
   }),
+
+  // Host onboarding (Groot) - backend not yet implemented, mocked for tests
+  http.post(`${BASE_URL}/host/onboarding`, async ({ request }) => {
+    await request.json();
+    return HttpResponse.json({
+      success: true,
+      data: { success: true, enrichmentScoreSeed: {} },
+    });
+  }),
+  http.patch(`${BASE_URL}/host/onboarding/progress`, async ({ request }) => {
+    await request.json();
+    return HttpResponse.json({
+      success: true,
+      data: { success: true },
+    });
+  }),
+  http.get(`${BASE_URL}/host/profile`, () => {
+    return HttpResponse.json({
+      success: true,
+      data: {
+        displayName: "Jane",
+        hostArchetype: "family",
+        motivationType: "emotional_depth",
+        priorityDimensions: ["people_relationships"],
+        expressionMode: ["voice"],
+      },
+    });
+  }),
 ];

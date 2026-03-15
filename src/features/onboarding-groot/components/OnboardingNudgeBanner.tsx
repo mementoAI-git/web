@@ -1,0 +1,48 @@
+import { useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useStore } from "@/hooks/use-store";
+import { storageKeys } from "@/utility/constant";
+
+export function OnboardingNudgeBanner() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { user } = useStore();
+  const [dismissed, setDismissed] = useState(false);
+
+  if (location.pathname === "/onboard" || location.pathname.startsWith("/onboard") || location.pathname === "/onboarding" || location.pathname.startsWith("/onboarding")) {
+    return null;
+  }
+  if (dismissed) return null;
+
+  const complete = user?.onboarding_complete ?? localStorage.getItem(storageKeys.onboardingComplete) === "true";
+  const skipped = user?.onboarding_skipped ?? localStorage.getItem(storageKeys.onboardingSkipped) === "true";
+  if (complete || !skipped) return null;
+
+  return (
+    <div
+      className="mb-4 flex items-center justify-between gap-4 rounded-xl border-l-4 border-[#C8956C] bg-[#F5E6DA] px-4 py-3"
+      role="banner"
+    >
+      <p className="text-sm text-[#2C1F15]">
+        Finish setting up your Memento — it only takes a few minutes.
+      </p>
+      <div className="flex shrink-0 items-center gap-2">
+        <button
+          type="button"
+          onClick={() => navigate("/onboard")}
+          className="text-sm font-medium text-[#C8956C] hover:text-[#B08050] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C8956C] focus-visible:ring-offset-2 rounded"
+        >
+          Continue setup →
+        </button>
+        <button
+          type="button"
+          onClick={() => setDismissed(true)}
+          aria-label="Dismiss"
+          className="p-1 text-[#7A6A5E] hover:text-[#2C1F15] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C8956C] focus-visible:ring-offset-2 rounded"
+        >
+          ✕
+        </button>
+      </div>
+    </div>
+  );
+}

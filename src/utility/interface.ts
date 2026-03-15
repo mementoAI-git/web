@@ -63,6 +63,11 @@ export interface IUser {
   fullname?: string | null;
   newsletter_subscriber: boolean;
   created_at: string;
+  /** Host onboarding (Groot) - set by backend when complete */
+  onboarding_complete?: boolean;
+  /** Set when user skips onboarding - show nudge instead of redirect */
+  onboarding_skipped?: boolean;
+  onboarding_step_reached?: number;
 }
 
 export interface IMemoryAccessItem {

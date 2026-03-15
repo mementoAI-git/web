@@ -1,4 +1,5 @@
 import { type ChangeEvent, useCallback, useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import useSWRMutation from "swr/mutation";
 import endpoint from "@/api/endpoint";
 import { fileUploadFetcher } from "@/api/fetcher";
@@ -93,6 +94,14 @@ export default function General() {
         </button>
       </div>
 
+      <Link
+        to="/onboarding?mode=revisit"
+        className="flex items-center justify-between rounded-2xl border border-gray-200 p-4 text-left font-inter text-sm text-gray-950/90 hover:bg-gray-50/50 transition-colors"
+        onClick={() => close?.("settings")}
+      >
+        <span>Revisit preferences</span>
+        <span className="text-gray-950/60">→</span>
+      </Link>
       <div className="flex flex-col gap-4 rounded-2xl border border-gray-200 p-4">
         <UpdateTextInput label="First name" name="first_name" />
         <UpdateTextInput label="Last name" name="last_name" />
