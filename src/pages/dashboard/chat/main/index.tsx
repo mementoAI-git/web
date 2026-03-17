@@ -42,8 +42,7 @@ export default function ChatLandingPage() {
               {greetingText}
             </h3>
             <Chatinput
-              inputClassName="!h-[50px]"
-              className="max-w-[600px] !gap-3  sm:!gap-10"
+              className="max-w-[600px] !gap-3 sm:!gap-2"
               onSend={handleSend}
               loading={startingConversation}
             />

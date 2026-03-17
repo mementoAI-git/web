@@ -99,17 +99,19 @@ export default function Chatinput({
     if (showSlashMenu && filteredSlashCommands.length === 0) setShowSlashMenu(false)
   }, [showSlashMenu, filteredSlashCommands.length])
 
+  const MAX_TEXTAREA_HEIGHT = 300;
+
   const adjustHeight = useCallback(() => {
     const textarea = textareaRef.current;
     if (textarea) {
       textarea.style.height = 'auto';
-      const newHeight = Math.min(textarea.scrollHeight, 300); // Max height of 200px
-      textarea.style.height = `${newHeight}px`;
-
-      // Show scrollbar when content exceeds max height
-      if (textarea.scrollHeight > 200) {
+      const contentHeight = textarea.scrollHeight;
+      if (contentHeight > MAX_TEXTAREA_HEIGHT) {
+        const newHeight = Math.min(contentHeight, MAX_TEXTAREA_HEIGHT);
+        textarea.style.height = `${newHeight}px`;
         textarea.style.overflowY = 'auto';
       } else {
+        textarea.style.height = '100%';
         textarea.style.overflowY = 'hidden';
       }
     }
@@ -158,10 +160,10 @@ export default function Chatinput({
     setText("");
     setFiles([]);
 
-    // Reset textarea height to original size
+    // Reset textarea height to fill container
     const textarea = textareaRef.current;
     if (textarea) {
-      textarea.style.height = 'auto';
+      textarea.style.height = '100%';
       textarea.style.overflowY = 'hidden';
     }
   }
@@ -223,7 +225,7 @@ export default function Chatinput({
         ref={inputWrapperRef}
         className={
           cn(
-            "w-full h-fit flex focus-within:border-orange/16 flex-col gap-3 md:gap-4 rounded-3xl border border-[rgba(0,0,0,0.05)] py-3 px-4 md:p-6 !bg-white mx-auto shadow-[0px_4px_8px_0px_#AB7E2B1C] max-w-[600px] md:min-w-[600px]",
+            "w-full min-h-[120px] flex focus-within:border-orange/16 flex-col gap-3 md:gap-4 rounded-3xl border border-[rgba(0,0,0,0.05)] py-3 px-4 md:p-6 !bg-white mx-auto shadow-[0px_4px_8px_0px_#AB7E2B1C] max-w-[600px] md:min-w-[600px]",
             className
           )
         }
@@ -238,7 +240,7 @@ export default function Chatinput({
         }}
         onSelect={() => setCursorPosition(textareaRef.current?.selectionStart ?? 0)}
         placeholder="Type text here... Type / for formatting"
-        className={cn("h-10 md:h-12 w-full outline-none font-georgia resize-none text-lg md:text-xl overflow-hidden", {
+        className={cn("min-h-10 md:min-h-12 flex-1 w-full outline-none font-georgia resize-none text-lg md:text-xl overflow-hidden", {
           [inputClassName]: !isEmpty(inputClassName)
         })}
         onInput={adjustHeight}
@@ -254,7 +256,7 @@ export default function Chatinput({
         onCommandSelect={handleSlashCommandSelect}
         onClose={() => setShowSlashMenu(false)}
       />
-      <ImagePreview {...{ files, handleRemoveFile }} />
+      {files.length > 0 && <ImagePreview {...{ files, handleRemoveFile }} />}
       <div className="flex justify-between">
         <div className="flex items-center gap-4">
           {/* File Upload Button */}
