@@ -1,6 +1,6 @@
 "use client";
 
-import { forwardRef, useImperativeHandle, useState } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useState } from "react";
 import { toast } from "sonner";
 import AudioVisualizer from "@/components/audio-visualizer";
 import RecIndicator from "@/components/rec-indicator";
@@ -36,12 +36,18 @@ export const AudioRecorder = forwardRef<ReturnType<typeof useRecorder> & { start
 
     const stop = () => {
       recorder.stop();
-      if (recorder.chunks && recorder.chunks.length > 0) {
-        const blob = new Blob(recorder.chunks, { type: fileType });
-        const file = new File([blob], "recorded.webm", { type: fileType });
-        onFinish(file);
-      }
     };
+
+    useEffect(() => {
+      if (recorder.url) {
+        fetch(recorder.url)
+          .then((r) => r.blob())
+          .then((blob) => {
+            const file = new File([blob], "recorded.webm", { type: fileType });
+            onFinish(file);
+          });
+      }
+    }, [recorder.url, onFinish]);
 
     useImperativeHandle(ref, () => ({ ...recorder, start, stop }));
 
