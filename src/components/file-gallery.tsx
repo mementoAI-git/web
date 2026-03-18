@@ -40,10 +40,11 @@ function VideoFile({ file }: { file: IFile }) {
 }
 
 function FileGalleryItem({ file }: { file: IFile }) {
-  if (file.type.includes("video")) {
+  const type = file.type ?? "";
+  if (type.includes("video")) {
     return <VideoFile file={file} />;
   }
-  if (file.type.includes("audio")) {
+  if (type.includes("audio")) {
     return <AudioFile file={file} />;
   }
   return (

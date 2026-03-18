@@ -248,10 +248,10 @@ function Content({ data }: ContentProps) {
     event.target.value = "";
   };
 
-  const handleAddAudioFile = (file: File) => {
+  const handleAddAudioFile = (file: File, duration?: number) => {
     const reader = new FileReader();
     reader.onloadend = () => {
-      handleUpload({ id: uuidv4(), file, base64: reader.result as string, progress: 0 });
+      handleUpload({ id: uuidv4(), file, base64: reader.result as string, progress: 0, ...(duration !== undefined && { duration }) });
     };
     reader.readAsDataURL(file);
     setAudioRecordingCount((c) => c + 1);
