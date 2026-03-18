@@ -23,6 +23,7 @@ export default function useFileUpload() {
           prev.map((f) => (f.id === file.id ? { ...f, progress } : f)),
         );
       },
+      ...(file.duration !== undefined && { duration: file.duration }),
     };
 
     const result = await uploadFile(payload as any);

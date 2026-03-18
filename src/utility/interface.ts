@@ -178,6 +178,7 @@ export interface IOnUploadPayload {
   id: string;
   progress: number;
   uploadedFile?: IFile | null;
+  duration?: number;
 }
 
 export interface IPrompt {
