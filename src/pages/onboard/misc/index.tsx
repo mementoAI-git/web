@@ -21,7 +21,6 @@ import endpoint from "@/api/endpoint";
 import useFetcher from "@/hooks/use-fetcher";
 import { mutate } from "swr";
 import { storageKeys } from "@/utility/constant";
-import { saveOnboarding } from "@/api/onboarding";
 
 const MAX_EXPRESSION = 2;
 const ALL_EXPRESSION_MODES = EXPRESSION_OPTIONS.map((o) => o.value);
@@ -116,7 +115,7 @@ export default function MiscPage() {
   const completeAndNavigate = useCallback(
     async (action: string) => {
       try {
-        await saveOnboarding({
+        await completeOnboarding({
           fullName: nickname,
           displayName: nickname,
           ageBand: state.ageBand ?? "",
@@ -361,17 +360,17 @@ export default function MiscPage() {
             <p className="text-sm text-[#C55A1D]">Pick at least one.</p>
           )}
           <div className="flex flex-wrap gap-2">
-{PASSION_OPTIONS.map((opt) => (
-                <OnboardSelectionCard
-                  key={opt.value}
-                  value={opt.value}
-                  label={opt.label}
-                  icon={opt.icon || undefined}
-                  isSelected={state.passions.includes(opt.value)}
-                  onClick={() => togglePassion(opt.value)}
-                  variant={opt.value === "something_else" ? "add" : undefined}
-                />
-              ))}
+            {PASSION_OPTIONS.map((opt) => (
+              <OnboardSelectionCard
+                key={opt.value}
+                value={opt.value}
+                label={opt.label}
+                icon={opt.icon || undefined}
+                isSelected={state.passions.includes(opt.value)}
+                onClick={() => togglePassion(opt.value)}
+                variant={opt.value === "something_else" ? "add" : undefined}
+              />
+            ))}
           </div>
           {state.passions.includes("something_else") && (
             <div className="mt-2 space-y-2">
@@ -585,9 +584,9 @@ export default function MiscPage() {
         >
           {step === 7
             ? getPrimaryCTA(
-                state.motivationType === "__all__" ? "explorer" : state.motivationType,
-                state.expressionMode
-              ).label
+              state.motivationType === "__all__" ? "explorer" : state.motivationType,
+              state.expressionMode
+            ).label
             : "Continue"}
         </Button>
       </div>

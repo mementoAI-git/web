@@ -36,7 +36,7 @@ export default function NotFoundPage() {
           <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center items-center w-full px-4">
             <button
               onClick={handleGoBack}
-              className="btn-outline !gap-[4px] !py-3 sm:!py-4 md:!py-[18px] !px-6 sm:!px-8 md:!px-12 w-full sm:w-auto"
+              className="btn-outline gap-[4px]! py-3 sm:!py-4 md:!py-[18px] !px-6 sm:!px-8 md:!px-12 w-full sm:w-auto"
             >
               <ArrowLeftIcon className="size-4 text-lg" />
               <span>Go back</span>

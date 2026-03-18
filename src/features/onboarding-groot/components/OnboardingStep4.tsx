@@ -82,7 +82,7 @@ export function OnboardingStep4({
             className="absolute left-0 right-0 top-full mt-2 text-[13px] text-[#C8956C]"
             role="status"
           >
-            Pick your top two.
+            Pick your top two
           </p>
         )}
       </div>

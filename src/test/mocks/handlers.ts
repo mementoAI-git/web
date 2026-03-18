@@ -198,31 +198,44 @@ export const handlers = [
     });
   }),
 
-  // Host onboarding (Groot) - backend not yet implemented, mocked for tests
-  http.post(`${BASE_URL}/host/onboarding`, async ({ request }) => {
-    await request.json();
+  // Onboarding (Groot) — users module
+  http.get(`${BASE_URL}/users/onboarding-details`, () => {
     return HttpResponse.json({
-      success: true,
-      data: { success: true, enrichmentScoreSeed: {} },
-    });
-  }),
-  http.patch(`${BASE_URL}/host/onboarding/progress`, async ({ request }) => {
-    await request.json();
-    return HttpResponse.json({
-      success: true,
-      data: { success: true },
-    });
-  }),
-  http.get(`${BASE_URL}/host/profile`, () => {
-    return HttpResponse.json({
-      success: true,
+      status: 200,
+      message: "OK",
       data: {
-        displayName: "Jane",
-        hostArchetype: "family",
-        motivationType: "emotional_depth",
-        priorityDimensions: ["people_relationships"],
-        expressionMode: ["voice"],
+        onboarding_status: "completed",
+        user: {
+          first_name: "Jane",
+          last_name: "Doe",
+          nickname: "Jane",
+          full_name: "Jane Doe",
+          age_range: "30s_40s",
+          location: "London",
+        },
+        persona: {
+          join_reasons: ["memory_preservation", "family_history_heritage"],
+          audience: ["children", "partner_spouse"],
+          current_priority: ["people_relationships", "memories_stories"],
+          communication_style: [],
+          prefered_communication_style: "voice",
+        },
       },
+    });
+  }),
+  http.post(`${BASE_URL}/users/onboarding`, async ({ request }) => {
+    await request.json();
+    return HttpResponse.json({
+      status: 200,
+      message: "Onboarding saved successfully",
+      data: null,
+    });
+  }),
+  http.post(`${BASE_URL}/users/onboarding/skip`, () => {
+    return HttpResponse.json({
+      status: 200,
+      message: "Onboarding skipped",
+      data: { onboarding_status: "skipped" },
     });
   }),
 ];
