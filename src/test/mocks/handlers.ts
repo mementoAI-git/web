@@ -20,6 +20,32 @@ export const handlers = [
     });
   }),
 
+  http.get(`${BASE_URL}/users/persona`, () => {
+    return HttpResponse.json({
+      status: 200,
+      message: "Persona retrieved successfully",
+      data: null,
+    });
+  }),
+
+  http.get(`${BASE_URL}/beneficiaries`, () => {
+    return HttpResponse.json({
+      success: true,
+      data: {
+        docs: [],
+        hasNextPage: false,
+        hasPrevPage: false,
+        limit: 20,
+        nextPage: null,
+        page: 1,
+        pagingCounter: 0,
+        prevPage: null,
+        totalDocs: 0,
+        totalPages: 0,
+      },
+    });
+  }),
+
   http.get(`${BASE_URL}/users/stats`, () => {
     return HttpResponse.json({
       success: true,

@@ -13,6 +13,7 @@ export default {
   // user
   profile: "/users/profile",
   userContext: "/users/context",
+  persona: "/users/persona",
   completeOnboarding: "/users/complete-onboarding",
   uploadPicture: "/users/upload-picture",
   changePassword: "/users/change-password",
