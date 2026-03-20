@@ -148,7 +148,7 @@ const Content = forwardRef(({ data }: IContentProps, ref) => {
             position: "bottom-right",
             classNames: {
               actionButton:
-                "!bg-orange hover:!bg-[#C55A1D] !font-semibold !px-4 !py-2 !rounded-lg transition-colors",
+                "!bg-v3-brand-strong !rounded-lg !px-4 !py-2 !font-semibold transition-colors hover:!opacity-90",
             },
             action: {
               label: "Paste",

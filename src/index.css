@@ -3,7 +3,7 @@
 @config "../tailwind.config.ts";
 
 :root {
-  --color-primary: #E26A24;
+  --color-primary: var(--v3-brand-strong);
   --color-secondary: rgba(0, 6, 38, 0.9);
   --color-surface: #f5f6fa;
   --color-surfaces-100: #067a57;
@@ -51,7 +51,7 @@
   --color-sand-11: #5c4114;
   --color-sand-12: #412c09;
 
-  --color-orange: #e26a24;
+  --color-orange: var(--v3-brand-strong);
 
   --color-green-0: #b1c6a9;
 
@@ -68,6 +68,8 @@
   --v3-text-weaker: rgba(23, 11, 0, 0.45);
   --v3-text-disabled: rgba(23, 11, 0, 0.1);
   --v3-icon-disabled: rgba(23, 11, 0, 0.1);
+  /* v3 brand accent (CTAs, links, focus accents) — distinct from --v3-fill-strong (dark UI fill) */
+  --v3-brand-strong: #ff5e00;
 
   --color-weak: #1e1e1eb2;
   --color-strong: #1e1e1ee5;
@@ -91,12 +93,12 @@
   --onboarding-text-muted: #B0A098;
   --onboarding-green-soft: #8BAF8B;
 
-  --rdp-accent-color: #E26A24;
+  --rdp-accent-color: var(--v3-brand-strong);
   --rdp-range_start-background: #FBEFE9;
   --rdp-range_middle-background: #FBEFE9;
   --rdp-range_end-background: #FBEFE9;
   --rdp-day-selected-color: #fff;
-  --rdp-day-selected-background: #E26A24;
+  --rdp-day-selected-background: var(--v3-brand-strong);
 
   --font-garamond: "EB Garamond", serif;
   --font-azeret: "Azeret Mono", monospace;
@@ -194,6 +196,7 @@
   --color-v3-text-weaker: var(--v3-text-weaker);
   --color-v3-text-disabled: var(--v3-text-disabled);
   --color-v3-icon-disabled: var(--v3-icon-disabled);
+  --color-v3-brand-strong: var(--v3-brand-strong);
 
   --color-weak: var(--color-weak);
   --color-strong: var(--color-strong);
@@ -418,7 +421,7 @@ body {
   }
 
   .btn {
-    @apply flex h-fit cursor-pointer items-center justify-center gap-2 rounded-full bg-orange hover:bg-[#C55A1D] shadow-btn hover:scale-[97%] px-5 py-[11px] font-inter text-sm font-medium text-white disabled:bg-[#c7c9c8] disabled:cursor-not-allowed transition-all duration-150;
+    @apply flex h-fit cursor-pointer items-center justify-center gap-2 rounded-full bg-v3-brand-strong shadow-btn hover:scale-[97%] px-5 py-[11px] font-inter text-sm font-medium text-white transition-all duration-150 hover:opacity-90 disabled:cursor-not-allowed disabled:bg-[#c7c9c8];
   }
 
   .btn-outline {

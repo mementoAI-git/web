@@ -611,8 +611,7 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
         type="button"
         onClick={handleSubmit}
         disabled={isMutating || isUploading}
-        className="h-11 px-6 rounded-full font-inter font-semibold text-sm text-white hover:opacity-90 disabled:opacity-50 flex items-center gap-2 transition-opacity"
-        style={{ backgroundColor: "#FF5E00" }}
+        className="h-11 rounded-full bg-v3-brand-strong px-6 font-inter font-semibold text-sm text-white transition-opacity hover:opacity-90 disabled:opacity-50 flex items-center gap-2"
       >
         Continue
         <Spinner loading={isMutating} className="size-4!" />

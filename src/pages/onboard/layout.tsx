@@ -28,14 +28,14 @@ export default function OnboardLayout() {
         <button
           type="button"
           onClick={handleSkip}
-          className="text-sm font-medium text-[#7A6A5E] hover:text-[#2C1F15] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C8956C] focus-visible:ring-offset-2 rounded"
+          className="text-sm font-medium text-[#7A6A5E] hover:text-v3-fill-strong transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C8956C] focus-visible:ring-offset-2 rounded"
         >
           Skip for now →
         </button>
       </header>
       <AuthCheck>
         <main className="min-h-0 flex-1 overflow-y-auto bg-white">
-          <div className="mx-auto w-full max-w-[640px] px-4 py-8 sm:py-12">
+          <div className="mx-auto w-full max-w-[620px] px-4 pt-5 pb-2">
             <Outlet />
           </div>
         </main>

@@ -73,7 +73,7 @@ export default function AcceptInviteForm({ data }: { data: IBeneficiary }) {
         </span>
         <span className="block max-w-[490px] font-garamond text-xs leading-6 text-[#667085] sm:text-xl">
           Your contact, <span className="capitalize">{name}</span> has invited you to join Memento as a beneficiary on his profile.{" "}
-          <span className="cursor-pointer text-[#E26A24] underline underline-offset-4">
+          <span className="cursor-pointer text-v3-brand-strong underline underline-offset-4">
             What does this mean?
           </span>
         </span>

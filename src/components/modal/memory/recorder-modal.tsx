@@ -311,8 +311,7 @@ export function VideoRecorderModal({ data }: VideoRecorderModalProps) {
               type="button"
               onClick={handleUse}
               disabled={isUsing}
-              className="h-10 px-5 rounded-full font-inter font-semibold text-sm text-white hover:opacity-90 disabled:opacity-50 flex items-center gap-2 transition-opacity"
-              style={{ backgroundColor: "#FF5E00" }}
+              className="flex h-10 items-center gap-2 rounded-full bg-v3-brand-strong px-5 font-inter text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
             >
               Use recording
               <Spinner loading={isUsing} className="size-4!" />

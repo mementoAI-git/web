@@ -17,6 +17,7 @@ const defaultHeaderTitle: Record<string, string> = {
   chat: "chat with AI",
   explore: "explore",
   overview: "overview",
+  settings: "settings",
   "time-capsule": "time capsule",
   "": "overview",
 };
@@ -37,6 +38,7 @@ export function DashboardHeader({ onMenuClick, chatOpen, onChatToggle }: Dashboa
   const location = useLocation();
   const navigate = useNavigate();
   const path = location.pathname.replace("/", "");
+  const pathForTitle = path.startsWith("settings") ? "settings" : path;
   const { user, headerTitle } = useStore();
   const { open } = useModal();
 
@@ -68,7 +70,7 @@ export function DashboardHeader({ onMenuClick, chatOpen, onChatToggle }: Dashboa
                 className="text-gray-400"
               />
               <span className="font-inter font-medium text-sm text-gray-900 capitalize whitespace-nowrap">
-                {truncateText(defaultHeaderTitle[path] || headerTitle, 32)}
+                {truncateText(defaultHeaderTitle[pathForTitle] || headerTitle, 32)}
               </span>
             </div>
           </div>

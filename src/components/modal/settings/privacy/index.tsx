@@ -22,8 +22,8 @@ export default function Privacy() {
       <div>
         <span className="font-inter text-sm text-gray-950/70">
           Memento AI believes in transparent data practices. Learn how your information is protected when using our products, and visit our
-          <span className="font-semibold text-[#E26A24] underline"> Privacy Policy</span> and
-          <span className="font-semibold text-[#E26A24] underline"> Terms</span> pages for more details.
+          <span className="font-semibold text-v3-brand-strong underline"> Privacy Policy</span> and
+          <span className="font-semibold text-v3-brand-strong underline"> Terms</span> pages for more details.
         </span>
       </div>
       <div className="flex flex-col gap-4 rounded-2xl border border-gray-200 p-4">

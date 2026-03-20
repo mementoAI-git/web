@@ -16,7 +16,7 @@ const baseOptions = {
       "!text-[#717680] !font-inter !font-normal !rounded-full hover:!bg-[#F3F3F3]/50",
     input: "",
     inputIcon: "",
-    selected: "!rounded-full !bg-orange !hover:!bg-[#C55A1D] !text-white",
+    selected: "!rounded-full !bg-orange !hover:!opacity-90 !text-white",
   },
   icons: {
     next() {

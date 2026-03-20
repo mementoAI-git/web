@@ -58,8 +58,8 @@ describe("OnboardSelectionCard", () => {
       />
     );
     const button = screen.getByRole("button");
-    expect(button).toHaveClass("bg-[#E26A24]/[0.06]");
-    expect(button).toHaveClass("border-[#E26A24]/20");
+    expect(button).toHaveClass("bg-v3-brand-strong/[0.06]");
+    expect(button).toHaveClass("border-v3-brand-strong/20");
   });
 
   it("does not apply selected styling when not selected", () => {
@@ -73,8 +73,8 @@ describe("OnboardSelectionCard", () => {
       />
     );
     const button = screen.getByRole("button");
-    expect(button).not.toHaveClass("bg-[#E26A24]/[0.06]");
-    expect(button).not.toHaveClass("border-[#E26A24]/20");
+    expect(button).not.toHaveClass("bg-v3-brand-strong/[0.06]");
+    expect(button).not.toHaveClass("border-v3-brand-strong/20");
     expect(button).toHaveClass("border-gray-200");
     expect(button).toHaveClass("bg-white");
   });
