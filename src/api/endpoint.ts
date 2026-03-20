@@ -13,6 +13,7 @@ export default {
   // user
   profile: "/users/profile",
   userContext: "/users/context",
+  persona: "/users/persona",
   completeOnboarding: "/users/complete-onboarding",
   uploadPicture: "/users/upload-picture",
   changePassword: "/users/change-password",
@@ -80,10 +81,10 @@ export default {
   // feedback
   feedback: "/feedback",
 
-  // host onboarding (Groot) - backend not yet implemented
-  hostOnboarding: "/host/onboarding",
-  hostOnboardingProgress: "/host/onboarding/progress",
-  hostProfile: "/host/profile",
+  // onboarding (Groot) — under users module
+  onboardingDetails: "/users/onboarding-details",
+  onboarding: "/users/onboarding",
+  onboardingSkip: "/users/onboarding/skip",
 
   // sentry
   tunnel: `${import.meta.env.VITE_API_BASE_URL}/sentry_tunnel`,

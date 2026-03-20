@@ -15,7 +15,12 @@ vi.mock("react-router-dom", async (importOriginal) => {
 
 async function advanceThroughAllSteps(
   user: ReturnType<typeof userEvent.setup>,
-  options?: { motivation?: string; expression?: string }
+  options?: {
+    motivation?: string | RegExp;
+    expression?: string | RegExp;
+    /** When true (e.g. revisit with prefill), skip clicking expression so prefill is kept */
+    skipExpressionClick?: boolean;
+  }
 ) {
   // Step 1: full name + nickname
   await user.type(
@@ -51,9 +56,11 @@ async function advanceThroughAllSteps(
   await user.click(screen.getByRole("button", { name: /family & relationships/i }));
   await user.click(screen.getByRole("button", { name: /continue/i }));
 
-  // Step 7: expression
-  const expression = options?.expression ?? /talking — I prefer to speak/i;
-  await user.click(screen.getByRole("button", { name: expression }));
+  // Step 7: expression (skip if prefill already has one selected, to avoid toggling off)
+  if (!options?.skipExpressionClick) {
+    const expression = options?.expression ?? /talking — I prefer to speak/i;
+    await user.click(screen.getByRole("button", { name: expression }));
+  }
   await user.click(screen.getByRole("button", { name: /almost there/i }));
 }
 
@@ -154,10 +161,12 @@ describe("OnboardingGrootPage", () => {
       route: "/onboarding?mode=revisit",
       auth: true,
     });
+    // Wait for prefill to load (GET /users/onboarding-details) then form to render
+    expect(await screen.findByLabelText(/what's your full name/i)).toBeInTheDocument();
     expect(screen.queryByText("Skip for now →")).not.toBeInTheDocument();
-    await advanceThroughAllSteps(user);
+    await advanceThroughAllSteps(user, { skipExpressionClick: true });
     expect(
-      screen.getByRole("button", { name: /save changes/i })
+      await screen.findByRole("button", { name: /save changes/i })
     ).toBeInTheDocument();
   });
 

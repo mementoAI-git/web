@@ -18,6 +18,7 @@ export interface OnboardingShellProps {
   showBack?: boolean;
   showSkip?: boolean;
   hideFooter?: boolean;
+  isSaving?: boolean;
   children: React.ReactNode;
 }
 
@@ -34,6 +35,7 @@ export function OnboardingShell({
   showSkip = true,
   hideFooter = false,
   children,
+  isSaving = false,
 }: OnboardingShellProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -124,32 +126,32 @@ export function OnboardingShell({
 
       {/* Footer nav - always visible at bottom when shown */}
       {!hideFooter && (
-      <footer className="flex shrink-0 items-center justify-between gap-4 border-t border-[#E4D9CC] bg-white px-4 py-6 sm:px-6">
-        <div className="w-20">
-          {showBack && (
-            <button
-              type="button"
-              onClick={onBack}
-              className="text-sm text-[#B0A098] hover:text-[#7A6A5E] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C8956C] focus-visible:ring-offset-2 rounded"
-            >
-              ← Back
-            </button>
-          )}
-        </div>
-        <button
-          type="button"
-          onClick={onAdvance}
-          disabled={!canAdvance}
-          className={cn(
-            "rounded-xl px-6 py-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-v3-brand-strong focus-visible:ring-offset-2",
-            canAdvance
-              ? "bg-v3-brand-strong text-white hover:opacity-90"
-              : "cursor-not-allowed bg-[#E4D9CC] text-[#7A6A5E]"
-          )}
-        >
-          {advanceLabel}
-        </button>
-      </footer>
+        <footer className="flex shrink-0 items-center justify-between gap-4 border-t border-[#E4D9CC] bg-white px-4 py-6 sm:px-6">
+          <div className="w-20">
+            {showBack && (
+              <button
+                type="button"
+                onClick={onBack}
+                className="text-sm text-[#B0A098] hover:text-[#7A6A5E] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C8956C] focus-visible:ring-offset-2 rounded"
+              >
+                ← Back
+              </button>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={onAdvance}
+            disabled={!canAdvance || isSaving}
+            className={cn(
+              "rounded-xl px-6 py-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-v3-brand-strong focus-visible:ring-offset-2",
+              canAdvance && !isSaving
+                ? "bg-v3-brand-strong text-white hover:opacity-90"
+                : "cursor-not-allowed bg-[#E4D9CC] text-[#7A6A5E]",
+            )}
+          >
+            {isSaving ? "Saving..." : advanceLabel}
+          </button>
+        </footer>
       )}
     </div>
   );
