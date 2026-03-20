@@ -248,6 +248,14 @@ body {
     var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
+/* Ensure all clickable links show pointer cursor on hover */
+a,
+a:hover,
+a:focus,
+[role="link"] {
+  cursor: pointer;
+}
+
 .rdp-day_range_start,
 .rdp-day_range_end {
   border-radius: 8px !important;

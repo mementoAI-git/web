@@ -35,7 +35,7 @@ export default function OnboardLayout() {
       </header>
       <AuthCheck>
         <main className="min-h-0 flex-1 overflow-y-auto bg-white">
-          <div className="mx-auto w-full max-w-[640px] px-4 py-8 sm:py-12">
+          <div className="mx-auto w-full max-w-[620px] px-4 pt-5 pb-2">
             <Outlet />
           </div>
         </main>

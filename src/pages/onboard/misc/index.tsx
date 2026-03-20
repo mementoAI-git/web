@@ -201,7 +201,7 @@ export default function MiscPage() {
   const TOTAL_STEPS = 7;
 
   return (
-    <div ref={contentRef} className="flex flex-col gap-11">
+    <div ref={contentRef} className="flex w-full flex-col gap-10">
       {/* Step dots and label - matches image design */}
       <div className="flex shrink-0 flex-col items-center gap-3">
         <div className="flex items-center gap-2" aria-hidden>
@@ -226,10 +226,10 @@ export default function MiscPage() {
 
       {showIntro && (
         <div className="flex flex-col gap-1">
-          <h3 className="font-garamond text-[24px] font-medium leading-[38px] text-[#4A4A4A]">
+          <h3 className="font-garamond text-[24px] font-normal leading-[38px] text-v3-text-strong">
             Okay, <span className="capitalize">{nickname}</span>. I&apos;ve got some questions for you.
           </h3>
-          <p className="font-garamond text-[20px] font-normal leading-[28px] text-[#4A4A4A]/80">
+          <p className="font-garamond text-[20px] font-normal leading-[28px] text-v3-text-strong">
             These questions will help Memento better personalize your experience
             <br />
             on the product.
@@ -240,9 +240,9 @@ export default function MiscPage() {
       {step === 1 && (
         <div className="flex flex-col space-y-6">
           <div className="flex flex-col gap-2">
-            <p className="font-garamond text-lg sm:text-xl font-medium text-[#4A4A4A]">
-              How old are you?<span className="text-[#4A90E2]">*</span>
-            </p>
+<p className="font-garamond text-lg sm:text-xl font-normal text-v3-text-strong">
+            How old are you?<span className="text-[#4A90E2]">*</span>
+          </p>
             {validationAttempted && !state.ageBand && (
               <p className="text-sm text-[#C55A1D]">Please pick an age range.</p>
             )}
@@ -260,7 +260,7 @@ export default function MiscPage() {
             </div>
           </div>
           <div className="flex flex-col gap-0 space-y-2">
-            <label htmlFor="where-from" className="block font-garamond text-lg sm:text-xl font-medium text-[#4A4A4A]">
+            <label htmlFor="where-from" className="block font-garamond text-lg sm:text-xl font-normal text-v3-text-strong">
               Where are you from? <span className="text-[#4A4A4A]/60">(optional)</span>
             </label>
             <input
@@ -278,7 +278,7 @@ export default function MiscPage() {
 
       {step === 2 && (
         <div className="space-y-4">
-          <p className="font-garamond text-lg sm:text-xl font-medium text-[#4A4A4A]">
+          <p className="font-garamond text-lg sm:text-xl font-normal text-v3-text-strong">
             Who is this Memento mostly for?<span className="text-[#4A90E2]">*</span>{" "}
             <span className="text-[#B87333] text-base">(multi-select)</span>
           </p>
@@ -349,11 +349,11 @@ export default function MiscPage() {
       {step === 3 && (
         <div className="flex flex-col gap-6">
           <div>
-            <p className="font-garamond text-lg sm:text-xl font-medium text-[#4A4A4A]">
+            <p className="font-garamond text-lg sm:text-xl font-normal text-v3-text-strong">
               What are some things that interest you?<span className="text-[#4A90E2]">*</span>{" "}
               <span className="text-[#B87333] text-base">(multi-select)</span>
             </p>
-            <p className="mt-1 font-garamond text-xl text-[#4A4A4A]/70">
+            <p className="mt-1 font-inter text-sm text-v3-text-weak">
               This helps us personalize your Memento experience.
             </p>
           </div>
@@ -417,7 +417,7 @@ export default function MiscPage() {
 
       {step === 4 && (
         <div className="space-y-4">
-          <p className="font-garamond text-lg sm:text-xl font-medium text-[#4A4A4A]">
+          <p className="font-garamond text-lg sm:text-xl font-normal text-v3-text-strong">
             What brings you to Memento?<span className="text-[#4A90E2]">*</span>
           </p>
           {validationAttempted && !state.motivationType && (
@@ -447,7 +447,7 @@ export default function MiscPage() {
 
       {step === 5 && (
         <div className="space-y-4">
-          <p className="font-garamond text-lg sm:text-xl font-medium text-[#4A4A4A]">
+          <p className="font-garamond text-lg sm:text-xl font-normal text-v3-text-strong">
             What matters most to you now?<span className="text-[#4A90E2]">*</span>{" "}
             <span className="text-[#B87333] text-base">(multi-select)</span>
           </p>
@@ -517,7 +517,7 @@ export default function MiscPage() {
 
       {step === 6 && (
         <div className="space-y-4">
-          <p className="font-garamond text-lg sm:text-xl font-medium text-[#4A4A4A]">
+          <p className="font-garamond text-lg sm:text-xl font-normal text-v3-text-strong">
             How would you most like to add to your Memento?<span className="text-[#4A90E2]">*</span>{" "}
             <span className="text-[#B87333] text-base">(pick up to 2)</span>
           </p>
@@ -548,7 +548,7 @@ export default function MiscPage() {
 
       {step === 7 && (
         <div className="flex flex-col items-center gap-6 text-center">
-          <h1 className="font-garamond text-2xl sm:text-[28px] font-medium leading-tight text-[#4A4A4A]">
+          <h1 className="font-garamond text-2xl sm:text-[28px] font-normal leading-tight text-v3-text-strong">
             You&apos;re all set, <span className="capitalize">{nickname}</span>. Let&apos;s begin.
           </h1>
           <p className="font-garamond text-base text-[#4A4A4A]/80">
@@ -566,14 +566,14 @@ export default function MiscPage() {
         </div>
       )}
 
-      <div className="w-full border-t border-black/5" />
+      <div className="w-full border-t border-[var(--v3-stroke-weak)]" />
       <div className="flex items-center justify-between gap-3 sm:gap-4">
         <Button
           type="button"
           variant="secondary"
           onClick={prevStep}
           disabled={step === 1}
-          className="!bg-transparent border border-black/10 rounded-full px-6 sm:px-8 py-4 sm:py-[18px] text-sm font-semibold leading-[20px] disabled:opacity-40 disabled:pointer-events-none"
+          className="!bg-transparent border border-black/10 rounded-full px-6 sm:px-8 py-[14px] h-fit text-sm font-semibold leading-[20px] disabled:opacity-40 disabled:pointer-events-none"
         >
           Prev
         </Button>
@@ -581,7 +581,7 @@ export default function MiscPage() {
           type="button"
           onClick={handleContinue}
           disabled={(step < 7 && !canProceed) || isMutating}
-          className="flex items-center gap-2 rounded-full !bg-orange hover:!bg-[#C55A1D] px-6 sm:px-8 py-4 sm:py-[18px] text-sm font-semibold leading-[20px] text-white shadow-sm disabled:cursor-not-allowed disabled:opacity-60"
+          className="flex h-auto items-center gap-2 rounded-full !bg-orange hover:!bg-[#C55A1D] px-6 sm:px-8 py-3.5 sm:py-[14px] text-sm font-semibold leading-[20px] text-white shadow-sm disabled:cursor-not-allowed disabled:opacity-60"
         >
           {step === 7
             ? getPrimaryCTA(
