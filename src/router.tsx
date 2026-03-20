@@ -1,4 +1,4 @@
-import { createBrowserRouter } from "react-router-dom";
+import { createBrowserRouter, Navigate } from "react-router-dom";
 import App from "@/App";
 import {
   AcceptInvitePage,
@@ -29,6 +29,7 @@ import {
   VerifyEmailPage,
   StoriesPage,
   StoriesDetailsPage,
+  SettingsPage,
   NotFoundPage,
   ErrorPage,
 } from "@/pages";
@@ -84,6 +85,8 @@ export const router = createBrowserRouter([
           { path: "stories", element: <StoriesPage /> },
           { path: "stories/:id", element: <StoriesDetailsPage /> },
           { path: "capsule", element: <TimeCapsulePage /> },
+          { path: "settings", element: <Navigate to="/settings/general" replace /> },
+          { path: "settings/:tab", element: <SettingsPage /> },
         ],
       },
       { path: "*", element: <NotFoundPage /> },

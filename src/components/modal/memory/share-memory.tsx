@@ -53,7 +53,7 @@ function Content({ data }: ShareMemoryProps) {
               <button
                 type="button"
                 onClick={() => handleCopy(link, "Link copied successfully")}
-                className="cursor-pointer border-l border-gray-200 text-orange hover:text-[#C55A1D] transition-colors"
+                className="cursor-pointer border-l border-gray-200 text-v3-brand-strong transition-colors hover:opacity-90"
               >
                 <div className="flex items-center justify-center gap-1 px-3 py-2">
                   {copied ? (

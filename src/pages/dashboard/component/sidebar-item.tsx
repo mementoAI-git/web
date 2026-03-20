@@ -1,6 +1,5 @@
 import type { ComponentType, SVGProps } from "react";
 import { useNavigate } from "react-router-dom";
-import { useModal } from "@/hooks/use-modal";
 
 interface SideBarItemProps {
   Icon?: ComponentType<SVGProps<SVGSVGElement>>;
@@ -22,15 +21,10 @@ export default function SideBarItem({
   color = "#F06037",
 }: SideBarItemProps) {
   const navigate = useNavigate();
-  const { open } = useModal();
 
   const handleClick = () => {
     if (link) {
-      if (link === "/settings") {
-        open("settings");
-      } else {
-        navigate(link);
-      }
+      navigate(link);
     }
     onClick?.();
   };

@@ -16,6 +16,7 @@ export { default as SuggestedConversationPage } from "./dashboard/chat/suggested
 
 export { default as StoriesPage } from "./dashboard/stories";
 export { default as StoriesDetailsPage } from "./dashboard/stories/details";
+export { default as SettingsPage } from "./dashboard/settings";
 export { default as NotFoundPage } from "./404";
 export { default as ErrorPage } from "./error";
 export { default as OnboardingGrootPage } from "./onboarding-groot";

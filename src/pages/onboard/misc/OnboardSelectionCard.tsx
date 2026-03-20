@@ -34,11 +34,11 @@ export function OnboardSelectionCard({
       }}
       className={cn(
         "flex min-h-8 w-fit items-center gap-1 rounded-lg border py-1 px-2 text-left transition-colors",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E26A24] focus-visible:ring-offset-2",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-v3-brand-strong focus-visible:ring-offset-2",
         isAddVariant
           ? "border-black/[0.12] bg-black/[0.04] text-[#4A4A4A] hover:border-black/[0.18] hover:bg-black/[0.06]"
           : isSelected
-            ? "border-[#E26A24]/20 bg-[#E26A24]/[0.06] text-[#4A4A4A]"
+            ? "border-v3-brand-strong/20 bg-v3-brand-strong/[0.06] text-[#4A4A4A]"
             : "border-gray-200 bg-white text-[#4A4A4A] hover:border-gray-300"
       )}
     >

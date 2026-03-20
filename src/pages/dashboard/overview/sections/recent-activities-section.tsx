@@ -90,18 +90,19 @@ export default function RecentActivitiesSection() {
   const activities = data?.data?.docs ?? [];
 
   return (
-    <div className="flex flex-1 flex-col gap-4 p-5">
-      <div className="flex w-full items-center justify-between">
-        <h3 className="font-inter text-base font-semibold text-v3-text-strong">
-          Recent <i className="font-garamond font-normal italic">activities</i>
-        </h3>
+    <div className="flex flex-1 flex-col gap-4">
+      <header className="flex w-full items-center justify-between gap-3">
+        <h2 className="font-garamond font-normal text-sand-12 text-xl sm:text-2xl lg:text-[32px] leading-[38px]">
+          Recent{" "}
+          <i className="text-[rgba(176,169,156,0.9)]">Activities</i>
+        </h2>
         <Link
           to="/stories"
-          className="font-inter text-sm font-medium text-orange underline hover:no-underline"
+          className="shrink-0 font-inter text-sm font-medium text-orange underline hover:no-underline"
         >
           See all
         </Link>
-      </div>
+      </header>
       <div className="flex flex-col">
         {isLoading
           ? Array.from({ length: 4 }).map((_, i) => (

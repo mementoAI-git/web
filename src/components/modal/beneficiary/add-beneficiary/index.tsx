@@ -51,7 +51,7 @@ export function AddBeneficiary() {
         <div>
           <h4 className="modal-title">Invite beneficiary</h4>
         </div>
-        <div className="flex gap-3 rounded-xl border border-[#FDDFC5] bg-[#E26A2408] p-3 text-[#E26A24]">
+        <div className="flex gap-3 rounded-xl border border-[#FDDFC5] bg-v3-brand-strong/[0.03] p-3 text-v3-brand-strong">
           <div className="size-5">
             <LightBulbIcon width={18} height={18} />
           </div>
