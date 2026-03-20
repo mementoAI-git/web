@@ -15,14 +15,23 @@ describe("MemoryInsightsModal", () => {
     expect(screen.getByRole("button", { name: /summary/i })).toHaveClass(/bg-v3-fill-weak/);
   });
 
-  it("shows empty state when no context and Summary selected", () => {
+  it("shows empty state when no context and Summary selected", async () => {
     server.use(
+      http.get(`${API_BASE}/users/persona`, () =>
+        HttpResponse.json({
+          status: 200,
+          message: "Persona retrieved successfully",
+          data: null,
+        }),
+      ),
       http.get(`${API_BASE}/users/context`, () =>
         HttpResponse.json({ success: true, data: {} }),
       ),
     );
     renderWithProviders(<MemoryInsightsModal />, { route: "/overview", auth: true });
-    expect(screen.getByText(/your summary is being built/i)).toBeInTheDocument();
+    expect(
+      await screen.findByText(/your summary is being built/i),
+    ).toBeInTheDocument();
   });
 
   it("shows summary content when context exists", async () => {
@@ -34,6 +43,13 @@ describe("MemoryInsightsModal", () => {
       },
     });
     server.use(
+      http.get(`${API_BASE}/users/persona`, () =>
+        HttpResponse.json({
+          status: 200,
+          message: "Persona retrieved successfully",
+          data: null,
+        }),
+      ),
       http.get(`${API_BASE}/users/context`, () =>
         HttpResponse.json({ success: true, data: userWithContext.context }),
       ),
@@ -41,6 +57,38 @@ describe("MemoryInsightsModal", () => {
     renderWithProviders(<MemoryInsightsModal />, { route: "/overview", auth: true });
     expect(await screen.findByText(/A creative person who loves storytelling/i)).toBeInTheDocument();
     expect(screen.getByText(/Currently focused on: Preserving family memories/i)).toBeInTheDocument();
+  });
+
+  it("prefers GET /users/persona over context when persona document exists", async () => {
+    server.use(
+      http.get(`${API_BASE}/users/persona`, () =>
+        HttpResponse.json({
+          status: 200,
+          message: "Persona retrieved successfully",
+          data: {
+            user: "user-1",
+            self_description: "From persona API only.",
+            current_priority: ["memories_stories", "people_relationships"],
+            join_reasons: ["memory_preservation"],
+          },
+        }),
+      ),
+      http.get(`${API_BASE}/users/context`, () =>
+        HttpResponse.json({
+          success: true,
+          data: {
+            self_description: "Should not show this.",
+            current_priority: "ignored",
+            join_reasons: [],
+          },
+        }),
+      ),
+    );
+    renderWithProviders(<MemoryInsightsModal />, { route: "/overview", auth: true });
+    expect(await screen.findByText(/From persona API only/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Currently focused on: memories_stories, people_relationships/i),
+    ).toBeInTheDocument();
   });
 
   it("switches to All category and shows insights when available", async () => {
@@ -54,6 +102,13 @@ describe("MemoryInsightsModal", () => {
       },
     });
     server.use(
+      http.get(`${API_BASE}/users/persona`, () =>
+        HttpResponse.json({
+          status: 200,
+          message: "Persona retrieved successfully",
+          data: null,
+        }),
+      ),
       http.get(`${API_BASE}/users/context`, () =>
         HttpResponse.json({ success: true, data: userWithContext.context }),
       ),

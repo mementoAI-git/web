@@ -1,13 +1,57 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import useSWR from "swr";
 import { useModal } from "@/hooks/use-modal";
 import { useStore } from "@/hooks/use-store";
+import { useApi } from "@/hooks/use-api";
 import { TimesIcon, PlusIcon } from "@/components/icons";
 import endpoint from "@/api/endpoint";
 import { cn } from "@/utility";
-import type { IBeneficiary, IUser } from "@/utility/interface";
+import type { IBeneficiary, IPersona, IUser } from "@/utility/interface";
 
-function buildSummaryFromContext(ctx: IUser["context"] | undefined): string | null {
+/** Fields used to build summary and category lists (persona + legacy context) */
+type MemoryInsightSource = {
+  important_notes?: string[];
+  key_preferences?: string[];
+  conversation_history_summary?: string;
+  emotional_state_trends?: string[];
+  goals_and_aspirations?: string[];
+  self_description?: string;
+  join_reasons?: string[];
+  /** Persona API: string[]; legacy /users/context: string */
+  current_priority?: string | string[];
+};
+
+function personaToInsightSource(persona: IPersona): MemoryInsightSource {
+  return {
+    important_notes: persona.important_notes,
+    key_preferences: persona.key_preferences,
+    conversation_history_summary: persona.conversation_history_summary,
+    emotional_state_trends: persona.emotional_state_trends,
+    goals_and_aspirations: persona.goals_and_aspirations,
+    self_description: persona.self_description,
+    current_priority: persona.current_priority,
+    join_reasons: persona.join_reasons,
+  };
+}
+
+function userContextToInsightSource(
+  ctx: IUser["context"] | Record<string, unknown> | undefined
+): MemoryInsightSource {
+  if (!ctx || typeof ctx !== "object") return {};
+  const c = ctx as IUser["context"] & { current_priority?: string | string[] };
+  return {
+    important_notes: c.important_notes,
+    key_preferences: c.key_preferences,
+    conversation_history_summary: c.conversation_history_summary,
+    emotional_state_trends: c.emotional_state_trends,
+    goals_and_aspirations: c.goals_and_aspirations,
+    self_description: c.self_description,
+    current_priority: c.current_priority,
+    join_reasons: c.join_reasons,
+  };
+}
+
+function buildSummaryFromContext(ctx: MemoryInsightSource | undefined): string | null {
   if (!ctx) return null;
   const parts: string[] = [];
   if (ctx.conversation_history_summary?.trim()) {
@@ -15,12 +59,6 @@ function buildSummaryFromContext(ctx: IUser["context"] | undefined): string | nu
   }
   if (ctx.self_description?.trim()) {
     parts.push(ctx.self_description.trim());
-  }
-  if (ctx.current_priority?.trim()) {
-    parts.push(`Currently focused on: ${ctx.current_priority.trim()}`);
-  }
-  if (ctx.join_reasons?.length) {
-    parts.push(`Joined Memento to: ${ctx.join_reasons.join(", ")}`);
   }
   const bullets: string[] = [];
   if (ctx.important_notes?.length) bullets.push(...ctx.important_notes);
@@ -56,18 +94,41 @@ export default function MemoryInsightsModal() {
   const { user } = useStore();
   const [activeCategory, setActiveCategory] = useState("summary");
 
+  const { data: personaRes, isLoading: personaLoading } = useApi<IPersona | null>(
+    endpoint.persona
+  );
   const { data: beneficiariesData } = useSWR(`${endpoint.beneficiaries}?page=1`);
   const { data: contextData } = useSWR(endpoint.userContext);
 
+  const insightSource = useMemo((): MemoryInsightSource => {
+    const personaPayload = personaRes?.data;
+    if (personaPayload != null) {
+      return personaToInsightSource(personaPayload);
+    }
+    const fromContext = contextData?.data ?? user?.context;
+    return userContextToInsightSource(fromContext as Record<string, unknown> | undefined);
+  }, [personaRes?.data, contextData?.data, user?.context]);
+
   const beneficiaries: IBeneficiary[] = beneficiariesData?.data?.docs || [];
-  const ctx = contextData?.data || user?.context || {};
-  const summary = buildSummaryFromContext(ctx);
+  const summary = buildSummaryFromContext(insightSource);
 
   const allInsights = [
-    ...(ctx.important_notes || []).map((text: string) => ({ text, category: "important_notes" })),
-    ...(ctx.key_preferences || []).map((text: string) => ({ text, category: "key_preferences" })),
-    ...(ctx.goals_and_aspirations || []).map((text: string) => ({ text, category: "goals_and_aspirations" })),
-    ...(ctx.emotional_state_trends || []).map((text: string) => ({ text, category: "emotional_state_trends" })),
+    ...(insightSource.important_notes || []).map((text: string) => ({
+      text,
+      category: "important_notes",
+    })),
+    ...(insightSource.key_preferences || []).map((text: string) => ({
+      text,
+      category: "key_preferences",
+    })),
+    ...(insightSource.goals_and_aspirations || []).map((text: string) => ({
+      text,
+      category: "goals_and_aspirations",
+    })),
+    ...(insightSource.emotional_state_trends || []).map((text: string) => ({
+      text,
+      category: "emotional_state_trends",
+    })),
   ];
 
   const filtered =
@@ -179,7 +240,9 @@ export default function MemoryInsightsModal() {
               {CATEGORIES.find((c) => c.key === activeCategory)?.label}
             </p>
 
-            {activeCategory === "summary" ? (
+            {personaLoading && activeCategory === "summary" && !summary ? (
+              <p className="font-inter text-sm text-v3-text-weak">Loading your persona…</p>
+            ) : activeCategory === "summary" ? (
               summary ? (
                 <p className="font-inter text-sm text-v3-text-strong whitespace-pre-wrap leading-relaxed">
                   {summary}

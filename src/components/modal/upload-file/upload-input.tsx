@@ -41,7 +41,7 @@ export default function UploadInput({ onUpload }: UploadInputProps) {
     >
       <AddImageIcon className="h-4 w-4 text-grey-600 sm:h-5 sm:w-5 lg:h-6 lg:w-6" />
 
-      <input id="file-upload-input" type="file" hidden onChange={handleUpload} />
+      <input id="file-upload-input" type="file" accept="audio/*,video/*,image/*,application/*" hidden onChange={handleUpload} />
 
       <div className="flex flex-col items-center justify-center gap-1 font-inter text-center sm:gap-2">
         <span className="text-xs leading-tight text-grey-600 sm:text-sm lg:text-base">

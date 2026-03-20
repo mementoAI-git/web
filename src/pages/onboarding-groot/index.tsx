@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   OnboardingShell,
@@ -16,15 +16,34 @@ import {
   STEP_LABELS,
   ADVANCE_LABELS,
 } from "@/features/onboarding-groot";
+import type { OnboardingState } from "@/features/onboarding-groot/types";
 import { storageKeys } from "@/utility/constant";
-import { saveOnboarding } from "@/api/onboarding";
+import {
+  skipOnboarding,
+  fetchOnboardingDetails,
+  mapOnboardingDetailsToState,
+} from "@/api/onboarding";
+import endpoint from "@/api/endpoint";
+import { useMutation } from "@/hooks/use-api";
 
-export default function OnboardingGrootPage() {
+/** Loading state for revisit mode while fetching prefill */
+function OnboardingLoading() {
+  return (
+    <div className="flex min-h-[40vh] items-center justify-center text-[var(--onboarding-text-secondary)]">
+      Loading your preferences…
+    </div>
+  );
+}
+
+interface OnboardingFormProps {
+  initialState: Partial<OnboardingState> | undefined;
+  isRevisitMode: boolean;
+}
+
+function OnboardingForm({ initialState, isRevisitMode }: OnboardingFormProps) {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const isRevisitMode = searchParams.get("mode") === "revisit";
-
   const [validationAttempted, setValidationAttempted] = useState(false);
+  const { trigger: saveOnboarding, isLoading: isSavingOnboarding } = useMutation(endpoint.onboarding, { method: 'POST' });
 
   const {
     state,
@@ -45,11 +64,7 @@ export default function OnboardingGrootPage() {
     setMotivationType,
     setPriorityDimensions,
     setExpressionMode,
-  } = useOnboardingState({
-    initialState: isRevisitMode ? undefined : undefined,
-    // TODO: In revisit mode, fetch GET /api/host/profile and pass as initialState
-    // when backend is ready
-  });
+  } = useOnboardingState({ initialState });
 
   const step = state.currentStep;
   const errors = validationAttempted ? validationErrors(step) : {};
@@ -60,28 +75,28 @@ export default function OnboardingGrootPage() {
   const persistAndComplete = async () => {
     complete();
     try {
+      const [first_name, ...last_name] = state.fullName.trim().split(/\s+/);
+
+      const join_reasons = [
+        ...state.passions,
+        ...(state.passionsFreetext?.trim() ? [state.passionsFreetext.trim()] : []),
+      ];
+
       await saveOnboarding({
-        fullName: state.fullName.trim(),
-        displayName: state.displayName.trim(),
-        ageBand: state.ageBand ?? "",
-        whereFrom: state.whereFrom.trim() || undefined,
-        mementoFor: state.mementoFor,
-        passions: state.passions,
-        passionsFreetext: state.passionsFreetext.trim() || undefined,
-        lifeContext: state.lifeContext,
-        motivationType: state.motivationType ?? "",
-        priorityDimensions: state.priorityDimensions,
-        expressionMode: state.expressionMode,
-        isComplete: true,
-        stepReached: 8,
+        first_name: first_name ?? "",
+        last_name: last_name.join(" ") ?? "",
+        join_reasons: join_reasons.length ? join_reasons : undefined,
+        current_priority: state.priorityDimensions ? [...state.priorityDimensions] : [],
+        nickname: state.displayName?.trim() || undefined,
+        age_range: state.ageBand?.trim() || undefined,
+        location: state.whereFrom?.trim() || undefined,
+        prefered_communication_style: state.expressionMode?.[0]?.trim() || undefined,
+        audience: state.mementoFor ? [...state.mementoFor] : [],
       });
-    } catch {
-      // Backend may not be ready; continue with localStorage fallback
-    }
-    try {
+
       localStorage.setItem(storageKeys.onboardingComplete, "true");
     } catch {
-      // ignore
+      // Backend may not be ready; continue with localStorage fallback
     }
   };
 
@@ -97,9 +112,14 @@ export default function OnboardingGrootPage() {
     }
   };
 
-  const handleSkip = () => {
+  const handleSkip = async () => {
     skip();
-    navigate("/overview");
+    try {
+      await skipOnboarding();
+      localStorage.setItem(storageKeys.onboardingSkipped, "true");
+    } finally {
+      navigate("/overview");
+    }
   };
 
   const handlePrimaryCTA = async (action: string) => {
@@ -215,11 +235,40 @@ export default function OnboardingGrootPage() {
       onBack={goBack}
       onSkip={handleSkip}
       advanceLabel={advanceLabel}
+      isSaving={isSavingOnboarding}
       showBack={step > 1}
       showSkip={step < 8 && !isRevisitMode}
       hideFooter={false}
     >
       <StepTransition stepKey={step}>{stepContent}</StepTransition>
     </OnboardingShell>
+  );
+}
+
+export default function OnboardingGrootPage() {
+  const [searchParams] = useSearchParams();
+  const isRevisitMode = searchParams.get("mode") === "revisit";
+
+  const [prefill, setPrefill] = useState<Partial<OnboardingState> | null>(
+    isRevisitMode ? null : {}
+  );
+
+  useEffect(() => {
+    if (isRevisitMode) {
+      fetchOnboardingDetails().then((data) => {
+        setPrefill(data ? mapOnboardingDetailsToState(data) : {});
+      });
+    }
+  }, [isRevisitMode]);
+
+  if (prefill === null) {
+    return <OnboardingLoading />;
+  }
+
+  return (
+    <OnboardingForm
+      initialState={prefill ?? undefined}
+      isRevisitMode={isRevisitMode}
+    />
   );
 }

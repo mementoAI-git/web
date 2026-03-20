@@ -6,9 +6,11 @@ type MediaElement = HTMLAudioElement | HTMLVideoElement;
 export default function usePlayer({
   src,
   externalRef,
+  duration: externalDuration = 0,
 }: {
   src: string;
   externalRef?: RefObject<MediaElement>;
+  duration?: number;
 }) {
   const internalRef = useRef<MediaElement | null>(null);
   const ref = externalRef || internalRef;
@@ -36,29 +38,13 @@ export default function usePlayer({
     // setPlaying((prev) => !prev);
   };
 
-  useEffect(() => {
-    const media = ref.current;
-    if (!media) return () => undefined;
 
-    const handlePlay = () => setPlaying(true);
-    const handlePause = () => setPlaying(false);
-
-    media.addEventListener("play", handlePlay);
-    media.addEventListener("pause", handlePause);
-
-    return () => {
-      media.removeEventListener("play", handlePlay);
-      media.removeEventListener("pause", handlePause);
-    };
-  }, []);
 
   const forward = (seconds: number = 15) => {
     const media = ref.current;
     if (!media) return;
-    media.currentTime = Math.min(
-      media.currentTime + seconds,
-      media.duration || 0,
-    );
+    const dur = isFinite(media.duration) ? media.duration : externalDuration;
+    media.currentTime = Math.min(media.currentTime + seconds, dur || 0);
   };
 
   const backward = (seconds: number = -15) => {
@@ -70,7 +56,8 @@ export default function usePlayer({
   const seek = (seconds: number) => {
     const media = ref.current;
     if (!media) return;
-    media.currentTime = Math.max(Math.min(seconds, media.duration || 0), 0);
+    const dur = isFinite(media.duration) ? media.duration : externalDuration;
+    media.currentTime = Math.max(Math.min(seconds, dur || 0), 0);
   };
 
   const setVolumeLevel = (newVolume: number) => {
@@ -106,24 +93,13 @@ export default function usePlayer({
     setCanPlay(false);
     setProgress(0);
 
-    // const media = ref.current;
-    // if (!media) return;
-
-    return () => {
-      const media = ref.current;
-      if (media) {
-        media.pause();
-        media.removeAttribute("src");
-        media.load();
-      }
-    };
-  }, [src]);
-
-  useEffect(() => {
     const media = ref.current;
-    if (!media) {
-      return () => undefined;
-    }
+    if (!media) return () => undefined;
+
+    const handlePlay = () => setPlaying(true);
+    const handlePause = () => setPlaying(false);
+    media.addEventListener("play", handlePlay);
+    media.addEventListener("pause", handlePause);
 
     media.onloadstart = () => {
       setCanPlay(false);
@@ -137,27 +113,43 @@ export default function usePlayer({
     };
 
     media.ontimeupdate = () => {
-      if (!media || !media.duration) return;
-      const progressPercent = (media.currentTime / media.duration) * 100;
+      // Use the real browser duration when available; fall back to the
+      // externally supplied duration for WebM blobs that report Infinity.
+      const dur = (media.duration && isFinite(media.duration))
+        ? media.duration
+        : externalDuration;
+      if (!dur) return;
+      const progressPercent = (media.currentTime / dur) * 100;
       setProgress(progressPercent);
     };
 
-    // media.oncanplay = () => {
-    //   setCanPlay(true);
-    // };
+    media.oncanplay = () => {
+      setCanPlay(true);
+    };
 
+    // Always enable play on metadata load; Infinity duration is still playable.
     media.onloadedmetadata = () => {
       setCanPlay(true);
     };
 
+    // Race-condition guard: the browser may have already fired loadedmetadata or
+    // canplay BEFORE this effect ran (React effects run after paint, not synchronously).
+    // readyState >= 1 (HAVE_METADATA) means the event already fired — catch it here.
+    if (media.readyState >= 1) {
+      setCanPlay(true);
+    }
+
     return () => {
+      media.pause();
+      media.removeEventListener("play", handlePlay);
+      media.removeEventListener("pause", handlePause);
       media.onloadstart = null;
       media.onended = null;
       media.ontimeupdate = null;
-      // media.oncanplay = null;
+      media.oncanplay = null;
       media.onloadedmetadata = null;
     };
-  }, []);
+  }, [src]);
 
   return {
     media: ref.current,
