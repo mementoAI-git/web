@@ -10,7 +10,7 @@ interface IBubbleProps {
   text?: string
   duration?: number
   is_voice?: boolean
-  /** Compact variant for sidebar: 16px regular text, user messages use bg-black/5 */
+  /** Compact variant for sidebar: 16px regular text, user messages use bg-v3-fill-weak */
   compact?: boolean
 }
 
@@ -33,10 +33,16 @@ export default function Bubble({
     return getDuration(duration)
   }, [is_voice, duration])
   return (
-    <div className={cn("flex flex-col space-y-1", isUser && "items-end")}>
+    <div className={cn("flex flex-col space-y-1 px-2", isUser && "items-end")}>
       {
         !isEmpty(attatchments) &&
-        <div className={cn("px-4 py-3 rounded-xl flex gap-2 w-fit max-w-[85%]", compact ? "bg-black/5" : "bg-sand-3")}>
+        <div
+          className={cn(
+            "flex w-fit max-w-[85%] gap-2 rounded-xl px-2 py-2",
+            isUser && "bg-v3-fill-weak",
+            !isUser && "bg-transparent",
+          )}
+        >
           {
             attatchments.map(({ url, name }, i) => (
               <img
@@ -54,14 +60,11 @@ export default function Bubble({
       <div className={cn(isUser && "w-fit max-w-[85%]")}>
         <div
           className={cn(
-            "w-full",
-            isUser && compact && "py-1 px-2 rounded-lg md:rounded-xl",
-            isUser && !compact && "py-1 md:py-3 px-2 md:px-4 rounded-lg md:rounded-xl",
-            !isUser && "py-1 md:py-3",
-            {
-              "bg-black/5": isUser && compact,
-              "bg-sand-3": isUser && !compact,
-            }
+            "w-full rounded-[8px] p-2",
+            isUser && "max-w-[470px]",
+            isUser && compact && "bg-v3-fill-weak",
+            isUser && !compact && "bg-v3-fill-weak",
+            !isUser && "bg-transparent",
           )}
         >
           <span className={cn(

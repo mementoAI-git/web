@@ -436,6 +436,15 @@ body {
     @apply flex h-fit cursor-pointer items-center justify-center gap-2 rounded-full border border-[#84663366] hover:scale-[97%] px-5 py-[11px] font-inter text-sm font-medium text-sand-10 disabled:border-[#c7c9c8] disabled:text-[#c7c9c8] transition-all duration-150;
   }
 
+  /* v3 outline — same as .btn-outline but v3 border/text/icon tokens (cannot @apply .btn-outline in Tailwind v4). */
+  .btn-outline-v3 {
+    @apply flex h-fit cursor-pointer items-center justify-center gap-2 rounded-full border border-v3-stroke-weak hover:scale-[97%] px-5 py-[11px] font-inter text-sm font-medium text-v3-text-strong disabled:border-v3-stroke-weak disabled:text-v3-text-disabled transition-all duration-150;
+  }
+
+  .btn-outline-v3 svg {
+    color: var(--v3-icon-neutral);
+  }
+
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }

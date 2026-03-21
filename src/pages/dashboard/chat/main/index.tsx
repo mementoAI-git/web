@@ -35,14 +35,14 @@ export default function ChatLandingPage() {
       <div className="flex overflow-y-auto page-viewport flex-1 hide-scrollbar">
         <div className="flex flex-col justify-start items-center space-y-10 md:space-y-16 w-full pb-8">
           <div className="container flex flex-col items-center gap-10 md:gap-8 w-full max-w-none mx-0 mb-6 py-3 sm:py-6 md:py-12 text-center">
-            <h3 className="hidden md:block text-center font-light font-garamond text-[30px] sm:text-[32px] leading-[34px] sm:leading-[48px] text-gray-900 max-w-[500px] mx-auto">
+            <h3 className="hidden md:block text-center text-balance font-light font-garamond text-[30px] sm:text-[32px] leading-[34px] sm:leading-[48px] text-[var(--v3-text-strong)] max-w-[500px] mx-auto">
               {greetingText}
             </h3>
-            <h3 className="md:hidden font-medium font-garamond text-[40px] leading-[48px] text-sand-12">
+            <h3 className="md:hidden text-balance font-medium font-garamond text-[40px] leading-[48px] text-[var(--v3-text-strong)]">
               {greetingText}
             </h3>
             <Chatinput
-              className="max-w-[600px] !gap-3 sm:!gap-2"
+              className="!gap-3 sm:!gap-2"
               onSend={handleSend}
               loading={startingConversation}
             />

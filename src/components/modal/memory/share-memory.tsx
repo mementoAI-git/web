@@ -25,10 +25,13 @@ function Content({ data }: ShareMemoryProps) {
   const [link, setLink] = useState("");
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      setLink(`${window.location.origin}/post/${memory?._id}`);
-    }
-  }, [memory?._id]);
+    if (typeof window === "undefined" || !memory?._id) return;
+    const path =
+      memory.type === "conversation"
+        ? `/chat/${memory._id}`
+        : `/post/${memory._id}`;
+    setLink(`${window.location.origin}${path}`);
+  }, [memory?._id, memory?.type]);
 
   const socialPlatforms = getSocialShareLinks({
     shareUrl: link,
@@ -41,7 +44,11 @@ function Content({ data }: ShareMemoryProps) {
     <div className="w-full !max-w-120">
       <div className="space-y-6">
         <div className="text-center sm:text-left">
-          <h4 className="modal-title text-5xl !font-medium text-[#1D2939]">Share this Story</h4>
+          <h4 className="modal-title text-5xl !font-medium text-[#1D2939]">
+            {memory?.type === "conversation"
+              ? "Share this conversation"
+              : "Share this Story"}
+          </h4>
         </div>
 
         <div className="rounded-lg border border-gray-200 p-6">

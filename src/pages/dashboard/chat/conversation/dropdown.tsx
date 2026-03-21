@@ -6,11 +6,14 @@ import { type IMemory } from "@/utility/interface";
 interface IMemoryDropdownProps {
   memory: IMemory;
   onViewDetails?: () => void;
+  /** Passed to the trigger `DropdownIcon` (e.g. v3 header chips). */
+  triggerClassName?: string;
 }
 
 export function MemoryDropdown({
   memory,
   onViewDetails,
+  triggerClassName,
 }: IMemoryDropdownProps) {
   const { push } = useModal();
 
@@ -30,9 +33,12 @@ export function MemoryDropdown({
   return (
     <DropdownIcon
       icon={
-        <VerticalEllipseIcon className="!size-full cursor-pointer stroke-1" />
+        <VerticalEllipseIcon className="!size-full cursor-pointer stroke-1 text-current" />
       }
-      className="!size-7 sm:!size-8 !p-2 flex justify-center items-center"
+      className={
+        triggerClassName ??
+        "!size-7 sm:!size-8 !p-2 flex justify-center items-center"
+      }
       items={[
         {
           label: "View Details",
