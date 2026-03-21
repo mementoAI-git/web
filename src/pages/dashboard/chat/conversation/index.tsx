@@ -1,4 +1,7 @@
-import Chatinput, { type IOnSendPayload } from "@/components/Chatinput";
+import {
+  ConversationChatinput,
+  type IOnSendPayload,
+} from "@/components/Chatinput";
 import Bubble, { Typing } from "./bubble";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import useSWR, { mutate } from "swr";
@@ -14,6 +17,7 @@ import SidebarDetails from "@/components/memory/sidebar-details";
 import useFetcher from "@/hooks/use-fetcher";
 import { useStore } from "@/hooks/use-store";
 import { useNavigate } from "react-router-dom";
+import { useConversationChrome } from "@/contexts/conversation-chrome";
 
 type StreamlinePayload = {
   text: string;
@@ -30,6 +34,7 @@ export default function Conversation({ id, type = "memory" }) {
   const wasAtBottomRef = useRef(true);
   const isNew = id === "new";
   const { setHeaderTitle } = useStore();
+  const { setChrome } = useConversationChrome();
   const navigate = useNavigate();
   const [messages, setMessages] = useState<Partial<IMessage | any>[]>([])
   const [isSidebarOpen, setIsSidebarOpen] = useState(false) // Sidebar closed by default
@@ -52,7 +57,7 @@ export default function Conversation({ id, type = "memory" }) {
 
   const { trigger: startConversation, isMutating: startingConversation } = useFetcher(endpoint.startConversation)
 
-  const memory = useMemo(() => memoryData?.data || promptData?.data, [promptData, memoryData])
+  const memory = useMemo(() => memoryData?.data || promptData?.data, [promptData, memoryData]);
 
   // Function to scroll to bottom
   const scrollToBottom = useCallback(() => {
@@ -184,8 +189,27 @@ export default function Conversation({ id, type = "memory" }) {
     setHeaderTitle(memory?.title || "New conversation");
     return () => {
       setHeaderTitle(null);
+    };
+  }, [memory?.title, setHeaderTitle]);
+
+  useEffect(() => {
+    if (loadingMemory || loadingPrompt) {
+      setChrome(null);
+      return;
     }
-  }, [memory?.title]);
+    setChrome({
+      memory: memory ?? null,
+      onViewDetails: handleOpenSidebar,
+    });
+  }, [
+    loadingMemory,
+    loadingPrompt,
+    memory,
+    handleOpenSidebar,
+    setChrome,
+  ]);
+
+  useEffect(() => () => setChrome(null), [setChrome]);
 
   if (loadingMemory || loadingPrompt) {
     return <Loader />
@@ -193,35 +217,40 @@ export default function Conversation({ id, type = "memory" }) {
   const isTyping = isSending || startingConversation;
 
   return (
-    <div className="flex flex-1 overflow-hidden items-stretch h-full">
-      <div
-        className={cn("page-viewport hide-scrollbar h-full w-full !max-w-[90%]", { ["px-5"]: isSidebarOpen })}
-        ref={scrollContainerRef}
-        onScroll={handleScroll}
-      >
-        <History {...{
-          memory,
-          messages,
-          setMessages,
-          scrollContainerRef,
-          onViewDetails: handleOpenSidebar
-        }}>
-          {
-            (isTyping && isEmpty(aiMessage)) ?
-              <Typing /> :
-              <Bubble role="ai" text={aiMessage} />
-          }
-        </History>
-        <div className="sticky bottom-0 pb-4 bg-background">
-          <div className="container">
-            <Chatinput
-              loading={isTyping}
-              onStop={handleStop}
-              onSend={handleSend}
-              history={messages.slice(-20).map(({ role, text }) => ({ role, text }))}
-              inputClassName="!text-sm sm:!text-lg md:!text-xl"
-              memoryId={memory?._id || null}
-            />
+    <div className="flex flex-1 min-h-0 min-w-0 overflow-hidden items-stretch h-full">
+      <div className="flex min-h-0 min-w-0 flex-1 justify-center overflow-hidden">
+        <div
+          className={cn(
+            "hide-scrollbar flex h-full min-h-0 w-full min-w-0 max-w-[800px] flex-col overflow-y-auto",
+            { ["px-5"]: isSidebarOpen },
+          )}
+          ref={scrollContainerRef}
+          onScroll={handleScroll}
+        >
+          <History {...{
+            memory,
+            messages,
+            setMessages,
+            scrollContainerRef,
+            onViewDetails: handleOpenSidebar
+          }}>
+            {
+              (isTyping && isEmpty(aiMessage)) ?
+                <Typing /> :
+                <Bubble role="ai" text={aiMessage} />
+            }
+          </History>
+          <div className="sticky bottom-0 bg-white px-0 pb-4 sm:px-3 md:px-5">
+            <div className="w-full">
+              <ConversationChatinput
+                loading={isTyping}
+                onStop={handleStop}
+                onSend={handleSend}
+                history={messages.slice(-20).map(({ role, text }) => ({ role, text }))}
+                inputClassName="!text-sm sm:!text-lg md:!text-xl"
+                memoryId={memory?._id || null}
+              />
+            </div>
           </div>
         </div>
       </div>

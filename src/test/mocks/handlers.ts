@@ -264,4 +264,18 @@ export const handlers = [
       data: { onboarding_status: "skipped" },
     });
   }),
+
+  http.post(`${BASE_URL}/files/upload`, () => {
+    return HttpResponse.json({
+      success: true,
+      message: "Uploaded",
+      data: {
+        _id: "mock-file-id",
+        url: "https://example.com/mock-upload.png",
+        name: "mock-upload.png",
+        size: 128,
+        type: "image/png",
+      },
+    });
+  }),
 ];

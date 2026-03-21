@@ -8,6 +8,7 @@ import Spinner from "@/components/spinner";
 import useIntersectionObserver from "@/hooks/use-intersection-observer";
 import { isEmpty } from "@/utility";
 import GoBack from "@/components/go-back";
+import { useMatch } from "react-router-dom";
 
 interface IHistory extends PropsWithChildren {
   setMessages: Dispatch<SetStateAction<Partial<IMessage>[]>>;
@@ -25,6 +26,9 @@ export default function History({
   scrollContainerRef,
   onViewDetails,
 }: IHistory) {
+  const chatDetailMatch = useMatch({ path: "/chat/:id", end: true });
+  const hideInlineConversationHeader = Boolean(chatDetailMatch);
+
   const isLoadingMoreRef = useRef(false);
   const containerRef = scrollContainerRef;
   const [next, setNext] = useState<string | null>(null);
@@ -105,17 +109,19 @@ export default function History({
 
   return (
     <div
-      className="container flex-1"
+      className="w-full max-w-full flex-1"
       ref={containerRef}
     >
 
-      <div className="py-12 space-y-6">
-        <div>
-          <GoBack />
+      {!hideInlineConversationHeader ? (
+        <div className="w-full h-fit overflow-hidden space-y-6 py-3 px-6">
+          <div>
+            <GoBack />
+          </div>
+          <ConversationHeader {...{ onViewDetails, memory }} />
         </div>
-        <ConversationHeader {...{ onViewDetails, memory }} />
-      </div>
-      <div className="px-0 sm:px-3 md:px-5 space-y-6">
+      ) : null}
+      <div className="px-0 sm:px-3 md:px-[30px] space-y-6">
         {isLoadingMore && (
           <div className="py-3 flex justify-center items-center">
             <div className="flex gap-1.5 text-sm text-gray-500">

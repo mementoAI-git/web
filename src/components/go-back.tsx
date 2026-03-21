@@ -6,10 +6,10 @@ export default function GoBack() {
   return (
     <button
       onClick={() => navigate(-1)}
-      className="flex items-center gap-1.5 rounded-full bg-sand-3 py-2.5 px-3.5 text-sm font-medium text-sand-10 transition hover:scale-95"
+      className="flex items-center gap-1.5 rounded-full bg-v3-fill-weak py-2.5 px-3.5 text-sm font-medium text-v3-text-weak transition hover:scale-95"
       type="button"
     >
-      <ArrowLeftIcon className="size-3 text-lg" />
+      <ArrowLeftIcon className="size-3 shrink-0 text-v3-text-weak" />
       <span>Go back</span>
     </button>
   );
