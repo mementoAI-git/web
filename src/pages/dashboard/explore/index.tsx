@@ -17,12 +17,9 @@ export default function ExplorePage() {
         {data?.data?.length > 0 && (
           <div className="flex flex-col gap-4 py-6 sm:gap-10 md:py-12">
             <div className="font-garamond md:space-y-2">
-              <h2 className="text-2xl text-sand-12 md:text-[40px] md:font-medium md:leading-[48px] md:text-gray-950/90">
-                Pick up from where you left off.
+              <h2 className="text-2xl text-sand-12 md:text-[32px] md:font-normal md:leading-[48px] md:text-gray-950/90">
+                Continue reflecting
               </h2>
-              <p className="text-2xl text-sand-12 md:text-[24px] md:leading-[32px] md:text-gray-950/70">
-                Complete some unfinished prompts to earn points.
-              </p>
             </div>
 
             <div className="block md:hidden">
