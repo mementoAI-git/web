@@ -7,6 +7,7 @@ import { TrashIcon } from "@/components/icons";
 import { resolvePath } from "@/utility";
 import { toast } from "sonner";
 import { mutate } from "swr";
+import { SETTINGS_BENEFICIARIES_SWR_KEY } from "@/components/modal/settings/beneficiary&group/beneficiaries-list-swr-key";
 
 interface DeleteBeneficiaryProps {
   data: string;
@@ -19,7 +20,7 @@ export function DeleteBeneficiary({ data: id }: DeleteBeneficiaryProps) {
   const handleDelete = async () => {
     const result = await trigger({});
     if (result?.data) {
-      await mutate(`${endpoint.beneficiaries}?page=1`);
+      await mutate(SETTINGS_BENEFICIARIES_SWR_KEY);
       toast.success(result?.message);
       close?.("delete-beneficiary");
     }

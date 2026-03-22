@@ -76,10 +76,10 @@ export default function DashboardLayout() {
             />
             <div className="flex flex-1 flex-col overflow-hidden pt-[60px] sm:pt-0 md:flex-row">
               <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-                <div className="flex shrink-0 flex-col items-center justify-start px-4 py-1 sm:px-6">
+                <div className="flex h-fit w-full min-w-0 shrink-0 flex-col items-center justify-start bg-white px-4 pt-[3px] pb-0.5 text-v3-text-strong sm:px-6">
                   <OnboardingNudgeBanner />
                 </div>
-                <div className="w-full flex-1 overflow-hidden">
+                <div className="hide-scrollbar h-full min-h-0 w-full flex-1 overflow-y-auto">
                   <Outlet />
                 </div>
               </div>

@@ -1,4 +1,5 @@
-import { InfoIcon, TrashIcon, VerticalEllipseIcon } from "@/components/icons";
+import { InfoIcon, TrashIcon } from "@/components/icons";
+import { Info } from "lucide-react";
 import { DropdownIcon } from "@/components/Dropdown";
 import { useModal } from "@/hooks/use-modal";
 import { type IMemory } from "@/utility/interface";
@@ -33,11 +34,11 @@ export function MemoryDropdown({
   return (
     <DropdownIcon
       icon={
-        <VerticalEllipseIcon className="!size-full cursor-pointer stroke-1 text-current" />
+        <Info className="size-5 shrink-0" strokeWidth={1.75} aria-hidden />
       }
       className={
         triggerClassName ??
-        "!size-7 sm:!size-8 !p-2 flex justify-center items-center"
+        "!size-7 sm:!size-8 !p-2 flex items-center justify-center bg-transparent transition-colors hover:bg-v3-fill-weak"
       }
       items={[
         {

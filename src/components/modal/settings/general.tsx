@@ -1,144 +1,179 @@
-import { type ChangeEvent, useCallback, useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import useSWRMutation from "swr/mutation";
-import endpoint from "@/api/endpoint";
-import { fileUploadFetcher } from "@/api/fetcher";
-import Spinner from "@/components/spinner";
-import { LogoutIcon } from "@/components/icons";
-import { cn, isEmpty, toBase64 } from "@/utility";
+import { useCallback, useMemo, useState } from "react";
+import { toast } from "sonner";
+import { cn, isEmpty } from "@/utility";
 import { useStore } from "@/hooks/use-store";
-import { useLogout } from "@/hooks/use-logout";
+import {
+  CompassIcon,
+  CopyIcon,
+  GiftIcon,
+  HomeIcon,
+  MailIcon,
+  PhoneIcon,
+  UserIcon,
+} from "@/components/icons";
 import UpdateTextInput from "./update-text-input";
-import avatarPlaceholder from "@/assets/image/avatar.png";
-import { mutate } from "swr";
+import { SettingsGeneralFieldRow } from "./settings-general-field-row";
+import { formatProfileDobDisplay, InlineProfileDateField } from "./inline-profile-date-field";
+
+type FieldKey =
+  | "nickname"
+  | "first_name"
+  | "last_name"
+  | "phone_number"
+  | "location"
+  | "dob"
+  | "country";
+
 export default function General() {
   const { user } = useStore();
-  const { logout, loading } = useLogout();
-  const [previewImage, setPreviewImage] = useState<string | undefined>(user?.picture_url);
-  const { trigger, isMutating } = useSWRMutation(endpoint.uploadPicture, fileUploadFetcher);
+  const [editingField, setEditingField] = useState<FieldKey | null>(null);
 
-  const handleUpload = useCallback(
-    async (event: ChangeEvent<HTMLInputElement>) => {
-      const file = event.target.files?.[0];
-      if (!file) return;
+  const toggle = useCallback((key: FieldKey) => {
+    setEditingField((cur) => (cur === key ? null : key));
+  }, []);
 
-      const preview = await toBase64(file);
-      setPreviewImage(preview);
-      await trigger({ file } as any);
-      mutate(endpoint.profile);
-    },
-    [trigger],
-  );
+  const copyEmail = useCallback(async () => {
+    if (!user?.email) return;
+    try {
+      await navigator.clipboard.writeText(user.email);
+      toast.success("Email copied");
+    } catch {
+      toast.error("Could not copy email");
+    }
+  }, [user?.email]);
 
-  const handleLogout = useCallback(async () => {
-    await logout();
-  }, [logout]);
-
-  useEffect(() => {
-    setPreviewImage(user?.picture_url);
-  }, [user?.picture_url]);
+  const dobDisplay = useMemo(() => formatProfileDobDisplay(user?.dob ?? ""), [user?.dob]);
 
   return (
-    <div className="flex w-full flex-col gap-10">
-      {/* type-text-wrap-balance-headings, ux-proximity-grouping */}
-      <header className="flex flex-col gap-2">
-        <span className="font-inter text-base font-bold text-v3-text-strong text-balance">General</span>
-        <span className="font-inter text-sm text-v3-text-weak text-pretty">
-          Manage your Memento profile
-        </span>
-      </header>
-      <div className="flex items-start justify-between gap-6">
-        <div className="flex min-w-0 gap-4">
-          {/* visual-concentric-radius: card 24px → avatar 12px */}
-          <div className="relative size-[52px] shrink-0 overflow-hidden rounded-xl bg-v3-fill-weaker ring-1 ring-v3-stroke-weak">
-            <img
-              alt="Profile"
-              width={72}
-              height={72}
-              src={!isEmpty(previewImage) ? previewImage : avatarPlaceholder}
-              className="size-full object-cover"
-            />
-            {isMutating && (
-              <div className="absolute inset-0 flex size-full items-center justify-center bg-v3-fill-strong/20">
-                <Spinner loading className="!mr-0 !size-6 text-v3-text-strong" />
-              </div>
-            )}
-          </div>
-          <div className="flex min-w-0 flex-col gap-2">
-            <span className="font-garamond text-2xl font-medium text-v3-text-strong text-balance">
-              {user?.first_name} {user?.last_name}
-            </span>
-            <span className="font-inter text-sm text-v3-text-weak break-all">{user?.email}</span>
-            <label
-              htmlFor="profile-image"
-              className={cn(
-                "inline-flex min-h-10 cursor-pointer items-center justify-center rounded-full border border-v3-stroke-weak",
-                "px-4 py-2 text-center font-inter text-xs font-medium text-v3-text-strong",
-                "motion-safe:transition-colors motion-safe:duration-200 motion-safe:ease-out",
-                "hover:bg-v3-fill-weak active:motion-safe:scale-[0.99]",
-                "focus-within:ring-2 focus-within:ring-v3-stroke-strong focus-within:ring-offset-2",
-              )}
-            >
-              Edit photo
-              <input
-                id="profile-image"
-                type="file"
-                accept="image/*"
-                hidden
-                name="file"
-                onChange={handleUpload}
-              />
-            </label>
-          </div>
+    <div className="flex w-full flex-col">
+      <header className="mb-2">
+        <div className="flex min-w-0 flex-col gap-1">
+          <span className="font-inter text-base font-bold text-v3-text-strong text-balance">General</span>
+          <span className="font-inter text-sm text-v3-text-weak text-pretty">Manage your Memento profile</span>
         </div>
-        {/* ux-fitts-target-size: ≥44px hit target */}
-        <button
-          type="button"
-          onClick={handleLogout}
-          aria-label="Log out"
-          className={cn(
-            "icon-container flex size-11 shrink-0 items-center justify-center rounded-xl",
-            "border border-v3-stroke-weak text-v3-text-strong",
-            "motion-safe:transition-[background-color,transform] motion-safe:duration-200 motion-safe:ease-out",
-            "hover:bg-v3-fill-weak active:motion-safe:scale-[0.98]",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-v3-stroke-strong focus-visible:ring-offset-2",
-          )}
-        >
-          {loading ? <Spinner loading className="size-5! text-v3-brand-strong" /> : <LogoutIcon className="size-5" />}
-        </button>
-      </div>
+      </header>
 
-      <Link
-        to="/onboard/misc"
-        className={cn(
-          "flex min-h-11 items-center justify-between gap-3 rounded-xl border border-v3-stroke-weak p-4 text-left",
-          "font-inter text-sm font-medium text-v3-text-strong",
-          "motion-safe:transition-[background-color,transform] motion-safe:duration-200 motion-safe:ease-out",
-          "hover:bg-v3-fill-weaker active:motion-safe:scale-[0.995]",
-          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-v3-stroke-strong focus-visible:ring-offset-2",
-        )}
-      >
-        <span className="text-pretty">Revisit preferences</span>
-        <span className="text-v3-text-weaker" aria-hidden>
-          →
-        </span>
-      </Link>
-      <div className="flex flex-col gap-4 rounded-xl border border-v3-stroke-weak bg-v3-fill-weaker/50 p-4 sm:p-5">
-        <UpdateTextInput label="First name" name="first_name" />
-        <UpdateTextInput label="Last name" name="last_name" />
-        <UpdateTextInput
+      <div className="flex flex-col rounded-lg border border-v3-stroke-weak px-1 sm:px-2">
+        <SettingsGeneralFieldRow
+          icon={<UserIcon />}
+          label="Display name"
+          placeholder="Add a display name"
+          displayValue={(user?.nickname ?? "").trim()}
+          isEditing={editingField === "nickname"}
+          onToggleEdit={() => toggle("nickname")}
+        >
+          <UpdateTextInput label={undefined} aria-label="Display name" name="nickname" placeholder="How we greet you" />
+        </SettingsGeneralFieldRow>
+
+        <SettingsGeneralFieldRow
+          icon={<MailIcon />}
+          label="Email"
+          placeholder="No email on file"
+          displayValue={user?.email ?? ""}
+          valueEmphasis
+          showEdit={false}
+          isEditing={false}
+          valueAdornment={
+            user?.email ? (
+              <button
+                type="button"
+                onClick={() => void copyEmail()}
+                className={cn(
+                  "inline-flex min-h-8 min-w-8 items-center justify-center rounded-md",
+                  "text-v3-fill-strong motion-safe:transition-opacity motion-safe:duration-200 motion-safe:ease-out",
+                  "hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-v3-stroke-strong focus-visible:ring-offset-2",
+                )}
+                aria-label="Copy email address"
+              >
+                <CopyIcon className="size-[18px]" aria-hidden />
+              </button>
+            ) : null
+          }
+        />
+
+        <SettingsGeneralFieldRow
+          icon={<UserIcon />}
+          label="First name"
+          placeholder="Add a first name"
+          displayValue={(user?.first_name ?? "").trim()}
+          isEditing={editingField === "first_name"}
+          onToggleEdit={() => toggle("first_name")}
+        >
+          <UpdateTextInput label={undefined} aria-label="First name" name="first_name" />
+        </SettingsGeneralFieldRow>
+
+        <SettingsGeneralFieldRow
+          icon={<UserIcon />}
+          label="Last name"
+          placeholder="Add a last name"
+          displayValue={(user?.last_name ?? "").trim()}
+          isEditing={editingField === "last_name"}
+          onToggleEdit={() => toggle("last_name")}
+        >
+          <UpdateTextInput label={undefined} aria-label="Last name" name="last_name" />
+        </SettingsGeneralFieldRow>
+
+        <SettingsGeneralFieldRow
+          icon={<PhoneIcon />}
+          label="Phone"
+          placeholder="Add a phone number"
+          displayValue={(user?.phone_number ?? "").trim()}
+          isEditing={editingField === "phone_number"}
+          onToggleEdit={() => toggle("phone_number")}
+        >
+          <UpdateTextInput
+            label={undefined}
+            aria-label="Phone number"
+            name="phone_number"
+            btnText={isEmpty(user?.phone_number) ? "Add phone" : "Change"}
+          />
+        </SettingsGeneralFieldRow>
+
+        <SettingsGeneralFieldRow
+          icon={<CompassIcon />}
           label="Location"
-          name="location"
-          btnText={user?.location ? "Change" : "Set Location"}
-          placeholder="New York, USA"
-        />
-        <UpdateTextInput
-          label="Phone number"
-          name="phone_number"
-          btnText={isEmpty(user?.phone_number) ? "Add Phone number" : "Change Phone number"}
-        />
+          placeholder="Add a location"
+          displayValue={(user?.location ?? "").trim()}
+          isEditing={editingField === "location"}
+          onToggleEdit={() => toggle("location")}
+        >
+          <UpdateTextInput
+            label={undefined}
+            aria-label="Location"
+            name="location"
+            btnText={user?.location ? "Change" : "Set location"}
+            placeholder="e.g. New York, USA"
+          />
+        </SettingsGeneralFieldRow>
+
+        <SettingsGeneralFieldRow
+          icon={<GiftIcon />}
+          label="Birthday"
+          placeholder="Add a birthday"
+          displayValue={dobDisplay}
+          isEditing={editingField === "dob"}
+          onToggleEdit={() => toggle("dob")}
+        >
+          <InlineProfileDateField name="dob" aria-label="Birthday" />
+        </SettingsGeneralFieldRow>
+
+        <SettingsGeneralFieldRow
+          icon={<HomeIcon />}
+          label="Country"
+          placeholder="Add a country"
+          displayValue={(user?.country ?? "").trim()}
+          isEditing={editingField === "country"}
+          onToggleEdit={() => toggle("country")}
+        >
+          <UpdateTextInput
+            label={undefined}
+            aria-label="Country"
+            name="country"
+            placeholder="e.g. US"
+            btnText={isEmpty(user?.country) ? "Add" : "Update"}
+          />
+        </SettingsGeneralFieldRow>
       </div>
     </div>
   );
 }
-

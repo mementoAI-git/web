@@ -1,6 +1,5 @@
-import trophyIcon from "@/assets/icon/noto_trophy.svg";
 import zapIcon from "@/assets/icon/zap.svg";
-import { Bell, Home, PanelLeftClose, PanelLeftOpen, Pencil, Plus, Share2 } from "lucide-react";
+import { Home, PanelLeftClose, PanelLeftOpen, Pencil, Plus, Share2 } from "lucide-react";
 import dayjs from "dayjs";
 import { useEffect, useState } from "react";
 import { useModal } from "@/hooks/use-modal";
@@ -58,7 +57,11 @@ interface DashboardHeaderProps {
 }
 
 const convIconBtn =
-  "flex size-9 shrink-0 items-center justify-center rounded-xl bg-v3-fill-weaker text-v3-icon-neutral transition-colors cursor-pointer hover:bg-v3-fill-weak";
+  "flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-xl bg-v3-fill-weaker text-v3-icon-neutral transition-colors hover:bg-v3-fill-weak hover:text-v3-text-strong";
+
+/** Conversation header actions: transparent chip, v3 fill + stronger icon on hover */
+const convHeaderActionGhost =
+  "flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-xl bg-transparent text-v3-icon-neutral transition-colors hover:bg-v3-fill-weak hover:text-v3-text-strong";
 
 export function DashboardHeader({
   onMenuClick,
@@ -127,10 +130,10 @@ export function DashboardHeader({
                     isNew: false,
                   })
                 }
-                className={cn(convIconBtn, "hidden sm:flex")}
+                className={cn(convHeaderActionGhost, "hidden sm:flex")}
                 aria-label="Edit topic"
               >
-                <Pencil className="size-4" strokeWidth={1.75} aria-hidden />
+                <Pencil className="size-4 shrink-0" strokeWidth={1.75} aria-hidden />
               </button>
             ) : null}
             {createdLine ? (
@@ -143,44 +146,32 @@ export function DashboardHeader({
             ) : null}
           </div>
 
-          <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+          <div className="flex shrink-0 items-center gap-1 sm:gap-2 text-v3-icon-neutral">
             {chrome.memory?._id ? (
               <button
                 type="button"
                 onClick={() => open("share-memory", { memory: chrome.memory! })}
-                className={convIconBtn}
+                className={convHeaderActionGhost}
                 aria-label="Share conversation"
               >
-                <Share2 className="size-4" strokeWidth={1.75} aria-hidden />
+                <Share2 className="size-4 shrink-0" strokeWidth={1.75} aria-hidden />
               </button>
             ) : null}
             <button
               type="button"
               onClick={() => navigate("/chat/new")}
-              className={convIconBtn}
+              className={convHeaderActionGhost}
               aria-label="New chat"
             >
-              <Plus className="size-5" strokeWidth={1.75} aria-hidden />
+              <Plus className="size-5 shrink-0" strokeWidth={1.75} aria-hidden />
             </button>
             {chrome.memory?._id ? (
               <MemoryDropdown
                 memory={chrome.memory}
                 onViewDetails={chrome.onViewDetails}
-                triggerClassName="!aspect-square !size-9 !p-2 flex items-center justify-center rounded-xl bg-v3-fill-weaker text-v3-icon-neutral hover:bg-v3-fill-weak"
+                triggerClassName="!aspect-square !size-9 !p-2 flex items-center justify-center rounded-xl bg-transparent text-v3-icon-neutral transition-colors hover:bg-v3-fill-weak hover:text-v3-text-strong"
               />
             ) : null}
-            <StreakTracker>
-              <div className="flex shrink-0 cursor-pointer items-center gap-1.5 rounded-lg bg-v3-fill-weak px-2.5 py-1.5 transition-colors hover:opacity-90">
-                <img
-                  src={zapIcon}
-                  alt="Streak"
-                  className="size-4 object-contain opacity-70"
-                />
-                <span className="text-[13px] font-semibold text-gray-700">
-                  {user?.streak || 0}
-                </span>
-              </div>
-            </StreakTracker>
           </div>
         </header>
       </div>
@@ -214,20 +205,12 @@ export function DashboardHeader({
           <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={() => open("recent-activities")}
-              className="hidden size-8 shrink-0 cursor-pointer items-center justify-center rounded-lg bg-v3-fill-weak transition-colors hover:bg-gray-100 md:flex"
-              aria-label="Recent activities"
-            >
-              <Bell className="size-5 text-v3-icon-neutral" />
-            </button>
-            <button
-              type="button"
               onClick={onChatToggle}
               className={cn(
-                "flex items-center justify-center size-8 rounded-lg transition-colors cursor-pointer",
+                "flex size-8 cursor-pointer items-center justify-center rounded-lg transition-colors",
                 chatOpen
                   ? "bg-gradient-to-br from-[#FF8944] to-[#FF3CDF] hover:opacity-90"
-                  : "bg-v3-fill-weak hover:opacity-90",
+                  : "bg-transparent hover:bg-v3-fill-weak",
               )}
               aria-label={chatOpen ? "Close chat" : "Open chat"}
               aria-pressed={chatOpen}
@@ -246,17 +229,9 @@ export function DashboardHeader({
                 />
               )}
             </button>
-            <div className="hidden shrink-0 cursor-pointer items-center gap-1.5 rounded-lg bg-v3-fill-weak px-2.5 py-1.5 transition-colors hover:opacity-90 sm:flex">
-              <img
-                src={trophyIcon}
-                alt="XP"
-                className="size-4 object-contain"
-              />
-              <span className="text-[13px] font-semibold text-gray-700">0</span>
-            </div>
 
             <StreakTracker>
-              <div className="flex shrink-0 cursor-pointer items-center gap-1.5 rounded-lg bg-v3-fill-weak px-2.5 py-1.5 transition-colors hover:opacity-90">
+              <div className="flex shrink-0 cursor-pointer items-center gap-1.5 rounded-lg bg-transparent px-2.5 py-1.5 transition-colors hover:bg-v3-fill-weak">
                 <img
                   src={zapIcon}
                   alt="Streak"

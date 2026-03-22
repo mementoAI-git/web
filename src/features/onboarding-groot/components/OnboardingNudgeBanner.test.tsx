@@ -38,8 +38,12 @@ describe("OnboardingNudgeBanner", () => {
 
   it("renders when skipped and not complete", () => {
     localStorage.setItem("memento_onboarding_skipped", "true");
-    renderWithProviders(<OnboardingNudgeBanner />, { route: "/overview", auth: true });
+    const { container } = renderWithProviders(<OnboardingNudgeBanner />, { route: "/overview", auth: true });
     expect(screen.getByText(/finish setting up your memento/i)).toBeInTheDocument();
+    const banner = container.querySelector('[role="banner"]');
+    expect(banner?.className).toMatch(/\bw-full\b/);
+    expect(banner?.className).toMatch(/\bbg-v3-fill-weak\b/);
+    expect(banner?.className).toMatch(/\bborder-l-v3-stroke-strong\b/);
   });
 
   it("navigates to /onboard when Continue setup clicked", async () => {

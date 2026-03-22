@@ -19,8 +19,8 @@ export default function UserItem({ email, image, name, imageClassName = "" }: Us
         )}
       </div>
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        <span className="block truncate font-inter font-medium capitalize text-secondary">{name}</span>
-        <span className="block truncate font-inter text-[#535862]">{email}</span>
+        <span className="block truncate font-inter font-medium capitalize text-v3-text-weak">{name}</span>
+        <span className="block truncate font-inter text-sm text-[#535862]">{email}</span>
       </div>
     </div>
   );

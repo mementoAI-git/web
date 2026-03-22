@@ -35,7 +35,7 @@ vi.mock("@/features/onboarding-groot", () => ({
 import DashboardLayout from "./layout";
 
 describe("DashboardLayout", () => {
-  it("wraps onboarding nudge in a compact flex column with centered items", () => {
+  it("wraps onboarding nudge in a full-width flex column", () => {
     const { container } = renderWithProviders(
       <ChatSidebarProvider>
         <Routes>
@@ -51,8 +51,18 @@ describe("DashboardLayout", () => {
     expect(nudgeHost?.className).toMatch(/\bflex\b/);
     expect(nudgeHost?.className).toMatch(/\bflex-col\b/);
     expect(nudgeHost?.className).toMatch(/\bitems-center\b/);
+    expect(nudgeHost?.className).toMatch(/\bw-full\b/);
+    expect(nudgeHost?.className).toMatch(/\bbg-white\b/);
+    expect(nudgeHost?.className).toMatch(/\btext-v3-text-strong\b/);
     expect(nudgeHost?.className).toMatch(/\bjustify-start\b/);
-    expect(nudgeHost?.className).toMatch(/\bpy-1\b/);
+    expect(nudgeHost?.className).toContain("pt-[3px]");
+    expect(nudgeHost?.className).toMatch(/\bpb-0\.5\b/);
+    expect(nudgeHost?.className).toMatch(/\bh-fit\b/);
+    const outlet = screen.getByTestId("outlet-child");
+    expect(outlet.parentElement?.className).toMatch(/\bh-full\b/);
+    expect(outlet.parentElement?.className).toMatch(/\bmin-h-0\b/);
+    expect(outlet.parentElement?.className).toMatch(/\bw-full\b/);
+    expect(outlet.parentElement?.className).toMatch(/\boverflow-y-auto\b/);
     expect(container.querySelector('[data-testid="outlet-child"]')).toBeTruthy();
   });
 });

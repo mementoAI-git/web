@@ -46,6 +46,24 @@ export const handlers = [
     });
   }),
 
+  http.get(`${BASE_URL}/groups`, () => {
+    return HttpResponse.json({
+      success: true,
+      data: {
+        docs: [],
+        hasNextPage: false,
+        hasPrevPage: false,
+        limit: 25,
+        nextPage: null,
+        page: 1,
+        pagingCounter: 0,
+        prevPage: null,
+        totalDocs: 0,
+        totalPages: 0,
+      },
+    });
+  }),
+
   http.get(`${BASE_URL}/users/stats`, () => {
     return HttpResponse.json({
       success: true,

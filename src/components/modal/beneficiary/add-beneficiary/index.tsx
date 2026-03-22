@@ -9,6 +9,7 @@ import useFetcher from "@/hooks/use-fetcher";
 import endpoint from "@/api/endpoint";
 import { toast } from "sonner";
 import { mutate } from "swr";
+import { SETTINGS_BENEFICIARIES_SWR_KEY } from "@/components/modal/settings/beneficiary&group/beneficiaries-list-swr-key";
 import { LightBulbIcon } from "@/components/icons";
 import { SelectGroup, type GroupSearchResultItem } from "./select-group";
 
@@ -37,7 +38,7 @@ export function AddBeneficiary() {
         groups: selectedGroups.map((g) => g.id),
       });
       if (result.success) {
-        await mutate(`${endpoint.beneficiaries}?page=1`);
+        await mutate(SETTINGS_BENEFICIARIES_SWR_KEY);
         toast.success(result?.message);
         close?.("add-beneficiary");
       }
