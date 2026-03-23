@@ -109,8 +109,49 @@ export const handlers = [
   http.get(`${BASE_URL}/memories/conversations`, () => {
     return HttpResponse.json({
       success: true,
-      data: [],
+      data: {
+        docs: [
+          {
+            _id: "host-conversation-1",
+            title: "Your Memento",
+            updated_at: new Date().toISOString(),
+            type: "conversation",
+          },
+        ],
+        hasNextPage: false,
+        hasPrevPage: false,
+        limit: 20,
+        nextPage: null,
+        page: 1,
+        pagingCounter: 1,
+        prevPage: null,
+        totalDocs: 1,
+        totalPages: 1,
+      },
       message: "Conversations fetched",
+    });
+  }),
+
+  http.get(`${BASE_URL}/memories/:id`, ({ params }) => {
+    const id = String(params.id);
+    return HttpResponse.json({
+      success: true,
+      data: {
+        _id: id,
+        title: "Your Memento",
+        body: "",
+        user: "mock-user",
+        attachments: [],
+        tags: [],
+        type: "conversation",
+        status: "active",
+        level: 0,
+        refrence: "",
+        last_opened: new Date().toISOString(),
+        created_at: new Date(Date.now() - 86400000 * 30).toISOString(),
+        updated_at: new Date().toISOString(),
+      },
+      message: "Memory fetched",
     });
   }),
 

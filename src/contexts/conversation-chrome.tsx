@@ -13,6 +13,14 @@ import {
 export type ConversationChromeState = {
   memory: IMemory | null;
   onViewDetails?: () => void;
+  /** Download current thread as Markdown (messages loaded in the client). */
+  onExportConversation?: () => void;
+  /** Single-thread Host Chat chrome (top bar title, subtitle, search). */
+  hostChat?: {
+    title: string;
+    subtitle?: string;
+    onSearch?: () => void;
+  };
 };
 
 type ConversationChromeContextValue = {

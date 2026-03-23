@@ -1,5 +1,9 @@
-import { GearIcon, PlusIcon, WaveIcon } from "@/components/icons";
+import { GearIcon, PlusIcon, TimesIcon, WaveIcon } from "@/components/icons";
 import { cn, toBase64 } from "@/utility";
+import {
+  type ChatReplyQuote,
+  snippetReplyText,
+} from "@/utility/chat-reply-prompt";
 import React, {
   type ClipboardEvent,
   type KeyboardEvent,
@@ -28,8 +32,12 @@ import {
 
 export interface IOnSendPayload {
   attachments?: IFile[];
-  text: string
+  text: string;
+  /** Quoted message context (embedded in the prompt on send). */
+  replyTo?: ChatReplyQuote | null;
 }
+
+export type { ChatReplyQuote };
 
 export interface IChatinputProps {
   className?: string
@@ -41,6 +49,11 @@ export interface IChatinputProps {
   onStop?: () => void
   memoryId?: string | null
   history?: { role: "user" | "ai", text: string }[]
+  /** When set, draft text is restored from and saved to localStorage (text only). */
+  draftStorageKey?: string | null
+  /** Message being replied to; shown above the field until send or clear. */
+  replyQuote?: ChatReplyQuote | null;
+  onClearReplyQuote?: () => void;
 }
 
 type ChatinputImplProps = IChatinputProps & {
@@ -59,7 +72,19 @@ function ChatinputImpl({
   onSend,
   memoryId,
   history = [],
+  draftStorageKey = null,
+  replyQuote = null,
+  onClearReplyQuote,
 }: ChatinputImplProps) {
+  const readDraft = useCallback(() => {
+    if (!draftStorageKey || typeof localStorage === "undefined") return "";
+    try {
+      return localStorage.getItem(draftStorageKey) ?? "";
+    } catch {
+      return "";
+    }
+  }, [draftStorageKey]);
+
   const [text, setText] = useState("")
   const [isVoiceMode, setIsVoiceMode] = useState(false)
   const [cursorPosition, setCursorPosition] = useState(0)
@@ -114,6 +139,27 @@ function ChatinputImpl({
   useEffect(() => {
     if (showSlashMenu && filteredSlashCommands.length === 0) setShowSlashMenu(false)
   }, [showSlashMenu, filteredSlashCommands.length])
+
+  useLayoutEffect(() => {
+    if (!draftStorageKey) return;
+    setText(readDraft());
+  }, [readDraft, draftStorageKey]);
+
+  useEffect(() => {
+    if (!draftStorageKey) return;
+    const t = window.setTimeout(() => {
+      try {
+        if (text.trim()) {
+          localStorage.setItem(draftStorageKey, text);
+        } else {
+          localStorage.removeItem(draftStorageKey);
+        }
+      } catch {
+        /* ignore quota / private mode */
+      }
+    }, 400);
+    return () => window.clearTimeout(t);
+  }, [text, draftStorageKey]);
 
   const MAX_TEXTAREA_HEIGHT = 300;
 
@@ -207,13 +253,27 @@ function ChatinputImpl({
     if (!isEmpty(files) && files.every(f => f.progress < 100)) {
       return;
     }
+    if (!text.trim() && files.length === 0) {
+      return;
+    }
 
     const attachments = files
       .filter(f => f.uploadedFile)
       .map(f => f.uploadedFile);
 
-    const payload = { text, attachments };
+    const payload: IOnSendPayload = {
+      text,
+      attachments,
+      replyTo: replyQuote ?? null,
+    };
     onSend?.(payload);
+    if (draftStorageKey) {
+      try {
+        localStorage.removeItem(draftStorageKey);
+      } catch {
+        /* ignore */
+      }
+    }
     setText("");
     setFiles([]);
   }
@@ -241,6 +301,20 @@ function ChatinputImpl({
   )
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      e.stopPropagation();
+      const uploadsPending = !isEmpty(files) && files.every((f) => f.progress < 100);
+      if (
+        !loading &&
+        !typing &&
+        !uploadsPending &&
+        (text.trim() || files.length > 0)
+      ) {
+        handleSend();
+      }
+      return;
+    }
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       if (text.trim() || files.length > 0) {
@@ -285,6 +359,29 @@ function ChatinputImpl({
           {files.length > 0 && (
             <ImagePreview {...{ files, handleRemoveFile }} />
           )}
+          {replyQuote?.text?.trim() ? (
+            <div className="flex w-full min-w-0 items-start gap-2 rounded-xl border-l-[3px] border-[var(--v3-brand-strong)] bg-v3-fill-weaker px-3 py-2">
+              <div className="min-w-0 flex-1">
+                <p className="font-inter text-[11px] font-semibold uppercase tracking-wide text-v3-text-weak">
+                  Replying to{" "}
+                  {replyQuote.role === "user" ? "your message" : "Memento"}
+                </p>
+                <p className="mt-0.5 line-clamp-3 font-inter text-sm text-v3-text-strong">
+                  {snippetReplyText(replyQuote.text)}
+                </p>
+              </div>
+              {onClearReplyQuote ? (
+                <button
+                  type="button"
+                  onClick={onClearReplyQuote}
+                  className="flex size-8 shrink-0 items-center justify-center rounded-lg text-v3-text-weak transition-colors hover:bg-v3-fill-weak hover:text-v3-text-strong"
+                  aria-label="Cancel reply"
+                >
+                  <TimesIcon className="size-4" aria-hidden />
+                </button>
+              ) : null}
+            </div>
+          ) : null}
           <textarea
             ref={textareaRef}
             value={text}

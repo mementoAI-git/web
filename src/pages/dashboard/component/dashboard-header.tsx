@@ -1,11 +1,11 @@
 import zapIcon from "@/assets/icon/zap.svg";
-import { Home, PanelLeftClose, PanelLeftOpen, Pencil, Plus, Share2 } from "lucide-react";
+import { Home, PanelLeftClose, PanelLeftOpen, Pencil, Share2 } from "lucide-react";
 import dayjs from "dayjs";
 import { useEffect, useState } from "react";
 import { useModal } from "@/hooks/use-modal";
 import { useStore } from "@/hooks/use-store";
 import StreakTracker from "@/components/streak-tracker";
-import { useLocation, useMatch, useNavigate } from "react-router-dom";
+import { useLocation, useMatch } from "react-router-dom";
 import { cn } from "@/utility";
 import { MenuIcon, SearchIcon } from "@/components/icons";
 import { useConversationChrome } from "@/contexts/conversation-chrome";
@@ -72,7 +72,6 @@ export function DashboardHeader({
   onMainSidebarToggle,
 }: DashboardHeaderProps) {
   const location = useLocation();
-  const navigate = useNavigate();
   const mdUp = useMdViewport();
   const chatConversationMatch = useMatch({ path: "/chat/:id", end: true });
   const { chrome } = useConversationChrome();
@@ -89,11 +88,16 @@ export function DashboardHeader({
   const showConversationNav = Boolean(chatConversationMatch && chrome);
 
   if (showConversationNav && chrome) {
+    const host = chrome.hostChat;
     const title =
-      headerTitle || chrome.memory?.title || "New conversation";
+      host?.title ??
+      headerTitle ??
+      chrome.memory?.title ??
+      "New conversation";
     const createdLine =
       chrome.memory?.created_at &&
       dayjs(chrome.memory.created_at).format("MMM DD, YYYY");
+    const metaLine = host?.subtitle ?? createdLine;
 
     const railExpanded = mdUp ? !mainSidebarCollapsed : mobileSidebarOpen;
     const toggleMainSidebar = onMainSidebarToggle ?? onMenuClick;
@@ -136,12 +140,12 @@ export function DashboardHeader({
                 <Pencil className="size-4 shrink-0" strokeWidth={1.75} aria-hidden />
               </button>
             ) : null}
-            {createdLine ? (
+            {metaLine ? (
               <span
-                className="hidden font-inter text-xs text-v3-text-weaker lg:inline"
-                aria-label={`Created ${createdLine}`}
+                className="hidden min-w-0 truncate font-inter text-xs text-v3-text-weaker lg:inline"
+                aria-label={host?.subtitle ? metaLine : `Created ${metaLine}`}
               >
-                {createdLine}
+                {metaLine}
               </span>
             ) : null}
           </div>
@@ -157,18 +161,21 @@ export function DashboardHeader({
                 <Share2 className="size-4 shrink-0" strokeWidth={1.75} aria-hidden />
               </button>
             ) : null}
-            <button
-              type="button"
-              onClick={() => navigate("/chat/new")}
-              className={convHeaderActionGhost}
-              aria-label="New chat"
-            >
-              <Plus className="size-5 shrink-0" strokeWidth={1.75} aria-hidden />
-            </button>
+            {chrome.hostChat?.onSearch ? (
+              <button
+                type="button"
+                onClick={() => chrome.hostChat?.onSearch?.()}
+                className={convHeaderActionGhost}
+                aria-label="Search memories"
+              >
+                <SearchIcon className="size-4 shrink-0 text-current" aria-hidden />
+              </button>
+            ) : null}
             {chrome.memory?._id ? (
               <MemoryDropdown
                 memory={chrome.memory}
                 onViewDetails={chrome.onViewDetails}
+                onExportConversation={chrome.onExportConversation}
                 triggerClassName="!aspect-square !size-9 !p-2 flex items-center justify-center rounded-xl bg-transparent text-v3-icon-neutral transition-colors hover:bg-v3-fill-weak hover:text-v3-text-strong"
               />
             ) : null}
