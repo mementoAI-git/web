@@ -1,7 +1,21 @@
-import { type Dispatch, type PropsWithChildren, type SetStateAction, useCallback, useEffect, useRef, useState } from "react";
+import {
+  Fragment,
+  type Dispatch,
+  type PropsWithChildren,
+  type SetStateAction,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
+import dayjs from "dayjs";
 import Bubble from "./bubble";
+import { dayDividerLabel } from "@/features/host-chat/month-navigation";
 import ConversationHeader from "./header";
+import type { ChatReplyQuote } from "@/utility/chat-reply-prompt";
 import { type IMemory, type IMessage } from "@/utility/interface";
+import { replyQuoteBodyFromMessage } from "./reply-quote-body";
 import useFetcher from "@/hooks/use-fetcher";
 import endpoint from "@/api/endpoint";
 import Spinner from "@/components/spinner";
@@ -16,6 +30,9 @@ interface IHistory extends PropsWithChildren {
   memory: IMemory;
   scrollContainerRef: any;
   onViewDetails: () => void
+  onRetryFailedMessage?: () => void
+  onReplyToMessage?: (quote: ChatReplyQuote) => void
+  hostChatDeepDive?: boolean
 }
 
 export default function History({
@@ -25,12 +42,20 @@ export default function History({
   setMessages,
   scrollContainerRef,
   onViewDetails,
+  onRetryFailedMessage,
+  onReplyToMessage,
+  hostChatDeepDive = false,
 }: IHistory) {
   const chatDetailMatch = useMatch({ path: "/chat/:id", end: true });
   const hideInlineConversationHeader = Boolean(chatDetailMatch);
 
   const isLoadingMoreRef = useRef(false);
   const containerRef = scrollContainerRef;
+  /** Refs are unset during the first render; bump after layout so IO + scroll use the real column. */
+  const [scrollRootReady, setScrollRootReady] = useState(false);
+  useLayoutEffect(() => {
+    setScrollRootReady(true);
+  }, []);
   const [next, setNext] = useState<string | null>(null);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const { trigger: getMessages } = useFetcher(
@@ -42,9 +67,9 @@ export default function History({
 
   const loadMoreRef = useRef<HTMLDivElement>(null);
   const isIntersecting = useIntersectionObserver(loadMoreRef, {
-    root: containerRef.current,
+    root: scrollRootReady ? containerRef.current : null,
     rootMargin: "20px 0px 0px 0px",
-    threshold: 0.5
+    threshold: 0.5,
   });
 
   const fetchMessage = useCallback(async () => {
@@ -107,11 +132,11 @@ export default function History({
   }, [isIntersecting, next, fetchMessage, messages.length]);
 
 
+  // Do not put `ref={scrollContainerRef}` here — the parent conversation column
+  // owns that ref on the overflow-y-auto element. Re-attaching the same ref breaks
+  // scrolling, scroll restoration, and intersection-based load-more.
   return (
-    <div
-      className="w-full max-w-full flex-1"
-      ref={containerRef}
-    >
+    <div className="w-full max-w-full flex-1">
 
       {!hideInlineConversationHeader ? (
         <div className="w-full h-fit overflow-hidden space-y-6 py-3 px-6">
@@ -131,7 +156,64 @@ export default function History({
           </div>
         )}
         <div ref={loadMoreRef} className="w-full h-1" />
-        {messages && messages.map((m, i) => <Bubble key={i} text={m?.text} {...m} />)}
+        {messages &&
+          (() => {
+            let lastDayKey: string | null = null;
+            let lastMonthKey: string | null = null;
+            return messages.map((m, i) => {
+              const failed = Boolean((m as { sendFailed?: boolean }).sendFailed);
+              const attachments = (m as { attatchments?: { url: string; name: string }[] })
+                .attatchments;
+              const storedReply = (m as { replyTo?: ChatReplyQuote }).replyTo;
+              const replyBody = replyQuoteBodyFromMessage(m.text, attachments);
+              const iso = m.created_at;
+              const validIso = Boolean(iso && dayjs(iso).isValid());
+              const dayK = validIso && iso ? dayjs(iso).format("YYYY-MM-DD") : null;
+              const monthK = validIso && iso ? dayjs(iso).format("YYYY-MM") : null;
+              const showDayDivider = Boolean(dayK && dayK !== lastDayKey);
+              if (showDayDivider && dayK) lastDayKey = dayK;
+              const showMonthAnchor = Boolean(monthK && monthK !== lastMonthKey);
+              if (monthK) lastMonthKey = monthK;
+              const isAi = m.role !== "user";
+
+              return (
+                <Fragment key={m._id ?? `msg-${i}`}>
+                  {showDayDivider && validIso && iso ? (
+                    <div
+                      className="flex justify-center py-2"
+                      role="separator"
+                      aria-label={dayDividerLabel(iso)}
+                    >
+                      <span className="rounded-full bg-v3-fill-weaker px-3 py-1 font-inter text-xs font-medium text-v3-text-weaker">
+                        {dayDividerLabel(iso)}
+                      </span>
+                    </div>
+                  ) : null}
+                  <div id={showMonthAnchor && monthK ? `host-chat-anchor-${monthK}` : undefined}>
+                    <Bubble
+                      role={m.role}
+                      text={m.text ?? ""}
+                      createdAt={m.created_at}
+                      attatchments={attachments}
+                      sendFailed={failed}
+                      onRetry={failed ? onRetryFailedMessage : undefined}
+                      replyQuote={storedReply}
+                      hostChatDeepDive={hostChatDeepDive && isAi}
+                      onReply={
+                        onReplyToMessage && replyBody
+                          ? () =>
+                              onReplyToMessage({
+                                role: m.role === "user" ? "user" : "ai",
+                                text: replyBody,
+                              })
+                          : undefined
+                      }
+                    />
+                  </div>
+                </Fragment>
+              );
+            });
+          })()}
         {children}
         <div className="w-full h-5" />
       </div>

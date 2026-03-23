@@ -1,5 +1,5 @@
-import { InfoIcon, TrashIcon } from "@/components/icons";
-import { Info } from "lucide-react";
+import { EditIcon, InfoIcon, TrashIcon } from "@/components/icons";
+import { Download, Info } from "lucide-react";
 import { DropdownIcon } from "@/components/Dropdown";
 import { useModal } from "@/hooks/use-modal";
 import { type IMemory } from "@/utility/interface";
@@ -7,6 +7,7 @@ import { type IMemory } from "@/utility/interface";
 interface IMemoryDropdownProps {
   memory: IMemory;
   onViewDetails?: () => void;
+  onExportConversation?: () => void;
   /** Passed to the trigger `DropdownIcon` (e.g. v3 header chips). */
   triggerClassName?: string;
 }
@@ -14,6 +15,7 @@ interface IMemoryDropdownProps {
 export function MemoryDropdown({
   memory,
   onViewDetails,
+  onExportConversation,
   triggerClassName,
 }: IMemoryDropdownProps) {
   const { push } = useModal();
@@ -28,6 +30,12 @@ export function MemoryDropdown({
       } else {
         push("view-memory-details", { memory });
       }
+    }
+    if (value === "edit-memory") {
+      push("edit-memory", { memory });
+    }
+    if (value === "export-conversation" && onExportConversation) {
+      onExportConversation();
     }
   };
 
@@ -46,6 +54,20 @@ export function MemoryDropdown({
           value: "view-details",
           startIcon: <InfoIcon className="stroke-2" />,
         },
+        {
+          label: "Edit memory",
+          value: "edit-memory",
+          startIcon: <EditIcon className="stroke-2" />,
+        },
+        ...(onExportConversation
+          ? [
+              {
+                label: "Export conversation",
+                value: "export-conversation",
+                startIcon: <Download className="size-4 shrink-0" strokeWidth={1.75} aria-hidden />,
+              },
+            ]
+          : []),
       ]}
       footerItem={
         <li

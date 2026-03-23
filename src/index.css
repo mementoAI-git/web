@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "@heroui/styles";
 @plugin "@tailwindcss/typography";
 @config "../tailwind.config.ts";
 

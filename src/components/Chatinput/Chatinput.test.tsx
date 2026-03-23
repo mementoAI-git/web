@@ -1,4 +1,5 @@
 import { fireEvent, screen, waitFor } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 import { renderWithProviders } from "@/test";
 import Chatinput from "./index";
 
@@ -145,5 +146,31 @@ describe("Chatinput", () => {
     expect(textarea.compareDocumentPosition(screen.getByAltText("Preview"))).toBe(
       Node.DOCUMENT_POSITION_PRECEDING,
     );
+  });
+
+  it("submits on Ctrl+Enter", () => {
+    const onSend = vi.fn();
+    renderWithProviders(<Chatinput onSend={onSend} />, { auth: true });
+    const textarea = screen.getByPlaceholderText(
+      "Type text here... Type / for formatting",
+    );
+    fireEvent.change(textarea, {
+      target: { value: "send via shortcut", selectionStart: 17 },
+    });
+    fireEvent.keyDown(textarea, { key: "Enter", ctrlKey: true });
+    expect(onSend).toHaveBeenCalledWith(
+      expect.objectContaining({ text: "send via shortcut" }),
+    );
+  });
+
+  it("does not apply slash command when document receives Ctrl+Enter", () => {
+    renderWithProviders(<Chatinput onSend={() => {}} />, { auth: true });
+    const textarea = screen.getByPlaceholderText(
+      "Type text here... Type / for formatting",
+    );
+    fireEvent.change(textarea, { target: { value: "/", selectionStart: 1 } });
+    expect(screen.getByText("Basic blocks")).toBeInTheDocument();
+    fireEvent.keyDown(document, { key: "Enter", ctrlKey: true });
+    expect(textarea).toHaveValue("/");
   });
 });
