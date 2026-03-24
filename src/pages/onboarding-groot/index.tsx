@@ -17,7 +17,7 @@ import {
   ADVANCE_LABELS,
 } from "@/features/onboarding-groot";
 import type { OnboardingState } from "@/features/onboarding-groot/types";
-import { storageKeys } from "@/utility/constant";
+
 import {
   skipOnboarding,
   fetchOnboardingDetails,
@@ -25,6 +25,7 @@ import {
 } from "@/api/onboarding";
 import endpoint from "@/api/endpoint";
 import { useMutation } from "@/hooks/use-api";
+import { useStore } from "@/hooks/use-store";
 
 /** Loading state for revisit mode while fetching prefill */
 function OnboardingLoading() {
@@ -45,6 +46,7 @@ function OnboardingForm({ initialState, isRevisitMode }: OnboardingFormProps) {
   const [validationAttempted, setValidationAttempted] = useState(false);
   const { trigger: saveOnboarding, isLoading: isSavingOnboarding } = useMutation(endpoint.onboarding, { method: 'POST' });
 
+  const { user, setUser } = useStore();
   const {
     state,
     advanceStep,
@@ -94,9 +96,11 @@ function OnboardingForm({ initialState, isRevisitMode }: OnboardingFormProps) {
         audience: state.mementoFor ? [...state.mementoFor] : [],
       });
 
-      localStorage.setItem(storageKeys.onboardingComplete, "true");
+      if (user && setUser) {
+        setUser({ ...user, onboarded: true, onboarding_status: "completed" });
+      }
     } catch {
-      // Backend may not be ready; continue with localStorage fallback
+      // Backend may not be ready; do nothing
     }
   };
 
@@ -116,7 +120,9 @@ function OnboardingForm({ initialState, isRevisitMode }: OnboardingFormProps) {
     skip();
     try {
       await skipOnboarding();
-      localStorage.setItem(storageKeys.onboardingSkipped, "true");
+      if (user && setUser) {
+        setUser({ ...user, onboarding_status: "skipped" });
+      }
     } finally {
       navigate("/overview");
     }

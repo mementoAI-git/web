@@ -3,7 +3,6 @@
 import { useEffect, type PropsWithChildren } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useStore } from "@/hooks/use-store";
-import { storageKeys } from "@/utility/constant";
 
 /**
  * Redirects to /onboarding when user has not completed onboarding.
@@ -16,16 +15,15 @@ export default function OnboardingGuard({ children }: PropsWithChildren) {
   const { user } = useStore();
 
   useEffect(() => {
+    if (!user) return;
+
     const path = location.pathname;
     if (path === "/onboarding" || path.startsWith("/onboarding")) return;
     if (path === "/onboard" || path.startsWith("/onboard")) return;
 
-    const isCompleteState = user?.onboarding_status === "completed" || user?.onboarded === true;
-    const fromStorage = localStorage.getItem(storageKeys.onboardingComplete) === "true";
-    const skipped =
-      user?.onboarding_status === "skipped" || localStorage.getItem(storageKeys.onboardingSkipped) === "true";
+    const isComplete = user.onboarding_status === "completed" || user.onboarded === true;
+    const skipped = user.onboarding_status === "skipped";
 
-    const isComplete = isCompleteState || fromStorage;
     if (isComplete) return;
     if (skipped) return;
 
