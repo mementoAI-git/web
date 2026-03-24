@@ -20,19 +20,17 @@ export default function OnboardingGuard({ children }: PropsWithChildren) {
     if (path === "/onboarding" || path.startsWith("/onboarding")) return;
     if (path === "/onboard" || path.startsWith("/onboard")) return;
 
-    const fromBackend = user?.onboarding_complete;
+    const isCompleteState = user?.onboarding_status === "completed" || user?.onboarded === true;
     const fromStorage = localStorage.getItem(storageKeys.onboardingComplete) === "true";
     const skipped =
-      user?.onboarding_skipped ?? localStorage.getItem(storageKeys.onboardingSkipped) === "true";
-    const didOldOnboarding = user?.onbaorded === true;
+      user?.onboarding_status === "skipped" || localStorage.getItem(storageKeys.onboardingSkipped) === "true";
 
-    const isComplete = fromBackend === true || (fromBackend !== false && fromStorage);
+    const isComplete = isCompleteState || fromStorage;
     if (isComplete) return;
     if (skipped) return;
-    if (didOldOnboarding && fromBackend === undefined) return;
 
     navigate("/onboard", { replace: true });
-  }, [user?.onboarding_complete, user?.onboarding_skipped, location.pathname, navigate]);
+  }, [user?.onboarding_status, user?.onboarded, location.pathname, navigate]);
 
   return <>{children}</>;
 }

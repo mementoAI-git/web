@@ -14,8 +14,8 @@ export function OnboardingNudgeBanner() {
   }
   if (dismissed) return null;
 
-  const complete = user?.onboarding_complete ?? localStorage.getItem(storageKeys.onboardingComplete) === "true";
-  const skipped = user?.onboarding_skipped ?? localStorage.getItem(storageKeys.onboardingSkipped) === "true";
+  const complete = (user?.onboarding_status === "completed" || user?.onboarded === true) || localStorage.getItem(storageKeys.onboardingComplete) === "true";
+  const skipped = (user?.onboarding_status === "skipped") || localStorage.getItem(storageKeys.onboardingSkipped) === "true";
   if (complete || !skipped) return null;
 
   return (
