@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import { useOnboardingState } from "./useOnboardingState";
 import { storageKeys } from "@/utility/constant";
@@ -233,14 +233,6 @@ describe("useOnboardingState", () => {
     });
     expect(result.current.state.isComplete).toBe(true);
     expect(localStorage.getItem(storageKeys.onboardingState)).toBeNull();
-  });
-
-  it("skip sets onboarding_skipped in localStorage", () => {
-    const { result } = renderHook(() => useOnboardingState());
-    act(() => {
-      result.current.skip();
-    });
-    expect(localStorage.getItem(storageKeys.onboardingSkipped)).toBe("true");
   });
 
   it("accepts initialState for revisit mode", () => {

@@ -6,8 +6,7 @@ import { useStore } from "@/hooks/use-store";
 
 /**
  * Redirects to /onboarding when user has not completed onboarding.
- * Uses user.onboarding_complete from profile when available;
- * falls back to localStorage memento_onboarding_complete when backend doesn't return it.
+ * Uses the API user.onboarding_status flag.
  */
 export default function OnboardingGuard({ children }: PropsWithChildren) {
   const navigate = useNavigate();
