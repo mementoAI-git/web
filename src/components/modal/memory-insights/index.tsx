@@ -60,6 +60,12 @@ function buildSummaryFromContext(ctx: MemoryInsightSource | undefined): string |
   if (ctx.self_description?.trim()) {
     parts.push(ctx.self_description.trim());
   }
+  if (ctx.current_priority) {
+    const cp = Array.isArray(ctx.current_priority) ? ctx.current_priority.join(", ") : ctx.current_priority;
+    if (cp.trim()) {
+      parts.push(`Currently focused on: ${cp.trim()}`);
+    }
+  }
   const bullets: string[] = [];
   if (ctx.important_notes?.length) bullets.push(...ctx.important_notes);
   if (ctx.key_preferences?.length) bullets.push(...ctx.key_preferences);

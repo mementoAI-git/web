@@ -20,14 +20,14 @@ import { Button } from "@/components/ui/button";
 import endpoint from "@/api/endpoint";
 import useFetcher from "@/hooks/use-fetcher";
 import { mutate } from "swr";
-import { storageKeys } from "@/utility/constant";
+
 
 const MAX_EXPRESSION = 2;
 const ALL_EXPRESSION_MODES = EXPRESSION_OPTIONS.map((o) => o.value);
 const ALL_MOTIVATION_TYPES = MOTIVATION_OPTIONS.map((o) => o.value);
 
 export default function MiscPage() {
-  const { user } = useStore();
+  const { user, setUser } = useStore();
   const navigate = useNavigate();
   const nickname = (user?.nickname as string) || "there";
   const [validationAttempted, setValidationAttempted] = useState(false);
@@ -151,9 +151,13 @@ export default function MiscPage() {
             ].join(", ") || "",
         });
         await mutate(endpoint.profile);
-        localStorage.setItem(storageKeys.onboardingComplete, "true");
+        if (user && setUser) {
+          setUser({ ...user, onboarded: true, onboarding_status: "completed" });
+        }
       } catch {
-        localStorage.setItem(storageKeys.onboardingComplete, "true");
+        if (user && setUser) {
+          setUser({ ...user, onboarded: true, onboarding_status: "completed" });
+        }
       }
 
       switch (action) {

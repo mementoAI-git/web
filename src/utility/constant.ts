@@ -26,9 +26,6 @@ export const storageKeys = {
   welcomeOnce: "memento:welcome-once",
   /** Host onboarding (Groot) progress — persists across refreshes */
   onboardingState: "memento_onboarding_state",
-  /** Local fallback when backend doesn't return onboarding_complete */
-  onboardingComplete: "memento_onboarding_complete",
-  onboardingSkipped: "memento_onboarding_skipped",
 };
 
 // Supported file types for uploads

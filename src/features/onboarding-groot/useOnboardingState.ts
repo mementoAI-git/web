@@ -65,7 +65,7 @@ function loadState(): OnboardingState | null {
     if (parsed.isComplete) return null;
     const migrated = migrateState(parsed);
     if (migrated) return migrated;
-    return parsed as OnboardingState;
+    return parsed as unknown as OnboardingState;
   } catch {
     return null;
   }
@@ -123,13 +123,7 @@ export function useOnboardingState(options: UseOnboardingStateOptions = {}) {
     setState((prev) => ({ ...prev, isComplete: true }));
   }, []);
 
-  const skip = useCallback(() => {
-    try {
-      localStorage.setItem(storageKeys.onboardingSkipped, "true");
-    } catch {
-      // ignore
-    }
-  }, []);
+  const skip = useCallback(() => {}, []);
 
   const canAdvance = useCallback((step: OnboardingStep): boolean => {
     switch (step) {

@@ -1,14 +1,18 @@
 import AuthCheck from "@/components/layouts/auth-check";
 import { Link, Outlet, useNavigate } from "react-router-dom";
 import Logo from "@/components/logo";
-import { storageKeys } from "@/utility/constant";
+import { useStore } from "@/hooks/use-store";
 
 export default function OnboardLayout() {
   const navigate = useNavigate();
 
+  const { user, setUser } = useStore();
+
   const handleSkip = () => {
     try {
-      localStorage.setItem(storageKeys.onboardingSkipped, "true");
+      if (user && setUser) {
+        setUser({ ...user, onboarding_status: "skipped" });
+      }
     } catch {
       // ignore
     }

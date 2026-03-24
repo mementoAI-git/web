@@ -64,7 +64,8 @@ export interface IUser {
   dob: string;
   country: string;
   password: string;
-  onbaorded: boolean;
+  onboarded: boolean;
+  onboarding_status: "never" | "skipped" | "completed";
   providers: string[];
   preferences: IUserPreferences;
   context: IUserContext;
@@ -85,10 +86,6 @@ export interface IUser {
   fullname?: string | null;
   newsletter_subscriber: boolean;
   created_at: string;
-  /** Host onboarding (Groot) - set by backend when complete */
-  onboarding_complete?: boolean;
-  /** Set when user skips onboarding - show nudge instead of redirect */
-  onboarding_skipped?: boolean;
   onboarding_step_reached?: number;
 }
 

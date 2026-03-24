@@ -5,6 +5,8 @@ import { renderWithProviders } from "@/test";
 import { OnboardingNudgeBanner } from "./OnboardingNudgeBanner";
 
 const mockNavigate = vi.fn();
+let mockedUser: any = null;
+
 vi.mock("react-router-dom", async (importOriginal) => {
   const actual = await importOriginal<typeof import("react-router-dom")>();
   return {
@@ -13,31 +15,44 @@ vi.mock("react-router-dom", async (importOriginal) => {
   };
 });
 
+vi.mock("@/hooks/use-store", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/hooks/use-store")>();
+  return {
+    ...actual,
+    useStore: () => {
+      const base = actual.useStore();
+      return { ...base, user: mockedUser };
+    },
+  };
+});
+
 describe("OnboardingNudgeBanner", () => {
   beforeEach(() => {
     localStorage.clear();
     mockNavigate.mockClear();
+    mockedUser = null;
   });
 
   it("does not render when onboarding is complete", () => {
-    localStorage.setItem("memento_onboarding_complete", "true");
+    mockedUser = { onboarding_status: "completed", onboarded: true };
     renderWithProviders(<OnboardingNudgeBanner />, { route: "/overview", auth: true });
     expect(screen.queryByText(/finish setting up your memento/i)).not.toBeInTheDocument();
   });
 
   it("does not render when not skipped", () => {
+    mockedUser = { onboarding_status: "never" };
     renderWithProviders(<OnboardingNudgeBanner />, { route: "/overview", auth: true });
     expect(screen.queryByText(/finish setting up your memento/i)).not.toBeInTheDocument();
   });
 
   it("does not render on /onboard route", () => {
-    localStorage.setItem("memento_onboarding_skipped", "true");
+    mockedUser = { onboarding_status: "skipped" };
     renderWithProviders(<OnboardingNudgeBanner />, { route: "/onboard", auth: true });
     expect(screen.queryByText(/finish setting up your memento/i)).not.toBeInTheDocument();
   });
 
   it("renders when skipped and not complete", () => {
-    localStorage.setItem("memento_onboarding_skipped", "true");
+    mockedUser = { onboarding_status: "skipped" };
     const { container } = renderWithProviders(<OnboardingNudgeBanner />, { route: "/overview", auth: true });
     expect(screen.getByText(/finish setting up your memento/i)).toBeInTheDocument();
     const banner = container.querySelector('[role="banner"]');
@@ -48,7 +63,7 @@ describe("OnboardingNudgeBanner", () => {
 
   it("navigates to /onboard when Continue setup clicked", async () => {
     const user = userEvent.setup();
-    localStorage.setItem("memento_onboarding_skipped", "true");
+    mockedUser = { onboarding_status: "skipped" };
     renderWithProviders(<OnboardingNudgeBanner />, { route: "/overview", auth: true });
     await user.click(screen.getByText(/continue setup/i));
     expect(mockNavigate).toHaveBeenCalledWith("/onboard");
@@ -56,7 +71,7 @@ describe("OnboardingNudgeBanner", () => {
 
   it("dismisses when X clicked", async () => {
     const user = userEvent.setup();
-    localStorage.setItem("memento_onboarding_skipped", "true");
+    mockedUser = { onboarding_status: "skipped" };
     renderWithProviders(<OnboardingNudgeBanner />, { route: "/overview", auth: true });
     await user.click(screen.getByLabelText(/dismiss/i));
     expect(screen.queryByText(/finish setting up your memento/i)).not.toBeInTheDocument();
