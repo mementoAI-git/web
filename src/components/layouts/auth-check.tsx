@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type PropsWithChildren } from "react";
+import { useEffect, useRef, useState, type PropsWithChildren } from "react";
 import useSWR, { mutate } from "swr";
 import { useNavigate, useLocation } from "react-router-dom";
 import endpoint from "@/api/endpoint";
@@ -8,17 +8,35 @@ import { fetcher } from "@/api/fetcher";
 import { useStore } from "@/hooks/use-store";
 import { isEmpty } from "@/utility";
 import { authService } from "@/utility/auth-service";
+import type { IUser } from "@/utility/interface";
+
+/**
+ * Shallow merge profile from GET /users/profile without wiping fields the API omits
+ * or sends as null/undefined (e.g. after PUT nickname, a sparse payload must not clear nickname).
+ */
+function mergeProfileServerUpdate(prev: IUser | null, incoming: IUser): IUser {
+  if (!prev) return incoming;
+  const out: IUser = { ...prev };
+  for (const [key, value] of Object.entries(incoming)) {
+    if (value !== undefined && value !== null) {
+      (out as Record<string, unknown>)[key] = value;
+    }
+  }
+  return out;
+}
 
 export default function AuthCheck({ children }: PropsWithChildren) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { auth, hydrated, setUser, setAuth } = useStore();
+  const { auth, hydrated, setUser, setAuth, user } = useStore();
   const [loading, setLoading] = useState(true);
+  const userRef = useRef(user);
+  userRef.current = user;
 
   useSWR(endpoint.profile, fetcher, {
     onSuccess(data) {
-      if (data?.data) {
-        setUser?.(data.data);
+      if (data?.data && setUser) {
+        setUser(mergeProfileServerUpdate(userRef.current, data.data));
       }
     },
   });

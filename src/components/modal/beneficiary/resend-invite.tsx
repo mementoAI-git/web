@@ -7,6 +7,7 @@ import { PlanePaperIcon } from "@/components/icons";
 import { cn } from "@/utility";
 import { toast } from "sonner";
 import { mutate } from "swr";
+import { SETTINGS_BENEFICIARIES_SWR_KEY } from "@/components/modal/settings/beneficiary&group/beneficiaries-list-swr-key";
 
 interface ResendInviteProps {
   data: { email: string };
@@ -19,7 +20,7 @@ export function ResendInvite({ data }: ResendInviteProps) {
   const handleResendInvite = async () => {
     const result = await trigger({ email: data?.email });
     if (result?.data) {
-      await mutate(`${endpoint.beneficiaries}?page=1`);
+      await mutate(SETTINGS_BENEFICIARIES_SWR_KEY);
       toast.success(result?.message || "Invite resent successfully");
       close?.("resend-invite");
     }

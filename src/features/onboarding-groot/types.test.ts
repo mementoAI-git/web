@@ -2,12 +2,13 @@ import { describe, it, expect } from "vitest";
 import {
   ARCHETYPE_OPTIONS,
   DIMENSION_OPTIONS,
+  ONBOARDING_DIMENSION_OPTIONS,
   MOTIVATION_OPTIONS,
   EXPRESSION_OPTIONS,
   STEP_LABELS,
   ADVANCE_LABELS,
 } from "./types";
-import type { DimensionKey, ExpressionMode, HostArchetype, MotivationType } from "./types";
+import type { EnrichmentCategory, ExpressionMode, HostArchetype, MotivationType } from "./types";
 
 describe("onboarding-groot types", () => {
   it("ARCHETYPE_OPTIONS has 5 entries with value, label, sublabel, icon", () => {
@@ -45,20 +46,19 @@ describe("onboarding-groot types", () => {
     });
   });
 
-  it("DIMENSION_OPTIONS has 11 entries", () => {
-    expect(DIMENSION_OPTIONS).toHaveLength(11);
-    const expectedValues: DimensionKey[] = [
-      "people_relationships",
-      "memories_stories",
-      "beliefs_values",
-      "heritage_roots",
-      "passions_interests",
+  it("DIMENSION_OPTIONS lists all 10 EnrichmentCategory values", () => {
+    expect(DIMENSION_OPTIONS).toHaveLength(10);
+    const expectedValues: EnrichmentCategory[] = [
+      "identity_self",
+      "relationships_people",
       "work_purpose",
-      "wishes_letters",
+      "memories_experiences",
+      "beliefs_worldview",
+      "passions_interests",
+      "heritage_roots",
+      "lessons_wisdom",
+      "hopes_legacy",
       "everyday_life",
-      "hardships_resilience",
-      "humour_personality",
-      "something_else",
     ];
     DIMENSION_OPTIONS.forEach((opt, i) => {
       expect(opt.value).toBe(expectedValues[i]);
@@ -68,10 +68,11 @@ describe("onboarding-groot types", () => {
     });
   });
 
-  it("DIMENSION_OPTIONS something_else has empty icon", () => {
-    const somethingElse = DIMENSION_OPTIONS.find((o) => o.value === "something_else");
-    expect(somethingElse).toBeDefined();
-    expect(somethingElse?.icon).toBe("");
+  it("ONBOARDING_DIMENSION_OPTIONS omits deferred enrichment categories", () => {
+    expect(ONBOARDING_DIMENSION_OPTIONS.length).toBe(8);
+    const values = ONBOARDING_DIMENSION_OPTIONS.map((o) => o.value);
+    expect(values).not.toContain("lessons_wisdom");
+    expect(values).not.toContain("hopes_legacy");
   });
 
   it("EXPRESSION_OPTIONS has 4 entries", () => {

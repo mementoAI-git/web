@@ -35,11 +35,11 @@ import { DeleteCapsule } from "./capsule/delete";
 import { PauseCapsule } from "./capsule/pause";
 import { useState, useEffect } from "react";
 // import { DatePickerFilter } from "../Memories/MemoriesFilter";
-import Settings from "./settings";
 import ShareMemory from "./memory/share-memory";
 import SelectBeneficiary from "./select-beneficiary";
 import { Feedback } from "./feedback";
 import MemoryInsights from "./memory-insights";
+import SettingsAboutMeModal from "./settings-about-me-modal";
 import RecentActivitiesModal from "./recent-activities-modal";
 import {
   AudioRecorderModal,
@@ -80,11 +80,11 @@ const MODAL_COMPONENTS = {
   "unpause-capsule": UnpauseCapsule,
   "edit-capsule": CreateCapsule,
   "view-capsule": (props) => <CreateCapsule {...props} mode="view" />,
-  settings: Settings,
   // "date-picker-filter": DatePickerFilter,
   "share-memory": ShareMemory,
   "create-feedback": Feedback,
   "memory-insights": MemoryInsights,
+  "settings-about-me": SettingsAboutMeModal,
   "recent-activities": RecentActivitiesModal,
   "audio-recorder": AudioRecorderModal,
   "video-recorder": VideoRecorderModal,

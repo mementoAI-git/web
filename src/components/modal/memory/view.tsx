@@ -122,7 +122,7 @@ export function ViewMemory({ data, isMobile }: ViewMemoryProps) {
               push("edit-memory", { memory });
             }
           }}
-          className="font-inter text-sm font-medium text-orange hover:text-[#C55A1D] transition-colors"
+          className="font-inter text-sm font-medium text-v3-brand-strong transition-colors hover:opacity-90"
         >
           Edit Story
         </button>

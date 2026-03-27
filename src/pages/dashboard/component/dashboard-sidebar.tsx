@@ -2,6 +2,7 @@ import { useLocation } from "react-router-dom";
 import { topNavigations, bottomNavigations } from "./navigation";
 import SideBarItem from "./sidebar-item";
 import { ProfileDropdown } from "./profile-dropdown";
+import { useModal } from "@/hooks/use-modal";
 
 interface DashboardSideBarProps {
   onClose?: () => void;
@@ -9,6 +10,7 @@ interface DashboardSideBarProps {
 
 export function DashboardSideBar({ onClose }: DashboardSideBarProps) {
   const location = useLocation();
+  const { open } = useModal();
 
   const pathname = location.pathname;
 
@@ -35,6 +37,14 @@ export function DashboardSideBar({ onClose }: DashboardSideBarProps) {
 
       <div className="mt-auto px-4 pb-6 flex flex-col gap-1">
         <div className="h-px w-full my-4" />
+        <SideBarItem
+          emoji="📝"
+          title="Drop a feedback"
+          onClick={() => {
+            open("create-feedback");
+            onClose?.();
+          }}
+        />
         {bottomNavigations.map((n, i) => (
           <SideBarItem
             {...n}

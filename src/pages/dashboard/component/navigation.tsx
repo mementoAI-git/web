@@ -8,11 +8,12 @@ import gearIcon from "@/assets/icon/folder/noto_gear.png";
 import upgradeIcon from "@/assets/icon/folder/noto_upwards-button.png";
 import inviteIcon from "@/assets/icon/folder/noto_couple-with-heart-woman-man-light-skin-tone-medium-light-skin-tone.png";
 
+/** Sub-routes under /settings/:tab (full-page settings). */
 export const settingNavigations = [
-  { title: "my profile", link: "/settings/profile" },
+  { title: "my profile", link: "/settings/general" },
   { title: "security", link: "/settings/security" },
-  { title: "notifications", link: "/settings/notifications" },
-  { title: "beneficiaries", link: "/settings/beneficiaries" },
+  { title: "beneficiaries", link: "/settings/beneficiary" },
+  { title: "privacy", link: "/settings/privacy" },
 ];
 
 export const topNavigations = [

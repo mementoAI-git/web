@@ -8,7 +8,7 @@ import { cn } from "@/utility";
 
 function DailyPromptSkeleton() {
   return (
-    <div className="rounded-2xl bg-v3-fill-weak p-5 shadow-sm animate-pulse">
+    <div className="rounded-2xl bg-v3-fill-weak p-5 shadow-sm animate-pulse h-full">
       <div className="flex gap-2 mb-6">
         <div className="h-9 w-24 rounded-full bg-v3-fill-weak" />
         <div className="h-9 w-24 rounded-full bg-v3-fill-weak" />
@@ -45,7 +45,7 @@ export default function DailyPromptSection() {
   const hasMultiple = prompts.length > 1;
 
   return (
-    <div className="rounded-2xl bg-v3-fill-weak p-5 shadow-sm flex flex-col gap-6">
+    <div className="rounded-2xl bg-v3-fill-weak p-5 shadow-sm flex flex-col gap-6 h-full">
       {/* Prompt tabs */}
       {hasMultiple && (
         <div className="flex gap-2 justify-start">
@@ -68,7 +68,7 @@ export default function DailyPromptSection() {
       )}
 
       {/* Prompt text */}
-      <p className="font-garamond text-xl text-v3-text-strong text-left leading-relaxed flex-1 flex flex-wrap">
+      <p className="font-garamond text-2xl text-v3-text-strong text-left leading-relaxed flex-1 flex flex-wrap">
         {activePrompt.title}
       </p>
 

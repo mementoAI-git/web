@@ -87,7 +87,9 @@ describe("MemoryInsightsModal", () => {
     renderWithProviders(<MemoryInsightsModal />, { route: "/overview", auth: true });
     expect(await screen.findByText(/From persona API only/i)).toBeInTheDocument();
     expect(
-      screen.getByText(/Currently focused on: memories_stories, people_relationships/i),
+      screen.getByText(
+        /Currently focused on: Memories & Experiences, Relationships & People/i,
+      ),
     ).toBeInTheDocument();
   });
 

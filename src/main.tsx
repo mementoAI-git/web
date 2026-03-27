@@ -4,6 +4,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { RouterProvider } from "react-router-dom";
 import "./index.css";
+import "dialkit/styles.css";
 import "react-spring-bottom-sheet/dist/style.css";
 import { router } from "./router";
 import { ModalProvider } from "./hooks/use-modal";
@@ -14,6 +15,7 @@ import { StoreProvider } from "@/hooks/use-store";
 import { ChatProvider } from "@/hooks/use-chat";
 import { BackgroundMusicProvider } from "@/hooks/use-background-music";
 import { ErrorPage } from "./pages";
+import { RootAppShell } from "@/components/layouts/root-app-shell";
 
 const sentryHandler = {
   // Callback called when an error is thrown and not caught by an ErrorBoundary.
@@ -34,7 +36,9 @@ createRoot(document.getElementById("root")!, sentryHandler).render(
           <ModalProvider>
             <ChatProvider>
               <SWRConfig value={{ fetcher }}>
-                <RouterProvider router={router} />
+                <RootAppShell>
+                  <RouterProvider router={router} />
+                </RootAppShell>
                 <Toaster
                   position="top-center"
                   closeButton

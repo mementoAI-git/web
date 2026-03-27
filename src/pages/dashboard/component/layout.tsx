@@ -10,9 +10,11 @@ import { DashboardHeader } from "./dashboard-header";
 import { DashboardSideBar } from "./dashboard-sidebar";
 import { DashboardChatSidebar } from "./dashboard-chat-sidebar";
 import Modal from "@/components/modal";
+import { ConversationChromeProvider } from "@/contexts/conversation-chrome";
 
 export default function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [mainSidebarCollapsed, setMainSidebarCollapsed] = useState(false);
   const { chatOpen, setChatOpen } = useChatSidebar();
   const location = useLocation();
   const navigate = useNavigate();
@@ -28,6 +30,18 @@ export default function DashboardLayout() {
 
   useEffect(() => () => setChatOpen(false), [setChatOpen]);
 
+  const handleMainSidebarToggle = () => {
+    if (
+      typeof window !== "undefined" &&
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(min-width: 768px)").matches
+    ) {
+      setMainSidebarCollapsed((c) => !c);
+    } else {
+      setSidebarOpen((o) => !o);
+    }
+  };
+
   return (
     <AuthCheck>
       <OnboardingGuard>
@@ -39,37 +53,44 @@ export default function DashboardLayout() {
             onClick={() => setSidebarOpen(false)}
           />
         )}
-        <div className={`
-          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
-          fixed md:relative inset-y-0 left-0 z-50 md:z-auto
-          transition-transform duration-300 ease-in-out md:transition-none w-full md:w-[250px]
-        `}>
+        <div
+          className={cn(
+            sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0",
+            "fixed md:relative inset-y-0 left-0 z-50 md:z-auto",
+            "transition-all duration-300 ease-in-out md:transition-all",
+            "w-full md:w-[250px] shrink-0",
+            mainSidebarCollapsed && "md:!w-0 md:!min-w-0 md:overflow-hidden md:opacity-0",
+          )}
+        >
           <DashboardSideBar onClose={() => setSidebarOpen(false)} />
         </div>
         <main className="flex min-w-0 flex-1 flex-col overflow-hidden dynamic-height-content">
-          <DashboardHeader
-            onMenuClick={() => setSidebarOpen(true)}
-            chatOpen={chatOpen}
-            onChatToggle={() => setChatOpen(!chatOpen)}
-          />
-          <div className="flex flex-1 flex-col overflow-hidden pt-[60px] sm:pt-0 md:flex-row">
-            <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-              <div className="shrink-0 px-4 py-2 sm:px-6">
-                <OnboardingNudgeBanner />
+          <ConversationChromeProvider>
+            <DashboardHeader
+              onMenuClick={() => setSidebarOpen(true)}
+              mobileSidebarOpen={sidebarOpen}
+              mainSidebarCollapsed={mainSidebarCollapsed}
+              onMainSidebarToggle={handleMainSidebarToggle}
+            />
+            <div className="flex flex-1 flex-col overflow-hidden pt-[60px] sm:pt-0 md:flex-row">
+              <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+                <div className="flex h-fit w-full min-w-0 shrink-0 flex-col items-center justify-start bg-white px-4 pt-[3px] pb-0.5 text-v3-text-strong sm:px-6">
+                  <OnboardingNudgeBanner />
+                </div>
+                <div className="hide-scrollbar h-full min-h-0 w-full flex-1 overflow-y-auto">
+                  <Outlet />
+                </div>
               </div>
-              <div className="flex-1 overflow-hidden">
-                <Outlet />
-              </div>
+              <aside
+                className={cn(
+                  "flex w-full flex-shrink-0 flex-col overflow-hidden rounded-[16px] md:mx-2 md:my-2 md:w-[300px] md:max-w-[315px] lg:w-[315px] bg-v3-fill-weak",
+                  !chatOpen && "hidden",
+                )}
+              >
+                <DashboardChatSidebar onClose={() => setChatOpen(false)} />
+              </aside>
             </div>
-            <aside
-              className={cn(
-                "flex w-full flex-shrink-0 flex-col overflow-hidden rounded-[16px] md:mx-2 md:my-2 md:w-[300px] md:max-w-[315px] lg:w-[315px] bg-v3-fill-weak",
-                !chatOpen && "hidden",
-              )}
-            >
-              <DashboardChatSidebar onClose={() => setChatOpen(false)} />
-            </aside>
-          </div>
+          </ConversationChromeProvider>
         </main>
       </div>
       </OnboardingGuard>

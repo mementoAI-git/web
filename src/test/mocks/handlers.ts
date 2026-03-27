@@ -46,6 +46,24 @@ export const handlers = [
     });
   }),
 
+  http.get(`${BASE_URL}/groups`, () => {
+    return HttpResponse.json({
+      success: true,
+      data: {
+        docs: [],
+        hasNextPage: false,
+        hasPrevPage: false,
+        limit: 25,
+        nextPage: null,
+        page: 1,
+        pagingCounter: 0,
+        prevPage: null,
+        totalDocs: 0,
+        totalPages: 0,
+      },
+    });
+  }),
+
   http.get(`${BASE_URL}/users/stats`, () => {
     return HttpResponse.json({
       success: true,
@@ -91,8 +109,49 @@ export const handlers = [
   http.get(`${BASE_URL}/memories/conversations`, () => {
     return HttpResponse.json({
       success: true,
-      data: [],
+      data: {
+        docs: [
+          {
+            _id: "host-conversation-1",
+            title: "Your Memento",
+            updated_at: new Date().toISOString(),
+            type: "conversation",
+          },
+        ],
+        hasNextPage: false,
+        hasPrevPage: false,
+        limit: 20,
+        nextPage: null,
+        page: 1,
+        pagingCounter: 1,
+        prevPage: null,
+        totalDocs: 1,
+        totalPages: 1,
+      },
       message: "Conversations fetched",
+    });
+  }),
+
+  http.get(`${BASE_URL}/memories/:id`, ({ params }) => {
+    const id = String(params.id);
+    return HttpResponse.json({
+      success: true,
+      data: {
+        _id: id,
+        title: "Your Memento",
+        body: "",
+        user: "mock-user",
+        attachments: [],
+        tags: [],
+        type: "conversation",
+        status: "active",
+        level: 0,
+        refrence: "",
+        last_opened: new Date().toISOString(),
+        created_at: new Date(Date.now() - 86400000 * 30).toISOString(),
+        updated_at: new Date().toISOString(),
+      },
+      message: "Memory fetched",
     });
   }),
 
@@ -262,6 +321,83 @@ export const handlers = [
       status: 200,
       message: "Onboarding skipped",
       data: { onboarding_status: "skipped" },
+    });
+  }),
+
+  /**
+   * Host onboarding chat — streams like `/ai/prompt`; trailer
+   * `\n__MEMENTO_ONBOARDING__` + JSON for chips and `flow_complete`.
+   */
+  http.post(`${BASE_URL}/users/onboarding/chat/prompt`, async ({ request }) => {
+    const body = (await request.json()) as {
+      bootstrap?: boolean;
+      messages?: Array<{ role: string; content: string }>;
+    };
+    const enc = new TextEncoder();
+    const userCount =
+      body.messages?.filter((m) => m.role === "user").length ?? 0;
+    const MARK = "\n__MEMENTO_ONBOARDING__";
+
+    let text: string;
+    let meta: Record<string, unknown>;
+
+    if (body.bootstrap) {
+      text =
+        "Hi — I'm glad you're here. What's one thing you'd love this space to help you with?";
+      meta = {
+        suggestion_chips: ["Family stories", "My own memories", "Getting started"],
+        composer_placeholder: "Share what feels right",
+        composer_label: "Your reply",
+        flow_complete: false,
+        step_index: 1,
+        total_steps: 6,
+      };
+    } else if (userCount >= 7) {
+      text = "Beautiful — that gives me plenty to work with. Welcome aboard.";
+      meta = {
+        suggestion_chips: [],
+        composer_placeholder: "Your reply",
+        composer_label: "Your reply",
+        flow_complete: true,
+        step_index: 6,
+        total_steps: 6,
+      };
+    } else {
+      text = "Thanks — say a bit more when you're ready.";
+      meta = {
+        suggestion_chips: ["A little", "A lot", "Prefer not to say"],
+        composer_placeholder: "Your reply",
+        composer_label: "Your reply",
+        flow_complete: false,
+        step_index: userCount,
+        total_steps: 6,
+      };
+    }
+
+    const stream = new ReadableStream({
+      start(controller) {
+        controller.enqueue(enc.encode(text));
+        controller.enqueue(enc.encode(`${MARK}${JSON.stringify(meta)}`));
+        controller.close();
+      },
+    });
+    return new HttpResponse(stream, {
+      status: 200,
+      headers: { "Content-Type": "text/plain; charset=utf-8" },
+    });
+  }),
+
+  http.post(`${BASE_URL}/files/upload`, () => {
+    return HttpResponse.json({
+      success: true,
+      message: "Uploaded",
+      data: {
+        _id: "mock-file-id",
+        url: "https://example.com/mock-upload.png",
+        name: "mock-upload.png",
+        size: 128,
+        type: "image/png",
+      },
     });
   }),
 ];

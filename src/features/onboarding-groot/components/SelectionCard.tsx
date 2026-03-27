@@ -45,14 +45,14 @@ export function SelectionCard({
       className={cn(
         "relative min-h-[48px] w-full rounded-xl border-[1.5px] bg-[#FFFCF8] p-4 text-left transition-[border-color,background] duration-150 ease-in-out",
         "hover:border-[#E8B99A] hover:bg-[#FFFCF8]",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E26A24] focus-visible:ring-offset-2",
-        isSelected && "border-[#2C1F15] bg-[#2C1F15] hover:border-[#E26A24] hover:bg-[#2C1F15]",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-v3-brand-strong focus-visible:ring-offset-2",
+        isSelected && "border-[#2C1F15] bg-[#2C1F15] hover:border-v3-brand-strong hover:bg-[#2C1F15]",
         disabled && "cursor-not-allowed opacity-50 border-[#E4D9CC] bg-[#FAF7F2] hover:border-[#E4D9CC] hover:bg-[#FAF7F2]"
       )}
     >
       {isSelected && (
         <span
-          className="absolute right-2 top-2 flex h-[18px] w-[18px] items-center justify-center rounded-full bg-[#E26A24] text-[10px] text-white"
+          className="absolute right-2 top-2 flex h-[18px] w-[18px] items-center justify-center rounded-full bg-v3-brand-strong text-[10px] text-white"
           aria-hidden
         >
           ✓

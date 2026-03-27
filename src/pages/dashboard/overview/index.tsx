@@ -17,7 +17,7 @@ export default function OverviewPage() {
 
   return (
     <div className="page-viewport hide-scrollbar">
-      <div className="mx-auto w-full max-w-[1038px]">
+      <div className="mx-auto flex w-full max-w-[1038px] flex-col gap-6">
         <WelcomeSection />
         <ActivitySummary />
         <BrowseTopics />

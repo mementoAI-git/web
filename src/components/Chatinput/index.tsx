@@ -1,6 +1,19 @@
-import { GearIcon, PlusIcon, WaveIcon } from "@/components/icons";
+import { GearIcon, PlusIcon, TimesIcon, WaveIcon } from "@/components/icons";
 import { cn, toBase64 } from "@/utility";
-import React, { type KeyboardEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  type ChatReplyQuote,
+  snippetReplyText,
+} from "@/utility/chat-reply-prompt";
+import React, {
+  type ClipboardEvent,
+  type KeyboardEvent,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import Voiceinput from "./Voiceinput";
 import Spinner from "../spinner";
 import useFileUpload from "@/hooks/use-file-upload";
@@ -19,10 +32,14 @@ import {
 
 export interface IOnSendPayload {
   attachments?: IFile[];
-  text: string
+  text: string;
+  /** Quoted message context (embedded in the prompt on send). */
+  replyTo?: ChatReplyQuote | null;
 }
 
-interface IChatinputProps {
+export type { ChatReplyQuote };
+
+export interface IChatinputProps {
   className?: string
   inputClassName?: string
   typing?: boolean
@@ -32,9 +49,21 @@ interface IChatinputProps {
   onStop?: () => void
   memoryId?: string | null
   history?: { role: "user" | "ai", text: string }[]
+  /** When set, draft text is restored from and saved to localStorage (text only). */
+  draftStorageKey?: string | null
+  /** Message being replied to; shown above the field until send or clear. */
+  replyQuote?: ChatReplyQuote | null;
+  onClearReplyQuote?: () => void;
 }
 
-export default function Chatinput({
+type ChatinputImplProps = IChatinputProps & {
+  wrapperClassName: string
+  shellTestId?: string
+}
+
+function ChatinputImpl({
+  wrapperClassName,
+  shellTestId,
   className = "",
   inputClassName = "",
   typing = false,
@@ -42,8 +71,20 @@ export default function Chatinput({
   onStop,
   onSend,
   memoryId,
-  history = []
-}: IChatinputProps) {
+  history = [],
+  draftStorageKey = null,
+  replyQuote = null,
+  onClearReplyQuote,
+}: ChatinputImplProps) {
+  const readDraft = useCallback(() => {
+    if (!draftStorageKey || typeof localStorage === "undefined") return "";
+    try {
+      return localStorage.getItem(draftStorageKey) ?? "";
+    } catch {
+      return "";
+    }
+  }, [draftStorageKey]);
+
   const [text, setText] = useState("")
   const [isVoiceMode, setIsVoiceMode] = useState(false)
   const [cursorPosition, setCursorPosition] = useState(0)
@@ -99,55 +140,120 @@ export default function Chatinput({
     if (showSlashMenu && filteredSlashCommands.length === 0) setShowSlashMenu(false)
   }, [showSlashMenu, filteredSlashCommands.length])
 
+  useLayoutEffect(() => {
+    if (!draftStorageKey) return;
+    setText(readDraft());
+  }, [readDraft, draftStorageKey]);
+
+  useEffect(() => {
+    if (!draftStorageKey) return;
+    const t = window.setTimeout(() => {
+      try {
+        if (text.trim()) {
+          localStorage.setItem(draftStorageKey, text);
+        } else {
+          localStorage.removeItem(draftStorageKey);
+        }
+      } catch {
+        /* ignore quota / private mode */
+      }
+    }, 400);
+    return () => window.clearTimeout(t);
+  }, [text, draftStorageKey]);
+
   const MAX_TEXTAREA_HEIGHT = 300;
 
   const adjustHeight = useCallback(() => {
     const textarea = textareaRef.current;
-    if (textarea) {
-      textarea.style.height = 'auto';
-      const contentHeight = textarea.scrollHeight;
-      if (contentHeight > MAX_TEXTAREA_HEIGHT) {
-        const newHeight = Math.min(contentHeight, MAX_TEXTAREA_HEIGHT);
-        textarea.style.height = `${newHeight}px`;
-        textarea.style.overflowY = 'auto';
-      } else {
-        textarea.style.height = '100%';
-        textarea.style.overflowY = 'hidden';
-      }
-    }
+    if (!textarea) return;
+    textarea.style.height = "auto";
+    const contentHeight = textarea.scrollHeight;
+    const nextHeight = Math.min(contentHeight, MAX_TEXTAREA_HEIGHT);
+    textarea.style.height = `${nextHeight}px`;
+    textarea.style.overflowY =
+      contentHeight > MAX_TEXTAREA_HEIGHT ? "auto" : "hidden";
   }, []);
 
-  const handleFileUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const processFileForUpload = useCallback(
+    async (file: File) => {
+      const resolvedType = file.type || inferMimeType(file.name);
+      if (!(SUPPORTED_FILE_TYPES as readonly string[]).includes(resolvedType)) {
+        alert(
+          "Please select a supported file type (images, PDF, video, or audio)",
+        );
+        return;
+      }
 
-    const resolvedType = file.type || inferMimeType(file.name);
-    if (!(SUPPORTED_FILE_TYPES as readonly string[]).includes(resolvedType)) {
-      alert('Please select a supported file type (images, PDF, video, or audio)');
-      return;
-    }
+      const maxSize = resolvedType.startsWith("video/")
+        ? 15 * 1024 * 1024
+        : 5 * 1024 * 1024;
+      if (file.size > maxSize) {
+        const maxSizeMB = file.type.startsWith("video/") ? 15 : 5;
+        alert(`File size must be less than ${maxSizeMB}MB`);
+        return;
+      }
 
-    const maxSize = resolvedType.startsWith('video/') ? 15 * 1024 * 1024 : 5 * 1024 * 1024;
-    if (file.size > maxSize) {
-      const maxSizeMB = file.type.startsWith('video/') ? 15 : 5;
-      alert(`File size must be less than ${maxSizeMB}MB`);
-      return;
-    }
+      const base64 = await toBase64(file);
 
-    const base64 = await toBase64(file)
+      const uploadPayload: IOnUploadPayload = {
+        id: uuidv4(),
+        file,
+        progress: 0,
+        base64,
+      };
 
-    const uploadPayload: IOnUploadPayload = {
-      id: uuidv4(),
-      file,
-      progress: 0,
-      base64
-    };
+      await handleUpload(uploadPayload);
+    },
+    [handleUpload],
+  );
 
-    await handleUpload(uploadPayload);
-  }, [handleUpload]);
+  const handleFileUpload = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      e.target.value = "";
+      if (!file) return;
+      await processFileForUpload(file);
+    },
+    [processFileForUpload],
+  );
+
+  const handlePaste = useCallback(
+    async (e: ClipboardEvent<HTMLTextAreaElement>) => {
+      const dt = e.clipboardData;
+      if (!dt) return;
+
+      const tryImageUpload = async (file: File | null) => {
+        if (!file) return false;
+        const resolved = file.type || inferMimeType(file.name);
+        if (!resolved.startsWith("image/")) return false;
+        e.preventDefault();
+        await processFileForUpload(file);
+        return true;
+      };
+
+      if (dt.files?.length) {
+        for (let i = 0; i < dt.files.length; i += 1) {
+          const file = dt.files.item(i);
+          if (await tryImageUpload(file)) return;
+        }
+      }
+
+      for (let i = 0; i < (dt.items?.length ?? 0); i += 1) {
+        const item = dt.items[i];
+        if (item?.kind === "file") {
+          const file = item.getAsFile();
+          if (await tryImageUpload(file)) return;
+        }
+      }
+    },
+    [processFileForUpload],
+  );
 
   const handleSend = () => {
     if (!isEmpty(files) && files.every(f => f.progress < 100)) {
+      return;
+    }
+    if (!text.trim() && files.length === 0) {
       return;
     }
 
@@ -155,17 +261,21 @@ export default function Chatinput({
       .filter(f => f.uploadedFile)
       .map(f => f.uploadedFile);
 
-    const payload = { text, attachments };
+    const payload: IOnSendPayload = {
+      text,
+      attachments,
+      replyTo: replyQuote ?? null,
+    };
     onSend?.(payload);
+    if (draftStorageKey) {
+      try {
+        localStorage.removeItem(draftStorageKey);
+      } catch {
+        /* ignore */
+      }
+    }
     setText("");
     setFiles([]);
-
-    // Reset textarea height to fill container
-    const textarea = textareaRef.current;
-    if (textarea) {
-      textarea.style.height = '100%';
-      textarea.style.overflowY = 'hidden';
-    }
   }
 
   const handleSlashCommandSelect = useCallback(
@@ -191,6 +301,20 @@ export default function Chatinput({
   )
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      e.stopPropagation();
+      const uploadsPending = !isEmpty(files) && files.every((f) => f.progress < 100);
+      if (
+        !loading &&
+        !typing &&
+        !uploadsPending &&
+        (text.trim() || files.length > 0)
+      ) {
+        handleSend();
+      }
+      return;
+    }
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       if (text.trim() || files.length > 0) {
@@ -206,9 +330,9 @@ export default function Chatinput({
     }
   }, [files, handleDeleteFile]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     adjustHeight();
-  }, []);
+  }, [text, adjustHeight]);
 
   if (isVoiceMode) {
     return (
@@ -220,94 +344,144 @@ export default function Chatinput({
   }
 
   return (
-    <div className="w-fit p-[6px] rounded-[30px] bg-[rgba(251,248,244,0.7)]">
-      <div
-        ref={inputWrapperRef}
-        className={
-          cn(
-            "w-full min-h-[120px] flex focus-within:border-orange/16 flex-col gap-3 md:gap-4 rounded-3xl border border-[rgba(0,0,0,0.05)] py-3 px-4 md:p-6 !bg-white mx-auto shadow-[0px_4px_8px_0px_#AB7E2B1C] max-w-[600px] md:min-w-[600px]",
-            className
-          )
-        }
-        style={{ backgroundColor: "rgba(255, 255, 255, 1)" }}
-      >
-      <textarea
-        ref={textareaRef}
-        value={text}
-        onChange={e => {
-          setText(e.target.value)
-          setCursorPosition(e.target.selectionStart)
-        }}
-        onSelect={() => setCursorPosition(textareaRef.current?.selectionStart ?? 0)}
-        placeholder="Type text here... Type / for formatting"
-        className={cn("min-h-10 md:min-h-12 flex-1 w-full outline-none font-georgia resize-none text-lg md:text-xl overflow-hidden", {
-          [inputClassName]: !isEmpty(inputClassName)
-        })}
-        onInput={adjustHeight}
-        rows={1}
-        onKeyDown={handleKeyDown}
-      />
-      <SlashCommandPopup
-        show={showSlashMenu}
-        position={slashPosition}
-        commands={filteredSlashCommands}
-        selectedIndex={clampedSlashIndex}
-        onSelectedIndexChange={setSlashSelectedIndex}
-        onCommandSelect={handleSlashCommandSelect}
-        onClose={() => setShowSlashMenu(false)}
-      />
-      {files.length > 0 && <ImagePreview {...{ files, handleRemoveFile }} />}
-      <div className="flex justify-between">
-        <div className="flex items-center gap-4">
-          {/* File Upload Button */}
-          <label htmlFor="chat-file-trigger" className="icon-container !size-8 md:!size-11 cursor-pointer !bg-gray-100 !text-gray-500 hover:!bg-gray-200">
-            <PlusIcon className="size-3 md:size-5" />
-            <input
-              id="chat-file-trigger"
-              type="file"
-              accept={SUPPORTED_FILE_TYPES.join(",")}
-              onChange={handleFileUpload}
-              className="hidden"
-            />
-          </label>
-
-          <ChatSettings>
-            <div className={cn("icon-container", "!rounded-xl !size-8 md:!size-11 !bg-gray-100 !text-gray-500 hover:!bg-gray-200")}>
-              <GearIcon className="size-4 md:size-5 stroke-2" />
+    <div className={cn(wrapperClassName)} data-testid={shellTestId}>
+      <div className="w-full min-w-0 rounded-[30px] bg-[rgba(251,248,244,0.7)] p-[6px]">
+        <div
+          ref={inputWrapperRef}
+          className={
+            cn(
+              "flex min-h-[120px] w-full min-w-0 flex-col gap-3 rounded-3xl border border-[rgba(0,0,0,0.05)] px-4 py-3 shadow-[0px_4px_8px_0px_#AB7E2B1C] focus-within:border-orange/16 !bg-white md:gap-4 md:p-6",
+              className
+            )
+          }
+          style={{ backgroundColor: "rgba(255, 255, 255, 1)" }}
+        >
+          {files.length > 0 && (
+            <ImagePreview {...{ files, handleRemoveFile }} />
+          )}
+          {replyQuote?.text?.trim() ? (
+            <div className="flex w-full min-w-0 items-start gap-2 rounded-xl border-l-[3px] border-[var(--v3-brand-strong)] bg-v3-fill-weaker px-3 py-2">
+              <div className="min-w-0 flex-1">
+                <p className="font-inter text-[11px] font-semibold uppercase tracking-wide text-v3-text-weak">
+                  Replying to{" "}
+                  {replyQuote.role === "user" ? "your message" : "Memento"}
+                </p>
+                <p className="mt-0.5 line-clamp-3 font-inter text-sm text-v3-text-strong">
+                  {snippetReplyText(replyQuote.text)}
+                </p>
+              </div>
+              {onClearReplyQuote ? (
+                <button
+                  type="button"
+                  onClick={onClearReplyQuote}
+                  className="flex size-8 shrink-0 items-center justify-center rounded-lg text-v3-text-weak transition-colors hover:bg-v3-fill-weak hover:text-v3-text-strong"
+                  aria-label="Cancel reply"
+                >
+                  <TimesIcon className="size-4" aria-hidden />
+                </button>
+              ) : null}
             </div>
-          </ChatSettings>
-        </div>
+          ) : null}
+          <textarea
+            ref={textareaRef}
+            value={text}
+            onChange={e => {
+              setText(e.target.value)
+              setCursorPosition(e.target.selectionStart)
+            }}
+            onSelect={() => setCursorPosition(textareaRef.current?.selectionStart ?? 0)}
+            placeholder="Type text here... Type / for formatting"
+            className={cn(
+              "min-h-10 md:min-h-12 w-full shrink-0 outline-none font-georgia resize-none text-lg md:text-xl overflow-hidden",
+              {
+                [inputClassName]: !isEmpty(inputClassName),
+              },
+            )}
+            rows={1}
+            onKeyDown={handleKeyDown}
+            onPaste={handlePaste}
+          />
+          <SlashCommandPopup
+            show={showSlashMenu}
+            position={slashPosition}
+            commands={filteredSlashCommands}
+            selectedIndex={clampedSlashIndex}
+            onSelectedIndexChange={setSlashSelectedIndex}
+            onCommandSelect={handleSlashCommandSelect}
+            onClose={() => setShowSlashMenu(false)}
+          />
+          <div className="flex justify-between">
+            <div className="flex items-center gap-4">
+              {/* File Upload Button */}
+              <label htmlFor="chat-file-trigger" className="icon-container !size-8 md:!size-11 cursor-pointer !bg-gray-100 !text-gray-500 hover:!bg-gray-200">
+                <PlusIcon className="size-3 md:size-5" />
+                <input
+                  id="chat-file-trigger"
+                  type="file"
+                  accept={SUPPORTED_FILE_TYPES.join(",")}
+                  onChange={handleFileUpload}
+                  className="hidden"
+                />
+              </label>
 
-        {
-          typing ?
-            <button onClick={onStop} className="btn text-white">Stop</button> :
-            (text.length > 0 || files.length > 0 || loading) ?
-              <button
-                onClick={handleSend}
-                disabled={loading || typing || (!isEmpty(files) && files.every(f => f.progress < 100))}
-                className="btn space-x-2 disabled:opacity-60 text-white"
-              >
-                {
-                  loading ?
-                    <>
-                      <span>Sending..</span>
-                      <Spinner loading className="!size-4" />
-                    </> :
-                    "Send"
-                }
-              </button> :
-              <button
-                onClick={() => setIsVoiceMode(true)}
-                className="sm:bg-orange/10 cursor-pointer bg-transparent flex items-center gap-2 rounded-full px-5 py-2.5 text-orange"
-              >
-                <WaveIcon className="size-5 stroke-2" />
-                <span className="font-inter hidden sm:inline text-sm font-semibold">
-                  Use voice mode
-                </span>
-              </button>
-        }
-      </div>
+              <ChatSettings>
+                <div className={cn("icon-container", "!rounded-xl !size-8 md:!size-11 !bg-gray-100 !text-gray-500 hover:!bg-gray-200")}>
+                  <GearIcon className="size-4 md:size-5 stroke-2" />
+                </div>
+              </ChatSettings>
+            </div>
+
+            {
+              typing ?
+                <button onClick={onStop} className="btn text-white">Stop</button> :
+                (text.length > 0 || files.length > 0 || loading) ?
+                  <button
+                    onClick={handleSend}
+                    disabled={loading || typing || (!isEmpty(files) && files.every(f => f.progress < 100))}
+                    className="btn space-x-2 disabled:opacity-60 text-white"
+                  >
+                    {
+                      loading ?
+                        <>
+                          <span>Sending..</span>
+                          <Spinner loading className="!size-4" />
+                        </> :
+                        "Send"
+                    }
+                  </button> :
+                  <button
+                    onClick={() => setIsVoiceMode(true)}
+                    className="sm:bg-orange/10 cursor-pointer bg-transparent flex items-center gap-2 rounded-full px-5 py-2.5 text-orange"
+                  >
+                    <WaveIcon className="size-5 stroke-2" />
+                    <span className="font-inter hidden sm:inline text-sm font-semibold">
+                      Use voice mode
+                    </span>
+                  </button>
+            }
+          </div>
+        </div>
       </div>
     </div>
   )
+}
+
+export default function Chatinput(props: IChatinputProps) {
+  return (
+    <ChatinputImpl
+      shellTestId="chat-input-landing-shell"
+      wrapperClassName="mx-auto w-full min-w-0 max-w-[600px]"
+      {...props}
+    />
+  );
+}
+
+export function ConversationChatinput(props: IChatinputProps) {
+  return (
+    <ChatinputImpl
+      shellTestId="chat-input-conversation-shell"
+      wrapperClassName="w-full min-w-0"
+      {...props}
+    />
+  );
 }

@@ -7,6 +7,8 @@ import useForm from "@/hooks/use-form";
 import { useModal } from "@/hooks/use-modal";
 import { isEmpty } from "@/utility";
 import { toast } from "sonner";
+import { mutate } from "swr";
+import { SETTINGS_BENEFICIARIES_SWR_KEY } from "@/components/modal/settings/beneficiary&group/beneficiaries-list-swr-key";
 import * as yup from "yup";
 
 const schema = yup.object().shape({
@@ -34,6 +36,7 @@ export function UpdateBeneficiary({ data: beneficiary }: UpdateBeneficiaryProps)
     async onSubmit(payload) {
       const result = await trigger(payload);
       if (result?.data) {
+        await mutate(SETTINGS_BENEFICIARIES_SWR_KEY);
         toast.success(result?.message);
         close?.("update-beneficiary");
       }

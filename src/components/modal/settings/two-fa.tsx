@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import useFetcher from "@/hooks/use-fetcher";
 import endpoint from "@/api/endpoint";
 import { mutate } from "swr";
+import { SettingsActionRow, SettingsPillButton } from "./settings-action-row";
 
 export default function TwoFactorAuthenticator() {
   const { push } = useModal();
@@ -29,49 +30,36 @@ export default function TwoFactorAuthenticator() {
 
   const isEnabled = user?.two_factor?.enabled;
 
+  const statusLabel = !hydrated || !user ? (
+    <span className="inline-block h-4 w-32 rounded-full bg-v3-fill-weaker" aria-hidden />
+  ) : isEnabled ? (
+    "Authenticator app is enabled for your account."
+  ) : (
+    "Authenticator app is not set up yet."
+  );
+
   return (
-    <div className="space-y-2 font-inter text-[#000933A6]">
-      <div className="flex items-center gap-3">
-        <span className="font-inter text-sm font-bold text-gray-950/90">2FA Verification</span>
-        {hydrated && user ? (
-          <span
-            className={`inline-block rounded-full border px-2.5 py-0.5 text-sm first-letter:capitalize ${isEnabled
-              ? "border-[#067A5733] bg-[#ECFDF3] text-[#12B76A]"
-              : "border-[#FECDCA] bg-[#FEF3F2] text-[#C73A3A]"
-              }`}
+    <SettingsActionRow
+      label={statusLabel}
+      action={
+        !hydrated || !user ? null : isEnabled ? (
+          <SettingsPillButton
+            type="button"
+            variant="default"
+            disabled={disabling}
+            onClick={handleDisable2FA}
+            className="border-danger/40 text-danger hover:bg-danger/5"
           >
-            {isEnabled ? "2FA activated" : "Not activated"}
-          </span>
+            <span>Turn off 2FA</span>
+            {disabling ? <Spinner loading className="!size-4 text-danger" /> : null}
+          </SettingsPillButton>
         ) : (
-          <div className="h-4.5 w-30 rounded-full bg-gray-200" />
-        )}
-      </div>
-      <span className="inline-block font-inter text-base text-gray-950/70">
-        An extra layer to boost your Memento account security. A verification code will be required in addition to your
-        password each time you sign in.
-      </span>
-      {isEnabled ? (
-        <button
-          type="button"
-          onClick={handleDisable2FA}
-          disabled={disabling}
-          className="flex min-w-32.5 items-center justify-center gap-1 rounded-lg border border-[#F04438] px-3 py-1 text-sm font-semibold text-[#F04438] shadow-md"
-        >
-          <span className="mr-1 inline-block">Disable 2FA</span>
-          <Spinner loading={disabling} className="!size-3 !text-[#C73A3A]" />
-        </button>
-      ) : (
-        <button
-          type="button"
-          onClick={handleSetup2FA}
-          disabled={enabling}
-          className="flex items-center flex-nowrap justify-center gap-2 rounded-full bg-gray-950 px-5 py-2.5 text-sm font-semibold text-white shadow-md"
-        >
-          <span className="mr-1 inline-block text-nowrap">Setup 2FA</span>
-          <Spinner loading={enabling} className="!size-4 !text-white" />
-        </button>
-      )}
-    </div>
+          <SettingsPillButton type="button" variant="default" disabled={enabling} onClick={handleSetup2FA}>
+            <span>Set up</span>
+            {enabling ? <Spinner loading className="!size-4 text-v3-text-strong" /> : null}
+          </SettingsPillButton>
+        )
+      }
+    />
   );
 }
-

@@ -1,5 +1,4 @@
-
-import questionImage from "@/assets/image/question-2.png"
+import recentActivitiesIcon from "@/assets/icon/homepage/recent activities icon.svg";
 import { BookmarkIcon, Launch2Icon, BookmarkSolidIcon } from "@/components/icons"
 import { type IMemory } from "@/utility/interface"
 import { MemoryDropdown } from "./dropdown"
@@ -14,40 +13,42 @@ export default function ConversationHeader({ memory, onViewDetails }: { memory: 
   });
 
   return (
-    <div className="border border-sand-4 rounded-xl md:rounded-2xl p-3 sm:p-4.5 md:p-6 flex items-center gap-10">
-      <div className="size-[86px] shrink-0 hidden sm:flex items-center justify-center">
-        <img className="size-full shrink-0 object-contain" alt="Question icon" src={questionImage} />
+    <div className="h-fit w-full border border-v3-stroke-weak rounded-xl md:rounded-2xl py-4 px-3.5 flex items-center gap-4 overflow-hidden">
+      <div className="size-10 shrink-0 hidden sm:flex items-center justify-center rounded-xl bg-v3-fill-weaker">
+        <img
+          className="size-full shrink-0 object-contain"
+          alt=""
+          src={recentActivitiesIcon}
+        />
       </div>
 
-      <div className="space-y-2 flex-1 sm:space-y-4">
-        <div className="flex items-center justify-between">
-          <button className="rounded-full cursor-pointer hover:scale-[97%] gap-[6px] flex items-center text-xs border-[1.5px] text-sand-10 border-sand-10 px-2 sm:px-3 py-0.5 sm:py-1">
-            Question
-          </button>
-          {
-            memory?._id &&
-            <div className="flex gap-1 items-center text-sand-12">
+      <div className="flex h-fit flex-1 flex-row items-start justify-center gap-3 sm:gap-4">
+        <h3 className="w-full md:text-2xl md:font-normal font-garamond text-v3-text-strong">
+          {memory?.title || "New conversation"}
+        </h3>
+        {memory?._id && (
+          <div className="flex items-center justify-end">
+            <div className="flex gap-1 items-center text-v3-text-strong">
               <div
-                className="aspect-square flex justify-center items-center p-1.5 size-7 sm:size-8 shrink-0 rounded-lg hover:bg-sand-2"
-                onClick={() => open("share-post", memory?._id)}
+                className="aspect-square flex justify-center items-center p-1.5 size-7 sm:size-8 shrink-0 rounded-lg hover:bg-v3-fill-weaker"
+                onClick={() =>
+                  memory?._id && open("share-post", { id: memory._id })
+                }
               >
-                <Launch2Icon className="stroke-[1.5px] size-full text-sand-12 cursor-pointer" />
+                <Launch2Icon className="stroke-[1.5px] size-full text-v3-text-strong cursor-pointer" />
               </div>
               <div
-                className="text-sand-12 flex justify-center items-center p-1.5 aspect-square size-7 sm:size-8 shrink-0 rounded-lg hover:bg-sand-2" onClick={toggleBookmark}>
+                className="text-v3-text-strong flex justify-center items-center p-1.5 aspect-square size-7 sm:size-8 shrink-0 rounded-lg hover:bg-v3-fill-weaker" onClick={toggleBookmark}>
                 {
                   memory.bookmarked ?
-                    <BookmarkSolidIcon className="text-sand-8 size-full stroke-2 cursor-pointer" /> :
-                    <BookmarkIcon className="text-sand-12  size-full stroke-2 cursor-pointer" />
+                    <BookmarkSolidIcon className="text-v3-text-strong size-full stroke-2 cursor-pointer" /> :
+                    <BookmarkIcon className="text-v3-text-strong size-full stroke-2 cursor-pointer" />
                 }
               </div>
               <MemoryDropdown {...{ memory, onViewDetails }} />
             </div>
-          }
-        </div>
-        <h3 className="md:text-xl md:font-medium font-garamond text-sand-12">
-          {memory?.title || "New conversation"}
-        </h3>
+          </div>
+        )}
       </div>
     </div>
   )

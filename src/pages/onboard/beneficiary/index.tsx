@@ -57,7 +57,7 @@ export default function BeneficiaryPage() {
           </Link>
           <Button
             asChild
-            className="rounded-full !bg-orange hover:!bg-[#C55A1D] px-8 py-[18px] text-sm font-semibold leading-[20px] text-white"
+            className="rounded-full !bg-v3-brand-strong px-8 py-[18px] text-sm font-semibold leading-[20px] text-white hover:!opacity-90"
           >
             <Link to="/overview">Continue</Link>
           </Button>

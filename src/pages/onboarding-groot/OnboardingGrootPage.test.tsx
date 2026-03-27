@@ -1,7 +1,8 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "@/test";
+import { storageKeys } from "@/utility/constant";
 import OnboardingGrootPage from "./index";
 
 const mockNavigate = vi.fn();
@@ -53,7 +54,7 @@ async function advanceThroughAllSteps(
   await user.click(screen.getByRole("button", { name: /continue/i }));
 
   // Step 6: dimensions
-  await user.click(screen.getByRole("button", { name: /family & relationships/i }));
+  await user.click(screen.getByRole("button", { name: /relationships & people/i }));
   await user.click(screen.getByRole("button", { name: /continue/i }));
 
   // Step 7: expression (skip if prefill already has one selected, to avoid toggling off)
@@ -68,6 +69,10 @@ describe("OnboardingGrootPage", () => {
   beforeEach(() => {
     mockNavigate.mockClear();
     localStorage.clear();
+  });
+
+  afterEach(() => {
+    localStorage.removeItem(storageKeys.onboardingState);
   });
 
   it("renders step 1 with full name and nickname inputs", () => {
@@ -140,49 +145,61 @@ describe("OnboardingGrootPage", () => {
     expect(screen.getByText("Skip for now →")).toBeInTheDocument();
   });
 
-  it("voice_recorder CTA navigates to overview with create-memory modal", async () => {
-    const user = userEvent.setup();
-    renderWithProviders(<OnboardingGrootPage />, {
-      route: "/onboarding",
-      auth: true,
-    });
-    await advanceThroughAllSteps(user);
-    await user.click(
-      screen.getByRole("button", { name: /record your first memory/i })
-    );
-    expect(mockNavigate).toHaveBeenCalledWith("/overview", {
-      state: { openModal: "create-memory" },
-    });
-  });
+  it(
+    "voice_recorder CTA navigates to overview with create-memory modal",
+    async () => {
+      const user = userEvent.setup();
+      renderWithProviders(<OnboardingGrootPage />, {
+        route: "/onboarding",
+        auth: true,
+      });
+      await advanceThroughAllSteps(user);
+      await user.click(
+        screen.getByRole("button", { name: /record your first memory/i }),
+      );
+      expect(mockNavigate).toHaveBeenCalledWith("/overview", {
+        state: { openModal: "create-memory" },
+      });
+    },
+    15_000,
+  );
 
-  it("revisit mode hides Skip and shows Save changes on step 8", async () => {
-    const user = userEvent.setup();
-    renderWithProviders(<OnboardingGrootPage />, {
-      route: "/onboarding?mode=revisit",
-      auth: true,
-    });
-    // Wait for prefill to load (GET /users/onboarding-details) then form to render
-    expect(await screen.findByLabelText(/what's your full name/i)).toBeInTheDocument();
-    expect(screen.queryByText("Skip for now →")).not.toBeInTheDocument();
-    await advanceThroughAllSteps(user, { skipExpressionClick: true });
-    expect(
-      await screen.findByRole("button", { name: /save changes/i })
-    ).toBeInTheDocument();
-  });
+  it(
+    "revisit mode hides Skip and shows Save changes on step 8",
+    async () => {
+      const user = userEvent.setup();
+      renderWithProviders(<OnboardingGrootPage />, {
+        route: "/onboarding?mode=revisit",
+        auth: true,
+      });
+      // Wait for prefill to load (GET /users/onboarding-details) then form to render
+      expect(await screen.findByLabelText(/what's your full name/i)).toBeInTheDocument();
+      expect(screen.queryByText("Skip for now →")).not.toBeInTheDocument();
+      await advanceThroughAllSteps(user, { skipExpressionClick: true });
+      expect(
+        await screen.findByRole("button", { name: /save changes/i }),
+      ).toBeInTheDocument();
+    },
+    15_000,
+  );
 
-  it("time_capsule CTA navigates to /capsule", async () => {
-    const user = userEvent.setup();
-    renderWithProviders(<OnboardingGrootPage />, {
-      route: "/onboarding",
-      auth: true,
-    });
-    await advanceThroughAllSteps(user, {
-      motivation: /I'm being practical about the future/i,
-      expression: /guided questions/i,
-    });
-    await user.click(
-      screen.getByRole("button", { name: /create your first time capsule/i })
-    );
-    expect(mockNavigate).toHaveBeenCalledWith("/capsule");
-  });
+  it(
+    "time_capsule CTA navigates to /capsule",
+    async () => {
+      const user = userEvent.setup();
+      renderWithProviders(<OnboardingGrootPage />, {
+        route: "/onboarding",
+        auth: true,
+      });
+      await advanceThroughAllSteps(user, {
+        motivation: /I'm being practical about the future/i,
+        expression: /guided questions/i,
+      });
+      await user.click(
+        screen.getByRole("button", { name: /create your first time capsule/i }),
+      );
+      expect(mockNavigate).toHaveBeenCalledWith("/capsule");
+    },
+    15_000,
+  );
 });

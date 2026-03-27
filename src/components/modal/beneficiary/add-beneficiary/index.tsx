@@ -9,6 +9,7 @@ import useFetcher from "@/hooks/use-fetcher";
 import endpoint from "@/api/endpoint";
 import { toast } from "sonner";
 import { mutate } from "swr";
+import { SETTINGS_BENEFICIARIES_SWR_KEY } from "@/components/modal/settings/beneficiary&group/beneficiaries-list-swr-key";
 import { LightBulbIcon } from "@/components/icons";
 import { SelectGroup, type GroupSearchResultItem } from "./select-group";
 
@@ -37,7 +38,7 @@ export function AddBeneficiary() {
         groups: selectedGroups.map((g) => g.id),
       });
       if (result.success) {
-        await mutate(`${endpoint.beneficiaries}?page=1`);
+        await mutate(SETTINGS_BENEFICIARIES_SWR_KEY);
         toast.success(result?.message);
         close?.("add-beneficiary");
       }
@@ -51,7 +52,7 @@ export function AddBeneficiary() {
         <div>
           <h4 className="modal-title">Invite beneficiary</h4>
         </div>
-        <div className="flex gap-3 rounded-xl border border-[#FDDFC5] bg-[#E26A2408] p-3 text-[#E26A24]">
+        <div className="flex gap-3 rounded-xl border border-[#FDDFC5] bg-v3-brand-strong/[0.03] p-3 text-v3-brand-strong">
           <div className="size-5">
             <LightBulbIcon width={18} height={18} />
           </div>

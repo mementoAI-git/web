@@ -1,6 +1,6 @@
-import { Link } from "react-router-dom";
-import { PlusIcon } from "@/components/icons";
+import { Link, useNavigate } from "react-router-dom";
 import { useModal } from "@/hooks/use-modal";
+import { PlusIcon } from "@/components/icons";
 import { useStore } from "@/hooks/use-store";
 import { useMemo } from "react";
 import useSWR from "swr";
@@ -57,6 +57,7 @@ function getGreeting(): string {
 
 export default function WelcomeSection() {
   const { user } = useStore();
+  const navigate = useNavigate();
   const { open } = useModal();
   const greeting = useMemo(() => getGreeting(), []);
   const { data: statsData } = useSWR(endpoint.userStats);
@@ -126,8 +127,7 @@ export default function WelcomeSection() {
             <div className="flex gap-2 sm:gap-3 items-center">
               <button
                 onClick={() => open("create-memory")}
-                className="flex items-center gap-1.5 sm:gap-2 h-9 sm:h-12 px-3 sm:px-5 rounded-full font-inter font-medium text-xs sm:text-sm text-white cursor-pointer transition-opacity hover:opacity-90"
-                style={{ backgroundColor: "#FF5E00" }}
+                className="flex items-center gap-1.5 sm:gap-2 h-9 sm:h-12 px-3 sm:px-5 rounded-full bg-v3-brand-strong font-inter font-medium text-xs sm:text-sm text-white cursor-pointer transition-opacity hover:opacity-90"
               >
                 <PlusIcon className="size-3 sm:size-4 shrink-0" />
                 <span className="whitespace-nowrap">Add story/item</span>
@@ -182,9 +182,9 @@ export default function WelcomeSection() {
               >
                 View insights
               </button>
-              <Link
-                to="/explore"
-                className="flex items-center gap-1.5 h-10 px-4 bg-white/80 rounded-full font-inter font-semibold text-sm text-gray-800 whitespace-nowrap transition-opacity hover:opacity-90 border border-black/10"
+              <span
+                className="inline-flex items-center gap-1.5 h-10 px-4 bg-white/80 rounded-full font-inter font-semibold text-sm text-gray-800 whitespace-nowrap border border-black/10 opacity-50 cursor-not-allowed pointer-events-none select-none"
+                aria-disabled="true"
               >
                 <svg
                   width="16"
@@ -193,6 +193,7 @@ export default function WelcomeSection() {
                   fill="none"
                   xmlns="http://www.w3.org/2000/svg"
                   className="shrink-0"
+                  aria-hidden
                 >
                   <circle
                     cx="8"
@@ -235,7 +236,7 @@ export default function WelcomeSection() {
                   />
                 </svg>
                 Connect apps
-              </Link>
+              </span>
             </div>
           </div>
         </div>
@@ -284,7 +285,7 @@ export default function WelcomeSection() {
         {/* Beneficiaries */}
         <button
           type="button"
-          onClick={() => open("settings", { activeTab: "beneficiary" })}
+          onClick={() => navigate("/settings/beneficiary")}
           className="relative rounded-2xl overflow-hidden h-[99px] block hover:opacity-95 transition-opacity col-span-2 lg:col-span-1 border border-[#E3E3E3] w-full text-left"
         >
           <img

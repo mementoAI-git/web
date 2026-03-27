@@ -7,6 +7,7 @@ import { TimesIcon, PlusIcon } from "@/components/icons";
 import endpoint from "@/api/endpoint";
 import { cn } from "@/utility";
 import type { IBeneficiary, IPersona, IUser } from "@/utility/interface";
+import { formatEnrichmentPriorityForDisplay } from "@/features/enrichment/enrichment-categories";
 
 /** Fields used to build summary and category lists (persona + legacy context) */
 type MemoryInsightSource = {
@@ -59,6 +60,12 @@ function buildSummaryFromContext(ctx: MemoryInsightSource | undefined): string |
   }
   if (ctx.self_description?.trim()) {
     parts.push(ctx.self_description.trim());
+  }
+  if (ctx.current_priority) {
+    const cpPretty = formatEnrichmentPriorityForDisplay(ctx.current_priority);
+    if (cpPretty.trim()) {
+      parts.push(`Currently focused on: ${cpPretty.trim()}`);
+    }
   }
   const bullets: string[] = [];
   if (ctx.important_notes?.length) bullets.push(...ctx.important_notes);
@@ -182,7 +189,7 @@ export default function MemoryInsightsModal() {
               <div className="flex items-center gap-4">
                 <button
                   onClick={() => open("add-beneficiary")}
-                  className="size-12 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center hover:border-[#FF5E00] hover:bg-orange-50 transition-colors shrink-0"
+                  className="size-12 shrink-0 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center transition-colors hover:border-v3-brand-strong hover:bg-v3-brand-strong/10"
                 >
                   <PlusIcon className="size-4 text-v3-icon-neutral" />
                 </button>
@@ -221,7 +228,7 @@ export default function MemoryInsightsModal() {
                 <div className="flex flex-col items-center gap-1.5 w-14">
                   <button
                     onClick={() => open("add-beneficiary")}
-                    className="size-12 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center hover:border-[#FF5E00] hover:bg-orange-50 transition-colors"
+                    className="flex size-12 items-center justify-center rounded-full border-2 border-dashed border-gray-300 transition-colors hover:border-v3-brand-strong hover:bg-v3-brand-strong/10"
                   >
                     <PlusIcon className="size-4 text-v3-icon-neutral" />
                   </button>

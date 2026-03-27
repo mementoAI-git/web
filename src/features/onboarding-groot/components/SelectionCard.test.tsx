@@ -62,7 +62,7 @@ describe("SelectionCard", () => {
     );
     const checkmark = screen.getByText("✓");
     expect(checkmark).toBeInTheDocument();
-    expect(checkmark.closest("span")).toHaveClass("bg-[#E26A24]");
+    expect(checkmark.closest("span")).toHaveClass("bg-v3-brand-strong");
   });
 
   it("does not show checkmark when not selected", () => {

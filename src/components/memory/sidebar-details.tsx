@@ -51,7 +51,7 @@ function Content({ memory, onClose, isMobile = false, source }: ContentProps) {
   }
 
   return (
-    <div className="size-full space-y-2 sm:space-y-3 p-3 sm:p-4 lg:p-6">
+    <div className="h-full w-full max-w-[249px] mx-auto md:mx-0 space-y-2 sm:space-y-3 p-3 sm:p-4 lg:p-6">
       <div className="flex justify-end">
         <div
           className="p-3 cursor-pointer ml-auto inline-block hover:bg-sand-3 rounded-lg"
@@ -152,7 +152,9 @@ export default function SidebarDetails({ memory, onClose, isOpen, source }: Side
       </Sheet>
 
       <div
-        className={`h-full hidden md:block border-l border-[#EAECF0] transition-all duration-300 ease-in-out overflow-hidden ${isOpen ? 'w-60' : 'w-0'
+        className={`h-full hidden md:flex md:flex-col shrink-0 border-l border-[#EAECF0] transition-all duration-300 ease-in-out overflow-hidden ${isOpen
+          ? "w-[249px]"
+          : "w-0 max-w-0"
           }`}
       >
         <Content memory={memory} onClose={onClose} isMobile={false} source={source} />

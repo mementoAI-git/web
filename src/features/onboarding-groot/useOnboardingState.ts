@@ -8,7 +8,7 @@ import type {
   PassionKey,
   LifeContextKey,
   MotivationType,
-  DimensionKey,
+  EnrichmentCategory,
   ExpressionMode,
 } from "./types";
 
@@ -65,7 +65,7 @@ function loadState(): OnboardingState | null {
     if (parsed.isComplete) return null;
     const migrated = migrateState(parsed);
     if (migrated) return migrated;
-    return parsed as OnboardingState;
+    return parsed as unknown as OnboardingState;
   } catch {
     return null;
   }
@@ -123,13 +123,7 @@ export function useOnboardingState(options: UseOnboardingStateOptions = {}) {
     setState((prev) => ({ ...prev, isComplete: true }));
   }, []);
 
-  const skip = useCallback(() => {
-    try {
-      localStorage.setItem(storageKeys.onboardingSkipped, "true");
-    } catch {
-      // ignore
-    }
-  }, []);
+  const skip = useCallback(() => {}, []);
 
   const canAdvance = useCallback((step: OnboardingStep): boolean => {
     switch (step) {
@@ -238,7 +232,7 @@ export function useOnboardingState(options: UseOnboardingStateOptions = {}) {
     setPassionsFreetext: (v: string) => updateField("passionsFreetext", v),
     setLifeContext: (v: LifeContextKey[]) => updateField("lifeContext", v),
     setMotivationType: (v: MotivationType | null) => updateField("motivationType", v),
-    setPriorityDimensions: (v: DimensionKey[]) =>
+    setPriorityDimensions: (v: EnrichmentCategory[]) =>
       updateField("priorityDimensions", v),
     setExpressionMode: (v: ExpressionMode[]) => updateField("expressionMode", v),
   };

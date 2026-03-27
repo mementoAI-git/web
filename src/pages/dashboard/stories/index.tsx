@@ -104,8 +104,7 @@ export default function StoriesPage() {
               </button>
               <button
                 onClick={() => open("create-memory")}
-                className="flex items-center gap-1.5 sm:gap-2 h-9 sm:h-12 px-3 sm:px-5 rounded-full font-inter font-semibold text-xs sm:text-sm text-white cursor-pointer transition-opacity hover:opacity-90"
-                style={{ backgroundColor: "#FF5E00" }}
+                className="flex items-center gap-1.5 sm:gap-2 h-9 sm:h-12 px-3 sm:px-5 rounded-full bg-v3-brand-strong font-inter font-semibold text-xs sm:text-sm text-white cursor-pointer transition-opacity hover:opacity-90"
               >
                 <PlusIcon className="size-3 sm:size-4 shrink-0" />
                 <span className="whitespace-nowrap">Add memory</span>

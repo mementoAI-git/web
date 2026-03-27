@@ -106,7 +106,7 @@ export function OnboardingShell({
                 key={stepNum}
                 className={cn(
                   "h-2.5 w-2.5 rounded-full transition-colors",
-                  (isCompleted || isCurrent) && "bg-[#E26A24]",
+                  (isCompleted || isCurrent) && "bg-v3-brand-strong",
                   !isCompleted && !isCurrent && "bg-[#E4D9CC]"
                 )}
               />
@@ -143,10 +143,10 @@ export function OnboardingShell({
             onClick={onAdvance}
             disabled={!canAdvance || isSaving}
             className={cn(
-              "rounded-xl px-6 py-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E26A24] focus-visible:ring-offset-2",
-              canAdvance
-                ? "bg-[#E26A24] text-white hover:bg-[#C55A1D]"
-                : "cursor-not-allowed bg-[#E4D9CC] text-[#7A6A5E]"
+              "rounded-xl px-6 py-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-v3-brand-strong focus-visible:ring-offset-2",
+              canAdvance && !isSaving
+                ? "bg-v3-brand-strong text-white hover:opacity-90"
+                : "cursor-not-allowed bg-[#E4D9CC] text-[#7A6A5E]",
             )}
           >
             {isSaving ? "Saving..." : advanceLabel}

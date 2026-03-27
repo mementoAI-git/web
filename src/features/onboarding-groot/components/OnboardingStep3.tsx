@@ -1,12 +1,12 @@
 import { SelectionCard } from "./SelectionCard";
-import { DIMENSION_OPTIONS } from "../types";
-import type { DimensionKey } from "../types";
+import { ONBOARDING_DIMENSION_OPTIONS } from "../types";
+import type { EnrichmentCategory } from "../types";
 
-const ALL_DIMENSION_KEYS = DIMENSION_OPTIONS.map((o) => o.value);
+const ALL_ONBOARDING_DIMENSION_KEYS = ONBOARDING_DIMENSION_OPTIONS.map((o) => o.value);
 
 export interface OnboardingStep3Props {
-  priorityDimensions: DimensionKey[];
-  onDimensionsChange: (dimensions: DimensionKey[]) => void;
+  priorityDimensions: EnrichmentCategory[];
+  onDimensionsChange: (dimensions: EnrichmentCategory[]) => void;
   validationErrors?: { dimensions?: string };
 }
 
@@ -15,9 +15,9 @@ export function OnboardingStep3({
   onDimensionsChange,
   validationErrors = {},
 }: OnboardingStep3Props) {
-  const allSelected = priorityDimensions.length === ALL_DIMENSION_KEYS.length;
+  const allSelected = priorityDimensions.length === ALL_ONBOARDING_DIMENSION_KEYS.length;
 
-  const toggleDimension = (value: DimensionKey) => {
+  const toggleDimension = (value: EnrichmentCategory) => {
     if (priorityDimensions.includes(value)) {
       onDimensionsChange(priorityDimensions.filter((d) => d !== value));
     } else {
@@ -26,7 +26,7 @@ export function OnboardingStep3({
   };
 
   const handleAllClick = () => {
-    onDimensionsChange(allSelected ? [] : [...ALL_DIMENSION_KEYS]);
+    onDimensionsChange(allSelected ? [] : [...ALL_ONBOARDING_DIMENSION_KEYS]);
   };
 
   return (
@@ -40,7 +40,7 @@ export function OnboardingStep3({
         </p>
       </div>
       <div className="flex flex-col gap-3">
-        {DIMENSION_OPTIONS.map((opt) => (
+        {ONBOARDING_DIMENSION_OPTIONS.map((opt) => (
           <SelectionCard
             key={opt.value}
             value={opt.value}
