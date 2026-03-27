@@ -1,42 +1,61 @@
-name: Memento frontend Dev
+name: Memento Frontend Dev
 
 on:
   push:
-    branches: [ "dev" ]
+    branches: ["dev"]
 
 jobs:
-  deploy-dev:
-    name: Deploy to Dev
+  build:
+    name: Build
     runs-on: ubuntu-latest
+
     steps:
-    - name: Deploy and restart application (Dev)
-      uses: appleboy/ssh-action@v0.1.7
-      with:
-        host: ${{ secrets.SSH_HOST }}
-        username: ${{ secrets.SSH_USERNAME }}
-        key: ${{ secrets.SSH_PRIVATE_KEY }}
-        port: 22
-        script: |
-          set -e
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-          export NVM_DIR="$HOME/.nvm"
-          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-          
-          # Set the project directory
-          project_path=${{ secrets.DEV_PROJECT_PATH }}
-          deploy_path=${{ secrets.DEV_DEPLOY_PATH }}
-          
-          # Navigate to project directory
-          cd $project_path
-          
-          # Stash any local changes and pull latest code
-          git stash
-          git pull origin dev
-          
-          # Install dependencies and compile
-          pnpm install
-          pnpm build
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: latest
 
-          # Copy the build files to the deployment directory
-          cp -r dist/* $deploy_path/
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: pnpm
 
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+        env:
+          VITE_API_BASE_URL: ${{ secrets.DEV_VITE_API_BASE_URL }}
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-${{ github.sha }}
+          path: dist/
+          retention-days: 7
+
+  deploy:
+    name: Deploy
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dist-${{ github.sha }}
+          path: dist/
+
+      - name: Rsync dist to server
+        run: |
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > /tmp/deploy_key
+          chmod 600 /tmp/deploy_key
+          rsync -avz --delete \
+            -e "ssh -i /tmp/deploy_key -p 22 -o StrictHostKeyChecking=no" \
+            ./dist/ \
+            ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}:${{ secrets.DEV_DEPLOY_PATH }}/
