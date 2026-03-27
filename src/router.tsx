@@ -31,6 +31,7 @@ import {
   SettingsPage,
   NotFoundPage,
   ErrorPage,
+  OAuthCallbackPage,
 } from "@/pages";
 import TimeCapsulePage from "./pages/dashboard/time-capsule-new";
 
@@ -47,6 +48,7 @@ export const router = createBrowserRouter([
       { path: "verify-email", element: <VerifyEmailPage /> },
       { path: "confirm-email", element: <ConfirmEmailPage /> },
       { path: "set-password", element: <SetPasswordPage /> },
+      { path: "oauth/callback/:provider", element: <OAuthCallbackPage /> },
       { path: "accept-invite/:id", element: <AcceptInvitePage /> },
       { path: "post/:id", element: <PostPage /> },
       {

@@ -1,6 +1,5 @@
-import { Link, useSearchParams } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
-import { useEffect } from "react";
 import endpoint from "@/api/endpoint";
 import { Button } from "@/components/Buttons";
 import { Passwordinput, Textinput } from "@/components/Form";
@@ -29,9 +28,6 @@ const schema = yup.object().shape({
       /[!@#$%^&*(),.?":{}|<>]/,
       "Password must contain at least one special character",
     ),
-  invite_code: yup
-    .string().required("Invite code is required").trim()
-    .min(6, "Invite code must be at least 6 characters long"),
 });
 
 const initial = {
@@ -39,15 +35,13 @@ const initial = {
   password: "",
   first_name: "",
   last_name: "",
-  invite_code: ""
 };
 
 export default function RegisterPage() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const { trigger, isMutating } = useFetcher(endpoint.register);
 
-  const { handleSubmit, getField, setValues } = useForm({
+  const { handleSubmit, getField } = useForm({
     schema,
     initial,
     async onSubmit(payload) {
@@ -59,18 +53,11 @@ export default function RegisterPage() {
     },
   });
 
-  useEffect(() => {
-    const code = searchParams.get("code");
-    if (code) {
-      setValues((prev) => ({ ...prev, invite_code: code }));
-    }
-  }, [searchParams, setValues]);
-
   return (
     <AuthLayout
       title="Create account"
       subtitle="Create a new account on Memento to start crafting your stories."
-      // include_auth_socials
+      include_auth_socials
       footer={
         <span className="font-inter text-center text-gray-600">
           Already have an account?
@@ -109,11 +96,6 @@ export default function RegisterPage() {
         />
 
         <Passwordinput label="Password" {...getField("password")} />
-        <Textinput
-          label="Invite code"
-          placeholder="123456"
-          {...getField("invite_code")}
-        />
         <Button
           loading={isMutating}
           type="submit"
@@ -122,7 +104,7 @@ export default function RegisterPage() {
         />
 
         <small className="px-3 text-center font-inter text-sm leading-5 text-gray-800">
-          By clicking “Create account” you agree to the
+          By clicking "Create account" you agree to the
           <span className="text-primary underline">Terms of Use</span> and
           <span className="text-primary underline"> Privacy Policy</span>
         </small>
@@ -130,4 +112,3 @@ export default function RegisterPage() {
     </AuthLayout>
   );
 }
-
