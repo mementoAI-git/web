@@ -1,5 +1,6 @@
 import type { ComponentType, SVGProps } from "react";
 import { useNavigate } from "react-router-dom";
+import { cn } from "@/utility";
 
 interface SideBarItemProps {
   Icon?: ComponentType<SVGProps<SVGSVGElement>>;
@@ -39,7 +40,10 @@ export default function SideBarItem({
   return (
     <div
       onClick={handleClick}
-      className={`${active && "active"} flex items-center group/item gap-3 rounded-[8px] w-full h-10 bg-transparent cursor-pointer px-3 py-2 transition-colors`}
+      className={cn(
+        "flex h-10 w-full cursor-pointer items-center gap-3 rounded-[8px] bg-transparent px-3 py-2 transition-colors group/item",
+        active && "active",
+      )}
       style={{
         backgroundColor: active ? activeBg : undefined,
         border: active ? `1px solid ${activeBorder}` : "1px solid transparent",

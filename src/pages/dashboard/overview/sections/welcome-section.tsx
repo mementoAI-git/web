@@ -2,11 +2,12 @@ import { Link, useNavigate } from "react-router-dom";
 import { useModal } from "@/hooks/use-modal";
 import { PlusIcon } from "@/components/icons";
 import { useStore } from "@/hooks/use-store";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import useSWR from "swr";
 import endpoint from "@/api/endpoint";
 import bgCard from "@/assets/icon/folder/empty-get-started.png";
 import brightButtonIcon from "@/assets/icon/noto_bright-button.svg";
+import moonfaceIcon from "@/assets/icon/moonface.svg";
 import zapIcon from "@/assets/icon/zap.svg";
 import trophyIcon from "@/assets/icon/noto_trophy.svg";
 // deprecated backgrounds — kept for reference
@@ -20,19 +21,10 @@ import streakCardBg from "@/assets/icon/backgrounds/side cards for streak.png";
 import blueFolderIcon from "@/assets/icon/blue folder 2.svg";
 import surferIcon from "@/assets/icon/noto_man-surfing-medium-skin-tone.svg";
 import hourglassIcon from "@/assets/icon/noto_hourglass-not-done.svg";
-
-/** Greetings that are implied questions; use "?" after the name instead of "." */
-const QUESTION_GREETINGS = new Set([
-  "Can't sleep,",
-  "Burning the midnight oil,",
-  "Keeping a late night,",
-  "Late night session,",
-  "Still going,",
-]);
-
-export function getGreetingPunctuation(greeting: string): "." | "?" {
-  return QUESTION_GREETINGS.has(greeting) ? "?" : ".";
-}
+import {
+  getGreetingPunctuation,
+  shouldUseBrightWelcomeIcon,
+} from "./welcome-section-helpers";
 
 function getGreeting(): string {
   const hour = new Date().getHours();
@@ -60,6 +52,15 @@ export default function WelcomeSection() {
   const navigate = useNavigate();
   const { open } = useModal();
   const greeting = useMemo(() => getGreeting(), []);
+  const [useBrightWelcomeIcon, setUseBrightWelcomeIcon] = useState(() =>
+    shouldUseBrightWelcomeIcon(),
+  );
+  useEffect(() => {
+    const sync = () => setUseBrightWelcomeIcon(shouldUseBrightWelcomeIcon());
+    sync();
+    const id = window.setInterval(sync, 60_000);
+    return () => window.clearInterval(id);
+  }, []);
   const { data: statsData } = useSWR(endpoint.userStats);
   const { data: memoriesStatsData } = useSWR(endpoint.memoriesStats);
   const { data: storiesListData } = useSWR(`${endpoint.stories}?page=1&limit=1`);
@@ -85,7 +86,7 @@ export default function WelcomeSection() {
       <div className="space-y-2">
         <div className="flex items-center gap-3">
           <img
-            src={brightButtonIcon}
+            src={useBrightWelcomeIcon ? brightButtonIcon : moonfaceIcon}
             alt=""
             className="size-7 sm:size-10 shrink-0"
           />
@@ -169,7 +170,7 @@ export default function WelcomeSection() {
                   Enrichment score
                 </span>
               </div>
-              <p className="font-inter text-sm text-gray-700 leading-relaxed">
+              <p className="font-inter text-xs text-gray-700 leading-relaxed">
                 Share stories &amp; files to build context. Link apps to enrich
                 your Memento.
               </p>

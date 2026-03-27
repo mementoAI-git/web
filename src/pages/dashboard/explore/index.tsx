@@ -15,7 +15,7 @@ export default function ExplorePage() {
     <div className="page-viewport hide-scrollbar">
       <div className="container">
         {data?.data?.length > 0 && (
-          <div className="flex flex-col gap-4 py-6 sm:gap-10 md:py-12">
+          <div className="flex flex-col gap-4 pt-6 sm:gap-10 md:pt-12">
             <div className="font-garamond md:space-y-2">
               <h2 className="text-2xl text-sand-12 md:text-[32px] md:font-normal md:leading-[48px] md:text-gray-950/90">
                 Continue reflecting
@@ -30,7 +30,7 @@ export default function ExplorePage() {
               </Slider>
             </div>
 
-            <div className="hidden items-stretch gap-6 overflow-x-auto pb-4 hide-scrollbar md:flex">
+            <div className="hidden items-stretch gap-6 overflow-x-auto hide-scrollbar md:flex">
               {data.data.map(({ prompt }, index) => (
                 <PromptCard key={prompt._id ?? index} {...prompt} />
               ))}

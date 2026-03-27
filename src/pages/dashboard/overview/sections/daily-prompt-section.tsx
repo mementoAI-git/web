@@ -68,7 +68,7 @@ export default function DailyPromptSection() {
       )}
 
       {/* Prompt text */}
-      <p className="font-garamond text-2xl text-v3-text-strong text-left leading-relaxed flex-1 flex flex-wrap">
+      <p className="font-inter text-[20px] font-medium text-v3-text-strong text-left leading-relaxed flex-1 flex flex-wrap">
         {activePrompt.title}
       </p>
 

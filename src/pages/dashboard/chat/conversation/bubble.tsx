@@ -14,7 +14,7 @@ interface IBubbleProps {
   text?: string
   duration?: number
   is_voice?: boolean
-  /** Compact variant for sidebar: 16px regular text, user messages use bg-v3-fill-weak */
+  /** Compact variant for sidebar: 14px body text, user messages use bg-v3-fill-weak */
   compact?: boolean
   /** ISO timestamp from the server; shown when valid */
   createdAt?: string
@@ -134,13 +134,19 @@ export default function Bubble({
               </p>
             </div>
           ) : null}
-          <span className={cn(
-            "text-sand-12",
-            compact ? "font-georgia text-base font-normal" : "font-georgia md:text-xl"
-          )}>
+          <span
+            className={cn(
+              "text-sand-12 font-georgia text-[14px] font-normal leading-relaxed [&_p]:m-0 [&_p]:text-[14px]",
+            )}
+          >
             <Markdown
               remarkPlugins={[remarkGfm]}
               components={{
+                p: ({ children, ...props }) => (
+                  <p className="text-[14px] leading-relaxed" {...props}>
+                    {children}
+                  </p>
+                ),
                 a: ({ href, children, ...props }) => (
                   <a
                     href={href}
@@ -149,7 +155,7 @@ export default function Bubble({
                     className={cn(
                       "mem-tags text-sm! inline-flex items-center max-w-full normal-case! cursor-pointer!",
                       "text-primary dark:text-primary/80 hover:opacity-80",
-                      "truncate break-all"
+                      "truncate break-all",
                     )}
                     {...props}
                   >

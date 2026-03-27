@@ -1,13 +1,17 @@
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Sheet } from "react-modal-sheet";
 import endpoint from "@/api/endpoint";
-import { SearchIcon, TimesIcon } from "@/components/icons";
 import Spinner from "@/components/spinner";
 import { getRecentMemories, isEmpty } from "@/utility";
 import { useModal } from "@/hooks/use-modal";
 import { useStore } from "@/hooks/use-store";
 import useSWR from "swr";
+import {
+  Card,
+  IconSearch,
+  SearchField,
+} from "@heroui/react";
 import SearchItem from "./search-item";
 
 function SearchModalContent() {
@@ -48,13 +52,16 @@ function SearchModalContent() {
       revalidateOnFocus: false,
       onSuccess: () => {
         abortControllerRef.current = null;
-      }
-    }
+      },
+    },
   );
-  const searchResults = searchData?.data?.docs || [];
+  const docs = searchData?.data?.docs;
+  const searchResults = useMemo(() => docs ?? [], [docs]);
 
   const showRecent = !debouncedSearch.trim();
-  const showEmpty = debouncedSearch.trim() ? (!isLoading && isEmpty(searchResults)) : isEmpty(recentMemories);
+  const showEmpty = debouncedSearch.trim()
+    ? !isLoading && isEmpty(searchResults)
+    : isEmpty(recentMemories);
 
   const handleClearSearch = useCallback(() => {
     setSearch("");
@@ -63,39 +70,53 @@ function SearchModalContent() {
     inputRef.current?.focus();
   }, []);
 
-  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
-    const results = showRecent ? recentMemories : searchResults;
-    const maxIndex = results.length - 1;
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      const results = showRecent ? recentMemories : searchResults;
+      const maxIndex = results.length - 1;
 
-    switch (e.key) {
-      case "ArrowDown":
-        e.preventDefault();
-        setActiveIndex(prev => (prev < maxIndex ? prev + 1 : 0));
-        break;
-      case "ArrowUp":
-        e.preventDefault();
-        setActiveIndex(prev => (prev > 0 ? prev - 1 : maxIndex));
-        break;
-      case "Enter":
-        if (activeIndex >= 0 && results[activeIndex]) {
-          const memory = results[activeIndex];
-          navigate(`/memories/${memory?._id}`);
-          close?.("search-memory");
-        }
-        break;
-      case "Escape":
-        if (search) {
-          handleClearSearch();
-        } else {
-          close?.("search-memory");
-        }
-        break;
-    }
-  }, [activeIndex, showRecent, recentMemories, searchResults, search, handleClearSearch, close, navigate]);
+      switch (e.key) {
+        case "ArrowDown":
+          e.preventDefault();
+          setActiveIndex((prev) => (prev < maxIndex ? prev + 1 : 0));
+          break;
+        case "ArrowUp":
+          e.preventDefault();
+          setActiveIndex((prev) => (prev > 0 ? prev - 1 : maxIndex));
+          break;
+        case "Enter":
+          if (activeIndex >= 0 && results[activeIndex]) {
+            const memory = results[activeIndex];
+            navigate(`/memories/${memory?._id}`);
+            close?.("search-memory");
+          }
+          break;
+        case "Escape":
+          if (search) {
+            handleClearSearch();
+          } else {
+            close?.("search-memory");
+          }
+          break;
+      }
+    },
+    [
+      activeIndex,
+      showRecent,
+      recentMemories,
+      searchResults,
+      search,
+      handleClearSearch,
+      close,
+      navigate,
+    ],
+  );
 
   useEffect(() => {
     if (activeIndex >= 0 && resultsRef.current) {
-      const activeElement = resultsRef.current.querySelector(`#search-item-${activeIndex}`);
+      const activeElement = resultsRef.current.querySelector(
+        `#search-item-${activeIndex}`,
+      );
       if (activeElement) {
         activeElement.scrollIntoView({ block: "nearest", behavior: "smooth" });
       }
@@ -103,42 +124,46 @@ function SearchModalContent() {
   }, [activeIndex]);
 
   return (
-    <div className="size-full bg-white flex flex-col max-h-[600px]">
-      {/* Search Input Section - Prominent at Top */}
-      <div className="p-6 pb-4 border-b border-gray-100">
-        <div className="flex items-center gap-3 bg-gray-50 rounded-xl border border-gray-200 px-4 py-3.5 focus-within:border-gray-300 focus-within:bg-white transition-all">
-          <SearchIcon className="text-gray-400 shrink-0 w-5 h-5" />
-          <input
-            ref={inputRef}
-            role="combobox"
-            aria-expanded={!showEmpty}
-            aria-controls="search-results"
-            aria-activedescendant={activeIndex >= 0 ? `search-item-${activeIndex}` : undefined}
-            aria-autocomplete="list"
-            aria-label="Search memories"
-            placeholder="Start searching..."
-            className="flex-1 outline-0 bg-transparent text-base placeholder:text-gray-400"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            onKeyDown={handleKeyDown}
-            autoFocus
-          />
-          {search && !isLoading && (
-            <button
-              onClick={handleClearSearch}
-              aria-label="Clear search"
-              className="shrink-0 text-gray-400 hover:text-gray-600 transition-colors"
-            >
-              <TimesIcon className="size-5" />
-            </button>
-          )}
-          {isLoading && (
-            <Spinner loading className="!size-5 !text-gray-400 shrink-0" />
-          )}
-        </div>
+    <div className="flex size-full max-h-[600px] flex-col bg-white">
+      <div className="border-b border-v3-stroke-weak p-6 pb-4">
+        <SearchField
+          value={search}
+          onChange={setSearch}
+          className="w-full"
+          aria-label="Search memories"
+        >
+          <SearchField.Group className="w-full">
+            <SearchField.SearchIcon />
+            <SearchField.Input
+              ref={inputRef}
+              role="combobox"
+              aria-expanded={!showEmpty}
+              aria-controls="search-results"
+              aria-activedescendant={
+                activeIndex >= 0 ? `search-item-${activeIndex}` : undefined
+              }
+              aria-autocomplete="list"
+              placeholder="Start searching..."
+              className="font-inter"
+              onKeyDown={handleKeyDown}
+              autoFocus
+            />
+            {Boolean(search) && !isLoading ? (
+              <SearchField.ClearButton
+                aria-label="Clear search"
+                onPress={handleClearSearch}
+              />
+            ) : null}
+            {isLoading ? (
+              <Spinner
+                loading
+                className="!size-5 shrink-0 !text-v3-text-weak"
+              />
+            ) : null}
+          </SearchField.Group>
+        </SearchField>
       </div>
 
-      {/* Results Section */}
       <div
         id="search-results"
         ref={resultsRef}
@@ -147,16 +172,20 @@ function SearchModalContent() {
         className="flex-1 overflow-y-auto px-6 py-4"
       >
         {showEmpty ? (
-          <div className="animate-fadeIn flex items-center justify-center h-full">
-            {/* Empty State - Inline */}
+          <div className="animate-fadeIn flex h-full items-center justify-center">
             <div className="flex flex-col items-center justify-center py-12 text-center">
-              <div className="bg-gray-100 rounded-full p-3 mb-3">
-                <SearchIcon className="text-gray-400 w-8 h-8" />
+              <div className="mb-3 rounded-full bg-v3-fill-weaker p-3">
+                <IconSearch
+                  width={32}
+                  height={32}
+                  className="text-v3-text-weak"
+                  aria-hidden
+                />
               </div>
-              <div className="mb-2 font-inter text-base font-semibold text-gray-900">
+              <div className="mb-2 font-inter text-base font-semibold text-v3-text-strong">
                 {showRecent ? "No recent memories" : "No memories found"}
               </div>
-              <div className="font-inter text-sm text-gray-500 max-w-xs">
+              <div className="max-w-xs font-inter text-sm text-v3-text-weak">
                 {showRecent
                   ? "Your recently opened memories will appear here."
                   : "Try searching for a different keyword."}
@@ -164,13 +193,17 @@ function SearchModalContent() {
             </div>
           </div>
         ) : showRecent ? (
-          <div className="space-y-4 animate-fadeIn">
-            <h3 className="font-inter font-semibold text-sm text-gray-500 uppercase tracking-wide">
+          <div className="animate-fadeIn space-y-4">
+            <h3 className="font-inter text-sm font-semibold uppercase tracking-wide text-v3-text-weak">
               Recently Opened
             </h3>
             <div className="space-y-1">
               {recentMemories.map((memory, i) => (
-                <div key={memory._id} className="animate-slideIn" style={{ animationDelay: `${i * 30}ms` }}>
+                <div
+                  key={memory._id}
+                  className="animate-slideIn"
+                  style={{ animationDelay: `${i * 30}ms` }}
+                >
                   <SearchItem
                     memory={memory}
                     searchTerm=""
@@ -182,23 +215,32 @@ function SearchModalContent() {
             </div>
           </div>
         ) : (
-          <div className="space-y-4 animate-fadeIn">
-            <h3 className="font-inter font-semibold text-sm text-gray-500 uppercase tracking-wide" role="status" aria-live="polite">
-              Stories • {searchResults.length} {searchResults.length === 1 ? 'result' : 'results'}
+          <div className="animate-fadeIn space-y-4">
+            <h3
+              className="font-inter text-sm font-semibold uppercase tracking-wide text-v3-text-weak"
+              role="status"
+              aria-live="polite"
+            >
+              Stories • {searchResults.length}{" "}
+              {searchResults.length === 1 ? "result" : "results"}
             </h3>
             {isLoading ? (
               <div className="space-y-2">
                 {Array(3)
                   .fill(0)
                   .map((_, i) => (
-                    <div key={i} className="animate-slideIn" style={{ animationDelay: `${i * 30}ms` }}>
-                      <div className="flex items-center gap-3 py-3 px-3 rounded-lg animate-pulse">
-                        <div className="size-12 shrink-0 bg-gray-200 rounded-lg" />
+                    <div
+                      key={i}
+                      className="animate-slideIn"
+                      style={{ animationDelay: `${i * 30}ms` }}
+                    >
+                      <div className="flex animate-pulse items-center gap-3 rounded-lg px-3 py-3">
+                        <div className="size-12 shrink-0 rounded-lg bg-v3-fill-weak" />
                         <div className="flex-1 space-y-2">
-                          <div className="bg-gray-200 rounded h-4 w-[70%]" />
-                          <div className="bg-gray-200 rounded h-3 w-[90%]" />
+                          <div className="h-4 w-[70%] rounded bg-v3-fill-weak" />
+                          <div className="h-3 w-[90%] rounded bg-v3-fill-weak" />
                         </div>
-                        <div className="bg-gray-200 rounded h-3 w-16 shrink-0" />
+                        <div className="h-3 w-16 shrink-0 rounded bg-v3-fill-weak" />
                       </div>
                     </div>
                   ))}
@@ -206,7 +248,11 @@ function SearchModalContent() {
             ) : (
               <div className="space-y-1">
                 {searchResults.map((memory, i) => (
-                  <div key={memory._id} className="animate-slideIn" style={{ animationDelay: `${i * 30}ms` }}>
+                  <div
+                    key={memory._id}
+                    className="animate-slideIn"
+                    style={{ animationDelay: `${i * 30}ms` }}
+                  >
                     <SearchItem
                       memory={memory}
                       searchTerm={debouncedSearch.trim()}
@@ -228,16 +274,20 @@ export function SearchMemoriesV2() {
   const { close } = useModal();
 
   return (
-    <div className="w-full h-full">
+    <div className="h-full w-full">
       <div
-        className="hidden sm:flex w-full h-full items-center justify-center"
+        className="hidden h-full w-full items-center justify-center sm:flex"
         onClick={() => close?.("search-memory")}
       >
         <div
-          className="w-full !min-w-[640px] !max-w-[640px] modal-container !bg-white !p-0 !rounded-2xl overflow-hidden"
+          className="flex w-full justify-center px-4"
           onClick={(e) => e.stopPropagation()}
         >
-          <SearchModalContent />
+          <Card className="w-full max-w-[640px] min-w-[min(100%,640px)] overflow-hidden rounded-2xl border border-v3-stroke-weak bg-white p-0 shadow-[0px_8px_40px_rgba(23,11,0,0.12)]">
+            <Card.Content className="p-0">
+              <SearchModalContent />
+            </Card.Content>
+          </Card>
         </div>
       </div>
       <Sheet
@@ -248,7 +298,7 @@ export function SearchMemoriesV2() {
         snapPoints={[0.5, 0.75, 1]}
       >
         <Sheet.Container className="bg-white">
-          <Sheet.Header className="bg-white rounded-3xl" />
+          <Sheet.Header className="rounded-3xl bg-white" />
           <Sheet.Content className="bg-white px-0 pb-6">
             <SearchModalContent />
           </Sheet.Content>

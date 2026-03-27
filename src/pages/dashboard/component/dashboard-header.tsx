@@ -1,5 +1,11 @@
 import zapIcon from "@/assets/icon/zap.svg";
-import { PanelLeftClose, PanelLeftOpen, Pencil, Share2 } from "lucide-react";
+import {
+  PanelLeft,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Pencil,
+  Share2,
+} from "lucide-react";
 import dayjs from "dayjs";
 import { useEffect, useState } from "react";
 import { useModal } from "@/hooks/use-modal";
@@ -8,6 +14,7 @@ import StreakTracker from "@/components/streak-tracker";
 import { useLocation, useMatch } from "react-router-dom";
 import { cn } from "@/utility";
 import { MenuIcon, SearchIcon } from "@/components/icons";
+import { IconSearch, InputGroup, Kbd } from "@heroui/react";
 import { useConversationChrome } from "@/contexts/conversation-chrome";
 import { MemoryDropdown } from "@/pages/dashboard/chat/conversation/dropdown";
 
@@ -80,6 +87,23 @@ export function DashboardHeader({
       : path;
   const { user, headerTitle } = useStore();
   const { open } = useModal();
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (!e.metaKey && !e.ctrlKey) return;
+      if (e.key !== "k" && e.key !== "K") return;
+      const el = e.target as HTMLElement | null;
+      if (!el) return;
+      const tag = el.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || el.isContentEditable) {
+        return;
+      }
+      e.preventDefault();
+      open("search-memory");
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [open]);
 
   const showConversationNav = Boolean(chatConversationMatch && chrome);
 
@@ -181,28 +205,66 @@ export function DashboardHeader({
     );
   }
 
+  const railExpanded = mdUp ? !mainSidebarCollapsed : mobileSidebarOpen;
+  const toggleMainSidebar = onMainSidebarToggle ?? onMenuClick;
+
   return (
     <div className="w-full h-[60px] fixed top-0 left-0 right-0 sm:relative flex items-center bg-white border-b border-black/5 px-4 sm:px-8">
       <header className="w-full flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <span className="font-inter font-semibold text-base text-gray-900 capitalize whitespace-nowrap">
+        <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
+          <button
+            type="button"
+            onClick={toggleMainSidebar}
+            className={cn(convIconBtn, "hidden md:flex")}
+            aria-expanded={railExpanded}
+            aria-label={railExpanded ? "Collapse sidebar" : "Expand sidebar"}
+          >
+            <PanelLeft className="size-5" strokeWidth={1.75} aria-hidden />
+          </button>
+          <span className="min-w-0 truncate font-inter font-semibold text-base text-gray-900 capitalize">
             {truncateText(defaultHeaderTitle[pathForTitle] || headerTitle, 32)}
           </span>
         </div>
 
         <div className="flex items-center gap-4">
-          <div
-            onClick={() => open("search-memory")}
-            className="h-9 w-[320px] hidden lg:block"
-          >
-            <div className="relative group/search">
-              <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-gray-400 group-focus-within/search:text-primary transition-colors" />
-              <input
+          <div className="hidden h-10 w-[320px] lg:block">
+            <InputGroup
+              fullWidth
+              onClick={() => open("search-memory")}
+              className={cn(
+                "h-10 cursor-pointer rounded-full border border-v3-stroke-weak bg-white",
+                "shadow-[0px_2px_12px_rgba(23,11,0,0.06)] transition-shadow",
+                "hover:shadow-[0px_4px_16px_rgba(23,11,0,0.08)]",
+                "has-[input:focus-visible]:ring-2 has-[input:focus-visible]:ring-v3-brand-strong has-[input:focus-visible]:ring-offset-2",
+              )}
+              aria-label="Open search"
+            >
+              <InputGroup.Prefix className="pl-3.5">
+                <IconSearch
+                  width={16}
+                  height={16}
+                  className="text-v3-text-weak"
+                  aria-hidden
+                />
+              </InputGroup.Prefix>
+              <InputGroup.Input
                 readOnly
+                tabIndex={0}
                 placeholder="Search"
-                className="w-full h-9 pl-9 pr-4 bg-gray-50 border border-transparent rounded-lg text-sm transition-all focus:bg-white focus:border-black/5 outline-none cursor-pointer"
+                aria-haspopup="dialog"
+                className="cursor-pointer font-inter text-sm text-v3-text-strong placeholder:text-v3-text-weaker"
               />
-            </div>
+              <InputGroup.Suffix className="pr-2.5">
+                <span className="inline-flex items-center gap-1" aria-hidden>
+                  <Kbd className="rounded-md border border-v3-stroke-weak bg-v3-fill-weaker px-1.5 py-0.5 font-inter text-[10px] font-medium text-v3-text-strong">
+                    <Kbd.Abbr keyValue="command" />
+                  </Kbd>
+                  <Kbd className="rounded-md border border-v3-stroke-weak bg-v3-fill-weaker px-1.5 py-0.5 font-inter text-[10px] font-medium text-v3-text-strong">
+                    <Kbd.Content>K</Kbd.Content>
+                  </Kbd>
+                </span>
+              </InputGroup.Suffix>
+            </InputGroup>
           </div>
 
           <div className="flex items-center gap-2">

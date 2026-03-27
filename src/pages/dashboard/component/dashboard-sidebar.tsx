@@ -37,14 +37,6 @@ export function DashboardSideBar({ onClose }: DashboardSideBarProps) {
 
       <div className="mt-auto px-4 pb-6 flex flex-col gap-1">
         <div className="h-px w-full my-4" />
-        <SideBarItem
-          emoji="📝"
-          title="Drop a feedback"
-          onClick={() => {
-            open("create-feedback");
-            onClose?.();
-          }}
-        />
         {bottomNavigations.map((n, i) => (
           <SideBarItem
             {...n}
@@ -53,6 +45,14 @@ export function DashboardSideBar({ onClose }: DashboardSideBarProps) {
             onClick={onClose}
           />
         ))}
+        <SideBarItem
+          emoji="📝"
+          title="Drop a feedback"
+          onClick={() => {
+            open("create-feedback");
+            onClose?.();
+          }}
+        />
       </div>
     </div>
   );

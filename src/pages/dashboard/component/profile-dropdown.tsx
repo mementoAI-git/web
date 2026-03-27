@@ -1,21 +1,38 @@
 import avatar from "@/assets/image/avatar.png";
-import { DropdownIcon } from "@/components/Dropdown";
 import { useStore } from "@/hooks/use-store";
+import { cn } from "@/utility";
 import { useNavigate } from "react-router-dom";
 import {
-  UserCircleIcon,
-  LogoutIcon,
-  ChevronDownIcon,
-} from "@/components/icons";
+  Dropdown,
+  DropdownItem,
+  DropdownMenu,
+  DropdownPopover,
+  DropdownSection,
+  DropdownTrigger,
+  Separator,
+} from "@heroui/react";
+import {
+  ChevronDown,
+  ChevronRight,
+  CircleHelp,
+  LogOut,
+  Settings,
+  Twitter,
+  UsersRound,
+} from "lucide-react";
+
+const CONTACT_URL = "https://tally.so/r/kdb0Jj";
+const X_URL = "https://x.com/MementoAI";
+const DISCORD_URL = "https://discord.gg/RzR7xJSwYg";
+
+const lucideItemIcon = "size-4 shrink-0 text-v3-text-strong";
+
+const itemRowClass =
+  "flex min-h-11 w-full cursor-pointer items-center gap-3 rounded-lg px-2.5 py-2 font-inter text-sm text-v3-text-strong outline-none data-[focused]:bg-v3-fill-weaker";
+
 export function ProfileDropdown({ hideName = false }: { hideName?: boolean }) {
   const { user, unsetAuth } = useStore();
   const navigate = useNavigate();
-
-  const handleSelect = (value: string) => {
-    if (value === "profile") {
-      navigate("/settings/general");
-    }
-  };
 
   const handleLogout = () => {
     unsetAuth?.();
@@ -23,38 +40,108 @@ export function ProfileDropdown({ hideName = false }: { hideName?: boolean }) {
   };
 
   return (
-    <div>
-      <DropdownIcon
-        items={[
-          {
-            label: "My Profile",
-            value: "profile",
-            startIcon: <UserCircleIcon strokeWidth={2} width={16} />,
-          },
-        ]}
-        onSelect={handleSelect}
-        footerItem={
-          <li
-            onClick={handleLogout}
-            className="flex cursor-pointer items-center gap-2.5 px-2.5 py-1.5 hover:bg-[#F97066]/8 text-[#F97066]"
-          >
-            <LogoutIcon width={16} />
-            <span className="font-inter text-sm">Logout</span>
-          </li>
-        }
+    <Dropdown>
+      <DropdownTrigger
+        type="button"
+        className={cn(
+          "flex items-center gap-2 rounded-lg bg-transparent px-4 py-2.5 outline-none transition-colors",
+          "hover:bg-v3-fill-weak data-[pressed]:bg-v3-fill-weak",
+          "data-[focus-visible]:ring-2 data-[focus-visible]:ring-v3-brand-strong data-[focus-visible]:ring-offset-2",
+        )}
       >
-        <div className="px-4 py-2.5 flex items-center gap-2 justify-center">
-          <img src={avatar} alt="Avatar" className="size-5 object-contain" />
-          {!hideName && (
-            <>
-              <span className="font-inter font-semibold text-sm text-gray-800">
-                {user?.first_name ?? "User"}
-              </span>
-              <ChevronDownIcon className="size-3.5 text-gray-400" />
-            </>
-          )}
-        </div>
-      </DropdownIcon>
-    </div>
+        <img src={avatar} alt="" className="size-5 shrink-0 object-contain" />
+        {!hideName && (
+          <>
+            <span className="font-inter text-sm font-semibold text-gray-800">
+              {user?.first_name ?? "User"}
+            </span>
+            <ChevronDown
+              className="size-3.5 shrink-0 text-gray-400"
+              strokeWidth={2}
+              aria-hidden
+            />
+          </>
+        )}
+      </DropdownTrigger>
+      <DropdownPopover
+        placement="bottom start"
+        offset={8}
+        className={cn(
+          "min-w-[260px] rounded-xl border border-v3-stroke-weak bg-white p-1",
+          "shadow-[0px_4px_24px_rgba(23,11,0,0.08)]",
+        )}
+      >
+        <DropdownMenu
+          selectionMode="none"
+          aria-label="Account menu"
+          className="outline-none"
+        >
+          <DropdownSection className="mb-0">
+            <DropdownItem
+              id="settings"
+              textValue="Settings"
+              onAction={() => navigate("/settings")}
+              className={itemRowClass}
+            >
+              <Settings className={lucideItemIcon} strokeWidth={2} />
+              <span className="flex-1 text-left">Settings</span>
+            </DropdownItem>
+            <DropdownItem
+              id="logout"
+              textValue="Log out"
+              onAction={handleLogout}
+              className={itemRowClass}
+            >
+              <LogOut className={lucideItemIcon} strokeWidth={2} />
+              <span className="flex-1 text-left">Log out</span>
+            </DropdownItem>
+          </DropdownSection>
+          <Separator className="my-1 bg-v3-stroke-weak" />
+          <DropdownSection className="mb-0">
+            <DropdownItem
+              id="contact"
+              textValue="Contact us"
+              href={CONTACT_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={itemRowClass}
+            >
+              <CircleHelp className={lucideItemIcon} strokeWidth={2} />
+              <span className="flex-1 text-left">Contact us</span>
+              <ChevronRight
+                className="size-4 shrink-0 text-v3-text-weak"
+                strokeWidth={2}
+                aria-hidden
+              />
+            </DropdownItem>
+          </DropdownSection>
+          <Separator className="my-1 bg-v3-stroke-weak" />
+          <DropdownSection className="mb-0">
+            <DropdownItem
+              id="follow-x"
+              textValue="Follow Us"
+              href={X_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={itemRowClass}
+            >
+              <Twitter className={lucideItemIcon} strokeWidth={2} />
+              <span className="flex-1 text-left">Follow Us</span>
+            </DropdownItem>
+            <DropdownItem
+              id="discord"
+              textValue="Join Community"
+              href={DISCORD_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={itemRowClass}
+            >
+              <UsersRound className={lucideItemIcon} strokeWidth={2} />
+              <span className="flex-1 text-left">Join Community</span>
+            </DropdownItem>
+          </DropdownSection>
+        </DropdownMenu>
+      </DropdownPopover>
+    </Dropdown>
   );
 }

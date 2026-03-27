@@ -118,10 +118,10 @@ export function DashboardChatSidebar({ onClose }: DashboardChatSidebarProps) {
   const isTyping = startingConversation || isSending;
 
   return (
-    <div className="flex h-full flex-col">
-      <div className="flex shrink-0 items-center justify-between pl-[13px] pr-2 py-2">
+    <div className="flex h-full flex-col bg-v3-fill-weak">
+      <div className="flex shrink-0 items-center justify-between bg-v3-fill-weak pl-[13px] pr-2 py-2">
         <h2 className="flex items-center gap-2 font-inter text-base font-medium text-v3-text-strong">
-          Home Chat
+          Chat
         </h2>
         <button
           type="button"
@@ -134,7 +134,7 @@ export function DashboardChatSidebar({ onClose }: DashboardChatSidebarProps) {
       </div>
       <div
         ref={scrollRef}
-        className="flex min-h-0 flex-1 flex-col overflow-y-auto px-2"
+        className="flex min-h-0 flex-1 flex-col overflow-y-auto bg-v3-fill-weak px-2"
       >
         <div className="space-y-4 py-4">
           {messages.map((m, i) => (
@@ -144,7 +144,7 @@ export function DashboardChatSidebar({ onClose }: DashboardChatSidebarProps) {
           {aiMessage && <Bubble role="ai" text={aiMessage} compact />}
         </div>
       </div>
-      <div className="shrink-0 px-2 py-2">
+      <div className="shrink-0 bg-v3-fill-weak px-2 py-2">
         <DashboardChatInput onSend={handleSend} loading={isTyping} />
       </div>
     </div>

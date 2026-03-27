@@ -1,6 +1,6 @@
 "use client";
 
-import { type KeyboardEvent, useCallback, useRef, useState } from "react";
+import { type KeyboardEvent, useCallback, useId, useRef, useState } from "react";
 import { isEmpty } from "lodash";
 import { ArrowUp } from "lucide-react";
 import Spinner from "@/components/spinner";
@@ -22,6 +22,7 @@ interface DashboardChatInputProps {
 export function DashboardChatInput({ onSend, loading = false }: DashboardChatInputProps) {
   const [text, setText] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const inputId = useId();
 
   const handleSend = useCallback(() => {
     const trimmed = text.trim();
@@ -49,8 +50,12 @@ export function DashboardChatInput({ onSend, loading = false }: DashboardChatInp
   }, []);
 
   return (
-    <div className="flex w-full min-w-0 flex-col gap-2 rounded-xl border border-transparent bg-v3-fill-weak p-2 focus-within:border-orange/70">
+    <div className="flex w-full min-w-0 flex-col gap-2 rounded-xl border border-solid border-transparent bg-v3-fill-weak p-2 transition-[border-color] duration-150 focus-within:border-[var(--v3-brand-strong)]">
+      <label htmlFor={inputId} className="sr-only">
+        Chat message
+      </label>
       <textarea
+        id={inputId}
         ref={textareaRef}
         value={text}
         onChange={(e) => setText(e.target.value)}

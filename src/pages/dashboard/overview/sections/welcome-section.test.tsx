@@ -1,7 +1,11 @@
-import { describe, it, expect } from "vitest";
+import { afterEach, beforeEach, describe, it, expect, vi } from "vitest";
 import { screen } from "@testing-library/react";
 import { renderWithProviders } from "@/test";
-import { getGreetingPunctuation, default as WelcomeSection } from "./welcome-section";
+import { default as WelcomeSection } from "./welcome-section";
+import {
+  getGreetingPunctuation,
+  shouldUseBrightWelcomeIcon,
+} from "./welcome-section-helpers";
 
 describe("WelcomeSection", () => {
   it("renders View insights button", () => {
@@ -19,6 +23,33 @@ describe("WelcomeSection", () => {
       "aria-disabled",
       "true",
     );
+  });
+});
+
+describe("shouldUseBrightWelcomeIcon", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("uses bright icon from 6:00 local through 16:59", () => {
+    vi.setSystemTime(new Date("2026-03-27T06:00:00"));
+    expect(shouldUseBrightWelcomeIcon()).toBe(true);
+    vi.setSystemTime(new Date("2026-03-27T12:00:00"));
+    expect(shouldUseBrightWelcomeIcon()).toBe(true);
+    vi.setSystemTime(new Date("2026-03-27T16:59:00"));
+    expect(shouldUseBrightWelcomeIcon()).toBe(true);
+  });
+
+  it("uses moonface from 17:00 through 5:59", () => {
+    vi.setSystemTime(new Date("2026-03-27T17:00:00"));
+    expect(shouldUseBrightWelcomeIcon()).toBe(false);
+    vi.setSystemTime(new Date("2026-03-27T23:00:00"));
+    expect(shouldUseBrightWelcomeIcon()).toBe(false);
+    vi.setSystemTime(new Date("2026-03-28T05:59:00"));
+    expect(shouldUseBrightWelcomeIcon()).toBe(false);
   });
 });
 

@@ -58,7 +58,7 @@ function RecentActivityItem({
         />
       </div>
       <div className="min-w-0 flex-1">
-        <p className="truncate font-inter text-sm font-medium text-v3-text-strong">
+        <p className="truncate font-inter text-[14px] font-medium text-v3-text-strong">
           {activity.description}
         </p>
         <p className="font-inter text-xs text-v3-text-weak">
@@ -98,7 +98,7 @@ export default function RecentActivitiesSection() {
         </h2>
         <Link
           to="/stories"
-          className="shrink-0 font-inter text-sm font-medium text-orange underline hover:no-underline"
+          className="shrink-0 font-inter text-sm font-medium text-v3-fill-strong underline hover:no-underline"
         >
           See all
         </Link>
