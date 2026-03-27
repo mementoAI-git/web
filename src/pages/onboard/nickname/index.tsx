@@ -26,7 +26,7 @@ export default function NicknamePage() {
       if (user && setUser) {
         setUser({ ...user, nickname: trimmed });
       }
-      navigate("/onboarding/chat");
+      navigate("/onboarding/chat", { state: { nickname: trimmed } });
     } catch (error) {
       console.error("Failed to update profile:", error);
     }
