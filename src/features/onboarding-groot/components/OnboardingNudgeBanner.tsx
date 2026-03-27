@@ -17,6 +17,11 @@ export function OnboardingNudgeBanner() {
   const skipped = user?.onboarding_status === "skipped";
   if (complete || !skipped) return null;
 
+  /** New flow: /onboard → welcome → nickname → /onboarding/chat; resume chat if we already have a name. */
+  const continueSetupPath = user?.nickname?.trim()
+    ? "/onboarding/chat"
+    : "/onboard";
+
   return (
     <div
       className="mb-4 flex w-full max-w-full items-center justify-between gap-4 rounded border-l-4 border-l-v3-stroke-strong bg-v3-fill-weak px-4 py-1"
@@ -28,7 +33,7 @@ export function OnboardingNudgeBanner() {
       <div className="flex shrink-0 items-center gap-2">
         <button
           type="button"
-          onClick={() => navigate("/onboard")}
+          onClick={() => navigate(continueSetupPath)}
           className="rounded text-sm font-medium text-v3-brand-strong transition-colors hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-v3-brand-strong focus-visible:ring-offset-2"
         >
           Continue setup →

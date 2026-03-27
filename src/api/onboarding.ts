@@ -5,9 +5,9 @@ import type {
   AgeBand,
   MementoFor,
   PassionKey,
-  DimensionKey,
   ExpressionMode,
 } from "@/features/onboarding-groot/types";
+import { migrateLegacyPriorityList } from "@/features/enrichment/enrichment-categories";
 
 // --- API types (users module) ---
 
@@ -25,6 +25,7 @@ export interface OnboardingDetailsUser {
 export interface OnboardingDetailsPersona {
   join_reasons: string[];
   audience: string[];
+  /** Known keys or legacy onboarding keys; may include comma-separated entries in one string */
   current_priority: string[];
   communication_style: string[];
   prefered_communication_style: string;
@@ -157,7 +158,7 @@ export function mapOnboardingDetailsToState(
     mementoFor: (persona.audience ?? []) as MementoFor[],
     passions,
     passionsFreetext: otherReasons.join(", "),
-    priorityDimensions: (persona.current_priority ?? []) as DimensionKey[],
+    priorityDimensions: migrateLegacyPriorityList(persona.current_priority ?? []),
     expressionMode: persona.prefered_communication_style
       ? ([persona.prefered_communication_style] as ExpressionMode[])
       : [],

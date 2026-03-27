@@ -1,11 +1,12 @@
 /**
- * Host Chat — shared types (aligned with onboarding life dimensions).
+ * Host Chat — shared types (aligned with Enrichment Score categories).
+ * @see docs/MEMENTO_ENRICHMENT_SCORE.md
  */
-import type { DimensionKey } from "@/features/onboarding-groot/types";
-import { DIMENSION_OPTIONS } from "@/features/onboarding-groot/types";
+import type { EnrichmentCategory } from "@/features/enrichment/enrichment-categories";
+import { enrichmentCategoryLabel } from "@/features/enrichment/enrichment-categories";
 
-/** Life area for deep-dive mode (same keys as onboarding `DimensionKey`). */
-export type LifeDimension = DimensionKey;
+/** Life area for deep-dive mode — same keys as `EnrichmentCategory` / onboarding priorities. */
+export type LifeDimension = EnrichmentCategory;
 
 export type ChatMode = "open" | "deep_dive";
 
@@ -17,7 +18,7 @@ export interface NudgePayload {
 }
 
 export function dimensionLabel(key: LifeDimension): string {
-  return DIMENSION_OPTIONS.find((o) => o.value === key)?.label ?? key;
+  return enrichmentCategoryLabel(key);
 }
 
 /** Stub enrichment until `GET …/enrichment` (or similar) exists. */

@@ -1,5 +1,5 @@
 import zapIcon from "@/assets/icon/zap.svg";
-import { Home, PanelLeftClose, PanelLeftOpen, Pencil, Share2 } from "lucide-react";
+import { PanelLeftClose, PanelLeftOpen, Pencil, Share2 } from "lucide-react";
 import dayjs from "dayjs";
 import { useEffect, useState } from "react";
 import { useModal } from "@/hooks/use-modal";
@@ -46,8 +46,6 @@ function useMdViewport() {
 
 interface DashboardHeaderProps {
   onMenuClick?: () => void;
-  chatOpen?: boolean;
-  onChatToggle?: () => void;
   /** Mobile drawer open (main left nav) */
   mobileSidebarOpen?: boolean;
   /** Desktop: main left nav width collapsed */
@@ -65,8 +63,6 @@ const convHeaderActionGhost =
 
 export function DashboardHeader({
   onMenuClick,
-  chatOpen,
-  onChatToggle,
   mobileSidebarOpen = false,
   mainSidebarCollapsed = false,
   onMainSidebarToggle,
@@ -210,33 +206,6 @@ export function DashboardHeader({
           </div>
 
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={onChatToggle}
-              className={cn(
-                "flex size-8 cursor-pointer items-center justify-center rounded-lg transition-colors",
-                chatOpen
-                  ? "bg-gradient-to-br from-[#FF8944] to-[#FF3CDF] hover:opacity-90"
-                  : "bg-transparent hover:bg-v3-fill-weak",
-              )}
-              aria-label={chatOpen ? "Close chat" : "Open chat"}
-              aria-pressed={chatOpen}
-            >
-              {chatOpen ? (
-                <Home
-                  className="size-5 text-white"
-                  strokeWidth={1.75}
-                  aria-hidden
-                />
-              ) : (
-                <Home
-                  className="size-5 text-v3-icon-neutral opacity-65"
-                  strokeWidth={1.75}
-                  aria-hidden
-                />
-              )}
-            </button>
-
             <StreakTracker>
               <div className="flex shrink-0 cursor-pointer items-center gap-1.5 rounded-lg bg-transparent px-2.5 py-1.5 transition-colors hover:bg-v3-fill-weak">
                 <img

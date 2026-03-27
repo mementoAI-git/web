@@ -71,6 +71,8 @@
   --v3-icon-disabled: rgba(23, 11, 0, 0.1);
   /* v3 brand accent (CTAs, links, focus accents) — distinct from --v3-fill-strong (dark UI fill) */
   --v3-brand-strong: #ff5e00;
+  /* v3 full-page / sheet background (e.g. host onboarding chat) */
+  --v3-bg: #ffffff;
 
   --color-weak: #1e1e1eb2;
   --color-strong: #1e1e1ee5;
@@ -198,6 +200,7 @@
   --color-v3-text-disabled: var(--v3-text-disabled);
   --color-v3-icon-disabled: var(--v3-icon-disabled);
   --color-v3-brand-strong: var(--v3-brand-strong);
+  --color-v3-bg: var(--v3-bg);
 
   --color-weak: var(--color-weak);
   --color-strong: var(--color-strong);

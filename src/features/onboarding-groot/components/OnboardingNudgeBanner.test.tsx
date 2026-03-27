@@ -61,12 +61,20 @@ describe("OnboardingNudgeBanner", () => {
     expect(banner?.className).toMatch(/\bborder-l-v3-stroke-strong\b/);
   });
 
-  it("navigates to /onboard when Continue setup clicked", async () => {
+  it("navigates to /onboard when Continue setup clicked and no nickname yet", async () => {
     const user = userEvent.setup();
     mockedUser = { onboarding_status: "skipped" };
     renderWithProviders(<OnboardingNudgeBanner />, { route: "/overview", auth: true });
     await user.click(screen.getByText(/continue setup/i));
     expect(mockNavigate).toHaveBeenCalledWith("/onboard");
+  });
+
+  it("navigates to /onboarding/chat when skipped but nickname exists", async () => {
+    const user = userEvent.setup();
+    mockedUser = { onboarding_status: "skipped", nickname: "Alex" };
+    renderWithProviders(<OnboardingNudgeBanner />, { route: "/overview", auth: true });
+    await user.click(screen.getByText(/continue setup/i));
+    expect(mockNavigate).toHaveBeenCalledWith("/onboarding/chat");
   });
 
   it("dismisses when X clicked", async () => {

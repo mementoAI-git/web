@@ -1,12 +1,8 @@
 import type { IUser, IUserPreferences } from "@/utility/interface";
-import {
-  DIMENSION_OPTIONS,
-  MOTIVATION_OPTIONS,
-  PASSION_OPTIONS,
-} from "@/features/onboarding-groot/types";
+import { MOTIVATION_OPTIONS, PASSION_OPTIONS } from "@/features/onboarding-groot/types";
+import { formatEnrichmentPriorityTokenForDisplay } from "@/features/enrichment/enrichment-categories";
 
 const PASSION_BY_VALUE = new Map(PASSION_OPTIONS.map((o) => [o.value, o.label]));
-const DIMENSION_BY_VALUE = new Map(DIMENSION_OPTIONS.map((o) => [o.value, o.label]));
 
 const TONE_LABELS: Record<string, string> = {
   upbeat: "an upbeat, energetic",
@@ -57,13 +53,12 @@ function paragraphInterests(raw: string): string {
   return `When I went through onboarding, I shared that ${raw.trim()}.`;
 }
 
-/** First-person paragraph: story priorities (dimensions). */
+/** First-person paragraph: story priorities (enrichment categories or legacy keys). */
 function paragraphPriorities(raw: string): string {
   const tokens = splitCsv(raw);
   if (tokens.length === 0) return "";
-  const mapped = tokens.map((t) => DIMENSION_BY_VALUE.get(t) ?? t);
-  const allKeys = tokens.every((t) => DIMENSION_BY_VALUE.has(t));
-  const core = allKeys ? formatOxfordList(mapped) : raw.trim();
+  const mapped = tokens.map((t) => formatEnrichmentPriorityTokenForDisplay(t));
+  const core = formatOxfordList(mapped);
   return `The parts of my story I'm prioritizing right now include ${core}.`;
 }
 

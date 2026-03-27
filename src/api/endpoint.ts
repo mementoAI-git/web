@@ -85,6 +85,8 @@ export default {
   onboardingDetails: "/users/onboarding-details",
   onboarding: "/users/onboarding",
   onboardingSkip: "/users/onboarding/skip",
+  /** Host onboarding chat — streams like `/ai/prompt`; trailer JSON for chips / completion */
+  hostOnboardingChatPrompt: "/users/onboarding/chat/prompt",
 
   // sentry
   tunnel: `${import.meta.env.VITE_API_BASE_URL}/sentry_tunnel`,

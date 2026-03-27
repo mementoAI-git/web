@@ -9,7 +9,7 @@ import {
   MEMENTO_FOR_OPTIONS,
   PASSION_OPTIONS,
   MOTIVATION_OPTIONS,
-  DIMENSION_OPTIONS,
+  ONBOARDING_DIMENSION_OPTIONS,
   EXPRESSION_OPTIONS,
 } from "@/features/onboarding-groot/types";
 import { getPrimaryCTA, getStep5Body } from "@/features/onboarding-groot/adaptive";
@@ -33,7 +33,6 @@ export default function MiscPage() {
   const [validationAttempted, setValidationAttempted] = useState(false);
   const [passionsInputValue, setPassionsInputValue] = useState("");
   const [mementoForInputValue, setMementoForInputValue] = useState("");
-  const [dimensionsInputValue, setDimensionsInputValue] = useState("");
 
   const {
     state,
@@ -46,8 +45,6 @@ export default function MiscPage() {
     addMementoForFreetext,
     removeMementoForFreetext,
     setPriorityDimensions,
-    addDimensionsFreetext,
-    removeDimensionsFreetext,
     setPassions,
     addPassionFreetext,
     removePassionFreetext,
@@ -87,7 +84,7 @@ export default function MiscPage() {
     }
   };
 
-  const toggleDimension = (v: (typeof DIMENSION_OPTIONS)[0]["value"]) => {
+  const toggleDimension = (v: (typeof ONBOARDING_DIMENSION_OPTIONS)[0]["value"]) => {
     if (state.priorityDimensions.includes(v)) {
       setPriorityDimensions(state.priorityDimensions.filter((d) => d !== v));
     } else {
@@ -130,7 +127,6 @@ export default function MiscPage() {
               ? "all"
               : (state.motivationType ?? ""),
           priorityDimensions: state.priorityDimensions,
-          dimensionsFreetext: state.dimensionsFreetext.length > 0 ? state.dimensionsFreetext.join(", ") : undefined,
           expressionMode: state.expressionMode,
           isComplete: true,
           stepReached: 7,
@@ -144,11 +140,7 @@ export default function MiscPage() {
                 ? [state.motivationType]
                 : [],
           self_description: state.passions.join(", ") || state.passionsFreetext.join(", "),
-          current_priority:
-            [
-              ...state.priorityDimensions.filter((d) => d !== "something_else"),
-              ...state.dimensionsFreetext,
-            ].join(", ") || "",
+          current_priority: state.priorityDimensions.join(", ") || "",
         });
         await mutate(endpoint.profile);
         if (user && setUser) {
@@ -457,14 +449,8 @@ export default function MiscPage() {
           {validationAttempted && state.priorityDimensions.length < 1 && (
             <p className="text-sm text-[#C55A1D]">Pick at least one.</p>
           )}
-          {validationAttempted &&
-            state.priorityDimensions.includes("something_else") &&
-            state.priorityDimensions.length === 1 &&
-            state.dimensionsFreetext.length < 1 && (
-              <p className="text-sm text-[#C55A1D]">Please add at least one.</p>
-            )}
           <div className="flex flex-wrap gap-2">
-            {DIMENSION_OPTIONS.map((opt) => (
+            {ONBOARDING_DIMENSION_OPTIONS.map((opt) => (
               <OnboardSelectionCard
                 key={opt.value}
                 value={opt.value}
@@ -472,49 +458,9 @@ export default function MiscPage() {
                 icon={opt.icon || undefined}
                 isSelected={state.priorityDimensions.includes(opt.value)}
                 onClick={() => toggleDimension(opt.value)}
-                variant={opt.value === "something_else" ? "add" : undefined}
               />
             ))}
           </div>
-          {state.priorityDimensions.includes("something_else") && (
-            <div className="mt-2 space-y-2">
-              {state.dimensionsFreetext.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {state.dimensionsFreetext.map((item, i) => (
-                    <span
-                      key={`${item}-${i}`}
-                      className="inline-flex items-center gap-1 rounded-lg border border-[#E26A24]/20 bg-[#E26A24]/[0.06] px-2 py-1 text-sm text-[#4A4A4A]"
-                    >
-                      {item}
-                      <button
-                        type="button"
-                        onClick={() => removeDimensionsFreetext(i)}
-                        className="ml-0.5 rounded p-0.5 text-[#4A4A4A]/60 hover:bg-[#E26A24]/10 hover:text-[#4A4A4A]"
-                        aria-label={`Remove ${item}`}
-                      >
-                        ×
-                      </button>
-                    </span>
-                  ))}
-                </div>
-              )}
-              <input
-                type="text"
-                value={dimensionsInputValue}
-                onChange={(e) => setDimensionsInputValue(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    addDimensionsFreetext(dimensionsInputValue);
-                    setDimensionsInputValue("");
-                  }
-                }}
-                placeholder="e.g. legacy, creativity... (press Enter to add)"
-                maxLength={200}
-                className="w-full rounded-xl border-[1.5px] border-[#E4D9CC] bg-[#FFFCF8] px-4 py-3 text-[#2C1F15] placeholder:text-[#B0A098] focus:border-[#C8956C] focus:outline-none"
-              />
-            </div>
-          )}
         </div>
       )}
 

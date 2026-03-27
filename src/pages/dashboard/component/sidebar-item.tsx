@@ -4,6 +4,8 @@ import { useNavigate } from "react-router-dom";
 interface SideBarItemProps {
   Icon?: ComponentType<SVGProps<SVGSVGElement>>;
   icon?: string;
+  /** Shown in the icon column instead of Icon / image URL */
+  emoji?: string;
   title: string;
   link?: string;
   active?: boolean;
@@ -17,6 +19,7 @@ export default function SideBarItem({
   onClick,
   Icon,
   icon,
+  emoji,
   title,
   color = "#F06037",
 }: SideBarItemProps) {
@@ -49,7 +52,11 @@ export default function SideBarItem({
       }}
     >
       <div className="size-5 flex items-center justify-center transition-colors">
-        {icon ? (
+        {emoji ? (
+          <span className="text-lg leading-none select-none" aria-hidden>
+            {emoji}
+          </span>
+        ) : icon ? (
           <img src={icon} alt={title} className="size-5 object-contain" />
         ) : Icon ? (
           <Icon className="size-5" style={{ color: active ? activeTextColor : "#667085" }} />

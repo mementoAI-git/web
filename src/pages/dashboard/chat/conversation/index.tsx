@@ -42,7 +42,7 @@ import {
   monthKeysFromMessages,
 } from "@/features/host-chat";
 
-const DEFAULT_DEEP_DIVE_NUDGE_DIMENSION: LifeDimension = "people_relationships";
+const DEFAULT_DEEP_DIVE_NUDGE_DIMENSION: LifeDimension = "relationships_people";
 
 type StreamlinePayload = {
   text: string;

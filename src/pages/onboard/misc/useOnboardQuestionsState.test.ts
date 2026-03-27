@@ -93,22 +93,12 @@ describe("useOnboardQuestionsState", () => {
     expect(result.current.canAdvance(2)).toBe(true);
   });
 
-  it("adds dimensions freetext and requires it when only something_else selected (step 5)", () => {
+  it("requires at least one enrichment priority dimension (step 5)", () => {
     const { result } = renderHook(() => useOnboardQuestionsState());
     expect(result.current.canAdvance(5)).toBe(false);
 
     act(() => {
-      result.current.setPriorityDimensions(["something_else"]);
-    });
-    expect(result.current.canAdvance(5)).toBe(false);
-
-    act(() => {
-      result.current.addDimensionsFreetext("legacy");
-    });
-    expect(result.current.canAdvance(5)).toBe(true);
-
-    act(() => {
-      result.current.setPriorityDimensions(["people_relationships", "something_else"]);
+      result.current.setPriorityDimensions(["relationships_people"]);
     });
     expect(result.current.canAdvance(5)).toBe(true);
   });

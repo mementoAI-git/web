@@ -17,6 +17,7 @@ import {
   OnboardLayout,
   OnboardingGrootLayout,
   OnboardingGrootPage,
+  HostOnboardingChatPage,
   WelcomePage,
   OnboardPage,
   OverviewPage,
@@ -51,7 +52,10 @@ export const router = createBrowserRouter([
       {
         path: "onboarding",
         element: <OnboardingGrootLayout />,
-        children: [{ index: true, element: <OnboardingGrootPage /> }],
+        children: [
+          { index: true, element: <OnboardingGrootPage /> },
+          { path: "chat", element: <HostOnboardingChatPage /> },
+        ],
       },
       {
         path: "onboard",

@@ -8,7 +8,7 @@ import type {
   PassionKey,
   LifeContextKey,
   MotivationType,
-  DimensionKey,
+  EnrichmentCategory,
   ExpressionMode,
 } from "./types";
 
@@ -232,7 +232,7 @@ export function useOnboardingState(options: UseOnboardingStateOptions = {}) {
     setPassionsFreetext: (v: string) => updateField("passionsFreetext", v),
     setLifeContext: (v: LifeContextKey[]) => updateField("lifeContext", v),
     setMotivationType: (v: MotivationType | null) => updateField("motivationType", v),
-    setPriorityDimensions: (v: DimensionKey[]) =>
+    setPriorityDimensions: (v: EnrichmentCategory[]) =>
       updateField("priorityDimensions", v),
     setExpressionMode: (v: ExpressionMode[]) => updateField("expressionMode", v),
   };

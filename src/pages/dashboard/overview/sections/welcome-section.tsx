@@ -182,9 +182,9 @@ export default function WelcomeSection() {
               >
                 View insights
               </button>
-              <Link
-                to="/explore"
-                className="flex items-center gap-1.5 h-10 px-4 bg-white/80 rounded-full font-inter font-semibold text-sm text-gray-800 whitespace-nowrap transition-opacity hover:opacity-90 border border-black/10"
+              <span
+                className="inline-flex items-center gap-1.5 h-10 px-4 bg-white/80 rounded-full font-inter font-semibold text-sm text-gray-800 whitespace-nowrap border border-black/10 opacity-50 cursor-not-allowed pointer-events-none select-none"
+                aria-disabled="true"
               >
                 <svg
                   width="16"
@@ -193,6 +193,7 @@ export default function WelcomeSection() {
                   fill="none"
                   xmlns="http://www.w3.org/2000/svg"
                   className="shrink-0"
+                  aria-hidden
                 >
                   <circle
                     cx="8"
@@ -235,7 +236,7 @@ export default function WelcomeSection() {
                   />
                 </svg>
                 Connect apps
-              </Link>
+              </span>
             </div>
           </div>
         </div>

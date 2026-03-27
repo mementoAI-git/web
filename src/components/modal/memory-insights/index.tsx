@@ -7,6 +7,7 @@ import { TimesIcon, PlusIcon } from "@/components/icons";
 import endpoint from "@/api/endpoint";
 import { cn } from "@/utility";
 import type { IBeneficiary, IPersona, IUser } from "@/utility/interface";
+import { formatEnrichmentPriorityForDisplay } from "@/features/enrichment/enrichment-categories";
 
 /** Fields used to build summary and category lists (persona + legacy context) */
 type MemoryInsightSource = {
@@ -61,9 +62,9 @@ function buildSummaryFromContext(ctx: MemoryInsightSource | undefined): string |
     parts.push(ctx.self_description.trim());
   }
   if (ctx.current_priority) {
-    const cp = Array.isArray(ctx.current_priority) ? ctx.current_priority.join(", ") : ctx.current_priority;
-    if (cp.trim()) {
-      parts.push(`Currently focused on: ${cp.trim()}`);
+    const cpPretty = formatEnrichmentPriorityForDisplay(ctx.current_priority);
+    if (cpPretty.trim()) {
+      parts.push(`Currently focused on: ${cpPretty.trim()}`);
     }
   }
   const bullets: string[] = [];

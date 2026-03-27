@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 
 export default function NicknamePage() {
   const navigate = useNavigate();
-  const { user } = useStore();
+  const { user, setUser } = useStore();
   const [name, setName] = useState(user?.nickname ?? "");
   const { isMutating, trigger: updateProfile } = useFetcher(endpoint.profile, "put");
 
@@ -20,13 +20,17 @@ export default function NicknamePage() {
     if (!name.trim() || isMutating) return;
 
     try {
-      await updateProfile({ nickname: name.trim() });
+      const trimmed = name.trim();
+      await updateProfile({ nickname: trimmed });
       await mutate(endpoint.profile);
-      navigate("/onboard/misc");
+      if (user && setUser) {
+        setUser({ ...user, nickname: trimmed });
+      }
+      navigate("/onboarding/chat");
     } catch (error) {
       console.error("Failed to update profile:", error);
     }
-  }, [isMutating, name, updateProfile, navigate]);
+  }, [isMutating, name, updateProfile, navigate, user, setUser]);
 
   useEffect(() => {
     if (isEmpty(name) && !isEmpty(user?.nickname)) {

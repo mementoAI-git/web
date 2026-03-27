@@ -42,7 +42,8 @@ describe("buildSettingsAboutMeParagraphs", () => {
     const joined = paragraphs!.join(" ");
     expect(joined).toMatch(/^I['’]m|^I tend|^When I went|^The parts/);
     expect(joined).toMatch(/reading & learning/i);
-    expect(joined).toMatch(/stories & adventures/i);
+    expect(joined).toMatch(/Memories & Experiences/i);
+    expect(joined).toMatch(/Relationships & People/i);
     expect(joined).toMatch(/truly know me/i);
   });
 });

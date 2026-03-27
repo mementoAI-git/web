@@ -11,7 +11,7 @@ describe("DeepDiveNudge", () => {
 
     render(
       <DeepDiveNudge
-        dimension="people_relationships"
+        dimension="relationships_people"
         onDeepDive={onDeepDive}
         onDismiss={onDismiss}
       />,

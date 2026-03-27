@@ -19,3 +19,5 @@ export { default as NotFoundPage } from "./404";
 export { default as ErrorPage } from "./error";
 export { default as OnboardingGrootPage } from "./onboarding-groot";
 export { default as OnboardingGrootLayout } from "./onboarding-groot/layout";
+export { default as HostOnboardingChatPage } from "./onboarding-chat";
+

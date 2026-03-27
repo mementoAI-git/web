@@ -5,7 +5,7 @@ import type {
   PassionKey,
   LifeContextKey,
   MotivationType,
-  DimensionKey,
+  EnrichmentCategory,
   ExpressionMode,
 } from "@/features/onboarding-groot/types";
 
@@ -31,7 +31,7 @@ export interface OnboardQuestionsState {
   passionsFreetext: string[];
   lifeContext: LifeContextKey[];
   motivationType: MotivationType | "__all__" | null;
-  priorityDimensions: DimensionKey[];
+  priorityDimensions: EnrichmentCategory[];
   dimensionsFreetext: string[];
   expressionMode: ExpressionMode[];
 }
@@ -90,11 +90,7 @@ export function useOnboardQuestionsState() {
       case 4:
         return state.motivationType !== null;
       case 5:
-        if (state.priorityDimensions.length < 1) return false;
-        if (state.priorityDimensions.includes("something_else") && state.priorityDimensions.length === 1) {
-          return state.dimensionsFreetext.length >= 1;
-        }
-        return true;
+        return state.priorityDimensions.length >= 1;
       case 6:
         return state.expressionMode.length >= 1;
       case 7:
@@ -145,7 +141,7 @@ export function useOnboardQuestionsState() {
     },
     setLifeContext: (v: LifeContextKey[]) => update("lifeContext", v),
     setMotivationType: (v: MotivationType | "__all__" | null) => update("motivationType", v),
-    setPriorityDimensions: (v: DimensionKey[]) => update("priorityDimensions", v),
+    setPriorityDimensions: (v: EnrichmentCategory[]) => update("priorityDimensions", v),
     addDimensionsFreetext: (item: string) => {
       const trimmed = item.trim();
       if (!trimmed) return;

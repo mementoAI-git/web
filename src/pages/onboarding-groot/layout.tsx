@@ -3,7 +3,7 @@ import AuthCheck from "@/components/layouts/auth-check";
 
 export default function OnboardingGrootLayout() {
   return (
-    <div className="min-h-screen bg-[#FAF7F2]">
+    <div className="min-h-screen bg-v3-bg">
       <AuthCheck>
         <Outlet />
       </AuthCheck>

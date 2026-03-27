@@ -1,7 +1,22 @@
 /**
  * Host Onboarding (Groot) — Types and option constants
  * @see memento-onboarding-prd.md
+ * Life-area keys for priorities align with Enrichment Score categories (`docs/MEMENTO_ENRICHMENT_SCORE.md`).
  */
+
+import type { EnrichmentCategory, EnrichmentCategoryOption } from "@/features/enrichment/enrichment-categories";
+import {
+  ENRICHMENT_CATEGORY_OPTIONS,
+  ONBOARDING_ENRICHMENT_CATEGORY_OPTIONS,
+} from "@/features/enrichment/enrichment-categories";
+
+/** @deprecated Use `EnrichmentCategory` — kept for incremental refactors */
+export type DimensionKey = EnrichmentCategory;
+
+export type { EnrichmentCategory };
+
+/** Selectable row in onboarding dimension step (same shape as enrichment options). */
+export type DimensionOption = EnrichmentCategoryOption;
 
 // Identity flow (steps 1–4)
 export type AgeBand =
@@ -44,19 +59,6 @@ export type LifeContextKey =
   | "life_stable"
   | "none_of_these";
 
-export type DimensionKey =
-  | "people_relationships"
-  | "memories_stories"
-  | "beliefs_values"
-  | "heritage_roots"
-  | "passions_interests"
-  | "work_purpose"
-  | "wishes_letters"
-  | "everyday_life"
-  | "hardships_resilience"
-  | "humour_personality"
-  | "something_else";
-
 export type ExpressionMode = "voice" | "writing" | "media" | "guided";
 
 export type HostArchetype =
@@ -88,7 +90,7 @@ export interface OnboardingState {
   lifeContext: LifeContextKey[];
   // Intent (steps 5–8)
   motivationType: MotivationType | null;
-  priorityDimensions: DimensionKey[];
+  priorityDimensions: EnrichmentCategory[];
   expressionMode: ExpressionMode[];
   isComplete: boolean;
   isRevisitMode: boolean;
@@ -103,13 +105,6 @@ export interface ArchetypeOption {
 
 export interface MotivationOption {
   value: MotivationType;
-  label: string;
-  sublabel: string;
-  icon: string;
-}
-
-export interface DimensionOption {
-  value: DimensionKey;
   label: string;
   sublabel: string;
   icon: string;
@@ -256,74 +251,12 @@ export const MOTIVATION_OPTIONS: MotivationOption[] = [
   },
 ];
 
-export const DIMENSION_OPTIONS: DimensionOption[] = [
-  {
-    value: "people_relationships",
-    label: "Family & relationships",
-    sublabel: "The people who shaped you",
-    icon: "🤝",
-  },
-  {
-    value: "memories_stories",
-    label: "Stories & adventures",
-    sublabel: "Things that happened, places you went",
-    icon: "📚",
-  },
-  {
-    value: "beliefs_values",
-    label: "Beliefs & values",
-    sublabel: "What you stand for and live by",
-    icon: "🕯️",
-  },
-  {
-    value: "heritage_roots",
-    label: "Places that shaped you",
-    sublabel: "Where you're from, where you've been",
-    icon: "🗺️",
-  },
-  {
-    value: "passions_interests",
-    label: "Passions & interests",
-    sublabel: "What you love to do or think about",
-    icon: "🌟",
-  },
-  {
-    value: "work_purpose",
-    label: "Work & what you built",
-    sublabel: "Your career, craft, or contribution",
-    icon: "🔨",
-  },
-  {
-    value: "wishes_letters",
-    label: "Letters & things unsaid",
-    sublabel: "Words for specific people or moments",
-    icon: "💌",
-  },
-  {
-    value: "everyday_life",
-    label: "Everyday life",
-    sublabel: "The small things that made up your days",
-    icon: "☕",
-  },
-  {
-    value: "hardships_resilience",
-    label: "Hardships & resilience",
-    sublabel: "What you survived and what it taught you",
-    icon: "🌊",
-  },
-  {
-    value: "humour_personality",
-    label: "Humour & personality",
-    sublabel: "How you laugh, what makes you you",
-    icon: "😄",
-  },
-  {
-    value: "something_else",
-    label: "Add something else",
-    sublabel: "",
-    icon: "",
-  },
-];
+/** All enrichment categories (e.g. settings copy, migrations). */
+export const DIMENSION_OPTIONS: EnrichmentCategoryOption[] = ENRICHMENT_CATEGORY_OPTIONS;
+
+/** Initial onboarding: excludes deferred categories (`lessons_wisdom`, `hopes_legacy`). */
+export const ONBOARDING_DIMENSION_OPTIONS: EnrichmentCategoryOption[] =
+  ONBOARDING_ENRICHMENT_CATEGORY_OPTIONS;
 
 export const EXPRESSION_OPTIONS: ExpressionOption[] = [
   {

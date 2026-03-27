@@ -47,6 +47,7 @@ There is **no** folder called `components/chat`. Chat UI lives here:
 Defined in `src/router.tsx`, including:
 
 - `/chat` — landing  
+- `/onboarding/chat` — **host onboarding chat** (AI-driven **streaming** flow via `POST /users/onboarding/chat/prompt`; not the same as dashboard `/chat` threads). See **`docs/MEMENTO_HOST_ONBOARDING_CHAT.md`** for the full API contract, what seeds the host memory, and backend implement/remove checklist.  
 - `/chat/conversations` — list  
 - `/chat/:id` — one thread (`id` is the **memory** id today)  
 - `/chat/new`, `/chat/reply/:id`, etc.
@@ -210,6 +211,7 @@ Use this as a **roadmap**. Check boxes as you go. **Backend** steps may run in p
 | Message / memory types | `src/utility/interface.ts`                                |
 | Voice AI system text   | `src/hooks/use-live-api/utils.ts` → `createSystemContext` |
 | Test API mocks         | `src/test/mocks/handlers.ts`                              |
+| Host onboarding chat API + seeding notes | `docs/MEMENTO_HOST_ONBOARDING_CHAT.md`, `src/api/host-onboarding-chat.ts` |
 | v3 colours + Tailwind  | `src/index.css` (`:root` `--v3-*`, `--color-v3-*`)        |
 
 

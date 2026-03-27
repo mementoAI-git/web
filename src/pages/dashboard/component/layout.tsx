@@ -68,8 +68,6 @@ export default function DashboardLayout() {
           <ConversationChromeProvider>
             <DashboardHeader
               onMenuClick={() => setSidebarOpen(true)}
-              chatOpen={chatOpen}
-              onChatToggle={() => setChatOpen(!chatOpen)}
               mobileSidebarOpen={sidebarOpen}
               mainSidebarCollapsed={mainSidebarCollapsed}
               onMainSidebarToggle={handleMainSidebarToggle}
