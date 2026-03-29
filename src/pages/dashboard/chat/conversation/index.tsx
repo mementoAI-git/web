@@ -41,8 +41,7 @@ import {
   getDismissedHostChatNudges,
   monthKeysFromMessages,
 } from "@/features/host-chat";
-
-const DEFAULT_DEEP_DIVE_NUDGE_DIMENSION: LifeDimension = "relationships_people";
+import { useEnrichmentStats } from "@/features/enrichment";
 
 type StreamlinePayload = {
   text: string;
@@ -64,7 +63,7 @@ export default function Conversation({ id, type = "memory" }) {
   const isHostChat = type === "memory" && !isNew;
   const { setHeaderTitle } = useStore();
   const { setChrome } = useConversationChrome();
-  const { open } = useModal();
+  const { open, push } = useModal();
   const navigate = useNavigate();
   const [messages, setMessages] = useState<Partial<IMessage | any>[]>([])
   const [isSidebarOpen, setIsSidebarOpen] = useState(false) // Sidebar closed by default
@@ -72,7 +71,16 @@ export default function Conversation({ id, type = "memory" }) {
   const [chatMode, setChatMode] = useState<ChatMode>("open");
   const [deepDiveDimension, setDeepDiveDimension] = useState<LifeDimension | null>(null);
   const [nudgeHidden, setNudgeHidden] = useState(false);
-  const [lastEnrichmentDelta] = useState<number | null>(null);
+  const [sessionEnrichmentDelta, setSessionEnrichmentDelta] = useState<number | null>(null);
+  const sessionStartScoreRef = useRef<number | null>(null);
+
+  const {
+    stats: enrichmentStats,
+    deltaToday,
+    milestoneJustReached,
+    nudgeDimension,
+    nudgeQuestion,
+  } = useEnrichmentStats();
 
   const { trigger: sendMessage, isMutating: isSending } = useSWRMutation<
     void,
@@ -111,11 +119,24 @@ export default function Conversation({ id, type = "memory" }) {
 
   const jumpMonthKeys = useMemo(() => monthKeysFromMessages(messages), [messages]);
 
+  // Capture session start score once, then track delta as enrichment updates
+  useEffect(() => {
+    if (!enrichmentStats) return;
+    const currentScore = enrichmentStats.enrichment_score;
+    if (sessionStartScoreRef.current === null) {
+      sessionStartScoreRef.current = currentScore;
+    } else {
+      const delta = currentScore - sessionStartScoreRef.current;
+      if (delta > 0) setSessionEnrichmentDelta(delta);
+    }
+  }, [enrichmentStats?.enrichment_score]);
+
+  const activeDimension = nudgeDimension ?? "relationships_people";
   const showDeepDiveNudge =
     isHostChat &&
     chatMode === "open" &&
     !nudgeHidden &&
-    !getDismissedHostChatNudges().includes(DEFAULT_DEEP_DIVE_NUDGE_DIMENSION);
+    !getDismissedHostChatNudges().includes(activeDimension);
 
   // Function to scroll to bottom
   const scrollToBottom = useCallback(() => {
@@ -168,6 +189,8 @@ export default function Conversation({ id, type = "memory" }) {
       ]));
     }
     setAiMessage("");
+    // Refetch enrichment stats after each AI response to update delta + milestone
+    mutate(endpoint.userStats);
   }, []);
 
   const sendChatMessage = useCallback(
@@ -229,13 +252,13 @@ export default function Conversation({ id, type = "memory" }) {
 
         const result = await startConversation({
           text: apiText,
-          ...(isNew ? {} : { prompt_id: id })
         })
 
         if (result?.data?.response) {
           handleOnFinishTyping(result?.data?.response)
-          mutate(`${endpoint.memoryPrompt}/${id}`)
-          navigate(`/chat/${result?.data?.memory_id}`)
+          // Invalidate profile so primary_conversation_id is fresh
+          mutate(endpoint.profile)
+          navigate(`/chat/${result?.data?.memory_id}`, { replace: true })
         }
 
       } catch (error: unknown) {
@@ -287,15 +310,15 @@ export default function Conversation({ id, type = "memory" }) {
   }, []);
 
   const handleStartDeepDiveFromNudge = useCallback(() => {
-    setDeepDiveDimension(DEFAULT_DEEP_DIVE_NUDGE_DIMENSION);
+    setDeepDiveDimension(activeDimension);
     setChatMode("deep_dive");
     setNudgeHidden(true);
-  }, []);
+  }, [activeDimension]);
 
   const handleDismissNudge = useCallback(() => {
-    dismissHostChatNudge(DEFAULT_DEEP_DIVE_NUDGE_DIMENSION);
+    dismissHostChatNudge(activeDimension);
     setNudgeHidden(true);
-  }, []);
+  }, [activeDimension]);
 
   const handleSend = useCallback(
     (payload: IOnSendPayload) => {
@@ -446,18 +469,30 @@ export default function Conversation({ id, type = "memory" }) {
         >
           {isHostChat ? (
             <div className="flex w-full flex-col gap-3 pt-2 pb-4 sm:px-3 md:px-5">
-              <HostChatEnrichmentBar />
-              <HostChatJumpPills monthKeys={jumpMonthKeys} onJump={jumpToMonth} />
+              <HostChatEnrichmentBar
+                enrichmentScore={enrichmentStats?.enrichment_score ?? 5}
+                deltaToday={deltaToday}
+              />
+              <HostChatJumpPills
+                monthKeys={jumpMonthKeys}
+                onJump={jumpToMonth}
+                categoryPills={enrichmentStats?.jump_pills}
+                onCategoryPill={(starter) => handleSend({ text: starter, attachments: [] })}
+              />
               {chatMode === "deep_dive" && deepDiveDimension ? (
                 <DeepDiveBanner
                   dimensionLabel={dimensionLabel(deepDiveDimension)}
                   onExit={handleExitDeepDive}
                 />
               ) : null}
-              <MilestoneCard enrichmentDelta={lastEnrichmentDelta} />
+              <MilestoneCard
+                enrichmentDelta={sessionEnrichmentDelta}
+                milestoneLabel={milestoneJustReached ? enrichmentStats?.milestone?.reached_label : null}
+              />
               {showDeepDiveNudge ? (
                 <DeepDiveNudge
-                  dimension={DEFAULT_DEEP_DIVE_NUDGE_DIMENSION}
+                  dimension={activeDimension}
+                  question={nudgeQuestion}
                   onDeepDive={handleStartDeepDiveFromNudge}
                   onDismiss={handleDismissNudge}
                 />
@@ -520,6 +555,12 @@ export default function Conversation({ id, type = "memory" }) {
           onClose={handleCloseSidebar}
           isOpen={isSidebarOpen}
           source={type === "prompt" ? "prompt" : "conversation"}
+          quickActions={{
+            onViewFullDetails: () => push("view-memory-details", { memory }),
+            onEditMemory: () => push("edit-memory", { memory }),
+            onExportConversation: handleExportConversation,
+            onDelete: () => push("delete-memory", { memory }),
+          }}
         />
       }
     </div>

@@ -4,6 +4,8 @@ import { dimensionLabel } from "../chat.types";
 
 interface DeepDiveNudgeProps {
   dimension: LifeDimension;
+  /** Suggested question from the API (nudge.question). Falls back to generic copy if absent. */
+  question?: string | null;
   onDeepDive: () => void;
   onDismiss: () => void;
   className?: string;
@@ -11,6 +13,7 @@ interface DeepDiveNudgeProps {
 
 export function DeepDiveNudge({
   dimension,
+  question,
   onDeepDive,
   onDismiss,
   className,
@@ -26,8 +29,14 @@ export function DeepDiveNudge({
     >
       <p className="text-sm font-semibold text-v3-text-strong">Go deeper</p>
       <p className="mt-1 text-sm text-v3-text-weak">
-        Spend a few minutes focused on{" "}
-        <span className="font-medium text-v3-text-strong">{label}</span>. You can leave anytime.
+        {question ? (
+          question
+        ) : (
+          <>
+            Spend a few minutes focused on{" "}
+            <span className="font-medium text-v3-text-strong">{label}</span>. You can leave anytime.
+          </>
+        )}
       </p>
       <div className="mt-4 flex flex-wrap gap-2">
         <button

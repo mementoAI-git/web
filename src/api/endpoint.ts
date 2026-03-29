@@ -60,6 +60,7 @@ export default {
   memoriesStats: "/memories/stats",
   removeFileFromMemory: "/memories/remove-file",
   addMessageToMemory: "/memories/add-message",
+  conversationEnrichment: "/memories/:id/enrichment",
 
   // ai
   aiPrompt: "/ai/prompt",

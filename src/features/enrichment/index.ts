@@ -12,3 +12,17 @@ export {
   formatEnrichmentPriorityTokenForDisplay,
   formatEnrichmentPriorityForDisplay,
 } from "./enrichment-categories";
+
+export type {
+  CategoryScore,
+  MilestoneInfo,
+  NudgeQuestion,
+  JumpPill,
+  UserStatsData,
+  ConversationEnrichmentData,
+} from "./enrichment-api.types";
+
+export {
+  useEnrichmentStats,
+  type UseEnrichmentStatsResult,
+} from "./use-enrichment-stats";
