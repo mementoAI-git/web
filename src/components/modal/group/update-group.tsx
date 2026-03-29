@@ -1,7 +1,7 @@
 "use client";
 
 import { X } from "lucide-react";
-import { Input, Button } from "@heroui/react";
+import { Button } from "@heroui/react";
 import useForm from "@/hooks/use-form";
 import * as yup from "yup";
 import { useModal } from "@/hooks/use-modal";
@@ -20,11 +20,8 @@ const schema = yup.object().shape({
   color: yup.number().min(0).max(6).optional(),
 });
 
-const inputClassNames = {
-  label: "!text-v3-text-weak !font-normal !text-xs pb-0.5",
-  input: "font-inter text-sm text-v3-text-strong placeholder:text-v3-text-weaker",
-  inputWrapper: "!rounded-lg border-v3-stroke-weak bg-white hover:border-v3-stroke-strong data-[focus=true]:border-v3-stroke-strong shadow-none",
-};
+const fieldClass =
+  "h-10 w-full rounded-lg border border-v3-stroke-weak bg-white px-3 font-inter text-sm text-v3-text-strong outline-none placeholder:text-v3-text-weaker transition-colors hover:border-v3-stroke-strong focus:border-v3-stroke-strong";
 
 interface UpdateGroupProps {
   data: IGroup;
@@ -66,7 +63,7 @@ export function UpdateGroup({ data: group }: UpdateGroupProps) {
         <button
           type="button"
           onClick={() => close?.("update-group")}
-          className="flex size-8 shrink-0 items-center justify-center rounded-full text-v3-text-weak transition-colors hover:bg-v3-fill-weak hover:text-v3-text-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-v3-stroke-strong focus-visible:ring-offset-2"
+          className="flex size-8 shrink-0 items-center justify-center rounded-full text-v3-text-weak transition-colors hover:bg-v3-fill-weak hover:text-v3-text-strong focus-visible:outline-none"
           aria-label="Close"
         >
           <X size={16} strokeWidth={1.5} />
@@ -74,30 +71,29 @@ export function UpdateGroup({ data: group }: UpdateGroupProps) {
       </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <Input
-          label="Group name"
-          variant="bordered"
-          labelPlacement="outside"
-          placeholder="e.g. Family"
-          name={nameField.name}
-          value={nameField.value}
-          onChange={nameField.onChange}
-          isInvalid={!!nameField.error}
-          errorMessage={nameField.error}
-          classNames={inputClassNames}
-        />
-        <Input
-          label="Description (optional)"
-          variant="bordered"
-          labelPlacement="outside"
-          placeholder="Short description"
-          name={descriptionField.name}
-          value={descriptionField.value}
-          onChange={descriptionField.onChange}
-          isInvalid={!!descriptionField.error}
-          errorMessage={descriptionField.error}
-          classNames={inputClassNames}
-        />
+        <div className="flex flex-col gap-1.5">
+          <label className="font-inter text-xs text-v3-text-weak">Group name</label>
+          <input
+            name={nameField.name}
+            value={nameField.value}
+            onChange={nameField.onChange}
+            placeholder="e.g. Family"
+            className={fieldClass}
+          />
+          {nameField.error && <span className="font-inter text-xs text-danger">{nameField.error}</span>}
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <label className="font-inter text-xs text-v3-text-weak">Description <span className="text-v3-text-weaker">(optional)</span></label>
+          <input
+            name={descriptionField.name}
+            value={descriptionField.value}
+            onChange={descriptionField.onChange}
+            placeholder="Short description"
+            className={fieldClass}
+          />
+          {descriptionField.error && <span className="font-inter text-xs text-danger">{descriptionField.error}</span>}
+        </div>
 
         <div className="flex flex-col gap-2">
           <span className="font-inter text-xs text-v3-text-weak">Group color</span>
