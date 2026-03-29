@@ -58,7 +58,7 @@ describe("General", () => {
 
     renderWithProviders(<General />, { route: "/settings/general", auth: true });
 
-    await screen.findByText("test@example.com");
+    // Email appears in multiple places (profile header + field cell), so wait for the copy button
     const copyBtn = await screen.findByRole("button", { name: /copy email address/i });
     fireEvent.click(copyBtn);
     expect(writeText).toHaveBeenCalledWith("test@example.com");

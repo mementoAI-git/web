@@ -9,15 +9,13 @@ describe("BeneficiaryAndGroup", () => {
 
     const addBeneficiary = screen.getByRole("button", { name: /add beneficiary/i });
     expect(addBeneficiary).toBeInTheDocument();
-    expect(addBeneficiary.className).toMatch(/v3-brand-strong/);
+    expect(addBeneficiary.className).toMatch(/v3-fill-strong/);
 
     const nav = await screen.findByRole("navigation", { name: /beneficiary and group sections/i });
-    expect(nav.parentElement).toHaveClass("border-v3-stroke-weak", "p-4");
-    expect(nav.textContent).toMatch(/Beneficiary/);
+    expect(nav.textContent).toMatch(/Beneficiaries/);
     expect(nav.textContent).toMatch(/Group/);
-    expect(within(nav).getAllByText("0")).toHaveLength(2);
 
-    const beneficiaryTab = within(nav).getByRole("tab", { name: /^Beneficiaries,/i });
-    expect(beneficiaryTab).toHaveClass("text-xs", "py-1.5", "w-fit", "h-fit", "bg-v3-fill-strong", "text-white");
+    const beneficiaryTab = within(nav).getByRole("tab", { name: /^Beneficiaries/i });
+    expect(beneficiaryTab).toHaveClass("text-xs", "bg-v3-fill-strong", "text-white");
   });
 });

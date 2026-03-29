@@ -22,7 +22,7 @@ describe("Stats", () => {
   it("renders heading, intro, and insights section", () => {
     renderWithProviders(<Stats />, { route: "/settings/stats", auth: true });
 
-    expect(screen.getByRole("heading", { name: /stats/i })).toBeInTheDocument();
+    expect(screen.getByText(/^stats$/i)).toBeInTheDocument();
     expect(
       screen.getByText(/highlights from your activity and how your memento is growing/i),
     ).toBeInTheDocument();

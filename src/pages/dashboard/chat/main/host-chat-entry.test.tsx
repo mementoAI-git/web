@@ -9,6 +9,7 @@ import { ModalProvider } from "@/hooks/use-modal";
 import { StoreProvider } from "@/hooks/use-store";
 import { server } from "@/test/mocks/server";
 import { seedAuth, clearAuth } from "@/test/auth-helpers";
+import { mockUser } from "@/test/fixtures";
 import HostChatEntryPage from "./host-chat-entry";
 
 const BASE = "http://localhost:3000/api";
@@ -21,6 +22,10 @@ function renderHostEntry() {
       {
         path: "/chat/:id",
         element: <div data-testid="conversation-open">thread</div>,
+      },
+      {
+        path: "/chat/new",
+        element: <div data-testid="conversation-new">new</div>,
       },
     ],
     { initialEntries: ["/chat"] },
@@ -46,14 +51,13 @@ function renderHostEntry() {
 }
 
 describe("HostChatEntryPage", () => {
-  it("navigates to the first conversation when docs exist", async () => {
+  it("navigates to the existing conversation when primary_conversation_id is set", async () => {
     server.use(
-      http.get(`${BASE}/memories/conversations`, () =>
+      http.get(`${BASE}/users/profile`, () =>
         HttpResponse.json({
           success: true,
-          data: {
-            docs: [{ _id: "thread-xyz", title: "Your Memento" }],
-          },
+          data: { ...mockUser, primary_conversation_id: "thread-xyz" },
+          message: "Profile fetched successfully",
         }),
       ),
     );
@@ -65,12 +69,13 @@ describe("HostChatEntryPage", () => {
     });
   });
 
-  it("starts a conversation when list is empty", async () => {
+  it("navigates to /chat/new when no primary_conversation_id exists", async () => {
     server.use(
-      http.get(`${BASE}/memories/conversations`, () =>
+      http.get(`${BASE}/users/profile`, () =>
         HttpResponse.json({
           success: true,
-          data: { docs: [] },
+          data: { ...mockUser, primary_conversation_id: null },
+          message: "Profile fetched successfully",
         }),
       ),
     );
@@ -78,7 +83,7 @@ describe("HostChatEntryPage", () => {
     const { router } = renderHostEntry();
 
     await waitFor(() => {
-      expect(router.state.location.pathname).toBe("/chat/mock-memory-id");
+      expect(router.state.location.pathname).toBe("/chat/new");
     });
   });
 });

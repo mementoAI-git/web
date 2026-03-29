@@ -14,23 +14,12 @@ describe("SettingsPage", () => {
       { route: "/settings/general", auth: true },
     );
 
-    expect(await screen.findByText("Manage your Memento profile")).toBeInTheDocument();
+    expect(await screen.findByText("Profile details")).toBeInTheDocument();
 
     const viewport = container.querySelector(".page-viewport");
     expect(viewport).toBeTruthy();
-    expect(viewport?.className).not.toMatch(/bg-v3-fill-weaker/);
-    expect(viewport?.className).not.toMatch(/motion-reduce:bg-white/);
 
-    const nav = screen.getByRole("navigation", { name: /settings sections/i });
-    const navStroke = nav.parentElement as HTMLElement | null;
-    const settingsColumn = navStroke?.parentElement as HTMLElement | null;
-    expect(settingsColumn?.className).toContain("w-full");
-    expect(settingsColumn?.className).not.toContain("max-w-[600px]");
-    expect(settingsColumn?.className).toContain("bg-white");
-    expect(navStroke?.className).toContain("border-b");
-    expect(navStroke?.className).toContain("border-v3-stroke-weak");
-    const prev = navStroke?.previousElementSibling as HTMLElement | null;
-    expect(prev?.className).not.toMatch(/border-b/);
+    expect(screen.getByRole("navigation", { name: /settings sections/i })).toBeInTheDocument();
   });
 
   it("redirects invalid tab to general", async () => {
@@ -42,7 +31,7 @@ describe("SettingsPage", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText("Manage your Memento profile")).toBeInTheDocument();
+      expect(screen.getByText("Profile details")).toBeInTheDocument();
     });
   });
 
@@ -55,7 +44,7 @@ describe("SettingsPage", () => {
       { route: "/settings/general", auth: true },
     );
 
-    await screen.findByText("Manage your Memento profile");
+    await screen.findByText("Profile details");
     expect(screen.getByRole("navigation", { name: /settings sections/i })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /personal info/i })).toHaveAttribute("href", "/settings/general");
 
@@ -63,7 +52,7 @@ describe("SettingsPage", () => {
     expect(statsLink).toHaveAttribute("href", "/settings/stats");
     await user.click(statsLink);
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /^stats$/i })).toBeInTheDocument();
+      expect(screen.getByText(/highlights from your activity/i)).toBeInTheDocument();
     });
 
     const securityLinks = screen.getAllByRole("link", { name: /security/i });

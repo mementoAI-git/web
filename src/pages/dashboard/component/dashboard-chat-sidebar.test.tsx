@@ -5,12 +5,12 @@ import { renderWithProviders } from "@/test";
 import { DashboardChatSidebar } from "./dashboard-chat-sidebar";
 
 describe("DashboardChatSidebar", () => {
-  it("renders with Home Chat heading and home icon", () => {
+  it("renders with Chat heading", () => {
     renderWithProviders(
       <DashboardChatSidebar onClose={() => {}} />,
       { route: "/overview", auth: true },
     );
-    expect(screen.getByRole("heading", { name: /home chat/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /^chat$/i })).toBeInTheDocument();
   });
 
   it("has a close button", () => {

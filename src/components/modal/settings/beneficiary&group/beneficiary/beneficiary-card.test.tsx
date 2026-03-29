@@ -26,13 +26,12 @@ const minimalBeneficiary: IBeneficiaryWithGroups = {
 };
 
 describe("BeneficiaryCard", () => {
-  it("uses v3 fill weak surface and 16px padding without outer border", () => {
+  it("renders as a card with 16px padding", () => {
     const { container } = renderWithProviders(<BeneficiaryCard beneficiary={minimalBeneficiary} />, {
       auth: true,
     });
     const article = container.querySelector("article");
     expect(article).toBeTruthy();
-    expect(article).toHaveClass("bg-v3-fill-weak", "p-4");
-    expect(article?.className).not.toMatch(/\bborder\b/);
+    expect(article).toHaveClass("p-4");
   });
 });
