@@ -1,13 +1,16 @@
 import { useState } from "react";
 import { createPortal } from "react-dom";
 import * as yup from "yup";
-import { X } from "lucide-react";
+import { X, Fingerprint, Trash2 } from "lucide-react";
+import { startRegistration } from "@simplewebauthn/browser";
 import { Passwordinput } from "@/components/Form";
 import useFetcher from "@/hooks/use-fetcher";
 import useForm from "@/hooks/use-form";
 import endpoint from "@/api/endpoint";
 import { toast } from "sonner";
 import Spinner from "@/components/spinner";
+import useSWR, { mutate } from "swr";
+import fetcher from "@/api";
 import { cn } from "@/utility";
 import TwoFactorAuthenticator from "./two-fa";
 import { SettingsSectionCard } from "./settings-section-card";
@@ -120,6 +123,132 @@ function ChangePasswordModal({ onClose }: { onClose: () => void }) {
   );
 }
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL as string;
+
+interface PasskeyEntry {
+  credential_id: string;
+  device_name: string;
+  created_at: string;
+}
+
+function PasskeyManager() {
+  const { data, isLoading } = useSWR<{ data: PasskeyEntry[] }>(endpoint.listPasskeys, fetcher);
+  const { trigger: deletePasskey } = useFetcher("", "delete");
+  const [adding, setAdding] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const passkeys = data?.data ?? [];
+
+  async function handleAddPasskey() {
+    setAdding(true);
+    try {
+      // 1. Get registration options
+      const auth = JSON.parse(localStorage.getItem("memento:auth") ?? "{}");
+      const token = auth?.access_token;
+
+      const beginRes = await fetch(`${API_BASE}${endpoint.passkeyRegisterBegin}`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const beginData = await beginRes.json();
+      if (!beginRes.ok) {
+        toast.error(beginData?.message ?? "Could not start passkey setup");
+        return;
+      }
+
+      // 2. Browser prompts for biometric/device registration
+      const regResponse = await startRegistration({ optionsJSON: beginData.data });
+
+      // 3. Complete registration on server
+      const deviceName = navigator.userAgentData?.platform || navigator.platform || "Unknown device";
+      const completeRes = await fetch(`${API_BASE}${endpoint.passkeyRegisterComplete}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ response: regResponse, device_name: deviceName }),
+      });
+      const completeData = await completeRes.json();
+      if (!completeRes.ok) {
+        toast.error(completeData?.message ?? "Passkey registration failed");
+        return;
+      }
+
+      toast.success("Passkey added successfully");
+      mutate(endpoint.listPasskeys);
+    } catch (err: any) {
+      if (err?.name === "NotAllowedError") return; // user cancelled
+      toast.error("Could not add passkey. Try again.");
+    } finally {
+      setAdding(false);
+    }
+  }
+
+  async function handleDeletePasskey(credentialId: string) {
+    setDeletingId(credentialId);
+    try {
+      const url = endpoint.deletePasskey.replace(":credential_id", encodeURIComponent(credentialId));
+      const result = await deletePasskey({}, url);
+      if (result?.success) {
+        toast.success(result?.message ?? "Passkey removed");
+        mutate(endpoint.listPasskeys);
+      }
+    } catch {
+      toast.error("Could not remove passkey");
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-4">
+      {isLoading ? (
+        <div className="flex items-center gap-2 font-inter text-sm text-v3-text-weak">
+          <Spinner loading className="!size-4" /> Loading passkeys…
+        </div>
+      ) : passkeys.length === 0 ? (
+        <p className="font-inter text-sm text-v3-text-weak">No passkeys registered yet.</p>
+      ) : (
+        <ul className="flex flex-col gap-2">
+          {passkeys.map((pk) => (
+            <li
+              key={pk.credential_id}
+              className="flex items-center justify-between gap-3 rounded-xl border border-v3-stroke-weak px-4 py-3"
+            >
+              <div className="flex min-w-0 items-center gap-3">
+                <Fingerprint size={16} className="shrink-0 text-v3-text-weak" strokeWidth={1.5} />
+                <div className="flex min-w-0 flex-col">
+                  <span className="truncate font-inter text-sm font-medium text-v3-text-strong">{pk.device_name}</span>
+                  <span className="font-inter text-xs text-v3-text-weak">
+                    Added {new Date(pk.created_at).toLocaleDateString()}
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => handleDeletePasskey(pk.credential_id)}
+                disabled={deletingId === pk.credential_id}
+                className="flex shrink-0 items-center justify-center rounded-full p-2 text-danger transition-colors hover:bg-danger/10 disabled:opacity-50"
+                aria-label="Remove passkey"
+              >
+                {deletingId === pk.credential_id ? (
+                  <Spinner loading className="!size-4 text-danger" />
+                ) : (
+                  <Trash2 size={14} strokeWidth={1.5} />
+                )}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <SettingsPillButton type="button" variant="default" disabled={adding} onClick={handleAddPasskey}>
+        <Fingerprint size={14} strokeWidth={1.5} />
+        <span>Add a passkey</span>
+        {adding ? <Spinner loading className="!size-4 text-v3-text-strong" /> : null}
+      </SettingsPillButton>
+    </div>
+  );
+}
+
 export default function Security() {
   const [passwordModalOpen, setPasswordModalOpen] = useState(false);
 
@@ -137,6 +266,13 @@ export default function Security() {
         <SettingsPillButton variant="default" onClick={() => setPasswordModalOpen(true)}>
           Change password
         </SettingsPillButton>
+      </SettingsSectionCard>
+
+      <SettingsSectionCard
+        title="Passkeys"
+        description="Sign in with your device biometrics — fingerprint, Face ID, or Windows Hello — without needing a password."
+      >
+        <PasskeyManager />
       </SettingsSectionCard>
 
       <SettingsSectionCard

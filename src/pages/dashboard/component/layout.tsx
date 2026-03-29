@@ -4,6 +4,7 @@ import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import AuthCheck from "@/components/layouts/auth-check";
 import OnboardingGuard from "@/components/layouts/onboarding-guard";
 import { OnboardingNudgeBanner } from "@/features/onboarding-groot";
+import { SecurityNudgeBanner } from "@/components/security-nudge-banner";
 import { useModal } from "@/hooks/use-modal";
 import { useChatSidebar } from "@/contexts/chat-sidebar";
 import { DashboardHeader } from "./dashboard-header";
@@ -76,6 +77,7 @@ export default function DashboardLayout() {
               <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
                 <div className="flex h-fit w-full min-w-0 shrink-0 flex-col items-center justify-start bg-white px-4 pt-[3px] pb-0.5 text-v3-text-strong sm:px-6">
                   <OnboardingNudgeBanner />
+                  <SecurityNudgeBanner />
                 </div>
                 <div className="hide-scrollbar h-full min-h-0 w-full flex-1 overflow-y-auto">
                   <Outlet />

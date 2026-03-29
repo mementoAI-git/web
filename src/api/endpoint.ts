@@ -9,9 +9,16 @@ export default {
   logout: "/auth/logout",
   oauth: "/auth/oauth/",
   setPassword: "/auth/set-password",
+  verify2FALogin: "/auth/2fa/verify",
+  passkeyRegisterBegin: "/auth/passkey/register/begin",
+  passkeyRegisterComplete: "/auth/passkey/register/complete",
+  passkeyLoginBegin: "/auth/passkey/login/begin",
+  passkeyLoginComplete: "/auth/passkey/login/complete",
 
   // user
   profile: "/users/profile",
+  listPasskeys: "/users/passkeys",
+  deletePasskey: "/users/passkeys/:credential_id",
   userContext: "/users/context",
   persona: "/users/persona",
   completeOnboarding: "/users/complete-onboarding",
