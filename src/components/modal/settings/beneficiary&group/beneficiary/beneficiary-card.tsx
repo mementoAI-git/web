@@ -22,7 +22,7 @@ export function BeneficiaryCard({ beneficiary }: BeneficiaryCardProps) {
         "motion-safe:transition-shadow motion-safe:duration-200 motion-safe:ease-out",
       )}
     >
-      <UserItem {...beneficiary} imageClassName="!size-12 !text-lg" />
+      <UserItem name={beneficiary.name} email={beneficiary.email} user={beneficiary.user} avatarSize="lg" />
 
       <dl className="grid gap-2 font-inter text-xs">
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">

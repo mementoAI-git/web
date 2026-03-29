@@ -17,6 +17,7 @@ import { MenuIcon, SearchIcon } from "@/components/icons";
 import { IconSearch, InputGroup, Kbd } from "@heroui/react";
 import { useConversationChrome } from "@/contexts/conversation-chrome";
 import { MemoryDropdown } from "@/pages/dashboard/chat/conversation/dropdown";
+import { FloatingChatButton } from "@/components/floating-chat-button";
 
 const defaultHeaderTitle: Record<string, string> = {
   memories: "my memories",
@@ -199,6 +200,7 @@ export function DashboardHeader({
                 triggerClassName="!aspect-square !size-9 !p-2 flex items-center justify-center rounded-xl bg-transparent text-v3-icon-neutral transition-colors hover:bg-v3-fill-weak hover:text-v3-text-strong"
               />
             ) : null}
+            <FloatingChatButton variant="header" />
           </div>
         </header>
       </div>
@@ -210,8 +212,8 @@ export function DashboardHeader({
 
   return (
     <div className="w-full h-[60px] fixed top-0 left-0 right-0 sm:relative flex items-center bg-white border-b border-black/5 px-4 sm:px-8">
-      <header className="w-full flex items-center justify-between">
-        <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
+      <header className="grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)] lg:gap-x-4">
+        <div className="col-start-1 row-start-1 flex min-w-0 items-center gap-2 sm:gap-3">
           <button
             type="button"
             onClick={toggleMainSidebar}
@@ -226,69 +228,66 @@ export function DashboardHeader({
           </span>
         </div>
 
-        <div className="flex items-center gap-4">
-          <div className="hidden h-10 w-[320px] lg:block">
-            <InputGroup
-              fullWidth
-              onClick={() => open("search-memory")}
-              className={cn(
-                "h-10 cursor-pointer rounded-full border border-v3-stroke-weak bg-white",
-                "shadow-[0px_2px_12px_rgba(23,11,0,0.06)] transition-shadow",
-                "hover:shadow-[0px_4px_16px_rgba(23,11,0,0.08)]",
-                "has-[input:focus-visible]:ring-2 has-[input:focus-visible]:ring-v3-brand-strong has-[input:focus-visible]:ring-offset-2",
-              )}
-              aria-label="Open search"
-            >
-              <InputGroup.Prefix className="pl-3.5">
-                <IconSearch
-                  width={16}
-                  height={16}
-                  className="text-v3-text-weak"
-                  aria-hidden
-                />
-              </InputGroup.Prefix>
-              <InputGroup.Input
-                readOnly
-                tabIndex={0}
-                placeholder="Search"
-                aria-haspopup="dialog"
-                className="cursor-pointer font-inter text-sm text-v3-text-strong placeholder:text-v3-text-weaker"
+        <div className="col-start-2 row-start-1 hidden h-10 w-full min-w-[min(100%,280px)] max-w-[700px] justify-self-center lg:col-start-2 lg:block">
+          <InputGroup
+            fullWidth
+            onClick={() => open("search-memory")}
+            className={cn(
+              "h-10 cursor-pointer rounded-lg border border-v3-stroke-weak bg-white",
+              "has-[input:focus-visible]:ring-2 has-[input:focus-visible]:ring-v3-brand-strong has-[input:focus-visible]:ring-offset-2",
+            )}
+            aria-label="Open search"
+          >
+            <InputGroup.Prefix className="pl-3.5">
+              <IconSearch
+                width={16}
+                height={16}
+                className="text-v3-text-weak"
+                aria-hidden
               />
-              <InputGroup.Suffix className="pr-2.5">
-                <span className="inline-flex items-center gap-1" aria-hidden>
-                  <Kbd className="rounded-md border border-v3-stroke-weak bg-v3-fill-weaker px-1.5 py-0.5 font-inter text-[10px] font-medium text-v3-text-strong">
-                    <Kbd.Abbr keyValue="command" />
-                  </Kbd>
-                  <Kbd className="rounded-md border border-v3-stroke-weak bg-v3-fill-weaker px-1.5 py-0.5 font-inter text-[10px] font-medium text-v3-text-strong">
-                    <Kbd.Content>K</Kbd.Content>
-                  </Kbd>
-                </span>
-              </InputGroup.Suffix>
-            </InputGroup>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <StreakTracker>
-              <div className="flex shrink-0 cursor-pointer items-center gap-1.5 rounded-lg bg-transparent px-2.5 py-1.5 transition-colors hover:bg-v3-fill-weak">
-                <img
-                  src={zapIcon}
-                  alt="Streak"
-                  className="size-4 object-contain opacity-70"
-                />
-                <span className="text-[13px] font-semibold text-gray-700">
-                  {user?.streak || 0}
-                </span>
-              </div>
-            </StreakTracker>
-          </div>
+            </InputGroup.Prefix>
+            <InputGroup.Input
+              readOnly
+              tabIndex={0}
+              placeholder="Search"
+              aria-haspopup="dialog"
+              className="cursor-pointer font-inter text-sm text-v3-text-strong placeholder:text-v3-text-weaker"
+            />
+            <InputGroup.Suffix className="pr-2.5">
+              <span className="inline-flex items-center gap-1" aria-hidden>
+                <Kbd className="rounded-md border border-v3-stroke-weak bg-v3-fill-weaker px-1.5 py-0.5 font-inter text-[10px] font-medium text-v3-text-strong">
+                  <Kbd.Abbr keyValue="command" />
+                </Kbd>
+                <Kbd className="rounded-md border border-v3-stroke-weak bg-v3-fill-weaker px-1.5 py-0.5 font-inter text-[10px] font-medium text-v3-text-strong">
+                  <Kbd.Content>K</Kbd.Content>
+                </Kbd>
+              </span>
+            </InputGroup.Suffix>
+          </InputGroup>
         </div>
 
-        <button
-          onClick={onMenuClick}
-          className="md:hidden p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
-        >
-          <MenuIcon width={20} height={20} />
-        </button>
+        <div className="col-start-2 flex items-center justify-end gap-2 lg:col-start-3">
+          <StreakTracker>
+            <div className="flex shrink-0 cursor-pointer items-center gap-1.5 rounded-lg bg-transparent px-2.5 py-1.5 transition-colors hover:bg-v3-fill-weak">
+              <img
+                src={zapIcon}
+                alt="Streak"
+                className="size-4 object-contain opacity-70"
+              />
+              <span className="text-[13px] font-semibold text-gray-700">
+                {user?.streak || 0}
+              </span>
+            </div>
+          </StreakTracker>
+          <FloatingChatButton variant="header" />
+          <button
+            type="button"
+            onClick={onMenuClick}
+            className="md:hidden p-1.5 rounded-lg transition-colors hover:bg-gray-100"
+          >
+            <MenuIcon width={20} height={20} />
+          </button>
+        </div>
       </header>
     </div>
   );

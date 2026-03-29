@@ -27,6 +27,18 @@ describe("Bubble", () => {
     expect(bubble).toBeInTheDocument();
   });
 
+  it("uses larger responsive body type for full chat (24px from md), compact stays 14px", () => {
+    const { rerender } = render(<Bubble role="ai" text="Full thread" />);
+    const full = screen.getByText("Full thread").closest("span");
+    expect(full?.className).toMatch(/md:text-xl/);
+    expect(full?.className).toMatch(/text-base/);
+
+    rerender(<Bubble role="ai" text="Sidebar" compact />);
+    const compact = screen.getByText("Sidebar").closest("span");
+    expect(compact?.className).toMatch(/text-\[14px\]/);
+    expect(compact?.className).not.toMatch(/md:text-xl/);
+  });
+
   it("caps user message body width at 470px", () => {
     render(<Bubble role="user" text="User said this" />);
     const body = screen.getByText("User said this").closest("div.rounded-\\[8px\\]");

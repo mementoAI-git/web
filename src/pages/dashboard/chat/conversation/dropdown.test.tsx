@@ -41,43 +41,40 @@ describe("MemoryDropdown", () => {
     mockPush.mockClear();
   });
 
-  it("uses an info-style trigger (lucide Info) with a transparent-style control", () => {
+  it("uses an info-style trigger (lucide Info) with v3 transparent control", () => {
     renderWithProviders(
-      <MemoryDropdown memory={mockMemory} />,
+      <MemoryDropdown memory={mockMemory} onViewDetails={() => {}} />,
       { route: "/chat/m1", auth: true },
     );
 
-    const trigger = screen.getByRole("button");
+    const trigger = screen.getByRole("button", { name: /open memory sidebar/i });
     expect(trigger.querySelector("svg")).toBeTruthy();
-    expect(trigger.className).toMatch(/bg-transparent/);
     expect(trigger.className).toMatch(/hover:bg-v3-fill-weak/);
   });
 
-  it("opens edit-memory modal when Edit memory is chosen", async () => {
+  it("calls onViewDetails when provided instead of opening a modal", async () => {
     const user = userEvent.setup();
+    const onViewDetails = vi.fn();
     renderWithProviders(
-      <MemoryDropdown memory={mockMemory} />,
+      <MemoryDropdown memory={mockMemory} onViewDetails={onViewDetails} />,
       { route: "/chat/m1", auth: true },
     );
 
-    await user.click(screen.getByRole("button"));
-    await user.click(screen.getByText("Edit memory"));
-    expect(mockPush).toHaveBeenCalledWith("edit-memory", { memory: mockMemory });
+    await user.click(screen.getByRole("button", { name: /open memory sidebar/i }));
+    expect(onViewDetails).toHaveBeenCalledTimes(1);
+    expect(mockPush).not.toHaveBeenCalled();
   });
 
-  it("calls onExportConversation when Export conversation is chosen", async () => {
+  it("pushes view-memory-details when onViewDetails is omitted", async () => {
     const user = userEvent.setup();
-    const onExportConversation = vi.fn();
-    renderWithProviders(
-      <MemoryDropdown
-        memory={mockMemory}
-        onExportConversation={onExportConversation}
-      />,
-      { route: "/chat/m1", auth: true },
-    );
+    renderWithProviders(<MemoryDropdown memory={mockMemory} />, {
+      route: "/chat/m1",
+      auth: true,
+    });
 
-    await user.click(screen.getByRole("button"));
-    await user.click(screen.getByText("Export conversation"));
-    expect(onExportConversation).toHaveBeenCalledTimes(1);
+    await user.click(screen.getByRole("button", { name: /open memory sidebar/i }));
+    expect(mockPush).toHaveBeenCalledWith("view-memory-details", {
+      memory: mockMemory,
+    });
   });
 });

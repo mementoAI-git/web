@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  type KeyboardEvent,
-} from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, type KeyboardEvent } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ArrowUp, Mic, Plus } from "lucide-react";
 import { Button, Card, Label, TextArea } from "@heroui/react";
@@ -121,7 +115,7 @@ export default function HostOnboardingChatScreen({
   const location = useLocation();
   const { user, setUser, hydrated } = useStore();
   const scrollRef = useRef<HTMLDivElement>(null);
-  const { composerId, introComposerId } = useHostOnboardingChatFieldIds();
+  const { composerId } = useHostOnboardingChatFieldIds();
 
   const stateNickname =
     (location.state as { nickname?: string } | null)?.nickname?.trim() ?? "";
@@ -148,8 +142,6 @@ export default function HostOnboardingChatScreen({
     draft,
     setDraft,
     introAcknowledged,
-    introDraft,
-    setIntroDraft,
     submitIntro,
     script,
     submitUserTurn,
@@ -178,32 +170,11 @@ export default function HostOnboardingChatScreen({
       Boolean(streamingAssistantText.trim()) ||
       (showMainComposer && messages.length > 0));
 
-  const introTextareaRef = useAutosizeTextarea(
-    introDraft,
-    showIntro,
-    INTRO_TEXTAREA_MAX_HEIGHT_PX
-  );
-
   const mainComposerTextareaRef = useAutosizeTextarea(
     draft,
     showMainComposer,
     INTRO_TEXTAREA_MAX_HEIGHT_PX
   );
-
-  const appendIntroDictation = useCallback(
-    (phrase: string) => {
-      setIntroDraft((prev) => {
-        const chunk = phrase.trim();
-        if (!chunk) return prev;
-        const base = prev.trimEnd();
-        return base ? `${base} ${chunk}` : chunk;
-      });
-    },
-    [setIntroDraft]
-  );
-
-  const { isSupported: speechSupported, isListening, toggleListening } =
-    useIntroSpeechDictation(appendIntroDictation, showIntro);
 
   const appendMainDictation = useCallback(
     (phrase: string) => {
@@ -222,15 +193,6 @@ export default function HostOnboardingChatScreen({
     isListening: mainIsListening,
     toggleListening: toggleMainListening,
   } = useIntroSpeechDictation(appendMainDictation, showMainComposer);
-
-  const onIntroComposerKeyDown = useCallback(
-    (e: KeyboardEvent) => {
-      if (e.key !== "Enter" || e.shiftKey) return;
-      e.preventDefault();
-      if (introDraft.trim()) submitIntro();
-    },
-    [introDraft, submitIntro]
-  );
 
   const onMainComposerKeyDown = useCallback(
     (e: KeyboardEvent) => {
@@ -276,11 +238,6 @@ export default function HostOnboardingChatScreen({
     submitUserTurn();
   };
 
-  const onSubmitIntro = (e: React.FormEvent) => {
-    e.preventDefault();
-    submitIntro();
-  };
-
   return (
     <div
       className="flex h-screen flex-col overflow-hidden bg-v3-bg"
@@ -302,7 +259,7 @@ export default function HostOnboardingChatScreen({
               className="font-inter min-w-0 px-2 text-sm text-v3-text-weaker hover:bg-transparent hover:text-v3-text-strong"
               onPress={() => {
                 resetFlow();
-                navigate("/onboard", { replace: true });
+                navigate("/onboarding/onboard", { replace: true });
               }}
             >
               Reset
@@ -339,78 +296,16 @@ export default function HostOnboardingChatScreen({
                 </p>
               </div>
               <div className="min-h-4 flex-1" aria-hidden="true" />
-              <form
-                onSubmit={onSubmitIntro}
-                className="flex w-full shrink-0 flex-col gap-0"
-              >
-                <Label
-                  htmlFor={introComposerId}
-                  className="sr-only font-inter text-sm font-medium text-v3-text-strong"
+              <div className="flex w-full shrink-0 flex-col gap-0">
+                <Button
+                  type="button"
+                  variant="primary"
+                  className="font-inter w-full rounded-full !bg-v3-brand-strong !text-white hover:!opacity-90"
+                  onPress={() => submitIntro(DEFAULT_INTRO_REPLY)}
                 >
-                  Reply to continue
-                </Label>
-                <div className="rounded-[20px] border border-v3-stroke-weak bg-v3-fill-weaker p-3">
-                  <TextArea
-                    ref={introTextareaRef}
-                    id={introComposerId}
-                    name="onboarding-intro-reply"
-                    rows={1}
-                    value={introDraft}
-                    onChange={(e) => setIntroDraft(e.target.value)}
-                    onKeyDown={onIntroComposerKeyDown}
-                    placeholder={DEFAULT_INTRO_REPLY}
-                    fullWidth
-                    className={introTextAreaClass}
-                  />
-                  <div className="flex items-center justify-between pt-3">
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      aria-label="Add"
-                      isDisabled
-                      className="size-10 min-w-10 rounded-xl border border-v3-stroke-weak bg-v3-bg p-0 shadow-none"
-                    >
-                      <Plus className="mx-auto size-5 text-v3-text-strong" />
-                    </Button>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        aria-label={
-                          speechSupported
-                            ? isListening
-                              ? "Stop recording"
-                              : "Record voice"
-                            : "Voice input not supported in this browser"
-                        }
-                        aria-pressed={speechSupported ? isListening : undefined}
-                        title={
-                          speechSupported
-                            ? undefined
-                            : "Voice input is not available in this browser"
-                        }
-                        isDisabled={!speechSupported}
-                        onPress={toggleListening}
-                        className={cn(
-                          "size-10 min-w-10 rounded-xl border border-v3-stroke-weak bg-v3-bg p-0 shadow-none",
-                          isListening &&
-                            "ring-2 ring-v3-brand-strong ring-offset-2 ring-offset-v3-fill-weaker"
-                        )}
-                      >
-                        <Mic className="mx-auto size-5 text-v3-text-strong" />
-                      </Button>
-                      <Button
-                        type="submit"
-                        aria-label="Send"
-                        isDisabled={!introDraft.trim()}
-                        className="size-10 min-w-10 rounded-xl !bg-orange p-0 !text-white shadow-sm hover:!opacity-90 disabled:opacity-50"
-                      >
-                        <ArrowUp className="mx-auto size-5" strokeWidth={2.5} />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </form>
+                  Alright, let&apos;s go
+                </Button>
+              </div>
             </>
           ) : (
             <>

@@ -21,16 +21,11 @@ describe("SettingsPage", () => {
     expect(viewport?.className).not.toMatch(/bg-v3-fill-weaker/);
     expect(viewport?.className).not.toMatch(/motion-reduce:bg-white/);
 
-    expect(
-      [...container.querySelectorAll("[class]")].some((el) =>
-        el.className.includes("max-w-[600px]"),
-      ),
-    ).toBe(true);
-
     const nav = screen.getByRole("navigation", { name: /settings sections/i });
     const navStroke = nav.parentElement as HTMLElement | null;
     const settingsColumn = navStroke?.parentElement as HTMLElement | null;
-    expect(settingsColumn?.className).toContain("max-w-[600px]");
+    expect(settingsColumn?.className).toContain("w-full");
+    expect(settingsColumn?.className).not.toContain("max-w-[600px]");
     expect(settingsColumn?.className).toContain("bg-white");
     expect(navStroke?.className).toContain("border-b");
     expect(navStroke?.className).toContain("border-v3-stroke-weak");
@@ -62,6 +57,14 @@ describe("SettingsPage", () => {
 
     await screen.findByText("Manage your Memento profile");
     expect(screen.getByRole("navigation", { name: /settings sections/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /personal info/i })).toHaveAttribute("href", "/settings/general");
+
+    const statsLink = screen.getByRole("link", { name: /^stats$/i });
+    expect(statsLink).toHaveAttribute("href", "/settings/stats");
+    await user.click(statsLink);
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /^stats$/i })).toBeInTheDocument();
+    });
 
     const securityLinks = screen.getAllByRole("link", { name: /security/i });
     const securityLink = securityLinks.find((el) => el.getAttribute("href") === "/settings/security");

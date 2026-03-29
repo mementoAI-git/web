@@ -327,7 +327,7 @@ body {
   }
 
   .page-viewport {
-    @apply flex-1 h-full flex flex-col overflow-y-auto mx-auto w-[93%] max-w-[1160px];
+    @apply flex h-full min-w-0 w-full max-w-[1160px] flex-1 flex-col overflow-y-auto mx-auto;
   }
 
   .input-container {
@@ -829,5 +829,65 @@ body {
     border: none;
     border-top: 2px solid #e5e7eb;
     margin: 2em 0;
+  }
+}
+
+/* HeroUI soft avatars: radial gradient fallbacks (no initials), matching default docs look */
+@layer components {
+  /* HeroUI fallback spans default to square corners; round them to match the avatar root */
+  .user-avatar.avatar--soft [data-slot="avatar-fallback"] {
+    border-radius: 100px;
+  }
+
+  .user-avatar.avatar--soft .avatar__fallback--default {
+    background-image: radial-gradient(
+      circle at 32% 28%,
+      rgb(219 234 254) 0%,
+      rgb(96 165 250) 42%,
+      rgb(59 130 246) 72%,
+      rgb(29 78 216) 100%
+    );
+  }
+
+  .user-avatar.avatar--soft .avatar__fallback--accent {
+    background-image: radial-gradient(
+      circle at 32% 28%,
+      rgb(237 233 254) 0%,
+      rgb(167 139 250) 40%,
+      rgb(124 58 237) 72%,
+      rgb(91 33 182) 100%
+    );
+  }
+
+  .user-avatar.avatar--soft .avatar__fallback--success {
+    background-image: radial-gradient(
+      circle at 32% 28%,
+      rgb(209 250 229) 0%,
+      rgb(52 211 153) 40%,
+      rgb(5 150 105) 72%,
+      rgb(4 120 87) 100%
+    );
+  }
+
+  .user-avatar.avatar--soft .avatar__fallback--warning {
+    background-image: radial-gradient(
+      circle at 32% 28%,
+      rgb(255 237 213) 0%,
+      rgb(251 146 60) 42%,
+      rgb(234 88 12) 72%,
+      rgb(194 65 12) 100%
+    );
+  }
+
+  .user-avatar.avatar--soft .avatar__fallback--danger {
+    width: 50px;
+    height: 50px;
+    background-image: radial-gradient(
+      circle at 32% 28%,
+      rgb(254 226 226) 0%,
+      rgb(248 113 113) 40%,
+      rgb(239 68 68) 72%,
+      rgb(185 28 28) 100%
+    );
   }
 }

@@ -102,19 +102,19 @@ export default function WelcomeSection() {
           </h2>
         </div>
       </div>
-      <div className="flex flex-col lg:flex-row gap-6 items-stretch">
-        <div className="relative rounded-3xl overflow-hidden flex-1 min-h-[159px] sm:min-h-[200px]">
+      <div className="flex flex-col items-stretch gap-6 xl:flex-row">
+        <div className="relative min-h-[159px] min-w-0 flex-1 overflow-hidden rounded-3xl sm:min-h-[200px]">
           <img
             src={bgCard}
             alt=""
             className="absolute top-0 right-0 left-0 object-cover size-full"
           />
-          <div className="absolute flex flex-col justify-between size-full top-0 right-0 left-0 p-5 sm:p-7 lg:p-8">
-            <div className="flex items-center justify-between gap-4">
-              <h2 className="font-garamond text-[20px] lg:text-[24px] font-normal text-[#353434]">
+          <div className="absolute left-0 top-0 flex size-full flex-col justify-between p-5 sm:p-7 lg:p-8">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+              <h2 className="min-w-0 font-garamond text-[20px] font-normal text-[#353434] lg:text-[24px]">
                 What’s on your mind today?
               </h2>
-              <div className="flex items-center gap-3 shrink-0">
+              <div className="flex shrink-0 items-center gap-3">
                 <span className="flex items-center gap-1.5 font-inter text-sm font-semibold text-gray-700">
                   <img src={zapIcon} alt="streak" className="size-5" />
                   {streakCount}
@@ -125,7 +125,7 @@ export default function WelcomeSection() {
                 </span>
               </div>
             </div>
-            <div className="flex gap-2 sm:gap-3 items-center">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
               <button
                 onClick={() => open("create-memory")}
                 className="flex items-center gap-1.5 sm:gap-2 h-9 sm:h-12 px-3 sm:px-5 rounded-full bg-v3-brand-strong font-inter font-medium text-xs sm:text-sm text-white cursor-pointer transition-opacity hover:opacity-90"
@@ -144,7 +144,7 @@ export default function WelcomeSection() {
             </div>
           </div>
         </div>
-        <div className="w-full lg:max-w-[335px] relative rounded-3xl overflow-hidden flex-1">
+        <div className="relative w-full min-w-0 flex-1 overflow-hidden rounded-3xl xl:max-w-[335px] xl:shrink-0">
           <img
             src={enrichmentBgPng}
             alt=""
@@ -175,16 +175,16 @@ export default function WelcomeSection() {
                 your Memento.
               </p>
             </div>
-            <div className="flex gap-2 items-center">
+            <div className="flex flex-wrap items-center gap-2">
               <button
                 type="button"
                 onClick={() => open("memory-insights")}
-                className="flex items-center h-10 px-5 rounded-full font-inter font-semibold text-sm text-white whitespace-nowrap transition-opacity hover:opacity-90 bg-v3-fill-strong"
+                className="flex h-10 items-center rounded-full bg-v3-fill-strong px-5 font-inter text-sm font-semibold text-white transition-opacity hover:opacity-90 whitespace-nowrap"
               >
                 View insights
               </button>
               <span
-                className="inline-flex items-center gap-1.5 h-10 px-4 bg-white/80 rounded-full font-inter font-semibold text-sm text-gray-800 whitespace-nowrap border border-black/10 opacity-50 cursor-not-allowed pointer-events-none select-none"
+                className="inline-flex h-10 select-none items-center gap-1.5 rounded-full border border-black/10 bg-white/80 px-4 font-inter text-sm font-semibold text-gray-800 whitespace-nowrap opacity-50 pointer-events-none cursor-not-allowed"
                 aria-disabled="true"
               >
                 <svg
@@ -244,11 +244,11 @@ export default function WelcomeSection() {
       </div>
 
       {/* Stat cards row */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
         {/* All Memories */}
         <Link
           to="/stories"
-          className="relative rounded-2xl overflow-hidden h-[99px] block hover:opacity-95 transition-opacity col-span-2 lg:col-span-1 border border-[#E3E3E3]"
+          className="relative col-span-2 block h-[99px] overflow-hidden rounded-2xl border border-[#E3E3E3] transition-opacity hover:opacity-95 xl:col-span-1"
         >
           <img
             src={memoriesCardBg}
@@ -287,7 +287,7 @@ export default function WelcomeSection() {
         <button
           type="button"
           onClick={() => navigate("/settings/beneficiary")}
-          className="relative rounded-2xl overflow-hidden h-[99px] block hover:opacity-95 transition-opacity col-span-2 lg:col-span-1 border border-[#E3E3E3] w-full text-left"
+          className="relative col-span-2 block h-[99px] w-full overflow-hidden rounded-2xl border border-[#E3E3E3] text-left transition-opacity hover:opacity-95 xl:col-span-1"
         >
           <img
             src={benefiCardBg}
@@ -326,7 +326,7 @@ export default function WelcomeSection() {
         {/* Time Capsules */}
         <Link
           to="/capsule"
-          className="relative rounded-2xl overflow-hidden h-[99px] block hover:opacity-95 transition-opacity col-span-2 lg:col-span-1 border border-[#E3E3E3]"
+          className="relative col-span-2 block h-[99px] overflow-hidden rounded-2xl border border-[#E3E3E3] transition-opacity hover:opacity-95 xl:col-span-1"
         >
           <img
             src={timeCapCardBg}
@@ -357,7 +357,7 @@ export default function WelcomeSection() {
         </Link>
 
         {/* Streak Count */}
-        <div className="relative rounded-2xl overflow-hidden h-[99px] col-span-2 lg:col-span-1 border border-[#E3E3E3]">
+        <div className="relative col-span-2 h-[99px] overflow-hidden rounded-2xl border border-[#E3E3E3] xl:col-span-1">
           <img
             src={streakCardBg}
             alt=""

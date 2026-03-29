@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 import SidebarDetails from "./sidebar-details";
@@ -68,6 +69,21 @@ function renderSidebar(props: Partial<React.ComponentProps<typeof SidebarDetails
   );
 }
 
+const mockPush = vi.fn();
+
+vi.mock("@/hooks/use-modal", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/hooks/use-modal")>();
+  return {
+    ...actual,
+    useModal: () => ({
+      state: [],
+      open: vi.fn(),
+      push: mockPush,
+      close: vi.fn(),
+    }),
+  };
+});
+
 describe("SidebarDetails", () => {
   it("caps detail content at 249px width", () => {
     renderSidebar();
@@ -80,5 +96,32 @@ describe("SidebarDetails", () => {
     const { container } = renderSidebar({ isOpen: true });
     const desktopPanel = container.querySelector('[class*="w-[249px]"]');
     expect(desktopPanel).toBeTruthy();
+  });
+
+  it("renders conversation quick actions and opens edit-memory on click", async () => {
+    mockPush.mockClear();
+    const user = userEvent.setup();
+    const onExport = vi.fn();
+    renderSidebar({
+      quickActions: {
+        onViewFullDetails: () => mockPush("view-memory-details", { memory }),
+        onEditMemory: () => mockPush("edit-memory", { memory }),
+        onExportConversation: onExport,
+        onDelete: () => mockPush("delete-memory", { memory }),
+      },
+    });
+
+    expect(screen.getAllByText("View full details").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Export conversation").length).toBeGreaterThan(0);
+
+    const editBtns = screen.getAllByRole("button", { name: /edit memory/i });
+    await user.click(editBtns[0]!);
+    expect(mockPush).toHaveBeenCalledWith("edit-memory", { memory });
+
+    const exportBtns = screen.getAllByRole("button", {
+      name: /export conversation/i,
+    });
+    await user.click(exportBtns[0]!);
+    expect(onExport).toHaveBeenCalledTimes(1);
   });
 });

@@ -20,6 +20,16 @@ describe("ConversationChatinput", () => {
     ).toBeInTheDocument();
   });
 
+  it("shows voice and Send in the action row with Send disabled when empty", () => {
+    renderWithProviders(<ConversationChatinput onSend={() => {}} />, {
+      auth: true,
+    });
+    expect(
+      screen.getByRole("button", { name: /use voice mode/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^send$/i })).toBeDisabled();
+  });
+
   it("uses its own outer shell (full width, no landing max width)", () => {
     renderWithProviders(<ConversationChatinput onSend={() => {}} />, {
       auth: true,

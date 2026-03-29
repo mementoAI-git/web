@@ -1,5 +1,5 @@
+import { UserAvatar } from "@/components/user-avatar";
 import { isEmpty } from "@/utility";
-import avatarPlaceholder from "@/assets/image/avatar.png";
 
 type Recipient = {
   _id: string;
@@ -34,11 +34,7 @@ export default function RecentRecipients({
   if (!recipients.length) {
     return (
       <div className="flex flex-col items-center justify-center py-6 gap-2">
-        <img
-          src={avatarPlaceholder}
-          alt="No recipients"
-          className="w-10 h-10 opacity-30"
-        />
+        <UserAvatar alt="No recipients" size="md" className="size-10 opacity-30" />
         <p className="text-xs text-gray-400">No recent recipients</p>
       </div>
     );
@@ -57,6 +53,8 @@ export default function RecentRecipients({
           recipient.email ||
           ""
         ).split(/[@\s]/)[0];
+        const initialsSource =
+          recipient.name || recipient.user?.name || recipient.email?.split("@")[0] || "";
         const isSelected = selectedRecipients.includes(recipient.email);
         return (
           <button
@@ -70,15 +68,14 @@ export default function RecentRecipients({
             }`}
           >
             {/* Avatar */}
-            <div className="size-6 rounded-full items-center flex justify-center bg-[#F5F5F5] overflow-hidden transition-transform group-hover:scale-105">
-              <img
-                src={
-                  !isEmpty(recipient?.user?.picture_url)
-                    ? recipient?.user?.picture_url
-                    : avatarPlaceholder
-                }
+            <div className="flex size-6 items-center justify-center overflow-hidden rounded-full transition-transform group-hover:scale-105">
+              <UserAvatar
                 alt={recipient.name}
-                className="size-full object-cover"
+                src={!isEmpty(recipient?.user?.picture_url) ? recipient.user?.picture_url : undefined}
+                name={initialsSource || undefined}
+                email={recipient.email}
+                size="sm"
+                className="!size-6 !rounded-full"
               />
             </div>
             {/* Name */}

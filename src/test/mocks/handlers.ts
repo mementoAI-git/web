@@ -12,6 +12,15 @@ export const handlers = [
     });
   }),
 
+  http.put(`${BASE_URL}/users/profile`, async ({ request }) => {
+    const body = (await request.json()) as Record<string, unknown>;
+    return HttpResponse.json({
+      success: true,
+      data: { ...mockUser, ...body },
+      message: "Profile updated",
+    });
+  }),
+
   http.get(`${BASE_URL}/users/context`, () => {
     return HttpResponse.json({
       success: true,

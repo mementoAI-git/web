@@ -4,43 +4,47 @@ import General from "@/components/modal/settings/general";
 import Security from "@/components/modal/settings/security";
 import Beneficiary from "@/components/modal/settings/beneficiary&group";
 import Privacy from "@/components/modal/settings/privacy";
-import { GearIcon, Lock2Icon, ShieldIcon, UsersIcon } from "@/components/icons";
-import { SettingsProfileHeader } from "./settings-profile-header";
+import Stats from "@/components/modal/settings/stats";
+import { Settings, Lock, Users, Shield, ChartColumn } from "lucide-react";
 
-/** Horizontal tabs: v3 tokens, motion-safe ≤300ms, focus-visible rings, ≥40px hit targets (userinterface-wiki). */
-const tabLinkBase =
-  "inline-flex min-h-10 shrink-0 items-center gap-2 border-b-2 border-transparent px-2 pb-3 pt-1 font-inter text-sm outline-none " +
-  "text-v3-text-weak motion-safe:transition-[color,border-color] motion-safe:duration-200 motion-safe:ease-out " +
-  "hover:text-v3-text-strong " +
-  "focus-visible:rounded-md focus-visible:ring-2 focus-visible:ring-v3-stroke-strong focus-visible:ring-offset-2 focus-visible:ring-offset-white " +
+const navItemBase =
+  "flex w-full items-center gap-2.5 rounded-lg px-3 py-2 font-inter text-sm text-v3-text-weak outline-none " +
+  "motion-safe:transition-[background-color,color] motion-safe:duration-150 motion-safe:ease-out " +
+  "hover:bg-v3-fill-weak hover:text-v3-text-strong " +
+  "focus-visible:ring-2 focus-visible:ring-v3-stroke-strong focus-visible:ring-offset-2 focus-visible:ring-offset-white " +
   "[&_svg]:shrink-0 [&_svg]:text-current";
 
 const settings = {
   general: {
-    label: "General",
-    icon: <GearIcon strokeWidth={1.5} width={16.67} height={16.67} />,
+    label: "Personal info",
+    icon: <Settings size={16} strokeWidth={1.5} />,
     component: <General />,
+  },
+  stats: {
+    label: "Stats",
+    icon: <ChartColumn size={16} strokeWidth={1.5} />,
+    component: <Stats />,
   },
   security: {
     label: "Security",
-    icon: <Lock2Icon strokeWidth={1.4} width={13.37} height={15} />,
+    icon: <Lock size={16} strokeWidth={1.5} />,
     component: <Security />,
   },
   beneficiary: {
     label: "Beneficiary & Group",
-    icon: <UsersIcon strokeWidth={1.5} width={16} height={15} />,
+    icon: <Users size={16} strokeWidth={1.5} />,
     component: <Beneficiary />,
   },
   privacy: {
     label: "Privacy & Account",
-    icon: <ShieldIcon strokeWidth={1.5} width={16} height={15} />,
+    icon: <Shield size={16} strokeWidth={1.5} />,
     component: <Privacy />,
   },
 } as const;
 
 type SettingKey = keyof typeof settings;
 
-const VALID_TABS: SettingKey[] = ["general", "security", "beneficiary", "privacy"];
+const VALID_TABS: SettingKey[] = ["general", "stats", "security", "beneficiary", "privacy"];
 
 function isValidTab(tab: string | undefined): tab is SettingKey {
   return !!tab && VALID_TABS.includes(tab as SettingKey);
@@ -53,49 +57,48 @@ export default function SettingsPage() {
     return <Navigate to="/settings/general" replace />;
   }
 
-  const tabLinks = (Object.entries(settings) as [SettingKey, (typeof settings)[SettingKey]][]).map(([key, setting]) => (
-    <NavLink
-      key={key}
-      to={`/settings/${key}`}
-      className={({ isActive }) =>
-        cn(
-          tabLinkBase,
-          isActive &&
-            "border-v3-brand-strong font-semibold text-v3-text-strong [&_svg]:text-v3-fill-strong motion-reduce:transition-none",
-        )
-      }
-    >
-      {setting.icon}
-      <span className="max-w-[11rem] truncate sm:max-w-none">{setting.label}</span>
-    </NavLink>
-  ));
+  const navLinks = (Object.entries(settings) as [SettingKey, (typeof settings)[SettingKey]][]).map(
+    ([key, setting]) => (
+      <NavLink
+        key={key}
+        to={`/settings/${key}`}
+        className={({ isActive }) =>
+          cn(
+            navItemBase,
+            isActive && "bg-v3-fill-weak font-semibold text-v3-text-strong",
+          )
+        }
+      >
+        {setting.icon}
+        <span className="truncate">{setting.label}</span>
+      </NavLink>
+    ),
+  );
 
   return (
-    <div className="page-viewport hide-scrollbar w-full flex flex-col pt-10">
-      <div
-        className={cn(
-          "mx-auto flex w-full max-w-[600px] flex-col bg-white shadow-sm",
-          "motion-reduce:shadow-none",
-        )}
-      >
-        <div className="h-fit w-full shrink-0 px-4 sm:px-0">
-          <SettingsProfileHeader />
-        </div>
-        <div className="w-full border-b border-v3-stroke-weak">
+    <div className="page-viewport hide-scrollbar w-full flex flex-col pl-10">
+      <div className="mx-auto flex w-full max-w-[1000px] flex-col">
+
+        {/* Sidebar + content */}
+        <div className="flex w-full gap-[80px] pt-8">
+
+          {/* Vertical nav */}
           <nav
             aria-label="Settings sections"
-            className="hide-scrollbar flex h-fit w-full gap-1 overflow-x-auto px-4 pt-5 sm:gap-4 sm:px-0 sm:pt-8"
+            className="sticky top-6 flex w-44 shrink-0 flex-col gap-0.5 self-start"
           >
-            {tabLinks}
+            {navLinks}
           </nav>
-        </div>
 
-        <div
-          className="w-full px-4 pb-8 pt-6 sm:px-0 sm:pb-10 sm:pt-8"
-          role="region"
-          aria-label={`${settings[tab].label} settings`}
-        >
-          <div className="w-full">{settings[tab].component}</div>
+          {/* Tab content */}
+          <div
+            className="min-w-0 flex-1 pb-10"
+            role="region"
+            aria-label={`${settings[tab].label} settings`}
+          >
+            {settings[tab].component}
+          </div>
+
         </div>
       </div>
     </div>

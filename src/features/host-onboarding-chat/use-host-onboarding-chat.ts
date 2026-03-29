@@ -246,23 +246,26 @@ export function useHostOnboardingChat(
     progressTotal,
   ]);
 
-  const submitIntro = useCallback(() => {
-    if (introAcknowledged || isTyping || isComplete) return;
-    const text = introDraft.trim();
-    if (!text) return;
-    if (persist && !nicknameRef.current.trim()) return;
+  const submitIntro = useCallback(
+    (overrideText?: string) => {
+      if (introAcknowledged || isTyping || isComplete) return;
+      const text = (overrideText ?? introDraft).trim();
+      if (!text) return;
+      if (persist && !nicknameRef.current.trim()) return;
 
-    const userMsg: HostOnboardingMessage = {
-      id: nextId(),
-      role: "user",
-      content: text,
-    };
-    const snapshot = [...messagesRef.current, userMsg];
-    setMessages(snapshot);
-    setIntroDraft("");
-    setIntroAcknowledged(true);
-    void runStream({ messagesSnapshot: snapshot });
-  }, [introAcknowledged, isTyping, isComplete, introDraft, persist, runStream]);
+      const userMsg: HostOnboardingMessage = {
+        id: nextId(),
+        role: "user",
+        content: text,
+      };
+      const snapshot = [...messagesRef.current, userMsg];
+      setMessages(snapshot);
+      setIntroDraft("");
+      setIntroAcknowledged(true);
+      void runStream({ messagesSnapshot: snapshot });
+    },
+    [introAcknowledged, isTyping, isComplete, introDraft, persist, runStream],
+  );
 
   const submitUserTurn = useCallback(() => {
     const text = draft.trim();

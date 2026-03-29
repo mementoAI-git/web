@@ -1,5 +1,6 @@
-import avatar from "@/assets/image/avatar.png";
+import { UserAvatar } from "@/components/user-avatar";
 import { useStore } from "@/hooks/use-store";
+import { isEmpty } from "@/utility";
 import { cn } from "@/utility";
 import { useNavigate } from "react-router-dom";
 import {
@@ -28,11 +29,15 @@ const DISCORD_URL = "https://discord.gg/RzR7xJSwYg";
 const lucideItemIcon = "size-4 shrink-0 text-v3-text-strong";
 
 const itemRowClass =
-  "flex min-h-11 w-full cursor-pointer items-center gap-3 rounded-lg px-2.5 py-2 font-inter text-sm text-v3-text-strong outline-none data-[focused]:bg-v3-fill-weaker";
+  "flex min-h-8 w-full cursor-pointer items-center gap-3 rounded-lg px-2.5 py-0.5 font-inter text-v3-text-strong outline-none data-[focused]:bg-v3-fill-weaker";
+
+const itemLabelClass = "flex-1 text-left text-[13px]";
 
 export function ProfileDropdown({ hideName = false }: { hideName?: boolean }) {
   const { user, unsetAuth } = useStore();
   const navigate = useNavigate();
+  const rawName = [user?.first_name, user?.last_name].filter(Boolean).join(" ").trim();
+  const photo = user?.picture_url || user?.picture;
 
   const handleLogout = () => {
     unsetAuth?.();
@@ -49,7 +54,16 @@ export function ProfileDropdown({ hideName = false }: { hideName?: boolean }) {
           "data-[focus-visible]:ring-2 data-[focus-visible]:ring-v3-brand-strong data-[focus-visible]:ring-offset-2",
         )}
       >
-        <img src={avatar} alt="" className="size-5 shrink-0 object-contain" />
+        <span aria-hidden className="inline-flex shrink-0">
+          <UserAvatar
+            alt=""
+            src={!isEmpty(photo) ? photo : undefined}
+            name={rawName || undefined}
+            email={user?.email}
+            size="sm"
+            className="!size-5 !rounded-full"
+          />
+        </span>
         {!hideName && (
           <>
             <span className="font-inter text-sm font-semibold text-gray-800">
@@ -74,7 +88,7 @@ export function ProfileDropdown({ hideName = false }: { hideName?: boolean }) {
         <DropdownMenu
           selectionMode="none"
           aria-label="Account menu"
-          className="outline-none"
+          className="gap-0 outline-none"
         >
           <DropdownSection className="mb-0">
             <DropdownItem
@@ -84,7 +98,7 @@ export function ProfileDropdown({ hideName = false }: { hideName?: boolean }) {
               className={itemRowClass}
             >
               <Settings className={lucideItemIcon} strokeWidth={2} />
-              <span className="flex-1 text-left">Settings</span>
+              <span className={itemLabelClass}>Settings</span>
             </DropdownItem>
             <DropdownItem
               id="logout"
@@ -93,7 +107,7 @@ export function ProfileDropdown({ hideName = false }: { hideName?: boolean }) {
               className={itemRowClass}
             >
               <LogOut className={lucideItemIcon} strokeWidth={2} />
-              <span className="flex-1 text-left">Log out</span>
+              <span className={itemLabelClass}>Log out</span>
             </DropdownItem>
           </DropdownSection>
           <Separator className="my-1 bg-v3-stroke-weak" />
@@ -107,7 +121,7 @@ export function ProfileDropdown({ hideName = false }: { hideName?: boolean }) {
               className={itemRowClass}
             >
               <CircleHelp className={lucideItemIcon} strokeWidth={2} />
-              <span className="flex-1 text-left">Contact us</span>
+              <span className={itemLabelClass}>Contact us</span>
               <ChevronRight
                 className="size-4 shrink-0 text-v3-text-weak"
                 strokeWidth={2}
@@ -126,7 +140,7 @@ export function ProfileDropdown({ hideName = false }: { hideName?: boolean }) {
               className={itemRowClass}
             >
               <Twitter className={lucideItemIcon} strokeWidth={2} />
-              <span className="flex-1 text-left">Follow Us</span>
+              <span className={itemLabelClass}>Follow Us</span>
             </DropdownItem>
             <DropdownItem
               id="discord"
@@ -137,7 +151,7 @@ export function ProfileDropdown({ hideName = false }: { hideName?: boolean }) {
               className={itemRowClass}
             >
               <UsersRound className={lucideItemIcon} strokeWidth={2} />
-              <span className="flex-1 text-left">Join Community</span>
+              <span className={itemLabelClass}>Join Community</span>
             </DropdownItem>
           </DropdownSection>
         </DropdownMenu>

@@ -17,28 +17,35 @@ vi.mock("@/hooks/use-store", async (importOriginal) => {
 });
 
 describe("General", () => {
-  it("renders profile field rows including birthday and country", () => {
+  it("renders profile grid including birthday and country", () => {
     renderWithProviders(<General />, { route: "/settings/general", auth: true });
 
-    expect(screen.getByText("Display name:")).toBeInTheDocument();
+    expect(screen.getByText("Display name")).toBeInTheDocument();
     expect(screen.getByText("Tester")).toBeInTheDocument();
-    expect(screen.getByText("Email:")).toBeInTheDocument();
-    expect(screen.getByText("First name:")).toBeInTheDocument();
-    expect(screen.getByText("Last name:")).toBeInTheDocument();
-    expect(screen.getByText("Phone:")).toBeInTheDocument();
-    expect(screen.getByText("Location:")).toBeInTheDocument();
-    expect(screen.getByText("Birthday:")).toBeInTheDocument();
+    expect(screen.getByText("Email")).toBeInTheDocument();
+    expect(screen.getByText("First name")).toBeInTheDocument();
+    expect(screen.getByText("Test")).toBeInTheDocument();
+    expect(screen.getByText("Last name")).toBeInTheDocument();
+    expect(screen.getByText("User")).toBeInTheDocument();
+    expect(screen.getByText("Phone")).toBeInTheDocument();
+    expect(screen.getByText("+1234567890")).toBeInTheDocument();
+    expect(screen.getByText("Location")).toBeInTheDocument();
+    expect(screen.getByText("Add a location")).toBeInTheDocument();
+    expect(screen.getByText("Birthday")).toBeInTheDocument();
     expect(screen.getByText("January 1, 1990")).toBeInTheDocument();
-    expect(screen.getByText("Country:")).toBeInTheDocument();
+    expect(screen.getByText("Country")).toBeInTheDocument();
     expect(screen.getByText("US")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /edit profile/i })).toBeInTheDocument();
   });
 
-  it("opens inline editor when edit is activated for a field", async () => {
+  it("opens edit profile modal with all fields", async () => {
     const user = userEvent.setup();
     renderWithProviders(<General />, { route: "/settings/general", auth: true });
 
-    await user.click(screen.getByRole("button", { name: /edit first name/i }));
-    expect(screen.getByRole("textbox", { name: /first name/i })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /edit profile/i }));
+    expect(await screen.findByRole("dialog", { name: /edit profile/i })).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: /^first name$/i })).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: /^display name$/i })).toHaveValue("Tester");
   });
 
   it("copies email when copy control is used", async () => {

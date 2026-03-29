@@ -1,4 +1,4 @@
-import { GearIcon, PlusIcon, TimesIcon, WaveIcon } from "@/components/icons";
+import { GearIcon, PlusIcon, TimesIcon } from "@/components/icons";
 import { cn, toBase64 } from "@/utility";
 import {
   type ChatReplyQuote,
@@ -29,6 +29,7 @@ import {
   CHAT_SLASH_COMMANDS,
   type ChatSlashCommandItem,
 } from "./chat-slash-commands";
+import { Phone } from "lucide-react";
 
 export interface IOnSendPayload {
   attachments?: IFile[];
@@ -334,6 +335,15 @@ function ChatinputImpl({
     adjustHeight();
   }, [text, adjustHeight]);
 
+  const uploadsPending =
+    !isEmpty(files) && files.every((f) => f.progress < 100);
+  const hasSendableContent = Boolean(text.trim()) || files.length > 0;
+  const sendDisabled =
+    typing ||
+    loading ||
+    uploadsPending ||
+    !hasSendableContent;
+
   if (isVoiceMode) {
     return (
       <Voiceinput
@@ -410,11 +420,15 @@ function ChatinputImpl({
             onCommandSelect={handleSlashCommandSelect}
             onClose={() => setShowSlashMenu(false)}
           />
-          <div className="flex justify-between">
+          <div className="flex justify-between gap-3">
             <div className="flex items-center gap-4">
               {/* File Upload Button */}
-              <label htmlFor="chat-file-trigger" className="icon-container !size-8 md:!size-11 cursor-pointer !bg-gray-100 !text-gray-500 hover:!bg-gray-200">
-                <PlusIcon className="size-3 md:size-5" />
+              <label
+                htmlFor="chat-file-trigger"
+                aria-label="Attach file"
+                className="flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-xl border border-v3-stroke-weak bg-v3-fill-weaker text-v3-icon-neutral transition-colors hover:bg-v3-fill-weak hover:text-v3-text-strong md:size-11"
+              >
+                <PlusIcon className="size-3 md:size-5" aria-hidden />
                 <input
                   id="chat-file-trigger"
                   type="file"
@@ -425,40 +439,56 @@ function ChatinputImpl({
               </label>
 
               <ChatSettings>
-                <div className={cn("icon-container", "!rounded-xl !size-8 md:!size-11 !bg-gray-100 !text-gray-500 hover:!bg-gray-200")}>
-                  <GearIcon className="size-4 md:size-5 stroke-2" />
+                <div
+                  className="flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-xl border border-v3-stroke-weak bg-v3-fill-weaker text-v3-icon-neutral transition-colors hover:bg-v3-fill-weak hover:text-v3-text-strong md:size-11"
+                  role="presentation"
+                >
+                  <GearIcon className="size-4 md:size-5 stroke-2" aria-hidden />
                 </div>
               </ChatSettings>
             </div>
 
-            {
-              typing ?
-                <button onClick={onStop} className="btn text-white">Stop</button> :
-                (text.length > 0 || files.length > 0 || loading) ?
-                  <button
-                    onClick={handleSend}
-                    disabled={loading || typing || (!isEmpty(files) && files.every(f => f.progress < 100))}
-                    className="btn space-x-2 disabled:opacity-60 text-white"
-                  >
-                    {
-                      loading ?
-                        <>
-                          <span>Sending..</span>
-                          <Spinner loading className="!size-4" />
-                        </> :
-                        "Send"
-                    }
-                  </button> :
-                  <button
-                    onClick={() => setIsVoiceMode(true)}
-                    className="sm:bg-orange/10 cursor-pointer bg-transparent flex items-center gap-2 rounded-full px-5 py-2.5 text-orange"
-                  >
-                    <WaveIcon className="size-5 stroke-2" />
-                    <span className="font-inter hidden sm:inline text-sm font-semibold">
-                      Use voice mode
-                    </span>
-                  </button>
-            }
+            <div className="flex shrink-0 items-center gap-2 md:gap-3">
+              {!typing ? (
+                <button
+                  type="button"
+                  onClick={() => setIsVoiceMode(true)}
+                  className="flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-xl border border-v3-stroke-weak bg-v3-fill-weaker text-v3-icon-neutral transition-colors hover:bg-v3-fill-weak hover:text-v3-text-strong md:size-11"
+                  aria-label="Use voice mode"
+                >
+                  <Phone
+                    className="size-[18px] shrink-0 md:size-5"
+                    strokeWidth={1.75}
+                    aria-hidden
+                  />
+                </button>
+              ) : null}
+              {typing ? (
+                <button
+                  type="button"
+                  onClick={onStop}
+                  className="btn text-white"
+                >
+                  Stop
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleSend}
+                  disabled={sendDisabled}
+                  className="btn space-x-2 text-white disabled:pointer-events-none disabled:opacity-50"
+                >
+                  {loading ? (
+                    <>
+                      <span>Sending..</span>
+                      <Spinner loading className="!size-4" />
+                    </>
+                  ) : (
+                    "Send"
+                  )}
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>

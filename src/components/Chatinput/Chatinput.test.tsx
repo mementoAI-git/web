@@ -1,4 +1,5 @@
 import { fireEvent, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { renderWithProviders } from "@/test";
 import Chatinput from "./index";
@@ -10,6 +11,23 @@ describe("Chatinput", () => {
       screen.getByPlaceholderText("Type text here... Type / for formatting"),
     ).toBeInTheDocument();
     expect(screen.getByTestId("chat-input-landing-shell")).toBeInTheDocument();
+  });
+
+  it("shows voice (call) control and Send; Send is disabled until there is text or a file", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<Chatinput onSend={() => {}} />, { auth: true });
+
+    expect(
+      screen.getByRole("button", { name: /use voice mode/i }),
+    ).toBeInTheDocument();
+    const sendBtn = screen.getByRole("button", { name: /^send$/i });
+    expect(sendBtn).toBeDisabled();
+
+    const textarea = screen.getByPlaceholderText(
+      "Type text here... Type / for formatting",
+    );
+    await user.type(textarea, "hi");
+    expect(sendBtn).not.toBeDisabled();
   });
 
   it("fills container width without a 680px max on the outer shell", () => {

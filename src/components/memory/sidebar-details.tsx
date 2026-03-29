@@ -19,18 +19,30 @@ import {
   ClipIcon,
   TagIcon,
   TimesIcon,
-  EditIcon
+  EditIcon,
+  TrashIcon,
 } from "@/components/icons";
 
 import dayjs from "dayjs";
 import { useModal } from "@/hooks/use-modal";
-import { Sheet } from 'react-modal-sheet';
+import { Sheet } from "react-modal-sheet";
+import { Download, Info } from "lucide-react";
+import { cn } from "@/utility";
+
+export type MemorySidebarQuickActions = {
+  onViewFullDetails: () => void;
+  onEditMemory: () => void;
+  onExportConversation?: () => void;
+  onDelete: () => void;
+};
 
 interface SidebarDetailsProps {
   memory: IMemory;
   onClose: () => void;
   isOpen: boolean;
   source?: PostTypeSource;
+  /** Conversation chat: memory menu actions (previously in header dropdown). */
+  quickActions?: MemorySidebarQuickActions | null;
 }
 
 interface ContentProps {
@@ -38,28 +50,115 @@ interface ContentProps {
   onClose: () => void;
   isMobile?: boolean;
   source?: PostTypeSource;
+  quickActions?: MemorySidebarQuickActions | null;
 }
 
-function Content({ memory, onClose, isMobile = false, source }: ContentProps) {
+const quickActionRow =
+  "flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left font-inter text-sm font-medium text-v3-text-strong transition-colors hover:bg-v3-fill-weaker focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-v3-stroke-strong";
+
+function Content({
+  memory,
+  onClose,
+  isMobile = false,
+  source,
+  quickActions,
+}: ContentProps) {
   const { open } = useModal();
+
+  const runAndMaybeCloseMobile = (fn: () => void) => {
+    fn();
+    if (isMobile) onClose();
+  };
 
   const handleEditPermission = () => {
     open("set-tag-permission", { memory, isNew: false });
     if (isMobile) {
       onClose();
     }
-  }
+  };
 
   return (
     <div className="h-full w-full max-w-[249px] mx-auto md:mx-0 space-y-2 sm:space-y-3 p-3 sm:p-4 lg:p-6">
       <div className="flex justify-end">
-        <div
-          className="p-3 cursor-pointer ml-auto inline-block hover:bg-sand-3 rounded-lg"
+        <button
+          type="button"
+          className="ml-auto inline-flex cursor-pointer rounded-lg p-3 transition-colors hover:bg-v3-fill-weaker"
           onClick={onClose}
+          aria-label="Close panel"
         >
-          <TimesIcon className="ml-auto text-sand-8" width={10} height={10} />
-        </div>
+          <TimesIcon className="text-v3-icon-neutral" width={10} height={10} aria-hidden />
+        </button>
       </div>
+      {quickActions ? (
+        <div className="space-y-2 border-b border-v3-stroke-weak pb-4 sm:pb-5">
+          <span className="block font-inter text-xs font-medium uppercase tracking-wide text-v3-text-weak">
+            Memory
+          </span>
+          <ul className="flex flex-col gap-0.5">
+            <li>
+              <button
+                type="button"
+                className={quickActionRow}
+                onClick={() =>
+                  runAndMaybeCloseMobile(quickActions.onViewFullDetails)
+                }
+              >
+                <Info
+                  className="size-4 shrink-0 text-v3-icon-neutral"
+                  strokeWidth={1.75}
+                  aria-hidden
+                />
+                View full details
+              </button>
+            </li>
+            <li>
+              <button
+                type="button"
+                className={quickActionRow}
+                onClick={() =>
+                  runAndMaybeCloseMobile(quickActions.onEditMemory)
+                }
+              >
+                <EditIcon width={16} height={16} aria-hidden />
+                Edit memory
+              </button>
+            </li>
+            {quickActions.onExportConversation ? (
+              <li>
+                <button
+                  type="button"
+                  className={quickActionRow}
+                  onClick={() =>
+                    runAndMaybeCloseMobile(
+                      quickActions.onExportConversation!,
+                    )
+                  }
+                >
+                  <Download
+                    className="size-4 shrink-0 text-v3-icon-neutral"
+                    strokeWidth={1.75}
+                    aria-hidden
+                  />
+                  Export conversation
+                </button>
+              </li>
+            ) : null}
+            <li>
+              <button
+                type="button"
+                className={cn(
+                  quickActionRow,
+                  "text-[#F97066] hover:bg-[#F97066]/8",
+                )}
+                onClick={() => runAndMaybeCloseMobile(quickActions.onDelete)}
+              >
+                <TrashIcon width={16} height={16} aria-hidden />
+                Delete
+              </button>
+            </li>
+          </ul>
+        </div>
+      ) : null}
       <div className="space-y-3 sm:space-y-4 border-b border-[#EAECF0] pb-8 sm:pb-10 lg:pb-14">
         <span className="block font-inter text-xs text-[#667085] uppercase">
           properties
@@ -132,7 +231,13 @@ function Content({ memory, onClose, isMobile = false, source }: ContentProps) {
   );
 }
 
-export default function SidebarDetails({ memory, onClose, isOpen, source }: SidebarDetailsProps) {
+export default function SidebarDetails({
+  memory,
+  onClose,
+  isOpen,
+  source,
+  quickActions,
+}: SidebarDetailsProps) {
   return (
     <>
       <Sheet
@@ -145,7 +250,13 @@ export default function SidebarDetails({ memory, onClose, isOpen, source }: Side
         <Sheet.Container className="bg-sand-1">
           <Sheet.Header className="bg-sand-1 rounded-3xl" />
           <Sheet.Content className="bg-sand-1">
-            <Content memory={memory} onClose={onClose} isMobile source={source} />
+            <Content
+              memory={memory}
+              onClose={onClose}
+              isMobile
+              source={source}
+              quickActions={quickActions}
+            />
           </Sheet.Content>
         </Sheet.Container>
         <Sheet.Backdrop />
@@ -157,7 +268,13 @@ export default function SidebarDetails({ memory, onClose, isOpen, source }: Side
           : "w-0 max-w-0"
           }`}
       >
-        <Content memory={memory} onClose={onClose} isMobile={false} source={source} />
+        <Content
+          memory={memory}
+          onClose={onClose}
+          isMobile={false}
+          source={source}
+          quickActions={quickActions}
+        />
       </div>
     </>
   );

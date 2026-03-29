@@ -27,4 +27,18 @@ describe("FloatingChatButton", () => {
 
     expect(screen.getByRole("button", { name: /close chat/i })).toBeInTheDocument();
   });
+
+  it("header variant renders inline without absolute wrapper", () => {
+    renderWithProviders(
+      <ChatSidebarProvider>
+        <FloatingChatButton variant="header" />
+      </ChatSidebarProvider>,
+      { route: "/overview", auth: true },
+    );
+
+    const btn = screen.getByRole("button", { name: /open chat/i });
+    expect(btn).toHaveClass("rounded-xl");
+    expect(btn).toHaveClass("size-9");
+    expect(btn.parentElement?.className).not.toMatch(/absolute/);
+  });
 });

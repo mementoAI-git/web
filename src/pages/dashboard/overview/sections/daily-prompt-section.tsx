@@ -73,7 +73,7 @@ export default function DailyPromptSection() {
       </p>
 
       {/* Action buttons */}
-      <div className="flex gap-2 justify-start items-start flex-nowrap">
+      <div className="flex flex-wrap gap-2 justify-start items-start">
         <Link
           to={`/chat/reply/${activePrompt._id}`}
           className="flex items-center h-10 px-5 rounded-full font-inter font-semibold text-sm text-v3-text-strong whitespace-nowrap transition-opacity hover:opacity-90 bg-white border border-v3-stroke-weak"

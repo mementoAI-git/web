@@ -2,12 +2,11 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "@/test";
-import { DEFAULT_INTRO_REPLY } from "@/features/host-onboarding-chat/scripted-exchanges";
 import { storageKeys } from "@/utility/constant";
 import HostOnboardingChatScreen from "./host-onboarding-chat-screen";
 
-function introComposer() {
-  return screen.getByRole("textbox", { name: /reply to continue/i });
+function introContinueButton() {
+  return screen.getByRole("button", { name: /Alright, let's go/i });
 }
 
 const mockNavigate = vi.fn();
@@ -69,7 +68,7 @@ describe("HostOnboardingChatScreen", () => {
     });
   });
 
-  it("intro view lists hero heading before reply field", async () => {
+  it("intro view lists hero heading before continue button", async () => {
     const { container } = renderWithProviders(
       <HostOnboardingChatScreen assistantPreDelayMs={0} persist={true} nickname="Alex" />,
       {
@@ -93,14 +92,14 @@ describe("HostOnboardingChatScreen", () => {
     const heading = screen.getByRole("heading", {
       name: /Okay, Alex\. I've got some questions for you\./i,
     });
-    const replyField = introComposer();
+    const continueBtn = introContinueButton();
     expect(
-      heading.compareDocumentPosition(replyField) &
+      heading.compareDocumentPosition(continueBtn) &
         Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
   });
 
-  it("intro sends default reply when Enter is pressed", async () => {
+  it("intro continues with default reply when Alright, let's go is pressed", async () => {
     const user = userEvent.setup();
     renderWithProviders(
       <HostOnboardingChatScreen assistantPreDelayMs={0} persist={true} nickname="Alex" />,
@@ -114,10 +113,7 @@ describe("HostOnboardingChatScreen", () => {
       expect(screen.getByText(/Okay, Alex/i)).toBeInTheDocument();
     });
 
-    const field = introComposer();
-    expect(field).toHaveValue("");
-    expect(field).toHaveAttribute("placeholder", DEFAULT_INTRO_REPLY);
-    await user.type(field, `${DEFAULT_INTRO_REPLY}{Enter}`);
+    await user.click(introContinueButton());
 
     await waitFor(() => {
       expect(
@@ -143,10 +139,7 @@ describe("HostOnboardingChatScreen", () => {
       screen.getByText(/personalize your experience on the product/i),
     ).toBeInTheDocument();
 
-    const field = introComposer();
-    expect(field).toHaveValue("");
-    await user.type(field, DEFAULT_INTRO_REPLY);
-    await user.click(screen.getByRole("button", { name: /^Send$/i }));
+    await user.click(introContinueButton());
 
     await waitFor(() => {
       expect(
@@ -155,7 +148,7 @@ describe("HostOnboardingChatScreen", () => {
     });
   });
 
-  it("reset clears chat and navigates to /onboard to restart funnel", async () => {
+  it("reset clears chat and navigates to /onboarding/onboard to restart funnel", async () => {
     const user = userEvent.setup();
     renderWithProviders(
       <HostOnboardingChatScreen assistantPreDelayMs={0} persist={true} nickname="Alex" />,
@@ -168,10 +161,7 @@ describe("HostOnboardingChatScreen", () => {
     await waitFor(() => {
       expect(screen.getByText(/Okay, Alex/i)).toBeInTheDocument();
     });
-    const field = introComposer();
-    await user.clear(field);
-    await user.type(field, "ready");
-    await user.click(screen.getByRole("button", { name: /^Send$/i }));
+    await user.click(introContinueButton());
     await waitFor(() => {
       expect(
         screen.getByText(/say a bit more when you're ready/i),
@@ -180,7 +170,9 @@ describe("HostOnboardingChatScreen", () => {
 
     await user.click(screen.getByRole("button", { name: /^Reset$/i }));
     await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith("/onboard", { replace: true });
+      expect(mockNavigate).toHaveBeenCalledWith("/onboarding/onboard", {
+        replace: true,
+      });
     });
   });
 

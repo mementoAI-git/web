@@ -136,14 +136,24 @@ export default function Bubble({
           ) : null}
           <span
             className={cn(
-              "text-sand-12 font-georgia text-[14px] font-normal leading-relaxed [&_p]:m-0 [&_p]:text-[14px]",
+              "text-sand-12 font-georgia font-normal",
+              compact
+                ? "text-[14px] leading-relaxed [&_p]:m-0 [&_p]:text-[14px] [&_p]:leading-relaxed"
+                : "text-base leading-relaxed md:text-xl md:leading-snug [&_p]:m-0 [&_p]:text-base [&_p]:leading-relaxed [&_p]:md:text-xl [&_p]:md:leading-snug",
             )}
           >
             <Markdown
               remarkPlugins={[remarkGfm]}
               components={{
                 p: ({ children, ...props }) => (
-                  <p className="text-[14px] leading-relaxed" {...props}>
+                  <p
+                    className={
+                      compact
+                        ? "text-[14px] leading-relaxed"
+                        : "text-base leading-relaxed md:text-xl md:leading-snug"
+                    }
+                    {...props}
+                  >
                     {children}
                   </p>
                 ),

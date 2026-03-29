@@ -2,6 +2,7 @@ import { useLocation } from "react-router-dom";
 import { topNavigations, bottomNavigations } from "./navigation";
 import SideBarItem from "./sidebar-item";
 import { ProfileDropdown } from "./profile-dropdown";
+import { SidebarUpgradeCard } from "./sidebar-upgrade-card";
 import { useModal } from "@/hooks/use-modal";
 
 interface DashboardSideBarProps {
@@ -53,6 +54,9 @@ export function DashboardSideBar({ onClose }: DashboardSideBarProps) {
             onClose?.();
           }}
         />
+        <div className="mt-4 flex shrink-0 flex-col">
+          <SidebarUpgradeCard onNavigate={onClose} />
+        </div>
       </div>
     </div>
   );
