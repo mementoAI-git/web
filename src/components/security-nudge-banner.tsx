@@ -30,7 +30,7 @@ export function SecurityNudgeBanner() {
   useEffect(() => {
     if (!hydrated || !user) return;
     const has2FA = user.two_factor?.enabled;
-    const hasPasskey = (user as any).passkeys?.length > 0;
+    const hasPasskey = (user as import("@/utility/interface").IUser).passkeys?.length > 0;
     if (!has2FA && !hasPasskey && !isDismissed()) {
       setVisible(true);
     }

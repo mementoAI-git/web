@@ -76,6 +76,11 @@ export interface IUser {
     secret: string;
     enabled: boolean;
   };
+  passkeys?: Array<{
+    credential_id: string;
+    device_name: string;
+    created_at: string;
+  }>;
   location?: string;
   picture: string;
   picture_url?: string;

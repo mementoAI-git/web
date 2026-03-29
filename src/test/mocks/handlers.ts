@@ -409,4 +409,96 @@ export const handlers = [
       },
     });
   }),
+
+  // 2FA login verification
+  http.post(`${BASE_URL}/auth/2fa/verify`, async ({ request }) => {
+    const body = (await request.json()) as { two_fa_token?: string; code?: string };
+    if (body.code === "000000") {
+      return HttpResponse.json({ success: false, message: "Invalid 2FA code" }, { status: 400 });
+    }
+    return HttpResponse.json({
+      success: true,
+      message: "Login successful",
+      data: {
+        access_token: "mock-access-token",
+        refresh_token: "mock-refresh-token",
+        expires_at: new Date(Date.now() + 3600000).toISOString(),
+        refresh_expires_at: new Date(Date.now() + 86400000).toISOString(),
+        onboarding_status: "completed",
+        onboarded: true,
+      },
+    });
+  }),
+
+  // Passkey management
+  http.get(`${BASE_URL}/users/passkeys`, () => {
+    return HttpResponse.json({
+      success: true,
+      message: "Passkeys retrieved successfully",
+      data: [],
+    });
+  }),
+
+  http.delete(`${BASE_URL}/users/passkeys/:credential_id`, () => {
+    return HttpResponse.json({
+      success: true,
+      message: "Passkey removed successfully",
+      data: null,
+    });
+  }),
+
+  // Passkey login
+  http.post(`${BASE_URL}/auth/passkey/login/begin`, () => {
+    return HttpResponse.json({
+      success: true,
+      message: "Authentication options generated",
+      data: {
+        challenge: "mock-challenge",
+        challenge_id: "mock-challenge-id",
+        rpId: "localhost",
+        allowCredentials: [],
+        userVerification: "required",
+        timeout: 60000,
+      },
+    });
+  }),
+
+  http.post(`${BASE_URL}/auth/passkey/login/complete`, () => {
+    return HttpResponse.json({
+      success: true,
+      message: "Login successful",
+      data: {
+        access_token: "mock-access-token",
+        refresh_token: "mock-refresh-token",
+        expires_at: new Date(Date.now() + 3600000).toISOString(),
+        refresh_expires_at: new Date(Date.now() + 86400000).toISOString(),
+        onboarding_status: "completed",
+        onboarded: true,
+      },
+    });
+  }),
+
+  // Passkey registration
+  http.post(`${BASE_URL}/auth/passkey/register/begin`, () => {
+    return HttpResponse.json({
+      success: true,
+      message: "Registration options generated",
+      data: {
+        challenge: "mock-reg-challenge",
+        rp: { id: "localhost", name: "Memento" },
+        user: { id: "user123", name: "test@example.com", displayName: "Test" },
+        pubKeyCredParams: [],
+        timeout: 60000,
+        attestation: "none",
+      },
+    });
+  }),
+
+  http.post(`${BASE_URL}/auth/passkey/register/complete`, () => {
+    return HttpResponse.json({
+      success: true,
+      message: "Passkey registered successfully",
+      data: { credential_id: "new-cred-id", device_name: "Test Device" },
+    });
+  }),
 ];
