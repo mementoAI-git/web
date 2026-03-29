@@ -6,4 +6,5 @@ export { default as OAuthCallbackPage } from "./oauth-callback";
 export { default as RegisterPage } from "./register";
 export { default as SetPasswordPage } from "./set-password";
 export { default as VerifyEmailPage } from "./verify-email";
+export { default as TwoFactorPage } from "./two-factor";
 

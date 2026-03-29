@@ -7,6 +7,7 @@ import {
   ChatPage,
   CheckMailPage,
   ConfirmEmailPage,
+  TwoFactorPage,
   DashboardLayout,
   ExploreCategoryPage,
   ExplorePage,
@@ -42,6 +43,7 @@ export const router = createBrowserRouter([
     errorElement: <ErrorPage />,
     children: [
       { path: "login", element: <LoginPage /> },
+      { path: "two-factor", element: <TwoFactorPage /> },
       { path: "register", element: <RegisterPage /> },
       { path: "forget-password", element: <ForgetPasswordPage /> },
       { path: "check-mail", element: <CheckMailPage /> },
