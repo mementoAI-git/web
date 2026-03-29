@@ -10,7 +10,7 @@ import endpoint from "@/api/endpoint";
 import { toast } from "sonner";
 import Spinner from "@/components/spinner";
 import useSWR, { mutate } from "swr";
-import fetcher from "@/api";
+import fetcher from "@/api/fetcher";
 import { cn } from "@/utility";
 import TwoFactorAuthenticator from "./two-fa";
 import { SettingsSectionCard } from "./settings-section-card";
