@@ -1,6 +1,6 @@
 import endpoint from "@/api/endpoint";
 import { X } from "lucide-react";
-import { Input, Button, Select, SelectItem } from "@heroui/react";
+import { Input, Button } from "@heroui/react";
 import Spinner from "@/components/spinner";
 import useFetcher from "@/hooks/use-fetcher";
 import useForm from "@/hooks/use-form";
@@ -127,25 +127,19 @@ export function UpdateBeneficiary({ data: beneficiary }: UpdateBeneficiaryProps)
         />
         <div className="flex flex-col gap-1.5">
           <label className="font-inter text-xs text-v3-text-weak">Permission level</label>
-          <Select
-            variant="bordered"
-            selectedKeys={[String(values.level)]}
+          <select
+            name={levelField.name}
+            value={String(values.level)}
             onChange={(e) => levelField.onChange({ target: { name: levelField.name, value: Number(e.target.value) } } as any)}
-            isInvalid={!!levelField.error}
-            errorMessage={levelField.error}
-            classNames={{
-              trigger: "border-v3-stroke-weak bg-white hover:border-v3-stroke-strong data-[open=true]:border-v3-stroke-strong shadow-none rounded-xl",
-              value: "font-inter text-sm text-v3-text-strong",
-              label: "font-inter text-xs text-v3-text-weak",
-            }}
-            aria-label="Permission level"
+            className="h-10 w-full rounded-xl border border-v3-stroke-weak bg-white px-3 font-inter text-sm text-v3-text-strong outline-none transition-colors hover:border-v3-stroke-strong focus:border-v3-stroke-strong"
           >
             {PERMISSION_LEVELS.map((lvl) => (
-              <SelectItem key={lvl.value} textValue={lvl.label}>
-                <span className="font-inter text-sm">{lvl.label}</span>
-              </SelectItem>
+              <option key={lvl.value} value={lvl.value}>{lvl.label}</option>
             ))}
-          </Select>
+          </select>
+          {levelField.error && (
+            <span className="font-inter text-xs text-danger">{levelField.error}</span>
+          )}
         </div>
 
         <div className="flex items-center justify-end gap-2 border-t border-v3-stroke-weak pt-4">
