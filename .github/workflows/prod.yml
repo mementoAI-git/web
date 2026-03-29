@@ -51,10 +51,14 @@ jobs:
           path: dist/
 
       - name: Rsync dist to server
+        env:
+          SSH_USERNAME: ${{ secrets.SSH_USERNAME }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          PROD_DEPLOY_PATH: ${{ secrets.PROD_DEPLOY_PATH }}
         run: |
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > /tmp/deploy_key
           chmod 600 /tmp/deploy_key
           rsync -avz --delete \
             -e "ssh -i /tmp/deploy_key -p 22 -o StrictHostKeyChecking=no" \
             ./dist/ \
-            ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}:${{ secrets.PROD_DEPLOY_PATH }}/
+            "${SSH_USERNAME}@${SSH_HOST}:${PROD_DEPLOY_PATH}/"
