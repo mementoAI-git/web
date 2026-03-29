@@ -1,15 +1,18 @@
 import { cn } from "@/utility";
 
 interface MilestoneCardProps {
-  /** When API returns enrichment delta after a message; null hides the card. */
+  /** Score delta since page load; null or 0 hides the card. */
   enrichmentDelta: number | null;
+  /** Label of the milestone just reached, if any (e.g. "Life Chronicler"). */
+  milestoneLabel?: string | null;
   className?: string;
 }
 
-/**
- * Shown when the server signals a meaningful enrichment jump (stub until API exists).
- */
-export function MilestoneCard({ enrichmentDelta, className }: MilestoneCardProps) {
+export function MilestoneCard({
+  enrichmentDelta,
+  milestoneLabel,
+  className,
+}: MilestoneCardProps) {
   if (enrichmentDelta == null || enrichmentDelta <= 0) return null;
 
   return (
@@ -21,12 +24,12 @@ export function MilestoneCard({ enrichmentDelta, className }: MilestoneCardProps
       role="status"
     >
       <p className="text-xs font-medium uppercase tracking-wide text-v3-text-weaker">
-        Milestone
+        {milestoneLabel ? milestoneLabel : "Milestone"}
       </p>
       <p className="mt-1 text-sm text-v3-text-strong">
         Your Memento grew by{" "}
         <span className="font-semibold text-v3-brand-strong">+{enrichmentDelta}%</span>{" "}
-        enrichment this exchange.
+        enrichment this session.
       </p>
     </div>
   );

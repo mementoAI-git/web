@@ -20,6 +20,3 @@ export interface NudgePayload {
 export function dimensionLabel(key: LifeDimension): string {
   return enrichmentCategoryLabel(key);
 }
-
-/** Stub enrichment until `GET …/enrichment` (or similar) exists. */
-export const HOST_CHAT_ENRICHMENT_STUB_PERCENT = 47;

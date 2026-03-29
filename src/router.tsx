@@ -57,6 +57,11 @@ export const router = createBrowserRouter([
         children: [
           { index: true, element: <OnboardingGrootPage /> },
           { path: "chat", element: <HostOnboardingChatPage /> },
+          {
+            path: "onboard",
+            element: <OnboardLayout />,
+            children: [{ index: true, element: <OnboardPage /> }],
+          },
         ],
       },
       {
@@ -79,7 +84,7 @@ export const router = createBrowserRouter([
           { path: "explore/categories", element: <ExplorePage /> },
           { path: "explore/categories/:id", element: <ExploreCategoryPage /> },
           { path: "chat", element: <ChatLandingPage /> },
-          { path: "chat/new", element: <Navigate to="/chat" replace /> },
+          { path: "chat/new", element: <ChatPage /> },
           { path: "chat/conversations", element: <Navigate to="/chat" replace /> },
           {
             path: "chat/conversations/suggested",
