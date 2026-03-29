@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Textinput } from "@/components/Form";
+import { X } from "lucide-react";
+import { Input, Button } from "@heroui/react";
 import { ModalCloseBtn } from "../../modalLayout";
 import useForm from "@/hooks/use-form";
 import * as yup from "yup";
@@ -10,7 +11,6 @@ import endpoint from "@/api/endpoint";
 import { toast } from "sonner";
 import { mutate } from "swr";
 import { SETTINGS_BENEFICIARIES_SWR_KEY } from "@/components/modal/settings/beneficiary&group/beneficiaries-list-swr-key";
-import { LightBulbIcon } from "@/components/icons";
 import { SelectGroup, type GroupSearchResultItem } from "./select-group";
 
 const initial = {
@@ -24,6 +24,12 @@ const schema = yup.object().shape({
   name: yup.string().required("Name is required"),
   relationship: yup.string().required("Relationship is required"),
 });
+
+const inputClassNames = {
+  label: "!text-v3-text-weak !font-normal !text-xs pb-0.5",
+  input: "font-inter text-sm text-v3-text-strong placeholder:text-v3-text-weaker",
+  inputWrapper: "border-v3-stroke-weak bg-white hover:border-v3-stroke-strong data-[focus=true]:border-v3-stroke-strong shadow-none",
+};
 
 export function AddBeneficiary() {
   const { close } = useModal();
@@ -45,64 +51,101 @@ export function AddBeneficiary() {
     },
   });
 
+  const emailField = getField("email");
+  const nameField = getField("name");
+  const relationshipField = getField("relationship");
+
   return (
-    <div className="modal-container">
-      <ModalCloseBtn onClick={() => close?.("add-beneficiary")} />
-      <div className="space-y-6">
-        <div>
-          <h4 className="modal-title">Invite beneficiary</h4>
+    <div className="modal-container !max-w-[480px]">
+      <div className="mb-5 flex items-start justify-between gap-3">
+        <div className="flex flex-col gap-0.5">
+          <h2 className="font-inter text-sm font-semibold text-v3-text-strong">Invite beneficiary</h2>
+          <p className="font-inter text-sm text-v3-text-weak">
+            They'll receive an email to accept and access your Memento.
+          </p>
         </div>
-        <div className="flex gap-3 rounded-xl border border-[#FDDFC5] bg-v3-brand-strong/[0.03] p-3 text-v3-brand-strong">
-          <div className="size-5">
-            <LightBulbIcon width={18} height={18} />
-          </div>
-          <span className="font-inter text-sm font-normal">
-            Add a Beneficiary by sending an invite to their email address. They will be taken through a process to accept
-            the invite. Once a beneficiary has accepted your invite, they will be able to converse with your Memento.
-          </span>
-        </div>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <Textinput
-            label={<span className="font-inter text-sm font-normal text-gray-950/70">Email</span>}
-            type="email"
-            inputClassName="!h-[50px]"
-            {...getField("email")}
-            placeholder="example@gmail.com"
-            labelClassName="!text-[rgba(0,9,51,0.65)] !text-xs !font-normal"
-          />
-          <Textinput
-            label={<span className="font-inter text-sm font-normal text-gray-950/70">Name</span>}
-            inputClassName="!h-[50px]"
-            {...getField("name")}
-            placeholder="John Doe"
-            labelClassName="!text-[rgba(0,9,51,0.65)] !text-xs !font-normal"
-          />
-          <Textinput
-            {...getField("relationship")}
-            placeholder="Brother"
-            label={<span className="font-inter text-sm font-normal text-gray-950/70">Relationship(This person to you)</span>}
-            inputClassName="!h-[50px]"
-            labelClassName="!text-[rgba(0,9,51,0.65)] !text-xs !font-normal"
-          />
-          <SelectGroup
-            value={selectedGroups}
-            onChange={setSelectedGroups}
-            label={<span className="font-inter text-sm font-normal text-gray-950/70">Group</span>}
-            labelHint="(add beneficiary to groups)"
-            placeholder="Type to search groups..."
-          />
-          <div className="flex w-full items-center justify-end gap-4">
-            <button type="button" className="btn-outline">
-              Discard
-            </button>
-            <button type="submit" disabled={isMutating || !isValid} className="btn">
-              <span>Send invite</span>
-              <Spinner className="!size-4" loading={isMutating} />
-            </button>
-          </div>
-        </form>
+        <button
+          type="button"
+          onClick={() => close?.("add-beneficiary")}
+          className="flex size-8 shrink-0 items-center justify-center rounded-full text-v3-text-weak hover:bg-v3-fill-weak hover:text-v3-text-strong transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-v3-stroke-strong focus-visible:ring-offset-2"
+          aria-label="Close"
+        >
+          <X size={16} strokeWidth={1.5} />
+        </button>
       </div>
+
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <Input
+          label="Email"
+          type="email"
+          variant="bordered"
+          labelPlacement="outside"
+          placeholder="example@gmail.com"
+          name={emailField.name}
+          value={emailField.value}
+          onChange={emailField.onChange}
+          isInvalid={!!emailField.error}
+          errorMessage={emailField.error}
+          classNames={inputClassNames}
+        />
+        <Input
+          label="Name"
+          variant="bordered"
+          labelPlacement="outside"
+          placeholder="John Doe"
+          name={nameField.name}
+          value={nameField.value}
+          onChange={nameField.onChange}
+          isInvalid={!!nameField.error}
+          errorMessage={nameField.error}
+          classNames={inputClassNames}
+        />
+        <Input
+          label="Relationship (this person to you)"
+          variant="bordered"
+          labelPlacement="outside"
+          placeholder="Brother, Friend, Spouse…"
+          name={relationshipField.name}
+          value={relationshipField.value}
+          onChange={relationshipField.onChange}
+          isInvalid={!!relationshipField.error}
+          errorMessage={relationshipField.error}
+          classNames={inputClassNames}
+        />
+        <SelectGroup
+          value={selectedGroups}
+          onChange={setSelectedGroups}
+          label="Group"
+          labelHint="(optional)"
+          placeholder="Search groups to add…"
+        />
+
+        <div className="flex items-center justify-end gap-2 border-t border-v3-stroke-weak pt-4">
+          <Button
+            type="button"
+            variant="bordered"
+            size="sm"
+            className="h-9 rounded-full border-v3-stroke-weak font-inter text-sm font-medium text-v3-text-strong hover:bg-v3-fill-weak"
+            onPress={() => close?.("add-beneficiary")}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            size="sm"
+            isDisabled={isMutating || !isValid}
+            className="h-9 rounded-full bg-v3-fill-strong px-4 font-inter text-sm font-semibold text-white hover:opacity-90 disabled:opacity-50"
+          >
+            {isMutating ? (
+              <span className="flex items-center gap-2">
+                Sending… <Spinner className="!size-4" loading />
+              </span>
+            ) : (
+              "Send invite"
+            )}
+          </Button>
+        </div>
+      </form>
     </div>
   );
 }
-

@@ -179,65 +179,10 @@ export default function WelcomeSection() {
               <button
                 type="button"
                 onClick={() => open("memory-insights")}
-                className="flex h-10 items-center rounded-full bg-v3-fill-strong px-5 font-inter text-sm font-semibold text-white transition-opacity hover:opacity-90 whitespace-nowrap"
+                className="flex h-10 items-center rounded-full border border-v3-stroke-weak bg-transparent px-5 font-inter text-sm font-semibold text-v3-text-strong transition-colors hover:bg-v3-fill-weak whitespace-nowrap"
               >
                 View insights
               </button>
-              <span
-                className="inline-flex h-10 select-none items-center gap-1.5 rounded-full border border-black/10 bg-white/80 px-4 font-inter text-sm font-semibold text-gray-800 whitespace-nowrap opacity-50 pointer-events-none cursor-not-allowed"
-                aria-disabled="true"
-              >
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 16 16"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="shrink-0"
-                  aria-hidden
-                >
-                  <circle
-                    cx="8"
-                    cy="3"
-                    r="2"
-                    stroke="#1A1A1A"
-                    strokeWidth="1.5"
-                  />
-                  <circle
-                    cx="3"
-                    cy="12"
-                    r="2"
-                    stroke="#1A1A1A"
-                    strokeWidth="1.5"
-                  />
-                  <circle
-                    cx="13"
-                    cy="12"
-                    r="2"
-                    stroke="#1A1A1A"
-                    strokeWidth="1.5"
-                  />
-                  <line
-                    x1="8"
-                    y1="5"
-                    x2="3"
-                    y2="10"
-                    stroke="#1A1A1A"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                  />
-                  <line
-                    x1="8"
-                    y1="5"
-                    x2="13"
-                    y2="10"
-                    stroke="#1A1A1A"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                  />
-                </svg>
-                Connect apps
-              </span>
             </div>
           </div>
         </div>

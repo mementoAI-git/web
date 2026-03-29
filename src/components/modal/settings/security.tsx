@@ -240,11 +240,13 @@ function PasskeyManager() {
         </ul>
       )}
 
-      <SettingsPillButton type="button" variant="default" disabled={adding} onClick={handleAddPasskey}>
-        <Fingerprint size={14} strokeWidth={1.5} />
-        <span>Add a passkey</span>
-        {adding ? <Spinner loading className="!size-4 text-v3-text-strong" /> : null}
-      </SettingsPillButton>
+      <div className="flex justify-end">
+        <SettingsPillButton type="button" variant="default" disabled={adding} onClick={handleAddPasskey}>
+          <Fingerprint size={14} strokeWidth={1.5} />
+          <span>Add a passkey</span>
+          {adding ? <Spinner loading className="!size-4 text-v3-text-strong" /> : null}
+        </SettingsPillButton>
+      </div>
     </div>
   );
 }
@@ -263,9 +265,11 @@ export default function Security() {
         title="Password"
         description="Update the password you use to sign in to Memento."
       >
-        <SettingsPillButton variant="default" onClick={() => setPasswordModalOpen(true)}>
-          Change password
-        </SettingsPillButton>
+        <div className="flex justify-end">
+          <SettingsPillButton variant="default" onClick={() => setPasswordModalOpen(true)}>
+            Change password
+          </SettingsPillButton>
+        </div>
       </SettingsSectionCard>
 
       <SettingsSectionCard

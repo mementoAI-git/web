@@ -1,6 +1,6 @@
 import endpoint from "@/api/endpoint";
-import { Selectinput, Textinput } from "@/components/Form";
-import { ModalCloseBtn } from "../modalLayout";
+import { X } from "lucide-react";
+import { Input, Button, Select, SelectItem } from "@heroui/react";
 import Spinner from "@/components/spinner";
 import useFetcher from "@/hooks/use-fetcher";
 import useForm from "@/hooks/use-form";
@@ -21,6 +21,18 @@ const schema = yup.object().shape({
 interface UpdateBeneficiaryProps {
   data: any;
 }
+
+const inputClassNames = {
+  label: "!text-v3-text-weak !font-normal !text-xs pb-0.5",
+  input: "font-inter text-sm text-v3-text-strong placeholder:text-v3-text-weaker",
+  inputWrapper: "border-v3-stroke-weak bg-white hover:border-v3-stroke-strong data-[focus=true]:border-v3-stroke-strong shadow-none",
+};
+
+const PERMISSION_LEVELS = [
+  { label: "Level 1", value: "1" },
+  { label: "Level 2", value: "2" },
+  { label: "Level 3", value: "3" },
+];
 
 export function UpdateBeneficiary({ data: beneficiary }: UpdateBeneficiaryProps) {
   const { close } = useModal();
@@ -52,56 +64,116 @@ export function UpdateBeneficiary({ data: beneficiary }: UpdateBeneficiaryProps)
     });
   };
 
+  const emailField = getField("email");
+  const nameField = getField("name");
+  const relationshipField = getField("relationship");
+  const levelField = getField("level");
+
   return (
-    <div className="modal-container">
-      <ModalCloseBtn onClick={() => close?.("update-beneficiary")} />
-      <div className="space-y-6">
-        <h4 className="modal-title">Update Beneficiary</h4>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <Textinput
-            label="Email"
-            type="email"
-            inputClassName="!h-[50px]"
-            disabled={!isEmpty(beneficiary?.accepted_at)}
-            {...getField("email")}
-            labelClassName="!text-[rgba(0,9,51,0.65)] !text-xs !font-normal"
-          />
-          <Textinput
-            label="Name"
-            inputClassName="!h-[50px]"
-            {...getField("name")}
-            labelClassName="!text-[rgba(0,9,51,0.65)] !text-xs !font-normal"
-          />
-          <Textinput
-            {...getField("relationship")}
-            label="Relationship(This person to you)"
-            inputClassName="!h-[50px]"
-            labelClassName="!text-[rgba(0,9,51,0.65)] !text-xs !font-normal"
-          />
-          <Selectinput
-            label="Permission level"
-            labelClassName="!text-[rgba(0,9,51,0.65)] !text-xs !font-normal"
-            placeholder="Set permission level"
-            data={[
-              { label: "Level 1", value: "1" },
-              { label: "Level 2", value: "2" },
-              { label: "Level 3", value: "3" },
-            ]}
-            {...getField("level")}
-            value={String(values.level)}
-          />
-          <div className="flex w-full items-center justify-end gap-4">
-            <button type="button" onClick={handleDiscard} className="btn-outline">
-              Discard
-            </button>
-            <button type="submit" disabled={isMutating || !isValid} className="btn">
-              <span>Save</span>
-              <Spinner className="!size-4" loading={isMutating} />
-            </button>
-          </div>
-        </form>
+    <div className="modal-container !max-w-[480px]">
+      <div className="mb-5 flex items-start justify-between gap-3">
+        <div className="flex flex-col gap-0.5">
+          <h2 className="font-inter text-sm font-semibold text-v3-text-strong">Edit beneficiary</h2>
+          <p className="font-inter text-sm text-v3-text-weak">Update details for this beneficiary.</p>
+        </div>
+        <button
+          type="button"
+          onClick={() => close?.("update-beneficiary")}
+          className="flex size-8 shrink-0 items-center justify-center rounded-full text-v3-text-weak hover:bg-v3-fill-weak hover:text-v3-text-strong transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-v3-stroke-strong focus-visible:ring-offset-2"
+          aria-label="Close"
+        >
+          <X size={16} strokeWidth={1.5} />
+        </button>
       </div>
+
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <Input
+          label="Email"
+          type="email"
+          variant="bordered"
+          labelPlacement="outside"
+          placeholder="example@gmail.com"
+          name={emailField.name}
+          value={emailField.value}
+          onChange={emailField.onChange}
+          isInvalid={!!emailField.error}
+          errorMessage={emailField.error}
+          isDisabled={!isEmpty(beneficiary?.accepted_at)}
+          classNames={inputClassNames}
+        />
+        <Input
+          label="Name"
+          variant="bordered"
+          labelPlacement="outside"
+          placeholder="John Doe"
+          name={nameField.name}
+          value={nameField.value}
+          onChange={nameField.onChange}
+          isInvalid={!!nameField.error}
+          errorMessage={nameField.error}
+          classNames={inputClassNames}
+        />
+        <Input
+          label="Relationship (this person to you)"
+          variant="bordered"
+          labelPlacement="outside"
+          placeholder="Brother, Friend, Spouse…"
+          name={relationshipField.name}
+          value={relationshipField.value}
+          onChange={relationshipField.onChange}
+          isInvalid={!!relationshipField.error}
+          errorMessage={relationshipField.error}
+          classNames={inputClassNames}
+        />
+        <div className="flex flex-col gap-1.5">
+          <label className="font-inter text-xs text-v3-text-weak">Permission level</label>
+          <Select
+            variant="bordered"
+            selectedKeys={[String(values.level)]}
+            onChange={(e) => levelField.onChange({ target: { name: levelField.name, value: Number(e.target.value) } } as any)}
+            isInvalid={!!levelField.error}
+            errorMessage={levelField.error}
+            classNames={{
+              trigger: "border-v3-stroke-weak bg-white hover:border-v3-stroke-strong data-[open=true]:border-v3-stroke-strong shadow-none rounded-xl",
+              value: "font-inter text-sm text-v3-text-strong",
+              label: "font-inter text-xs text-v3-text-weak",
+            }}
+            aria-label="Permission level"
+          >
+            {PERMISSION_LEVELS.map((lvl) => (
+              <SelectItem key={lvl.value} textValue={lvl.label}>
+                <span className="font-inter text-sm">{lvl.label}</span>
+              </SelectItem>
+            ))}
+          </Select>
+        </div>
+
+        <div className="flex items-center justify-end gap-2 border-t border-v3-stroke-weak pt-4">
+          <Button
+            type="button"
+            variant="bordered"
+            size="sm"
+            className="h-9 rounded-full border-v3-stroke-weak font-inter text-sm font-medium text-v3-text-strong hover:bg-v3-fill-weak"
+            onPress={handleDiscard}
+          >
+            Discard
+          </Button>
+          <Button
+            type="submit"
+            size="sm"
+            isDisabled={isMutating || !isValid}
+            className="h-9 rounded-full bg-v3-fill-strong px-4 font-inter text-sm font-semibold text-white hover:opacity-90 disabled:opacity-50"
+          >
+            {isMutating ? (
+              <span className="flex items-center gap-2">
+                Saving… <Spinner className="!size-4" loading />
+              </span>
+            ) : (
+              "Save changes"
+            )}
+          </Button>
+        </div>
+      </form>
     </div>
   );
 }
-

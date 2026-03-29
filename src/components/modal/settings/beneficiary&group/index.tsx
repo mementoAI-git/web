@@ -30,11 +30,24 @@ export default function BeneficiaryAndGroup() {
 
   return (
     <div className="flex w-full flex-col gap-6">
-      <header className="flex min-w-0 flex-col gap-1">
-        <span className="font-inter text-base font-bold text-v3-text-strong text-balance">Beneficiary &amp; groups</span>
-        <span className="font-inter text-sm text-v3-text-weak text-pretty">
-          Your beneficiaries can access your Memento. Use groups to organize them.
-        </span>
+      <header className="flex min-w-0 items-start justify-between gap-3">
+        <div className="flex flex-col gap-1">
+          <span className="font-inter text-base font-bold text-v3-text-strong text-balance">Beneficiary &amp; groups</span>
+          <span className="font-inter text-sm text-v3-text-weak text-pretty">
+            Your beneficiaries can access your Memento. Use groups to organize them.
+          </span>
+        </div>
+        {activeTab === "groups" && (
+          <Button
+            type="button"
+            variant="solid"
+            size="sm"
+            className="h-8 shrink-0 rounded-full !bg-v3-fill-strong px-3 font-inter text-xs font-semibold !text-white hover:!opacity-90"
+            onPress={() => push?.("add-group")}
+          >
+            Add group
+          </Button>
+        )}
       </header>
 
       <div className="flex w-full flex-col gap-5 rounded-2xl border border-v3-stroke-weak bg-white p-5">

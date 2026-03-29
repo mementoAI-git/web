@@ -37,7 +37,7 @@ export function UpdateGroup({ data: group }: UpdateGroupProps) {
     schema,
     async onSubmit(payload) {
       const result = await trigger(payload);
-      if (result?.success && result?.data) {
+      if (result?.success) {
         await mutate((key) => typeof key === "string" && key.startsWith("/groups"));
         toast.success(result?.message ?? "Group updated");
         close?.("update-group");

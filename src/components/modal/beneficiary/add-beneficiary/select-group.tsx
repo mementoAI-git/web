@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import useSWR from "swr";
+import { X } from "lucide-react";
 import { cn } from "@/utility";
 import endpoint from "@/api/endpoint";
 import { fetcher } from "@/api/fetcher";
@@ -27,27 +28,21 @@ interface SearchApiResponse {
 interface SelectGroupProps {
   value: GroupSearchResultItem[];
   onChange: (selected: GroupSearchResultItem[]) => void;
-  /** Optional label above the field */
   label?: React.ReactNode;
-  /** Optional hint in parentheses after the label */
   labelHint?: React.ReactNode;
-  /** Placeholder when no items selected */
   placeholder?: string;
-  /** Empty state when query is too short */
   emptyMessage?: string;
-  /** Message when no results */
   noResultsMessage?: string;
 }
 
-const DEFAULT_LABEL = "Group";
-const DEFAULT_PLACEHOLDER = "Type to search groups...";
-const DEFAULT_EMPTY_MESSAGE = "Type to search groups...";
-const DEFAULT_NO_RESULTS_MESSAGE = "No groups found. Try a different search.";
+const DEFAULT_PLACEHOLDER = "Search groups…";
+const DEFAULT_EMPTY_MESSAGE = "Type to search groups…";
+const DEFAULT_NO_RESULTS_MESSAGE = "No groups found.";
 
 export function SelectGroup({
   value: selectedGroups,
   onChange,
-  label = DEFAULT_LABEL,
+  label,
   labelHint,
   placeholder = DEFAULT_PLACEHOLDER,
   emptyMessage = DEFAULT_EMPTY_MESSAGE,
@@ -74,7 +69,7 @@ export function SelectGroup({
   const { data: searchResponse, isLoading: isSearchLoading } = useSWR<SearchApiResponse>(
     searchKey,
     fetcher,
-    { revalidateOnFocus: false }
+    { revalidateOnFocus: false },
   );
 
   const searchResults: GroupSearchResultItem[] = Array.isArray(searchResponse?.data)
@@ -105,65 +100,69 @@ export function SelectGroup({
   const hasQuery = input.trim().length >= QUERY_MIN;
 
   return (
-    <div>
-      <p className="font-inter text-sm font-medium text-gray-700 mb-2">
-        {label}
-        {labelHint != null && (
-          <span className="text-gray-400 font-normal"> {labelHint}</span>
-        )}
-      </p>
-      <div
-        ref={containerRef}
-        className="relative flex flex-wrap gap-2 min-h-[48px] px-3 py-2 border border-gray-200 rounded-xl bg-white"
-      >
-        {selectedGroups.map((g) => {
-          const colorClass = GROUP_COLORS[Math.min(g.color ?? 0, GROUP_COLORS.length - 1)];
-          return (
-          <span
-            key={g.id}
-            className={cn(
-              "flex items-center gap-1 px-2.5 py-1 rounded-full border font-inter text-xs font-medium",
-              colorClass
-            )}
-          >
-            @{g.name}
-            <button
-              type="button"
-              onClick={() => removeGroup(g.id)}
-              className="opacity-60 hover:opacity-100 ml-0.5 leading-none"
-            >
-              ×
-            </button>
-          </span>
-          );
-        })}
-        <input
-          value={input}
-          onChange={(e) => {
-            setInput(e.target.value);
-            setShowDropdown(true);
-          }}
-          onFocus={() => setShowDropdown(true)}
-          onKeyDown={(e) => {
-            if (e.key === "Escape") setShowDropdown(false);
-          }}
-          placeholder={selectedGroups.length === 0 ? placeholder : ""}
-          className="flex-1 min-w-[120px] outline-none font-inter text-sm text-gray-700 placeholder:text-gray-400"
-        />
+    <div className="flex flex-col gap-1.5">
+      {(label != null || labelHint != null) && (
+        <p className="font-inter text-xs text-v3-text-weak">
+          {label}
+          {labelHint != null && (
+            <span className="text-v3-text-weaker font-normal"> {labelHint}</span>
+          )}
+        </p>
+      )}
+      <div ref={containerRef} className="relative">
+        <div
+          className={cn(
+            "flex min-h-10 flex-wrap items-center gap-1.5 rounded-xl border px-3 py-2 transition-colors",
+            showDropdown
+              ? "border-v3-stroke-strong bg-white"
+              : "border-v3-stroke-weak bg-white hover:border-v3-stroke-strong",
+          )}
+        >
+          {selectedGroups.map((g) => {
+            const colorClass = GROUP_COLORS[Math.min(g.color ?? 0, GROUP_COLORS.length - 1)];
+            return (
+              <span
+                key={g.id}
+                className={cn(
+                  "flex items-center gap-1 rounded-full border px-2 py-0.5 font-inter text-xs font-medium",
+                  colorClass,
+                )}
+              >
+                {g.name}
+                <button
+                  type="button"
+                  onClick={() => removeGroup(g.id)}
+                  className="ml-0.5 flex items-center opacity-60 hover:opacity-100"
+                  aria-label={`Remove ${g.name}`}
+                >
+                  <X size={10} strokeWidth={2} />
+                </button>
+              </span>
+            );
+          })}
+          <input
+            value={input}
+            onChange={(e) => {
+              setInput(e.target.value);
+              setShowDropdown(true);
+            }}
+            onFocus={() => setShowDropdown(true)}
+            onKeyDown={(e) => {
+              if (e.key === "Escape") setShowDropdown(false);
+            }}
+            placeholder={selectedGroups.length === 0 ? placeholder : ""}
+            className="min-w-[120px] flex-1 bg-transparent font-inter text-sm text-v3-text-strong outline-none placeholder:text-v3-text-weaker"
+          />
+        </div>
+
         {showDropdown && (
-          <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-20 py-1 max-h-48 overflow-y-auto">
+          <div className="absolute left-0 right-0 top-full z-20 mt-1 max-h-48 overflow-y-auto rounded-xl border border-v3-stroke-weak bg-white py-1 shadow-lg">
             {!hasQuery ? (
-              <div className="px-3 py-4 text-gray-500 text-sm">
-                {emptyMessage}
-              </div>
+              <p className="px-3 py-4 font-inter text-sm text-v3-text-weaker">{emptyMessage}</p>
             ) : isSearchLoading ? (
-              <div className="flex items-center justify-center py-4 text-gray-500 text-sm">
-                Searching...
-              </div>
+              <p className="px-3 py-4 font-inter text-sm text-v3-text-weaker">Searching…</p>
             ) : searchResults.length === 0 ? (
-              <div className="px-3 py-4 text-gray-500 text-sm">
-                {noResultsMessage}
-              </div>
+              <p className="px-3 py-4 font-inter text-sm text-v3-text-weaker">{noResultsMessage}</p>
             ) : (
               searchResults.map((item) => (
                 <button
@@ -171,13 +170,14 @@ export function SelectGroup({
                   key={item.id}
                   onClick={() => addGroup(item)}
                   disabled={selectedGroups.some((g) => g.id === item.id)}
-                  className="flex items-center gap-2 w-full px-3 py-2 hover:bg-gray-50 disabled:opacity-50 disabled:pointer-events-none text-sm text-gray-700 text-left"
+                  className="flex w-full items-center gap-2.5 px-3 py-2 text-left hover:bg-v3-fill-weaker disabled:pointer-events-none disabled:opacity-40"
                 >
-                  <div className="size-8 rounded-full bg-gray-100 flex items-center justify-center text-xs font-semibold text-gray-600 shrink-0">
+                  <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-v3-fill-weak font-inter text-xs font-semibold text-v3-text-strong">
                     {item.name[0]?.toUpperCase()}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium leading-tight truncate">{item.name}</p>                  </div>
+                  <span className="min-w-0 flex-1 truncate font-inter text-sm font-medium text-v3-text-strong">
+                    {item.name}
+                  </span>
                 </button>
               ))
             )}
