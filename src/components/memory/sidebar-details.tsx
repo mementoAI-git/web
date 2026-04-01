@@ -46,6 +46,11 @@ interface SidebarDetailsProps {
   enableChatPreferencesTab?: boolean;
   activeTab?: SidebarPanelTab;
   onTabChange?: (tab: SidebarPanelTab) => void;
+  /**
+   * Desktop only. `overlay` = fixed right panel + dimmed backdrop (stories, etc.).
+   * `inline` = third column in page flex row, no backdrop (chat conversation).
+   */
+  desktopLayout?: "overlay" | "inline";
 }
 
 interface ContentProps {
@@ -72,11 +77,9 @@ function MemorySections({
   quickActions,
   open,
   runAndMaybeCloseMobile,
-  handleEditPermission,
 }: Pick<ContentProps, "memory" | "isMobile" | "source" | "quickActions"> & {
   open: ReturnType<typeof useModal>["open"];
   runAndMaybeCloseMobile: (fn: () => void) => void;
-  handleEditPermission: () => void;
 }) {
   return (
     <>
@@ -211,22 +214,6 @@ function MemorySections({
           />
         </ul>
       </div>
-
-      <Separator className="my-4 bg-v3-stroke-weak" />
-
-      <div className="space-y-2">
-        <Badge variant="outline" className={sectionBadgeClass}>
-          Actions
-        </Badge>
-        <ul>
-          <PropsItem
-            icon={<EditIcon width={13} />}
-            title="Edit permission & tags"
-            onClick={handleEditPermission}
-            className="cursor-pointer !text-sm !font-medium !text-grey-600"
-          />
-        </ul>
-      </div>
     </>
   );
 }
@@ -246,13 +233,6 @@ function Content({
   const runAndMaybeCloseMobile = (fn: () => void) => {
     fn();
     if (isMobile) onClose();
-  };
-
-  const handleEditPermission = () => {
-    open("set-tag-permission", { memory, isNew: false });
-    if (isMobile) {
-      onClose();
-    }
   };
 
   const showChat = enableChatPreferencesTab && activeTab === "chat";
@@ -319,7 +299,6 @@ function Content({
           quickActions={quickActions}
           open={open}
           runAndMaybeCloseMobile={runAndMaybeCloseMobile}
-          handleEditPermission={handleEditPermission}
         />
       )}
     </div>
@@ -335,9 +314,11 @@ export default function SidebarDetails({
   enableChatPreferencesTab = false,
   activeTab = "memory",
   onTabChange,
+  desktopLayout = "overlay",
 }: SidebarDetailsProps) {
   const desktopWidth =
     isOpen && enableChatPreferencesTab && activeTab === "chat" ? 336 : 287;
+  const isInlineDesktop = desktopLayout === "inline";
 
   return (
     <>
@@ -379,7 +360,12 @@ export default function SidebarDetails({
           mass: 0.8,
         }}
         data-testid="memory-sidebar-desktop"
-        className="fixed top-0 right-0 z-40 hidden h-screen overflow-hidden border-l border-v3-stroke-weak bg-white md:flex md:flex-col"
+        className={cn(
+          "hidden overflow-hidden border-l border-v3-stroke-weak bg-white md:flex md:flex-col",
+          isInlineDesktop ?
+            "relative z-auto h-full min-h-0 min-w-0 shrink-0 self-stretch" :
+            "fixed top-0 right-0 z-40 h-screen",
+        )}
       >
         <div className="h-full min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
           <Content
@@ -394,7 +380,7 @@ export default function SidebarDetails({
           />
         </div>
       </motion.div>
-      {isOpen ? (
+      {isOpen && !isInlineDesktop ? (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
