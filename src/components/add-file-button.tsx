@@ -16,7 +16,7 @@ export default function AddFileButton({ onClick, disabled = false }: AddFileButt
   return (
     <div ref={ref} className="relative">
       {show && (
-        <div className="shadow-btn absolute -top-15 flex gap-1 rounded-xl bg-white p-2 text-[#344054]">
+        <div className="shadow-btn absolute -top-15 flex gap-1 rounded-xl bg-white p-2 text-text-neutral-weak">
           {icons.map((Icon, index) => (
             <button
               key={index}

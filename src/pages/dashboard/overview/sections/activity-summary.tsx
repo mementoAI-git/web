@@ -6,9 +6,9 @@ export default function ActivitySummary() {
     <div className="flex w-full min-w-0 flex-col pb-16">
       <div className="flex flex-col gap-12 xl:flex-row xl:items-stretch">
         <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-5">
-          <h2 className="font-garamond font-normal text-sand-12 text-xl sm:text-2xl lg:text-[32px] leading-[38px]">
+          <h2 className="font-garamond font-normal text-text-neutral-strong text-xl sm:text-2xl lg:text-[32px] leading-[38px]">
             Continue{" "}
-            <i className="text-[rgba(176,169,156,0.9)]">reflecting</i>
+            <i className="text-text-neutral-weaker">reflecting</i>
           </h2>
           <div className="flex min-h-0 min-w-0 flex-1 flex-col">
             <DailyPromptSection />

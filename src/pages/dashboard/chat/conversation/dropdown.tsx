@@ -40,7 +40,7 @@ export function MemoryDropdown({
         triggerClassName ??
         cn(
           "flex aspect-square size-7 shrink-0 items-center justify-center rounded-lg p-2 sm:size-8",
-          "bg-transparent text-v3-icon-neutral transition-colors hover:bg-v3-fill-weak hover:text-v3-text-strong",
+          "bg-transparent text-icon-neutral transition-colors hover:bg-fill-neutral-weaker hover:text-text-neutral-strong",
         )
       }
       aria-label="Open memory sidebar"

@@ -1,4 +1,4 @@
-import { Button } from "@heroui/react";
+import { Button } from "@/components/ui/button";
 import { ArrowUpCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import upgradeCardBg from "@/assets/image/upgradecard.png";
@@ -14,7 +14,7 @@ export function SidebarUpgradeCard({ onNavigate }: SidebarUpgradeCardProps) {
 
   return (
     <div
-      className="flex flex-col overflow-hidden rounded-[24px] bg-cover bg-center p-[12px] text-white shadow-[0_4px_16px_rgba(23,11,0,0.12)]"
+      className="flex flex-col overflow-hidden rounded-[24px] bg-cover bg-center p-[12px] text-white shadow-[0_4px_16px_var(--brown-100)]"
       style={{ backgroundImage: `url(${upgradeCardBg})` }}
     >
       <div className="flex flex-col items-start gap-1">
@@ -36,8 +36,8 @@ export function SidebarUpgradeCard({ onNavigate }: SidebarUpgradeCardProps) {
       <Button
         type="button"
         variant="ghost"
-        className="mt-4 h-10 min-w-0 rounded-full !border-0 !bg-white/20 !px-4 font-inter text-sm font-medium !text-white hover:!bg-white/30 data-[hovered]:!bg-white/30 data-[pressed]:!bg-white/25"
-        onPress={() => {
+        className="mt-4 h-10 min-w-0 rounded-full !border-0 !bg-white/20 !px-4 font-inter text-sm font-medium !text-white hover:!bg-white/30"
+        onClick={() => {
           navigate("/settings/general");
           onNavigate?.();
         }}

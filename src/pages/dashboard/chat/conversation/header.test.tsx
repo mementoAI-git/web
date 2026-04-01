@@ -37,4 +37,13 @@ describe("ConversationHeader", () => {
     expect(icon).toBeTruthy();
     expect(icon?.parentElement?.className).toMatch(/\bsize-10\b/);
   });
+
+  it("renders Chat settings on the right side of the header", () => {
+    render(
+      <ConversationHeader memory={baseMemory} onViewDetails={() => {}} />,
+    );
+    expect(
+      screen.getByRole("button", { name: /chat settings/i }),
+    ).toBeInTheDocument();
+  });
 });

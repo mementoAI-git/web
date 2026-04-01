@@ -10,7 +10,7 @@ export default function Post({ memory }: { memory: IMemory }) {
   return (
     <div className="w-full space-y-10">
       <div className="space-y-3">
-        <h3 className="font-garamond text-xl font-medium leading-tight text-[#101828] sm:text-2xl md:text-3xl lg:text-[40px] lg:leading-[48px]">
+        <h3 className="font-garamond text-xl font-medium leading-tight text-text-neutral-strong sm:text-2xl md:text-3xl lg:text-[40px] lg:leading-[48px]">
           {memory?.title}
         </h3>
         <div className="rounded-xl border border-grey-500 p-3">

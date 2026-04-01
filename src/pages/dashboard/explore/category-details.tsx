@@ -82,7 +82,7 @@ export default function CategoryDetails({ category }: CategoryDetailsProps) {
       <div className="container">
         <div className="space-y-6 py-3 sm:py-12">
           <div className="flex min-h-[253px] w-full flex-col gap-6 rounded-xl border border-sand-3 bg-sand-2 p-4 md:flex-row">
-            <div className="max-h-[221px] w-full overflow-hidden rounded-[10px] border border-[#EAECF0] md:max-w-[346px]">
+            <div className="max-h-[221px] w-full overflow-hidden rounded-[10px] border border-v3-stroke-weak md:max-w-[346px]">
               <img src={category.image} className="size-full object-cover" alt={category.title} />
             </div>
             <div className="flex flex-1 flex-col gap-3 sm:gap-6">

@@ -3,7 +3,7 @@ import { useModal } from "@/hooks/use-modal";
 import { useEffect, useState, useRef, useCallback } from "react";
 import useSWR from "swr";
 import useSWRInfinite from "swr/infinite";
-import { StatCard } from "./components/stat-card";
+import { StatCard } from "../component/stat-card";
 import { storageKeys } from "@/utility/constant";
 import useIntersectionObserver from "@/hooks/use-intersection-observer";
 import Spinner from "@/components/spinner";
@@ -95,31 +95,35 @@ export default function TimeCapsulePage() {
   const values = [
     {
       icon: TimerFillIcon,
-      iconProps: { width: 58 },
-      message: `${scheduledCount} messages`,
-      title: "scheduled",
+      iconProps: { width: 32 },
+      count: scheduledCount,
+      subtitle: "scheduled",
       bg: ScheduledBg,
+      variant: "blue" as const,
     },
     {
       icon: ZapIcon,
-      iconProps: { width: 58 },
-      message: `${deliveredCount} messages`,
-      title: "delivered/unlocked",
+      iconProps: { width: 32 },
+      count: deliveredCount,
+      subtitle: "delivered/unlocked",
       bg: DeliveredBg,
+      variant: "pink" as const,
     },
     {
       icon: UnpdfIcon,
-      iconProps: { width: 58 },
-      message: `${draftCount} messages`,
-      title: "drafts",
+      iconProps: { width: 32 },
+      count: draftCount,
+      subtitle: "drafts",
       bg: DraftsBg,
+      variant: "orange" as const,
     },
     {
       icon: PauseIcon,
-      iconProps: { width: 58 },
-      message: `${pausedCount} messages`,
-      title: "Frozen",
+      iconProps: { width: 32 },
+      count: pausedCount,
+      subtitle: "Frozen",
       bg: FrozenBg,
+      variant: "green" as const,
     },
   ];
 
@@ -141,16 +145,18 @@ export default function TimeCapsulePage() {
             <Button onClick={() => open("create-capsule")}>Create New</Button>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
-            {values.map((stat, index) => {
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            {values.map((stat) => {
               const IconComponent = stat.icon;
               return (
                 <StatCard
-                  key={index}
+                  key={stat.subtitle}
                   icon={<IconComponent {...stat.iconProps} />}
-                  message={stat.message}
-                  title={stat.title}
+                  unit="messages"
+                  title={stat.count}
+                  subtitle={stat.subtitle}
                   bgImage={stat.bg}
+                  variant={stat.variant}
                 />
               );
             })}

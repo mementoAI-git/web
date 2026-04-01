@@ -1,6 +1,6 @@
 import { useMemo, type ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { Button } from "@heroui/react";
+import { Button } from "@/components/ui/button";
 import useSWR from "swr";
 import { Clock, TrendingUp, BookOpen, Star } from "lucide-react";
 import { cn } from "@/utility";
@@ -17,12 +17,12 @@ interface InsightCardData {
 
 function InsightCard({ icon, iconBg, title, body }: InsightCardData) {
   return (
-    <div className="flex w-64 shrink-0 flex-col gap-3 rounded-2xl border border-v3-stroke-weak bg-white p-4">
+    <div className="flex w-60 min-w-60 sm:w-64 sm:min-w-64 flex-col gap-3 rounded-2xl border border-v3-stroke-weak bg-white p-4">
       <div className="flex items-center gap-3">
         <div className={cn("flex size-9 shrink-0 items-center justify-center rounded-xl", iconBg)}>
           {icon}
         </div>
-        <p className="font-inter text-sm font-semibold leading-tight text-v3-text-strong">{title}</p>
+        <p className="font-inter text-sm font-semibold leading-tight text-v3-text-strong line-clamp-2">{title}</p>
       </div>
       <p className="font-inter text-xs leading-relaxed text-v3-text-weak flex-1">{body}</p>
     </div>
@@ -127,18 +127,15 @@ export default function Stats() {
         </div>
         <div className="flex gap-3">
           <Button
-            as={Link}
-            to="/onboard/misc"
-            size="md"
-            variant="bordered"
+            asChild
+            variant="outline"
             className="flex-1 rounded-lg !border !border-v3-stroke-weak font-inter text-sm font-semibold text-v3-text-strong hover:!bg-v3-fill-strong hover:!text-white"
           >
-            Update my story
+            <Link to="/onboard/misc">Update my story</Link>
           </Button>
           <Button
-            size="md"
-            variant="bordered"
-            onPress={() => open("memory-insights")}
+            variant="outline"
+            onClick={() => open("memory-insights")}
             className="flex-1 rounded-lg !border !border-v3-stroke-weak font-inter text-sm font-semibold text-v3-text-strong hover:!bg-v3-fill-strong hover:!text-white"
           >
             See full insights

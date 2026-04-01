@@ -92,7 +92,7 @@ export default function Bubble({
         <div
           className={cn(
             "flex w-fit max-w-[85%] gap-2 rounded-xl px-2 py-2",
-            isUser && "bg-v3-fill-weak",
+            isUser && "bg-fill-neutral-weaker",
             !isUser && "bg-transparent",
           )}
         >
@@ -115,28 +115,28 @@ export default function Bubble({
           className={cn(
             "w-full rounded-[8px] p-2",
             isUser && "max-w-[470px]",
-            isUser && compact && "bg-v3-fill-weak",
-            isUser && !compact && "bg-v3-fill-weak",
+            isUser && compact && "bg-fill-neutral-weaker",
+            isUser && !compact && "bg-fill-neutral-weaker",
             !isUser && "bg-transparent",
             !isUser &&
               hostChatDeepDive &&
-              "border-l-[3px] border-v3-brand-strong bg-v3-fill-weaker pl-3",
+              "border-l-[3px] border-stroke-brand-strong bg-fill-neutral-weakest pl-3",
           )}
         >
           {isUser && replyQuote?.text?.trim() ? (
-            <div className="mb-2 border-b border-v3-stroke-weak pb-2">
-              <p className="font-inter text-[10px] font-semibold uppercase tracking-wide text-v3-text-weak">
+            <div className="mb-2 border-b border-stroke-neutral-weaker pb-2">
+              <p className="font-inter text-[10px] font-semibold uppercase tracking-wide text-text-neutral-weak">
                 Replying to{" "}
                 {replyQuote.role === "user" ? "your message" : "Memento"}
               </p>
-              <p className="mt-0.5 line-clamp-2 font-inter text-xs text-v3-text-strong opacity-90">
+              <p className="mt-0.5 line-clamp-2 font-inter text-xs text-text-neutral-strong opacity-90">
                 {snippetReplyText(replyQuote.text, 160)}
               </p>
             </div>
           ) : null}
           <span
             className={cn(
-              "text-sand-12 font-georgia font-normal",
+              "text-text-neutral-strong font-georgia font-normal",
               compact
                 ? "text-[14px] leading-relaxed [&_p]:m-0 [&_p]:text-[14px] [&_p]:leading-relaxed"
                 : "text-base leading-relaxed md:text-xl md:leading-snug [&_p]:m-0 [&_p]:text-base [&_p]:leading-relaxed [&_p]:md:text-xl [&_p]:md:leading-snug",
@@ -189,7 +189,7 @@ export default function Bubble({
           >
             {timeLabel ? (
               <time
-                className="font-inter text-xs text-[var(--v3-text-weak)]"
+                className="font-inter text-xs text-text-neutral-weak"
                 dateTime={createdAt}
               >
                 {timeLabel}
@@ -202,7 +202,7 @@ export default function Bubble({
                   e.stopPropagation();
                   onReply();
                 }}
-                className="inline-flex h-7 items-center gap-1 rounded-md px-1.5 font-inter text-xs font-medium text-[var(--v3-text-weak)] transition-colors hover:bg-v3-fill-weaker hover:text-v3-text-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-v3-stroke-strong"
+                className="inline-flex h-7 items-center gap-1 rounded-md px-1.5 font-inter text-xs font-medium text-text-neutral-weak transition-colors hover:bg-fill-neutral-weakest hover:text-text-neutral-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stroke-neutral-weak"
                 aria-label="Reply to message"
               >
                 <CornerDownRight className="size-3.5 shrink-0" strokeWidth={2} aria-hidden />
@@ -213,7 +213,7 @@ export default function Bubble({
               <button
                 type="button"
                 onClick={() => void handleCopy()}
-                className="inline-flex size-7 shrink-0 items-center justify-center rounded-md text-[var(--v3-text-weak)] transition-colors hover:bg-v3-fill-weaker hover:text-v3-text-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-v3-stroke-strong"
+                className="inline-flex size-7 shrink-0 items-center justify-center rounded-md text-text-neutral-weak transition-colors hover:bg-fill-neutral-weakest hover:text-text-neutral-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stroke-neutral-weak"
                 aria-label="Copy message"
               >
                 <CopyIcon className="size-4" aria-hidden />
@@ -228,11 +228,11 @@ export default function Bubble({
               "ml-auto justify-end",
             )}
           >
-            <span className="font-inter text-xs text-[#F97066]">Couldn&apos;t send.</span>
+            <span className="font-inter text-xs text-text-error-strong">Couldn&apos;t send.</span>
             <button
               type="button"
               onClick={onRetry}
-              className="font-inter text-xs font-semibold text-[var(--v3-brand-strong)] underline-offset-2 hover:underline"
+              className="font-inter text-xs font-semibold text-text-brand-strong underline-offset-2 hover:underline"
             >
               Retry
             </button>
@@ -241,10 +241,10 @@ export default function Bubble({
         {
           is_voice &&
           <div className="mt-2 flex gap-2">
-            <WaveIcon className={cn("size-[18px] text-sand-8", { "ml-auto size-[15px] text-[#667085]": isUser })} />
+            <WaveIcon className={cn("size-[18px] text-icon-neutral-weaker", { "ml-auto size-[15px] text-text-neutral-weak": isUser })} />
             {
               isUser && (
-                <span className="font-inter text-xs text-gray-700">
+                <span className="font-inter text-xs text-text-neutral-weak">
                   {mins}:{secs}
                 </span>
               )
@@ -344,9 +344,9 @@ export function TypingBubble({ text, onFinish }: ITypingBubbleProps) {
 export function Typing() {
   return (
     <div className="flex items-center gap-1 px-5 py-3">
-      <div className="w-2 h-2 bg-sand-8 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-      <div className="w-2 h-2 bg-sand-8 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-      <div className="w-2 h-2 bg-sand-8 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+      <div className="w-2 h-2 bg-icon-neutral-weaker rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+      <div className="w-2 h-2 bg-icon-neutral-weaker rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+      <div className="w-2 h-2 bg-icon-neutral-weaker rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
     </div>
   )
 }

@@ -63,11 +63,11 @@ export default function SideBarItem({
         ) : icon ? (
           <img src={icon} alt={title} className="size-5 object-contain" />
         ) : Icon ? (
-          <Icon className="size-5" style={{ color: active ? activeTextColor : "#667085" }} />
+          <Icon className="size-5 text-v3-text-weak" style={{ color: active ? activeTextColor : undefined }} />
         ) : null}
       </div>
       <span
-        className={`text-sm font-inter font-medium transition-colors ${active ? "font-semibold" : "text-[#344054]"}`}
+        className={`text-sm font-inter font-medium transition-colors ${active ? "font-semibold" : "text-text-neutral-weak"}`}
         style={{ color: active ? activeTextColor : undefined }}
       >
         {title}

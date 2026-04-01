@@ -37,7 +37,7 @@ export default function UploadInput({ onUpload }: UploadInputProps) {
     <label
       htmlFor="file-upload-input"
       ref={labelRef}
-      className="flex h-full min-h-[40px] max-h-[300px] flex-1 flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-grey-500 bg-[#FCFCFD] p-2 text-center sm:min-h-[154px] sm:max-h-[425px] sm:rounded-2xl sm:p-3 sm:text-left lg:p-4"
+      className="flex h-full min-h-[40px] max-h-[300px] flex-1 flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-grey-500 bg-white p-2 text-center sm:min-h-[154px] sm:max-h-[425px] sm:rounded-2xl sm:p-3 sm:text-left lg:p-4"
     >
       <AddImageIcon className="h-4 w-4 text-grey-600 sm:h-5 sm:w-5 lg:h-6 lg:w-6" />
 

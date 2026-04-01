@@ -18,10 +18,10 @@ export function IdentityStep1({
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h2 className="text-lg font-medium text-[#2C1F15]">
+        <h2 className="text-lg font-medium text-v3-text-strong">
           Your name, your way
         </h2>
-        <p className="mt-1 text-sm text-[#7A6A5E]">
+        <p className="mt-1 text-sm text-v3-text-weak">
           One is for formal contexts — the other is what we&apos;ll use every day.
         </p>
       </div>
@@ -30,7 +30,7 @@ export function IdentityStep1({
         <div>
           <label
             htmlFor="onboarding-full-name"
-            className="mb-2 block text-sm font-medium text-[#2C1F15]"
+            className="mb-2 block text-sm font-medium text-v3-text-strong"
           >
             What&apos;s your full name?
           </label>
@@ -42,18 +42,18 @@ export function IdentityStep1({
             placeholder="Used for documents, time capsules..."
             maxLength={80}
             className={cn(
-              "w-full rounded-xl border-[1.5px] bg-[#FFFCF8] px-4 py-3 text-[#2C1F15] placeholder:text-[#B0A098] transition-colors",
-              "focus:border-[#C8956C] focus:outline-none",
+              "w-full rounded-xl border-[1.5px] bg-v3-fill-weaker px-4 py-3 text-v3-text-strong placeholder:text-v3-text-weaker transition-colors",
+              "focus:border-v3-brand-strong focus:outline-none",
               validationErrors.fullName
-                ? "border-[#C8956C]"
-                : "border-[#E4D9CC]",
+                ? "border-v3-brand-strong"
+                : "border-v3-stroke-weak",
               fullName.trim() &&
                 !validationErrors.fullName &&
-                "border-[#8BAF8B]"
+                "border-stroke-success-strong"
             )}
           />
           {validationErrors.fullName && (
-            <p className="mt-1.5 text-[13px] text-[#C8956C]">
+            <p className="mt-1.5 text-[13px] text-v3-brand-strong">
               {validationErrors.fullName}
             </p>
           )}
@@ -62,7 +62,7 @@ export function IdentityStep1({
         <div>
           <label
             htmlFor="onboarding-display-name"
-            className="mb-2 block text-sm font-medium text-[#2C1F15]"
+            className="mb-2 block text-sm font-medium text-v3-text-strong"
           >
             What do people closest to you call you?
           </label>
@@ -74,18 +74,18 @@ export function IdentityStep1({
             placeholder="The nickname we&apos;ll use in the app"
             maxLength={40}
             className={cn(
-              "w-full rounded-xl border-[1.5px] bg-[#FFFCF8] px-4 py-3 text-[#2C1F15] placeholder:text-[#B0A098] transition-colors",
-              "focus:border-[#C8956C] focus:outline-none",
+              "w-full rounded-xl border-[1.5px] bg-v3-fill-weaker px-4 py-3 text-v3-text-strong placeholder:text-v3-text-weaker transition-colors",
+              "focus:border-v3-brand-strong focus:outline-none",
               validationErrors.displayName
-                ? "border-[#C8956C]"
-                : "border-[#E4D9CC]",
+                ? "border-v3-brand-strong"
+                : "border-v3-stroke-weak",
               displayName.trim() &&
                 !validationErrors.displayName &&
-                "border-[#8BAF8B]"
+                "border-stroke-success-strong"
             )}
           />
           {validationErrors.displayName && (
-            <p className="mt-1.5 text-[13px] text-[#C8956C]">
+            <p className="mt-1.5 text-[13px] text-v3-brand-strong">
               {validationErrors.displayName}
             </p>
           )}

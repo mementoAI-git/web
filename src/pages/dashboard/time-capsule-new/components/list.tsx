@@ -11,7 +11,7 @@ function CapsuleListItem({ capsule }: { capsule: ICapsule }) {
   return (
     <div className="flex  w-full flex-col gap-2 sm:gap-3 rounded-xl sm:rounded-2xl bg-gray-200 p-0.5 sm:p4 border-gray-200 border hover:border-sand-8">
       <div className=" bg-white rounded-xl p-2 flex  gap-4">
-        <div className="relative  flex h-[120px] sm:h-[138px] overflow-hidden w-40 items-center justify-center rounded-lg bg-[#F3F3F3]">
+        <div className="relative  flex h-[120px] sm:h-[138px] overflow-hidden w-40 items-center justify-center rounded-lg bg-v3-fill-weaker">
           {(() => {
             const directAttachments = capsule?.attachments || [];
             const memoryAttachments =

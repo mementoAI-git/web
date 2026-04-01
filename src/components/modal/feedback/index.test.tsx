@@ -61,9 +61,7 @@ describe("Feedback", () => {
 
     await screen.findByRole("heading", { name: /send feedback/i });
 
-    expect(
-      screen.getByRole("button", { name: /bug type/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("combobox")).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /choose images/i }),
     ).toBeInTheDocument();
@@ -93,7 +91,7 @@ describe("Feedback", () => {
     expect(stacks.length).toBeGreaterThanOrEqual(1);
   });
 
-  it("renders HeroUI Card, Avatar, and CloseButton for screenshot thumbnails", async () => {
+  it("renders thumbnail grid, image preview, and remove control for screenshots", async () => {
     const user = userEvent.setup();
     Object.defineProperty(window, "innerWidth", {
       writable: true,
@@ -122,11 +120,10 @@ describe("Feedback", () => {
 
     await screen.findByRole("heading", { name: /send feedback/i });
 
-    expect(container.querySelector('[data-slot="card"]')).toBeTruthy();
-    expect(container.querySelector(".avatar")).toBeTruthy();
+    expect(container.querySelector("img[alt='image.png']")).toBeTruthy();
 
     const remove = screen.getByRole("button", { name: /remove image\.png/i });
-    expect(remove).toHaveAttribute("data-slot", "close-button");
+    expect(remove).toHaveClass("rounded-full");
     await user.click(remove);
     expect(uploadState.handleDeleteFile).toHaveBeenCalledTimes(1);
     expect(uploadState.handleDeleteFile).toHaveBeenCalledWith(

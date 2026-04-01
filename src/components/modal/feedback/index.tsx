@@ -24,23 +24,12 @@ import { CloseWithFilesConfirmation } from "../memory/close-with-files-confirmat
 import { useStore } from "@/hooks/use-store";
 import * as yup from "yup";
 import useFetcher from "@/hooks/use-fetcher";
-import {
-  Avatar,
-  Button,
-  Card,
-  CloseButton,
-  Input,
-  Label,
-  ListBox,
-  Select,
-  SelectIndicator,
-  SelectPopover,
-  SelectTrigger,
-  SelectValue,
-  Spinner,
-  TextArea,
-  TextField,
-} from "@heroui/react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Spinner } from "@/components/ui/spinner";
+import { X, ChevronDown } from "lucide-react";
 
 const FEEDBACK_OPTIONS = [
   { label: "Bug", value: "Bug" },
@@ -308,37 +297,23 @@ const Content = forwardRef<
   return (
     <div className="w-full space-y-4">
       <div className="flex w-full flex-col gap-3">
-        <Select
-          fullWidth
-          name="type"
-          selectedKey={values.type}
-          onSelectionChange={(key) => {
-            if (key != null) handleValue("type", String(key));
-          }}
-          className="font-inter flex w-full flex-col gap-1.5"
-        >
+        <div className="font-inter flex w-full flex-col gap-1.5">
           <Label className="font-inter text-sm font-medium text-v3-text-strong">
             Type
           </Label>
-          <SelectTrigger className={triggerV3Outline}>
-            <SelectValue className="font-inter text-sm" />
-            <SelectIndicator className="text-v3-text-weak" />
-          </SelectTrigger>
-          <SelectPopover className="min-w-[var(--trigger-width)] !rounded-[12px] overflow-hidden p-1 font-inter">
-            <ListBox className="max-h-60 overflow-y-auto !rounded-[12px] outline-none">
-              {FEEDBACK_OPTIONS.map((opt) => (
-                <ListBox.Item
-                  key={opt.value}
-                  id={opt.value}
-                  textValue={opt.label}
-                  className="cursor-pointer rounded-[8px] px-2 py-2 text-sm text-v3-text-strong outline-none data-[focus-visible]:bg-v3-fill-weaker data-[selected]:!bg-v3-fill-weak data-[selected]:font-medium"
-                >
-                  {opt.label}
-                </ListBox.Item>
-              ))}
-            </ListBox>
-          </SelectPopover>
-        </Select>
+          <select
+            name="type"
+            value={values.type}
+            onChange={(e) => handleValue("type", e.target.value)}
+            className={triggerV3Outline}
+          >
+            {FEEDBACK_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        </div>
         {errors.type && (
           <small className="text-xs text-danger">{errors.type}</small>
         )}
@@ -350,13 +325,12 @@ const Content = forwardRef<
           >
             Message
           </Label>
-          <TextArea
+          <Textarea
             id={messageFieldId}
             name="message"
             value={values.message}
             onChange={handleChange}
             placeholder="Attach a message"
-            fullWidth
             className={cn(
               textFieldV3,
               "min-h-24 resize-y placeholder:text-v3-text-weak",
@@ -368,25 +342,22 @@ const Content = forwardRef<
         </div>
 
         {!user && (
-          <TextField
-            name="email"
-            value={values.email}
-            onChange={handleChange}
-            fullWidth
-            className="font-inter flex flex-col gap-1.5"
-          >
+          <div className="font-inter flex flex-col gap-1.5">
             <Label className="font-inter text-sm font-medium text-v3-text-strong">
               Email (optional)
             </Label>
             <Input
               type="email"
+              name="email"
+              value={values.email}
+              onChange={handleChange}
               placeholder="you@example.com"
               className={textFieldV3}
             />
             {errors.email && (
               <small className="text-xs text-danger">{errors.email}</small>
             )}
-          </TextField>
+          </div>
         )}
 
         <div className="flex flex-col gap-1.5">
@@ -405,7 +376,7 @@ const Content = forwardRef<
             type="button"
             variant="secondary"
             className="font-inter w-full max-w-full justify-center rounded-full border border-v3-stroke-weak bg-v3-fill-weaker text-sm font-medium text-v3-text-strong hover:bg-v3-stroke-weak/20 sm:w-auto"
-            onPress={() => fileInputRef.current?.click()}
+            onClick={() => fileInputRef.current?.click()}
           >
             Choose images
           </Button>
@@ -416,26 +387,19 @@ const Content = forwardRef<
           {files.length > 0 && (
             <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
               {files.map((file) => (
-                <Card
+                <div
                   key={file.id}
-                  variant="transparent"
-                  className="group relative overflow-hidden rounded-lg border border-v3-stroke-weak bg-v3-fill-weaker shadow-none !p-0"
+                  className="group relative overflow-hidden rounded-lg border border-v3-stroke-weak bg-v3-fill-weaker"
                 >
-                  <Card.Content className="relative aspect-video !min-h-0 !w-[100px] !flex-1 !gap-0 !p-0">
-                    <Avatar className="flex !h-full !w-full min-h-0 min-w-0 items-start justify-start rounded-none">
-                      <Avatar.Image
-                        src={file.base64 ?? ""}
-                        alt={file.file.name}
-                        className="!w-full object-cover"
-                      />
-                    </Avatar>
+                  <div className="relative aspect-video min-h-0 w-full">
+                    <img
+                      src={file.base64 ?? ""}
+                      alt={file.file.name}
+                      className="h-full w-full object-cover"
+                    />
                     {!file.uploadedFile && (
                       <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/50">
-                        <Spinner
-                          color="current"
-                          size="md"
-                          className="text-white"
-                        />
+                        <Spinner className="size-5 text-white" />
                         <span className="text-xs font-medium text-white">
                           {file.progress}%
                         </span>
@@ -459,13 +423,16 @@ const Content = forwardRef<
                         </svg>
                       </div>
                     )}
-                    <CloseButton
+                    <button
+                      type="button"
                       aria-label={`Remove ${file.file.name}`}
-                      onPress={() => void handleDeleteFile(file)}
-                      className="absolute left-1 top-1 z-10 min-h-8 min-w-8 shrink-0 rounded-full bg-black/55 text-white opacity-0 shadow-sm backdrop-blur-sm transition-opacity hover:bg-black/70 data-[focus-visible]:opacity-100 data-[focus-visible]:outline-none data-[focus-visible]:ring-2 data-[focus-visible]:ring-white data-[focus-visible]:ring-offset-0 group-hover:opacity-100"
-                    />
-                  </Card.Content>
-                </Card>
+                      onClick={() => void handleDeleteFile(file)}
+                      className="absolute left-1 top-1 z-10 flex size-8 shrink-0 items-center justify-center rounded-full bg-black/55 text-white opacity-0 shadow-sm backdrop-blur-sm transition-opacity hover:bg-black/70 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-0 group-hover:opacity-100"
+                    >
+                      <X size={14} strokeWidth={1.5} />
+                    </button>
+                  </div>
+                </div>
               ))}
             </div>
           )}
@@ -481,22 +448,21 @@ const Content = forwardRef<
         <Button
           type="button"
           variant="outline"
-          isDisabled={submitDisabled}
+          disabled={submitDisabled}
           className="font-inter rounded-full border-v3-stroke-weak text-v3-text-strong"
-          onPress={handleDiscard}
+          onClick={handleDiscard}
         >
           Cancel
         </Button>
         <Button
           type="button"
-          variant="primary"
-          isDisabled={submitDisabled}
+          disabled={submitDisabled}
           className="font-inter rounded-full !bg-v3-brand-strong !text-white hover:!opacity-90"
-          onPress={() => void handleSubmit()}
+          onClick={() => void handleSubmit()}
         >
           {showContinueLabel ? "Continue" : "Send Feedback"}
           {isMutating ? (
-            <Spinner size="sm" className="text-white" />
+            <Spinner className="size-4 text-white" />
           ) : null}
         </Button>
       </div>
@@ -523,10 +489,14 @@ function FeedbackHeader({
       <h4 className="modal-title min-w-0 flex-1 text-left leading-tight">
         Send Feedback
       </h4>
-      <CloseButton
-        onPress={onClose}
-        className="shrink-0 rounded-full bg-v3-fill-weaker text-v3-text-strong hover:bg-v3-stroke-weak/25 data-[focus-visible]:outline-none data-[focus-visible]:ring-2 data-[focus-visible]:ring-v3-brand-strong data-[focus-visible]:ring-offset-2"
-      />
+      <button
+        type="button"
+        onClick={onClose}
+        className="flex size-8 shrink-0 items-center justify-center rounded-full bg-v3-fill-weaker text-v3-text-strong hover:bg-v3-stroke-weak/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-v3-brand-strong focus-visible:ring-offset-2"
+        aria-label="Close"
+      >
+        <X size={14} strokeWidth={1.5} />
+      </button>
     </div>
   );
 }

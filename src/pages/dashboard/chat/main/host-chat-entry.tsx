@@ -26,11 +26,11 @@ export default function HostChatEntryPage() {
 
   if (error) {
     return (
-      <div className="flex flex-1 flex-col items-center justify-center gap-2 px-4 font-inter text-sm text-v3-text-weak">
+      <div className="flex flex-1 flex-col items-center justify-center gap-2 px-4 font-inter text-sm text-text-neutral-weak">
         <p>We couldn&apos;t load your conversation.</p>
         <button
           type="button"
-          className="rounded-full border border-v3-stroke-weak px-4 py-2 text-v3-text-strong"
+          className="rounded-full border border-stroke-neutral-weaker px-4 py-2 text-text-neutral-strong"
           onClick={() => window.location.reload()}
         >
           Retry

@@ -153,11 +153,11 @@ export default function RecentConversation() {
           <div>
             <GoBack />
           </div>
-          <h2 className="text-2xl sm:text-[40px] sm:leading-[48px] font-normal font-garamond text-sand-12">
+          <h2 className="text-2xl sm:text-[40px] sm:leading-[48px] font-normal font-garamond text-text-neutral-strong">
             Recent conversations
           </h2>
-          <div className="bg-white flex items-center gap-2 border border-gray-200 rounded-lg p-3.5">
-            <SearchIcon width={15} height={15} className="text-gray-500" />
+          <div className="bg-white flex items-center gap-2 border border-stroke-neutral-weak rounded-lg p-3.5">
+            <SearchIcon width={15} height={15} className="text-icon-neutral-weaker" />
             <input
               placeholder="Search..."
               className="outline-none w-full flex-1"
@@ -176,7 +176,7 @@ export default function RecentConversation() {
             </> :
             groupedMemories.length === 0 ?
               <div className="text-center py-8">
-                <p className="text-gray-500">
+                <p className="text-text-neutral-weaker">
                   {searchQuery ? "No conversations found matching your search." : "No conversations yet."}
                 </p>
               </div> :
@@ -184,8 +184,8 @@ export default function RecentConversation() {
                 {groupedMemories.map((group, index) => (
                   <div key={`${group.label}-${index}`} className="flex flex-col md:flex-row gap-4">
                     <div className="flex flex-col min-w-30 shrink-0">
-                      <span className="font-bold text-sm font-inter text-gray-800">{group.label}</span>
-                      <span className="text-gray-500 text-sm font-inter font-normal">{group.date}</span>
+                      <span className="font-bold text-sm font-inter text-text-neutral-strong">{group.label}</span>
+                      <span className="text-text-neutral-weaker text-sm font-inter font-normal">{group.date}</span>
                     </div>
                     <div className="flex flex-col flex-1 gap-4">
                       {group.memories.map((memory, i) => (

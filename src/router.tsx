@@ -93,6 +93,8 @@ export const router = createBrowserRouter([
             element: <Navigate to="/chat" replace />,
           },
           { path: "chat/reply/:id", element: <ReplyPage /> },
+          // Live voice (Gemini Live): ChatPage + Conversation; composer mounts Voiceinput fullscreen
+          { path: "chat/:id/voice", element: <ChatPage /> },
           { path: "chat/:id", element: <ChatPage /> },
           { path: "stories", element: <StoriesPage /> },
           { path: "stories/:id", element: <StoriesDetailsPage /> },

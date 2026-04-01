@@ -149,7 +149,7 @@ export default function History({
       <div className="px-0 sm:px-3 md:px-[30px] space-y-6">
         {isLoadingMore && (
           <div className="py-3 flex justify-center items-center">
-            <div className="flex gap-1.5 text-sm text-gray-500">
+            <div className="flex gap-1.5 text-sm text-text-neutral-weaker">
               <span>Loading more messages...</span>
               <Spinner loading className="!size-3" />
             </div>
@@ -184,7 +184,7 @@ export default function History({
                       role="separator"
                       aria-label={dayDividerLabel(iso)}
                     >
-                      <span className="rounded-full bg-v3-fill-weaker px-3 py-1 font-inter text-xs font-medium text-v3-text-weaker">
+                      <span className="rounded-full bg-fill-neutral-weakest px-3 py-1 font-inter text-xs font-medium text-text-neutral-weaker">
                         {dayDividerLabel(iso)}
                       </span>
                     </div>

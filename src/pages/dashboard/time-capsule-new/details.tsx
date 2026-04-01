@@ -82,7 +82,7 @@ export default function StoriesDetails() {
               />
             </div>
 
-            <span className="font-garamond text-xl sm:text-2xl md:text-3xl lg:text-[40px] lg:leading-[48px] font-medium text-[#101828] leading-tight">
+            <span className="font-garamond text-xl sm:text-2xl md:text-3xl lg:text-[40px] lg:leading-[48px] font-medium text-text-neutral-strong leading-tight">
               {memory?.title}
             </span>
           </div>

@@ -124,7 +124,7 @@ export default function Modal() {
 
   return (
     <div
-      className={`modal-overlay relative z-100 w-full h-full flex flex-col justify-start items-center bg-[rgba(94,94,94,0.5)] ${state ? "flex" : "hidden"}`}
+      className={`modal-overlay relative z-100 w-full h-full flex flex-col justify-start items-center bg-overlay-backdrop ${state ? "flex" : "hidden"}`}
       onClick={() => close(topModal.name)}
     >
       {[...state].reverse().map((modal, i) => {
@@ -152,7 +152,7 @@ export default function Modal() {
             } : undefined}
           >
             {needsOverlay && (
-              <div className="absolute -inset-1.5 bg-[rgba(94,94,94,0.5)] backdrop-blur-sm pointer-events-none" />
+              <div className="absolute -inset-1.5 bg-overlay-backdrop backdrop-blur-sm pointer-events-none" />
             )}
             {isTop && !isMobile && (
               <button

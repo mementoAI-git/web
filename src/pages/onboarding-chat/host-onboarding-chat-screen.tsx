@@ -3,7 +3,9 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, type KeyboardEvent } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ArrowUp, Mic, Plus } from "lucide-react";
-import { Button, Card, Label, TextArea } from "@heroui/react";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import Logo from "@/components/logo";
 import { skipOnboarding } from "@/api/onboarding";
 import {
@@ -59,17 +61,13 @@ function BubbleMessageText({ content }: { content: string }) {
   );
 }
 
-function chatBubbleCardClass(role: "assistant" | "user") {
+function chatBubbleClass(role: "assistant" | "user") {
   return cn(
     "shrink-0 w-fit max-w-[75%] min-w-0",
     role === "assistant"
-      ? "self-start !rounded-none border-0 !bg-transparent !p-0 shadow-none"
-      : "self-end rounded-lg border border-v3-stroke-weak bg-v3-fill-weak px-2 py-1 shadow-none"
+      ? "self-start"
+      : "self-end rounded-lg border border-v3-stroke-weak bg-v3-fill-weak px-2 py-1"
   );
-}
-
-function chatBubbleContentClass() {
-  return "!gap-0 !p-0";
 }
 
 function AiOrbBadge({ size }: { size: 40 | 60 }) {
@@ -257,7 +255,7 @@ export default function HostOnboardingChatScreen({
               type="button"
               variant="ghost"
               className="font-inter min-w-0 px-2 text-sm text-v3-text-weaker hover:bg-transparent hover:text-v3-text-strong"
-              onPress={() => {
+              onClick={() => {
                 resetFlow();
                 navigate("/onboarding/onboard", { replace: true });
               }}
@@ -268,7 +266,7 @@ export default function HostOnboardingChatScreen({
               type="button"
               variant="ghost"
               className="font-inter min-w-0 px-2 text-sm text-v3-text-weaker hover:bg-transparent hover:text-v3-text-strong"
-              onPress={() => void handleSkip()}
+              onClick={() => void handleSkip()}
             >
               Skip for now →
             </Button>
@@ -281,7 +279,7 @@ export default function HostOnboardingChatScreen({
           className={cn(
             "mx-auto flex h-[750px] max-h-full min-h-0 w-full max-w-[500px] shrink-0 flex-col",
             "rounded-[32px] border border-v3-stroke-weak bg-v3-bg p-4",
-            "shadow-[0_4px_28px_rgba(23,11,0,0.07)]"
+            "shadow-[0_4px_28px_var(--brown-50)]"
           )}
         >
           {showIntro ? (
@@ -299,9 +297,8 @@ export default function HostOnboardingChatScreen({
               <div className="flex w-full shrink-0 flex-col gap-0">
                 <Button
                   type="button"
-                  variant="primary"
                   className="font-inter w-full rounded-full !bg-v3-brand-strong !text-white hover:!opacity-90"
-                  onPress={() => submitIntro(DEFAULT_INTRO_REPLY)}
+                  onClick={() => submitIntro(DEFAULT_INTRO_REPLY)}
                 >
                   Alright, let&apos;s go
                 </Button>
@@ -341,27 +338,19 @@ export default function HostOnboardingChatScreen({
               >
                 <div className="flex w-full flex-col gap-3 py-1">
                   {messages.map((m) => (
-                    <Card
+                    <div
                       key={m.id}
-                      variant="transparent"
-                      className={chatBubbleCardClass(
+                      className={chatBubbleClass(
                         m.role === "assistant" ? "assistant" : "user"
                       )}
                     >
-                      <Card.Content className={chatBubbleContentClass()}>
-                        <BubbleMessageText content={m.content} />
-                      </Card.Content>
-                    </Card>
+                      <BubbleMessageText content={m.content} />
+                    </div>
                   ))}
                   {streamingAssistantText.trim() ? (
-                    <Card
-                      variant="transparent"
-                      className={chatBubbleCardClass("assistant")}
-                    >
-                      <Card.Content className={chatBubbleContentClass()}>
-                        <BubbleMessageText content={streamingAssistantText} />
-                      </Card.Content>
-                    </Card>
+                    <div className={chatBubbleClass("assistant")}>
+                      <BubbleMessageText content={streamingAssistantText} />
+                    </div>
                   ) : null}
                   {showChatOrbUnderTranscript && (
                     <div
@@ -392,9 +381,8 @@ export default function HostOnboardingChatScreen({
                     </p>
                     <Button
                       type="button"
-                      variant="primary"
                       className="font-inter rounded-full !bg-v3-brand-strong !text-white hover:!opacity-90"
-                      onPress={handleComplete}
+                      onClick={handleComplete}
                     >
                       Go to dashboard
                     </Button>
@@ -420,7 +408,7 @@ export default function HostOnboardingChatScreen({
                               variant="secondary"
                               size="sm"
                               className={cn(chipButtonV3, "shrink-0")}
-                              onPress={() => appendChipToDraft(chip)}
+                              onClick={() => appendChipToDraft(chip)}
                             >
                               {chip}
                             </Button>
@@ -433,7 +421,7 @@ export default function HostOnboardingChatScreen({
                           >
                             {script.composerLabel}
                           </Label>
-                          <TextArea
+                          <Textarea
                             ref={mainComposerTextareaRef}
                             id={composerId}
                             name="onboarding-chat-reply"
@@ -442,7 +430,6 @@ export default function HostOnboardingChatScreen({
                             onChange={(e) => setDraft(e.target.value)}
                             onKeyDown={onMainComposerKeyDown}
                             placeholder={script.composerPlaceholder}
-                            fullWidth
                             className={introTextAreaClass}
                           />
                           <div className="flex items-center justify-between pt-3">
@@ -450,7 +437,7 @@ export default function HostOnboardingChatScreen({
                               type="button"
                               variant="secondary"
                               aria-label="Add"
-                              isDisabled
+                              disabled
                               className="size-10 min-w-10 rounded-xl border border-v3-stroke-weak bg-v3-bg p-0 shadow-none"
                             >
                               <Plus className="mx-auto size-5 text-v3-text-strong" />
@@ -476,8 +463,8 @@ export default function HostOnboardingChatScreen({
                                     ? undefined
                                     : "Voice input is not available in this browser"
                                 }
-                                isDisabled={!mainSpeechSupported}
-                                onPress={toggleMainListening}
+                                disabled={!mainSpeechSupported}
+                                onClick={toggleMainListening}
                                 className={cn(
                                   "size-10 min-w-10 rounded-xl border border-v3-stroke-weak bg-v3-bg p-0 shadow-none",
                                   mainIsListening &&
@@ -489,7 +476,7 @@ export default function HostOnboardingChatScreen({
                               <Button
                                 type="submit"
                                 aria-label="Send"
-                                isDisabled={!draft.trim()}
+                                disabled={!draft.trim()}
                                 className="size-10 min-w-10 rounded-xl !bg-orange p-0 !text-white shadow-sm hover:!opacity-90 disabled:opacity-50"
                               >
                                 <ArrowUp

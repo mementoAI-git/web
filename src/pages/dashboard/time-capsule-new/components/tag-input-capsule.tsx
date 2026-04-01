@@ -54,7 +54,7 @@ export default function Taginput({
         {/* Input field */}
         <input
           placeholder={isEmpty(values) ? placeholder : ""}
-          className="flex-1 min-w-[120px] outline-0 placeholder:text-[#000D4D73]"
+          className="flex-1 min-w-[120px] outline-0 placeholder:text-text-neutral-weaker"
           onKeyDown={onKeyDown}
           value={input}
           onChange={(event) => setInput(event.target.value)}

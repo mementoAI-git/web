@@ -1,7 +1,7 @@
 "use client";
 
 import { X } from "lucide-react";
-import { Button } from "@heroui/react";
+import { Button } from "@/components/ui/button";
 import useForm from "@/hooks/use-form";
 import * as yup from "yup";
 import { useModal } from "@/hooks/use-modal";
@@ -111,17 +111,17 @@ export function AddGroup() {
         <div className="flex items-center justify-end gap-2 border-t border-v3-stroke-weak pt-4">
           <Button
             type="button"
-            variant="bordered"
+            variant="outline"
             size="sm"
             className="h-9 rounded-full border-v3-stroke-weak font-inter text-sm font-medium text-v3-text-strong hover:bg-v3-fill-weak"
-            onPress={() => close?.("add-group")}
+            onClick={() => close?.("add-group")}
           >
             Cancel
           </Button>
           <Button
             type="submit"
             size="sm"
-            isDisabled={isMutating || !isValid}
+            disabled={isMutating || !isValid}
             className="h-9 rounded-full bg-v3-fill-strong px-4 font-inter text-sm font-semibold text-white hover:opacity-90 disabled:opacity-50"
           >
             {isMutating ? (

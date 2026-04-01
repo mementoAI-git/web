@@ -32,10 +32,10 @@ export function IdentityStep4({
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h2 className="text-lg font-medium text-[#2C1F15]">
+        <h2 className="text-lg font-medium text-v3-text-strong">
           Your life right now
         </h2>
-        <p className="mt-1 text-sm text-[#7A6A5E]">
+        <p className="mt-1 text-sm text-v3-text-weak">
           Which of these feel true for you today? This helps us understand where you are — not just where you&apos;ve been.
         </p>
       </div>
@@ -54,7 +54,7 @@ export function IdentityStep4({
       </div>
 
       {validationErrors.lifeContext && (
-        <p className="text-[13px] text-[#C8956C]">
+        <p className="text-[13px] text-v3-brand-strong">
           {validationErrors.lifeContext}
         </p>
       )}

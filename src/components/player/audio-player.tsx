@@ -61,7 +61,7 @@ export default function AudioPlayer({
 
   return (
     <div
-      className={`flex flex-1 flex-col items-center justify-between rounded-2xl border border-[#F3F3F3] bg-[#FCFCFD] ${className}`}
+      className={`flex flex-1 flex-col items-center justify-between rounded-2xl border border-v3-stroke-weak bg-white ${className}`}
     >
       <div />
       <div className="w-62.5 space-y-6">

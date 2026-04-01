@@ -52,7 +52,7 @@ export function BookmarkMemory({ data: memory }: BookmarkMemoryProps) {
           <button
             type="button"
             onClick={() => close("bookmark-memory")}
-            className="h-10 flex-1 cursor-pointer rounded-lg border border-[#0011661A] bg-white/1 px-4 py-2.5 font-inter text-sm font-semibold shadow"
+            className="h-10 flex-1 cursor-pointer rounded-lg border border-stroke-neutral-weak bg-white/1 px-4 py-2.5 font-inter text-sm font-semibold shadow"
           >
             Cancel
           </button>

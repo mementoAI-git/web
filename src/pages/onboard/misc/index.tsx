@@ -209,14 +209,14 @@ export default function MiscPage() {
                 key={stepNum}
                 className={cn(
                   "h-2.5 w-2.5 rounded-full transition-colors",
-                  (isCompleted || isCurrent) && "bg-[#E26A24]",
-                  !isCompleted && !isCurrent && "bg-[#E4D9CC]"
+                  (isCompleted || isCurrent) && "bg-fill-brand-strong",
+                  !isCompleted && !isCurrent && "bg-v3-stroke-weak"
                 )}
               />
             );
           })}
         </div>
-        <p className="text-sm text-[#7A6A5E]">{ONBOARD_QUESTIONS_STEP_LABELS[step]}</p>
+        <p className="text-sm text-v3-text-weak">{ONBOARD_QUESTIONS_STEP_LABELS[step]}</p>
       </div>
 
       {showIntro && (
@@ -236,10 +236,10 @@ export default function MiscPage() {
         <div className="flex flex-col space-y-6">
           <div className="flex flex-col gap-2">
 <p className="font-garamond text-lg sm:text-xl font-normal text-v3-text-strong">
-            How old are you?<span className="text-[#4A90E2]">*</span>
+            How old are you?<span className="text-text-info-strong">*</span>
           </p>
             {validationAttempted && !state.ageBand && (
-              <p className="text-sm text-[#C55A1D]">Please pick an age range.</p>
+              <p className="text-sm text-text-error-strong">Please pick an age range.</p>
             )}
             <div className="flex flex-wrap gap-2">
               {AGE_BAND_OPTIONS.map((opt) => (
@@ -265,7 +265,7 @@ export default function MiscPage() {
               onChange={(e) => setWhereFrom(e.target.value)}
               placeholder="City, country — or just the region"
               maxLength={120}
-              className="w-full rounded-xl border-[1.5px] border-[#E4D9CC] bg-[#FFFCF8] px-4 py-3 text-[#2C1F15] placeholder:text-[#B0A098] focus:border-[#C8956C] focus:outline-none"
+              className="w-full rounded-xl border-[1.5px] border-v3-stroke-weak bg-v3-fill-weaker px-4 py-3 text-v3-text-strong placeholder:text-v3-text-weaker focus:border-v3-brand-strong focus:outline-none"
             />
           </div>
         </div>
@@ -274,17 +274,17 @@ export default function MiscPage() {
       {step === 2 && (
         <div className="space-y-4">
           <p className="font-garamond text-lg sm:text-xl font-normal text-v3-text-strong">
-            Who is this Memento mostly for?<span className="text-[#4A90E2]">*</span>{" "}
-            <span className="text-[#B87333] text-base">(multi-select)</span>
+            Who is this Memento mostly for?<span className="text-text-info-strong">*</span>{" "}
+            <span className="text-text-brand-weak text-base">(multi-select)</span>
           </p>
           {validationAttempted && state.mementoFor.length < 1 && (
-            <p className="text-sm text-[#C55A1D]">Please pick at least one.</p>
+            <p className="text-sm text-text-error-strong">Please pick at least one.</p>
           )}
           {validationAttempted &&
             state.mementoFor.includes("something_else") &&
             state.mementoFor.length === 1 &&
             state.mementoForFreetext.length < 1 && (
-              <p className="text-sm text-[#C55A1D]">Please add at least one.</p>
+              <p className="text-sm text-text-error-strong">Please add at least one.</p>
             )}
           <div className="flex flex-wrap gap-2">
             {MEMENTO_FOR_OPTIONS.map((opt) => (
@@ -306,13 +306,13 @@ export default function MiscPage() {
                   {state.mementoForFreetext.map((item, i) => (
                     <span
                       key={`${item}-${i}`}
-                      className="inline-flex items-center gap-1 rounded-lg border border-[#E26A24]/20 bg-[#E26A24]/[0.06] px-2 py-1 text-sm text-[#4A4A4A]"
+                      className="inline-flex items-center gap-1 rounded-lg border border-v3-brand-strong/20 bg-v3-brand-strong/[0.06] px-2 py-1 text-sm text-v3-text-strong"
                     >
                       {item}
                       <button
                         type="button"
                         onClick={() => removeMementoForFreetext(i)}
-                        className="ml-0.5 rounded p-0.5 text-[#4A4A4A]/60 hover:bg-[#E26A24]/10 hover:text-[#4A4A4A]"
+                        className="ml-0.5 rounded p-0.5 text-v3-text-weaker hover:bg-v3-brand-strong/10 hover:text-v3-text-strong"
                         aria-label={`Remove ${item}`}
                       >
                         ×
@@ -334,7 +334,7 @@ export default function MiscPage() {
                 }}
                 placeholder="e.g. my mentor, a community... (press Enter to add)"
                 maxLength={200}
-                className="w-full rounded-xl border-[1.5px] border-[#E4D9CC] bg-[#FFFCF8] px-4 py-3 text-[#2C1F15] placeholder:text-[#B0A098] focus:border-[#C8956C] focus:outline-none"
+                className="w-full rounded-xl border-[1.5px] border-v3-stroke-weak bg-v3-fill-weaker px-4 py-3 text-v3-text-strong placeholder:text-v3-text-weaker focus:border-v3-brand-strong focus:outline-none"
               />
             </div>
           )}
@@ -345,15 +345,15 @@ export default function MiscPage() {
         <div className="flex flex-col gap-6">
           <div>
             <p className="font-garamond text-lg sm:text-xl font-normal text-v3-text-strong">
-              What are some things that interest you?<span className="text-[#4A90E2]">*</span>{" "}
-              <span className="text-[#B87333] text-base">(multi-select)</span>
+              What are some things that interest you?<span className="text-text-info-strong">*</span>{" "}
+              <span className="text-text-brand-weak text-base">(multi-select)</span>
             </p>
             <p className="mt-1 font-inter text-sm text-v3-text-weak">
               This helps us personalize your Memento experience.
             </p>
           </div>
           {validationAttempted && state.passions.length < 1 && (
-            <p className="text-sm text-[#C55A1D]">Pick at least one.</p>
+            <p className="text-sm text-text-error-strong">Pick at least one.</p>
           )}
           <div className="flex flex-wrap gap-2">
             {PASSION_OPTIONS.map((opt) => (
@@ -375,13 +375,13 @@ export default function MiscPage() {
                   {state.passionsFreetext.map((item, i) => (
                     <span
                       key={`${item}-${i}`}
-                      className="inline-flex items-center gap-1 rounded-lg border border-[#E26A24]/20 bg-[#E26A24]/[0.06] px-2 py-1 text-sm text-[#4A4A4A]"
+                      className="inline-flex items-center gap-1 rounded-lg border border-v3-brand-strong/20 bg-v3-brand-strong/[0.06] px-2 py-1 text-sm text-v3-text-strong"
                     >
                       {item}
                       <button
                         type="button"
                         onClick={() => removePassionFreetext(i)}
-                        className="ml-0.5 rounded p-0.5 text-[#4A4A4A]/60 hover:bg-[#E26A24]/10 hover:text-[#4A4A4A]"
+                        className="ml-0.5 rounded p-0.5 text-v3-text-weaker hover:bg-v3-brand-strong/10 hover:text-v3-text-strong"
                         aria-label={`Remove ${item}`}
                       >
                         ×
@@ -403,7 +403,7 @@ export default function MiscPage() {
                 }}
                 placeholder="e.g. gardening, vintage cars... (press Enter to add)"
                 maxLength={200}
-                className="w-full rounded-xl border-[1.5px] border-[#E4D9CC] bg-[#FFFCF8] px-4 py-3 text-[#2C1F15] placeholder:text-[#B0A098] focus:border-[#C8956C] focus:outline-none"
+                className="w-full rounded-xl border-[1.5px] border-v3-stroke-weak bg-v3-fill-weaker px-4 py-3 text-v3-text-strong placeholder:text-v3-text-weaker focus:border-v3-brand-strong focus:outline-none"
               />
             </div>
           )}
@@ -413,10 +413,10 @@ export default function MiscPage() {
       {step === 4 && (
         <div className="space-y-4">
           <p className="font-garamond text-lg sm:text-xl font-normal text-v3-text-strong">
-            What brings you to Memento?<span className="text-[#4A90E2]">*</span>
+            What brings you to Memento?<span className="text-text-info-strong">*</span>
           </p>
           {validationAttempted && !state.motivationType && (
-            <p className="text-sm text-[#C55A1D]">Please choose one.</p>
+            <p className="text-sm text-text-error-strong">Please choose one.</p>
           )}
           <div className="flex flex-wrap gap-2">
             {MOTIVATION_OPTIONS.map((opt) => (
@@ -443,11 +443,11 @@ export default function MiscPage() {
       {step === 5 && (
         <div className="space-y-4">
           <p className="font-garamond text-lg sm:text-xl font-normal text-v3-text-strong">
-            What matters most to you now?<span className="text-[#4A90E2]">*</span>{" "}
-            <span className="text-[#B87333] text-base">(multi-select)</span>
+            What matters most to you now?<span className="text-text-info-strong">*</span>{" "}
+            <span className="text-text-brand-weak text-base">(multi-select)</span>
           </p>
           {validationAttempted && state.priorityDimensions.length < 1 && (
-            <p className="text-sm text-[#C55A1D]">Pick at least one.</p>
+            <p className="text-sm text-text-error-strong">Pick at least one.</p>
           )}
           <div className="flex flex-wrap gap-2">
             {ONBOARDING_DIMENSION_OPTIONS.map((opt) => (
@@ -467,11 +467,11 @@ export default function MiscPage() {
       {step === 6 && (
         <div className="space-y-4">
           <p className="font-garamond text-lg sm:text-xl font-normal text-v3-text-strong">
-            How would you most like to add to your Memento?<span className="text-[#4A90E2]">*</span>{" "}
-            <span className="text-[#B87333] text-base">(pick up to 2)</span>
+            How would you most like to add to your Memento?<span className="text-text-info-strong">*</span>{" "}
+            <span className="text-text-brand-weak text-base">(pick up to 2)</span>
           </p>
           {validationAttempted && state.expressionMode.length < 1 && (
-            <p className="text-sm text-[#C55A1D]">Pick at least one.</p>
+            <p className="text-sm text-text-error-strong">Pick at least one.</p>
           )}
           <div className="flex flex-wrap gap-2">
             {EXPRESSION_OPTIONS.map((opt) => (
@@ -500,7 +500,7 @@ export default function MiscPage() {
           <h1 className="font-garamond text-2xl sm:text-[28px] font-normal leading-tight text-v3-text-strong">
             You&apos;re all set, <span className="capitalize">{nickname}</span>. Let&apos;s begin.
           </h1>
-          <p className="font-garamond text-base text-[#4A4A4A]/80">
+          <p className="font-garamond text-base text-v3-text-weak">
             {getStep5Body(
               state.motivationType === "__all__" ? "explorer" : state.motivationType
             )}
@@ -508,7 +508,7 @@ export default function MiscPage() {
           <button
             type="button"
             onClick={() => completeAndNavigate("dashboard")}
-            className="text-sm text-[#4A4A4A]/60 hover:text-[#4A4A4A]"
+            className="text-sm text-v3-text-weaker hover:text-v3-text-weak"
           >
             Or take me to the dashboard — I&apos;ll explore on my own →
           </button>
@@ -530,7 +530,7 @@ export default function MiscPage() {
           type="button"
           onClick={handleContinue}
           disabled={(step < 7 && !canProceed) || isMutating}
-          className="flex h-auto items-center gap-2 rounded-full !bg-orange hover:!bg-[#C55A1D] px-6 sm:px-8 py-3.5 sm:py-[14px] text-sm font-semibold leading-[20px] text-white shadow-sm disabled:cursor-not-allowed disabled:opacity-60"
+          className="flex h-auto items-center gap-2 rounded-full !bg-fill-brand-strong hover:!bg-fill-brand-weak px-6 sm:px-8 py-3.5 sm:py-[14px] text-sm font-semibold leading-[20px] text-white shadow-sm disabled:cursor-not-allowed disabled:opacity-60"
         >
           {step === 7
             ? getPrimaryCTA(

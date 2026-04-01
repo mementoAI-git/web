@@ -10,8 +10,8 @@ export default function SuggestedCategories() {
   return (
     <div className="w-full max-w-[560px] space-y-3 md:space-y-6">
       <div className="container flex items-center justify-between w-full">
-        <h4 className="font-inter font-semibold text-xl md:text-base md:leading-[24px] text-[var(--v3-text-strong)]">Suggested Conversations</h4>
-        <Link to="/chat/conversations/suggested" className="text-[var(--v3-brand-strong)] underline font-semibold font-inter text-sm cursor-pointer">
+        <h4 className="font-inter font-semibold text-xl md:text-base md:leading-[24px] text-text-neutral-strong">Suggested Conversations</h4>
+        <Link to="/chat/conversations/suggested" className="text-text-brand-strong underline font-semibold font-inter text-sm cursor-pointer">
           See more
         </Link>
       </div>
@@ -39,8 +39,8 @@ export default function SuggestedCategories() {
               })
           }
         </div>
-        <div className="absolute hidden md:block left-0 top-0 bottom-4 w-16 bg-gradient-to-r from-[var(--color-background)] to-transparent pointer-events-none z-10" />
-        <div className="absolute hidden md:block right-0 top-0 bottom-4 w-16 bg-gradient-to-l from-[var(--color-background)] to-transparent pointer-events-none z-10" />
+        <div className="absolute hidden md:block left-0 top-0 bottom-4 w-16 bg-gradient-to-r from-background to-transparent pointer-events-none z-10" />
+        <div className="absolute hidden md:block right-0 top-0 bottom-4 w-16 bg-gradient-to-l from-background to-transparent pointer-events-none z-10" />
       </div>
     </div>
   );

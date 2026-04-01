@@ -65,7 +65,7 @@ export default function ImageThumbnail({
             <div
               key={i}
               style={{ width: size }}
-              className={`absolute top-0 aspect-square overflow-hidden rounded-[5.83px] border-[1.5px] border-[#F3F3F3] ${imageRotation[i]} ${boxClassName}`}
+              className={`absolute top-0 aspect-square overflow-hidden rounded-[5.83px] border-[1.5px] border-v3-stroke-weak ${imageRotation[i]} ${boxClassName}`}
             >
               <ImageThumbnailItem {...{ ...img, size }} />
             </div>

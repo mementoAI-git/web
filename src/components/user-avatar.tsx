@@ -1,16 +1,22 @@
-import { Avatar } from "@heroui/react";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { cn, isEmpty } from "@/utility";
 
-const AVATAR_COLORS = ["default", "accent", "success", "warning", "danger"] as const;
+const AVATAR_BG_COLORS = [
+  "bg-muted",
+  "bg-blue-100",
+  "bg-green-100",
+  "bg-amber-100",
+  "bg-red-100",
+] as const;
 
-export type UserAvatarColor = (typeof AVATAR_COLORS)[number];
+export type UserAvatarColor = (typeof AVATAR_BG_COLORS)[number];
 
-/** Stable HeroUI avatar color from any string (e.g. email). */
+/** Stable avatar fallback color from any string (e.g. email). */
 export function avatarColorFromSeed(seed: string): UserAvatarColor {
-  if (!seed) return "default";
+  if (!seed) return AVATAR_BG_COLORS[0];
   let h = 0;
   for (let i = 0; i < seed.length; i++) h = (Math.imul(31, h) + seed.charCodeAt(i)) >>> 0;
-  return AVATAR_COLORS[h % AVATAR_COLORS.length];
+  return AVATAR_BG_COLORS[h % AVATAR_BG_COLORS.length];
 }
 
 export type UserAvatarProps = {
@@ -24,8 +30,10 @@ export type UserAvatarProps = {
   src?: string | null;
 };
 
+const sizeMap = { sm: "size-6", md: "size-8", lg: "size-10" } as const;
+
 /**
- * HeroUI Avatar with `variant="soft"` and gradient fallbacks (no initials).
+ * Avatar with gradient fallbacks (no initials).
  * When `src` is set and loads, the image is shown; otherwise a colored gradient disk.
  */
 export function UserAvatar({
@@ -38,19 +46,16 @@ export function UserAvatar({
   src,
 }: UserAvatarProps) {
   const seed = colorSeed ?? `${email ?? ""}|${name ?? ""}`;
-  const color = avatarColorFromSeed(seed);
+  const colorBg = avatarColorFromSeed(seed);
   const showImage = !isEmpty(src);
 
   return (
     <Avatar
-      color={color}
-      size={size}
-      variant="soft"
+      className={cn("user-avatar shrink-0", sizeMap[size], className)}
       {...(showImage ? {} : { "aria-label": alt })}
-      className={cn("user-avatar shrink-0", className)}
     >
-      {showImage ? <Avatar.Image src={src!} alt={alt} /> : null}
-      <Avatar.Fallback />
+      {showImage ? <AvatarImage src={src!} alt={alt} /> : null}
+      <AvatarFallback className={colorBg} />
     </Avatar>
   );
 }

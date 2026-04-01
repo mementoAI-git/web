@@ -1,7 +1,7 @@
 "use client";
 
 import { X, Trash2, UserPlus } from "lucide-react";
-import { Button } from "@heroui/react";
+import { Button } from "@/components/ui/button";
 import { useModal } from "@/hooks/use-modal";
 import Spinner from "@/components/spinner";
 import { toast } from "sonner";
@@ -96,11 +96,11 @@ export function GroupDetail({ data: groupId }: GroupDetailProps) {
             <Button
               type="button"
               size="sm"
-              variant="bordered"
+              variant="outline"
               className="h-8 rounded-full border-v3-stroke-weak px-3 font-inter text-xs font-medium text-v3-text-strong hover:bg-v3-fill-weak"
-              onPress={() => open?.("add-group-members", groupId)}
-              startContent={<UserPlus size={13} strokeWidth={1.5} />}
+              onClick={() => open?.("add-group-members", groupId)}
             >
+              <UserPlus size={13} strokeWidth={1.5} />
               Add members
             </Button>
           </div>

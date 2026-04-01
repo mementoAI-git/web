@@ -1,4 +1,5 @@
-import { cn } from "@/utility";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 import { formatJumpMonthLabel } from "../month-navigation";
 import type { JumpPill } from "@/features/enrichment/enrichment-api.types";
 
@@ -11,6 +12,9 @@ interface HostChatJumpPillsProps {
   className?: string;
 }
 
+const chipClass =
+  "h-7 shrink-0 cursor-pointer border-v3-stroke-weak bg-white px-2.5 text-[11px] font-medium text-v3-text-strong hover:bg-v3-fill-weaker";
+
 export function HostChatJumpPills({
   monthKeys,
   onJump,
@@ -18,46 +22,44 @@ export function HostChatJumpPills({
   onCategoryPill,
   className,
 }: HostChatJumpPillsProps) {
-  // Month navigation takes priority once conversation has history
   if (monthKeys.length > 0) {
     return (
       <div
-        className={cn("flex w-full max-w-[800px] flex-wrap gap-2 font-inter", className)}
+        className={cn("flex shrink-0 flex-nowrap items-center gap-1.5", className)}
         role="navigation"
         aria-label="Jump to month"
       >
         {monthKeys.map((k) => (
-          <button
-            key={k}
-            type="button"
-            className="min-h-8 rounded-full border border-v3-stroke-weak bg-white px-3 text-xs font-medium text-v3-text-strong transition-colors hover:bg-v3-fill-weaker"
-            onClick={() => onJump(k)}
-          >
-            {formatJumpMonthLabel(k)}
-          </button>
+          <Badge key={k} variant="outline" asChild className={cn(chipClass, "rounded-full")}>
+            <button type="button" onClick={() => onJump(k)}>
+              {formatJumpMonthLabel(k)}
+            </button>
+          </Badge>
         ))}
       </div>
     );
   }
 
-  // Category starter pills shown on fresh/empty conversation
   if (categoryPills.length === 0 || !onCategoryPill) return null;
 
   return (
     <div
-      className={cn("flex w-full max-w-[800px] flex-wrap gap-2 font-inter", className)}
+      className={cn("flex shrink-0 flex-nowrap items-center gap-1.5", className)}
       role="navigation"
       aria-label="Start a topic"
     >
       {categoryPills.map((pill) => (
-        <button
+        <Badge
           key={pill.category_key}
-          type="button"
-          className="min-h-8 rounded-full border border-v3-stroke-weak bg-white px-3 text-xs font-medium text-v3-text-strong transition-colors hover:bg-v3-fill-weaker"
-          onClick={() => onCategoryPill(pill.starter)}
+          variant="outline"
+          asChild
+          className={cn(chipClass, "max-w-[min(100%,220px)] truncate rounded-full")}
+          title={pill.starter}
         >
-          {pill.starter}
-        </button>
+          <button type="button" onClick={() => onCategoryPill(pill.starter)}>
+            {pill.starter}
+          </button>
+        </Badge>
       ))}
     </div>
   );

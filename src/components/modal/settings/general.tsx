@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Button } from "@heroui/react";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/utility";
 import { useStore } from "@/hooks/use-store";
 import { CopyIcon } from "@/components/icons";
@@ -38,12 +38,12 @@ export default function General() {
             <span>Profile details</span>
             <Button
               type="button"
-              variant="bordered"
+              variant="outline"
               className={cn(
                 "h-8 min-h-8 shrink-0 rounded-full !border !border-v3-stroke-weak bg-white px-3 font-inter text-sm font-semibold text-v3-text-strong",
-                "hover:bg-v3-fill-weaker data-[hovered]:bg-v3-fill-weaker",
+                "hover:bg-v3-fill-weaker",
               )}
-              onPress={() => setEditOpen(true)}
+              onClick={() => setEditOpen(true)}
             >
               Edit profile
             </Button>

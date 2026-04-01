@@ -90,10 +90,10 @@ export default function WelcomeSection() {
             alt=""
             className="size-7 sm:size-10 shrink-0"
           />
-          <h2 className="font-garamond text-gray-800 font-normal text-[24px] sm:text-[32px] lg:text-[40px] leading-[1.2]">
+          <h2 className="font-garamond text-text-neutral-strong font-normal text-[24px] sm:text-[32px] lg:text-[40px] leading-[1.2]">
             {greeting}
             {(user?.nickname || user?.first_name || user?.last_name) && (
-              <i style={{ color: "#376B59" }}>
+              <i className="text-text-success-strong">
                 {" "}
                 {user?.nickname || user?.first_name || user?.last_name}
                 {getGreetingPunctuation(greeting)}
@@ -111,15 +111,15 @@ export default function WelcomeSection() {
           />
           <div className="absolute left-0 top-0 flex size-full flex-col justify-between p-5 sm:p-7 lg:p-8">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
-              <h2 className="min-w-0 font-garamond text-[20px] font-normal text-[#353434] lg:text-[24px]">
+              <h2 className="min-w-0 font-garamond text-[20px] font-normal text-text-neutral-strong lg:text-[24px]">
                 What’s on your mind today?
               </h2>
               <div className="flex shrink-0 items-center gap-3">
-                <span className="flex items-center gap-1.5 font-inter text-sm font-semibold text-gray-700">
+                <span className="flex items-center gap-1.5 font-inter text-sm font-semibold text-text-neutral-weak">
                   <img src={zapIcon} alt="streak" className="size-5" />
                   {streakCount}
                 </span>
-                <span className="flex items-center gap-1.5 font-inter text-sm font-semibold text-gray-700">
+                <span className="flex items-center gap-1.5 font-inter text-sm font-semibold text-text-neutral-weak">
                   <img src={trophyIcon} alt="xp" className="size-5" />
                   {xpCount}
                 </span>
@@ -135,9 +135,9 @@ export default function WelcomeSection() {
               </button>
               <Link
                 to="/chat/new"
-                className="flex items-center gap-1.5 sm:gap-2 h-9 sm:h-12 px-3 sm:px-5 bg-white border border-gray-200 rounded-full cursor-pointer hover:opacity-90 transition-opacity"
+                className="flex items-center gap-1.5 sm:gap-2 h-9 sm:h-12 px-3 sm:px-5 bg-white border border-stroke-neutral-weak rounded-full cursor-pointer hover:opacity-90 transition-opacity"
               >
-                <span className="text-[#101828] text-xs sm:text-sm font-inter font-medium whitespace-nowrap">
+                <span className="text-text-neutral-strong text-xs sm:text-sm font-inter font-medium whitespace-nowrap">
                   Start a conversation
                 </span>
               </Link>
@@ -166,11 +166,11 @@ export default function WelcomeSection() {
                 >
                   {Number(stats.enrichment_score) || 0}%
                 </span>
-                <span className="font-inter text-sm font-normal text-[#413a2f] bg-white/70 rounded-full px-3 py-1.5 whitespace-nowrap">
+                <span className="font-inter text-sm font-normal text-text-neutral-strong bg-white/70 rounded-full px-3 py-1.5 whitespace-nowrap">
                   Enrichment score
                 </span>
               </div>
-              <p className="font-inter text-xs text-gray-700 leading-relaxed">
+              <p className="font-inter text-xs text-text-neutral-weak leading-relaxed">
                 Share stories &amp; files to build context. Link apps to enrich
                 your Memento.
               </p>
@@ -179,7 +179,7 @@ export default function WelcomeSection() {
               <button
                 type="button"
                 onClick={() => open("memory-insights")}
-                className="flex h-10 items-center rounded-full border border-v3-stroke-weak bg-transparent px-5 font-inter text-sm font-semibold text-v3-text-strong transition-colors hover:bg-v3-fill-weak whitespace-nowrap"
+                className="flex h-10 items-center rounded-full border border-stroke-neutral-weak bg-transparent px-5 font-inter text-sm font-semibold text-text-neutral-strong transition-colors hover:bg-fill-neutral-weak whitespace-nowrap"
               >
                 View insights
               </button>
@@ -193,7 +193,7 @@ export default function WelcomeSection() {
         {/* All Memories */}
         <Link
           to="/stories"
-          className="relative col-span-2 block h-[99px] overflow-hidden rounded-2xl border border-[#E3E3E3] transition-opacity hover:opacity-95 xl:col-span-1"
+          className="relative col-span-2 block h-[99px] overflow-hidden rounded-2xl border border-stroke-neutral-weaker transition-opacity hover:opacity-95 xl:col-span-1"
         >
           <img
             src={memoriesCardBg}
@@ -202,20 +202,17 @@ export default function WelcomeSection() {
           />
           <div className="relative flex items-center justify-between h-full px-5 font-inter rounded-[16px]">
             <div className="flex min-w-0 flex-col gap-1">
-              <span className="font-inter text-[12px] font-normal uppercase tracking-widest text-gray-500 md:truncate">
+              <span className="font-inter text-[12px] font-normal uppercase tracking-widest text-text-neutral-weaker md:truncate">
                 All Memories
               </span>
-              <span
-                className="font-inter text-[14px] font-semibold leading-tight"
-                style={{ color: "#293039" }}
-              >
-                <span className="font-bold" style={{ color: "#2D6BC4" }}>
+              <span className="font-inter text-[14px] font-semibold leading-tight text-text-neutral-strong">
+                <span className="font-bold text-text-info-strong">
                   {memoriesCount}
                 </span>{" "}
                 items
               </span>
               {weeklyMemories > 0 && (
-                <span className="font-inter text-[12px] font-normal text-gray-500">
+                <span className="font-inter text-[12px] font-normal text-text-neutral-weaker">
                   +{weeklyMemories} this week
                 </span>
               )}
@@ -232,29 +229,20 @@ export default function WelcomeSection() {
         <button
           type="button"
           onClick={() => navigate("/settings/beneficiary")}
-          className="relative col-span-2 block h-[99px] w-full overflow-hidden rounded-2xl border border-[#E3E3E3] text-left transition-opacity hover:opacity-95 xl:col-span-1"
+          className="relative col-span-2 block h-[99px] w-full overflow-hidden rounded-2xl border border-stroke-neutral-weaker text-left transition-opacity hover:opacity-95 xl:col-span-1"
         >
           <img
             src={benefiCardBg}
             alt=""
             className="absolute inset-0 object-cover w-full h-full rounded-[16px]"
           />
-          <div
-            className="relative flex items-center justify-between h-full px-5"
-            style={{ color: "rgba(255, 255, 255, 0.9)" }}
-          >
+          <div className="relative flex items-center justify-between h-full px-5 text-white/90">
             <div className="flex min-w-0 flex-col gap-1">
-              <span className="font-inter text-[12px] font-normal uppercase tracking-widest text-[rgba(102,112,133,0.7)] md:truncate">
+              <span className="font-inter text-[12px] font-normal uppercase tracking-widest text-text-neutral-weaker md:truncate">
                 Beneficiaries
               </span>
-              <span
-                className="font-inter text-[14px] font-semibold leading-tight"
-                style={{ color: "rgba(41, 48, 57, 1)" }}
-              >
-                <span
-                  className="font-bold"
-                  style={{ color: "rgba(255, 46, 88, 1)" }}
-                >
+              <span className="font-inter text-[14px] font-semibold leading-tight text-text-neutral-strong">
+                <span className="font-bold text-text-brand-strong">
                   {beneficiariesCount}
                 </span>{" "}
                 {beneficiariesCount === 1 ? "person" : "people"}
@@ -271,7 +259,7 @@ export default function WelcomeSection() {
         {/* Time Capsules */}
         <Link
           to="/capsule"
-          className="relative col-span-2 block h-[99px] overflow-hidden rounded-2xl border border-[#E3E3E3] transition-opacity hover:opacity-95 xl:col-span-1"
+          className="relative col-span-2 block h-[99px] overflow-hidden rounded-2xl border border-stroke-neutral-weaker transition-opacity hover:opacity-95 xl:col-span-1"
         >
           <img
             src={timeCapCardBg}
@@ -280,14 +268,11 @@ export default function WelcomeSection() {
           />
           <div className="relative flex items-center justify-between h-full px-5">
             <div className="flex min-w-0 flex-col gap-1">
-              <span className="font-inter text-[12px] font-normal uppercase tracking-widest text-gray-500/70 md:truncate">
+              <span className="font-inter text-[12px] font-normal uppercase tracking-widest text-text-neutral-weaker md:truncate">
                 Time Capsules
               </span>
-              <span
-                className="font-inter text-[14px] font-semibold leading-tight"
-                style={{ color: "#293039" }}
-              >
-                <span className="font-bold" style={{ color: "#EA580C" }}>
+              <span className="font-inter text-[14px] font-semibold leading-tight text-text-neutral-strong">
+                <span className="font-bold text-text-brand-strong">
                   {capsuleCount}
                 </span>{" "}
                 {capsuleCount === 1 ? "post" : "posts"} scheduled
@@ -302,7 +287,7 @@ export default function WelcomeSection() {
         </Link>
 
         {/* Streak Count */}
-        <div className="relative col-span-2 h-[99px] overflow-hidden rounded-2xl border border-[#E3E3E3] xl:col-span-1">
+        <div className="relative col-span-2 h-[99px] overflow-hidden rounded-2xl border border-stroke-neutral-weaker xl:col-span-1">
           <img
             src={streakCardBg}
             alt=""
@@ -310,15 +295,12 @@ export default function WelcomeSection() {
           />
           <div className="relative flex items-center justify-between h-full px-5">
             <div className="flex min-w-0 flex-col gap-1">
-              <span className="font-inter text-[12px] font-normal uppercase tracking-widest text-gray-500 md:truncate">
+              <span className="font-inter text-[12px] font-normal uppercase tracking-widest text-text-neutral-weaker md:truncate">
                 Streak Count
               </span>
-              <p
-                className="font-inter text-[14px] font-semibold leading-tight"
-                style={{ color: "#293039" }}
-              >
+              <p className="font-inter text-[14px] font-semibold leading-tight text-text-neutral-strong">
                 You're on a{" "}
-                <span className="font-bold" style={{ color: "#EA580C" }}>
+                <span className="font-bold text-text-brand-strong">
                   {streakCount}-day
                 </span>{" "}
                 streak

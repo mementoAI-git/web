@@ -33,6 +33,10 @@ Track what has been tested. Updated each time a feature is built or tests are ad
 | `src/components/ui/button.tsx` | `src/components/ui/button.test.tsx` | 6 | Unit |
 | `src/components/switch.tsx` | `src/components/switch.test.tsx` | 4 | Unit |
 | `src/components/spinner.tsx` | `src/components/spinner.test.tsx` | 3 | Unit |
+| `src/components/Form/text-input.tsx` | `src/components/Form/text-input.test.tsx` | 4 | Unit |
+| `src/components/Form/password-input.tsx` | `src/components/Form/password-input.test.tsx` | 1 | Unit |
+| `src/components/Form/search-input.tsx` | `src/components/Form/search-input.test.tsx` | 3 | Unit |
+| `src/components/Form/checkbox.tsx` | `src/components/Form/checkbox.test.tsx` | 2 | Unit |
 
 ### Pages (Integration)
 
@@ -48,9 +52,11 @@ Track what has been tested. Updated each time a feature is built or tests are ad
 |---|---|---|
 | Utilities | 5 | 99 |
 | Hooks | 2 | 11 |
-| Components | 3 | 13 |
+| Components | 7 | 23 |
 | Pages | 1 | 6 |
-| **Total** | **11** | **129** |
+| **Total (listed rows)** | **15** | **139** |
+
+*Full Vitest unit project includes additional files not listed in this table; run `npm test` for the current count.*
 
 ---
 
@@ -64,7 +70,7 @@ Track what has been tested. Updated each time a feature is built or tests are ad
 - `src/hooks/use-bookmark.ts` — Bookmark toggle with API calls
 - `src/hooks/use-clickaway.ts` — Click outside detection
 - `src/hooks/use-chat.tsx` — Chat context provider
-- `src/components/Form/*` — TextInput, PasswordInput, Checkbox, SearchInput, SelectInput, TagInput, DateInput
+- `src/components/Form/select-input.tsx`, `tag-input.tsx`, `dateinput.tsx` — not yet covered by dedicated unit tests
 - `src/components/Dropdown/*` — Dropdown menu system
 - `src/pages/auth/login/index.tsx` — Login page with form + API
 - `src/pages/auth/register/index.tsx` — Registration page

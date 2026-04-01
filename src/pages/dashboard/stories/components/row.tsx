@@ -28,19 +28,19 @@ export default function StoriesTableRow({ memory }: { memory: IMemory }) {
           <div className="h-10 flex items-center justify-center w-[46.87px] min-w-[33.53px]">
             {
               isEmpty(memory?.attachments) ?
-                <div className="size-[33.53px] rounded-[5.83px] justify-center items-center flex bg-grey-500">
-                  <DocsClipIcon width={17} />
+                <div className="size-[33.53px] rounded-[5.83px] justify-center items-center flex bg-v3-fill-weaker">
+                  <DocsClipIcon width={17} className="text-v3-text-weaker" />
                 </div> :
                 <ImageThumbnail images={memory?.attachments} size={33.53} />
             }
           </div>
-          <span className="max-w-75 truncate font-inter text-sm font-medium whitespace-nowrap text-[#050709]">
+          <span className="max-w-75 truncate font-inter text-sm font-medium whitespace-nowrap text-v3-text-strong">
             {" "}
             {memory.title}
           </span>
         </div>
       </td>
-      <td className="text-sm whitespace-nowrap text-[#535862]">
+      <td className="text-sm whitespace-nowrap text-v3-text-weak">
         {dayjs(memory.created_at).format("MMM DD, YYYY")}
       </td>
       <td>

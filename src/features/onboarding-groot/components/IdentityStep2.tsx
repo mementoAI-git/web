@@ -32,16 +32,16 @@ export function IdentityStep2({
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h2 className="text-lg font-medium text-[#2C1F15]">
+        <h2 className="text-lg font-medium text-v3-text-strong">
           A little about you
         </h2>
-        <p className="mt-1 text-sm text-[#7A6A5E]">
+        <p className="mt-1 text-sm text-v3-text-weak">
           This helps us tailor prompts and suggestions to you.
         </p>
       </div>
 
       <div>
-        <p className="mb-3 text-sm font-medium text-[#2C1F15]">
+        <p className="mb-3 text-sm font-medium text-v3-text-strong">
           How old are you?
         </p>
         <div className="flex flex-col gap-3">
@@ -57,7 +57,7 @@ export function IdentityStep2({
           ))}
         </div>
         {validationErrors.ageBand && (
-          <p className="mt-1.5 text-[13px] text-[#C8956C]">
+          <p className="mt-1.5 text-[13px] text-v3-brand-strong">
             {validationErrors.ageBand}
           </p>
         )}
@@ -66,9 +66,9 @@ export function IdentityStep2({
       <div>
         <label
           htmlFor="onboarding-where-from"
-          className="mb-2 block text-sm font-medium text-[#2C1F15]"
+          className="mb-2 block text-sm font-medium text-v3-text-strong"
         >
-          Where are you from? <span className="text-[#B0A098]">(optional)</span>
+          Where are you from? <span className="text-v3-text-weaker">(optional)</span>
         </label>
         <input
           id="onboarding-where-from"
@@ -77,12 +77,12 @@ export function IdentityStep2({
           onChange={(e) => onWhereFromChange(e.target.value)}
           placeholder="City, country — or just the region"
           maxLength={120}
-          className="w-full rounded-xl border-[1.5px] border-[#E4D9CC] bg-[#FFFCF8] px-4 py-3 text-[#2C1F15] placeholder:text-[#B0A098] focus:border-[#C8956C] focus:outline-none"
+          className="w-full rounded-xl border-[1.5px] border-v3-stroke-weak bg-v3-fill-weaker px-4 py-3 text-v3-text-strong placeholder:text-v3-text-weaker focus:border-v3-brand-strong focus:outline-none"
         />
       </div>
 
       <div>
-        <p className="mb-3 text-sm font-medium text-[#2C1F15]">
+        <p className="mb-3 text-sm font-medium text-v3-text-strong">
           Who is this Memento mostly for?
         </p>
         <div className="flex flex-col gap-3">
@@ -98,7 +98,7 @@ export function IdentityStep2({
           ))}
         </div>
         {validationErrors.mementoFor && (
-          <p className="mt-1.5 text-[13px] text-[#C8956C]">
+          <p className="mt-1.5 text-[13px] text-v3-brand-strong">
             {validationErrors.mementoFor}
           </p>
         )}

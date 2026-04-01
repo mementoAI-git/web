@@ -11,8 +11,8 @@ export default function RecentConversations() {
   return (
     <div className="flex w-full max-w-[560px] flex-col gap-3">
       <div className="flex items-center justify-between">
-        <h4 className="font-inter font-semibold text-base text-[var(--v3-text-strong)]">Recent Conversations</h4>
-        <Link to="/chat/conversations" className="cursor-pointer text-sm font-inter font-semibold text-[var(--v3-brand-strong)] md:underline">
+        <h4 className="font-inter font-semibold text-base text-text-neutral-strong">Recent Conversations</h4>
+        <Link to="/chat/conversations" className="cursor-pointer text-sm font-inter font-semibold text-text-brand-strong md:underline">
           See more
         </Link>
       </div>

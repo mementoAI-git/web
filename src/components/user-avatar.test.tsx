@@ -3,12 +3,14 @@ import { render, screen } from "@testing-library/react";
 import { UserAvatar, avatarColorFromSeed } from "./user-avatar";
 
 describe("avatarColorFromSeed", () => {
-  it("returns a known variant for any non-empty seed", () => {
-    expect(["default", "accent", "success", "warning", "danger"]).toContain(avatarColorFromSeed("x@y.com"));
+  const palette = ["bg-muted", "bg-blue-100", "bg-green-100", "bg-amber-100", "bg-red-100"] as const;
+
+  it("returns a known Tailwind background class for any non-empty seed", () => {
+    expect(palette).toContain(avatarColorFromSeed("x@y.com"));
   });
 
-  it("returns default for empty seed", () => {
-    expect(avatarColorFromSeed("")).toBe("default");
+  it("returns bg-muted for empty seed", () => {
+    expect(avatarColorFromSeed("")).toBe("bg-muted");
   });
 });
 

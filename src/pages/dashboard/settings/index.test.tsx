@@ -19,7 +19,8 @@ describe("SettingsPage", () => {
     const viewport = container.querySelector(".page-viewport");
     expect(viewport).toBeTruthy();
 
-    expect(screen.getByRole("navigation", { name: /settings sections/i })).toBeInTheDocument();
+    const settingsNavs = screen.getAllByRole("navigation", { name: /settings sections/i });
+    expect(settingsNavs.length).toBeGreaterThanOrEqual(1);
   });
 
   it("redirects invalid tab to general", async () => {
@@ -45,12 +46,14 @@ describe("SettingsPage", () => {
     );
 
     await screen.findByText("Profile details");
-    expect(screen.getByRole("navigation", { name: /settings sections/i })).toBeInTheDocument();
+    const settingsNavs = screen.getAllByRole("navigation", { name: /settings sections/i });
+    expect(settingsNavs.length).toBeGreaterThanOrEqual(1);
     expect(screen.getByRole("link", { name: /personal info/i })).toHaveAttribute("href", "/settings/general");
 
-    const statsLink = screen.getByRole("link", { name: /^stats$/i });
-    expect(statsLink).toHaveAttribute("href", "/settings/stats");
-    await user.click(statsLink);
+    const statsLinks = screen.getAllByRole("link", { name: /^stats$/i });
+    const statsLink = statsLinks.find((el) => el.getAttribute("href") === "/settings/stats");
+    expect(statsLink).toBeTruthy();
+    await user.click(statsLink!);
     await waitFor(() => {
       expect(screen.getByText(/highlights from your activity/i)).toBeInTheDocument();
     });

@@ -154,7 +154,7 @@ export function GeneralProfileEditModal({ open, onOpenChange }: GeneralProfileEd
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[200] flex items-center justify-center bg-[rgba(94,94,94,0.5)] p-4"
+      className="fixed inset-0 z-[200] flex items-center justify-center bg-overlay-backdrop p-4"
       role="presentation"
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onOpenChange(false);

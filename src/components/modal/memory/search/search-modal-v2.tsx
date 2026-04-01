@@ -7,11 +7,9 @@ import { getRecentMemories, isEmpty } from "@/utility";
 import { useModal } from "@/hooks/use-modal";
 import { useStore } from "@/hooks/use-store";
 import useSWR from "swr";
-import {
-  Card,
-  IconSearch,
-  SearchField,
-} from "@heroui/react";
+import { Input } from "@/components/ui/input";
+import { SearchIcon } from "@/components/icons";
+import { X } from "lucide-react";
 import SearchItem from "./search-item";
 
 function SearchModalContent() {
@@ -126,42 +124,43 @@ function SearchModalContent() {
   return (
     <div className="flex size-full max-h-[600px] flex-col bg-white">
       <div className="border-b border-v3-stroke-weak p-6 pb-4">
-        <SearchField
-          value={search}
-          onChange={setSearch}
-          className="w-full"
-          aria-label="Search memories"
-        >
-          <SearchField.Group className="w-full">
-            <SearchField.SearchIcon />
-            <SearchField.Input
-              ref={inputRef}
-              role="combobox"
-              aria-expanded={!showEmpty}
-              aria-controls="search-results"
-              aria-activedescendant={
-                activeIndex >= 0 ? `search-item-${activeIndex}` : undefined
-              }
-              aria-autocomplete="list"
-              placeholder="Start searching..."
-              className="font-inter"
-              onKeyDown={handleKeyDown}
-              autoFocus
+        <div className="flex w-full items-center gap-2 rounded-lg border border-v3-stroke-weak bg-white px-3 py-2 focus-within:ring-2 focus-within:ring-v3-brand-strong focus-within:ring-offset-0">
+          <SearchIcon width={16} height={16} className="shrink-0 text-v3-text-weak" aria-hidden />
+          <input
+            ref={inputRef}
+            type="text"
+            role="combobox"
+            aria-expanded={!showEmpty}
+            aria-controls="search-results"
+            aria-activedescendant={
+              activeIndex >= 0 ? `search-item-${activeIndex}` : undefined
+            }
+            aria-autocomplete="list"
+            aria-label="Search memories"
+            placeholder="Start searching..."
+            className="min-w-0 flex-1 border-0 bg-transparent font-inter text-sm text-v3-text-strong outline-none placeholder:text-v3-text-weaker"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            onKeyDown={handleKeyDown}
+            autoFocus
+          />
+          {Boolean(search) && !isLoading ? (
+            <button
+              type="button"
+              aria-label="Clear search"
+              onClick={handleClearSearch}
+              className="flex shrink-0 items-center justify-center rounded-full p-0.5 text-v3-text-weak hover:text-v3-text-strong"
+            >
+              <X size={14} strokeWidth={1.5} />
+            </button>
+          ) : null}
+          {isLoading ? (
+            <Spinner
+              loading
+              className="!size-5 shrink-0 !text-v3-text-weak"
             />
-            {Boolean(search) && !isLoading ? (
-              <SearchField.ClearButton
-                aria-label="Clear search"
-                onPress={handleClearSearch}
-              />
-            ) : null}
-            {isLoading ? (
-              <Spinner
-                loading
-                className="!size-5 shrink-0 !text-v3-text-weak"
-              />
-            ) : null}
-          </SearchField.Group>
-        </SearchField>
+          ) : null}
+        </div>
       </div>
 
       <div
@@ -175,7 +174,7 @@ function SearchModalContent() {
           <div className="animate-fadeIn flex h-full items-center justify-center">
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <div className="mb-3 rounded-full bg-v3-fill-weaker p-3">
-                <IconSearch
+                <SearchIcon
                   width={32}
                   height={32}
                   className="text-v3-text-weak"
@@ -283,11 +282,9 @@ export function SearchMemoriesV2() {
           className="flex w-full justify-center px-4"
           onClick={(e) => e.stopPropagation()}
         >
-          <Card className="w-full max-w-[640px] min-w-[min(100%,640px)] overflow-hidden rounded-2xl border border-v3-stroke-weak bg-white p-0 shadow-[0px_8px_40px_rgba(23,11,0,0.12)]">
-            <Card.Content className="p-0">
-              <SearchModalContent />
-            </Card.Content>
-          </Card>
+          <div className="w-full max-w-[640px] min-w-[min(100%,640px)] overflow-hidden rounded-2xl border border-v3-stroke-weak bg-white shadow-[0px_8px_40px_var(--brown-100)]">
+            <SearchModalContent />
+          </div>
         </div>
       </div>
       <Sheet

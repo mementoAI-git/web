@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import welcomeImage from "@/assets/image/onboarding/welcome-image.png";
 
 const primaryButtonClass =
-  "rounded-[64px] !bg-orange hover:!bg-[#C55A1D] px-8 sm:px-12 py-6 font-inter text-sm font-semibold text-white shadow-sm";
+  "rounded-[64px] !bg-fill-brand-strong hover:!bg-fill-brand-weak px-8 sm:px-12 py-6 font-inter text-sm font-semibold text-white shadow-sm";
 
 export function OnboardPage() {
   const navigate = useNavigate();

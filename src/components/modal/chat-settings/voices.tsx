@@ -45,8 +45,8 @@ export default function Voices() {
   );
 
   return (
-    <div className="space-y-5">
-      <p className="font-garamond text-xl text-sand-12">AI Voice</p>
+    <div className="space-y-4">
+      <p className="font-garamond text-xl font-medium text-text-neutral-strong">AI Voice</p>
       <div className="grid grid-cols-2 gap-3">
         {voices.map(({ title, subtitle, image, voiceName }) => (
           <button
@@ -54,15 +54,17 @@ export default function Voices() {
             key={voiceName}
             className={cn(
               "flex items-center gap-3 rounded-xl border py-2.5 px-3 transition-all duration-200",
-              selectedVoice === voiceName ? "border-2 border-blue-6 bg-blue-1" : "border-[#EAECF0] hover:border-gray-300",
+              selectedVoice === voiceName
+                ? "border-2 border-stroke-brand-strong bg-fill-neutral-weakest"
+                : "border-stroke-neutral-weaker hover:border-stroke-neutral-weak",
               isMutating ? "cursor-not-allowed opacity-50" : "cursor-pointer",
             )}
             onClick={() => !isMutating && handleVoiceSelect(voiceName)}
           >
             <img src={image} width={32} height={32} className="size-8 rounded-full object-cover" alt={title} />
-            <div className="flex flex-col">
-              <span className="font-inter text-sm font-medium text-sand-12">{title}</span>
-              <span className="font-inter text-xs text-[#667085]">{subtitle}</span>
+            <div className="flex flex-col text-left">
+              <span className="font-inter text-sm font-medium text-text-neutral-strong">{title}</span>
+              <span className="font-inter text-xs text-text-neutral-weak">{subtitle}</span>
             </div>
           </button>
         ))}

@@ -25,11 +25,11 @@ const pillBase =
 
 export const settingsPillButtonClass = {
   /** Outline, dark label — e.g. Log out, Change password */
-  default: cn(pillBase, "border border-[#10182866] bg-transparent text-v3-text-strong hover:bg-v3-fill-weaker"),
+  default: cn(pillBase, "border border-stroke-neutral-weak bg-transparent text-text-neutral-strong hover:bg-fill-neutral-weak"),
   /** Muted outline — e.g. Coming soon */
   secondary: cn(
     pillBase,
-    "cursor-not-allowed border border-[#1018286633] bg-transparent text-gray-400",
+    "cursor-not-allowed border border-stroke-neutral-disabled bg-transparent text-text-neutral-disabled",
   ),
   /** Solid destructive */
   destructive: cn(pillBase, "border border-transparent bg-danger text-white hover:opacity-90"),

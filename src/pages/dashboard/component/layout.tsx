@@ -50,7 +50,7 @@ export default function DashboardLayout() {
         <Modal />
         {sidebarOpen && (
           <div
-            className="fixed inset-0 modal-overlay bg-[rgba(94,94,94,0.5)] z-40 lg:hidden"
+            className="fixed inset-0 modal-overlay bg-overlay-backdrop z-40 lg:hidden"
             onClick={() => setSidebarOpen(false)}
           />
         )}
@@ -75,7 +75,7 @@ export default function DashboardLayout() {
             />
             <div className="flex flex-1 flex-col overflow-hidden pt-[60px] sm:pt-0 md:flex-row">
               <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-                <div className="flex h-fit w-full min-w-0 shrink-0 flex-col items-center justify-start bg-white px-4 pt-[3px] pb-0.5 text-v3-text-strong sm:px-6">
+                <div className="w-full min-w-0 shrink-0 bg-white px-4 pt-[3px] pb-0.5 text-v3-text-strong sm:px-6">
                   <OnboardingNudgeBanner />
                   <SecurityNudgeBanner />
                 </div>

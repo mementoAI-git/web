@@ -1,9 +1,11 @@
 import { SearchIcon } from "@/components/icons";
 import { useModal } from "@/hooks/use-modal";
 import { storageKeys } from "@/utility/constant";
-import { cn } from "@/utility";
-import gridIconSvg from "@/assets/icon/Stories/grid-icon.svg";
-import listIconSvg from "@/assets/icon/Stories/list-icon.svg";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { LayoutGrid, List } from "lucide-react";
 
 interface IStoriesHeader {
   mode?: string;
@@ -29,6 +31,7 @@ export default function StoriesHeader({
   ];
 
   const handleChangeMode = (m: string) => {
+    if (!m) return;
     localStorage.setItem(storageKeys.listmode, m)
     onChangeMode(m)
   }
@@ -39,57 +42,78 @@ export default function StoriesHeader({
         {/* Filter Pills */}
         <div className="flex flex-wrap items-center gap-2">
           {filters.map((f) => (
-            <button
+            <Button
               key={f.value}
+              variant={filter === f.value ? "default" : "outline"}
+              size="sm"
               onClick={() => onChangeFilter(f.value)}
               className={cn(
-                "px-4 py-2 rounded-full font-inter text-sm font-medium transition-all border",
+                "rounded-full font-inter text-sm font-medium",
                 filter === f.value
-                  ? "bg-[#1D2939] border-[#1D2939] text-white"
-                  : "bg-white border-[#EAECF0] text-[#344054] hover:bg-gray-50"
+                  ? "bg-v3-text-strong text-white hover:bg-v3-text-strong/90"
+                  : "border-v3-stroke-weak text-v3-text-weak hover:bg-v3-fill-weaker"
               )}
             >
-              {f.label} {f.count !== undefined && <span className="opacity-70 ml-1">({f.count})</span>}
-            </button>
+              {f.label}
+              {f.count !== undefined && (
+                <Badge
+                  variant="secondary"
+                  className={cn(
+                    "ml-1.5 rounded-full px-1.5 py-0 text-[10px] font-medium",
+                    filter === f.value
+                      ? "bg-white/20 text-white"
+                      : "bg-v3-fill-weaker text-v3-text-weak"
+                  )}
+                >
+                  {f.count}
+                </Badge>
+              )}
+            </Button>
           ))}
         </div>
 
         <div className="flex flex-1 items-center gap-3 max-w-2xl">
           {/* Search Input */}
-          <div
+          <button
+            type="button"
             onClick={() => open("search-memory")}
-            className="flex-1 group relative cursor-pointer"
+            className="flex flex-1 cursor-pointer items-center gap-2 rounded-xl border border-v3-stroke-weak bg-white px-3 py-2.5 shadow-sm transition-colors hover:border-v3-stroke-strong"
           >
-            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[#667085]">
-              <SearchIcon className="size-5" />
-            </div>
-            <div className="w-full pl-10 pr-12 py-2.5 bg-white border border-[#D0D5DD] rounded-xl text-sm text-[#101828] placeholder-[#667085] shadow-sm group-hover:border-gray-400 transition-colors flex items-center">
-              Search
-            </div>
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 border border-[#D0D5DD] rounded px-1.5 py-0.5 text-[#667085] font-medium text-[10px] bg-gray-50">
+            <SearchIcon className="size-5 text-v3-text-weak" />
+            <span className="flex-1 text-left text-sm text-v3-text-weak">Search</span>
+            <kbd className="rounded border border-v3-stroke-weak bg-v3-fill-weaker px-1.5 py-0.5 font-inter text-[10px] font-medium text-v3-text-weak">
               ⌘K
-            </div>
-          </div>
+            </kbd>
+          </button>
 
           {/* Mode Toggles */}
-          <div className="flex items-center p-1 rounded-[64px]" style={{ backgroundColor: "rgba(0,0,0,0.1)" }}>
-            {["grid", "list"].map(m => (
-              <button
-                key={m}
-                onClick={() => handleChangeMode(m)}
-                className={cn(
-                  "p-2 rounded-[64px] transition-all",
-                  mode === m ? "bg-white shadow-sm" : ""
-                )}
-              >
-                <img
-                  src={m === "grid" ? gridIconSvg : listIconSvg}
-                  alt={m}
-                  className={cn("size-5 object-contain", mode !== m && "opacity-40")}
-                />
-              </button>
-            ))}
-          </div>
+          <ToggleGroup
+            type="single"
+            value={mode}
+            onValueChange={handleChangeMode}
+            className="rounded-full bg-v3-fill-weak p-1"
+          >
+            <ToggleGroupItem
+              value="grid"
+              aria-label="Grid view"
+              className={cn(
+                "rounded-[64px] p-2 data-[state=on]:bg-white data-[state=on]:shadow-sm",
+                "hover:bg-transparent"
+              )}
+            >
+              <LayoutGrid className={cn("size-5", mode !== "grid" && "opacity-40")} />
+            </ToggleGroupItem>
+            <ToggleGroupItem
+              value="list"
+              aria-label="List view"
+              className={cn(
+                "rounded-[64px] p-2 data-[state=on]:bg-white data-[state=on]:shadow-sm",
+                "hover:bg-transparent"
+              )}
+            >
+              <List className={cn("size-5", mode !== "list" && "opacity-40")} />
+            </ToggleGroupItem>
+          </ToggleGroup>
         </div>
       </div>
     </div>

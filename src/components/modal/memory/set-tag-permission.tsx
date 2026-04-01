@@ -82,7 +82,7 @@ function Taginput({ values, setValue }: ITaginput) {
                 ? ""
                 : "Tap tags below to add here or type in manually"
             }
-            className="w-full flex-1 outline-0 placeholder:text-[#000D4D73]"
+            className="w-full flex-1 outline-0 placeholder:text-text-neutral-weaker"
             onKeyDown={onKeyDown}
             value={input}
             onChange={(e) => setInput(e.target.value)}

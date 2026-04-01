@@ -17,9 +17,9 @@ export const settingNavigations = [
 
 export const topNavigations = [
   { icon: globeIcon, title: "Overview", link: "/overview" },
-  { icon: chatsIcon, title: "Chats", link: "/chat" },
-  { icon: cardFileBoxIcon, title: "My Memories", link: "/stories" },
-  { icon: compassIcon, title: "Explore", link: "/explore" },
+  { icon: chatsIcon, title: "Chat", link: "/chat" },
+  { icon: cardFileBoxIcon, title: "My stories", link: "/stories" },
+  { icon: compassIcon, title: "Explore topics", link: "/explore" },
   { icon: hourglassIcon, title: "Time capsule", link: "/capsule" },
 ];
 

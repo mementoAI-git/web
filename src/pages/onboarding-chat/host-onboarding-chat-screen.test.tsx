@@ -45,11 +45,10 @@ describe("HostOnboardingChatScreen", () => {
       ).toBeInTheDocument();
     });
 
-    const assistantBubble = screen
-      .getByText(/glad you're here/i)
-      .closest("[data-slot='card']");
+    const gladHere = screen.getByText(/glad you're here/i);
+    const assistantBubble = gladHere.closest(".self-start");
     expect(assistantBubble).toBeTruthy();
-    expect(assistantBubble).toHaveClass("!rounded-none");
+    expect(assistantBubble).toHaveClass("max-w-[75%]");
 
     const scrollPane = container.querySelector(".hide-scrollbar");
     const idleOrb = scrollPane?.querySelector("video");

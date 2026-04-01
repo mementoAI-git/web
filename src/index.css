@@ -1,5 +1,4 @@
 @import "tailwindcss";
-@import "@heroui/styles";
 @plugin "@tailwindcss/typography";
 @config "../tailwind.config.ts";
 
@@ -73,6 +72,180 @@
   --v3-brand-strong: #ff5e00;
   /* v3 full-page / sheet background (e.g. host onboarding chat) */
   --v3-bg: #ffffff;
+
+  /* Primitive Colors - Single source of truth */
+  /* Brown Scale (Light Mode) */
+  --brown-1000: rgba(23, 11, 0, 0.9);
+  --brown-700: rgba(23, 11, 0, 0.65);
+  --brown-500: rgba(23, 11, 0, 0.45);
+  --brown-100: rgba(23, 11, 0, 0.1);
+  --brown-50: rgba(23, 11, 0, 0.04);
+  --brown-25: rgba(23, 11, 0, 0.02);
+
+  /* Brown Scale (Dark Mode) */
+  --brown-dark-1000: #FFFFFF;
+  --brown-dark-700: rgba(255, 255, 255, 0.78);
+  --brown-dark-500: rgba(255, 255, 255, 0.6);
+  --brown-dark-100: rgba(255, 255, 255, 0.12);
+  --brown-dark-50: rgba(255, 255, 255, 0.06);
+  --brown-dark-25: rgba(255, 255, 255, 0.03);
+
+  /* Orange Scale (Brand) */
+  --orange-1000: #FF5E00;
+  --orange-800: rgba(255, 94, 0, 0.8);
+  --orange-200: rgba(255, 94, 0, 0.2);
+  --orange-50: rgba(255, 94, 0, 0.05);
+
+  /* Red Scale (Error) */
+  --red-1000: #C73A3A;
+  --red-800: rgba(199, 58, 58, 0.8);
+  --red-200: rgba(199, 58, 58, 0.14);
+  --red-50: rgba(255, 74, 74, 0.05);
+
+  /* Amber Scale (Warning) */
+  --amber-1000: #8F6C1A;
+  --amber-800: rgba(143, 108, 26, 0.8);
+  --amber-200: rgba(143, 108, 26, 0.2);
+  --amber-50: rgba(255, 192, 46, 0.05);
+
+  /* Green Scale (Success) */
+  --green-1000: #067A57;
+  --green-800: rgba(6, 122, 87, 0.8);
+  --green-200: rgba(6, 122, 87, 0.2);
+  --green-50: rgba(10, 204, 146, 0.05);
+
+  /* Blue Scale (Info) */
+  --blue-1000: #1A80F7;
+  --blue-800: rgba(26, 128, 247, 0.8);
+  --blue-200: rgba(26, 128, 247, 0.2);
+  --blue-50: rgba(26, 128, 247, 0.06);
+
+  /* Neutral Scale */
+  --neutral-1000: #000000;
+  --neutral-700: rgba(0, 0, 0, 0.6);
+  --neutral-500: rgba(0, 0, 0, 0.45);
+  --neutral-100: rgba(0, 0, 0, 0.1);
+  --neutral-50: rgba(0, 0, 0, 0.04);
+  --neutral-25: rgba(0, 0, 0, 0.02);
+
+  /* Neutral Scale (Dark Mode) */
+  --neutral-dark-1000: #FFFFFF;
+  --neutral-dark-700: rgba(255, 255, 255, 0.78);
+  --neutral-dark-500: rgba(255, 255, 255, 0.6);
+  --neutral-dark-100: rgba(255, 255, 255, 0.12);
+  --neutral-dark-50: rgba(255, 255, 255, 0.06);
+  --neutral-dark-25: rgba(255, 255, 255, 0.03);
+
+  /* Overlay/Backdrop Colors */
+  --overlay-backdrop: rgba(94, 94, 94, 0.5);
+  --overlay-backdrop-dark: rgba(0, 0, 0, 0.6);
+
+  /* Semantic Tokens - Light Mode (Default) */
+  /* Text Colors */
+  --text-neutral-strong: var(--brown-1000);
+  --text-neutral-weak: var(--brown-700);
+  --text-neutral-weaker: var(--brown-500);
+  --text-neutral-disabled: var(--brown-100);
+  --text-inverse-strong: var(--brown-dark-1000);
+  --text-inverse-weak: var(--brown-dark-700);
+  --text-inverse-weaker: var(--brown-dark-500);
+  --text-inverse-disabled: var(--brown-dark-100);
+  --text-brand-strong: var(--orange-1000);
+  --text-brand-weak: var(--orange-800);
+  --text-brand-weaker: var(--orange-200);
+  --text-brand-disabled: var(--orange-50);
+  --text-info-strong: var(--blue-1000);
+  --text-info-weak: var(--blue-800);
+  --text-info-weaker: var(--blue-200);
+  --text-info-disabled: var(--blue-50);
+  --text-success-strong: var(--green-1000);
+  --text-success-weak: var(--green-800);
+  --text-success-weaker: var(--green-200);
+  --text-success-disabled: var(--green-50);
+  --text-warning-strong: var(--amber-1000);
+  --text-warning-weak: var(--amber-800);
+  --text-warning-weaker: var(--amber-200);
+  --text-warning-disabled: var(--amber-50);
+  --text-error-strong: var(--red-1000);
+  --text-error-weak: var(--red-800);
+  --text-error-weaker: var(--red-200);
+  --text-error-disabled: var(--red-50);
+
+  /* Icon Colors */
+  --icon-neutral-strong: var(--brown-1000);
+  --icon-neutral-weak: var(--brown-500);
+  --icon-neutral-weaker: var(--brown-100);
+  --icon-neutral-disabled: var(--brown-50);
+  --icon-inverse-strong: var(--brown-dark-1000);
+  --icon-inverse-weak: var(--brown-dark-500);
+  --icon-inverse-weaker: var(--brown-dark-100);
+  --icon-inverse-disabled: var(--brown-dark-50);
+  --icon-brand-strong: var(--orange-1000);
+  --icon-info-strong: var(--blue-1000);
+  --icon-success-strong: var(--green-1000);
+  --icon-warning-strong: var(--amber-1000);
+  --icon-error-strong: var(--red-1000);
+
+  /* Stroke/Border Colors */
+  --stroke-neutral-strong: var(--brown-500);
+  --stroke-neutral-weak: var(--brown-100);
+  --stroke-neutral-weaker: var(--brown-50);
+  --stroke-neutral-disabled: var(--brown-25);
+  --stroke-inverse-strong: var(--brown-dark-500);
+  --stroke-inverse-weak: var(--brown-dark-100);
+  --stroke-inverse-weaker: var(--brown-dark-50);
+  --stroke-inverse-disabled: var(--brown-dark-25);
+  --stroke-brand-strong: var(--orange-1000);
+  --stroke-brand-weak: var(--orange-200);
+  --stroke-info-strong: var(--blue-1000);
+  --stroke-success-strong: var(--green-1000);
+  --stroke-warning-strong: var(--amber-1000);
+  --stroke-error-strong: var(--red-1000);
+
+  /* Fill/Background Colors */
+  --fill-neutral-strong: var(--brown-1000);
+  --fill-neutral-weak: var(--brown-50);
+  --fill-neutral-weaker: var(--brown-25);
+  --fill-neutral-disabled: var(--brown-25);
+  --fill-inverse-strong: var(--brown-dark-1000);
+  --fill-inverse-weak: var(--brown-dark-50);
+  --fill-inverse-weaker: var(--brown-dark-25);
+  --fill-inverse-disabled: var(--brown-dark-25);
+  --fill-brand-strong: var(--orange-1000);
+  --fill-brand-weak: var(--orange-50);
+  --fill-info-strong: var(--blue-1000);
+  --fill-info-weak: var(--blue-50);
+  --fill-success-strong: var(--green-1000);
+  --fill-success-weak: var(--green-50);
+  --fill-warning-strong: var(--amber-1000);
+  --fill-warning-weak: var(--amber-50);
+  --fill-error-strong: var(--red-1000);
+  --fill-error-weak: var(--red-50);
+
+  /* Background Colors */
+  --bg-neutral: #ffffff;
+  --bg-neutral-strong: var(--neutral-100);
+  --bg-neutral-weak: var(--neutral-50);
+  --bg-neutral-weaker: var(--neutral-25);
+  --bg-neutral-disabled: var(--neutral-25);
+  --bg-inverse-strong: var(--neutral-dark-100);
+  --bg-inverse-weak: var(--neutral-dark-50);
+  --bg-inverse-weaker: var(--neutral-dark-25);
+  --bg-inverse-disabled: var(--neutral-dark-25);
+
+  /* Legacy compatibility - Map old v3 tokens to new semantic tokens */
+  --v3-text-strong: var(--text-neutral-strong);
+  --v3-text-weak: var(--text-neutral-weak);
+  --v3-text-weaker: var(--text-neutral-weaker);
+  --v3-text-disabled: var(--text-neutral-disabled);
+  --v3-fill-strong: var(--fill-neutral-strong);
+  --v3-fill-weak: var(--fill-neutral-weak);
+  --v3-fill-weaker: var(--fill-neutral-weaker);
+  --v3-stroke-strong: var(--stroke-neutral-strong);
+  --v3-stroke-weak: var(--stroke-neutral-weak);
+  --v3-brand-strong: var(--text-brand-strong);
+  --v3-icon-neutral: var(--icon-neutral-weak);
+  --v3-icon-disabled: var(--icon-neutral-disabled);
 
   --color-weak: #1e1e1eb2;
   --color-strong: #1e1e1ee5;
@@ -152,6 +325,10 @@
   --color-grey-900: var(--color-grey-900);
   --color-background: var(--color-background);
 
+  /* Overlay Colors */
+  --color-overlay-backdrop: var(--overlay-backdrop);
+  --color-overlay-backdrop-dark: var(--overlay-backdrop-dark);
+
   --color-blue-1: var(--color-blue-1);
   --color-blue-2: var(--color-blue-2);
   --color-blue-3: var(--color-blue-3);
@@ -186,7 +363,7 @@
 
   --color-green-0: var(--color-green-0);
 
-  /* v3 design system */
+  /* v3 design system - Legacy compatibility */
   --color-v3-base: var(--v3-base);
   --color-v3-fill-weak: var(--v3-fill-weak);
   --color-v3-fill-strong: var(--v3-fill-strong);
@@ -201,6 +378,98 @@
   --color-v3-icon-disabled: var(--v3-icon-disabled);
   --color-v3-brand-strong: var(--v3-brand-strong);
   --color-v3-bg: var(--v3-bg);
+
+  /* Semantic Color Tokens - Text */
+  --color-text-neutral-strong: var(--text-neutral-strong);
+  --color-text-neutral-weak: var(--text-neutral-weak);
+  --color-text-neutral-weaker: var(--text-neutral-weaker);
+  --color-text-neutral-disabled: var(--text-neutral-disabled);
+  --color-text-inverse-strong: var(--text-inverse-strong);
+  --color-text-inverse-weak: var(--text-inverse-weak);
+  --color-text-inverse-weaker: var(--text-inverse-weaker);
+  --color-text-inverse-disabled: var(--text-inverse-disabled);
+  --color-text-brand-strong: var(--text-brand-strong);
+  --color-text-brand-weak: var(--text-brand-weak);
+  --color-text-brand-weaker: var(--text-brand-weaker);
+  --color-text-brand-disabled: var(--text-brand-disabled);
+  --color-text-info-strong: var(--text-info-strong);
+  --color-text-info-weak: var(--text-info-weak);
+  --color-text-info-weaker: var(--text-info-weaker);
+  --color-text-info-disabled: var(--text-info-disabled);
+  --color-text-success-strong: var(--text-success-strong);
+  --color-text-success-weak: var(--text-success-weak);
+  --color-text-success-weaker: var(--text-success-weaker);
+  --color-text-success-disabled: var(--text-success-disabled);
+  --color-text-warning-strong: var(--text-warning-strong);
+  --color-text-warning-weak: var(--text-warning-weak);
+  --color-text-warning-weaker: var(--text-warning-weaker);
+  --color-text-warning-disabled: var(--text-warning-disabled);
+  --color-text-error-strong: var(--text-error-strong);
+  --color-text-error-weak: var(--text-error-weak);
+  --color-text-error-weaker: var(--text-error-weaker);
+  --color-text-error-disabled: var(--text-error-disabled);
+
+  /* Semantic Color Tokens - Icon */
+  --color-icon-neutral-strong: var(--icon-neutral-strong);
+  --color-icon-neutral-weak: var(--icon-neutral-weak);
+  --color-icon-neutral-weaker: var(--icon-neutral-weaker);
+  --color-icon-neutral-disabled: var(--icon-neutral-disabled);
+  --color-icon-inverse-strong: var(--icon-inverse-strong);
+  --color-icon-inverse-weak: var(--icon-inverse-weak);
+  --color-icon-inverse-weaker: var(--icon-inverse-weaker);
+  --color-icon-inverse-disabled: var(--icon-inverse-disabled);
+  --color-icon-brand-strong: var(--icon-brand-strong);
+  --color-icon-info-strong: var(--icon-info-strong);
+  --color-icon-success-strong: var(--icon-success-strong);
+  --color-icon-warning-strong: var(--icon-warning-strong);
+  --color-icon-error-strong: var(--icon-error-strong);
+
+  /* Semantic Color Tokens - Stroke/Border */
+  --color-stroke-neutral-strong: var(--stroke-neutral-strong);
+  --color-stroke-neutral-weak: var(--stroke-neutral-weak);
+  --color-stroke-neutral-weaker: var(--stroke-neutral-weaker);
+  --color-stroke-neutral-disabled: var(--stroke-neutral-disabled);
+  --color-stroke-inverse-strong: var(--stroke-inverse-strong);
+  --color-stroke-inverse-weak: var(--stroke-inverse-weak);
+  --color-stroke-inverse-weaker: var(--stroke-inverse-weaker);
+  --color-stroke-inverse-disabled: var(--stroke-inverse-disabled);
+  --color-stroke-brand-strong: var(--stroke-brand-strong);
+  --color-stroke-brand-weak: var(--stroke-brand-weak);
+  --color-stroke-info-strong: var(--stroke-info-strong);
+  --color-stroke-success-strong: var(--stroke-success-strong);
+  --color-stroke-warning-strong: var(--stroke-warning-strong);
+  --color-stroke-error-strong: var(--stroke-error-strong);
+
+  /* Semantic Color Tokens - Fill/Background */
+  --color-fill-neutral-strong: var(--fill-neutral-strong);
+  --color-fill-neutral-weak: var(--fill-neutral-weak);
+  --color-fill-neutral-weaker: var(--fill-neutral-weaker);
+  --color-fill-neutral-disabled: var(--fill-neutral-disabled);
+  --color-fill-inverse-strong: var(--fill-inverse-strong);
+  --color-fill-inverse-weak: var(--fill-inverse-weak);
+  --color-fill-inverse-weaker: var(--fill-inverse-weaker);
+  --color-fill-inverse-disabled: var(--fill-inverse-disabled);
+  --color-fill-brand-strong: var(--fill-brand-strong);
+  --color-fill-brand-weak: var(--fill-brand-weak);
+  --color-fill-info-strong: var(--fill-info-strong);
+  --color-fill-info-weak: var(--fill-info-weak);
+  --color-fill-success-strong: var(--fill-success-strong);
+  --color-fill-success-weak: var(--fill-success-weak);
+  --color-fill-warning-strong: var(--fill-warning-strong);
+  --color-fill-warning-weak: var(--fill-warning-weak);
+  --color-fill-error-strong: var(--fill-error-strong);
+  --color-fill-error-weak: var(--fill-error-weak);
+
+  /* Semantic Color Tokens - Background */
+  --color-bg-neutral: var(--bg-neutral);
+  --color-bg-neutral-strong: var(--bg-neutral-strong);
+  --color-bg-neutral-weak: var(--bg-neutral-weak);
+  --color-bg-neutral-weaker: var(--bg-neutral-weaker);
+  --color-bg-neutral-disabled: var(--bg-neutral-disabled);
+  --color-bg-inverse-strong: var(--bg-inverse-strong);
+  --color-bg-inverse-weak: var(--bg-inverse-weak);
+  --color-bg-inverse-weaker: var(--bg-inverse-weaker);
+  --color-bg-inverse-disabled: var(--bg-inverse-disabled);
 
   --color-weak: var(--color-weak);
   --color-strong: var(--color-strong);

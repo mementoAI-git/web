@@ -18,11 +18,11 @@ export default function CapsulePage({ params }) {
             <ChevronLeftIcon width={10} height={10} />
             <span className="font-inter text-sm text-grey-600">Back</span>
           </button>
-          <span className="font-inter capitalize text-4xl font-medium text-[#101828]">
+          <span className="font-inter capitalize text-4xl font-medium text-v3-text-strong">
             {capsuleData?.title}
           </span>
           <div className="flex items-center mt-6 gap-3">
-            <span className="text-[#667085] text-xs font-inter">To (recipients):</span>
+            <span className="text-v3-text-weak text-xs font-inter">To (recipients):</span>
             <div className="flex flex-wrap gap-2">
               {capsuleData?.recipients.map((r, i) => (
                 <span

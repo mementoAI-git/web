@@ -34,7 +34,7 @@ function FilterCheckboxOption({ onClick, item, value }: any) {
   return (
     <li
       onClick={() => onClick(item.value)}
-      className="flex cursor-pointer items-center gap-2.5 px-3 py-2 hover:bg-gray-50 text-[#344054]"
+      className="flex cursor-pointer items-center gap-2.5 px-3 py-2 hover:bg-gray-50 text-text-neutral-weak"
     >
       <Checkbox label={item.label} checked={isChecked} />
     </li>

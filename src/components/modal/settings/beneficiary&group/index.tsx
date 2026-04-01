@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@heroui/react";
+import { Button } from "@/components/ui/button";
 import useSWR from "swr";
 import { useModal } from "@/hooks/use-modal";
 import { cn } from "@/utility";
@@ -40,10 +40,9 @@ export default function BeneficiaryAndGroup() {
         {activeTab === "groups" && (
           <Button
             type="button"
-            variant="solid"
             size="sm"
             className="h-8 shrink-0 rounded-full !bg-v3-fill-strong px-3 font-inter text-xs font-semibold !text-white hover:!opacity-90"
-            onPress={() => push?.("add-group")}
+            onClick={() => push?.("add-group")}
           >
             Add group
           </Button>
@@ -88,10 +87,9 @@ export default function BeneficiaryAndGroup() {
           {activeTab === "beneficiary" && (
             <Button
               type="button"
-              variant="solid"
               size="sm"
               className="h-8 shrink-0 rounded-full !bg-v3-fill-strong px-3 font-inter text-xs font-semibold !text-white hover:!opacity-90"
-              onPress={() => push?.("add-beneficiary")}
+              onClick={() => push?.("add-beneficiary")}
             >
               Add beneficiary
             </Button>

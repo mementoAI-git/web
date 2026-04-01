@@ -26,7 +26,7 @@ export default function NicknamePage() {
       if (user && setUser) {
         setUser({ ...user, nickname: trimmed });
       }
-      navigate("/onboarding/chat", { state: { nickname: trimmed } });
+      navigate("/onboard/misc");
     } catch (error) {
       console.error("Failed to update profile:", error);
     }
@@ -45,7 +45,7 @@ export default function NicknamePage() {
       </p>
       <div className="w-full space-y-2">
         <label htmlFor="onboard-name" className="mb-2 block text-sm font-medium text-v3-text-weak">
-          Name<span className="text-[#C8956C]">*</span>
+          Name<span className="text-v3-brand-strong">*</span>
         </label>
         <input
           id="onboard-name"
@@ -53,13 +53,13 @@ export default function NicknamePage() {
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Enter your First name or Nickname"
-          className="w-full rounded-xl border-[1.5px] border-[#E4D9CC] bg-[#FFFCF8] px-4 py-3 text-[#2C1F15] placeholder:text-v3-text-weaker focus:border-[#C8956C] focus:outline-none"
+          className="w-full rounded-xl border-[1.5px] border-v3-stroke-weak bg-v3-fill-weaker px-4 py-3 text-v3-text-strong placeholder:text-v3-text-weaker focus:border-v3-brand-strong focus:outline-none"
         />
       </div>
       <Button
         onClick={handleSubmit}
         disabled={!name.trim() || isMutating}
-        className="flex h-fit items-center gap-2 rounded-[64px] !bg-orange hover:!bg-[#C55A1D] px-8 py-[14px] text-sm font-semibold leading-[20px] text-white shadow-sm disabled:cursor-not-allowed disabled:opacity-60"
+        className="flex h-fit items-center gap-2 rounded-[64px] !bg-fill-brand-strong hover:!bg-fill-brand-weak px-8 py-[14px] text-sm font-semibold leading-[20px] text-white shadow-sm disabled:cursor-not-allowed disabled:opacity-60"
       >
         <span>Continue</span>
         <Spinner className="!size-4" loading={isMutating} />

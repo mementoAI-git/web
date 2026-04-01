@@ -19,7 +19,7 @@ export default function AttachFileBtn({ onUpload }: AttachFileBtnProps) {
   );
 
   return (
-    <label className="flex size-10 cursor-pointer items-center justify-center rounded-full border border-[#EAECF0] text-secondary">
+    <label className="flex size-10 cursor-pointer items-center justify-center rounded-full border border-v3-stroke-weak text-secondary">
       <input accept={SUPPORTED_FILE_TYPES.join(",")} id="attachment" type="file" hidden onChange={handleUpload} />
       <ClipIcon width={16} height={16} />
     </label>

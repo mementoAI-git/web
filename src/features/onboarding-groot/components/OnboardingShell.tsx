@@ -80,14 +80,14 @@ export function OnboardingShell({
     <div ref={containerRef} className="flex h-screen flex-col overflow-hidden bg-white" role="main" aria-label="Onboarding">
       {/* Topbar */}
       <header className="flex shrink-0 items-center justify-between px-4 py-6 sm:px-6">
-        <Link to="/" className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C8956C] focus-visible:ring-offset-2 rounded">
+        <Link to="/" className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-v3-brand-strong focus-visible:ring-offset-2 rounded">
           <Logo />
         </Link>
         {showSkip && (
           <button
             type="button"
             onClick={onSkip}
-            className="text-sm text-[#B0A098] hover:text-[#7A6A5E] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C8956C] focus-visible:ring-offset-2 rounded"
+            className="text-sm text-v3-text-weaker hover:text-v3-text-weak transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-v3-brand-strong focus-visible:ring-offset-2 rounded"
           >
             Skip for now →
           </button>
@@ -107,13 +107,13 @@ export function OnboardingShell({
                 className={cn(
                   "h-2.5 w-2.5 rounded-full transition-colors",
                   (isCompleted || isCurrent) && "bg-v3-brand-strong",
-                  !isCompleted && !isCurrent && "bg-[#E4D9CC]"
+                  !isCompleted && !isCurrent && "bg-v3-stroke-weak"
                 )}
               />
             );
           })}
         </div>
-        <p className="text-sm text-[#7A6A5E]">{stepLabel}</p>
+        <p className="text-sm text-v3-text-weak">{stepLabel}</p>
       </div>
 
       {/* Content area - scrolls when content overflows */}
@@ -126,13 +126,13 @@ export function OnboardingShell({
 
       {/* Footer nav - always visible at bottom when shown */}
       {!hideFooter && (
-        <footer className="flex shrink-0 items-center justify-between gap-4 border-t border-[#E4D9CC] bg-white px-4 py-6 sm:px-6">
+        <footer className="flex shrink-0 items-center justify-between gap-4 border-t border-v3-stroke-weak bg-white px-4 py-6 sm:px-6">
           <div className="w-20">
             {showBack && (
               <button
                 type="button"
                 onClick={onBack}
-                className="text-sm text-[#B0A098] hover:text-[#7A6A5E] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C8956C] focus-visible:ring-offset-2 rounded"
+                className="text-sm text-v3-text-weaker hover:text-v3-text-weak transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-v3-brand-strong focus-visible:ring-offset-2 rounded"
               >
                 ← Back
               </button>
@@ -146,7 +146,7 @@ export function OnboardingShell({
               "rounded-xl px-6 py-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-v3-brand-strong focus-visible:ring-offset-2",
               canAdvance && !isSaving
                 ? "bg-v3-brand-strong text-white hover:opacity-90"
-                : "cursor-not-allowed bg-[#E4D9CC] text-[#7A6A5E]",
+                : "cursor-not-allowed bg-v3-stroke-weak text-v3-text-weak",
             )}
           >
             {isSaving ? "Saving..." : advanceLabel}

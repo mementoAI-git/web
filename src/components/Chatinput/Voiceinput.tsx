@@ -101,19 +101,19 @@ export default function Voiceinput({ onCancel, memoryId, history = [] }: Voicein
   };
 
   return createPortal(
-    <div className="fixed bg-background h-screen w-screen top-0 bottom-0 right-0 left-0 flex justify-center items-center">
+    <div className="fixed inset-0 z-[200] flex h-screen w-screen items-center justify-center bg-background">
       <div className="relative flex flex-col justify-center items-center size-full max-w-[1038px]">
         {/* Connection Status Indicator */}
         <div className="absolute top-5 left-5 flex items-center gap-2">
           <div className={cn(
             "w-2 h-2 rounded-full transition-all duration-300",
             connected
-              ? "bg-blue-6 animate-pulse"
-              : "bg-gray-400"
+              ? "bg-fill-info-strong animate-pulse"
+              : "bg-fill-neutral-weaker"
           )} />
           <span className={cn(
             "text-sm font-medium transition-colors duration-300",
-            connected ? "text-blue-6" : "text-gray-500"
+            connected ? "text-text-info-strong" : "text-text-neutral-weaker"
           )}>
             {connected ? "Connected" : "Disconnected"}
           </span>
@@ -133,7 +133,7 @@ export default function Voiceinput({ onCancel, memoryId, history = [] }: Voicein
               <Visual3D {...{ inputNode, outputNode }} />
             </div>
 
-            <span className="font-georgia text-2xl text-center text-sand-12 block">
+            <span className="font-georgia text-2xl text-center text-text-neutral-strong block">
               {formatTime(recordingTime)}
             </span>
           </div>
@@ -142,14 +142,14 @@ export default function Voiceinput({ onCancel, memoryId, history = [] }: Voicein
             <div
               onClick={toggleRecording}
               className={cn(
-                "icon-container !text-blue-6 !rounded-xl cursor-pointer transition-all !bg-blue-2 hover:!bg-blue-3", {
-                "!bg-red-2 hover:!bg-red-3 !text-sand-8": connected && isRecording && !muted, // Recording and unmuted
-                "!bg-[#FEE4E2] hover:!bg-yellow-3": connected && isRecording && muted, // Recording but muted
+                "icon-container !text-text-info-strong !rounded-xl cursor-pointer transition-all !bg-fill-info-weak hover:!bg-fill-info-weaker", {
+                "!bg-fill-error-weak hover:!bg-fill-warning-weak !text-text-neutral-weaker": connected && isRecording && !muted, // Recording and unmuted
+                "!bg-fill-error-weak hover:!bg-fill-warning-weak": connected && isRecording && muted, // Recording but muted
               })
               }
             >
               {connected && isRecording && muted ? (
-                <MicOffIcon className="size-5 stroke-2 text-[#F97066]" />
+                <MicOffIcon className="size-5 stroke-2 text-text-error-strong" />
               ) : (
                 <MicIcon className="size-5" />
               )}
@@ -160,14 +160,14 @@ export default function Voiceinput({ onCancel, memoryId, history = [] }: Voicein
               className={cn(
                 "icon-container !rounded-xl cursor-pointer transition-all",
                 isDisconnecting
-                  ? "!bg-gray-2 hover:!bg-gray-2 cursor-not-allowed"
-                  : "!bg-[#FEE4E2] hover:!bg-red-3"
+                  ? "!bg-fill-neutral-weakest hover:!bg-fill-neutral-weakest cursor-not-allowed"
+                  : "!bg-fill-error-weak hover:!bg-fill-error-weaker"
               )}
             >
               {isDisconnecting ? (
-                <div className="size-4 border-2 border-gray-6 border-t-transparent rounded-full animate-spin" />
+                <div className="size-4 border-2 border-stroke-neutral-weaker border-t-transparent rounded-full animate-spin" />
               ) : (
-                <TimesIcon className="size-4 text-[#F97066]" />
+                <TimesIcon className="size-4 text-text-error-strong" />
               )}
             </div>
           </div>

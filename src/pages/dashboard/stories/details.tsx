@@ -59,22 +59,22 @@ export default function StoriesDetails() {
     <div className="flex max-w-[1160px] mx-auto h-screen">
       <div className="h-full mx-auto px-5 max-w-[758px] w-full py-6 overflow-y-auto hide-scrollbar">
         <div className="flex flex-1 gap-2 sm:gap-3 flex-col h-full">
-          <div className="pb-2 sm:pb-3 space-y-2 sm:space-y-3 border-b border-grey-500">
-            <div className="flex gap-1 items-center text-sand-12 mb-3.5">
+          <div className="pb-2 sm:pb-3 space-y-2 sm:space-y-3 border-b border-stroke-neutral-weaker">
+            <div className="flex gap-1 items-center text-text-neutral-strong mb-3.5">
               <div
-                className="aspect-square flex justify-center items-center p-1.5 size-7 sm:size-8 shrink-0 rounded-lg hover:bg-sand-2"
+                className="aspect-square flex justify-center items-center p-1.5 size-7 sm:size-8 shrink-0 rounded-lg hover:bg-fill-neutral-weaker"
                 onClick={() => open("share-memory", { memory })}
               >
-                <Launch2Icon className="stroke-[1.5px] size-full text-sand-12 cursor-pointer" />
+                <Launch2Icon className="stroke-[1.5px] size-full text-text-neutral-strong cursor-pointer" />
               </div>
               <div
-                className="text-sand-12 flex justify-center items-center p-1.5 aspect-square size-7 sm:size-8 shrink-0 rounded-lg hover:bg-sand-2"
+                className="text-text-neutral-strong flex justify-center items-center p-1.5 aspect-square size-7 sm:size-8 shrink-0 rounded-lg hover:bg-fill-neutral-weaker"
                 onClick={toggleBookmark}
               >
                 {memory.bookmarked ? (
-                  <BookmarkSolidIcon className="text-sand-8 size-full stroke-2 cursor-pointer" />
+                  <BookmarkSolidIcon className="text-icon-neutral-weaker size-full stroke-2 cursor-pointer" />
                 ) : (
-                  <BookmarkIcon className="text-sand-12  size-full stroke-2 cursor-pointer" />
+                  <BookmarkIcon className="text-text-neutral-strong size-full stroke-2 cursor-pointer" />
                 )}
               </div>
               <MemoryDropdown
@@ -82,7 +82,7 @@ export default function StoriesDetails() {
               />
             </div>
 
-            <span className="font-garamond text-xl sm:text-2xl md:text-3xl lg:text-[40px] lg:leading-[48px] font-medium text-[#101828] leading-tight">
+            <span className="font-garamond text-xl sm:text-2xl md:text-3xl lg:text-[40px] lg:leading-[48px] font-medium text-text-neutral-strong leading-tight">
               {memory?.title}
             </span>
           </div>
@@ -92,7 +92,7 @@ export default function StoriesDetails() {
             )}
             <div className="tiptap-editor">
               <div
-                className="font-inter text-sm sm:text-base text-grey-600 mt-4 sm:mt-6 leading-relaxed tiptap-editor"
+                className="font-inter text-sm sm:text-base text-text-neutral-weak mt-4 sm:mt-6 leading-relaxed tiptap-editor"
                 dangerouslySetInnerHTML={{
                   __html: ensureLinksOpenInNewTab(DOMPurify.sanitize(memory?.body || "")),
                 }}

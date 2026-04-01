@@ -47,7 +47,7 @@ export default function UserItem({
       )}
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <span className="block truncate font-inter font-medium capitalize text-v3-text-weak">{name}</span>
-        <span className="block truncate font-inter text-sm text-[#535862]">{email}</span>
+        <span className="block truncate font-inter text-sm text-text-neutral-weak">{email}</span>
       </div>
     </div>
   );

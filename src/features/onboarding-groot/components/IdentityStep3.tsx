@@ -30,10 +30,10 @@ export function IdentityStep3({
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h2 className="text-lg font-medium text-[#2C1F15]">
+        <h2 className="text-lg font-medium text-v3-text-strong">
           What you love
         </h2>
-        <p className="mt-1 text-sm text-[#7A6A5E]">
+        <p className="mt-1 text-sm text-v3-text-weak">
           What are some things you&apos;re passionate about or enjoy? We&apos;ll use these to make prompts feel personal.
         </p>
       </div>
@@ -55,9 +55,9 @@ export function IdentityStep3({
         <div className="animate-in fade-in duration-200">
           <label
             htmlFor="onboarding-passions-freetext"
-            className="mb-2 block text-sm font-medium text-[#2C1F15]"
+            className="mb-2 block text-sm font-medium text-v3-text-strong"
           >
-            Tell us more <span className="text-[#B0A098]">(optional)</span>
+            Tell us more <span className="text-v3-text-weaker">(optional)</span>
           </label>
           <input
             id="onboarding-passions-freetext"
@@ -66,13 +66,13 @@ export function IdentityStep3({
             onChange={(e) => onPassionsFreetextChange(e.target.value)}
             placeholder="e.g. gardening, vintage cars..."
             maxLength={200}
-            className="w-full rounded-xl border-[1.5px] border-[#E4D9CC] bg-[#FFFCF8] px-4 py-3 text-[#2C1F15] placeholder:text-[#B0A098] focus:border-[#C8956C] focus:outline-none"
+            className="w-full rounded-xl border-[1.5px] border-v3-stroke-weak bg-v3-fill-weaker px-4 py-3 text-v3-text-strong placeholder:text-v3-text-weaker focus:border-v3-brand-strong focus:outline-none"
           />
         </div>
       )}
 
       {validationErrors.passions && (
-        <p className="text-[13px] text-[#C8956C]">
+        <p className="text-[13px] text-v3-brand-strong">
           {validationErrors.passions}
         </p>
       )}

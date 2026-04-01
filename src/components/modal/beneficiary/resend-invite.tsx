@@ -1,6 +1,6 @@
 import endpoint from "@/api/endpoint";
 import { X, Send } from "lucide-react";
-import { Button } from "@heroui/react";
+import { Button } from "@/components/ui/button";
 import Spinner from "@/components/spinner";
 import useFetcher from "@/hooks/use-fetcher";
 import { useModal } from "@/hooks/use-modal";
@@ -54,18 +54,18 @@ export function ResendInvite({ data }: ResendInviteProps) {
       <div className="flex items-center justify-end gap-2 border-t border-v3-stroke-weak pt-4">
         <Button
           type="button"
-          variant="bordered"
+          variant="outline"
           size="sm"
           className="h-9 rounded-full border-v3-stroke-weak font-inter text-sm font-medium text-v3-text-strong hover:bg-v3-fill-weak"
-          onPress={() => close?.("resend-invite")}
+          onClick={() => close?.("resend-invite")}
         >
           Cancel
         </Button>
         <Button
           type="button"
           size="sm"
-          isDisabled={isMutating}
-          onPress={handleResendInvite}
+          disabled={isMutating}
+          onClick={handleResendInvite}
           className="h-9 rounded-full bg-v3-fill-strong px-4 font-inter text-sm font-semibold text-white hover:opacity-90 disabled:opacity-50"
         >
           {isMutating ? (

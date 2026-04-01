@@ -27,7 +27,7 @@ export function OnboardingStep1({
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <label htmlFor="onboarding-display-name" className="mb-2 block text-sm font-medium text-[#2C1F15]">
+        <label htmlFor="onboarding-display-name" className="mb-2 block text-sm font-medium text-v3-text-strong">
           Your name
         </label>
         <input
@@ -38,23 +38,23 @@ export function OnboardingStep1({
           placeholder="Eleanor, Jamie, Nne, Dad..."
           maxLength={40}
           className={cn(
-            "w-full rounded-xl border-[1.5px] bg-[#FFFCF8] px-4 py-3 text-[#2C1F15] placeholder:text-[#B0A098] transition-colors",
-            "focus:border-[#C8956C] focus:outline-none",
+            "w-full rounded-xl border-[1.5px] bg-v3-fill-weaker px-4 py-3 text-v3-text-strong placeholder:text-v3-text-weaker transition-colors",
+            "focus:border-v3-brand-strong focus:outline-none",
             validationErrors.displayName
-              ? "border-[#C8956C]"
-              : "border-[#E4D9CC]",
-            displayName.trim() && !validationErrors.displayName && "border-[#8BAF8B]"
+              ? "border-v3-brand-strong"
+              : "border-v3-stroke-weak",
+            displayName.trim() && !validationErrors.displayName && "border-stroke-success-strong"
           )}
         />
         {validationErrors.displayName && (
-          <p className="mt-1.5 text-[13px] text-[#C8956C]">
+          <p className="mt-1.5 text-[13px] text-v3-brand-strong">
             {validationErrors.displayName}
           </p>
         )}
       </div>
 
       <div>
-        <p className="mb-3 text-sm font-medium text-[#2C1F15]">
+        <p className="mb-3 text-sm font-medium text-v3-text-strong">
           Which best describes you?
         </p>
         <div className="flex flex-col gap-3">
@@ -71,7 +71,7 @@ export function OnboardingStep1({
           ))}
         </div>
         {validationErrors.archetype && (
-          <p className="mt-1.5 text-[13px] text-[#C8956C]">
+          <p className="mt-1.5 text-[13px] text-v3-brand-strong">
             {validationErrors.archetype}
           </p>
         )}
@@ -79,7 +79,7 @@ export function OnboardingStep1({
 
       {showOtherTextarea && (
         <div className="animate-in fade-in duration-200">
-          <label htmlFor="onboarding-archetype-freetext" className="mb-2 block text-sm font-medium text-[#2C1F15]">
+          <label htmlFor="onboarding-archetype-freetext" className="mb-2 block text-sm font-medium text-v3-text-strong">
             Tell us a little about why you&apos;re here
           </label>
           <textarea
@@ -89,7 +89,7 @@ export function OnboardingStep1({
             placeholder="No pressure — whatever feels right"
             maxLength={280}
             rows={3}
-            className="w-full rounded-xl border-[1.5px] border-[#E4D9CC] bg-[#FFFCF8] px-4 py-3 text-[#2C1F15] placeholder:text-[#B0A098] focus:border-[#C8956C] focus:outline-none"
+            className="w-full rounded-xl border-[1.5px] border-v3-stroke-weak bg-v3-fill-weaker px-4 py-3 text-v3-text-strong placeholder:text-v3-text-weaker focus:border-v3-brand-strong focus:outline-none"
           />
         </div>
       )}

@@ -66,7 +66,7 @@ export function Selectinput({
       >
         <SelectTrigger
           className={cn(
-            "input-base flex h-auto min-h-9 w-full items-center justify-between rounded-lg border border-[rgba(208,213,221,1)] bg-transparent px-3 py-2 text-sm shadow-none ring-offset-0 focus:ring-1 focus:ring-ring data-placeholder:text-[#000D4D73]",
+            "input-base flex h-auto min-h-9 w-full items-center justify-between rounded-lg border border-stroke-neutral-weak bg-transparent px-3 py-2 text-sm shadow-none ring-offset-0 focus:ring-1 focus:ring-ring data-placeholder:text-text-neutral-weaker",
             inputClassName
           )}
         >

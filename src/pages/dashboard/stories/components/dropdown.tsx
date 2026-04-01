@@ -1,8 +1,3 @@
-import {
-  CheckboxOption,
-  DropdownIcon,
-  DropdownButton,
-} from "@/components/Dropdown";
 import { useModal } from "@/hooks/use-modal";
 import type { IMemory } from "@/utility/interface";
 import { useBookmark } from "@/hooks/use-bookmark";
@@ -11,6 +6,14 @@ import { resolvePath } from "@/utility";
 import endpoint from "@/api/endpoint";
 import { mutate } from "swr";
 import { toast } from "sonner";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
 import {
   AddBookmarkIcon,
   VerticalEllipseIcon,
@@ -21,6 +24,7 @@ import {
   FilterIcon,
   RestoreIcon,
 } from "@/components/icons";
+import { cn } from "@/lib/utils";
 
 const FILTER_LABELS = {
   all: "All",
@@ -38,109 +42,132 @@ export function MemoryItemActions({ memory }: { memory: IMemory }) {
     isBookmarked: memory.bookmarked,
   });
 
-  const handleSelect = async (value: string) => {
-    if (value === "share-story") {
-      open("share-memory", { memory });
-    }
-    if (value === "edit-memory") {
-      open("edit-memory", { memory });
-    }
-    if (value === "bookmark") {
-      toggleBookmark();
-    }
-    if (value === "restore") {
-      restoreMemory();
-      await mutate(
-        (key) =>
-          typeof key === "string" && key.startsWith(`${endpoint.stories}`),
-      );
-      toast.success("Memory restored successfully");
-    }
+  const handleRestore = async () => {
+    await restoreMemory();
+    await mutate(
+      (key) =>
+        typeof key === "string" && key.startsWith(`${endpoint.stories}`),
+    );
+    toast.success("Memory restored successfully");
   };
 
+  const isDeleted = memory.status === "deleted";
+
   return (
-    <DropdownIcon
-      icon={<VerticalEllipseIcon className="w-1 h-3" />}
-      items={
-        memory.status == "deleted"
-          ? [
-              {
-                label: "Restore",
-                value: "restore",
-                startIcon: (
-                  <RestoreIcon strokeWidth={1.5} width={20} height={20} />
-                ),
-              },
-            ]
-          : [
-              {
-                label: "Edit story",
-                value: "edit-memory",
-                startIcon: <EditIcon width={16} />,
-              },
-              {
-                label: "Share story",
-                value: "share-story",
-                startIcon: (
-                  <LaunchIcon
-                    className="size-[14px]"
-                    strokeWidth={1.5}
-                    width={14}
-                  />
-                ),
-              },
-              {
-                label: memory.bookmarked ? "Remove bookmark" : "Add bookmark",
-                value: "bookmark",
-                startIcon: memory.bookmarked ? (
-                  <RemoveBookmarkIcon width={16} height={16} />
-                ) : (
-                  <AddBookmarkIcon width={16} height={16} />
-                ),
-              },
-            ]
-      }
-      footerItem={
-        <li
-          onClick={() => open("delete-memory", { memory })}
-          className="flex cursor-pointer items-center rounded gap-2.5 px-2.5 py-1.5 hover:bg-[#F97066]/8 text-[#F97066]"
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 rounded-full hover:bg-v3-fill-weaker"
         >
-          <TrashIcon width={16} />
-          <span className="font-inter text-sm">Delete</span>
-        </li>
-      }
-      onSelect={handleSelect}
-      className="!right-0 !bottom-8"
-    />
+          <VerticalEllipseIcon className="w-1 h-4 text-v3-text-weak" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        align="end"
+        className="w-48 rounded-xl border-v3-stroke-weak bg-white p-1 shadow-lg"
+      >
+        {isDeleted ? (
+          <DropdownMenuItem
+            onClick={handleRestore}
+            className="rounded-lg px-2.5 py-2 text-sm text-v3-text-strong focus:bg-v3-fill-weaker focus:text-v3-text-strong cursor-pointer"
+          >
+            <RestoreIcon className="size-4 mr-2" strokeWidth={1.5} />
+            Restore
+          </DropdownMenuItem>
+        ) : (
+          <>
+            <DropdownMenuItem
+              onClick={() => open("edit-memory", { memory })}
+              className="rounded-lg px-2.5 py-2 text-sm text-v3-text-strong focus:bg-v3-fill-weaker focus:text-v3-text-strong cursor-pointer"
+            >
+              <EditIcon className="size-4 mr-2" />
+              Edit story
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => open("share-memory", { memory })}
+              className="rounded-lg px-2.5 py-2 text-sm text-v3-text-strong focus:bg-v3-fill-weaker focus:text-v3-text-strong cursor-pointer"
+            >
+              <LaunchIcon className="size-3.5 mr-2" strokeWidth={1.5} />
+              Share story
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={toggleBookmark}
+              className="rounded-lg px-2.5 py-2 text-sm text-v3-text-strong focus:bg-v3-fill-weaker focus:text-v3-text-strong cursor-pointer"
+            >
+              {memory.bookmarked ? (
+                <>
+                  <RemoveBookmarkIcon className="size-4 mr-2" />
+                  Remove bookmark
+                </>
+              ) : (
+                <>
+                  <AddBookmarkIcon className="size-4 mr-2" />
+                  Add bookmark
+                </>
+              )}
+            </DropdownMenuItem>
+          </>
+        )}
+        <DropdownMenuSeparator className="bg-v3-stroke-weak my-1" />
+        <DropdownMenuItem
+          onClick={() => open("delete-memory", { memory })}
+          className="rounded-lg px-2.5 py-2 text-sm text-red-600 focus:bg-red-50 focus:text-red-600 cursor-pointer"
+        >
+          <TrashIcon className="size-4 mr-2" />
+          Delete
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
+}
+
+interface MemoryListFilterProps {
+  value?: "all" | "bookmarked" | "deleted";
+  onChange: (v: "all" | "bookmarked" | "deleted") => void;
 }
 
 export function MemoryListFilter({
   value = "all",
   onChange,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-}) {
+}: MemoryListFilterProps) {
   return (
-    <DropdownButton
-      title={
-        <div className="flex items-center gap-1">
-          <FilterIcon />
-          <span>filter: {FILTER_LABELS[value] || value}</span>
-        </div>
-      }
-      onSelect={onChange}
-      ItemLayout={({ onClick, item }) => (
-        <CheckboxOption {...{ onClick, item, value }} />
-      )}
-      items={[
-        { label: "All", value: "all" },
-        { label: "Bookmarked", value: "bookmarked" },
-        { label: "Deleted", value: "deleted" },
-        { label: "Custom date", value: "custom-date" },
-      ]}
-      value={value}
-    />
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="outline"
+          size="sm"
+          className="rounded-full border-v3-stroke-weak bg-white text-v3-text-strong hover:bg-v3-fill-weaker font-inter text-sm"
+        >
+          <FilterIcon className="size-4 mr-1.5" />
+          Filter: {FILTER_LABELS[value]}
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        align="start"
+        className="w-40 rounded-xl border-v3-stroke-weak bg-white p-1 shadow-lg"
+      >
+        {(Object.keys(FILTER_LABELS) as Array<keyof typeof FILTER_LABELS>).map(
+          (key) => (
+            <DropdownMenuItem
+              key={key}
+              onClick={() => onChange(key)}
+              className={cn(
+                "rounded-lg px-2.5 py-2 text-sm cursor-pointer",
+                value === key
+                  ? "bg-v3-fill-weaker text-v3-text-strong"
+                  : "text-v3-text-weak focus:bg-v3-fill-weaker focus:text-v3-text-strong"
+              )}
+            >
+              <span className={cn("size-4 mr-2 flex items-center justify-center", value === key && "text-v3-brand-strong")}>
+                {value === key && "✓"}
+              </span>
+              {FILTER_LABELS[key]}
+            </DropdownMenuItem>
+          )
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

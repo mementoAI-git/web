@@ -47,7 +47,7 @@ export function UnpauseCapsule({ data: id }: UnpauseCapsuleProps) {
         <div className="flex items-center justify-between gap-4">
           <button
             type="button"
-            className="flex-1 cursor-pointer rounded-lg border border-[#0011661A] bg-white/1 py-2.5 text-sm font-semibold shadow"
+            className="flex-1 cursor-pointer rounded-lg border border-stroke-neutral-weak bg-white/1 py-2.5 text-sm font-semibold shadow"
             onClick={() => close?.("unpause-capsule")}
           >
             Cancel

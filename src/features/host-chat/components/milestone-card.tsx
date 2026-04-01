@@ -1,4 +1,5 @@
-import { cn } from "@/utility";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 interface MilestoneCardProps {
   /** Score delta since page load; null or 0 hides the card. */
@@ -16,21 +17,22 @@ export function MilestoneCard({
   if (enrichmentDelta == null || enrichmentDelta <= 0) return null;
 
   return (
-    <div
+    <Badge
+      variant="secondary"
       className={cn(
-        "w-full max-w-[800px] rounded-2xl border border-v3-stroke-weak bg-v3-fill-weaker px-4 py-3 font-inter",
+        "h-auto max-w-[min(85vw,280px)] shrink-0 whitespace-normal rounded-full border-0 bg-v3-fill-weaker px-2.5 py-1.5 text-left text-[11px] font-medium leading-snug text-v3-text-strong",
         className,
       )}
       role="status"
     >
-      <p className="text-xs font-medium uppercase tracking-wide text-v3-text-weaker">
+      <span className="block text-[10px] font-semibold uppercase tracking-wide text-v3-text-weaker">
         {milestoneLabel ? milestoneLabel : "Milestone"}
-      </p>
-      <p className="mt-1 text-sm text-v3-text-strong">
-        Your Memento grew by{" "}
+      </span>
+      <span className="mt-0.5 block text-v3-text-weak">
+        Memento{" "}
         <span className="font-semibold text-v3-brand-strong">+{enrichmentDelta}%</span>{" "}
-        enrichment this session.
-      </p>
-    </div>
+        this session.
+      </span>
+    </Badge>
   );
 }

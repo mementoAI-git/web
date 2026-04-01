@@ -87,7 +87,7 @@ export default function WelcomePage() {
       <div className="shrink-0 bg-white pt-6">
         <Button
           asChild
-          className="rounded-full !bg-orange hover:!bg-[#C55A1D] px-6 sm:px-8 py-[23px] text-sm font-semibold leading-[20px] text-white shadow-sm h-[50px]"
+          className="rounded-full !bg-fill-brand-strong hover:!bg-fill-brand-weak px-6 sm:px-8 py-[23px] text-sm font-semibold leading-[20px] text-white shadow-sm h-[50px]"
         >
           <Link to="/onboard/nickname">Continue</Link>
         </Button>

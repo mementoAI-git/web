@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import useSWR from "swr";
 import { StatCard } from "../component/stat-card";
 import { DoubleHeartIcon, PlusIcon } from "@/components/icons";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 import totalMemoriesBg from "@/assets/icon/total-memories.svg";
 import mediaFilesBg from "@/assets/icon/media-files.svg";
@@ -30,13 +32,13 @@ const TableEmptyState = () => (
     <td colSpan={columns.length} className="py-12">
       <div className="flex flex-col items-center justify-center">
         <div className="text-center">
-          <div className="w-16 h-16 mx-auto mb-4 bg-sand-3 rounded-full flex items-center justify-center">
-            <DoubleHeartIcon className="size-8 stroke-2 text-sand-10" />
+          <div className="w-16 h-16 mx-auto mb-4 bg-v3-fill-weaker rounded-full flex items-center justify-center">
+            <DoubleHeartIcon className="size-8 stroke-2 text-v3-text-weaker" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+          <h3 className="text-lg font-semibold text-v3-text-strong mb-2">
             No stories yet
           </h3>
-          <p className="text-gray-500 text-sm">
+          <p className="text-v3-text-weak text-sm">
             Start creating your first story to see it here.
           </p>
         </div>
@@ -83,32 +85,29 @@ export default function StoriesPage() {
         <div className="space-y-6 sm:space-y-16 py-3 sm:py-4 lg:py-8">
           <div className="flex flex-col md:items-end md:flex-row md:justify-between gap-2">
             <div>
-              <p className="font-garamond font-medium text-[32px] md:text-4xl lg:text-[40px] leading-tight sm:leading-snug md:leading-[48px] text-gray-900">
-                My Memories
+              <p className="font-garamond font-normal text-[32px] md:text-4xl lg:text-[40px] leading-tight sm:leading-snug md:leading-[48px] text-v3-text-strong">
+                My stories
               </p>
-              <p className="font-inter font-normal text-base text-gray-500 pt-2">
+              <p className="font-inter font-normal text-base text-v3-text-weak pt-2">
                 Add stories, images, audios - whatever, to your Memento
               </p>
             </div>
 
             <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-              <button
+              <Button
+                variant="outline"
                 onClick={() => open("memory-insights")}
-                className="flex items-center h-9 sm:h-12 px-3 sm:px-5 rounded-full font-inter font-semibold text-xs sm:text-sm text-[#101828] cursor-pointer transition-opacity hover:opacity-90 whitespace-nowrap"
-                style={{
-                  backgroundColor: "#F9F9F9",
-                  border: "1px solid rgba(0,0,0,0.05)",
-                }}
+                className="h-9 sm:h-12 px-3 sm:px-5 rounded-full font-inter font-semibold text-xs sm:text-sm text-v3-text-strong border-v3-stroke-weak bg-v3-fill-weaker hover:bg-v3-fill-weak"
               >
                 View insights
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={() => open("create-memory")}
-                className="flex items-center gap-1.5 sm:gap-2 h-9 sm:h-12 px-3 sm:px-5 rounded-full bg-v3-brand-strong font-inter font-semibold text-xs sm:text-sm text-white cursor-pointer transition-opacity hover:opacity-90"
+                className="h-9 sm:h-12 px-3 sm:px-5 rounded-full bg-v3-brand-strong font-inter font-semibold text-xs sm:text-sm text-white hover:opacity-90 flex items-center gap-1.5 sm:gap-2"
               >
                 <PlusIcon className="size-3 sm:size-4 shrink-0" />
                 <span className="whitespace-nowrap">Add memory</span>
-              </button>
+              </Button>
             </div>
           </div>
 

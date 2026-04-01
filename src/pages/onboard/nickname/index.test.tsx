@@ -26,7 +26,7 @@ describe("NicknamePage", () => {
     mockTrigger.mockClear();
   });
 
-  it("navigates to onboarding chat with nickname in location state", async () => {
+  it("saves nickname and navigates to onboard misc step", async () => {
     const user = userEvent.setup();
     renderWithProviders(<NicknamePage />, {
       route: "/onboard/nickname",
@@ -40,9 +40,7 @@ describe("NicknamePage", () => {
     await user.click(screen.getByRole("button", { name: /Continue/i }));
 
     await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith("/onboarding/chat", {
-        state: { nickname: "River" },
-      });
+      expect(mockNavigate).toHaveBeenCalledWith("/onboard/misc");
     });
     expect(mockTrigger).toHaveBeenCalledWith({ nickname: "River" });
   });

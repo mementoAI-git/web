@@ -1,4 +1,6 @@
-import { cn } from "@/utility";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import type { LifeDimension } from "../chat.types";
 import { dimensionLabel } from "../chat.types";
 
@@ -19,40 +21,47 @@ export function DeepDiveNudge({
   className,
 }: DeepDiveNudgeProps) {
   const label = dimensionLabel(dimension);
+  const hint =
+    question ??
+    `Try a focused chat on ${label}. You can leave anytime.`;
 
   return (
     <div
       className={cn(
-        "w-full max-w-[800px] rounded-2xl border border-v3-stroke-weak bg-white p-4 font-inter shadow-sm",
+        "flex max-w-[min(92vw,420px)] shrink-0 items-center gap-2 rounded-full border border-v3-stroke-weak bg-white px-2 py-1 shadow-sm ring-1 ring-v3-stroke-weak/80",
         className,
       )}
     >
-      <p className="text-sm font-semibold text-v3-text-strong">Go deeper</p>
-      <p className="mt-1 text-sm text-v3-text-weak">
-        {question ? (
-          question
-        ) : (
-          <>
-            Spend a few minutes focused on{" "}
-            <span className="font-medium text-v3-text-strong">{label}</span>. You can leave anytime.
-          </>
-        )}
+      <Badge
+        variant="outline"
+        className="h-6 shrink-0 border-v3-stroke-weak bg-v3-fill-weaker px-2 text-[10px] font-semibold text-v3-text-strong"
+      >
+        Go deeper
+      </Badge>
+      <p
+        className="min-w-0 flex-1 truncate text-[11px] leading-tight text-v3-text-weak sm:text-xs"
+        title={hint}
+      >
+        {question ?? `Try a focused chat on ${label}.`}
       </p>
-      <div className="mt-4 flex flex-wrap gap-2">
-        <button
+      <div className="flex shrink-0 items-center gap-1">
+        <Button
           type="button"
-          className="rounded-full bg-v3-brand-strong px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90"
+          size="xs"
+          className="h-7 rounded-full bg-v3-brand-strong px-2.5 text-[11px] font-medium text-white hover:opacity-90"
           onClick={onDeepDive}
         >
-          Start deep dive
-        </button>
-        <button
+          Start
+        </Button>
+        <Button
           type="button"
-          className="rounded-full border border-v3-stroke-weak bg-white px-4 py-2 text-sm font-medium text-v3-text-strong transition-colors hover:bg-v3-fill-weaker"
+          variant="ghost"
+          size="xs"
+          className="h-7 rounded-full px-2 text-[11px] font-medium text-v3-text-weak hover:bg-v3-fill-weaker hover:text-v3-text-strong"
           onClick={onDismiss}
         >
-          Not now
-        </button>
+          Later
+        </Button>
       </div>
     </div>
   );

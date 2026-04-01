@@ -8,18 +8,18 @@ import { cn } from "@/utility";
 
 function DailyPromptSkeleton() {
   return (
-    <div className="rounded-2xl bg-v3-fill-weak p-5 shadow-sm animate-pulse h-full">
+    <div className="rounded-2xl bg-fill-neutral-weaker p-5 shadow-sm animate-pulse h-full">
       <div className="flex gap-2 mb-6">
-        <div className="h-9 w-24 rounded-full bg-v3-fill-weak" />
-        <div className="h-9 w-24 rounded-full bg-v3-fill-weak" />
+        <div className="h-9 w-24 rounded-full bg-fill-neutral-weak" />
+        <div className="h-9 w-24 rounded-full bg-fill-neutral-weak" />
       </div>
       <div className="space-y-3 mb-8">
-        <div className="h-6 w-full rounded bg-v3-fill-weak" />
-        <div className="h-6 w-3/4 rounded bg-v3-fill-weak mx-auto" />
+        <div className="h-6 w-full rounded bg-fill-neutral-weak" />
+        <div className="h-6 w-3/4 rounded bg-fill-neutral-weak mx-auto" />
       </div>
       <div className="flex gap-2 justify-center">
-        <div className="h-10 w-32 rounded-full bg-v3-fill-weak" />
-        <div className="h-10 w-24 rounded-full bg-v3-fill-weak" />
+        <div className="h-10 w-32 rounded-full bg-fill-neutral-weak" />
+        <div className="h-10 w-24 rounded-full bg-fill-neutral-weak" />
       </div>
     </div>
   );
@@ -45,7 +45,7 @@ export default function DailyPromptSection() {
   const hasMultiple = prompts.length > 1;
 
   return (
-    <div className="rounded-2xl bg-v3-fill-weak p-5 shadow-sm flex flex-col gap-6 h-full">
+    <div className="rounded-2xl bg-fill-neutral-weaker p-5 shadow-sm flex flex-col gap-6 h-full">
       {/* Prompt tabs */}
       {hasMultiple && (
         <div className="flex gap-2 justify-start">
@@ -57,8 +57,8 @@ export default function DailyPromptSection() {
               className={cn(
                 "rounded-full px-2 py-1 font-inter font-medium text-[12px] transition-colors",
                 i === activeIndex
-                  ? "bg-v3-fill-strong text-white"
-                  : "bg-v3-fill-weak text-v3-text-strong border border-v3-stroke-weak",
+                  ? "bg-fill-brand-strong text-white"
+                  : "bg-fill-neutral-weaker text-text-neutral-strong border border-stroke-neutral-weaker",
               )}
             >
               Prompt {i + 1}
@@ -68,7 +68,7 @@ export default function DailyPromptSection() {
       )}
 
       {/* Prompt text */}
-      <p className="font-inter text-[20px] font-medium text-v3-text-strong text-left leading-relaxed flex-1 flex flex-wrap">
+      <p className="font-inter text-[20px] font-medium text-text-neutral-strong text-left leading-relaxed flex-1 flex flex-wrap">
         {activePrompt.title}
       </p>
 
@@ -76,13 +76,13 @@ export default function DailyPromptSection() {
       <div className="flex flex-wrap gap-2 justify-start items-start">
         <Link
           to={`/chat/reply/${activePrompt._id}`}
-          className="flex items-center h-10 px-5 rounded-full font-inter font-semibold text-sm text-v3-text-strong whitespace-nowrap transition-opacity hover:opacity-90 bg-white border border-v3-stroke-weak"
+          className="flex items-center h-10 px-5 rounded-full font-inter font-semibold text-sm text-text-neutral-strong whitespace-nowrap transition-opacity hover:opacity-90 bg-white border border-stroke-neutral-weaker"
         >
           Write a response
         </Link>
         <Link
           to={`/chat/reply/${activePrompt._id}`}
-          className="flex items-center gap-2 h-10 px-5 rounded-full font-inter font-semibold text-sm text-white whitespace-nowrap transition-opacity hover:opacity-90 bg-orange"
+          className="flex items-center gap-2 h-10 px-5 rounded-full font-inter font-semibold text-sm text-white whitespace-nowrap transition-opacity hover:opacity-90 bg-fill-brand-strong"
         >
           <MicIcon className="size-4" />
           Speak it

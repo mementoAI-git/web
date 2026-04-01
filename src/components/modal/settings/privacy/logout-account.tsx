@@ -21,7 +21,7 @@ export default function LogoutAccount({ close, open }: LogoutAccountProps) {
   };
 
   return (
-    <div className={`modal-overlay !z-[200] bg-[rgba(94,94,94,0.5)] ${open ? "flex" : "hidden"}`}>
+    <div className={`modal-overlay !z-[200] bg-overlay-backdrop ${open ? "flex" : "hidden"}`}>
       <div className="flex h-full w-full items-center justify-center p-4">
         <div className="modal-container !max-w-120">
           <ModalCloseBtn onClick={close} />
@@ -37,7 +37,7 @@ export default function LogoutAccount({ close, open }: LogoutAccountProps) {
             <div className="flex items-center justify-end gap-4">
               <button
                 type="button"
-                className="h-10 cursor-pointer rounded-full border border-[#0011661A] bg-white/1 px-4 py-2.5 font-inter text-sm font-semibold shadow"
+                className="h-10 cursor-pointer rounded-full border border-stroke-neutral-weak bg-white/1 px-4 py-2.5 font-inter text-sm font-semibold shadow"
                 onClick={close}
               >
                 Cancel

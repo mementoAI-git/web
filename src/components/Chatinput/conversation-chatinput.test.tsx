@@ -20,14 +20,26 @@ describe("ConversationChatinput", () => {
     ).toBeInTheDocument();
   });
 
-  it("shows voice and Send in the action row with Send disabled when empty", () => {
-    renderWithProviders(<ConversationChatinput onSend={() => {}} />, {
-      auth: true,
-    });
+  it("shows voice link, quick record, and hides Send until there is content", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(
+      <ConversationChatinput onSend={() => {}} memoryId="m1" />,
+      { auth: true, route: "/chat/m1" },
+    );
+    expect(screen.getByRole("link", { name: /voice call/i })).toHaveAttribute(
+      "href",
+      "/chat/m1/voice",
+    );
     expect(
-      screen.getByRole("button", { name: /use voice mode/i }),
+      screen.getByRole("button", { name: /record voice clip/i }),
     ).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /^send$/i })).toBeDisabled();
+    expect(screen.queryByRole("button", { name: /^send$/i })).toBeNull();
+
+    await user.type(
+      screen.getByPlaceholderText("Type text here... Type / for formatting"),
+      "x",
+    );
+    expect(screen.getByRole("button", { name: /^send$/i })).toBeInTheDocument();
   });
 
   it("uses its own outer shell (full width, no landing max width)", () => {

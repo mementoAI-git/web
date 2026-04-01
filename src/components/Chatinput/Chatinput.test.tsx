@@ -13,21 +13,34 @@ describe("Chatinput", () => {
     expect(screen.getByTestId("chat-input-landing-shell")).toBeInTheDocument();
   });
 
-  it("shows voice (call) control and Send; Send is disabled until there is text or a file", async () => {
+  it("shows voice call as a button without a chat route; Send only after typing", async () => {
     const user = userEvent.setup();
     renderWithProviders(<Chatinput onSend={() => {}} />, { auth: true });
 
     expect(
-      screen.getByRole("button", { name: /use voice mode/i }),
+      screen.getByRole("button", { name: /voice call/i }),
     ).toBeInTheDocument();
-    const sendBtn = screen.getByRole("button", { name: /^send$/i });
-    expect(sendBtn).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: /record voice clip/i }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^send$/i })).toBeNull();
 
     const textarea = screen.getByPlaceholderText(
       "Type text here... Type / for formatting",
     );
     await user.type(textarea, "hi");
+    const sendBtn = screen.getByRole("button", { name: /^send$/i });
+    expect(sendBtn).toBeInTheDocument();
     expect(sendBtn).not.toBeDisabled();
+  });
+
+  it("links voice call to /chat/:id/voice when memory id is set", () => {
+    renderWithProviders(
+      <Chatinput onSend={() => {}} memoryId="abc123" />,
+      { auth: true, route: "/chat/abc123" },
+    );
+    const link = screen.getByRole("link", { name: /voice call/i });
+    expect(link).toHaveAttribute("href", "/chat/abc123/voice");
   });
 
   it("fills container width without a 680px max on the outer shell", () => {

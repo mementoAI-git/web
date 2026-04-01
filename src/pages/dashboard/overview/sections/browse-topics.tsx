@@ -11,12 +11,12 @@ export default function BrowseTopics() {
   return (
     <div className="flex w-full min-w-0 flex-col gap-6 py-0 pb-16">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
-        <h2 className="min-w-0 font-garamond font-normal text-sand-12 text-xl sm:text-2xl lg:text-[32px] leading-[38px]">
+        <h2 className="min-w-0 font-garamond font-normal text-text-neutral-strong text-xl sm:text-2xl lg:text-[32px] leading-[38px]">
           Browse conversations
-          <i className="text-[rgba(176,169,156,0.9)]"> by topics</i>
+          <i className="text-text-neutral-weaker"> by topics</i>
         </h2>
         <Link
-          className="shrink-0 font-inter text-base font-semibold text-v3-fill-strong underline hover:opacity-90"
+          className="shrink-0 font-inter text-base font-semibold text-text-brand-strong underline hover:opacity-90"
           to="/explore"
         >
           See all

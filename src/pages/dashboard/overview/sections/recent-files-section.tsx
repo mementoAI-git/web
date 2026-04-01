@@ -85,19 +85,19 @@ const FILE_TYPE_STYLES: Record<
   { bg: string; Icon: typeof CameraIcon }
 > = {
   photo: {
-    bg: "bg-amber-100",
+    bg: "bg-fill-warning-weak",
     Icon: CameraIcon,
   },
   video: {
-    bg: "bg-green-100",
+    bg: "bg-fill-success-weak",
     Icon: VideoIcon,
   },
   document: {
-    bg: "bg-slate-100",
+    bg: "bg-fill-neutral-weak",
     Icon: FileIcon,
   },
   audio: {
-    bg: "bg-amber-200/80",
+    bg: "bg-fill-warning-weaker",
     Icon: VolumeIcon,
   },
 };
@@ -121,22 +121,22 @@ function RecentFileItem({ memory }: RecentFileItemProps) {
     <button
       type="button"
       onClick={handleClick}
-      className="flex w-full items-center gap-3 rounded-[12px] border border-v3-stroke-weak bg-v3-fill-weak p-3 text-left transition-colors hover:border-v3-stroke-strong hover:bg-v3-fill-weaker"
+      className="flex w-full items-center gap-3 rounded-[12px] border border-stroke-neutral-weaker bg-fill-neutral-weaker p-3 text-left transition-colors hover:border-stroke-neutral-weak hover:bg-fill-neutral-weakest"
     >
       <div
         className={`flex size-10 shrink-0 items-center justify-center rounded-lg ${bg}`}
       >
-        <Icon className="size-5 text-v3-icon-neutral" />
+        <Icon className="size-5 text-icon-neutral" />
       </div>
       <div className="min-w-0 flex-1">
-        <p className="truncate font-inter text-sm font-semibold text-v3-text-strong">
+        <p className="truncate font-inter text-sm font-semibold text-text-neutral-strong">
           {memory.title || "Untitled"}
         </p>
-        <p className="font-inter text-xs text-v3-text-weak">
+        <p className="font-inter text-xs text-text-neutral-weak">
           {formatSubDescription(fileType, firstAttachment, memory.created_at)}
         </p>
       </div>
-      <span className="shrink-0 rounded-full bg-green-100 px-2.5 py-1 font-inter text-xs font-medium text-green-800">
+      <span className="shrink-0 rounded-full bg-fill-success-weak px-2.5 py-1 font-inter text-xs font-medium text-text-success-strong">
         {tagLabel}
       </span>
     </button>
@@ -145,22 +145,22 @@ function RecentFileItem({ memory }: RecentFileItemProps) {
 
 function RecentFilesSkeleton() {
   return (
-    <div className="flex flex-1 flex-col gap-4 rounded-2xl bg-v3-fill-weak p-5 shadow-sm">
+    <div className="flex flex-1 flex-col gap-4 rounded-2xl bg-fill-neutral-weaker p-5 shadow-sm">
       <div className="flex items-center justify-between">
-        <div className="h-5 w-32 animate-pulse rounded bg-v3-fill-weak" />
-        <div className="h-4 w-16 animate-pulse rounded bg-v3-fill-weak" />
+        <div className="h-5 w-32 animate-pulse rounded bg-fill-neutral-weak" />
+        <div className="h-4 w-16 animate-pulse rounded bg-fill-neutral-weak" />
       </div>
-      <div className="border-t border-v3-stroke-weak" />
+      <div className="border-t border-stroke-neutral-weaker" />
       <div className="space-y-2">
         {[1, 2, 3, 4].map((i) => (
           <div
             key={i}
-            className="flex items-center gap-3 rounded-[12px] border border-v3-stroke-weak bg-v3-fill-weaker p-3"
+            className="flex items-center gap-3 rounded-[12px] border border-stroke-neutral-weaker bg-fill-neutral-weak p-3"
           >
-            <div className="size-10 shrink-0 animate-pulse rounded-lg bg-v3-fill-weak" />
+            <div className="size-10 shrink-0 animate-pulse rounded-lg bg-fill-neutral-weaker" />
             <div className="flex-1 space-y-1">
-              <div className="h-4 w-3/4 animate-pulse rounded bg-v3-fill-weak" />
-              <div className="h-3 w-1/2 animate-pulse rounded bg-v3-fill-weak" />
+              <div className="h-4 w-3/4 animate-pulse rounded bg-fill-neutral-weaker" />
+              <div className="h-3 w-1/2 animate-pulse rounded bg-fill-neutral-weaker" />
             </div>
           </div>
         ))}
@@ -189,26 +189,26 @@ export default function RecentFilesSection() {
   }
 
   return (
-    <div className="flex flex-1 flex-col gap-4 rounded-2xl bg-v3-fill-weak p-5 shadow-sm">
+    <div className="flex flex-1 flex-col gap-4 rounded-2xl bg-fill-neutral-weaker p-5 shadow-sm">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <FolderIcon className="size-5 text-v3-icon-neutral" />
-          <h3 className="font-inter text-base font-semibold text-v3-text-strong">
+          <FolderIcon className="size-5 text-icon-neutral" />
+          <h3 className="font-inter text-base font-semibold text-text-neutral-strong">
             Recent Files
           </h3>
         </div>
         <Link
           to="/stories"
-          className="flex items-center gap-1 font-inter text-sm font-medium text-orange hover:underline"
+          className="flex items-center gap-1 font-inter text-sm font-medium text-text-brand-strong hover:underline"
         >
           View all
           <ChevronRightIcon width={14} height={14} />
         </Link>
       </div>
-      <div className="border-t border-v3-stroke-weak" />
+      <div className="border-t border-stroke-neutral-weaker" />
       <div className="space-y-2">
         {memories.length === 0 ? (
-          <p className="py-8 text-center font-inter text-sm text-v3-text-weak">
+          <p className="py-8 text-center font-inter text-sm text-text-neutral-weak">
             No recent files yet
           </p>
         ) : (

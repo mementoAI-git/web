@@ -42,10 +42,10 @@ export function OnboardingStep4({
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <h2 className="text-lg font-medium text-[#2C1F15]">
+        <h2 className="text-lg font-medium text-v3-text-strong">
           {getStep4Headline(motivationType)}
         </h2>
-        <p className="mt-1 text-sm text-[#7A6A5E]">
+        <p className="mt-1 text-sm text-v3-text-weak">
           We&apos;ll make sure that&apos;s the easiest way to get started.
         </p>
       </div>
@@ -79,7 +79,7 @@ export function OnboardingStep4({
         </div>
         {showMaxTooltip && (
           <p
-            className="absolute left-0 right-0 top-full mt-2 text-[13px] text-[#C8956C]"
+            className="absolute left-0 right-0 top-full mt-2 text-[13px] text-v3-brand-strong"
             role="status"
           >
             Pick your top two
@@ -88,7 +88,7 @@ export function OnboardingStep4({
       </div>
 
       {validationErrors.expression && (
-        <p className="text-[13px] text-[#C8956C]">
+        <p className="text-[13px] text-v3-brand-strong">
           {validationErrors.expression}
         </p>
       )}

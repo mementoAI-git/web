@@ -82,10 +82,10 @@ export function Dateinput({
             placeholder={value ? dayjs(value).format("DD MMM, YYYY") : props.placeholder}
             {...props}
             value={value ? dayjs(value).format("DD MMM, YYYY") : ""}
-            className={cn("flex-1 outline-0 placeholder:text-[#000D4D73]", className)}
+            className={cn("flex-1 outline-0 placeholder:text-text-neutral-weaker", className)}
             readOnly
           />
-          <span className="text-[#000D4D]">
+          <span className="text-text-neutral-strong">
             <Calendar1Icon width={16} height={16} />
           </span>
         </div>

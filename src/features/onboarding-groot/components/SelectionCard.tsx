@@ -43,11 +43,11 @@ export function SelectionCard({
       onKeyDown={handleKeyDown}
       disabled={disabled}
       className={cn(
-        "relative min-h-[48px] w-full rounded-xl border-[1.5px] bg-[#FFFCF8] p-4 text-left transition-[border-color,background] duration-150 ease-in-out",
-        "hover:border-[#E8B99A] hover:bg-[#FFFCF8]",
+        "relative min-h-[48px] w-full rounded-xl border-[1.5px] bg-v3-fill-weaker p-4 text-left transition-[border-color,background] duration-150 ease-in-out",
+        "hover:border-v3-stroke-strong hover:bg-v3-fill-weaker",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-v3-brand-strong focus-visible:ring-offset-2",
-        isSelected && "border-[#2C1F15] bg-[#2C1F15] hover:border-v3-brand-strong hover:bg-[#2C1F15]",
-        disabled && "cursor-not-allowed opacity-50 border-[#E4D9CC] bg-[#FAF7F2] hover:border-[#E4D9CC] hover:bg-[#FAF7F2]"
+        isSelected && "border-v3-text-strong bg-v3-text-strong hover:border-v3-brand-strong hover:bg-v3-text-strong",
+        disabled && "cursor-not-allowed opacity-50 border-v3-stroke-weak bg-v3-fill-weaker hover:border-v3-stroke-weak hover:bg-v3-fill-weaker"
       )}
     >
       {isSelected && (
@@ -63,9 +63,9 @@ export function SelectionCard({
           {icon}
         </span>
         <div className="min-w-0 flex-1">
-          <span className={cn("block font-medium", isSelected ? "text-white" : "text-[#2C1F15]")}>{label}</span>
+          <span className={cn("block font-medium", isSelected ? "text-white" : "text-v3-text-strong")}>{label}</span>
           {sublabel && (
-            <span className={cn("mt-0.5 block text-sm", isSelected ? "text-white/80" : "text-[#7A6A5E]")}>{sublabel}</span>
+            <span className={cn("mt-0.5 block text-sm", isSelected ? "text-white/80" : "text-v3-text-weak")}>{sublabel}</span>
           )}
         </div>
       </div>

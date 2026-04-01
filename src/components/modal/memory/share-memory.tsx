@@ -44,23 +44,23 @@ function Content({ data }: ShareMemoryProps) {
     <div className="w-full !max-w-120">
       <div className="space-y-6">
         <div className="text-center sm:text-left">
-          <h4 className="modal-title text-5xl !font-medium text-[#1D2939]">
+          <h4 className="modal-title text-5xl !font-medium text-text-neutral-strong">
             {memory?.type === "conversation"
               ? "Share this conversation"
               : "Share this Story"}
           </h4>
         </div>
 
-        <div className="rounded-lg border border-gray-200 p-6">
-          <div className="font-inter text-sm font-medium !text-grey-600">
+        <div className="rounded-lg border border-stroke-neutral-weaker p-6">
+          <div className="font-inter text-sm font-medium text-text-neutral-weak">
             <span className="font-normal">Share link</span>
-            <div className="relative mt-2 flex items-center justify-between gap-2 rounded-lg border border-gray-200 p-2">
-              <span className="truncate font-normal whitespace-nowrap">{link}</span>
+            <div className="relative mt-2 flex items-center justify-between gap-2 rounded-lg border border-stroke-neutral-weaker p-2">
+              <span className="truncate font-normal whitespace-nowrap text-text-neutral-strong">{link}</span>
 
               <button
                 type="button"
                 onClick={() => handleCopy(link, "Link copied successfully")}
-                className="cursor-pointer border-l border-gray-200 text-v3-brand-strong transition-colors hover:opacity-90"
+                className="cursor-pointer border-l border-stroke-neutral-weaker text-text-brand-strong transition-colors hover:opacity-90"
               >
                 <div className="flex items-center justify-center gap-1 px-3 py-2">
                   {copied ? (
@@ -80,9 +80,9 @@ function Content({ data }: ShareMemoryProps) {
           </div>
 
           <div className="mt-4 flex items-center gap-3">
-            <div className="flex-1 border-t border-grey-500" />
-            <span className="font-inter text-xs text-[#667085]">Or share on Social Media</span>
-            <div className="flex-1 border-t border-grey-500" />
+            <div className="flex-1 border-t border-stroke-neutral-weaker" />
+            <span className="font-inter text-xs text-text-neutral-weak">Or share on Social Media</span>
+            <div className="flex-1 border-t border-stroke-neutral-weaker" />
           </div>
 
           <div className="mt-4 flex items-center justify-center gap-3 md:justify-between md:gap-11">
@@ -91,7 +91,7 @@ function Content({ data }: ShareMemoryProps) {
                 key={platform.name}
                 type="button"
                 onClick={platform.onClick}
-                className="flex size-[56px] shrink-0 cursor-pointer items-center justify-center rounded-full border border-grey-400 transition-colors hover:border-grey-500 hover:bg-gray-50"
+                className="flex size-[56px] shrink-0 cursor-pointer items-center justify-center rounded-full border border-stroke-neutral-weak transition-colors hover:border-stroke-neutral-weaker hover:bg-fill-neutral-weaker"
                 aria-label={`Share on ${platform.name}`}
               >
                 <img
@@ -127,9 +127,9 @@ export default function ShareMemory({ data }: ShareMemoryProps) {
         onClose={handleClose}
         snapPoints={[0.5, 0.75, 1]}
       >
-        <Sheet.Container className="bg-white">
-          <Sheet.Header className="rounded-3xl bg-white" />
-          <Sheet.Content className="bg-white px-4 pb-6">
+        <Sheet.Container className="bg-background">
+          <Sheet.Header className="rounded-3xl bg-background" />
+          <Sheet.Content className="bg-background px-4 pb-6">
             <ModalCloseBtn className="!relative ml-auto mb-1 !right-0 !top-0" onClick={handleClose} />
             <Content data={data} />
           </Sheet.Content>
