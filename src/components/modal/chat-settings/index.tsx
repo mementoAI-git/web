@@ -1,29 +1,39 @@
 "use client";
 
-import { useState, type PropsWithChildren } from "react";
+import {
+  useState,
+  useEffect,
+  type PropsWithChildren,
+  isValidElement,
+  cloneElement,
+  type ReactElement,
+  type MouseEvent,
+} from "react";
 import { createPortal } from "react-dom";
 import { Sheet } from "react-modal-sheet";
 import { TimesIcon } from "@/components/icons";
-import BackgroundMusic from "./background-music";
-import UpgradePlan from "./upgrade-plan";
-import Voices from "./voices";
+import { Button } from "@/components/ui/button";
+import { ChatPreferencesPanel } from "./chat-preferences-panel";
 
 function Content({ onClose }: { onClose: () => void }) {
   return (
-    <div className="bg-white px-4 py-4 sm:px-6 sm:py-6">
-      <div className="mb-4 flex w-full items-center justify-between text-secondary sm:mb-6">
-        <span className="modal-title !text-2xl sm:text-[32px]">Chat settings</span>
-        <button type="button" onClick={onClose} className="cursor-pointer p-1">
-          <TimesIcon width={12} height={12} />
-        </button>
+    <div className="flex min-h-0 w-full flex-1 flex-col bg-white">
+      <div className="flex shrink-0 items-center justify-between border-b border-stroke-neutral-weaker px-5 py-4 sm:px-6 sm:py-5">
+        <h2 className="font-garamond text-xl font-medium text-text-neutral-strong sm:text-2xl">
+          Chat settings
+        </h2>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          onClick={onClose}
+          className="shrink-0 rounded-full text-text-neutral-strong hover:bg-fill-neutral-weaker"
+          aria-label="Close chat settings"
+        >
+          <TimesIcon width={12} height={12} aria-hidden />
+        </Button>
       </div>
-      <div className="flex flex-col gap-4 sm:gap-6">
-        <UpgradePlan />
-        <div className="border-y border-gray-200 py-4 sm:py-6">
-          <BackgroundMusic />
-        </div>
-        <Voices />
-      </div>
+      <ChatPreferencesPanel density="comfortable" className="min-h-0 flex-1" />
     </div>
   );
 }
@@ -31,31 +41,66 @@ function Content({ onClose }: { onClose: () => void }) {
 export default function ChatSettings({ children }: PropsWithChildren) {
   const [isOpen, setIsOpen] = useState(false);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setIsOpen(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [isOpen]);
+
+  const trigger = isValidElement(children)
+    ? cloneElement(children as ReactElement<{ onClick?: (e: MouseEvent) => void }>, {
+        onClick: (e: MouseEvent) => {
+          (children as ReactElement<{ onClick?: (e: MouseEvent) => void }>).props.onClick?.(e);
+          setIsOpen(true);
+        },
+      })
+    : children;
+
   return (
-    <div>
-      <div onClick={() => setIsOpen(true)}>{children}</div>
+    <>
+      {trigger}
       {isOpen && (
         <div>
           <div className="block sm:hidden">
-            <Sheet detent="content" className="block sm:hidden" isOpen={isOpen} onClose={() => setIsOpen(false)}>
+            <Sheet
+              detent="content"
+              className="block sm:hidden"
+              isOpen={isOpen}
+              onClose={() => setIsOpen(false)}
+            >
               <Sheet.Container className="bg-white">
                 <Sheet.Header className="rounded-3xl bg-white" />
-                <Sheet.Content className="bg-white">
+                <Sheet.Content className="flex max-h-[min(90dvh,calc(100dvh-24px))] min-h-0 flex-col overflow-y-auto overscroll-contain bg-white">
                   <Content onClose={() => setIsOpen(false)} />
                 </Sheet.Content>
               </Sheet.Container>
-              <Sheet.Backdrop />
+              <Sheet.Backdrop onTap={() => setIsOpen(false)} />
             </Sheet>
           </div>
           {createPortal(
-            <div className="absolute bottom-5 right-5 hidden h-full max-h-[95%] w-full max-w-[400px] flex-col gap-4 rounded-2xl border border-sand-3 bg-white py-4 shadow-[0px_75px_150px_0px_#34405424] sm:flex md:w-120">
-              <Content onClose={() => setIsOpen(false)} />
-            </div>,
+            <>
+              <div
+                className="fixed inset-0 z-[125] hidden bg-overlay-backdrop sm:block"
+                aria-hidden
+                onClick={() => setIsOpen(false)}
+              />
+              <div
+                className="fixed top-1.5 right-1.5 bottom-1.5 z-[130] hidden w-full max-w-[442px] min-h-0 flex-col overflow-hidden rounded-[24px] border border-stroke-neutral-weaker bg-white shadow-2xl sm:flex sm:max-h-[calc(100dvh-12px)]"
+                role="dialog"
+                aria-modal="true"
+                aria-label="Chat settings"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <Content onClose={() => setIsOpen(false)} />
+              </div>
+            </>,
             document.body,
           )}
         </div>
       )}
-    </div>
+    </>
   );
 }
-

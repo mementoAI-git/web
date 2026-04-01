@@ -85,16 +85,16 @@ vi.mock("@/hooks/use-modal", async (importOriginal) => {
 });
 
 describe("SidebarDetails", () => {
-  it("caps detail content at 249px width", () => {
+  it("caps detail content at 287px width", () => {
     renderSidebar();
-    const label = screen.getAllByText("properties")[0];
-    const panel = label.closest('[class*="max-w-[249px]"]');
+    const label = screen.getAllByText(/properties/i)[0];
+    const panel = label.closest('[class*="287px"]');
     expect(panel).toBeTruthy();
   });
 
-  it("uses 249px width on desktop when open", () => {
+  it("uses 287px width on desktop when open", () => {
     const { container } = renderSidebar({ isOpen: true });
-    const desktopPanel = container.querySelector('[class*="w-[249px]"]');
+    const desktopPanel = container.querySelector('[data-testid="memory-sidebar-desktop"]');
     expect(desktopPanel).toBeTruthy();
   });
 

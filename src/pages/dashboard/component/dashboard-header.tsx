@@ -13,11 +13,11 @@ import { useStore } from "@/hooks/use-store";
 import StreakTracker from "@/components/streak-tracker";
 import { useLocation, useMatch } from "react-router-dom";
 import { cn } from "@/utility";
-import { MenuIcon, SearchIcon } from "@/components/icons";
-import { IconSearch, InputGroup, Kbd } from "@heroui/react";
+import { GearIcon, MenuIcon, SearchIcon } from "@/components/icons";
+import { SearchIcon as IconSearch } from "@/components/icons";
 import { useConversationChrome } from "@/contexts/conversation-chrome";
 import { MemoryDropdown } from "@/pages/dashboard/chat/conversation/dropdown";
-import { FloatingChatButton } from "@/components/floating-chat-button";
+
 
 const defaultHeaderTitle: Record<string, string> = {
   memories: "my memories",
@@ -78,6 +78,7 @@ export function DashboardHeader({
   const location = useLocation();
   const mdUp = useMdViewport();
   const chatConversationMatch = useMatch({ path: "/chat/:id", end: true });
+  const chatVoiceMatch = useMatch({ path: "/chat/:id/voice", end: true });
   const { chrome } = useConversationChrome();
 
   const path = location.pathname.replace("/", "");
@@ -106,7 +107,9 @@ export function DashboardHeader({
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [open]);
 
-  const showConversationNav = Boolean(chatConversationMatch && chrome);
+  const showConversationNav = Boolean(
+    (chatConversationMatch || chatVoiceMatch) && chrome,
+  );
 
   if (showConversationNav && chrome) {
     const host = chrome.hostChat;
@@ -200,7 +203,16 @@ export function DashboardHeader({
                 triggerClassName="!aspect-square !size-9 !p-2 flex items-center justify-center rounded-xl bg-transparent text-v3-icon-neutral transition-colors hover:bg-v3-fill-weak hover:text-v3-text-strong"
               />
             ) : null}
-            <FloatingChatButton variant="header" />
+            {chrome.memory?._id && chrome.onOpenChatPreferences ? (
+              <button
+                type="button"
+                className={convHeaderActionGhost}
+                aria-label="Chat settings"
+                onClick={() => chrome.onOpenChatPreferences?.()}
+              >
+                <GearIcon className="size-4 shrink-0 stroke-2" aria-hidden />
+              </button>
+            ) : null}
           </div>
         </header>
       </div>
@@ -229,41 +241,36 @@ export function DashboardHeader({
         </div>
 
         <div className="col-start-2 row-start-1 hidden h-10 w-full min-w-[min(100%,280px)] max-w-[700px] justify-self-center lg:col-start-2 lg:block">
-          <InputGroup
-            fullWidth
+          <button
+            type="button"
             onClick={() => open("search-memory")}
             className={cn(
-              "h-10 cursor-pointer rounded-lg border border-v3-stroke-weak bg-white",
-              "has-[input:focus-visible]:ring-2 has-[input:focus-visible]:ring-v3-brand-strong has-[input:focus-visible]:ring-offset-2",
+              "flex h-10 w-full cursor-pointer items-center rounded-lg border border-v3-stroke-weak bg-white",
+              "focus-visible:ring-2 focus-visible:ring-v3-brand-strong focus-visible:ring-offset-2",
             )}
             aria-label="Open search"
+            aria-haspopup="dialog"
           >
-            <InputGroup.Prefix className="pl-3.5">
+            <span className="pl-3.5">
               <IconSearch
                 width={16}
                 height={16}
                 className="text-v3-text-weak"
                 aria-hidden
               />
-            </InputGroup.Prefix>
-            <InputGroup.Input
-              readOnly
-              tabIndex={0}
-              placeholder="Search"
-              aria-haspopup="dialog"
-              className="cursor-pointer font-inter text-sm text-v3-text-strong placeholder:text-v3-text-weaker"
-            />
-            <InputGroup.Suffix className="pr-2.5">
-              <span className="inline-flex items-center gap-1" aria-hidden>
-                <Kbd className="rounded-md border border-v3-stroke-weak bg-v3-fill-weaker px-1.5 py-0.5 font-inter text-[10px] font-medium text-v3-text-strong">
-                  <Kbd.Abbr keyValue="command" />
-                </Kbd>
-                <Kbd className="rounded-md border border-v3-stroke-weak bg-v3-fill-weaker px-1.5 py-0.5 font-inter text-[10px] font-medium text-v3-text-strong">
-                  <Kbd.Content>K</Kbd.Content>
-                </Kbd>
-              </span>
-            </InputGroup.Suffix>
-          </InputGroup>
+            </span>
+            <span className="flex-1 px-2 text-left font-inter text-sm text-v3-text-weaker">
+              Search
+            </span>
+            <span className="inline-flex items-center gap-1 pr-2.5" aria-hidden>
+              <kbd className="rounded-md border border-v3-stroke-weak bg-v3-fill-weaker px-1.5 py-0.5 font-inter text-[10px] font-medium text-v3-text-strong">
+                &#8984;
+              </kbd>
+              <kbd className="rounded-md border border-v3-stroke-weak bg-v3-fill-weaker px-1.5 py-0.5 font-inter text-[10px] font-medium text-v3-text-strong">
+                K
+              </kbd>
+            </span>
+          </button>
         </div>
 
         <div className="col-start-2 flex items-center justify-end gap-2 lg:col-start-3">
@@ -279,7 +286,6 @@ export function DashboardHeader({
               </span>
             </div>
           </StreakTracker>
-          <FloatingChatButton variant="header" />
           <button
             type="button"
             onClick={onMenuClick}

@@ -4,14 +4,6 @@ import PropsItem from "@/components/props-item";
 import type { IMemory } from "@/utility/interface";
 import { getPostTypeLabel, type PostTypeSource } from "@/utility/memory";
 
-// import FolderIcon from "@/public/icon/folder.svg";
-// import CalenderIcon from "@/public/icon/calendar-1.svg";
-// import LockIcon from "@/public/icon/lock-1.svg";
-// import ClipIcon from "@/public/icon/clip.svg";
-// import TagIcon from "@/public/icon/tag.svg";
-// import TimesIcon from "@/public/icon/times.svg";
-// import EditIcon from "@/public/icon/edit.svg";
-
 import {
   FolderIcon,
   Calendar1Icon,
@@ -27,7 +19,12 @@ import dayjs from "dayjs";
 import { useModal } from "@/hooks/use-modal";
 import { Sheet } from "react-modal-sheet";
 import { Download, Info } from "lucide-react";
-import { cn } from "@/utility";
+import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import * as motion from "motion/react-client";
+import { ChatPreferencesPanel } from "@/components/modal/chat-settings/chat-preferences-panel";
 
 export type MemorySidebarQuickActions = {
   onViewFullDetails: () => void;
@@ -36,6 +33,8 @@ export type MemorySidebarQuickActions = {
   onDelete: () => void;
 };
 
+export type SidebarPanelTab = "memory" | "chat";
+
 interface SidebarDetailsProps {
   memory: IMemory;
   onClose: () => void;
@@ -43,6 +42,10 @@ interface SidebarDetailsProps {
   source?: PostTypeSource;
   /** Conversation chat: memory menu actions (previously in header dropdown). */
   quickActions?: MemorySidebarQuickActions | null;
+  /** When true, show Memory | Chat tabs (chat = sound, voice, upgrade). */
+  enableChatPreferencesTab?: boolean;
+  activeTab?: SidebarPanelTab;
+  onTabChange?: (tab: SidebarPanelTab) => void;
 }
 
 interface ContentProps {
@@ -51,118 +54,104 @@ interface ContentProps {
   isMobile?: boolean;
   source?: PostTypeSource;
   quickActions?: MemorySidebarQuickActions | null;
+  enableChatPreferencesTab?: boolean;
+  activeTab?: SidebarPanelTab;
+  onTabChange?: (tab: SidebarPanelTab) => void;
 }
 
-const quickActionRow =
-  "flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left font-inter text-sm font-medium text-v3-text-strong transition-colors hover:bg-v3-fill-weaker focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-v3-stroke-strong";
+const sectionBadgeClass =
+  "mb-2 w-fit border-v3-stroke-weak bg-v3-fill-weaker/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-v3-text-weaker";
 
-function Content({
+const actionButtonClass =
+  "h-auto w-full justify-start gap-2.5 rounded-lg px-2.5 py-2.5 font-inter text-sm font-medium text-v3-text-strong hover:bg-v3-fill-weaker";
+
+function MemorySections({
   memory,
-  onClose,
-  isMobile = false,
+  isMobile,
   source,
   quickActions,
-}: ContentProps) {
-  const { open } = useModal();
-
-  const runAndMaybeCloseMobile = (fn: () => void) => {
-    fn();
-    if (isMobile) onClose();
-  };
-
-  const handleEditPermission = () => {
-    open("set-tag-permission", { memory, isNew: false });
-    if (isMobile) {
-      onClose();
-    }
-  };
-
+  open,
+  runAndMaybeCloseMobile,
+  handleEditPermission,
+}: Pick<ContentProps, "memory" | "isMobile" | "source" | "quickActions"> & {
+  open: ReturnType<typeof useModal>["open"];
+  runAndMaybeCloseMobile: (fn: () => void) => void;
+  handleEditPermission: () => void;
+}) {
   return (
-    <div className="h-full w-full max-w-[249px] mx-auto md:mx-0 space-y-2 sm:space-y-3 p-3 sm:p-4 lg:p-6">
-      <div className="flex justify-end">
-        <button
-          type="button"
-          className="ml-auto inline-flex cursor-pointer rounded-lg p-3 transition-colors hover:bg-v3-fill-weaker"
-          onClick={onClose}
-          aria-label="Close panel"
-        >
-          <TimesIcon className="text-v3-icon-neutral" width={10} height={10} aria-hidden />
-        </button>
-      </div>
+    <>
       {quickActions ? (
-        <div className="space-y-2 border-b border-v3-stroke-weak pb-4 sm:pb-5">
-          <span className="block font-inter text-xs font-medium uppercase tracking-wide text-v3-text-weak">
-            Memory
-          </span>
-          <ul className="flex flex-col gap-0.5">
-            <li>
-              <button
-                type="button"
-                className={quickActionRow}
-                onClick={() =>
-                  runAndMaybeCloseMobile(quickActions.onViewFullDetails)
-                }
-              >
-                <Info
-                  className="size-4 shrink-0 text-v3-icon-neutral"
-                  strokeWidth={1.75}
-                  aria-hidden
-                />
-                View full details
-              </button>
-            </li>
-            <li>
-              <button
-                type="button"
-                className={quickActionRow}
-                onClick={() =>
-                  runAndMaybeCloseMobile(quickActions.onEditMemory)
-                }
-              >
-                <EditIcon width={16} height={16} aria-hidden />
-                Edit memory
-              </button>
-            </li>
-            {quickActions.onExportConversation ? (
+        <>
+          <div className="space-y-1">
+            <Badge variant="outline" className={sectionBadgeClass}>
+              Memory
+            </Badge>
+            <ul className="flex flex-col gap-0.5">
               <li>
-                <button
+                <Button
                   type="button"
-                  className={quickActionRow}
-                  onClick={() =>
-                    runAndMaybeCloseMobile(
-                      quickActions.onExportConversation!,
-                    )
-                  }
+                  variant="ghost"
+                  className={actionButtonClass}
+                  onClick={() => runAndMaybeCloseMobile(quickActions.onViewFullDetails)}
                 >
-                  <Download
-                    className="size-4 shrink-0 text-v3-icon-neutral"
-                    strokeWidth={1.75}
-                    aria-hidden
-                  />
-                  Export conversation
-                </button>
+                  <Info className="size-4 shrink-0 text-v3-icon-neutral" strokeWidth={1.75} aria-hidden />
+                  View full details
+                </Button>
               </li>
-            ) : null}
-            <li>
-              <button
-                type="button"
-                className={cn(
-                  quickActionRow,
-                  "text-[#F97066] hover:bg-[#F97066]/8",
-                )}
-                onClick={() => runAndMaybeCloseMobile(quickActions.onDelete)}
-              >
-                <TrashIcon width={16} height={16} aria-hidden />
-                Delete
-              </button>
-            </li>
-          </ul>
-        </div>
+              <li>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className={actionButtonClass}
+                  onClick={() => runAndMaybeCloseMobile(quickActions.onEditMemory)}
+                >
+                  <EditIcon width={16} height={16} aria-hidden />
+                  Edit memory
+                </Button>
+              </li>
+              {quickActions.onExportConversation ? (
+                <li>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className={actionButtonClass}
+                    onClick={() =>
+                      runAndMaybeCloseMobile(quickActions.onExportConversation!)
+                    }
+                  >
+                    <Download
+                      className="size-4 shrink-0 text-v3-icon-neutral"
+                      strokeWidth={1.75}
+                      aria-hidden
+                    />
+                    Export conversation
+                  </Button>
+                </li>
+              ) : null}
+              <li>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className={cn(
+                    actionButtonClass,
+                    "text-destructive hover:bg-destructive/10 hover:text-destructive",
+                  )}
+                  onClick={() => runAndMaybeCloseMobile(quickActions.onDelete)}
+                >
+                  <TrashIcon width={16} height={16} aria-hidden />
+                  Delete
+                </Button>
+              </li>
+            </ul>
+          </div>
+          <Separator className="my-4 bg-v3-stroke-weak" />
+        </>
       ) : null}
-      <div className="space-y-3 sm:space-y-4 border-b border-[#EAECF0] pb-8 sm:pb-10 lg:pb-14">
-        <span className="block font-inter text-xs text-[#667085] uppercase">
-          properties
-        </span>
+
+      <div className="space-y-2">
+        <Badge variant="outline" className={sectionBadgeClass}>
+          Properties
+        </Badge>
         <ul>
           <PropsItem
             icon={<FolderIcon width={16} />}
@@ -186,10 +175,13 @@ function Content({
           />
         </ul>
       </div>
-      <div className="space-y-3 sm:space-y-4 border-b border-[#EAECF0] pb-8 sm:pb-10 lg:pb-14 mt-4">
-        <span className="block font-inter text-xs text-[#667085] uppercase">
-          stats
-        </span>
+
+      <Separator className="my-4 bg-v3-stroke-weak" />
+
+      <div className="space-y-2">
+        <Badge variant="outline" className={sectionBadgeClass}>
+          Stats
+        </Badge>
         <ul>
           <PropsItem
             icon={<ClipIcon width={13} />}
@@ -201,23 +193,31 @@ function Content({
             title="tags:"
             className="!items-start"
             subtitle={
-              <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
-                {memory.tags.map(t => <span key={t} className="mem-tags text-xs sm:text-sm">{t}</span>)}
-                <span
+              <div className="flex flex-wrap items-center gap-1 sm:gap-2">
+                {memory.tags.map((t) => (
+                  <span key={t} className="mem-tags text-xs sm:text-sm">
+                    {t}
+                  </span>
+                ))}
+                <button
+                  type="button"
                   onClick={() => open("set-tag-permission", { memory, isNew: false })}
-                  className="mem-tags !border !border-[#1D2939] !bg-transparent text-xs sm:text-sm"
+                  className="mem-tags !border !border-v3-text-strong !bg-transparent text-left text-xs sm:text-sm"
                 >
                   + Add tag
-                </span>
+                </button>
               </div>
             }
           />
         </ul>
       </div>
-      <div className="space-y-3 sm:space-y-4 pb-8 sm:pb-10 lg:pb-14 mt-4">
-        <span className="block font-inter text-xs text-[#667085] uppercase">
-          actions
-        </span>
+
+      <Separator className="my-4 bg-v3-stroke-weak" />
+
+      <div className="space-y-2">
+        <Badge variant="outline" className={sectionBadgeClass}>
+          Actions
+        </Badge>
         <ul>
           <PropsItem
             icon={<EditIcon width={13} />}
@@ -227,6 +227,101 @@ function Content({
           />
         </ul>
       </div>
+    </>
+  );
+}
+
+function Content({
+  memory,
+  onClose,
+  isMobile = false,
+  source,
+  quickActions,
+  enableChatPreferencesTab = false,
+  activeTab = "memory",
+  onTabChange,
+}: ContentProps) {
+  const { open } = useModal();
+
+  const runAndMaybeCloseMobile = (fn: () => void) => {
+    fn();
+    if (isMobile) onClose();
+  };
+
+  const handleEditPermission = () => {
+    open("set-tag-permission", { memory, isNew: false });
+    if (isMobile) {
+      onClose();
+    }
+  };
+
+  const showChat = enableChatPreferencesTab && activeTab === "chat";
+
+  return (
+    <div
+      className={cn(
+        "flex h-full w-full min-w-0 flex-col gap-0 p-3 sm:p-4 lg:p-6",
+        showChat ? "min-w-[min(100%,320px)]" : "min-w-[min(100%,287px)]",
+      )}
+    >
+      <div className="mb-2 flex items-center gap-2">
+        {enableChatPreferencesTab && onTabChange ? (
+          <div
+            className="flex min-w-0 flex-1 rounded-full border border-v3-stroke-weak bg-v3-fill-weaker/50 p-0.5"
+            role="tablist"
+            aria-label="Panel sections"
+          >
+            <Button
+              type="button"
+              role="tab"
+              aria-selected={activeTab === "memory"}
+              variant={activeTab === "memory" ? "secondary" : "ghost"}
+              size="sm"
+              className="h-8 min-w-0 flex-1 rounded-full px-2 text-xs font-medium sm:text-sm"
+              onClick={() => onTabChange("memory")}
+            >
+              Memory
+            </Button>
+            <Button
+              type="button"
+              role="tab"
+              aria-selected={activeTab === "chat"}
+              variant={activeTab === "chat" ? "secondary" : "ghost"}
+              size="sm"
+              className="h-8 min-w-0 flex-1 rounded-full px-2 text-xs font-medium sm:text-sm"
+              onClick={() => onTabChange("chat")}
+            >
+              Chat
+            </Button>
+          </div>
+        ) : (
+          <div className="min-w-0 flex-1" />
+        )}
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          className="shrink-0 rounded-full text-v3-icon-neutral hover:bg-v3-fill-weaker"
+          onClick={onClose}
+          aria-label="Close panel"
+        >
+          <TimesIcon width={10} height={10} aria-hidden />
+        </Button>
+      </div>
+
+      {showChat ? (
+        <ChatPreferencesPanel density="compact" className="min-h-0 flex-1 pb-4" />
+      ) : (
+        <MemorySections
+          memory={memory}
+          isMobile={isMobile}
+          source={source}
+          quickActions={quickActions}
+          open={open}
+          runAndMaybeCloseMobile={runAndMaybeCloseMobile}
+          handleEditPermission={handleEditPermission}
+        />
+      )}
     </div>
   );
 }
@@ -237,7 +332,13 @@ export default function SidebarDetails({
   isOpen,
   source,
   quickActions,
+  enableChatPreferencesTab = false,
+  activeTab = "memory",
+  onTabChange,
 }: SidebarDetailsProps) {
+  const desktopWidth =
+    isOpen && enableChatPreferencesTab && activeTab === "chat" ? 336 : 287;
+
   return (
     <>
       <Sheet
@@ -248,7 +349,7 @@ export default function SidebarDetails({
         snapPoints={[0.5, 0.75, 1]}
       >
         <Sheet.Container className="bg-sand-1">
-          <Sheet.Header className="bg-sand-1 rounded-3xl" />
+          <Sheet.Header className="rounded-3xl bg-sand-1" />
           <Sheet.Content className="bg-sand-1">
             <Content
               memory={memory}
@@ -256,26 +357,54 @@ export default function SidebarDetails({
               isMobile
               source={source}
               quickActions={quickActions}
+              enableChatPreferencesTab={enableChatPreferencesTab}
+              activeTab={activeTab}
+              onTabChange={onTabChange}
             />
           </Sheet.Content>
         </Sheet.Container>
         <Sheet.Backdrop />
       </Sheet>
 
-      <div
-        className={`h-full hidden md:flex md:flex-col shrink-0 border-l border-[#EAECF0] transition-all duration-300 ease-in-out overflow-hidden ${isOpen
-          ? "w-[249px]"
-          : "w-0 max-w-0"
-          }`}
+      <motion.div
+        initial={false}
+        animate={{
+          width: isOpen ? desktopWidth : 0,
+          opacity: isOpen ? 1 : 0,
+        }}
+        transition={{
+          type: "spring",
+          stiffness: 300,
+          damping: 30,
+          mass: 0.8,
+        }}
+        data-testid="memory-sidebar-desktop"
+        className="fixed top-0 right-0 z-40 hidden h-screen overflow-hidden border-l border-v3-stroke-weak bg-white md:flex md:flex-col"
       >
-        <Content
-          memory={memory}
-          onClose={onClose}
-          isMobile={false}
-          source={source}
-          quickActions={quickActions}
+        <div className="h-full min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
+          <Content
+            memory={memory}
+            onClose={onClose}
+            isMobile={false}
+            source={source}
+            quickActions={quickActions}
+            enableChatPreferencesTab={enableChatPreferencesTab}
+            activeTab={activeTab}
+            onTabChange={onTabChange}
+          />
+        </div>
+      </motion.div>
+      {isOpen ? (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+          className="fixed inset-0 z-30 hidden bg-black/20 md:block"
+          onClick={onClose}
+          aria-hidden
         />
-      </div>
+      ) : null}
     </>
   );
 }

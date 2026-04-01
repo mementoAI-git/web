@@ -13,6 +13,8 @@ import {
 export type ConversationChromeState = {
   memory: IMemory | null;
   onViewDetails?: () => void;
+  /** Open right panel on the Chat tab (sound, voice, upgrade). */
+  onOpenChatPreferences?: () => void;
   /** Download current thread as Markdown (messages loaded in the client). */
   onExportConversation?: () => void;
   /** Single-thread Host Chat chrome (top bar title, subtitle, search). */

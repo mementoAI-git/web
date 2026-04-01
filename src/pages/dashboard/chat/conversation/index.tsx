@@ -67,6 +67,7 @@ export default function Conversation({ id, type = "memory" }) {
   const navigate = useNavigate();
   const [messages, setMessages] = useState<Partial<IMessage | any>[]>([])
   const [isSidebarOpen, setIsSidebarOpen] = useState(false) // Sidebar closed by default
+  const [sidebarTab, setSidebarTab] = useState<"memory" | "chat">("memory")
   const [replyQuote, setReplyQuote] = useState<ChatReplyQuote | null>(null)
   const [chatMode, setChatMode] = useState<ChatMode>("open");
   const [deepDiveDimension, setDeepDiveDimension] = useState<LifeDimension | null>(null);
@@ -151,10 +152,17 @@ export default function Conversation({ id, type = "memory" }) {
   // Close sidebar handler
   const handleCloseSidebar = useCallback(() => {
     setIsSidebarOpen(false);
+    setSidebarTab("memory");
   }, []);
 
   // Open sidebar handler 
   const handleOpenSidebar = useCallback(() => {
+    setSidebarTab("memory");
+    setIsSidebarOpen(true);
+  }, []);
+
+  const handleOpenChatPreferences = useCallback(() => {
+    setSidebarTab("chat");
     setIsSidebarOpen(true);
   }, []);
 
@@ -426,6 +434,7 @@ export default function Conversation({ id, type = "memory" }) {
     setChrome({
       memory: memory ?? null,
       onViewDetails: handleOpenSidebar,
+      onOpenChatPreferences: memory?._id ? handleOpenChatPreferences : undefined,
       onExportConversation: handleExportConversation,
       ...(isHostChat ?
         {
@@ -442,6 +451,7 @@ export default function Conversation({ id, type = "memory" }) {
     loadingPrompt,
     memory,
     handleOpenSidebar,
+    handleOpenChatPreferences,
     handleExportConversation,
     setChrome,
     isHostChat,
@@ -468,7 +478,15 @@ export default function Conversation({ id, type = "memory" }) {
           onScroll={handleScroll}
         >
           {isHostChat ? (
-            <div className="flex w-full flex-col gap-3 pt-2 pb-4 sm:px-3 md:px-5">
+            <div
+              className={cn(
+                "sticky top-0 z-[5] flex w-full min-w-0 flex-nowrap items-center gap-2 overflow-x-auto border-b border-v3-stroke-weak/50 bg-white/95 py-2 backdrop-blur-md",
+                "sm:px-2 md:px-3",
+                "[scrollbar-width:thin] [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:h-1.5",
+              )}
+              role="toolbar"
+              aria-label="Host chat tools"
+            >
               <HostChatEnrichmentBar
                 enrichmentScore={enrichmentStats?.enrichment_score ?? 5}
                 deltaToday={deltaToday}
@@ -529,7 +547,7 @@ export default function Conversation({ id, type = "memory" }) {
               />
             }
           </History>
-          <div className="sticky bottom-0 bg-white px-0 pb-4 sm:px-3 md:px-5">
+          <div className="sticky bottom-0 bg-white px-0 pb-2 sm:px-2 md:px-3">
             <div className="w-full">
               <ConversationChatinput
                 key={`chat-draft-${memory?._id ?? id}`}
@@ -538,7 +556,10 @@ export default function Conversation({ id, type = "memory" }) {
                 onSend={handleSend}
                 history={messages.slice(-20).map(({ role, text }) => ({ role, text }))}
                 inputClassName="!text-sm sm:!text-lg md:!text-xl"
-                memoryId={memory?._id || null}
+                memoryId={
+                  memory?._id ??
+                  (id && id !== "new" ? id : null)
+                }
                 draftStorageKey={`memento-chat-draft:${memory?._id ?? id}`}
                 replyQuote={replyQuote}
                 onClearReplyQuote={() => setReplyQuote(null)}
@@ -561,6 +582,9 @@ export default function Conversation({ id, type = "memory" }) {
             onExportConversation: handleExportConversation,
             onDelete: () => push("delete-memory", { memory }),
           }}
+          enableChatPreferencesTab
+          activeTab={sidebarTab}
+          onTabChange={setSidebarTab}
         />
       }
     </div>
