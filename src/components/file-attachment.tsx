@@ -25,7 +25,7 @@ export default function FileAttachment({ file, onDelete, progressType = "bar", c
               <button
                 type="button"
                 onClick={() => onDelete(file)}
-                className="cursor-pointer text-[#A4A7AE]"
+                className="cursor-pointer text-text-neutral-weaker"
               >
                 <TrashIcon width={13} height={13} />
               </button>
@@ -42,11 +42,11 @@ export default function FileAttachment({ file, onDelete, progressType = "bar", c
           <div className="flex items-center gap-2">
             <div className="h-2 w-full overflow-hidden rounded-full bg-grey-500">
               <div
-                className="h-full rounded-full bg-[#314FDF] transition-all duration-300"
+                className="h-full rounded-full bg-fill-info-strong transition-all duration-300"
                 style={{ width: `${file.progress}%` }}
               />
             </div>
-            <span className="font-inter text-sm font-medium text-[#3C3F3E]">{file.progress}%</span>
+            <span className="font-inter text-sm font-medium text-text-neutral-weak">{file.progress}%</span>
           </div>
         )}
       </div>

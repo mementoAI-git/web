@@ -64,7 +64,7 @@ function Content({ data }: Setup2FAContentProps) {
       <div className="space-y-3 font-inter">
         <h4 className="leading-6 font-medium text-gray-950/90">Step 1:</h4>
         <span className="inline-block text-gray-950/70">Download the 2FA apps</span>
-        <ol className="list-inside list-decimal text-[#E26A24]">
+        <ol className="list-inside list-decimal text-v3-brand-strong">
           <li>Google Authenticator</li>
           <li>Authy.</li>
         </ol>

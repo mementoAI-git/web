@@ -1,4 +1,5 @@
-import { render } from "@testing-library/react";
+import { describe, it, expect } from "vitest";
+import { render, screen } from "@testing-library/react";
 import Spinner from "./spinner";
 
 describe("Spinner", () => {
@@ -7,16 +8,14 @@ describe("Spinner", () => {
     expect(container.firstChild).toBeNull();
   });
 
-  it("renders SVG when loading=true", () => {
+  it("renders loading indicator when loading=true", () => {
     render(<Spinner loading />);
-    const svg = document.querySelector("svg");
-    expect(svg).toBeInTheDocument();
-    expect(svg).toHaveAttribute("viewBox", "0 0 24 24");
+    expect(screen.getByRole("status", { name: /loading/i })).toBeInTheDocument();
   });
 
   it("applies custom className", () => {
     render(<Spinner loading className="custom-spinner" />);
-    const svg = document.querySelector("svg");
-    expect(svg).toHaveClass("custom-spinner");
+    const el = screen.getByRole("status", { name: /loading/i });
+    expect(el).toHaveClass("custom-spinner");
   });
 });

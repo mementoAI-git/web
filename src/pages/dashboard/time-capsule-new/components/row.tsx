@@ -21,13 +21,13 @@ export default function StoriesTableRow({ memory }: { memory: IMemory }) {
                 <ImageThumbnail images={memory?.attachments} size={33.53} />
             }
           </div>
-          <span className="max-w-75 truncate font-inter text-sm font-medium whitespace-nowrap text-[#050709]">
+          <span className="max-w-75 truncate font-inter text-sm font-medium whitespace-nowrap text-text-neutral-strong">
             {" "}
             {memory.title}
           </span>
         </div>
       </td>
-      <td className="text-sm whitespace-nowrap text-[#535862]">
+      <td className="text-sm whitespace-nowrap text-text-neutral-weak">
         {dayjs(memory.created_at).format("MMM DD, YYYY")}
       </td>
       <td>

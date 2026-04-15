@@ -31,6 +31,28 @@ interface IUserContext {
   join_reasons: string[];
 }
 
+/** Full persona document from GET /users/persona (see PERSONA-API-FRONTEND-INTEGRATION.md) */
+export interface IPersona {
+  _id?: string;
+  user: string;
+  important_notes?: string[];
+  key_preferences?: string[];
+  conversation_history_summary?: string;
+  emotional_state_trends?: string[];
+  goals_and_aspirations?: string[];
+  self_description?: string;
+  current_priority?: string[];
+  join_reasons?: string[];
+  audience?: string[];
+  communication_style?: string[];
+  last_array_update?: string | null;
+  last_summarized_at?: string | null;
+  last_update?: Record<string, string>;
+  last_summarized?: Record<string, string>;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface IUser {
   _id?: string;
   email: string;
@@ -42,7 +64,8 @@ export interface IUser {
   dob: string;
   country: string;
   password: string;
-  onbaorded: boolean;
+  onboarded: boolean;
+  onboarding_status: "never" | "skipped" | "completed";
   providers: string[];
   preferences: IUserPreferences;
   context: IUserContext;
@@ -53,6 +76,11 @@ export interface IUser {
     secret: string;
     enabled: boolean;
   };
+  passkeys?: Array<{
+    credential_id: string;
+    device_name: string;
+    created_at: string;
+  }>;
   location?: string;
   picture: string;
   picture_url?: string;
@@ -63,6 +91,7 @@ export interface IUser {
   fullname?: string | null;
   newsletter_subscriber: boolean;
   created_at: string;
+  onboarding_step_reached?: number;
 }
 
 export interface IMemoryAccessItem {
@@ -173,6 +202,7 @@ export interface IOnUploadPayload {
   id: string;
   progress: number;
   uploadedFile?: IFile | null;
+  duration?: number;
 }
 
 export interface IPrompt {

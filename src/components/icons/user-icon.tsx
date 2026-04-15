@@ -1,18 +1,20 @@
 import type { SVGProps } from "react";
 
+/** 24×24 outline user (aligned with Mail/Phone and other settings row icons). */
 export function UserIcon(props: SVGProps<SVGSVGElement>) {
   return (
     <svg
-      viewBox="0 0 15 15"
+      viewBox="0 0 24 24"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
+      stroke="currentColor"
+      strokeWidth={1.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
       {...props}
     >
-      <path
-        d="M7.33333 1.83333C8.34167 1.83333 9.16667 2.65833 9.16667 3.66667C9.16667 4.675 8.34167 5.5 7.33333 5.5C6.325 5.5 5.5 4.675 5.5 3.66667C5.5 2.65833 6.325 1.83333 7.33333 1.83333ZM7.33333 11C9.80833 11 12.65 12.1825 12.8333 12.8333H1.83333C2.04417 12.1733 4.8675 11 7.33333 11ZM7.33333 0C5.3075 0 3.66667 1.64083 3.66667 3.66667C3.66667 5.6925 5.3075 7.33333 7.33333 7.33333C9.35917 7.33333 11 5.6925 11 3.66667C11 1.64083 9.35917 0 7.33333 0ZM7.33333 9.16667C4.88583 9.16667 0 10.395 0 12.8333V14.6667H14.6667V12.8333C14.6667 10.395 9.78083 9.16667 7.33333 9.16667Z"
-        fill="currentColor"
-      />
+      <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+      <circle cx="12" cy="7" r="4" />
     </svg>
   );
 }
-

@@ -20,7 +20,7 @@ export function DetailsSkeleton() {
 
 export function DetailsSideBarSkeleton() {
   return (
-    <div className="size-full animate-pulse space-y-3 bg-[#FCFCFD] p-6">
+    <div className="size-full animate-pulse space-y-3 bg-white p-6">
       {
         [1, 2, 3].map(i => (
           <div key={i} className="space-y-4 border-b border-grey-500 pb-14">

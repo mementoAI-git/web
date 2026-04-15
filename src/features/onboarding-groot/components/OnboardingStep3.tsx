@@ -1,0 +1,70 @@
+import { SelectionCard } from "./SelectionCard";
+import { ONBOARDING_DIMENSION_OPTIONS } from "../types";
+import type { EnrichmentCategory } from "../types";
+
+const ALL_ONBOARDING_DIMENSION_KEYS = ONBOARDING_DIMENSION_OPTIONS.map((o) => o.value);
+
+export interface OnboardingStep3Props {
+  priorityDimensions: EnrichmentCategory[];
+  onDimensionsChange: (dimensions: EnrichmentCategory[]) => void;
+  validationErrors?: { dimensions?: string };
+}
+
+export function OnboardingStep3({
+  priorityDimensions,
+  onDimensionsChange,
+  validationErrors = {},
+}: OnboardingStep3Props) {
+  const allSelected = priorityDimensions.length === ALL_ONBOARDING_DIMENSION_KEYS.length;
+
+  const toggleDimension = (value: EnrichmentCategory) => {
+    if (priorityDimensions.includes(value)) {
+      onDimensionsChange(priorityDimensions.filter((d) => d !== value));
+    } else {
+      onDimensionsChange([...priorityDimensions, value]);
+    }
+  };
+
+  const handleAllClick = () => {
+    onDimensionsChange(allSelected ? [] : [...ALL_ONBOARDING_DIMENSION_KEYS]);
+  };
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div>
+        <h2 className="text-lg font-medium text-v3-text-strong">
+          What matters most?
+        </h2>
+        <p className="mt-1 text-sm text-v3-text-weak">
+          Select the life dimensions you&apos;d like to capture. You can pick as many as resonate with you.
+        </p>
+      </div>
+      <div className="flex flex-col gap-3">
+        {ONBOARDING_DIMENSION_OPTIONS.map((opt) => (
+          <SelectionCard
+            key={opt.value}
+            value={opt.value}
+            label={opt.label}
+            sublabel={opt.sublabel}
+            icon={opt.icon}
+            isSelected={priorityDimensions.includes(opt.value)}
+            onClick={() => toggleDimension(opt.value)}
+          />
+        ))}
+        <SelectionCard
+          value="__all__"
+          label="All of the above"
+          sublabel="I want to capture everything"
+          icon="✨"
+          isSelected={allSelected}
+          onClick={handleAllClick}
+        />
+      </div>
+      {validationErrors.dimensions && (
+        <p className="text-[13px] text-v3-brand-strong">
+          {validationErrors.dimensions}
+        </p>
+      )}
+    </div>
+  );
+}

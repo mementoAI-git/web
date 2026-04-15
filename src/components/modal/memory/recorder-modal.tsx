@@ -22,7 +22,7 @@ const MIN_BAR_HEIGHT_PX = 8;
 
 interface RecorderModalProps {
   data: {
-    onFinish: (file: File) => void;
+    onFinish: (file: File, duration?: number) => void;
     recordingNumber?: number;
   };
 }
@@ -35,6 +35,8 @@ export function AudioRecorderModal({ data }: RecorderModalProps) {
   const rec = useRecorder(stream, "audio/webm");
   const audioLevels = useAudioLevels(stream, !!rec.recording);
   const [smoothProgress, setSmoothProgress] = useState(0);
+  const [isSending, setIsSending] = useState(false);
+  const [capturedDuration, setCapturedDuration] = useState(0);
   const lastSecondAtRef = useRef(0);
 
   // Sub-second progress when recording so bars and line move smoothly
@@ -75,22 +77,27 @@ export function AudioRecorderModal({ data }: RecorderModalProps) {
   };
 
   const handleAddToPost = () => {
+    const duration = rec.timer;
+    setCapturedDuration(duration);
     if (rec.url) {
+      setIsSending(true);
+    } else {
+      setIsSending(true);
+      rec.stop();
+    }
+  };
+
+  useEffect(() => {
+    if (isSending && rec.url) {
       fetch(rec.url)
         .then((r) => r.blob())
         .then((blob) => {
           const file = new File([blob], `recording-${recordingNumber}.webm`, { type: "audio/webm" });
-          data.onFinish(file);
+          data.onFinish(file, capturedDuration);
           close("audio-recorder");
         });
-    } else if (rec.chunks.length > 0) {
-      const blob = new Blob(rec.chunks, { type: "audio/webm" });
-      const file = new File([blob], `recording-${recordingNumber}.webm`, { type: "audio/webm" });
-      rec.stop();
-      data.onFinish(file);
-      close("audio-recorder");
     }
-  };
+  }, [isSending, rec.url, recordingNumber, data, close, capturedDuration]);
 
   const handleClose = () => {
     handleReset();
@@ -311,8 +318,7 @@ export function VideoRecorderModal({ data }: VideoRecorderModalProps) {
               type="button"
               onClick={handleUse}
               disabled={isUsing}
-              className="h-10 px-5 rounded-full font-inter font-semibold text-sm text-white hover:opacity-90 disabled:opacity-50 flex items-center gap-2 transition-opacity"
-              style={{ backgroundColor: "#FF5E00" }}
+              className="flex h-10 items-center gap-2 rounded-full bg-v3-brand-strong px-5 font-inter text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
             >
               Use recording
               <Spinner loading={isUsing} className="size-4!" />

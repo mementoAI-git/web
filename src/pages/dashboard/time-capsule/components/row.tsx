@@ -24,6 +24,7 @@ export default function TimeCapsuleRow({ capsule }: { capsule: ICapsule }) {
           <UserItem
             name={`${capsule.recipients[0]?.first_name || ""} ${capsule.recipients[0]?.last_name || ""}`}
             email={capsule.recipients[0]?.email}
+            image={capsule.recipients[0]?.picture_url}
           />
         )}
       </td>

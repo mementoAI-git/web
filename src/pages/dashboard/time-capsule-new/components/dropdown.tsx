@@ -84,7 +84,7 @@ export function CapsuleItemActions({ capsule }: { capsule: ICapsule }) {
         capsule.status !== "deleted" && capsule.status !== "delivered" ? (
           <li
             onClick={() => open("delete-capsule", capsule._id)}
-            className="flex cursor-pointer items-center rounded gap-2.5 px-2.5 py-1.5 hover:bg-[#F97066]/8 text-[#F97066]"
+            className="flex cursor-pointer items-center rounded gap-2.5 px-2.5 py-1.5 hover:bg-fill-error-weak text-text-error-strong"
           >
             <TrashIcon width={16} />
             <span className="font-inter text-sm">Delete</span>

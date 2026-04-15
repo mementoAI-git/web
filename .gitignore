@@ -26,3 +26,19 @@ dist-ssr
 *.env
 *.DS_Store
 *.lock*
+
+package-lock.json
+yarn.lock
+
+# Local AI / IDE skill installs (not application source)
+/.agents/
+/.claude/
+/.windsurf/
+/.kiro/
+
+# Symlinked/copied skill packs at repo root; already-tracked files stay tracked.
+# To add a new tracked file under skills/, use: git add -f skills/<path>
+/skills/
+
+# Local planning / audit notes (not committed)
+/new-todo/

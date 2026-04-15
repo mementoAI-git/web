@@ -1,7 +1,5 @@
 "use client";
 
-import { FooterBtnGroup } from "@/components/memory";
-import { ModalCloseBtn } from "../modalLayout";
 import useForm from "@/hooks/use-form";
 import { useModal } from "@/hooks/use-modal";
 import {
@@ -11,10 +9,11 @@ import {
   useImperativeHandle,
   useCallback,
   useEffect,
+  useId,
   type ChangeEvent,
 } from "react";
 import endpoint from "@/api/endpoint";
-import { isEmpty } from "@/utility";
+import { cn, isEmpty } from "@/utility";
 import { toast } from "sonner";
 import { Sheet } from "react-modal-sheet";
 import useFileUpload from "@/hooks/use-file-upload";
@@ -22,10 +21,15 @@ import { v4 as uuidv4 } from "uuid";
 import { createPortal } from "react-dom";
 import { mutate } from "swr";
 import { CloseWithFilesConfirmation } from "../memory/close-with-files-confirmation";
-import { Selectinput, Textinput } from "@/components/Form";
 import { useStore } from "@/hooks/use-store";
 import * as yup from "yup";
 import useFetcher from "@/hooks/use-fetcher";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Spinner } from "@/components/ui/spinner";
+import { X, ChevronDown } from "lucide-react";
 
 const FEEDBACK_OPTIONS = [
   { label: "Bug", value: "Bug" },
@@ -41,11 +45,29 @@ const schema = yup.object().shape({
   email: yup.string().email("Invalid email address"),
 });
 
-interface IContentProps {
-  data: any;
+export interface FeedbackModalData {
+  payload?: Partial<{
+    type: string;
+    email: string;
+    message: string;
+  }>;
 }
 
-const Content = forwardRef(({ data }: IContentProps, ref) => {
+interface IContentProps {
+  data: FeedbackModalData;
+}
+
+const triggerV3Outline =
+  "font-inter w-full justify-between !rounded-[12px] border border-v3-stroke-weak bg-white px-3 py-2 text-left text-sm text-v3-text-strong shadow-none hover:bg-v3-fill-weaker data-focus-visible:outline-none data-focus-visible:ring-2 data-focus-visible:ring-v3-brand-strong data-focus-visible:ring-offset-0";
+
+const textFieldV3 =
+  "font-inter !rounded-[12px] border border-v3-stroke-weak bg-white px-3 py-2 text-sm text-v3-text-strong outline-none data-focus-visible:ring-2 data-focus-visible:ring-v3-brand-strong data-focus-visible:ring-offset-0";
+
+const Content = forwardRef<
+  { handleDeleteAllFiles: () => Promise<void>; hasFiles: boolean },
+  IContentProps
+>(({ data }, ref) => {
+  const messageFieldId = useId();
   const { payload } = data;
   const { user } = useStore();
   const { close } = useModal();
@@ -63,40 +85,41 @@ const Content = forwardRef(({ data }: IContentProps, ref) => {
 
   const { trigger, isMutating } = useFetcher(endpoint.feedback);
   const { files, handleUpload, handleDeleteFile, setFiles } = useFileUpload();
-  const { values, errors, handleChange, setValues, handleSubmit } = useForm({
-    initial: { ...initial, ...payload },
-    schema,
-    async onSubmit(p) {
-      if (isEmpty(p.message)) return toast.error("Message is required");
+  const { values, errors, handleChange, setValues, handleSubmit, handleValue } =
+    useForm({
+      initial: { ...initial, ...payload },
+      schema,
+      async onSubmit(p) {
+        if (isEmpty(p.message)) return toast.error("Message is required");
 
-      const uploadedScreenshots = files
-        .filter((f) => f.uploadedFile)
-        .map((f) => f.uploadedFile._id);
+        const uploadedScreenshots = files
+          .filter((f) => f.uploadedFile)
+          .map((f) => f.uploadedFile._id);
 
-      const payload = {
-        type: p.type,
-        message: p.message,
-        email: p.email || user?.email,
-        screenshots: uploadedScreenshots,
-      };
+        const payload = {
+          type: p.type,
+          message: p.message,
+          email: p.email || user?.email,
+          screenshots: uploadedScreenshots,
+        };
 
-      try {
-        const result = await trigger(payload);
-        if (result?.success) {
-          toast.success("Feedback sent successfully!");
-          mutate(
-            (key) =>
-              typeof key === "string" && key.startsWith(endpoint.feedback),
-          );
-          setFiles([]);
-          close("create-feedback");
+        try {
+          const result = await trigger(payload);
+          if (result?.success) {
+            toast.success("Feedback sent successfully!");
+            mutate(
+              (key) =>
+                typeof key === "string" && key.startsWith(endpoint.feedback),
+            );
+            setFiles([]);
+            close("create-feedback");
+          }
+        } catch (error) {
+          console.error("Failed to send feedback:", error);
+          toast.error("Failed to send feedback");
         }
-      } catch (error) {
-        console.error("Failed to send feedback:", error);
-        toast.error("Failed to send feedback");
-      }
-    },
-  });
+      },
+    });
 
   const uploadFileRef = useRef<((file: File) => Promise<void>) | undefined>(
     undefined,
@@ -122,7 +145,6 @@ const Content = forwardRef(({ data }: IContentProps, ref) => {
   // Clipboard detection
   useEffect(() => {
     const checkAndShowToast = async () => {
-      // If already checking or toast exists or has files, exit immediately
       if (
         isCheckingClipboard.current ||
         activeToastId.current ||
@@ -131,7 +153,6 @@ const Content = forwardRef(({ data }: IContentProps, ref) => {
         return;
       }
 
-      // Set flag to prevent concurrent checks
       isCheckingClipboard.current = true;
 
       try {
@@ -140,7 +161,6 @@ const Content = forwardRef(({ data }: IContentProps, ref) => {
           item.types.some((t) => t.startsWith("image/")),
         );
 
-        // Double check - maybe another call beat us to it
         if (hasImage && !activeToastId.current) {
           activeToastId.current = toast.info("Image detected in clipboard!", {
             duration: 8000,
@@ -148,7 +168,7 @@ const Content = forwardRef(({ data }: IContentProps, ref) => {
             position: "bottom-right",
             classNames: {
               actionButton:
-                "!bg-orange hover:!bg-[#C55A1D] !font-semibold !px-4 !py-2 !rounded-lg transition-colors",
+                "!bg-v3-brand-strong !rounded-lg !px-4 !py-2 !font-semibold transition-colors hover:!opacity-90",
             },
             action: {
               label: "Paste",
@@ -186,7 +206,6 @@ const Content = forwardRef(({ data }: IContentProps, ref) => {
       } catch {
         // Ignore clipboard errors
       } finally {
-        // Reset flag after a small delay
         setTimeout(() => {
           isCheckingClipboard.current = false;
         }, 200);
@@ -211,7 +230,6 @@ const Content = forwardRef(({ data }: IContentProps, ref) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Separate effect to dismiss toast when files are added
   useEffect(() => {
     if (files.length > 0 && activeToastId.current) {
       toast.dismiss(activeToastId.current);
@@ -219,7 +237,6 @@ const Content = forwardRef(({ data }: IContentProps, ref) => {
     }
   }, [files.length]);
 
-  // Keyboard paste listener
   useEffect(() => {
     const handlePaste = async (e: ClipboardEvent) => {
       const items = e.clipboardData?.items;
@@ -273,31 +290,51 @@ const Content = forwardRef(({ data }: IContentProps, ref) => {
     close("create-feedback");
   };
 
+  const submitDisabled = files.some((f) => !f.uploadedFile);
+  const showContinueLabel = editMode || !isEmpty(values.message);
+  const dimFooter = submitDisabled;
+
   return (
-    <div className="space-y-4">
-      <div className="space-y-4">
-        <div className="py-2">
-          <h4 className="modal-title">Send Feedback</h4>
+    <div className="w-full space-y-4">
+      <div className="flex w-full flex-col gap-3">
+        <div className="font-inter flex w-full flex-col gap-1.5">
+          <Label className="font-inter text-sm font-medium text-v3-text-strong">
+            Type
+          </Label>
+          <select
+            name="type"
+            value={values.type}
+            onChange={(e) => handleValue("type", e.target.value)}
+            className={triggerV3Outline}
+          >
+            {FEEDBACK_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
         </div>
+        {errors.type && (
+          <small className="text-xs text-danger">{errors.type}</small>
+        )}
 
-        <Selectinput
-          className="w-full"
-          label="Type"
-          data={FEEDBACK_OPTIONS}
-          name="type"
-          value={values.type}
-          onChange={handleChange}
-          error={errors.type}
-        />
-
-        <div className="input-container">
-          <label className="input-label">Message</label>
-          <textarea
+        <div className="flex flex-col gap-1.5">
+          <Label
+            className="font-inter text-sm font-medium text-v3-text-strong"
+            htmlFor={messageFieldId}
+          >
+            Message
+          </Label>
+          <Textarea
+            id={messageFieldId}
             name="message"
             value={values.message}
             onChange={handleChange}
-            placeholder="Tell us what happened…"
-            className="input-base w-full font-inter text-sm !h-24"
+            placeholder="Attach a message"
+            className={cn(
+              textFieldV3,
+              "min-h-24 resize-y placeholder:text-v3-text-weak",
+            )}
           />
           {errors.message && (
             <small className="text-xs text-danger">{errors.message}</small>
@@ -305,28 +342,45 @@ const Content = forwardRef(({ data }: IContentProps, ref) => {
         </div>
 
         {!user && (
-          <Textinput
-            label="Email (optional)"
-            type="email"
-            placeholder="you@example.com"
-            name="email"
-            value={values.email}
-            onChange={handleChange}
-            error={errors.email}
-          />
+          <div className="font-inter flex flex-col gap-1.5">
+            <Label className="font-inter text-sm font-medium text-v3-text-strong">
+              Email (optional)
+            </Label>
+            <Input
+              type="email"
+              name="email"
+              value={values.email}
+              onChange={handleChange}
+              placeholder="you@example.com"
+              className={textFieldV3}
+            />
+            {errors.email && (
+              <small className="text-xs text-danger">{errors.email}</small>
+            )}
+          </div>
         )}
 
-        <div className="input-container">
-          <label className="input-label">Screenshots (optional)</label>
+        <div className="flex flex-col gap-1.5">
+          <Label className="font-inter text-sm font-medium text-v3-text-strong">
+            Screenshots (optional)
+          </Label>
           <input
             ref={fileInputRef}
             type="file"
             accept="image/*"
             multiple
             onChange={handleScreenshots}
-            className="w-full font-inter text-sm text-grey-600 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-sand-2 file:text-sand-10 hover:file:bg-sand-3 file:cursor-pointer"
+            className="sr-only"
           />
-          <p className="mt-1 text-xs text-grey-600">
+          <Button
+            type="button"
+            variant="secondary"
+            className="font-inter w-full max-w-full justify-center rounded-full border border-v3-stroke-weak bg-v3-fill-weaker text-sm font-medium text-v3-text-strong hover:bg-v3-stroke-weak/20 sm:w-auto"
+            onClick={() => fileInputRef.current?.click()}
+          >
+            Choose images
+          </Button>
+          <p className="text-xs text-v3-text-weak">
             Or press Ctrl+V (Cmd+V on Mac) to paste from clipboard
           </p>
 
@@ -335,31 +389,30 @@ const Content = forwardRef(({ data }: IContentProps, ref) => {
               {files.map((file) => (
                 <div
                   key={file.id}
-                  className="relative group rounded-lg overflow-hidden border border-sand-6 bg-sand-2"
+                  className="group relative overflow-hidden rounded-lg border border-v3-stroke-weak bg-v3-fill-weaker"
                 >
-                  <div className="aspect-video relative">
+                  <div className="relative aspect-video min-h-0 w-full">
                     <img
-                      src={file.base64}
+                      src={file.base64 ?? ""}
                       alt={file.file.name}
-                      className="w-full h-full object-cover"
+                      className="h-full w-full object-cover"
                     />
                     {!file.uploadedFile && (
-                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                        <div className="text-center">
-                          <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto mb-1" />
-                          <span className="text-xs text-white font-medium">
-                            {file.progress}%
-                          </span>
-                        </div>
+                      <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/50">
+                        <Spinner className="size-5 text-white" />
+                        <span className="text-xs font-medium text-white">
+                          {file.progress}%
+                        </span>
                       </div>
                     )}
                     {file.uploadedFile && (
-                      <div className="absolute top-1 right-1 bg-blue-6 rounded-full p-1">
+                      <div className="absolute right-1 top-1 rounded-full bg-v3-brand-strong p-1">
                         <svg
-                          className="w-3 h-3 text-white"
+                          className="size-3 text-white"
                           fill="none"
                           viewBox="0 0 24 24"
                           stroke="currentColor"
+                          aria-hidden
                         >
                           <path
                             strokeLinecap="round"
@@ -372,33 +425,13 @@ const Content = forwardRef(({ data }: IContentProps, ref) => {
                     )}
                     <button
                       type="button"
-                      onClick={() => handleDeleteFile(file)}
-                      className="absolute top-1 left-1 bg-danger rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                      title="Remove"
+                      aria-label={`Remove ${file.file.name}`}
+                      onClick={() => void handleDeleteFile(file)}
+                      className="absolute left-1 top-1 z-10 flex size-8 shrink-0 items-center justify-center rounded-full bg-black/55 text-white opacity-0 shadow-sm backdrop-blur-sm transition-opacity hover:bg-black/70 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-0 group-hover:opacity-100"
                     >
-                      <svg
-                        className="w-3 h-3 text-white"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M6 18L18 6M6 6l12 12"
-                        />
-                      </svg>
+                      <X size={14} strokeWidth={1.5} />
                     </button>
                   </div>
-                  {/*<div className="p-2 bg-sand-1">
-                    <p
-                      className="text-xs text-grey-600 truncate"
-                      title={file.file.name}
-                    >
-                      {file.file.name}
-                    </p>
-                  </div>*/}
                 </div>
               ))}
             </div>
@@ -406,24 +439,75 @@ const Content = forwardRef(({ data }: IContentProps, ref) => {
         </div>
       </div>
 
-      <FooterBtnGroup
-        cta="Send Feedback"
-        onDiscard={handleDiscard}
-        onSave={handleSubmit}
-        disabled={files.some((f) => !f.uploadedFile)}
-        saving={isMutating}
-        editMode={editMode || !isEmpty(values.message)}
-      />
+      <div
+        className={cn(
+          "mt-2 flex items-center justify-end gap-2",
+          dimFooter && "cursor-not-allowed opacity-40",
+        )}
+      >
+        <Button
+          type="button"
+          variant="outline"
+          disabled={submitDisabled}
+          className="font-inter rounded-full border-v3-stroke-weak text-v3-text-strong"
+          onClick={handleDiscard}
+        >
+          Cancel
+        </Button>
+        <Button
+          type="button"
+          disabled={submitDisabled}
+          className="font-inter rounded-full !bg-v3-brand-strong !text-white hover:!opacity-90"
+          onClick={() => void handleSubmit()}
+        >
+          {showContinueLabel ? "Continue" : "Send Feedback"}
+          {isMutating ? (
+            <Spinner className="size-4 text-white" />
+          ) : null}
+        </Button>
+      </div>
     </div>
   );
 });
 
 Content.displayName = "Content";
 
-export function Feedback({ data }) {
+function FeedbackHeader({
+  onClose,
+  className,
+}: {
+  onClose: () => void;
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "mb-1 flex items-center justify-between gap-3",
+        className,
+      )}
+    >
+      <h4 className="modal-title min-w-0 flex-1 text-left leading-tight">
+        Send Feedback
+      </h4>
+      <button
+        type="button"
+        onClick={onClose}
+        className="flex size-8 shrink-0 items-center justify-center rounded-full bg-v3-fill-weaker text-v3-text-strong hover:bg-v3-stroke-weak/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-v3-brand-strong focus-visible:ring-offset-2"
+        aria-label="Close"
+      >
+        <X size={14} strokeWidth={1.5} />
+      </button>
+    </div>
+  );
+}
+
+export function Feedback({ data }: { data: FeedbackModalData }) {
   const { close } = useModal();
   const [showCloseConfirmation, setShowCloseConfirmation] = useState(false);
-  const contentRef = useRef(null);
+  const contentRef = useRef<{
+    handleDeleteAllFiles: () => Promise<void>;
+    hasFiles: boolean;
+  } | null>(null);
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -452,8 +536,8 @@ export function Feedback({ data }) {
   return (
     <div>
       {!isMobile ? (
-        <div className="modal-container" style={{ minWidth: "618px" }}>
-          <ModalCloseBtn onClick={handleCloseWithConfirmation} />
+        <div className="modal-container flex flex-col gap-4 !w-[500px] !min-w-[500px] !max-w-[500px] !p-6 sm:!p-6 md:!p-6">
+          <FeedbackHeader onClose={handleCloseWithConfirmation} />
           <Content data={data} ref={contentRef} />
         </div>
       ) : (
@@ -465,11 +549,11 @@ export function Feedback({ data }) {
           initialSnap={1}
         >
           <Sheet.Container className="bg-white">
-            <Sheet.Header className="bg-white rounded-3xl" />
+            <Sheet.Header className="rounded-3xl bg-white" />
             <Sheet.Content className="bg-white px-4 pb-6">
-              <ModalCloseBtn
-                className="!relative ml-auto !right-0 !top-0 mb-2"
-                onClick={handleCloseWithConfirmation}
+              <FeedbackHeader
+                onClose={handleCloseWithConfirmation}
+                className="mb-3"
               />
               <Content data={data} ref={contentRef} />
             </Sheet.Content>

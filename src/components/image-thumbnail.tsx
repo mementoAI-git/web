@@ -1,5 +1,5 @@
 import type { IFile } from "@/utility/interface";
-import { QIcon, PlayIcon } from "@/components/icons";
+import { QIcon, PlayIcon, MicIcon } from "@/components/icons";
 import { isImage } from "@/pages/dashboard/time-capsule-new/utility/helpers";
 
 interface IImageThumbnail {
@@ -36,6 +36,8 @@ function ImageThumbnailItem({
     <div className="size-full justify-center items-center flex bg-grey-500">
       {type?.includes("video") ? (
         <PlayIcon width={size * 0.6} height={size * 0.6} />
+      ) : type?.includes("audio") ? (
+        <MicIcon width={size * 0.6} height={size * 0.6} />
       ) : (
         <QIcon width={size * 0.6} height={size * 0.6} />
       )}
@@ -63,7 +65,7 @@ export default function ImageThumbnail({
             <div
               key={i}
               style={{ width: size }}
-              className={`absolute top-0 aspect-square overflow-hidden rounded-[5.83px] border-[1.5px] border-[#F3F3F3] ${imageRotation[i]} ${boxClassName}`}
+              className={`absolute top-0 aspect-square overflow-hidden rounded-[5.83px] border-[1.5px] border-v3-stroke-weak ${imageRotation[i]} ${boxClassName}`}
             >
               <ImageThumbnailItem {...{ ...img, size }} />
             </div>

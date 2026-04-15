@@ -62,25 +62,25 @@ export function ViewMemory({ data, isMobile }: ViewMemoryProps) {
       onClick={(e) => e.stopPropagation()}
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100 shrink-0">
-        <h2 className="font-garamond text-2xl font-medium text-gray-900 truncate pr-4">
+      <div className="flex items-center justify-between px-6 py-5 border-b border-stroke-neutral-weaker shrink-0">
+        <h2 className="font-garamond text-2xl font-medium text-text-neutral-strong truncate pr-4">
           {loading ? "" : memory?.title || "Story"}
         </h2>
         <div className="flex items-center gap-1 shrink-0">
           <div
-            className="aspect-square flex justify-center items-center p-1.5 size-8 rounded-lg hover:bg-sand-2 cursor-pointer"
+            className="aspect-square flex justify-center items-center p-1.5 size-8 rounded-lg hover:bg-fill-neutral-weaker cursor-pointer"
             onClick={() => memory && push("share-memory", { memory })}
           >
-            <Launch2Icon className="stroke-[1.5px] size-full text-sand-12" />
+            <Launch2Icon className="stroke-[1.5px] size-full text-text-neutral-strong" />
           </div>
           <div
-            className="flex justify-center items-center p-1.5 aspect-square size-8 rounded-lg hover:bg-sand-2 cursor-pointer"
+            className="flex justify-center items-center p-1.5 aspect-square size-8 rounded-lg hover:bg-fill-neutral-weaker cursor-pointer"
             onClick={() => memory && toggleBookmark()}
           >
             {memory?.bookmarked ? (
-              <BookmarkSolidIcon className="text-sand-8 size-full stroke-2" />
+              <BookmarkSolidIcon className="text-icon-neutral-weaker size-full stroke-2" />
             ) : (
-              <BookmarkIcon className="text-sand-12 size-full stroke-2" />
+              <BookmarkIcon className="text-text-neutral-strong size-full stroke-2" />
             )}
           </div>
           {memory && <MemoryDropdown memory={memory} />}
@@ -97,7 +97,7 @@ export function ViewMemory({ data, isMobile }: ViewMemoryProps) {
               <FileGallery files={memory?.attachments || []} />
             )}
             <div
-              className="tiptap-editor prose prose-sm max-w-none text-gray-800 mt-4 leading-relaxed font-garamond"
+              className="tiptap-editor prose prose-sm max-w-none text-text-neutral-strong mt-4 leading-relaxed font-garamond"
               dangerouslySetInnerHTML={{
                 __html: ensureLinksOpenInNewTab(DOMPurify.sanitize(ensureHtmlFormat(memory?.body || ""))),
               }}
@@ -107,11 +107,11 @@ export function ViewMemory({ data, isMobile }: ViewMemoryProps) {
       </div>
 
       {/* Footer */}
-      <div className="shrink-0 border-t border-gray-100 px-6 py-3 flex items-center justify-between">
+      <div className="shrink-0 border-t border-stroke-neutral-weaker px-6 py-3 flex items-center justify-between">
         <button
           type="button"
           onClick={() => memory && close("view-memory")}
-          className="font-inter text-sm text-gray-500 hover:text-gray-700 transition-colors"
+          className="font-inter text-sm text-text-neutral-weaker hover:text-text-neutral-weak transition-colors"
         >
           Close
         </button>
@@ -122,7 +122,7 @@ export function ViewMemory({ data, isMobile }: ViewMemoryProps) {
               push("edit-memory", { memory });
             }
           }}
-          className="font-inter text-sm font-medium text-orange hover:text-[#C55A1D] transition-colors"
+          className="font-inter text-sm font-medium text-text-brand-strong transition-colors hover:opacity-90"
         >
           Edit Story
         </button>
@@ -134,16 +134,16 @@ export function ViewMemory({ data, isMobile }: ViewMemoryProps) {
 function ViewMemorySkeleton() {
   return (
     <div className="animate-pulse space-y-4">
-      <div className="h-48 bg-sand-3 rounded-xl" />
+      <div className="h-48 bg-fill-neutral-weaker rounded-xl" />
       <div className="space-y-2">
-        <div className="h-3 bg-sand-3 rounded w-full" />
-        <div className="h-3 bg-sand-3 rounded w-4/5" />
-        <div className="h-3 bg-sand-3 rounded w-3/5" />
+        <div className="h-3 bg-fill-neutral-weaker rounded w-full" />
+        <div className="h-3 bg-fill-neutral-weaker rounded w-4/5" />
+        <div className="h-3 bg-fill-neutral-weaker rounded w-3/5" />
       </div>
       <div className="space-y-2 mt-6">
-        <div className="h-3 bg-sand-3 rounded w-full" />
-        <div className="h-3 bg-sand-3 rounded w-5/6" />
-        <div className="h-3 bg-sand-3 rounded w-2/3" />
+        <div className="h-3 bg-fill-neutral-weaker rounded w-full" />
+        <div className="h-3 bg-fill-neutral-weaker rounded w-5/6" />
+        <div className="h-3 bg-fill-neutral-weaker rounded w-2/3" />
       </div>
     </div>
   );

@@ -18,7 +18,8 @@ export const mockUser: IUser = {
   dob: "1990-01-01",
   country: "US",
   password: "",
-  onbaorded: true,
+  onboarded: true,
+  onboarding_status: "completed",
   providers: ["email"],
   preferences: {
     communication_style: "casual",

@@ -44,7 +44,7 @@ export default function SelectBeneficiary({ value = [], onAddRecipient, handleCl
             data?.data?.docs?.map((beneficiary: IBeneficiary, index: number) => (
               <li
                 key={`${beneficiary.email}-${index}`}
-                className="flex items-center justify-between border-b border-[#F2F4F7] py-2 pb-4 last:border-0"
+                className="flex items-center justify-between border-b border-stroke-neutral-weaker py-2 pb-4 last:border-0"
               >
                 <UserItem {...beneficiary} />
                 <Checkbox checked={values.includes(beneficiary.email)} onChange={() => handleCheck(beneficiary)} />

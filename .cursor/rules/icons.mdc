@@ -1,0 +1,15 @@
+---
+alwaysApply: true
+---
+
+# Icons (`memento-web`)
+
+## Order of preference
+
+1. **HeroUI’s built-in icons** — When a HeroUI component already exposes or expects an icon from `@heroui/react` (e.g. `IconChevronRight`, `IconChevronDown`, `ExternalLinkIcon`, `CloseIcon`), use **those** so spacing, weight, and behavior stay aligned with the component.
+
+2. **Lucide for all other UI icons** — For menus, buttons, page chrome, empty states, and any iconography **you** add next to HeroUI (or outside HeroUI), default to **`lucide-react`**.
+
+3. **Consistency** — Prefer one size/weight in a given control (e.g. `className="size-4 shrink-0"` and `strokeWidth={2}` on Lucide) unless the design spec says otherwise.
+
+4. **No ad hoc SVGs by default** — Avoid one-off inline SVG icon components unless there is no reasonable Lucide (or required HeroUI) option—e.g. rare third-party brand marks. If Lucide has no brand glyph, use a neutral metaphor (`UsersRound`, `MessagesSquare`, `Share2`, etc.) instead of copying full vendor logos unless product explicitly requires them.

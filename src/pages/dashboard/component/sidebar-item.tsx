@@ -1,10 +1,12 @@
 import type { ComponentType, SVGProps } from "react";
 import { useNavigate } from "react-router-dom";
-import { useModal } from "@/hooks/use-modal";
+import { cn } from "@/utility";
 
 interface SideBarItemProps {
   Icon?: ComponentType<SVGProps<SVGSVGElement>>;
   icon?: string;
+  /** Shown in the icon column instead of Icon / image URL */
+  emoji?: string;
   title: string;
   link?: string;
   active?: boolean;
@@ -18,31 +20,30 @@ export default function SideBarItem({
   onClick,
   Icon,
   icon,
+  emoji,
   title,
   color = "#F06037",
 }: SideBarItemProps) {
   const navigate = useNavigate();
-  const { open } = useModal();
 
   const handleClick = () => {
     if (link) {
-      if (link === "/settings") {
-        open("settings");
-      } else {
-        navigate(link);
-      }
+      navigate(link);
     }
     onClick?.();
   };
 
-  const activeBg = "#F5F3F2";
+  const activeBg = "var(--v3-fill-weak)";
   const activeBorder = "#FCFCFC";
   const activeTextColor = "#1E1E1E";
 
   return (
     <div
       onClick={handleClick}
-      className={`${active && "active"} flex items-center group/item gap-3 rounded-[8px] w-full h-10 bg-transparent cursor-pointer px-3 py-2 transition-colors`}
+      className={cn(
+        "flex h-10 w-full cursor-pointer items-center gap-3 rounded-[8px] bg-transparent px-3 py-2 transition-colors group/item",
+        active && "active",
+      )}
       style={{
         backgroundColor: active ? activeBg : undefined,
         border: active ? `1px solid ${activeBorder}` : "1px solid transparent",
@@ -55,14 +56,18 @@ export default function SideBarItem({
       }}
     >
       <div className="size-5 flex items-center justify-center transition-colors">
-        {icon ? (
+        {emoji ? (
+          <span className="text-lg leading-none select-none" aria-hidden>
+            {emoji}
+          </span>
+        ) : icon ? (
           <img src={icon} alt={title} className="size-5 object-contain" />
         ) : Icon ? (
-          <Icon className="size-5" style={{ color: active ? activeColor : "#667085" }} />
+          <Icon className="size-5 text-v3-text-weak" style={{ color: active ? activeTextColor : undefined }} />
         ) : null}
       </div>
       <span
-        className={`text-sm font-inter font-medium transition-colors ${active ? "font-semibold" : "text-[#344054]"}`}
+        className={`text-sm font-inter font-medium transition-colors ${active ? "font-semibold" : "text-text-neutral-weak"}`}
         style={{ color: active ? activeTextColor : undefined }}
       >
         {title}

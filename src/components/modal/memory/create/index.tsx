@@ -37,7 +37,7 @@ import smileySvg from "@/assets/icon/noto_slightly-smiling-face.svg";
 import micSvg from "@/assets/icon/microphone-01.svg";
 import videoRecorderSvg from "@/assets/icon/video-recorder.svg";
 
-const ACTIVE_BG = "bg-[rgba(23,11,0,0.1)]";
+const ACTIVE_BG = "bg-fill-neutral-strong";
 const initial = { title: "", body: "", attachments: [] as string[] };
 
 // ─── CreateMemory ─────────────────────────────────────────────────────────────
@@ -131,7 +131,7 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
     content: values.body || "",
     editorProps: {
       attributes: {
-        class: "prose prose-sm focus:outline-none min-h-[140px] px-4 py-4 text-sm text-gray-800",
+        class: "prose prose-sm focus:outline-none min-h-[140px] px-4 py-4 text-sm text-text-neutral-strong",
       },
     },
     onUpdate: ({ editor }) => {
@@ -228,10 +228,10 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
     [files, handleDeleteFile, setFiles],
   );
 
-  const handleAddAudioFile = (file: File) => {
+  const handleAddAudioFile = (file: File, duration?: number) => {
     const reader = new FileReader();
     reader.onloadend = () => {
-      handleUpload({ id: uuidv4(), file, base64: reader.result as string, progress: 0 });
+      handleUpload({ id: uuidv4(), file, base64: reader.result as string, progress: 0, ...(duration !== undefined && { duration }) });
     };
     reader.readAsDataURL(file);
     setAudioRecordingCount((c) => c + 1);
@@ -340,7 +340,7 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
       onClick={onClick}
       title={title}
       className={cn(
-        "size-9 flex items-center justify-center rounded-lg transition-colors hover:bg-[rgba(23,11,0,0.05)]",
+        "size-9 flex items-center justify-center rounded-lg transition-colors hover:bg-fill-neutral-weak",
         isActive && ACTIVE_BG,
       )}
     >
@@ -381,12 +381,11 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
         value={values.title}
         name="title"
         onChange={handleChange}
-        className="create-memory-title font-inter text-base w-full outline-none border border-gray-200 rounded-xl px-4 py-3"
-        style={{ color: "rgba(23,11,0,0.9)" }}
+        className="create-memory-title font-inter text-base w-full outline-none border border-stroke-neutral-weaker rounded-xl px-4 py-3 text-text-neutral-strong"
       />
 
       {/* Editor box */}
-      <div className="rounded-[24px] border border-gray-200 flex flex-col overflow-hidden">
+      <div className="rounded-[24px] border border-stroke-neutral-weaker flex flex-col overflow-hidden">
         {/* Formatting toolbar */}
         <div className="flex items-center gap-0.5 pt-4 px-4 pb-3">
           {toolbarBtn(
@@ -398,29 +397,29 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
           {toolbarBtn(
             !!editor?.isActive("bold"),
             () => editor?.chain().focus().toggleBold().run(),
-            <span className="font-bold text-sm text-gray-800 leading-none">B</span>,
+            <span className="font-bold text-sm text-text-neutral-strong leading-none">B</span>,
             "Bold",
           )}
           {toolbarBtn(
             !!editor?.isActive("italic"),
             () => editor?.chain().focus().toggleItalic().run(),
-            <span className="italic text-sm text-gray-800 leading-none">I</span>,
+            <span className="italic text-sm text-text-neutral-strong leading-none">I</span>,
             "Italic",
           )}
           {toolbarBtn(
             !!editor?.isActive("strike"),
             () => editor?.chain().focus().toggleStrike().run(),
-            <span className="line-through text-sm text-gray-800 leading-none">S</span>,
+            <span className="line-through text-sm text-text-neutral-strong leading-none">S</span>,
             "Strikethrough",
           )}
           {toolbarBtn(
             !!editor?.isActive("underline"),
             () => editor?.chain().focus().toggleUnderline().run(),
-            <span className="underline text-sm text-gray-800 leading-none">U</span>,
+            <span className="underline text-sm text-text-neutral-strong leading-none">U</span>,
             "Underline",
           )}
 
-          <div className="w-px h-5 bg-gray-200 mx-1.5" />
+          <div className="w-px h-5 bg-stroke-neutral-weaker mx-1.5" />
 
           {toolbarBtn(!!editor?.isActive("link"), handleLinkClick, <LinkIcon width={16} height={11} />, "Link")}
           {toolbarBtn(
@@ -432,7 +431,7 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
 
           <button
             type="button"
-            className="ml-auto font-inter text-sm text-gray-500 hover:text-gray-700 px-2 py-1 rounded-lg hover:bg-[rgba(23,11,0,0.05)] transition-colors"
+            className="ml-auto font-inter text-sm text-text-neutral-weak hover:text-text-neutral-strong px-2 py-1 rounded-lg hover:bg-fill-neutral-weak transition-colors"
           >
             Drafts
           </button>
@@ -470,7 +469,7 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
 
         {/* Icons bar */}
         <div className="mt-6 mx-4 mb-4" onClick={(e) => e.stopPropagation()}>
-          <div className="bg-[#F4F4F4] rounded-2xl flex items-center justify-start gap-3 px-[12px] py-[9px]">
+          <div className="bg-bg-neutral-weak rounded-2xl flex items-center justify-start gap-3 px-[12px] py-[9px]">
             {/* Plus menu */}
             <div ref={plusMenuRef} className="relative h-[40px]">
               <button
@@ -487,7 +486,7 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
                 createPortal(
                   <div
                     ref={plusMenuPortalRef}
-                    className="fixed z-[9999] bg-white rounded-xl shadow-lg border border-gray-100 py-1 min-w-[180px]"
+                    className="fixed z-[9999] bg-background rounded-xl shadow-lg border border-stroke-neutral-weaker py-1 min-w-[180px]"
                     style={(() => {
                       const rect = plusMenuRef.current?.getBoundingClientRect();
                       return rect
@@ -501,21 +500,21 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
                     <button
                       type="button"
                       onClick={() => { fileInputMediaRef.current?.click(); setShowPlusMenu(false); }}
-                      className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 text-left"
+                      className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-text-neutral-weak hover:bg-fill-neutral-weaker text-left"
                     >
                       <span className="text-base">📷</span> Photos & Videos
                     </button>
                     <button
                       type="button"
                       onClick={() => { fileInputAudioRef.current?.click(); setShowPlusMenu(false); }}
-                      className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 text-left"
+                      className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-text-neutral-weak hover:bg-fill-neutral-weaker text-left"
                     >
                       <span className="text-base">🎵</span> Audio
                     </button>
                     <button
                       type="button"
                       onClick={() => { fileInputAllRef.current?.click(); setShowPlusMenu(false); }}
-                      className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 text-left"
+                      className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-text-neutral-weak hover:bg-fill-neutral-weaker text-left"
                     >
                       <span className="text-base">📎</span> Files
                     </button>
@@ -562,7 +561,7 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
                 )}
             </div>
 
-            <div className="w-px h-6 bg-gray-300 shrink-0" />
+            <div className="w-px h-6 bg-stroke-neutral-weak shrink-0" />
 
             {/* Record audio */}
             <button
@@ -603,7 +602,7 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
       <button
         type="button"
         onClick={handleClose}
-        className="h-11 px-6 rounded-full font-inter font-semibold text-sm text-gray-700 border border-gray-200 hover:bg-gray-50 transition-colors"
+        className="h-11 px-6 rounded-full font-inter font-semibold text-sm text-text-neutral-weak border border-stroke-neutral-weaker hover:bg-fill-neutral-weaker transition-colors"
       >
         Dismiss
       </button>
@@ -611,8 +610,7 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
         type="button"
         onClick={handleSubmit}
         disabled={isMutating || isUploading}
-        className="h-11 px-6 rounded-full font-inter font-semibold text-sm text-white hover:opacity-90 disabled:opacity-50 flex items-center gap-2 transition-opacity"
-        style={{ backgroundColor: "#FF5E00" }}
+        className="h-11 rounded-full bg-fill-brand-strong px-6 font-inter font-semibold text-sm text-white transition-opacity hover:opacity-90 disabled:opacity-50 flex items-center gap-2"
       >
         Continue
         <Spinner loading={isMutating} className="size-4!" />
@@ -638,13 +636,13 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
         className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 px-4"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="bg-white rounded-[28px] w-full max-w-[480px] overflow-hidden shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <div className="bg-background rounded-[28px] w-full max-w-[480px] overflow-hidden shadow-2xl" onClick={(e) => e.stopPropagation()}>
           <div className="flex items-center justify-between px-6 pt-6 pb-4">
             <div className="flex items-center gap-2">
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                 <path d="M6 0L7.2 4H11L8 6.5L9.2 10.5L6 8L2.8 10.5L4 6.5L1 4H4.8L6 0Z" fill="#7C3AED" />
               </svg>
-              <span className="font-inter text-xs font-bold text-purple-600 tracking-widest uppercase">Record Video</span>
+              <span className="font-inter text-xs font-bold text-text-brand-strong tracking-widest uppercase">Record Video</span>
             </div>
             <button
               onClick={() => {
@@ -653,7 +651,7 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
                 setVideoRecordedFile(null);
                 setShowVideoRecorder(false);
               }}
-              className="size-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
+              className="size-8 flex items-center justify-center rounded-full bg-fill-neutral-weaker hover:bg-fill-neutral-weak transition-colors"
             >
               <TimesIcon width={10} height={10} />
             </button>
@@ -673,7 +671,7 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
                     if (videoRecorderRef.current?.reset) videoRecorderRef.current.reset();
                     if (videoRecorderRef.current?.resetStream) videoRecorderRef.current.resetStream();
                   }}
-                  className="flex-1 h-10 rounded-full bg-gray-100 text-gray-600 font-inter font-semibold text-sm hover:bg-gray-200 transition-colors"
+                  className="flex-1 h-10 rounded-full bg-fill-neutral-weaker text-text-neutral-weak font-inter font-semibold text-sm hover:bg-fill-neutral-weak transition-colors"
                 >
                   Re-record
                 </button>
@@ -681,7 +679,7 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
                   type="button"
                   onClick={handleUseVideo}
                   disabled={isUsingVideo}
-                  className="flex-1 h-10 rounded-full bg-[#170B00] text-white font-inter font-semibold text-sm hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2 transition-opacity"
+                  className="flex-1 h-10 rounded-full bg-fill-neutral-strong text-white font-inter font-semibold text-sm hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2 transition-opacity"
                 >
                   Add to post
                   <Spinner loading={isUsingVideo} className="size-4!" />
@@ -700,21 +698,21 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
     return (
       <>
         <Sheet detent="content" isOpen onClose={handleClose} snapPoints={[0.5, 0.75, 1]} initialSnap={1}>
-          <Sheet.Container className="bg-white">
-            <Sheet.Header className="bg-white rounded-t-3xl" />
-            <Sheet.Content className="bg-white px-4 pb-6 overflow-y-auto">
+          <Sheet.Container className="bg-background">
+            <Sheet.Header className="bg-background rounded-t-3xl" />
+            <Sheet.Content className="bg-background px-4 pb-6 overflow-y-auto">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="font-garamond text-xl font-medium text-gray-900">Add New Story</h2>
+                <h2 className="font-garamond text-xl font-medium text-text-neutral-strong">Add New Story</h2>
                 <button
                   type="button"
                   onClick={handleClose}
-                  className="size-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
+                  className="size-8 flex items-center justify-center rounded-full bg-fill-neutral-weaker hover:bg-fill-neutral-weak transition-colors"
                 >
                   <TimesIcon width={10} height={10} />
                 </button>
               </div>
               <div className="space-y-4">{formContent}</div>
-              <div className="mt-4 pt-4 border-t border-gray-100">{footer}</div>
+              <div className="mt-4 pt-4 border-t border-stroke-neutral-weaker">{footer}</div>
             </Sheet.Content>
           </Sheet.Container>
           <Sheet.Backdrop onTap={handleClose} />
@@ -728,23 +726,23 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
   // Desktop
   return (
     <>
-      <div
-        className="absolute top-0 right-0 bottom-0 w-full max-w-[520px] bg-white flex flex-col shadow-2xl rounded-[24px] overflow-hidden"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header */}
-        <div className="flex items-center px-6 py-5 border-b border-gray-100 shrink-0">
-          <h2 className="font-garamond text-2xl font-medium text-gray-900">Add New Story</h2>
-        </div>
-
-        {/* Scrollable content */}
-        <div className="flex-1 overflow-y-auto hide-scrollbar px-6 pt-5 pb-16 space-y-5">
-          {formContent}
-        </div>
-
-        {/* Sticky footer */}
-        <div className="shrink-0 border-t border-gray-100 px-6 py-4">{footer}</div>
+<div
+      className="absolute top-0 right-0 bottom-0 w-full max-w-[520px] bg-background flex flex-col shadow-2xl rounded-[24px] overflow-hidden"
+      onClick={(e) => e.stopPropagation()}
+    >
+      {/* Header */}
+      <div className="flex items-center px-6 py-5 border-b border-stroke-neutral-weaker shrink-0">
+        <h2 className="font-garamond text-2xl font-medium text-text-neutral-strong">Add New Story</h2>
       </div>
+
+      {/* Scrollable content */}
+      <div className="flex-1 overflow-y-auto hide-scrollbar px-6 pt-5 pb-16 space-y-5">
+        {formContent}
+      </div>
+
+      {/* Sticky footer */}
+      <div className="shrink-0 border-t border-stroke-neutral-weaker px-6 py-4">{footer}</div>
+    </div>
 
       {closeConfirmationPortal}
       {videoRecorderPortal}

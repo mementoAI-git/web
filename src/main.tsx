@@ -4,6 +4,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { RouterProvider } from "react-router-dom";
 import "./index.css";
+import "dialkit/styles.css";
 import "react-spring-bottom-sheet/dist/style.css";
 import { router } from "./router";
 import { ModalProvider } from "./hooks/use-modal";
@@ -14,6 +15,13 @@ import { StoreProvider } from "@/hooks/use-store";
 import { ChatProvider } from "@/hooks/use-chat";
 import { BackgroundMusicProvider } from "@/hooks/use-background-music";
 import { ErrorPage } from "./pages";
+import { RootAppShell } from "@/components/layouts/root-app-shell";
+// Dev-only: admin tools for previewing empty states.
+// Gated behind import.meta.env.DEV — Vite tree-shakes this from production.
+let DevAdminProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => <>{children}</>;
+if (import.meta.env.DEV) {
+  DevAdminProvider = (await import("@/dev/admin-tools")).DevAdminProvider;
+}
 
 const sentryHandler = {
   // Callback called when an error is thrown and not caught by an ErrorBoundary.
@@ -34,7 +42,11 @@ createRoot(document.getElementById("root")!, sentryHandler).render(
           <ModalProvider>
             <ChatProvider>
               <SWRConfig value={{ fetcher }}>
-                <RouterProvider router={router} />
+                <DevAdminProvider>
+                <RootAppShell>
+                  <RouterProvider router={router} />
+                </RootAppShell>
+                </DevAdminProvider>
                 <Toaster
                   position="top-center"
                   closeButton

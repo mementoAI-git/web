@@ -64,7 +64,7 @@ export function AddGroupMembers({ data: groupId }: AddGroupMembersProps) {
                 key={b._id}
                 className="flex items-center justify-between rounded-lg border border-gray-100 py-2 px-3"
               >
-                <UserItem {...b} imageClassName="!size-8" />
+                <UserItem {...b} avatarSize="sm" />
                 <Checkbox
                   checked={selectedIds.includes(b._id ?? "")}
                   onChange={() => toggle(b._id ?? "")}

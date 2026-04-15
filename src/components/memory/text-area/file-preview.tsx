@@ -115,7 +115,7 @@ export function FilePreview({ files, attachments = [], onRemoveFile, onRemoveAtt
         )}
 
         {allFiles.length > 3 && (
-          <div className="absolute -right-6 -top-1 z-40 rounded-full border border-white bg-black px-2 py-[2px] text-xs text-[#C1FDC5]">
+          <div className="absolute -right-6 -top-1 z-40 rounded-full border border-white bg-black px-2 py-[2px] text-xs text-text-success-weaker">
             +{allFiles.length - 3} files
           </div>
         )}

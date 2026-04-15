@@ -53,7 +53,7 @@ export function SlashCommandPopup({
           onSelectedIndexChange((selectedIndex - 1 + length) % length);
           return;
         }
-        if (e.key === "Enter") {
+        if (e.key === "Enter" && !e.metaKey && !e.ctrlKey) {
           e.preventDefault();
           onCommandSelect(commands[selectedIndex] as SlashCommandDisplayItem & Record<string, unknown>);
           onClose();

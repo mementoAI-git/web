@@ -9,7 +9,15 @@ import endpoint from "@/api/endpoint";
 import { useBackgroundMusic } from "@/hooks/use-background-music";
 import { cn } from "@/utility";
 
-function Slider({ volume, onVolumeChange }: { volume: number; onVolumeChange: (volume: number) => void }) {
+function Slider({
+  volume,
+  onVolumeChange,
+  disabled = false,
+}: {
+  volume: number;
+  onVolumeChange: (volume: number) => void;
+  disabled?: boolean;
+}) {
   const sliderRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
 
@@ -26,10 +34,11 @@ function Slider({ volume, onVolumeChange }: { volume: number; onVolumeChange: (v
 
   const handleMouseDown = useCallback(
     (event: ReactMouseEvent) => {
+      if (disabled) return;
       setIsDragging(true);
       updateVolume(event);
     },
-    [updateVolume],
+    [disabled, updateVolume],
   );
 
   const handleMouseMove = useCallback(
@@ -46,31 +55,45 @@ function Slider({ volume, onVolumeChange }: { volume: number; onVolumeChange: (v
 
   const handleSliderClick = useCallback(
     (event: ReactMouseEvent) => {
+      if (disabled) return;
       updateVolume(event);
     },
-    [updateVolume],
+    [disabled, updateVolume],
   );
 
   useEffect(() => {
-    if (!isDragging) return;
+    if (disabled) setIsDragging(false);
+  }, [disabled]);
+
+  useEffect(() => {
+    if (!isDragging || disabled) return;
     document.addEventListener("mousemove", handleMouseMove);
     document.addEventListener("mouseup", handleMouseUp);
     return () => {
       document.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseup", handleMouseUp);
     };
-  }, [handleMouseMove, handleMouseUp, isDragging]);
+  }, [disabled, handleMouseMove, handleMouseUp, isDragging]);
 
   return (
     <div
       ref={sliderRef}
-      className="relative h-[6px] w-full cursor-pointer rounded-full bg-sand-3"
+      className={cn(
+        "relative h-1.5 w-full rounded-full bg-fill-neutral-weaker",
+        disabled
+          ? "cursor-not-allowed opacity-50"
+          : "cursor-pointer",
+      )}
       onClick={handleSliderClick}
+      aria-disabled={disabled}
     >
-      <div className="relative h-full rounded-full bg-sand-7 transition-all duration-150" style={{ width: `${volume}%` }}>
+      <div
+        className="relative h-full rounded-full bg-fill-brand-strong transition-all duration-150"
+        style={{ width: `${volume}%` }}
+      >
         <div
-          className="absolute right-0 top-1/2 size-4 -translate-y-1/2 rounded-full border-2 border-sand-8 bg-white transition-transform duration-150 hover:scale-110"
-          onMouseDown={handleMouseDown}
+          className="absolute right-0 top-1/2 size-4 -translate-y-1/2 rounded-full border-2 border-stroke-neutral-weak bg-white transition-transform duration-150 hover:scale-110"
+          onMouseDown={disabled ? undefined : handleMouseDown}
           style={{ right: "-8px" }}
         />
       </div>
@@ -146,41 +169,40 @@ export default function BackgroundMusic() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <span className="font-garamond text-xl text-sand-12">Background Music</span>
+      <div className="flex items-center justify-between gap-3">
+        <span className="font-garamond text-xl font-medium text-text-neutral-strong">Background Music</span>
         <Switch checked={isEnabled} onCheckedChange={handleToggle} disabled={isMutating} />
       </div>
-      {isEnabled && (
-        <>
-          <Slider volume={volume} onVolumeChange={setVolume} />
-          <div className="grid grid-cols-2 gap-3">
-            {audioFiles.map((audio, index) => (
-              <button
-                type="button"
-                key={audio.key}
-                className={cn(
-                  "flex items-center gap-3 rounded-xl border py-2.5 px-3 transition-colors",
-                  currentTrackIndex === index ? "border-2 border-blue-6 bg-blue-1" : "border-[#EAECF0] hover:border-gray-300",
-                  isMutating ? "cursor-not-allowed opacity-50" : "cursor-pointer",
-                )}
-                onClick={() => !isMutating && handleTrackSelect(index)}
-              >
-                <img src={musicImage} width={32} height={32} alt="Music" className="size-8" />
-                <div className="min-w-0 flex-1">
-                  <span className="block truncate font-inter text-sm font-medium text-sand-12">{audio.title}</span>
-                  <span className="font-inter text-xs text-[#667085]">Tune {index + 1}</span>
-                </div>
-                {currentTrackIndex === index && isPlaying && (
-                  <span className="relative flex size-2">
-                    <span className="absolute size-full animate-ping rounded-full bg-blue-6" />
-                    <span className="relative inline-flex size-2 rounded-full bg-blue-6" />
-                  </span>
-                )}
-              </button>
-            ))}
-          </div>
-        </>
-      )}
+      <Slider volume={volume} onVolumeChange={setVolume} disabled={!isEnabled} />
+      <div className="grid grid-cols-2 gap-3">
+        {audioFiles.map((audio, index) => (
+          <button
+            type="button"
+            key={audio.key}
+            className={cn(
+              "flex items-center gap-3 rounded-xl border py-2.5 px-3 transition-colors",
+              currentTrackIndex === index
+                ? "border-2 border-stroke-brand-strong bg-fill-neutral-weakest"
+                : "border-stroke-neutral-weaker hover:border-stroke-neutral-weak",
+              isMutating ? "cursor-not-allowed opacity-50" : "cursor-pointer",
+              !isEnabled && "opacity-70",
+            )}
+            onClick={() => !isMutating && handleTrackSelect(index)}
+          >
+            <img src={musicImage} width={32} height={32} alt="" className="size-8" />
+            <div className="min-w-0 flex-1 text-left">
+              <span className="block truncate font-inter text-sm font-medium text-text-neutral-strong">{audio.title}</span>
+              <span className="font-inter text-xs text-text-neutral-weak">Tune {index + 1}</span>
+            </div>
+            {currentTrackIndex === index && isPlaying && isEnabled && (
+              <span className="relative flex size-2">
+                <span className="absolute size-full animate-ping rounded-full bg-fill-brand-strong" />
+                <span className="relative inline-flex size-2 rounded-full bg-fill-brand-strong" />
+              </span>
+            )}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }

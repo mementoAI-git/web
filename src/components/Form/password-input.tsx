@@ -1,27 +1,36 @@
 "use client";
 
 import { useState } from "react";
-import { Textinput, type ITexinput } from "./text-input";
 import { EyeIcon, EyeOffIcon } from "@/components/icons";
+import { InputGroupButton } from "@/components/ui/input-group";
+import { Textinput, type ITexinput } from "./text-input";
 
-export function Passwordinput({ label = "Password", ...props }: ITexinput) {
+export function Passwordinput({
+  label = "Password",
+  autoComplete = "current-password",
+  ...props
+}: ITexinput) {
   const [show, setShow] = useState(false);
   return (
     <Textinput
       end={
-        <div
-          className="cursor-pointer text-grey-300"
+        <InputGroupButton
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          className="text-grey-300"
           onClick={() => setShow((p) => !p)}
+          aria-label={show ? "Hide password" : "Show password"}
+          aria-pressed={show}
         >
           {show ? <EyeOffIcon width={20} height={20} /> : <EyeIcon width={20} height={20} />}
-        </div>
+        </InputGroupButton>
       }
       type={show ? "text" : "password"}
       placeholder=" • • • • • • •"
       label={label}
+      autoComplete={autoComplete}
       {...props}
     />
   );
 }
-
-

@@ -14,7 +14,7 @@ export default function ModalLayout({
 }: ModalLayoutProps) {
   return (
     <div
-      className={`modal-overlay z-50 bg-[rgba(94,94,94,0.5)] ${open ? "flex" : "hidden"}`}
+      className={`modal-overlay z-50 bg-overlay-backdrop ${open ? "flex" : "hidden"}`}
     >
       <div className="modal-container">
         <button
@@ -96,7 +96,7 @@ export function FullScreenModal({
 }: FullScreenModalProps) {
   return (
     <div
-      className={`modal-overlay z-50 bg-[rgba(94,94,94,0.5)] ${open ? "flex" : "hidden"}`}
+      className={`modal-overlay z-50 bg-overlay-backdrop ${open ? "flex" : "hidden"}`}
     >
       <div className="modal-full-screen">
         {header && (

@@ -41,8 +41,8 @@ function Content({ data }: SharePostProps) {
           <img src={confetti} alt="Confetti" className="size-14 object-contain" />
         </div>
         <div className="text-center sm:text-left">
-          <h4 className="modal-title text-5xl !font-medium text-[#1D2939]">Story added successfully</h4>
-          <p className="text-[#475467]">You have added a new story to your Memento</p>
+          <h4 className="modal-title text-5xl !font-medium text-text-neutral-strong">Story added successfully</h4>
+          <p className="text-text-neutral-weak">You have added a new story to your Memento</p>
         </div>
 
         <div className="space-y-4 rounded-lg border border-gray-200 p-6">
@@ -75,7 +75,7 @@ function Content({ data }: SharePostProps) {
 
           <div className="flex items-center gap-3">
             <div className="flex-1 border-t border-grey-500" />
-            <span className="font-inter text-xs text-[#667085]">Or share on Social Media</span>
+            <span className="font-inter text-xs text-v3-text-weak">Or share on Social Media</span>
             <div className="flex-1 border-t border-grey-500" />
           </div>
 

@@ -8,7 +8,7 @@ function AudioFile({ file }: { file: IFile }) {
   return (
     <div className="flex h-full w-full flex-col justify-between overflow-hidden rounded-lg bg-grey-400">
       <div className="flex flex-col p-3 font-inter">
-        <span className="text-sm font-medium text-[#050709] text-ellipsis whitespace-nowrap overflow-hidden">
+        <span className="text-sm font-medium text-text-neutral-strong text-ellipsis whitespace-nowrap overflow-hidden">
           {file.name}
         </span>
         <span className="text-xs text-grey-600">
@@ -26,7 +26,7 @@ function VideoFile({ file }: { file: IFile }) {
   return (
     <div className="flex w-full h-full flex-col justify-between overflow-hidden rounded-lg bg-grey-400">
       <div className="flex flex-col p-3 font-inter">
-        <span className="truncate text-sm font-medium text-[#050709] text-ellipsis whitespace-nowrap overflow-hidden">
+        <span className="truncate text-sm font-medium text-text-neutral-strong text-ellipsis whitespace-nowrap overflow-hidden">
           {file.name}
         </span>
         <span className="text-xs text-grey-600">
@@ -40,10 +40,11 @@ function VideoFile({ file }: { file: IFile }) {
 }
 
 function FileGalleryItem({ file }: { file: IFile }) {
-  if (file.type.includes("video")) {
+  const type = file.type ?? "";
+  if (type.includes("video")) {
     return <VideoFile file={file} />;
   }
-  if (file.type.includes("audio")) {
+  if (type.includes("audio")) {
     return <AudioFile file={file} />;
   }
   return (
@@ -93,7 +94,7 @@ export default function FileGallery({ files }: { files: IFile[] }) {
           data-file-index={maxFiles}
           className="cursor-pointer w-[100px] h-[100px] overflow-hidden rounded-lg relative"
         >
-          <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-[rgba(94,94,94,0.5)] backdrop-blur-sm font-inter text-2xl font-semibold text-white z-10">
+          <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-overlay-backdrop backdrop-blur-sm font-inter text-2xl font-semibold text-white z-10">
             {files.length - maxFiles}+
           </div>
           <FileGalleryItem file={overflowFile} />

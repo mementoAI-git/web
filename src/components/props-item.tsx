@@ -21,8 +21,8 @@ export default function PropsItem({
       className={`flex items-center gap-2 py-2 font-inter text-xs font-normal capitalize text-grey-800 ${className}`}
     >
       <div className="shrink-0">{icon}</div>
-      <span className="text-xs text-[#667085]">{title}</span>
-      <strong className="text-xs font-medium text-[#1D2939]">{subtitle}</strong>
+      <span className="text-xs text-v3-text-weak">{title}</span>
+      <strong className="text-xs font-medium text-v3-text-strong">{subtitle}</strong>
     </li>
   );
 }

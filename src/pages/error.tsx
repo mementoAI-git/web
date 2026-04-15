@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import notFoundImage from "@/assets/image/error.png";
-import { ArrowLeftIcon } from "@/components/icons";
+import { ErrorStateGoBackButton } from "@/components/error-state-outline-button";
 
 export default function ErrorPage() {
   const navigate = useNavigate();
@@ -18,29 +18,23 @@ export default function ErrorPage() {
       <div className="flex flex-col items-center justify-center gap-8 sm:gap-12 md:gap-[56px] w-full max-w-4xl">
         <img
           src={notFoundImage}
-          alt="Not Found"
+          alt="Error"
           className="w-full max-w-[250px] sm:max-w-[300px] md:max-w-[370.75px] h-auto object-cover"
         />
-        <div className="text-center space-y-6 sm:space-y-8 md:space-y-10 w-full">
-          <div className="space-y-4 sm:space-y-5 md:space-y-6">
-            <div className="space-y-2 sm:space-y-3">
-              <span className="font-inter text-sm sm:text-base font-medium text-orange uppercase">Error 505</span>
-              <p className="font-garamond text-2xl sm:text-3xl md:text-[40px] leading-tight sm:leading-[36px] md:leading-[48px] font-medium text-gray-800 px-4">
-                Sorry, We Seem to be Having an Issue
-              </p>
-            </div>
-            <p className="font-garamond text-lg sm:text-xl md:text-2xl text-gray-950/90 px-4">
+        <div className="flex w-full flex-col items-center text-center gap-6 sm:gap-8 md:gap-10">
+          <div className="flex flex-col items-center gap-2 sm:gap-3">
+            <span className="font-inter text-xs font-medium uppercase text-[var(--v3-brand-strong)]">
+              Error 505
+            </span>
+            <p className="font-garamond text-2xl sm:text-3xl md:text-xl leading-tight sm:leading-[36px] md:leading-[40px] font-normal text-[var(--v3-text-strong)] px-4 w-fit">
+              Sorry, We Seem to be Having an Issue
+            </p>
+            <p className="font-garamond text-[20px] text-[var(--v3-text-strong)] px-4 w-fit">
               We have been automatically notified of this issue and will resolve it.
             </p>
           </div>
           <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center items-center w-full px-4">
-            <button
-              onClick={handleGoBack}
-              className="btn-outline !gap-[4px] !py-3 sm:!py-4 md:!py-[18px] !px-6 sm:!px-8 md:!px-12 w-full sm:w-auto"
-            >
-              <ArrowLeftIcon className="size-4 text-lg" />
-              <span>Go back</span>
-            </button>
+            <ErrorStateGoBackButton onClick={handleGoBack} />
             <button
               onClick={handleGoHome}
               className="btn !py-3 sm:!py-4 md:!py-[18px] !px-6 sm:!px-8 md:!px-12 w-full sm:w-auto"
@@ -51,5 +45,5 @@ export default function ErrorPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }

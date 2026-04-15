@@ -1,11 +1,13 @@
-import endpoint from "@/api/endpoint";
 import { Textinput, type ITexinput } from "@/components/Form";
 import Spinner from "@/components/spinner";
-import useFetcher from "@/hooks/use-fetcher";
-import { useStore } from "@/hooks/use-store";
 import type { IUser } from "@/utility/interface";
-import { useEffect, useMemo, useState } from "react";
-import { toast } from "sonner";
+import { cn } from "@/utility";
+import {
+  profileFieldInputShellClassName,
+  profileFieldLabelClassName,
+  profileFieldTextInputClassName,
+} from "./profile-field-input-classes";
+import { useProfileFieldUpdate } from "./use-profile-field-update";
 
 interface UpdateTextInputProps extends Omit<ITexinput, "name" | "value" | "onChange"> {
   name: keyof IUser;
@@ -16,53 +18,32 @@ export default function UpdateTextInput({
   btnText = "Update",
   name,
   labelClassName,
+  inputClassName,
+  className,
   ...props
 }: UpdateTextInputProps) {
-  const { user, hydrated } = useStore();
-  const { isMutating, trigger } = useFetcher(endpoint.profile, "put");
-  const [value, setValue] = useState("");
-
-  const cachedValue = useMemo(() => {
-    if (!user) return "";
-    const fieldValue = user[name];
-    if (fieldValue == null) return "";
-    return String(fieldValue);
-  }, [name, user]);
-
-  const handleUpdate = async () => {
-    if (!user) return;
-    if (value === cachedValue) return;
-
-    const result = await trigger({ [name]: value });
-    if (result?.data) {
-      toast.success(result?.message);
-    }
-  };
-
-  useEffect(() => {
-    if (hydrated) {
-      setValue(cachedValue);
-    }
-  }, [cachedValue, hydrated]);
+  const { value, setValue, isMutating, save, hasUser } = useProfileFieldUpdate(name);
 
   return (
     <Textinput
       {...props}
       name={name as string}
       value={value}
+      disabled={props.disabled ?? !hasUser}
       onChange={(event) => setValue(event.target.value)}
-      labelClassName={`!text-grey-200 !font-normal ${labelClassName ?? ""}`.trim()}
+      className={cn(profileFieldTextInputClassName, className)}
+      labelClassName={cn(profileFieldLabelClassName, labelClassName)}
+      inputClassName={cn(profileFieldInputShellClassName, inputClassName)}
       end={
         <button
           type="button"
-          disabled={isMutating}
-          onClick={handleUpdate}
-          className="cursor-pointer text-sm font-inter font-semibold capitalize text-blue-6"
+          disabled={isMutating || !hasUser}
+          onClick={() => void save()}
+          className="cursor-pointer text-sm font-inter font-medium capitalize text-v3-text-weak disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {isMutating ? <Spinner loading className="!size-4 !text-blue-6" /> : btnText}
+          {isMutating ? <Spinner loading className="!size-4 !text-v3-text-weak" /> : btnText}
         </button>
       }
     />
   );
 }
-

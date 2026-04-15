@@ -69,10 +69,10 @@ export default function ConversationBar({
       onClick={handleClick}
       className={cn(
         "flex w-full cursor-pointer items-center justify-between px-2 py-2 transition-colors duration-150",
-        "hover:bg-[rgba(251,248,244,0.7)]",
+        "hover:bg-[var(--v3-fill-weak)]",
         isCompact
-          ? "rounded-[8px] border-b border-[#f2f2f2]"
-          : "rounded-xl border border-[#f2f2f2]",
+          ? "rounded-[8px] border-b border-[var(--v3-stroke-weak)]"
+          : "rounded-xl border border-[var(--v3-stroke-weak)]",
         { "p-3 sm:p-6": isLarge },
       )}
     >
@@ -85,7 +85,7 @@ export default function ConversationBar({
           src={recentActivitiesIcon}
         />
         <span
-          className={cn("font-georgia text-accent-foreground", {
+          className={cn("font-georgia text-[var(--v3-text-strong)]", {
             "sm:text-xl": isLarge,
           })}
         >
@@ -101,11 +101,11 @@ export default function ConversationBar({
               className={cn("size-4", { "size-3 sm:size-4": isLarge })}
             />
           }
-          className="rounded-lg p-2 hover:bg-sand-2"
+          className="rounded-lg p-2 hover:bg-[var(--v3-fill-weaker)]"
           footerItem={
             <li
               onClick={() => open?.("delete-memory", { memory: { _id } })}
-              className="flex cursor-pointer items-center gap-2.5 rounded px-2.5 py-1.5 text-[#F97066] hover:bg-[#F97066]/8"
+              className="flex cursor-pointer items-center gap-2.5 rounded px-2.5 py-1.5 text-[var(--color-danger)] hover:bg-[var(--v3-fill-weak)]"
             >
               <TrashIcon width={16} height={16} />
               <span className="font-inter text-sm">Delete</span>
@@ -131,8 +131,8 @@ export function ConversationBarSkeleton({
       className={cn(
         "flex w-full animate-pulse items-center justify-between px-2 py-2",
         isCompact
-          ? "rounded-[8px] border-b border-sand-4"
-          : "rounded-2xl border border-sand-4",
+          ? "rounded-[8px] border-b border-[var(--v3-stroke-weak)]"
+          : "rounded-2xl border border-[var(--v3-stroke-weak)]",
         {
           "p-3 sm:p-6": isLarge,
         },
@@ -140,17 +140,17 @@ export function ConversationBarSkeleton({
     >
       <div className="flex flex-1 items-center gap-4">
         <div
-          className={cn("size-10 rounded bg-sand-3", {
+          className={cn("size-10 rounded bg-[var(--v3-text-disabled)]", {
             "size-20 sm:size-30": isLarge,
           })}
         />
         <div
-          className={cn("h-4 w-full max-w-50 rounded bg-sand-3", {
+          className={cn("h-4 w-full max-w-50 rounded bg-[var(--v3-text-disabled)]", {
             "max-w-60": isLarge,
           })}
         />
       </div>
-      <div className="size-4 shrink-0 rounded bg-sand-3" />
+      <div className="size-4 shrink-0 rounded bg-[var(--v3-text-disabled)]" />
     </div>
   );
 }

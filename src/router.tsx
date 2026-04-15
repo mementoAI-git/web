@@ -1,4 +1,4 @@
-import { createBrowserRouter } from "react-router-dom";
+import { createBrowserRouter, Navigate } from "react-router-dom";
 import App from "@/App";
 import {
   AcceptInvitePage,
@@ -7,6 +7,7 @@ import {
   ChatPage,
   CheckMailPage,
   ConfirmEmailPage,
+  TwoFactorPage,
   DashboardLayout,
   ExploreCategoryPage,
   ExplorePage,
@@ -15,20 +16,23 @@ import {
   MiscPage,
   NicknamePage,
   OnboardLayout,
+  OnboardingGrootLayout,
+  OnboardingGrootPage,
+  HostOnboardingChatPage,
   WelcomePage,
   OnboardPage,
   OverviewPage,
   PostPage,
-  RecentConversationPage,
   RegisterPage,
   ReplyPage,
   SetPasswordPage,
-  SuggestedConversationPage,
   VerifyEmailPage,
   StoriesPage,
   StoriesDetailsPage,
+  SettingsPage,
   NotFoundPage,
   ErrorPage,
+  OAuthCallbackPage,
 } from "@/pages";
 import TimeCapsulePage from "./pages/dashboard/time-capsule-new";
 
@@ -39,14 +43,29 @@ export const router = createBrowserRouter([
     errorElement: <ErrorPage />,
     children: [
       { path: "login", element: <LoginPage /> },
+      { path: "two-factor", element: <TwoFactorPage /> },
       { path: "register", element: <RegisterPage /> },
       { path: "forget-password", element: <ForgetPasswordPage /> },
       { path: "check-mail", element: <CheckMailPage /> },
       { path: "verify-email", element: <VerifyEmailPage /> },
       { path: "confirm-email", element: <ConfirmEmailPage /> },
       { path: "set-password", element: <SetPasswordPage /> },
+      { path: "oauth/callback/:provider", element: <OAuthCallbackPage /> },
       { path: "accept-invite/:id", element: <AcceptInvitePage /> },
       { path: "post/:id", element: <PostPage /> },
+      {
+        path: "onboarding",
+        element: <OnboardingGrootLayout />,
+        children: [
+          { index: true, element: <OnboardingGrootPage /> },
+          { path: "chat", element: <HostOnboardingChatPage /> },
+          {
+            path: "onboard",
+            element: <OnboardLayout />,
+            children: [{ index: true, element: <OnboardPage /> }],
+          },
+        ],
+      },
       {
         path: "onboard",
         element: <OnboardLayout />,
@@ -67,16 +86,21 @@ export const router = createBrowserRouter([
           { path: "explore/categories", element: <ExplorePage /> },
           { path: "explore/categories/:id", element: <ExploreCategoryPage /> },
           { path: "chat", element: <ChatLandingPage /> },
-          { path: "chat/conversations", element: <RecentConversationPage /> },
+          { path: "chat/new", element: <ChatPage /> },
+          { path: "chat/conversations", element: <Navigate to="/chat" replace /> },
           {
             path: "chat/conversations/suggested",
-            element: <SuggestedConversationPage />,
+            element: <Navigate to="/chat" replace />,
           },
           { path: "chat/reply/:id", element: <ReplyPage /> },
+          // Live voice (Gemini Live): ChatPage + Conversation; composer mounts Voiceinput fullscreen
+          { path: "chat/:id/voice", element: <ChatPage /> },
           { path: "chat/:id", element: <ChatPage /> },
           { path: "stories", element: <StoriesPage /> },
           { path: "stories/:id", element: <StoriesDetailsPage /> },
           { path: "capsule", element: <TimeCapsulePage /> },
+          { path: "settings", element: <Navigate to="/settings/general" replace /> },
+          { path: "settings/:tab", element: <SettingsPage /> },
         ],
       },
       { path: "*", element: <NotFoundPage /> },

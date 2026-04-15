@@ -118,11 +118,12 @@ export function DropdownIcon({
       <button
         ref={buttonRef}
         onClick={() => setOpen((p) => !p)}
-        className={cn("", {
-          [className]: !isEmpty(className),
-          ["aspect-square size-8 shrink-0 flex items-center justify-center rounded-lg p-2 hover:bg-sand-2"]:
-            !isEmpty(icon),
-        })}
+        className={cn(
+          !isEmpty(icon)
+            ? "aspect-square size-8 shrink-0 flex items-center justify-center rounded-lg bg-transparent p-2 transition-colors hover:bg-v3-fill-weak"
+            : "",
+          !isEmpty(className) ? className : "",
+        )}
       >
         {children || icon}
       </button>

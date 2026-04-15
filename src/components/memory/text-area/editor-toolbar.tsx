@@ -61,7 +61,7 @@ export function EditorToolbar({ editor, editorStateVersion: _editorStateVersion 
   const previousUrl = editor.getAttributes("link").href || "";
 
   return (
-    <div className="flex min-h-8 items-center gap-1 border-t border-gray-200 bg-[#F9FAFB] px-3 py-1">
+    <div className="flex min-h-8 items-center gap-1 border-t border-gray-200 bg-v3-fill-weaker px-3 py-1">
       <button
         onClick={() => editor.chain().focus().toggleBold().run()}
         className={cn(

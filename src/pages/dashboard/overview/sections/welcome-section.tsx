@@ -1,12 +1,13 @@
-import { Link } from "react-router-dom";
-import { PlusIcon } from "@/components/icons";
+import { Link, useNavigate } from "react-router-dom";
 import { useModal } from "@/hooks/use-modal";
+import { PlusIcon } from "@/components/icons";
 import { useStore } from "@/hooks/use-store";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import useSWR from "swr";
 import endpoint from "@/api/endpoint";
 import bgCard from "@/assets/icon/folder/empty-get-started.png";
 import brightButtonIcon from "@/assets/icon/noto_bright-button.svg";
+import moonfaceIcon from "@/assets/icon/moonface.svg";
 import zapIcon from "@/assets/icon/zap.svg";
 import trophyIcon from "@/assets/icon/noto_trophy.svg";
 // deprecated backgrounds — kept for reference
@@ -20,19 +21,10 @@ import streakCardBg from "@/assets/icon/backgrounds/side cards for streak.png";
 import blueFolderIcon from "@/assets/icon/blue folder 2.svg";
 import surferIcon from "@/assets/icon/noto_man-surfing-medium-skin-tone.svg";
 import hourglassIcon from "@/assets/icon/noto_hourglass-not-done.svg";
-
-/** Greetings that are implied questions; use "?" after the name instead of "." */
-const QUESTION_GREETINGS = new Set([
-  "Can't sleep,",
-  "Burning the midnight oil,",
-  "Keeping a late night,",
-  "Late night session,",
-  "Still going,",
-]);
-
-export function getGreetingPunctuation(greeting: string): "." | "?" {
-  return QUESTION_GREETINGS.has(greeting) ? "?" : ".";
-}
+import {
+  getGreetingPunctuation,
+  shouldUseBrightWelcomeIcon,
+} from "./welcome-section-helpers";
 
 function getGreeting(): string {
   const hour = new Date().getHours();
@@ -57,8 +49,18 @@ function getGreeting(): string {
 
 export default function WelcomeSection() {
   const { user } = useStore();
+  const navigate = useNavigate();
   const { open } = useModal();
   const greeting = useMemo(() => getGreeting(), []);
+  const [useBrightWelcomeIcon, setUseBrightWelcomeIcon] = useState(() =>
+    shouldUseBrightWelcomeIcon(),
+  );
+  useEffect(() => {
+    const sync = () => setUseBrightWelcomeIcon(shouldUseBrightWelcomeIcon());
+    sync();
+    const id = window.setInterval(sync, 60_000);
+    return () => window.clearInterval(id);
+  }, []);
   const { data: statsData } = useSWR(endpoint.userStats);
   const { data: memoriesStatsData } = useSWR(endpoint.memoriesStats);
   const { data: storiesListData } = useSWR(`${endpoint.stories}?page=1&limit=1`);
@@ -84,14 +86,14 @@ export default function WelcomeSection() {
       <div className="space-y-2">
         <div className="flex items-center gap-3">
           <img
-            src={brightButtonIcon}
+            src={useBrightWelcomeIcon ? brightButtonIcon : moonfaceIcon}
             alt=""
             className="size-7 sm:size-10 shrink-0"
           />
-          <h2 className="font-garamond text-gray-800 font-normal text-[24px] sm:text-[32px] lg:text-[40px] leading-[1.2]">
+          <h2 className="font-garamond text-text-neutral-strong font-normal text-[24px] sm:text-[32px] lg:text-[40px] leading-[1.2]">
             {greeting}
             {(user?.nickname || user?.first_name || user?.last_name) && (
-              <i style={{ color: "#376B59" }}>
+              <i className="text-text-success-strong">
                 {" "}
                 {user?.nickname || user?.first_name || user?.last_name}
                 {getGreetingPunctuation(greeting)}
@@ -100,50 +102,49 @@ export default function WelcomeSection() {
           </h2>
         </div>
       </div>
-      <div className="flex flex-col lg:flex-row gap-6 items-stretch">
-        <div className="relative rounded-3xl overflow-hidden flex-1 min-h-[159px] sm:min-h-[200px]">
+      <div className="flex flex-col items-stretch gap-6 xl:flex-row">
+        <div className="relative min-h-[159px] min-w-0 flex-1 overflow-hidden rounded-3xl sm:min-h-[200px]">
           <img
             src={bgCard}
             alt=""
             className="absolute top-0 right-0 left-0 object-cover size-full"
           />
-          <div className="absolute flex flex-col justify-between size-full top-0 right-0 left-0 p-5 sm:p-7 lg:p-8">
-            <div className="flex items-center justify-between gap-4">
-              <h2 className="font-garamond text-[20px] lg:text-[24px] font-normal text-[#353434]">
+          <div className="absolute left-0 top-0 flex size-full flex-col justify-between p-5 sm:p-7 lg:p-8">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+              <h2 className="min-w-0 font-garamond text-[20px] font-normal text-text-neutral-strong lg:text-[24px]">
                 What’s on your mind today?
               </h2>
-              <div className="flex items-center gap-3 shrink-0">
-                <span className="flex items-center gap-1.5 font-inter text-sm font-semibold text-gray-700">
+              <div className="flex shrink-0 items-center gap-3">
+                <span className="flex items-center gap-1.5 font-inter text-sm font-semibold text-text-neutral-weak">
                   <img src={zapIcon} alt="streak" className="size-5" />
                   {streakCount}
                 </span>
-                <span className="flex items-center gap-1.5 font-inter text-sm font-semibold text-gray-700">
+                <span className="flex items-center gap-1.5 font-inter text-sm font-semibold text-text-neutral-weak">
                   <img src={trophyIcon} alt="xp" className="size-5" />
                   {xpCount}
                 </span>
               </div>
             </div>
-            <div className="flex gap-2 sm:gap-3 items-center">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
               <button
                 onClick={() => open("create-memory")}
-                className="flex items-center gap-1.5 sm:gap-2 h-9 sm:h-12 px-3 sm:px-5 rounded-full font-inter font-medium text-xs sm:text-sm text-white cursor-pointer transition-opacity hover:opacity-90"
-                style={{ backgroundColor: "#FF5E00" }}
+                className="flex items-center gap-1.5 sm:gap-2 h-9 sm:h-12 px-3 sm:px-5 rounded-full bg-v3-brand-strong font-inter font-medium text-xs sm:text-sm text-white cursor-pointer transition-opacity hover:opacity-90"
               >
                 <PlusIcon className="size-3 sm:size-4 shrink-0" />
                 <span className="whitespace-nowrap">Add story/item</span>
               </button>
               <Link
                 to="/chat/new"
-                className="flex items-center gap-1.5 sm:gap-2 h-9 sm:h-12 px-3 sm:px-5 bg-white border border-gray-200 rounded-full cursor-pointer hover:opacity-90 transition-opacity"
+                className="flex items-center gap-1.5 sm:gap-2 h-9 sm:h-12 px-3 sm:px-5 bg-white border border-stroke-neutral-weak rounded-full cursor-pointer hover:opacity-90 transition-opacity"
               >
-                <span className="text-[#101828] text-xs sm:text-sm font-inter font-medium whitespace-nowrap">
+                <span className="text-text-neutral-strong text-xs sm:text-sm font-inter font-medium whitespace-nowrap">
                   Start a conversation
                 </span>
               </Link>
             </div>
           </div>
         </div>
-        <div className="w-full lg:max-w-[335px] relative rounded-3xl overflow-hidden flex-1">
+        <div className="relative w-full min-w-0 flex-1 overflow-hidden rounded-3xl xl:max-w-[335px] xl:shrink-0">
           <img
             src={enrichmentBgPng}
             alt=""
@@ -165,88 +166,34 @@ export default function WelcomeSection() {
                 >
                   {Number(stats.enrichment_score) || 0}%
                 </span>
-                <span className="font-inter text-sm font-normal text-[#413a2f] bg-white/70 rounded-full px-3 py-1.5 whitespace-nowrap">
+                <span className="font-inter text-sm font-normal text-text-neutral-strong bg-white/70 rounded-full px-3 py-1.5 whitespace-nowrap">
                   Enrichment score
                 </span>
               </div>
-              <p className="font-inter text-sm text-gray-700 leading-relaxed">
+              <p className="font-inter text-xs text-text-neutral-weak leading-relaxed">
                 Share stories &amp; files to build context. Link apps to enrich
                 your Memento.
               </p>
             </div>
-            <div className="flex gap-2 items-center">
-              <Link
-                to="/stories"
-                className="flex items-center h-10 px-5 rounded-full font-inter font-semibold text-sm text-white whitespace-nowrap transition-opacity hover:opacity-90"
-                style={{ backgroundColor: "#1A1A1A" }}
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => open("memory-insights")}
+                className="flex h-10 items-center rounded-full border border-stroke-neutral-weak bg-transparent px-5 font-inter text-sm font-semibold text-text-neutral-strong transition-colors hover:bg-fill-neutral-weak whitespace-nowrap"
               >
-                See memory
-              </Link>
-              <Link
-                to="/explore"
-                className="flex items-center gap-1.5 h-10 px-4 bg-white/80 rounded-full font-inter font-semibold text-sm text-gray-800 whitespace-nowrap transition-opacity hover:opacity-90 border border-black/10"
-              >
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 16 16"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="shrink-0"
-                >
-                  <circle
-                    cx="8"
-                    cy="3"
-                    r="2"
-                    stroke="#1A1A1A"
-                    strokeWidth="1.5"
-                  />
-                  <circle
-                    cx="3"
-                    cy="12"
-                    r="2"
-                    stroke="#1A1A1A"
-                    strokeWidth="1.5"
-                  />
-                  <circle
-                    cx="13"
-                    cy="12"
-                    r="2"
-                    stroke="#1A1A1A"
-                    strokeWidth="1.5"
-                  />
-                  <line
-                    x1="8"
-                    y1="5"
-                    x2="3"
-                    y2="10"
-                    stroke="#1A1A1A"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                  />
-                  <line
-                    x1="8"
-                    y1="5"
-                    x2="13"
-                    y2="10"
-                    stroke="#1A1A1A"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                  />
-                </svg>
-                Connect apps
-              </Link>
+                View insights
+              </button>
             </div>
           </div>
         </div>
       </div>
 
       {/* Stat cards row */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
         {/* All Memories */}
         <Link
           to="/stories"
-          className="relative rounded-2xl overflow-hidden h-[99px] block hover:opacity-95 transition-opacity col-span-2 lg:col-span-1 border border-[#E3E3E3]"
+          className="relative col-span-2 block h-[99px] overflow-hidden rounded-2xl border border-stroke-neutral-weaker transition-opacity hover:opacity-95 xl:col-span-1"
         >
           <img
             src={memoriesCardBg}
@@ -254,21 +201,18 @@ export default function WelcomeSection() {
             className="absolute inset-0 object-cover w-full h-full rounded-[16px]"
           />
           <div className="relative flex items-center justify-between h-full px-5 font-inter rounded-[16px]">
-            <div className="flex flex-col gap-1">
-              <span className="font-inter text-[12px] font-normal uppercase tracking-widest text-gray-500">
+            <div className="flex min-w-0 flex-col gap-1">
+              <span className="font-inter text-[12px] font-normal uppercase tracking-widest text-text-neutral-weaker md:truncate">
                 All Memories
               </span>
-              <span
-                className="font-inter text-[14px] font-semibold leading-tight"
-                style={{ color: "#293039" }}
-              >
-                <span className="font-bold" style={{ color: "#2D6BC4" }}>
+              <span className="font-inter text-[14px] font-semibold leading-tight text-text-neutral-strong">
+                <span className="font-bold text-text-info-strong">
                   {memoriesCount}
                 </span>{" "}
                 items
               </span>
               {weeklyMemories > 0 && (
-                <span className="font-inter text-[12px] font-normal text-gray-500">
+                <span className="font-inter text-[12px] font-normal text-text-neutral-weaker">
                   +{weeklyMemories} this week
                 </span>
               )}
@@ -284,30 +228,21 @@ export default function WelcomeSection() {
         {/* Beneficiaries */}
         <button
           type="button"
-          onClick={() => open("settings", { activeTab: "beneficiary" })}
-          className="relative rounded-2xl overflow-hidden h-[99px] block hover:opacity-95 transition-opacity col-span-2 lg:col-span-1 border border-[#E3E3E3] w-full text-left"
+          onClick={() => navigate("/settings/beneficiary")}
+          className="relative col-span-2 block h-[99px] w-full overflow-hidden rounded-2xl border border-stroke-neutral-weaker text-left transition-opacity hover:opacity-95 xl:col-span-1"
         >
           <img
             src={benefiCardBg}
             alt=""
             className="absolute inset-0 object-cover w-full h-full rounded-[16px]"
           />
-          <div
-            className="relative flex items-center justify-between h-full px-5"
-            style={{ color: "rgba(255, 255, 255, 0.9)" }}
-          >
-            <div className="flex flex-col gap-1">
-              <span className="font-inter text-[12px] font-normal uppercase tracking-widest text-[rgba(102,112,133,0.7)]">
+          <div className="relative flex items-center justify-between h-full px-5 text-white/90">
+            <div className="flex min-w-0 flex-col gap-1">
+              <span className="font-inter text-[12px] font-normal uppercase tracking-widest text-text-neutral-weaker md:truncate">
                 Beneficiaries
               </span>
-              <span
-                className="font-inter text-[14px] font-semibold leading-tight"
-                style={{ color: "rgba(41, 48, 57, 1)" }}
-              >
-                <span
-                  className="font-bold"
-                  style={{ color: "rgba(255, 46, 88, 1)" }}
-                >
+              <span className="font-inter text-[14px] font-semibold leading-tight text-text-neutral-strong">
+                <span className="font-bold text-text-brand-strong">
                   {beneficiariesCount}
                 </span>{" "}
                 {beneficiariesCount === 1 ? "person" : "people"}
@@ -324,7 +259,7 @@ export default function WelcomeSection() {
         {/* Time Capsules */}
         <Link
           to="/capsule"
-          className="relative rounded-2xl overflow-hidden h-[99px] block hover:opacity-95 transition-opacity col-span-2 lg:col-span-1 border border-[#E3E3E3]"
+          className="relative col-span-2 block h-[99px] overflow-hidden rounded-2xl border border-stroke-neutral-weaker transition-opacity hover:opacity-95 xl:col-span-1"
         >
           <img
             src={timeCapCardBg}
@@ -332,15 +267,12 @@ export default function WelcomeSection() {
             className="absolute inset-0 object-cover w-full h-full rounded-[16px]"
           />
           <div className="relative flex items-center justify-between h-full px-5">
-            <div className="flex flex-col gap-1">
-              <span className="font-inter text-[12px] font-normal uppercase tracking-widest text-gray-500/70">
+            <div className="flex min-w-0 flex-col gap-1">
+              <span className="font-inter text-[12px] font-normal uppercase tracking-widest text-text-neutral-weaker md:truncate">
                 Time Capsules
               </span>
-              <span
-                className="font-inter text-[14px] font-semibold leading-tight"
-                style={{ color: "#293039" }}
-              >
-                <span className="font-bold" style={{ color: "#EA580C" }}>
+              <span className="font-inter text-[14px] font-semibold leading-tight text-text-neutral-strong">
+                <span className="font-bold text-text-brand-strong">
                   {capsuleCount}
                 </span>{" "}
                 {capsuleCount === 1 ? "post" : "posts"} scheduled
@@ -355,23 +287,20 @@ export default function WelcomeSection() {
         </Link>
 
         {/* Streak Count */}
-        <div className="relative rounded-2xl overflow-hidden h-[99px] col-span-2 lg:col-span-1 border border-[#E3E3E3]">
+        <div className="relative col-span-2 h-[99px] overflow-hidden rounded-2xl border border-stroke-neutral-weaker xl:col-span-1">
           <img
             src={streakCardBg}
             alt=""
             className="absolute inset-0 object-cover w-full h-full rounded-[16px]"
           />
           <div className="relative flex items-center justify-between h-full px-5">
-            <div className="flex flex-col gap-1">
-              <span className="font-inter text-[12px] font-normal uppercase tracking-widest text-gray-500">
+            <div className="flex min-w-0 flex-col gap-1">
+              <span className="font-inter text-[12px] font-normal uppercase tracking-widest text-text-neutral-weaker md:truncate">
                 Streak Count
               </span>
-              <p
-                className="font-inter text-[14px] font-semibold leading-tight"
-                style={{ color: "#293039" }}
-              >
+              <p className="font-inter text-[14px] font-semibold leading-tight text-text-neutral-strong">
                 You're on a{" "}
-                <span className="font-bold" style={{ color: "#EA580C" }}>
+                <span className="font-bold text-text-brand-strong">
                   {streakCount}-day
                 </span>{" "}
                 streak

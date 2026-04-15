@@ -70,7 +70,7 @@ export default function ActionBtn(props: FilePreviewItemBase) {
       {props._id && (
         <button
           type="button"
-          className="flex items-center gap-2 rounded-full bg-[#F3F3F3] px-4 py-[9px] font-geist text-sm font-medium text-danger"
+          className="flex items-center gap-2 rounded-full bg-v3-fill-weaker px-4 py-[9px] font-geist text-sm font-medium text-danger"
           onClick={() => setShowDeleteConfirmation(true)}
         >
           <TimesIcon width={10} height={10} />
@@ -79,11 +79,11 @@ export default function ActionBtn(props: FilePreviewItemBase) {
       )}
       <button
         type="button"
-        className="flex items-center gap-2 rounded-full bg-white px-4 py-[9px] font-geist text-sm font-medium text-[#98A2B3]"
+        className="flex items-center gap-2 rounded-full bg-white px-4 py-[9px] font-geist text-sm font-medium text-v3-text-weaker"
         onClick={handleDownload}
         disabled={downloading}
       >
-        {downloading ? <Spinner loading className="!m-0 !text-[#98A2B3]" /> : <DownloadIcon width={16} height={16} />}
+        {downloading ? <Spinner loading className="!m-0 !text-text-neutral-weaker" /> : <DownloadIcon width={16} height={16} />}
         <span className="text-black">Download</span>
       </button>
       <button

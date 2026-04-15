@@ -48,7 +48,7 @@ export function FooterBtnGroup({
             type="button"
             disabled={isDiscardDisabled}
             onClick={onDiscard}
-            className="btn-outline border-[#C7C9C8]!"
+            className="btn-outline border-stroke-neutral-weaker!"
           >
             {discardLabel}
           </button>
@@ -68,7 +68,7 @@ export function FooterBtnGroup({
             type="button"
             disabled={isDiscardDisabled}
             onClick={onDiscard}
-            className="btn-outline border-[#C7C9C8]!"
+            className="btn-outline border-stroke-neutral-weaker!"
           >
             {discardLabel}
           </button>

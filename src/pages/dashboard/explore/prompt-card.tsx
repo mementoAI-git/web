@@ -7,7 +7,7 @@ export default function PromptCard({ title, _id }: IPrompt) {
   return (
     <Link
       to={`/chat/reply/${_id}`}
-      className="flex size-full flex-1 gap-3 rounded-2xl border border-sand-4 p-3 sm:min-w-83 sm:p-4"
+      className="flex size-full flex-1 gap-3 rounded-2xl border border-v3-stroke-weak p-3 transition-colors hover:border-v3-stroke-strong sm:min-w-83 sm:p-4"
     >
       <div className="flex size-[56px] items-center justify-center sm:size-[72px]">
         <img src={questionIcon} className="size-[36.32px] object-contain sm:size-[46.7px]" alt="Question" />

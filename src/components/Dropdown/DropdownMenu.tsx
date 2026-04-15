@@ -26,7 +26,7 @@ export function DropdowmMenu({
       )}
       {footerItem && (
         <Fragment>
-          <div className="my-1 w-full border-t border-[#EAECF0]" />
+          <div className="my-1 w-full border-t border-v3-stroke-weak" />
           {footerItem}
         </Fragment>
       )}

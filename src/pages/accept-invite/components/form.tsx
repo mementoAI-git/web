@@ -50,7 +50,7 @@ export default function AcceptInviteForm({ data }: { data: IBeneficiary }) {
       <div
         className={cn(
           "mx-auto flex size-16 items-center justify-center rounded-full bg-grey-500 text-center sm:size-18",
-          { "border-2 border-[#EAECF0]": !isEmpty(benefactor.picture_url) },
+          { "border-2 border-v3-stroke-weak": !isEmpty(benefactor.picture_url) },
         )}
       >
         {isEmpty(benefactor.picture_url) ? (
@@ -71,15 +71,15 @@ export default function AcceptInviteForm({ data }: { data: IBeneficiary }) {
         <span className="font-garamond text-2xl font-medium text-gray-800 leading-[38px] sm:text-3xl">
           Join <span className="capitalize">{name}</span> on Memento AI
         </span>
-        <span className="block max-w-[490px] font-garamond text-xs leading-6 text-[#667085] sm:text-xl">
+        <span className="block max-w-[490px] font-garamond text-xs leading-6 text-v3-text-weak sm:text-xl">
           Your contact, <span className="capitalize">{name}</span> has invited you to join Memento as a beneficiary on his profile.{" "}
-          <span className="cursor-pointer text-[#E26A24] underline underline-offset-4">
+          <span className="cursor-pointer text-v3-brand-strong underline underline-offset-4">
             What does this mean?
           </span>
         </span>
       </div>
       <div className="flex flex-col items-center justify-center gap-2 sm:flex-row sm:gap-3">
-        <span className="text-xs text-[#667085] sm:text-sm">You're Joining as:</span>
+        <span className="text-xs text-v3-text-weak sm:text-sm">You're Joining as:</span>
         <span className="mem-tags lowercase!">{email}</span>
       </div>
 
@@ -113,8 +113,8 @@ export default function AcceptInviteForm({ data }: { data: IBeneficiary }) {
             </button>
             <span className="mx-auto block max-w-[410.52px] text-center font-inter text-sm text-gray-800">
               By clicking “Accept invite” you agree to our
-              <span className="cursor-pointer text-[#52A1DD] underline underline-offset-4"> Terms of Use</span> and
-              <span className="cursor-pointer text-[#52A1DD] underline underline-offset-4"> Privacy Policy</span>.
+              <span className="cursor-pointer text-text-info-strong underline underline-offset-4"> Terms of Use</span> and
+              <span className="cursor-pointer text-text-info-strong underline underline-offset-4"> Privacy Policy</span>.
             </span>
           </div>
         </form>

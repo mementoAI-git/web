@@ -4,121 +4,179 @@ import { ensureLinksOpenInNewTab } from "@/utility";
 import { MemoryItemActions } from "./dropdown";
 import type { IMemory, IPagination } from "@/utility/interface";
 import dayjs from "dayjs";
-import { Link, useNavigate } from "react-router-dom";
-import { useState, useCallback, useEffect } from "react";
+import { Link } from "react-router-dom";
+import { useCallback, useEffect, useState } from "react";
 import { useModal } from "@/hooks/use-modal";
+import { cn } from "@/lib/utils";
 
 import { PlaySolidIcon, WaveIcon } from "@/components/icons";
 import recordBanner from "@/assets/icon/record-banner.png";
 
-function StoriesGridItem({ memory, isMobile }: { memory: IMemory; isMobile: boolean }) {
-  const [isHovered, setIsHovered] = useState(false);
+/** Rotate aspect ratios so the masonry column layout feels like Pinterest. */
+const MEDIA_ASPECTS = [
+  "aspect-[3/4]",
+  "aspect-[4/5]",
+  "aspect-square",
+  "aspect-[5/6]",
+  "aspect-[2/3]",
+] as const;
+
+const TEXT_MIN_HEIGHTS = ["min-h-[200px]", "min-h-[260px]", "min-h-[228px]", "min-h-[244px]"] as const;
+
+function StoriesGridItem({
+  memory,
+  isMobile,
+  index,
+}: {
+  memory: IMemory;
+  isMobile: boolean;
+  index: number;
+}) {
   const { open } = useModal();
-  const navigate = useNavigate();
 
-  const handleClick = useCallback((e: React.MouseEvent) => {
-    if (!isMobile) {
-      e.preventDefault();
-      open("view-memory", { memoryId: memory._id });
-    }
-  }, [isMobile, open, memory._id]);
-
-  // Find first image or video for banner
-  const bannerMedia = memory.attachments.find(a =>
-    a.type.includes("image") || a.type.includes("video")
+  const handleClick = useCallback(
+    (e: React.MouseEvent) => {
+      if (!isMobile) {
+        e.preventDefault();
+        open("view-memory", { memoryId: memory._id });
+      }
+    },
+    [isMobile, open, memory._id],
   );
 
-  // Find audio if no banner media exists
-  const audioMedia = memory.attachments.find(a => a.type.includes("audio"));
+  const stopMenuBubble = useCallback((e: React.MouseEvent | React.KeyboardEvent) => {
+    e.stopPropagation();
+  }, []);
+
+  const bannerMedia = memory.attachments.find(
+    (a) => a.type.includes("image") || a.type.includes("video"),
+  );
+  const audioMedia = memory.attachments.find((a) => a.type.includes("audio"));
+  const aspectClass = MEDIA_ASPECTS[index % MEDIA_ASPECTS.length];
+  const textMinH = TEXT_MIN_HEIGHTS[index % TEXT_MIN_HEIGHTS.length];
 
   const renderContent = () => {
-    // Priority 1: Image or Video Banner
     if (bannerMedia) {
       const isVideo = bannerMedia.type.includes("video");
       return (
-        <div className="relative w-full overflow-hidden rounded-[16px] aspect-square bg-gray-50 border border-black/5">
+        <div
+          className={cn(
+            "relative w-full overflow-hidden rounded-2xl border border-v3-stroke-weak bg-v3-fill-weaker shadow-sm",
+            aspectClass,
+          )}
+        >
           <img
             src={bannerMedia.url}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover/card:scale-[1.03]"
             alt={memory.title}
+            loading="lazy"
           />
-          {isVideo && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/10 transition-opacity group-hover:bg-black/20">
-              <div className="bg-white/30 backdrop-blur-md rounded-full p-3 border border-white/40 shadow-lg">
+          {isVideo ? (
+            <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/10 transition-opacity group-hover/card:bg-black/25">
+              <div className="rounded-full border border-white/40 bg-white/30 p-3 shadow-lg backdrop-blur-md">
                 <PlaySolidIcon className="size-8 text-white" />
               </div>
             </div>
-          )}
+          ) : null}
         </div>
       );
     }
 
-    // Priority 2: Audio Banner (Using record-banner.png)
     if (audioMedia) {
       return (
-        <div className="relative w-full overflow-hidden rounded-[16px] aspect-square bg-gray-900 flex items-center justify-center border border-black/5">
+        <div
+          className={cn(
+            "relative flex w-full items-center justify-center overflow-hidden rounded-2xl border border-v3-stroke-weak bg-v3-fill-strong shadow-sm",
+            aspectClass,
+          )}
+        >
           <img
             src={recordBanner}
-            className="absolute inset-0 w-full h-full object-cover opacity-90 transition-transform duration-500 group-hover:scale-105"
-            alt="Recording Banner"
+            className="absolute inset-0 h-full w-full object-cover opacity-90 transition-transform duration-500 ease-out group-hover/card:scale-[1.03]"
+            alt=""
+            loading="lazy"
           />
-          <div className="z-10 bg-white/10 backdrop-blur-md rounded-2xl p-5 border border-white/20 flex flex-col items-center gap-3">
-            <WaveIcon className="w-16 h-auto text-white opacity-80" />
-            <span className="font-inter text-sm font-semibold text-white tracking-widest">
-              {audioMedia.duration ? dayjs().startOf('day').add(audioMedia.duration, 'second').format('HH:mm:ss') : '00:00:00'}
+          <div className="relative z-10 flex flex-col items-center gap-3 rounded-2xl border border-white/20 bg-white/10 p-5 backdrop-blur-md">
+            <WaveIcon className="h-auto w-16 text-white opacity-80" />
+            <span className="font-inter text-sm font-semibold tracking-widest text-white">
+              {audioMedia.duration ?
+                dayjs().startOf("day").add(audioMedia.duration, "second").format("HH:mm:ss") :
+                "00:00:00"}
             </span>
           </div>
         </div>
       );
     }
 
-    // Default: Text Card (if no media)
     return (
-      <div className="relative w-full overflow-hidden rounded-[16px] aspect-square bg-gray-50 border border-[#EEEDED] p-5 flex flex-col gap-2 shadow-sm">
-        <h4 className="font-garamond font-bold text-base text-[#412C09] line-clamp-2 leading-snug">
+      <div
+        className={cn(
+          "relative flex w-full flex-col gap-2 overflow-hidden rounded-2xl border border-v3-stroke-weak bg-v3-fill-weaker p-5 shadow-sm",
+          textMinH,
+        )}
+      >
+        <h4 className="line-clamp-2 font-inter text-base font-semibold leading-snug text-v3-text-strong">
           {memory.title}
         </h4>
-        <p className="font-inter text-sm text-[#412C09CC] line-clamp-6 leading-relaxed">
-          <div className="text-xs" dangerouslySetInnerHTML={{ __html: ensureLinksOpenInNewTab(DOMPurify.sanitize(memory?.body || "")) }} />
-        </p>
-        <div className="mt-auto pointer-events-none bg-gradient-to-t from-gray-50 via-gray-50/80 to-transparent h-16 w-full absolute bottom-0 left-0" />
+        <div
+          className="line-clamp-[8] font-inter text-sm leading-relaxed text-v3-text-weak [&_a]:underline"
+          dangerouslySetInnerHTML={{
+            __html: ensureLinksOpenInNewTab(DOMPurify.sanitize(memory?.body || "")),
+          }}
+        />
+        <div className="pointer-events-none absolute bottom-0 left-0 mt-auto h-20 w-full bg-gradient-to-t from-v3-fill-weaker via-v3-fill-weaker/85 to-transparent" />
       </div>
     );
   };
 
   return (
-    <div
-      className="group relative break-inside-avoid mb-8 flex w-full flex-col items-center"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+    <article
+      className={cn(
+        "group/card relative mb-4 w-full break-inside-avoid sm:mb-5",
+        "focus-within:ring-2 focus-within:ring-v3-brand-strong/40 focus-within:ring-offset-2",
+      )}
     >
-      <Link to={`/stories/${memory?._id}`} className="w-full" onClick={handleClick}>
-        {renderContent()}
+      <Link
+        to={`/stories/${memory._id}`}
+        className="block rounded-2xl outline-none"
+        onClick={handleClick}
+        aria-label={`Open story: ${memory.title}`}
+      >
+        <div className="relative overflow-hidden rounded-2xl">
+          {renderContent()}
+          <div
+            className="pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-t from-black/55 via-black/15 to-transparent opacity-0 transition-opacity duration-300 group-hover/card:opacity-100"
+            aria-hidden
+          />
+          <div className="pointer-events-none absolute bottom-3 left-3 z-10 translate-y-2 opacity-0 transition-all duration-300 group-hover/card:translate-y-0 group-hover/card:opacity-100">
+            <span className="inline-flex items-center rounded-full bg-white px-4 py-2 font-inter text-sm font-semibold text-neutral-900 shadow-lg ring-1 ring-black/5">
+              Open story
+            </span>
+          </div>
+        </div>
       </Link>
 
-      {/* Title Pill - Positioned 12px below the banner */}
-      <div className="mt-3 z-20 transition-transform duration-300 group-hover:translate-y-0.5 flex justify-center w-full">
-        <div className="bg-[#FAF6F1] border border-[#EEEDED] rounded-lg p-1 shadow-sm max-w-[90%] w-fit">
-          <p className="font-inter text-center font-medium text-xs sm:text-[13px] text-[#412C09] line-clamp-2 tracking-tight leading-snug">
-            {memory.title}
-          </p>
+      <div
+        className="absolute top-2 right-2 z-20 opacity-0 transition-opacity duration-300 group-hover/card:pointer-events-auto group-hover/card:opacity-100 pointer-events-none sm:top-3 sm:right-3"
+        onClick={stopMenuBubble}
+        onKeyDown={stopMenuBubble}
+      >
+        <div className="overflow-hidden rounded-xl border border-v3-stroke-weak bg-white/95 shadow-lg backdrop-blur-sm">
+          <MemoryItemActions memory={memory} />
         </div>
       </div>
 
-      {/* Actions (Hover) */}
-      {isHovered && (
-        <div className="absolute top-3 right-3 z-30 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-          <div className="bg-white/90 backdrop-blur-sm rounded-xl shadow-lg border border-black/5 overflow-hidden">
-            <MemoryItemActions memory={memory} />
-          </div>
-        </div>
-      )}
-    </div>
+      <p className="mt-2 line-clamp-2 px-0.5 text-center font-inter text-xs font-medium leading-snug text-v3-text-strong sm:text-[13px]">
+        {memory.title}
+      </p>
+    </article>
   );
 }
 
 export default function StoriesGrid({ data }: { data: IPagination<IMemory> }) {
-  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 640);
+  const [isMobile, setIsMobile] = useState(
+    () => typeof window !== "undefined" && window.innerWidth < 640,
+  );
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 640);
@@ -128,12 +186,12 @@ export default function StoriesGrid({ data }: { data: IPagination<IMemory> }) {
 
   if (!data?.docs || data.docs.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
-        <div className="w-16 h-16 mx-auto mb-4 bg-sand-3 rounded-full flex items-center justify-center">
-          <DoubleHeartIcon className="size-8 stroke-2 text-sand-10" />
+      <div className="flex flex-col items-center justify-center px-4 py-12 text-center">
+        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-v3-fill-weaker">
+          <DoubleHeartIcon className="size-8 stroke-2 text-v3-text-weaker" />
         </div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">No stories yet</h3>
-        <p className="text-gray-500 text-sm max-w-xs">
+        <h3 className="mb-2 text-lg font-semibold text-v3-text-strong">No stories yet</h3>
+        <p className="max-w-xs text-sm text-v3-text-weak">
           Start creating your first story to see it here.
         </p>
       </div>
@@ -141,8 +199,10 @@ export default function StoriesGrid({ data }: { data: IPagination<IMemory> }) {
   }
 
   return (
-    <div className="w-full columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-4 sm:gap-6 space-y-4 sm:space-y-6">
-      {data.docs.map((m, i) => <StoriesGridItem key={i} memory={m} isMobile={isMobile} />)}
+    <div className="w-full columns-2 gap-3 sm:columns-2 sm:gap-4 md:columns-3 lg:columns-4 lg:gap-5 xl:gap-6 [column-fill:_balance]">
+      {data.docs.map((m, i) => (
+        <StoriesGridItem key={m._id ?? i} memory={m} isMobile={isMobile} index={i} />
+      ))}
     </div>
   );
 }

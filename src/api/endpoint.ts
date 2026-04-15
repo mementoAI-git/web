@@ -9,10 +9,18 @@ export default {
   logout: "/auth/logout",
   oauth: "/auth/oauth/",
   setPassword: "/auth/set-password",
+  verify2FALogin: "/auth/2fa/verify",
+  passkeyRegisterBegin: "/auth/passkey/register/begin",
+  passkeyRegisterComplete: "/auth/passkey/register/complete",
+  passkeyLoginBegin: "/auth/passkey/login/begin",
+  passkeyLoginComplete: "/auth/passkey/login/complete",
 
   // user
   profile: "/users/profile",
+  listPasskeys: "/users/passkeys",
+  deletePasskey: "/users/passkeys/:credential_id",
   userContext: "/users/context",
+  persona: "/users/persona",
   completeOnboarding: "/users/complete-onboarding",
   uploadPicture: "/users/upload-picture",
   changePassword: "/users/change-password",
@@ -59,6 +67,7 @@ export default {
   memoriesStats: "/memories/stats",
   removeFileFromMemory: "/memories/remove-file",
   addMessageToMemory: "/memories/add-message",
+  conversationEnrichment: "/memories/:id/enrichment",
 
   // ai
   aiPrompt: "/ai/prompt",
@@ -79,6 +88,13 @@ export default {
 
   // feedback
   feedback: "/feedback",
+
+  // onboarding (Groot) — under users module
+  onboardingDetails: "/users/onboarding-details",
+  onboarding: "/users/onboarding",
+  onboardingSkip: "/users/onboarding/skip",
+  /** Host onboarding chat — streams like `/ai/prompt`; trailer JSON for chips / completion */
+  hostOnboardingChatPrompt: "/users/onboarding/chat/prompt",
 
   // sentry
   tunnel: `${import.meta.env.VITE_API_BASE_URL}/sentry_tunnel`,

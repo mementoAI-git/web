@@ -24,6 +24,10 @@ export const storageKeys = {
   listmode: "memento:listmode",
   recentMemories: "memento:recent-memories",
   welcomeOnce: "memento:welcome-once",
+  /** Host onboarding (Groot) progress — persists across refreshes */
+  onboardingState: "memento_onboarding_state",
+  /** Host onboarding chat (PRD v3 scripted flow) — survives skip / refresh until completed */
+  hostOnboardingChat: "memento:host-onboarding-chat",
 };
 
 // Supported file types for uploads

@@ -13,9 +13,9 @@ export default function RecIndicator({ counter = 0, recoding = false, className 
       <div className="flex aspect-square w-5 items-center justify-center rounded-full bg-white">
         <span className="relative flex size-[7px]">
           <span
-            className={`absolute inline-flex h-full w-full ${recoding ? "animate-ping" : ""} rounded-full bg-[#F97066] opacity-75`}
+            className={`absolute inline-flex h-full w-full ${recoding ? "animate-ping" : ""} rounded-full bg-fill-error-strong opacity-75`}
           />
-          <span className="relative inline-flex size-[7px] rounded-full bg-[#F97066]" />
+          <span className="relative inline-flex size-[7px] rounded-full bg-fill-error-strong" />
         </span>
       </div>
       <span className="font-inter text-sm font-medium">

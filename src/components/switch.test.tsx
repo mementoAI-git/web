@@ -1,39 +1,34 @@
-import { render } from "@testing-library/react";
+import { describe, it, expect, vi } from "vitest";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import Switch from "./switch";
 
 describe("Switch", () => {
-  it("renders without crashing", () => {
+  it("renders an accessible switch", () => {
     render(<Switch />);
-    expect(document.querySelector(".rounded-full")).toBeInTheDocument();
+    expect(screen.getByRole("switch")).toBeInTheDocument();
   });
 
-  it("calls onCheckedChange with !checked when clicked", async () => {
+  it("calls onCheckedChange with true when toggled from off", async () => {
     const user = userEvent.setup();
     const onCheckedChange = vi.fn();
-    const { container } = render(<Switch checked={false} onCheckedChange={onCheckedChange} />);
-    const switchEl = container.querySelector(".cursor-pointer");
-    await user.click(switchEl as HTMLElement);
+    render(<Switch checked={false} onCheckedChange={onCheckedChange} />);
+    await user.click(screen.getByRole("switch"));
     expect(onCheckedChange).toHaveBeenCalledWith(true);
   });
 
-  it("does NOT call onCheckedChange when disabled", async () => {
+  it("does not call onCheckedChange when disabled", async () => {
     const user = userEvent.setup();
     const onCheckedChange = vi.fn();
-    const { container } = render(<Switch checked={false} onCheckedChange={onCheckedChange} disabled />);
-    const switchEl = container.firstElementChild;
-    await user.click(switchEl as HTMLElement);
+    render(<Switch checked={false} onCheckedChange={onCheckedChange} disabled />);
+    await user.click(screen.getByRole("switch"));
     expect(onCheckedChange).not.toHaveBeenCalled();
   });
 
-  it("applies correct CSS classes based on checked state", () => {
-    const { container, rerender } = render(<Switch checked={false} />);
-    const root = container.firstElementChild;
-    expect(root).toHaveClass("bg-gray-300");
-    expect(root).not.toHaveClass("bg-blue-6");
-
+  it("reflects checked state", () => {
+    const { rerender } = render(<Switch checked={false} />);
+    expect(screen.getByRole("switch")).toHaveAttribute("data-state", "unchecked");
     rerender(<Switch checked />);
-    expect(root).toHaveClass("bg-blue-6");
-    expect(root).not.toHaveClass("bg-gray-300");
+    expect(screen.getByRole("switch")).toHaveAttribute("data-state", "checked");
   });
 });

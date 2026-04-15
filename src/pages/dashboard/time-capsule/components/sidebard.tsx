@@ -19,7 +19,7 @@ export default function CapsulesSidebar({ data }: { data: ICapsule }) {
 
   if (isEmpty(data)) return <DetailsSideBarSkeleton />;
   return (
-    <div className="size-full space-y-3 bg-[#FCFCFD] p-6">
+    <div className="size-full space-y-3 bg-white p-6">
       <div className="space-y-4 border-b border-grey-500 pb-14">
         <span className="block font-inter text-xs font-medium text-grey-800 uppercase">
           properties

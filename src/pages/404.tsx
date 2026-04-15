@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import notFoundImage from "@/assets/image/error_404.png";
-import { ArrowLeftIcon } from "@/components/icons";
+import { ErrorStateGoBackButton } from "@/components/error-state-outline-button";
 
 export default function NotFoundPage() {
   const navigate = useNavigate();
@@ -9,8 +9,8 @@ export default function NotFoundPage() {
     navigate(-1);
   };
 
-  const handleGoHome = () => {
-    navigate("/");
+  const handleGoOverview = () => {
+    navigate("/overview");
   };
 
   return (
@@ -19,37 +19,33 @@ export default function NotFoundPage() {
         <img
           src={notFoundImage}
           alt="Not Found"
-          className="w-full max-w-[250px] sm:max-w-[300px] md:max-w-[370.75px] h-auto object-cover"
+          className="w-full max-w-[250px] sm:max-w-[300px] h-[130px] object-cover"
         />
-        <div className="text-center space-y-6 sm:space-y-8 md:space-y-10 w-full">
-          <div className="space-y-4 sm:space-y-5 md:space-y-6">
-            <div className="space-y-2 sm:space-y-3">
-              <span className="font-inter text-sm sm:text-base font-medium text-orange uppercase">Error 404</span>
-              <p className="font-garamond text-2xl sm:text-3xl md:text-[40px] leading-tight sm:leading-[36px] md:leading-[48px] font-medium text-gray-800 px-4">
+        <div className="text-center space-y-6 sm:space-y-8 md:space-y-10 w-full flex flex-col justify-start items-center">
+          <div className="space-y-4 sm:space-y-5 md:space-y-6 flex flex-col justify-start items-center">
+            <div className="flex flex-col items-center justify-start gap-2 sm:gap-3">
+              <span className="font-inter text-xs font-medium uppercase text-v3-brand-strong">
+                Error 404
+              </span>
+              <p className="font-garamond text-2xl sm:text-3xl md:text-3xl leading-tight sm:leading-[36px] md:leading-[40px] font-normal text-v3-text-strong px-4 w-fit">
                 Sorry, We Couldn't Find That Page
               </p>
+              <p className="font-garamond text-[20px] text-v3-text-weak px-4 w-fit">
+                The page you are looking for doesn't exist or has been moved.
+              </p>
             </div>
-            <p className="font-garamond text-lg sm:text-xl md:text-2xl text-gray-950/90 px-4">
-              The page you are looking for doesn't exist or has been moved.
-            </p>
           </div>
           <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center items-center w-full px-4">
+            <ErrorStateGoBackButton onClick={handleGoBack} />
             <button
-              onClick={handleGoBack}
-              className="btn-outline !gap-[4px] !py-3 sm:!py-4 md:!py-[18px] !px-6 sm:!px-8 md:!px-12 w-full sm:w-auto"
+              onClick={handleGoOverview}
+              className="btn h-fit !bg-v3-brand-strong !text-white !py-3 sm:!py-4 md:!py-[14px] !px-6 sm:!px-8 md:!px-12 w-full sm:w-auto"
             >
-              <ArrowLeftIcon className="size-4 text-lg" />
-              <span>Go back</span>
-            </button>
-            <button
-              onClick={handleGoHome}
-              className="btn !py-3 sm:!py-4 md:!py-[18px] !px-6 sm:!px-8 md:!px-12 w-full sm:w-auto"
-            >
-              Homepage
+              Overview
             </button>
           </div>
         </div>
       </div>
     </div>
-  )
+  );
 }

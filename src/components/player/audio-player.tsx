@@ -42,10 +42,13 @@ export default function AudioPlayer({
     isMuted,
     setVolumeLevel,
     toggleMute,
-  } = usePlayer({ src, externalRef: audioRef });
+  } = usePlayer({ src, externalRef: audioRef, duration });
   const progressBar = useRef<HTMLDivElement | null>(null);
   const current = getDuration(media?.currentTime || 0);
-  const end = getDuration(media?.duration || duration);
+  // Use media.duration only when it is a real finite value; fall back to the
+  // DB-supplied duration prop (which correctly represents the recording length).
+  const knownDuration = (media?.duration && isFinite(media.duration)) ? media.duration : duration;
+  const end = getDuration(knownDuration);
 
   const handleSeek = (event: React.MouseEvent<HTMLDivElement>) => {
     if (!progressBar.current || !media?.duration) return;
@@ -58,7 +61,7 @@ export default function AudioPlayer({
 
   return (
     <div
-      className={`flex flex-1 flex-col items-center justify-between rounded-2xl border border-[#F3F3F3] bg-[#FCFCFD] ${className}`}
+      className={`flex flex-1 flex-col items-center justify-between rounded-2xl border border-v3-stroke-weak bg-white ${className}`}
     >
       <div />
       <div className="w-62.5 space-y-6">
@@ -69,7 +72,8 @@ export default function AudioPlayer({
         )}
         <audio
           ref={ref as Ref<HTMLAudioElement>}
-          preload="metadata"
+          preload="auto"
+          crossOrigin="anonymous"
           src={src}
           key={id}
         />

@@ -12,6 +12,67 @@ export const handlers = [
     });
   }),
 
+  http.put(`${BASE_URL}/users/profile`, async ({ request }) => {
+    const body = (await request.json()) as Record<string, unknown>;
+    return HttpResponse.json({
+      success: true,
+      data: { ...mockUser, ...body },
+      message: "Profile updated",
+    });
+  }),
+
+  http.get(`${BASE_URL}/users/context`, () => {
+    return HttpResponse.json({
+      success: true,
+      data: mockUser.context || {},
+      message: "User context fetched",
+    });
+  }),
+
+  http.get(`${BASE_URL}/users/persona`, () => {
+    return HttpResponse.json({
+      status: 200,
+      message: "Persona retrieved successfully",
+      data: null,
+    });
+  }),
+
+  http.get(`${BASE_URL}/beneficiaries`, () => {
+    return HttpResponse.json({
+      success: true,
+      data: {
+        docs: [],
+        hasNextPage: false,
+        hasPrevPage: false,
+        limit: 20,
+        nextPage: null,
+        page: 1,
+        pagingCounter: 0,
+        prevPage: null,
+        totalDocs: 0,
+        totalPages: 0,
+      },
+    });
+  }),
+
+  http.get(`${BASE_URL}/groups`, () => {
+    return HttpResponse.json({
+      success: true,
+      data: {
+        docs: [],
+        hasNextPage: false,
+        hasPrevPage: false,
+        limit: 25,
+        nextPage: null,
+        page: 1,
+        pagingCounter: 0,
+        prevPage: null,
+        totalDocs: 0,
+        totalPages: 0,
+      },
+    });
+  }),
+
   http.get(`${BASE_URL}/users/stats`, () => {
     return HttpResponse.json({
       success: true,
@@ -22,7 +83,34 @@ export const handlers = [
   http.get(`${BASE_URL}/activities`, () => {
     return HttpResponse.json({
       success: true,
-      data: [],
+      data: {
+        docs: [
+          {
+            _id: "act-1",
+            description: "What are your thoughts on the...",
+            created_at: new Date().toISOString(),
+            type: "chat",
+          },
+          {
+            _id: "act-2",
+            description: "My trip to the United States ba...",
+            created_at: new Date(Date.now() - 172800000).toISOString(),
+            type: "story",
+          },
+          {
+            _id: "act-3",
+            description: "How do I make a paper plane...",
+            created_at: new Date(Date.now() - 172800000).toISOString(),
+            type: "prompt",
+          },
+          {
+            _id: "act-4",
+            description: 'The one time i "woke up"',
+            created_at: new Date(Date.now() - 172800000).toISOString(),
+            type: "memo",
+          },
+        ],
+      },
       message: "Activities fetched",
     });
   }),
@@ -30,8 +118,119 @@ export const handlers = [
   http.get(`${BASE_URL}/memories/conversations`, () => {
     return HttpResponse.json({
       success: true,
-      data: [],
+      data: {
+        docs: [
+          {
+            _id: "host-conversation-1",
+            title: "Your Memento",
+            updated_at: new Date().toISOString(),
+            type: "conversation",
+          },
+        ],
+        hasNextPage: false,
+        hasPrevPage: false,
+        limit: 20,
+        nextPage: null,
+        page: 1,
+        pagingCounter: 1,
+        prevPage: null,
+        totalDocs: 1,
+        totalPages: 1,
+      },
       message: "Conversations fetched",
+    });
+  }),
+
+  http.get(`${BASE_URL}/memories/:id`, ({ params }) => {
+    const id = String(params.id);
+    return HttpResponse.json({
+      success: true,
+      data: {
+        _id: id,
+        title: "Your Memento",
+        body: "",
+        user: "mock-user",
+        attachments: [],
+        tags: [],
+        type: "conversation",
+        status: "active",
+        level: 0,
+        refrence: "",
+        last_opened: new Date().toISOString(),
+        created_at: new Date(Date.now() - 86400000 * 30).toISOString(),
+        updated_at: new Date().toISOString(),
+      },
+      message: "Memory fetched",
+    });
+  }),
+
+  http.get(`${BASE_URL}/memories`, () => {
+    return HttpResponse.json({
+      success: true,
+      data: {
+        docs: [
+          {
+            _id: "mem-1",
+            title: "Family reunion, Lagos 1990",
+            attachments: [{ type: "image/jpeg", duration: undefined, _id: "f1", name: "photo.jpg", size: 0, url: "" }],
+            beneficiaries: [{ _id: "b1", name: "Alice" }, { _id: "b2", name: "Bob" }, { _id: "b3", name: "Carol" }, { _id: "b4", name: "Dave" }],
+            groups: [],
+            created_at: new Date().toISOString(),
+          },
+          {
+            _id: "mem-2",
+            title: "Wedding anniversary message",
+            attachments: [{ type: "video/mp4", duration: 154, _id: "f2", name: "video.mp4", size: 0, url: "" }],
+            beneficiaries: [],
+            groups: [],
+            created_at: new Date(Date.now() - 86400000).toISOString(),
+          },
+          {
+            _id: "mem-3",
+            title: "Jollof rice recipe",
+            attachments: [{ type: "application/pdf", _id: "f3", name: "doc.pdf", size: 0, url: "" }],
+            beneficiaries: [{ _id: "b1", name: "Alice" }, { _id: "b2", name: "Bob" }, { _id: "b3", name: "Carol" }],
+            groups: [],
+            created_at: new Date(Date.now() - 172800000).toISOString(),
+          },
+          {
+            _id: "mem-4",
+            title: "Favourite hymn recording",
+            attachments: [{ type: "audio/mpeg", duration: 252, _id: "f4", name: "audio.mp3", size: 0, url: "" }],
+            beneficiaries: [{ _id: "b1", name: "Alice" }, { _id: "b2", name: "Bob" }],
+            groups: [],
+            created_at: new Date(Date.now() - 259200000).toISOString(),
+          },
+        ],
+        totalDocs: 4,
+        hasNextPage: false,
+        page: 1,
+      },
+      message: "Memories fetched",
+    });
+  }),
+
+  http.get(`${BASE_URL}/prompts`, () => {
+    return HttpResponse.json({
+      success: true,
+      data: [
+        {
+          prompt: {
+            _id: "prompt-1",
+            title:
+              "Think of a recent happy memory with your family. What happened and why is it meaningful?",
+            answered: false,
+          },
+        },
+        {
+          prompt: {
+            _id: "prompt-2",
+            title: "What's one thing you're grateful for today?",
+            answered: false,
+          },
+        },
+      ],
+      message: "Prompts fetched",
     });
   }),
 
@@ -82,10 +281,224 @@ export const handlers = [
     });
   }),
 
-  http.post(`${BASE_URL}/ai/conversation/new`, () => {
+  http.post(`${BASE_URL}/ai/conversation/new`, async ({ request }) => {
+    const body = (await request.json()) as { text?: string };
     return HttpResponse.json({
       success: true,
-      data: { memory_id: "mock-memory-id" },
+      data: {
+        memory_id: "mock-memory-id",
+        response: body?.text ? `Reply to: ${body.text}` : "Hello!",
+      },
+    });
+  }),
+
+  // Onboarding (Groot) — users module
+  http.get(`${BASE_URL}/users/onboarding-details`, () => {
+    return HttpResponse.json({
+      status: 200,
+      message: "OK",
+      data: {
+        onboarding_status: "completed",
+        user: {
+          first_name: "Jane",
+          last_name: "Doe",
+          nickname: "Jane",
+          full_name: "Jane Doe",
+          age_range: "30s_40s",
+          location: "London",
+        },
+        persona: {
+          join_reasons: ["memory_preservation", "family_history_heritage"],
+          audience: ["children", "partner_spouse"],
+          current_priority: ["people_relationships", "memories_stories"],
+          communication_style: [],
+          prefered_communication_style: "voice",
+        },
+      },
+    });
+  }),
+  http.post(`${BASE_URL}/users/onboarding`, async ({ request }) => {
+    await request.json();
+    return HttpResponse.json({
+      status: 200,
+      message: "Onboarding saved successfully",
+      data: null,
+    });
+  }),
+  http.post(`${BASE_URL}/users/onboarding/skip`, () => {
+    return HttpResponse.json({
+      status: 200,
+      message: "Onboarding skipped",
+      data: { onboarding_status: "skipped" },
+    });
+  }),
+
+  /**
+   * Host onboarding chat — streams like `/ai/prompt`; trailer
+   * `\n__MEMENTO_ONBOARDING__` + JSON for chips and `flow_complete`.
+   */
+  http.post(`${BASE_URL}/users/onboarding/chat/prompt`, async ({ request }) => {
+    const body = (await request.json()) as {
+      bootstrap?: boolean;
+      messages?: Array<{ role: string; content: string }>;
+    };
+    const enc = new TextEncoder();
+    const userCount =
+      body.messages?.filter((m) => m.role === "user").length ?? 0;
+    const MARK = "\n__MEMENTO_ONBOARDING__";
+
+    let text: string;
+    let meta: Record<string, unknown>;
+
+    if (body.bootstrap) {
+      text =
+        "Hi — I'm glad you're here. What's one thing you'd love this space to help you with?";
+      meta = {
+        suggestion_chips: ["Family stories", "My own memories", "Getting started"],
+        composer_placeholder: "Share what feels right",
+        composer_label: "Your reply",
+        flow_complete: false,
+        step_index: 1,
+        total_steps: 6,
+      };
+    } else if (userCount >= 7) {
+      text = "Beautiful — that gives me plenty to work with. Welcome aboard.";
+      meta = {
+        suggestion_chips: [],
+        composer_placeholder: "Your reply",
+        composer_label: "Your reply",
+        flow_complete: true,
+        step_index: 6,
+        total_steps: 6,
+      };
+    } else {
+      text = "Thanks — say a bit more when you're ready.";
+      meta = {
+        suggestion_chips: ["A little", "A lot", "Prefer not to say"],
+        composer_placeholder: "Your reply",
+        composer_label: "Your reply",
+        flow_complete: false,
+        step_index: userCount,
+        total_steps: 6,
+      };
+    }
+
+    const stream = new ReadableStream({
+      start(controller) {
+        controller.enqueue(enc.encode(text));
+        controller.enqueue(enc.encode(`${MARK}${JSON.stringify(meta)}`));
+        controller.close();
+      },
+    });
+    return new HttpResponse(stream, {
+      status: 200,
+      headers: { "Content-Type": "text/plain; charset=utf-8" },
+    });
+  }),
+
+  http.post(`${BASE_URL}/files/upload`, () => {
+    return HttpResponse.json({
+      success: true,
+      message: "Uploaded",
+      data: {
+        _id: "mock-file-id",
+        url: "https://example.com/mock-upload.png",
+        name: "mock-upload.png",
+        size: 128,
+        type: "image/png",
+      },
+    });
+  }),
+
+  // 2FA login verification
+  http.post(`${BASE_URL}/auth/2fa/verify`, async ({ request }) => {
+    const body = (await request.json()) as { two_fa_token?: string; code?: string };
+    if (body.code === "000000") {
+      return HttpResponse.json({ success: false, message: "Invalid 2FA code" }, { status: 400 });
+    }
+    return HttpResponse.json({
+      success: true,
+      message: "Login successful",
+      data: {
+        access_token: "mock-access-token",
+        refresh_token: "mock-refresh-token",
+        expires_at: new Date(Date.now() + 3600000).toISOString(),
+        refresh_expires_at: new Date(Date.now() + 86400000).toISOString(),
+        onboarding_status: "completed",
+        onboarded: true,
+      },
+    });
+  }),
+
+  // Passkey management
+  http.get(`${BASE_URL}/users/passkeys`, () => {
+    return HttpResponse.json({
+      success: true,
+      message: "Passkeys retrieved successfully",
+      data: [],
+    });
+  }),
+
+  http.delete(`${BASE_URL}/users/passkeys/:credential_id`, () => {
+    return HttpResponse.json({
+      success: true,
+      message: "Passkey removed successfully",
+      data: null,
+    });
+  }),
+
+  // Passkey login
+  http.post(`${BASE_URL}/auth/passkey/login/begin`, () => {
+    return HttpResponse.json({
+      success: true,
+      message: "Authentication options generated",
+      data: {
+        challenge: "mock-challenge",
+        challenge_id: "mock-challenge-id",
+        rpId: "localhost",
+        allowCredentials: [],
+        userVerification: "required",
+        timeout: 60000,
+      },
+    });
+  }),
+
+  http.post(`${BASE_URL}/auth/passkey/login/complete`, () => {
+    return HttpResponse.json({
+      success: true,
+      message: "Login successful",
+      data: {
+        access_token: "mock-access-token",
+        refresh_token: "mock-refresh-token",
+        expires_at: new Date(Date.now() + 3600000).toISOString(),
+        refresh_expires_at: new Date(Date.now() + 86400000).toISOString(),
+        onboarding_status: "completed",
+        onboarded: true,
+      },
+    });
+  }),
+
+  // Passkey registration
+  http.post(`${BASE_URL}/auth/passkey/register/begin`, () => {
+    return HttpResponse.json({
+      success: true,
+      message: "Registration options generated",
+      data: {
+        challenge: "mock-reg-challenge",
+        rp: { id: "localhost", name: "Memento" },
+        user: { id: "user123", name: "test@example.com", displayName: "Test" },
+        pubKeyCredParams: [],
+        timeout: 60000,
+        attestation: "none",
+      },
+    });
+  }),
+
+  http.post(`${BASE_URL}/auth/passkey/register/complete`, () => {
+    return HttpResponse.json({
+      success: true,
+      message: "Passkey registered successfully",
+      data: { credential_id: "new-cred-id", device_name: "Test Device" },
     });
   }),
 ];

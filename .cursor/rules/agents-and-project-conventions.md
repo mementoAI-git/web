@@ -7,6 +7,7 @@ This repo is a **React + TypeScript + Vite** application. Use these conventions 
 - **Framework**: React + TypeScript with Vite.
 - **Routing**: `react-router-dom` using `src/router.tsx` and page components under `src/pages/`.
 - **UI**: Tailwind CSS (see `tailwindcss` and related tooling in `package.json`), custom components under `src/components/`, and shared utilities under `src/lib/` and `src/utility/`.
+- **Icons**: See `.cursor/rules/icons.mdc` — HeroUI built-in icons when a HeroUI control provides them; otherwise default to `lucide-react`.
 
 When adding or modifying code:
 

@@ -1,48 +1,47 @@
-import endpoint from "@/api/endpoint";
-import Table from "@/components/table";
-import type { IBeneficiary, IPagination } from "@/utility/interface";
-import { useState } from "react";
+import type { IPagination } from "@/utility/interface";
 import useSWR from "swr";
-import Header from "./header";
-import Row from "./row";
-import EmptyTableRow from "@/components/table/empty-table-row";
+import { cn } from "@/utility";
+import { SETTINGS_BENEFICIARIES_SWR_KEY } from "../beneficiaries-list-swr-key";
+import { BeneficiaryCard } from "./beneficiary-card";
+import type { IBeneficiaryWithGroups } from "./beneficiary-types";
 
-const columns = [
-  { label: "recipient", className: "w-[22%] max-w-[170px]" },
-  { label: "date added", className: "!w-[15%]" },
-  { label: "relationship", className: "!w-[19%]" },
-  { label: "groups", className: "!w-[23%]" },
-  { label: "actions", className: "text-right" },
-];
-
-export interface IBeneficiaryWithGroups extends IBeneficiary {
-  groups: { _id: string; name: string; color?: number }[];
-}
+export type { IBeneficiaryWithGroups } from "./beneficiary-types";
 
 export default function Beneficiary() {
-  const [page, setPage] = useState(1);
-  const { data, isLoading } = useSWR<{ data?: IPagination<IBeneficiaryWithGroups> }>(
-    `${endpoint.beneficiaries}?page=${page}`
-  );
+  const { data, isLoading } = useSWR<{ data?: IPagination<IBeneficiaryWithGroups> }>(SETTINGS_BENEFICIARIES_SWR_KEY);
 
-  const tableData: IPagination<IBeneficiaryWithGroups> | undefined = data?.data;
+  const pageData = data?.data;
+  const docs = pageData?.docs ?? [];
 
   return (
-    <div className="space-y-6">
-      <Header count={tableData?.totalDocs ?? 0} />
-      <div className="hide-scrollbar w-full overflow-x-auto text-xs">
-        <Table
-          data={tableData}
-          columns={columns}
-          loading={isLoading}
-          headerClassName="!text-xs text-gray-500"
-          onChangePage={setPage}
-          emptyRow={<EmptyTableRow colSpan={columns.length} title="No beneficiaries yet" description="Add a beneficiary to give them access to your Memento." />}
-          renderRow={(beneficiary, index) => (
-            <Row beneficiary={beneficiary} key={beneficiary._id ?? index} />
-          )}
-        />
-      </div>
+    <div className="flex flex-col gap-4">
+      {isLoading ? (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          {[0, 1].map((k) => (
+            <div
+              key={k}
+              className={cn(
+                "h-56 rounded-2xl border border-v3-stroke-weak bg-v3-fill-weaker/40",
+                "motion-safe:animate-pulse",
+              )}
+              aria-hidden
+            />
+          ))}
+        </div>
+      ) : docs.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-v3-stroke-weak bg-v3-fill-weaker/20 px-4 py-10 text-center">
+          <p className="font-inter text-sm font-medium text-v3-text-strong">No beneficiaries yet</p>
+          <p className="mt-1 font-inter text-sm text-v3-text-weak">
+            Add a beneficiary to give them access to your Memento.
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          {docs.map((b) => (
+            <BeneficiaryCard key={b._id} beneficiary={b} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

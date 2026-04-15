@@ -1,8 +1,12 @@
 import { cn, getDuration, isEmpty } from "@/utility";
-import { WaveIcon } from "@/components/icons";
+import { CopyIcon, WaveIcon } from "@/components/icons";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { useEffect, useMemo, useRef, useState } from "react";
+import dayjs from "dayjs";
+import { CornerDownRight } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "sonner";
+import { snippetReplyText } from "@/utility/chat-reply-prompt";
 
 interface IBubbleProps {
   role?: "user" | "ai" | string
@@ -10,10 +14,31 @@ interface IBubbleProps {
   text?: string
   duration?: number
   is_voice?: boolean
+  /** Compact variant for sidebar: 14px body text, user messages use bg-v3-fill-weak */
+  compact?: boolean
+  /** ISO timestamp from the server; shown when valid */
+  createdAt?: string
+  /** When true, show retry after a failed send (user messages only) */
+  sendFailed?: boolean
+  onRetry?: () => void
+  /** When false, hide time + copy (defaults to hidden when `compact`) */
+  showMessageMeta?: boolean
+  /** Shown above the body on user bubbles when this message was a reply */
+  replyQuote?: { role: string; text: string } | null
+  onReply?: () => void
+  /** Host Chat: deep-dive accent on assistant bubbles */
+  hostChatDeepDive?: boolean
 }
 
 interface ITypingBubbleProps extends Pick<IBubbleProps, "text"> {
   onFinish: (text: string) => void
+}
+
+function formatMessageTime(iso?: string) {
+  if (!iso) return null;
+  const d = dayjs(iso);
+  if (!d.isValid()) return null;
+  return d.format("MMM D, h:mm A");
 }
 
 export default function Bubble({
@@ -21,19 +46,56 @@ export default function Bubble({
   attatchments = [],
   duration = 0,
   text = "",
-  is_voice = false
+  is_voice = false,
+  compact = false,
+  createdAt,
+  sendFailed = false,
+  onRetry,
+  showMessageMeta,
+  replyQuote,
+  onReply,
+  hostChatDeepDive = false,
 }: IBubbleProps) {
 
   const isUser = role === "user"
+  const metaVisible = showMessageMeta ?? !compact;
+  const timeLabel = metaVisible ? formatMessageTime(createdAt) : null;
+  const canCopy = metaVisible && Boolean(text?.trim());
+  const hasReplyableContent = Boolean(text?.trim() || !isEmpty(attatchments));
+  const bubbleTimeTitle =
+    metaVisible && createdAt && dayjs(createdAt).isValid()
+      ? `Sent ${dayjs(createdAt).format("MMMM D, YYYY [at] h:mm A")}`
+      : undefined;
+
+  const handleCopy = useCallback(async () => {
+    const t = text?.trim();
+    if (!t) return;
+    try {
+      await navigator.clipboard.writeText(t);
+      toast.success("Copied to clipboard");
+    } catch {
+      toast.error("Could not copy");
+    }
+  }, [text]);
+
   const { mins, secs } = useMemo(() => {
     if (!is_voice) return getDuration(0)
     return getDuration(duration)
   }, [is_voice, duration])
   return (
-    <div className="space-y-1">
+    <div
+      className={cn("flex flex-col space-y-1 px-2", isUser && "items-end")}
+      title={bubbleTimeTitle}
+    >
       {
         !isEmpty(attatchments) &&
-        <div className="bg-sand-3 ml-auto px-4 py-3 rounded-xl flex gap-2 w-fit max-w-[520px]">
+        <div
+          className={cn(
+            "flex w-fit max-w-[85%] gap-2 rounded-xl px-2 py-2",
+            isUser && "bg-fill-neutral-weaker",
+            !isUser && "bg-transparent",
+          )}
+        >
           {
             attatchments.map(({ url, name }, i) => (
               <img
@@ -48,16 +110,53 @@ export default function Bubble({
           }
         </div>
       }
-      <div>
+      <div className={cn(isUser && "w-fit max-w-[85%]")}>
         <div
-          className={cn("w-full py-1 md:py-3", {
-            "ml-auto w-fit bg-sand-3 px-2 md:px-4 max-w-[520px] rounded-lg md:rounded-xl": isUser
-          })}
+          className={cn(
+            "w-full rounded-[8px] p-2",
+            isUser && "max-w-[470px]",
+            isUser && compact && "bg-fill-neutral-weaker",
+            isUser && !compact && "bg-fill-neutral-weaker",
+            !isUser && "bg-transparent",
+            !isUser &&
+              hostChatDeepDive &&
+              "border-l-[3px] border-stroke-brand-strong bg-fill-neutral-weakest pl-3",
+          )}
         >
-          <span className="font-georgia md:text-xl text-sand-12 ">
+          {isUser && replyQuote?.text?.trim() ? (
+            <div className="mb-2 border-b border-stroke-neutral-weaker pb-2">
+              <p className="font-inter text-[10px] font-semibold uppercase tracking-wide text-text-neutral-weak">
+                Replying to{" "}
+                {replyQuote.role === "user" ? "your message" : "Memento"}
+              </p>
+              <p className="mt-0.5 line-clamp-2 font-inter text-xs text-text-neutral-strong opacity-90">
+                {snippetReplyText(replyQuote.text, 160)}
+              </p>
+            </div>
+          ) : null}
+          <span
+            className={cn(
+              "text-text-neutral-strong font-georgia font-normal",
+              compact
+                ? "text-[14px] leading-relaxed [&_p]:m-0 [&_p]:text-[14px] [&_p]:leading-relaxed"
+                : "text-base leading-relaxed md:text-xl md:leading-snug [&_p]:m-0 [&_p]:text-base [&_p]:leading-relaxed [&_p]:md:text-xl [&_p]:md:leading-snug",
+            )}
+          >
             <Markdown
               remarkPlugins={[remarkGfm]}
               components={{
+                p: ({ children, ...props }) => (
+                  <p
+                    className={
+                      compact
+                        ? "text-[14px] leading-relaxed"
+                        : "text-base leading-relaxed md:text-xl md:leading-snug"
+                    }
+                    {...props}
+                  >
+                    {children}
+                  </p>
+                ),
                 a: ({ href, children, ...props }) => (
                   <a
                     href={href}
@@ -66,7 +165,7 @@ export default function Bubble({
                     className={cn(
                       "mem-tags text-sm! inline-flex items-center max-w-full normal-case! cursor-pointer!",
                       "text-primary dark:text-primary/80 hover:opacity-80",
-                      "truncate break-all"
+                      "truncate break-all",
                     )}
                     {...props}
                   >
@@ -79,13 +178,73 @@ export default function Bubble({
             </Markdown>
           </span>
         </div>
+        {metaVisible &&
+          (timeLabel || canCopy || (onReply && hasReplyableContent)) && (
+          <div
+            className={cn(
+              "mt-1 flex max-w-[470px] flex-wrap items-center gap-1 px-0.5",
+              isUser && "ml-auto justify-end",
+              !isUser && "justify-start",
+            )}
+          >
+            {timeLabel ? (
+              <time
+                className="font-inter text-xs text-text-neutral-weak"
+                dateTime={createdAt}
+              >
+                {timeLabel}
+              </time>
+            ) : null}
+            {onReply && hasReplyableContent && !sendFailed ? (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onReply();
+                }}
+                className="inline-flex h-7 items-center gap-1 rounded-md px-1.5 font-inter text-xs font-medium text-text-neutral-weak transition-colors hover:bg-fill-neutral-weakest hover:text-text-neutral-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stroke-neutral-weak"
+                aria-label="Reply to message"
+              >
+                <CornerDownRight className="size-3.5 shrink-0" strokeWidth={2} aria-hidden />
+                Reply
+              </button>
+            ) : null}
+            {canCopy ? (
+              <button
+                type="button"
+                onClick={() => void handleCopy()}
+                className="inline-flex size-7 shrink-0 items-center justify-center rounded-md text-text-neutral-weak transition-colors hover:bg-fill-neutral-weakest hover:text-text-neutral-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stroke-neutral-weak"
+                aria-label="Copy message"
+              >
+                <CopyIcon className="size-4" aria-hidden />
+              </button>
+            ) : null}
+          </div>
+        )}
+        {isUser && sendFailed && onRetry ? (
+          <div
+            className={cn(
+              "mt-2 flex max-w-[470px] flex-wrap items-center gap-2 px-0.5",
+              "ml-auto justify-end",
+            )}
+          >
+            <span className="font-inter text-xs text-text-error-strong">Couldn&apos;t send.</span>
+            <button
+              type="button"
+              onClick={onRetry}
+              className="font-inter text-xs font-semibold text-text-brand-strong underline-offset-2 hover:underline"
+            >
+              Retry
+            </button>
+          </div>
+        ) : null}
         {
           is_voice &&
           <div className="mt-2 flex gap-2">
-            <WaveIcon className={cn("size-[18px] text-sand-8", { "ml-auto size-[15px] text-[#667085]": isUser })} />
+            <WaveIcon className={cn("size-[18px] text-icon-neutral-weaker", { "ml-auto size-[15px] text-text-neutral-weak": isUser })} />
             {
               isUser && (
-                <span className="font-inter text-xs text-gray-700">
+                <span className="font-inter text-xs text-text-neutral-weak">
                   {mins}:{secs}
                 </span>
               )
@@ -185,9 +344,9 @@ export function TypingBubble({ text, onFinish }: ITypingBubbleProps) {
 export function Typing() {
   return (
     <div className="flex items-center gap-1 px-5 py-3">
-      <div className="w-2 h-2 bg-sand-8 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-      <div className="w-2 h-2 bg-sand-8 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-      <div className="w-2 h-2 bg-sand-8 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+      <div className="w-2 h-2 bg-icon-neutral-weaker rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+      <div className="w-2 h-2 bg-icon-neutral-weaker rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+      <div className="w-2 h-2 bg-icon-neutral-weaker rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
     </div>
   )
 }

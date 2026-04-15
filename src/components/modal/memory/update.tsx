@@ -32,7 +32,7 @@ import smileySvg from "@/assets/icon/noto_slightly-smiling-face.svg";
 import micSvg from "@/assets/icon/microphone-01.svg";
 import videoRecorderSvg from "@/assets/icon/video-recorder.svg";
 
-const ACTIVE_BG = "bg-[rgba(23,11,0,0.1)]";
+const ACTIVE_BG = "bg-fill-neutral-strong";
 
 interface ContentProps {
   data: any;
@@ -102,7 +102,7 @@ function Content({ data }: ContentProps) {
     content: memory.body || "",
     editorProps: {
       attributes: {
-        class: "prose prose-sm focus:outline-none px-4 py-4 text-sm text-gray-800",
+        class: "prose prose-sm focus:outline-none px-4 py-4 text-sm text-text-neutral-strong",
       },
     },
     onUpdate: ({ editor }) => {
@@ -248,10 +248,10 @@ function Content({ data }: ContentProps) {
     event.target.value = "";
   };
 
-  const handleAddAudioFile = (file: File) => {
+  const handleAddAudioFile = (file: File, duration?: number) => {
     const reader = new FileReader();
     reader.onloadend = () => {
-      handleUpload({ id: uuidv4(), file, base64: reader.result as string, progress: 0 });
+      handleUpload({ id: uuidv4(), file, base64: reader.result as string, progress: 0, ...(duration !== undefined && { duration }) });
     };
     reader.readAsDataURL(file);
     setAudioRecordingCount((c) => c + 1);
@@ -344,7 +344,7 @@ function Content({ data }: ContentProps) {
       onClick={onClick}
       title={title}
       className={cn(
-        "size-9 flex items-center justify-center rounded-lg transition-colors hover:bg-[rgba(23,11,0,0.05)]",
+        "size-9 flex items-center justify-center rounded-lg transition-colors hover:bg-fill-neutral-weak",
         isActive && ACTIVE_BG,
       )}
     >
@@ -404,11 +404,11 @@ function Content({ data }: ContentProps) {
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           rows={2}
-          className="w-full min-w-0 pr-14 sm:pr-16 bg-transparent border-none outline-none focus:ring-0 p-0 font-garamond text-[24px] text-gray-900 placeholder:text-gray-400 resize-none overflow-y-auto hide-scrollbar leading-tight block"
+          className="w-full min-w-0 pr-14 sm:pr-16 bg-transparent border-none outline-none focus:ring-0 p-0 font-garamond text-[24px] text-text-neutral-strong placeholder:text-text-neutral-weaker resize-none overflow-y-auto hide-scrollbar leading-tight block"
           placeholder="Enter title"
         />
 
-        <div className="rounded-[16px] border border-gray-200 flex flex-col overflow-hidden">
+        <div className="rounded-[16px] border border-stroke-neutral-weaker flex flex-col overflow-hidden">
           <div className="flex items-center gap-0.5 pt-4 px-4 pb-3">
             {toolbarBtn(
               !!editor?.isActive("heading", { level: 2 }),
@@ -419,29 +419,29 @@ function Content({ data }: ContentProps) {
             {toolbarBtn(
               !!editor?.isActive("bold"),
               () => editor?.chain().focus().toggleBold().run(),
-              <span className="font-bold text-sm text-gray-800 leading-none">B</span>,
+              <span className="font-bold text-sm text-text-neutral-strong leading-none">B</span>,
               "Bold",
             )}
             {toolbarBtn(
               !!editor?.isActive("italic"),
               () => editor?.chain().focus().toggleItalic().run(),
-              <span className="italic text-sm text-gray-800 leading-none">I</span>,
+              <span className="italic text-sm text-text-neutral-strong leading-none">I</span>,
               "Italic",
             )}
             {toolbarBtn(
               !!editor?.isActive("strike"),
               () => editor?.chain().focus().toggleStrike().run(),
-              <span className="line-through text-sm text-gray-800 leading-none">S</span>,
+              <span className="line-through text-sm text-text-neutral-strong leading-none">S</span>,
               "Strikethrough",
             )}
             {toolbarBtn(
               !!editor?.isActive("underline"),
               () => editor?.chain().focus().toggleUnderline().run(),
-              <span className="underline text-sm text-gray-800 leading-none">U</span>,
+              <span className="underline text-sm text-text-neutral-strong leading-none">U</span>,
               "Underline",
             )}
 
-            <div className="w-px h-5 bg-gray-200 mx-1.5" />
+            <div className="w-px h-5 bg-stroke-neutral-weaker mx-1.5" />
 
             {toolbarBtn(!!editor?.isActive("link"), handleLinkClick, <LinkIcon width={16} height={11} />, "Link")}
             {toolbarBtn(
@@ -481,7 +481,7 @@ function Content({ data }: ContentProps) {
           )}
 
           <div className="mt-6 mx-4 mb-4" onClick={(e) => e.stopPropagation()}>
-            <div className="bg-[#F4F4F4] rounded-2xl flex items-center justify-start gap-3 px-[12px] py-[9px]">
+            <div className="bg-bg-neutral-weak rounded-2xl flex items-center justify-start gap-3 px-[12px] py-[9px]">
               <div ref={plusMenuRef} className="relative h-[40px]">
                 <button
                   type="button"
@@ -497,7 +497,7 @@ function Content({ data }: ContentProps) {
                   createPortal(
                     <div
                       ref={plusMenuPortalRef}
-                      className="fixed z-[9999] bg-white rounded-xl shadow-lg border border-gray-100 py-1 min-w-[180px]"
+                      className="fixed z-[9999] bg-background rounded-xl shadow-lg border border-stroke-neutral-weaker py-1 min-w-[180px]"
                       style={(() => {
                         const rect = plusMenuRef.current?.getBoundingClientRect();
                         return rect
@@ -511,21 +511,21 @@ function Content({ data }: ContentProps) {
                       <button
                         type="button"
                         onClick={() => { fileInputMediaRef.current?.click(); setShowPlusMenu(false); }}
-                        className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 text-left"
+                        className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-text-neutral-weak hover:bg-fill-neutral-weaker text-left"
                       >
                         <span className="text-base">📷</span> Photos & Videos
                       </button>
                       <button
                         type="button"
                         onClick={() => { fileInputAudioRef.current?.click(); setShowPlusMenu(false); }}
-                        className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 text-left"
+                        className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-text-neutral-weak hover:bg-fill-neutral-weaker text-left"
                       >
                         <span className="text-base">🎵</span> Audio
                       </button>
                       <button
                         type="button"
                         onClick={() => { fileInputAllRef.current?.click(); setShowPlusMenu(false); }}
-                        className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 text-left"
+                        className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-text-neutral-weak hover:bg-fill-neutral-weaker text-left"
                       >
                         <span className="text-base">📎</span> Files
                       </button>
@@ -538,7 +538,7 @@ function Content({ data }: ContentProps) {
                 <button
                   type="button"
                   onClick={() => { setShowEmoji((p) => !p); setShowPlusMenu(false); }}
-                  className="size-10 flex items-center justify-center rounded-xl hover:bg-black/5 transition-colors"
+                  className="size-10 flex items-center justify-center rounded-xl hover:bg-fill-neutral-weaker transition-colors"
                 >
                   <img src={smileySvg} alt="Emoji" width={20} height={20} />
                 </button>
@@ -571,12 +571,12 @@ function Content({ data }: ContentProps) {
                   )}
               </div>
 
-              <div className="w-px h-6 bg-gray-300 shrink-0" />
+              <div className="w-px h-6 bg-stroke-neutral-weak shrink-0" />
 
               <button
                 type="button"
                 onClick={() => push("audio-recorder", { onFinish: handleAddAudioFile, recordingNumber: audioRecordingCount })}
-                className="size-10 flex items-center justify-center rounded-xl hover:bg-black/5 transition-colors"
+                className="size-10 flex items-center justify-center rounded-xl hover:bg-fill-neutral-weaker transition-colors"
                 title="Record audio"
               >
                 <img src={micSvg} alt="Record audio" width={20} height={20} />
@@ -593,7 +593,7 @@ function Content({ data }: ContentProps) {
                     reader.readAsDataURL(file);
                   },
                 })}
-                className="size-10 flex items-center justify-center rounded-xl hover:bg-black/5 transition-colors"
+                className="size-10 flex items-center justify-center rounded-xl hover:bg-fill-neutral-weaker transition-colors"
                 title="Record video"
               >
                 <img src={videoRecorderSvg} alt="Record video" width={20} height={20} />
@@ -641,9 +641,9 @@ export function UpdateMemory({ data }: ContentProps) {
         snapPoints={[0.5, 0.75, 1]}
         initialSnap={1}
       >
-        <Sheet.Container className="bg-sand-1">
-          <Sheet.Header className="rounded-3xl bg-sand-1" />
-          <Sheet.Content className="bg-sand-1 px-4 pb-6">
+        <Sheet.Container className="bg-fill-neutral-weaker">
+          <Sheet.Header className="rounded-3xl bg-fill-neutral-weaker" />
+          <Sheet.Content className="bg-fill-neutral-weaker px-4 pb-6">
             <ModalCloseBtn className="!relative ml-auto mb-2 !right-0 !top-0" onClick={() => close("edit-memory")} />
             <Content data={data} />
           </Sheet.Content>

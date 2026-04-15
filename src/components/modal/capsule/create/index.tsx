@@ -118,7 +118,7 @@ function SheetHeader({
 }) {
   return (
     <div className="flex items-center justify-between mb-5">
-      <h4 className="text-lg font-semibold text-[#1D2939]">{title}</h4>
+      <h4 className="text-lg font-semibold text-v3-text-strong">{title}</h4>
       <button
         type="button"
         onClick={onClose}
@@ -233,7 +233,7 @@ function MobileFormSheet({
 
               {/* ── Recipients ── */}
               <div className="mb-5">
-                <p className="text-xs text-[#667085] mb-1.5">
+                <p className="text-xs text-v3-text-weak mb-1.5">
                   Select recipient(s)
                 </p>
                 <Taginput
@@ -247,8 +247,8 @@ function MobileFormSheet({
               </div>
 
               {/* ── Recent beneficiaries ── */}
-              <div className="bg-[#F9FAFB] rounded-xl p-3 mb-5">
-                <p className="text-xs text-[#667085] mb-3">Recent</p>
+              <div className="bg-v3-fill-weaker rounded-xl p-3 mb-5">
+                <p className="text-xs text-v3-text-weak mb-3">Recent</p>
                 <div className="overflow-x-auto">
                   <RecentRecipients
                     recipients={beneficiaries?.data?.docs}
@@ -263,7 +263,7 @@ function MobileFormSheet({
               {/* ── Upload media ── */}
               <div className="mb-5">
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-sm font-medium text-[#1D2939]">
+                  <span className="text-sm font-medium text-v3-text-strong">
                     Upload media
                   </span>
                   <button
@@ -285,7 +285,7 @@ function MobileFormSheet({
                       : "border-gray-200 bg-transparent",
                   )}
                 >
-                  <p className="text-sm font-semibold text-center text-[#1D2939]">
+                  <p className="text-sm font-semibold text-center text-v3-text-strong">
                     {isDragging ? (
                       "Drop files here to upload"
                     ) : (
@@ -296,7 +296,7 @@ function MobileFormSheet({
                       </>
                     )}
                   </p>
-                  <p className="text-xs text-[#667085] text-center">
+                  <p className="text-xs text-v3-text-weak text-center">
                     Supports JPG, PNG, MP4, MP3, PDF,
                     <br />
                     DOC, TXT. Max file size: 120mb
@@ -307,8 +307,8 @@ function MobileFormSheet({
 
               {/* ── Recent media strip ── */}
               <div className="mb-5">
-                <p className="text-sm text-[#667085] mb-3">Recent</p>
-                <div className="bg-[#F9FAFB] rounded-xl p-3">
+                <p className="text-sm text-v3-text-weak mb-3">Recent</p>
+                <div className="bg-v3-fill-weaker rounded-xl p-3">
                   <div className="flex items-center gap-2 overflow-x-auto">
                     <RecentMedia
                       items={recentMedia?.data?.docs}
@@ -331,18 +331,18 @@ function MobileFormSheet({
               </div>
 
               {/* ── Write a message ── */}
-              <div className="border-t border-[#0011661A] pt-5 mb-5">
-                <p className="text-sm font-medium text-[#1D2939] mb-3">
+              <div className="border-t border-v3-stroke-weak pt-5 mb-5">
+                <p className="text-sm font-medium text-v3-text-strong mb-3">
                   Write a message
                 </p>
                 <div className="flex flex-col gap-2">
-                  <div className="w-full rounded-xl border border-gray-200 bg-[#F9FAFB] px-3 py-2">
+                  <div className="w-full rounded-xl border border-gray-200 bg-v3-fill-weaker px-3 py-2">
                     <input
                       placeholder="Header here"
                       name="title"
                       onChange={handleChange}
                       value={values.title}
-                      className="w-full h-9 font-semibold font-garamond outline-none bg-transparent text-[#1D2939] placeholder:text-gray-400"
+                      className="w-full h-9 font-semibold font-garamond outline-none bg-transparent text-v3-text-strong placeholder:text-gray-400"
                     />
                   </div>
                   {errors.title && (
@@ -351,13 +351,13 @@ function MobileFormSheet({
                     </small>
                   )}
 
-                  <div className="w-full rounded-xl border border-gray-200 bg-[#F9FAFB] px-3 py-2">
+                  <div className="w-full rounded-xl border border-gray-200 bg-v3-fill-weaker px-3 py-2">
                     <textarea
                       placeholder="Message here..."
                       name="body"
                       onChange={handleChange}
                       value={values.body}
-                      className="w-full resize-none font-garamond outline-none bg-transparent text-[#1D2939] placeholder:text-gray-400 leading-6"
+                      className="w-full resize-none font-garamond outline-none bg-transparent text-v3-text-strong placeholder:text-gray-400 leading-6"
                       rows={5}
                     />
                   </div>
@@ -369,7 +369,7 @@ function MobileFormSheet({
 
               {/* ── Delivery date ── */}
               <div className="mb-5">
-                <p className="text-xs text-[#667085] mb-2">
+                <p className="text-xs text-v3-text-weak mb-2">
                   Capsule delivery date:
                 </p>
                 <DateOptionsDropdown
@@ -383,7 +383,7 @@ function MobileFormSheet({
 
               {/* ── Preview section ── */}
               <div className="mb-6">
-                <p className="text-sm font-medium text-[#1D2939] mb-3">
+                <p className="text-sm font-medium text-v3-text-strong mb-3">
                   Preview
                 </p>
 
@@ -454,11 +454,11 @@ function MobileFormSheet({
                 <button
                   type="button"
                   onClick={handleSaveToDraft}
-                  className="flex-1 h-12 rounded-full border border-gray-300 text-sm font-medium text-[#1D2939] flex items-center justify-center gap-2"
+                  className="flex-1 h-12 rounded-full border border-gray-300 text-sm font-medium text-v3-text-strong flex items-center justify-center gap-2"
                 >
                   Save as Draft
                   {pendingStatus === "draft" && (
-                    <Spinner loading={isMutating} className="size-4! !text-[#1D2939]" />
+                    <Spinner loading={isMutating} className="size-4! !text-v3-text-strong" />
                   )}
                 </button>
               )}
@@ -466,7 +466,7 @@ function MobileFormSheet({
                 <button
                   type="button"
                   onClick={onClose}
-                  className="flex-1 h-12 rounded-full border border-gray-300 text-sm font-medium text-[#1D2939] flex items-center justify-center gap-2"
+                  className="flex-1 h-12 rounded-full border border-gray-300 text-sm font-medium text-v3-text-strong flex items-center justify-center gap-2"
                 >
                   Cancel
                 </button>
@@ -1277,7 +1277,7 @@ export default function CreateCapsule({
                   >
                     Save to draft
                     {pendingStatus === "draft" && (
-                      <Spinner loading={isMutating} className="size-4! !text-[#1D2939]" />
+                      <Spinner loading={isMutating} className="size-4! !text-v3-text-strong" />
                     )}
                   </button>
                 )}

@@ -4,36 +4,41 @@ import { useState } from "react";
 import DeleteAccount from "./delete-account";
 import LogoutAccount from "./logout-account";
 import { createPortal } from "react-dom";
+import { cn } from "@/utility";
 
 export default function Privacy() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
+  const actionRowBase = "flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between";
+  const actionButtonBase = "w-full sm:w-auto rounded-full px-4 py-2 text-sm font-semibold motion-safe:transition-opacity motion-safe:duration-150";
+
   return (
-    <div className="flex w-full flex-col gap-10">
-      <div className="flex flex-col gap-2">
-        <span className="font-inter text-base font-bold text-gray-950/90">
+    <div className="flex w-full flex-col gap-6 sm:gap-8">
+      <header className="flex flex-col gap-1">
+        <span className="font-inter text-base font-bold text-v3-text-strong text-balance">
           Privacy & account
         </span>
-        <span className="font-inter text-sm text-gray-950/70">
+        <span className="font-inter text-sm text-v3-text-weak text-pretty">
           Manage your account privacy settings
         </span>
-      </div>
-      <div>
-        <span className="font-inter text-sm text-gray-950/70">
-          Memento AI believes in transparent data practices. Learn how your information is protected when using our products, and visit our
-          <span className="font-semibold text-[#E26A24] underline"> Privacy Policy</span> and
-          <span className="font-semibold text-[#E26A24] underline"> Terms</span> pages for more details.
-        </span>
-      </div>
-      <div className="flex flex-col gap-4 rounded-2xl border border-gray-200 p-4">
-        <span className="font-inter text-sm font-medium text-gray-950/90">
+      </header>
+
+      <p className="font-inter text-sm text-v3-text-weak text-pretty">
+        Memento AI believes in transparent data practices. Learn how your information is protected when using our products, and visit our
+        <span className="font-semibold text-v3-brand-strong underline"> Privacy Policy</span> and
+        <span className="font-semibold text-v3-brand-strong underline"> Terms</span> pages for more details.
+      </p>
+
+      {/* Protection Info Card */}
+      <div className="flex flex-col gap-4 rounded-2xl border border-v3-stroke-weak bg-white p-4 sm:p-5">
+        <span className="font-inter text-sm font-semibold text-v3-text-strong">
           How we protect your information
         </span>
-        <span className="font-inter text-sm font-normal leading-5 text-gray-950/70">
+        <span className="font-inter text-sm font-normal leading-5 text-v3-text-weak">
           Memento AI employs industry-standard security measures to protect your data.
         </span>
-        <ul className="ml-4 list-outside list-disc font-inter text-sm font-normal leading-5 text-gray-950/70">
+        <ul className="ml-4 list-outside list-disc font-inter text-sm font-normal leading-5 text-v3-text-weak">
           <li>
             Memento AI encrypts your information and shared data before it ever hits our servers. This means that only you have access to your
             info. The members of our staff do not.
@@ -47,52 +52,70 @@ export default function Privacy() {
           <li>Memento AI doesn&apos;t sell your data to third parties.</li>
         </ul>
       </div>
-      <div className="flex flex-col gap-4 rounded-2xl border border-gray-200 p-4">
-        <span className="font-inter text-sm font-medium text-gray-950/90">
+
+      {/* Privacy Settings Card */}
+      <div className="flex flex-col gap-4 rounded-2xl border border-v3-stroke-weak bg-white p-4 sm:p-5">
+        <span className="font-inter text-sm font-semibold text-v3-text-strong">
           Privacy settings
         </span>
         <div className="flex flex-col gap-4">
-          <div className="flex items-center justify-between gap-2">
-            <span className="font-inter text-sm text-gray-950/70">Export your information</span>
+          <div className={actionRowBase}>
+            <span className="font-inter text-sm text-v3-text-weak">Export your information</span>
             <button
               type="button"
               disabled
-              className="cursor-not-allowed rounded-full border border-[#1018286633] px-3 py-2 text-sm font-semibold text-gray-400"
+              className={cn(
+                actionButtonBase,
+                "cursor-not-allowed border border-v3-stroke-weak text-v3-text-weaker",
+              )}
             >
               Coming soon...
             </button>
           </div>
-          <div className="flex items-center justify-between gap-2">
-            <span className="font-inter text-sm text-gray-950/70">Shared stories/conversations</span>
+          <div className={actionRowBase}>
+            <span className="font-inter text-sm text-v3-text-weak">Shared stories/conversations</span>
             <button
               type="button"
               disabled
-              className="cursor-not-allowed rounded-full border border-[#1018286633] px-3 py-2 text-sm font-semibold text-gray-400"
+              className={cn(
+                actionButtonBase,
+                "cursor-not-allowed border border-v3-stroke-weak text-v3-text-weaker",
+              )}
             >
               Coming soon...
             </button>
           </div>
         </div>
       </div>
-      <div className="flex flex-col gap-4 rounded-2xl border border-gray-200 p-4">
-        <span className="font-inter text-sm font-medium text-gray-950/90">Account Settings</span>
+
+      {/* Account Settings Card */}
+      <div className="flex flex-col gap-4 rounded-2xl border border-v3-stroke-weak bg-white p-4 sm:p-5">
+        <span className="font-inter text-sm font-semibold text-v3-text-strong">Account Settings</span>
         <div className="flex flex-col gap-4">
-          <div className="flex items-center justify-between gap-2">
-            <span className="font-inter text-sm text-gray-950/70">Log out of all devices</span>
+          <div className={actionRowBase}>
+            <span className="font-inter text-sm text-v3-text-weak">Log out of all devices</span>
             <button
               type="button"
               onClick={() => setShowLogoutConfirm(true)}
-              className="rounded-full border border-[#10182866] px-3 py-2 text-sm font-semibold text-gray-900"
+              className={cn(
+                actionButtonBase,
+                "border border-v3-stroke-weak text-v3-text-strong hover:bg-v3-fill-weak",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-v3-stroke-strong focus-visible:ring-offset-2",
+              )}
             >
               Log out
             </button>
           </div>
-          <div className="flex items-center justify-between gap-2">
-            <span className="font-inter text-sm text-gray-950/70">Delete your account</span>
+          <div className={actionRowBase}>
+            <span className="font-inter text-sm text-v3-text-weak">Delete your account</span>
             <button
               type="button"
               onClick={() => setShowDeleteConfirm(true)}
-              className="rounded-full bg-[#F97066] px-3 py-2 text-sm font-semibold text-white"
+              className={cn(
+                actionButtonBase,
+                "bg-fill-error-strong text-white hover:opacity-90",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stroke-error-strong focus-visible:ring-offset-2",
+              )}
             >
               Delete account
             </button>

@@ -22,7 +22,7 @@ export function AudioRecButtons({
 }: RecButtonsProps) {
   if (recording) {
     return (
-      <button onClick={pause} className="btn flex flex-1 items-center justify-center gap-2 bg-[#F5FAFF]! text-[#2E90FA]!">
+      <button onClick={pause} className="btn flex flex-1 items-center justify-center gap-2 bg-fill-info-weak! text-text-info-strong!">
         <PauseRecIcon width={12} />
         <span className="font-inter text-sm font-semibold">Pause</span>
       </button>
@@ -32,11 +32,11 @@ export function AudioRecButtons({
   if (timer > 0) {
     return (
       <>
-        <button onClick={resume} className="btn flex flex-1 items-center justify-center gap-2 bg-[#F5FAFF]! text-[#2E90FA]!">
+        <button onClick={resume} className="btn flex flex-1 items-center justify-center gap-2 bg-fill-info-weak! text-text-info-strong!">
           <MicIcon width={12} />
           <span className="font-inter text-sm font-semibold">Resume</span>
         </button>
-        <button onClick={stop} className="btn flex flex-1 items-center justify-center gap-2 bg-[#FEF3F2]! text-[#F97066]!">
+        <button onClick={stop} className="btn flex flex-1 items-center justify-center gap-2 bg-fill-error-weak! text-text-error-strong!">
           <StopRecIcon width={15} />
           <span className="font-inter text-sm font-semibold">End</span>
         </button>

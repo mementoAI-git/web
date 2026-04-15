@@ -1,5 +1,8 @@
 import { useState } from "react";
-import { Textinput } from "@/components/Form";
+import { X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { ModalCloseBtn } from "../../modalLayout";
 import useForm from "@/hooks/use-form";
 import * as yup from "yup";
@@ -9,7 +12,7 @@ import useFetcher from "@/hooks/use-fetcher";
 import endpoint from "@/api/endpoint";
 import { toast } from "sonner";
 import { mutate } from "swr";
-import { LightBulbIcon } from "@/components/icons";
+import { SETTINGS_BENEFICIARIES_SWR_KEY } from "@/components/modal/settings/beneficiary&group/beneficiaries-list-swr-key";
 import { SelectGroup, type GroupSearchResultItem } from "./select-group";
 
 const initial = {
@@ -24,6 +27,9 @@ const schema = yup.object().shape({
   relationship: yup.string().required("Relationship is required"),
 });
 
+const inputClass =
+  "h-10 w-full rounded-xl border border-v3-stroke-weak bg-white px-3 font-inter text-sm text-v3-text-strong shadow-none outline-none placeholder:text-v3-text-weaker transition-colors hover:border-v3-stroke-strong focus:border-v3-stroke-strong";
+
 export function AddBeneficiary() {
   const { close } = useModal();
   const { trigger, isMutating } = useFetcher(endpoint.beneficiaries);
@@ -37,71 +43,108 @@ export function AddBeneficiary() {
         groups: selectedGroups.map((g) => g.id),
       });
       if (result.success) {
-        await mutate(`${endpoint.beneficiaries}?page=1`);
+        await mutate(SETTINGS_BENEFICIARIES_SWR_KEY);
         toast.success(result?.message);
         close?.("add-beneficiary");
       }
     },
   });
 
+  const emailField = getField("email");
+  const nameField = getField("name");
+  const relationshipField = getField("relationship");
+
   return (
-    <div className="modal-container">
-      <ModalCloseBtn onClick={() => close?.("add-beneficiary")} />
-      <div className="space-y-6">
-        <div>
-          <h4 className="modal-title">Invite beneficiary</h4>
+    <div className="modal-container !max-w-[480px]">
+      <div className="mb-5 flex items-start justify-between gap-3">
+        <div className="flex flex-col gap-0.5">
+          <h2 className="font-inter text-sm font-semibold text-v3-text-strong">Invite beneficiary</h2>
+          <p className="font-inter text-sm text-v3-text-weak">
+            They'll receive an email to accept and access your Memento.
+          </p>
         </div>
-        <div className="flex gap-3 rounded-xl border border-[#FDDFC5] bg-[#E26A2408] p-3 text-[#E26A24]">
-          <div className="size-5">
-            <LightBulbIcon width={18} height={18} />
-          </div>
-          <span className="font-inter text-sm font-normal">
-            Add a Beneficiary by sending an invite to their email address. They will be taken through a process to accept
-            the invite. Once a beneficiary has accepted your invite, they will be able to converse with your Memento.
-          </span>
-        </div>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <Textinput
-            label={<span className="font-inter text-sm font-normal text-gray-950/70">Email</span>}
-            type="email"
-            inputClassName="!h-[50px]"
-            {...getField("email")}
-            placeholder="example@gmail.com"
-            labelClassName="!text-[rgba(0,9,51,0.65)] !text-xs !font-normal"
-          />
-          <Textinput
-            label={<span className="font-inter text-sm font-normal text-gray-950/70">Name</span>}
-            inputClassName="!h-[50px]"
-            {...getField("name")}
-            placeholder="John Doe"
-            labelClassName="!text-[rgba(0,9,51,0.65)] !text-xs !font-normal"
-          />
-          <Textinput
-            {...getField("relationship")}
-            placeholder="Brother"
-            label={<span className="font-inter text-sm font-normal text-gray-950/70">Relationship(This person to you)</span>}
-            inputClassName="!h-[50px]"
-            labelClassName="!text-[rgba(0,9,51,0.65)] !text-xs !font-normal"
-          />
-          <SelectGroup
-            value={selectedGroups}
-            onChange={setSelectedGroups}
-            label={<span className="font-inter text-sm font-normal text-gray-950/70">Group</span>}
-            labelHint="(add beneficiary to groups)"
-            placeholder="Type to search groups..."
-          />
-          <div className="flex w-full items-center justify-end gap-4">
-            <button type="button" className="btn-outline">
-              Discard
-            </button>
-            <button type="submit" disabled={isMutating || !isValid} className="btn">
-              <span>Send invite</span>
-              <Spinner className="!size-4" loading={isMutating} />
-            </button>
-          </div>
-        </form>
+        <button
+          type="button"
+          onClick={() => close?.("add-beneficiary")}
+          className="flex size-8 shrink-0 items-center justify-center rounded-full text-v3-text-weak hover:bg-v3-fill-weak hover:text-v3-text-strong transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-v3-stroke-strong focus-visible:ring-offset-2"
+          aria-label="Close"
+        >
+          <X size={16} strokeWidth={1.5} />
+        </button>
       </div>
+
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <div className="flex flex-col gap-1.5">
+          <Label className="font-inter text-xs font-normal text-v3-text-weak">Email</Label>
+          <Input
+            type="email"
+            placeholder="example@gmail.com"
+            name={emailField.name}
+            value={emailField.value}
+            onChange={emailField.onChange}
+            aria-invalid={!!emailField.error}
+            className={inputClass}
+          />
+          {emailField.error && <span className="font-inter text-xs text-danger">{emailField.error}</span>}
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <Label className="font-inter text-xs font-normal text-v3-text-weak">Name</Label>
+          <Input
+            placeholder="John Doe"
+            name={nameField.name}
+            value={nameField.value}
+            onChange={nameField.onChange}
+            aria-invalid={!!nameField.error}
+            className={inputClass}
+          />
+          {nameField.error && <span className="font-inter text-xs text-danger">{nameField.error}</span>}
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <Label className="font-inter text-xs font-normal text-v3-text-weak">Relationship (this person to you)</Label>
+          <Input
+            placeholder="Brother, Friend, Spouse…"
+            name={relationshipField.name}
+            value={relationshipField.value}
+            onChange={relationshipField.onChange}
+            aria-invalid={!!relationshipField.error}
+            className={inputClass}
+          />
+          {relationshipField.error && <span className="font-inter text-xs text-danger">{relationshipField.error}</span>}
+        </div>
+        <SelectGroup
+          value={selectedGroups}
+          onChange={setSelectedGroups}
+          label="Group"
+          labelHint="(optional)"
+          placeholder="Search groups to add…"
+        />
+
+        <div className="flex items-center justify-end gap-2 border-t border-v3-stroke-weak pt-4">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-9 rounded-full border-v3-stroke-weak font-inter text-sm font-medium text-v3-text-strong hover:bg-v3-fill-weak"
+            onClick={() => close?.("add-beneficiary")}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            size="sm"
+            disabled={isMutating || !isValid}
+            className="h-9 rounded-full bg-v3-fill-strong px-4 font-inter text-sm font-semibold text-white hover:opacity-90 disabled:opacity-50"
+          >
+            {isMutating ? (
+              <span className="flex items-center gap-2">
+                Sending… <Spinner className="!size-4" loading />
+              </span>
+            ) : (
+              "Send invite"
+            )}
+          </Button>
+        </div>
+      </form>
     </div>
   );
 }
-

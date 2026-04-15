@@ -8,7 +8,7 @@ interface CloseWithFilesConfirmationProps {
 
 export function CloseWithFilesConfirmation({ open = false, close, onConfirm }: CloseWithFilesConfirmationProps) {
   return (
-    <div className={`modal-overlay z-[100] bg-[rgba(94,94,94,0.5)] ${open ? "flex" : "hidden"}`}>
+    <div className={`modal-overlay z-[100] bg-overlay-backdrop ${open ? "flex" : "hidden"}`}>
       <div className="modal-container w-full max-w-full sm:!max-w-96 md:!max-w-120 p-4 sm:p-6">
         <ModalCloseBtn onClick={close} />
         <div className="space-y-4 sm:space-y-6 mt-4 sm:mt-5">
@@ -20,7 +20,7 @@ export function CloseWithFilesConfirmation({ open = false, close, onConfirm }: C
           </div>
           <div className="flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-4">
             <button
-              className="w-full sm:flex-1 cursor-pointer bg-white/1 border border-[#0011661A] rounded-lg h-10 font-inter font-semibold text-sm shadow"
+              className="w-full sm:flex-1 cursor-pointer bg-white/1 border border-stroke-neutral-weak rounded-lg h-10 font-inter font-semibold text-sm shadow"
               onClick={close}
             >
               Cancel

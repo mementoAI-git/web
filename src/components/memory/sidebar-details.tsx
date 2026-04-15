@@ -4,14 +4,6 @@ import PropsItem from "@/components/props-item";
 import type { IMemory } from "@/utility/interface";
 import { getPostTypeLabel, type PostTypeSource } from "@/utility/memory";
 
-// import FolderIcon from "@/public/icon/folder.svg";
-// import CalenderIcon from "@/public/icon/calendar-1.svg";
-// import LockIcon from "@/public/icon/lock-1.svg";
-// import ClipIcon from "@/public/icon/clip.svg";
-// import TagIcon from "@/public/icon/tag.svg";
-// import TimesIcon from "@/public/icon/times.svg";
-// import EditIcon from "@/public/icon/edit.svg";
-
 import {
   FolderIcon,
   Calendar1Icon,
@@ -19,18 +11,46 @@ import {
   ClipIcon,
   TagIcon,
   TimesIcon,
-  EditIcon
+  EditIcon,
+  TrashIcon,
 } from "@/components/icons";
 
 import dayjs from "dayjs";
 import { useModal } from "@/hooks/use-modal";
-import { Sheet } from 'react-modal-sheet';
+import { Sheet } from "react-modal-sheet";
+import { Download, Info } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import * as motion from "motion/react-client";
+import { ChatPreferencesPanel } from "@/components/modal/chat-settings/chat-preferences-panel";
+
+export type MemorySidebarQuickActions = {
+  onViewFullDetails: () => void;
+  onEditMemory: () => void;
+  onExportConversation?: () => void;
+  onDelete: () => void;
+};
+
+export type SidebarPanelTab = "memory" | "chat";
 
 interface SidebarDetailsProps {
   memory: IMemory;
   onClose: () => void;
   isOpen: boolean;
   source?: PostTypeSource;
+  /** Conversation chat: memory menu actions (previously in header dropdown). */
+  quickActions?: MemorySidebarQuickActions | null;
+  /** When true, show Memory | Chat tabs (chat = sound, voice, upgrade). */
+  enableChatPreferencesTab?: boolean;
+  activeTab?: SidebarPanelTab;
+  onTabChange?: (tab: SidebarPanelTab) => void;
+  /**
+   * Desktop only. `overlay` = fixed right panel + dimmed backdrop (stories, etc.).
+   * `inline` = third column in page flex row, no backdrop (chat conversation).
+   */
+  desktopLayout?: "overlay" | "inline";
 }
 
 interface ContentProps {
@@ -38,32 +58,103 @@ interface ContentProps {
   onClose: () => void;
   isMobile?: boolean;
   source?: PostTypeSource;
+  quickActions?: MemorySidebarQuickActions | null;
+  enableChatPreferencesTab?: boolean;
+  activeTab?: SidebarPanelTab;
+  onTabChange?: (tab: SidebarPanelTab) => void;
 }
 
-function Content({ memory, onClose, isMobile = false, source }: ContentProps) {
-  const { open } = useModal();
+const sectionBadgeClass =
+  "mb-2 w-fit border-v3-stroke-weak bg-v3-fill-weaker/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-v3-text-weaker";
 
-  const handleEditPermission = () => {
-    open("set-tag-permission", { memory, isNew: false });
-    if (isMobile) {
-      onClose();
-    }
-  }
+const actionButtonClass =
+  "h-auto w-full justify-start gap-2.5 rounded-lg px-2.5 py-2.5 font-inter text-sm font-medium text-v3-text-strong hover:bg-v3-fill-weaker";
 
+function MemorySections({
+  memory,
+  isMobile,
+  source,
+  quickActions,
+  open,
+  runAndMaybeCloseMobile,
+}: Pick<ContentProps, "memory" | "isMobile" | "source" | "quickActions"> & {
+  open: ReturnType<typeof useModal>["open"];
+  runAndMaybeCloseMobile: (fn: () => void) => void;
+}) {
   return (
-    <div className="size-full space-y-2 sm:space-y-3 p-3 sm:p-4 lg:p-6">
-      <div className="flex justify-end">
-        <div
-          className="p-3 cursor-pointer ml-auto inline-block hover:bg-sand-3 rounded-lg"
-          onClick={onClose}
-        >
-          <TimesIcon className="ml-auto text-sand-8" width={10} height={10} />
-        </div>
-      </div>
-      <div className="space-y-3 sm:space-y-4 border-b border-[#EAECF0] pb-8 sm:pb-10 lg:pb-14">
-        <span className="block font-inter text-xs text-[#667085] uppercase">
-          properties
-        </span>
+    <>
+      {quickActions ? (
+        <>
+          <div className="space-y-1">
+            <Badge variant="outline" className={sectionBadgeClass}>
+              Memory
+            </Badge>
+            <ul className="flex flex-col gap-0.5">
+              <li>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className={actionButtonClass}
+                  onClick={() => runAndMaybeCloseMobile(quickActions.onViewFullDetails)}
+                >
+                  <Info className="size-4 shrink-0 text-v3-icon-neutral" strokeWidth={1.75} aria-hidden />
+                  View full details
+                </Button>
+              </li>
+              <li>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className={actionButtonClass}
+                  onClick={() => runAndMaybeCloseMobile(quickActions.onEditMemory)}
+                >
+                  <EditIcon width={16} height={16} aria-hidden />
+                  Edit memory
+                </Button>
+              </li>
+              {quickActions.onExportConversation ? (
+                <li>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className={actionButtonClass}
+                    onClick={() =>
+                      runAndMaybeCloseMobile(quickActions.onExportConversation!)
+                    }
+                  >
+                    <Download
+                      className="size-4 shrink-0 text-v3-icon-neutral"
+                      strokeWidth={1.75}
+                      aria-hidden
+                    />
+                    Export conversation
+                  </Button>
+                </li>
+              ) : null}
+              <li>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className={cn(
+                    actionButtonClass,
+                    "text-destructive hover:bg-destructive/10 hover:text-destructive",
+                  )}
+                  onClick={() => runAndMaybeCloseMobile(quickActions.onDelete)}
+                >
+                  <TrashIcon width={16} height={16} aria-hidden />
+                  Delete
+                </Button>
+              </li>
+            </ul>
+          </div>
+          <Separator className="my-4 bg-v3-stroke-weak" />
+        </>
+      ) : null}
+
+      <div className="space-y-2">
+        <Badge variant="outline" className={sectionBadgeClass}>
+          Properties
+        </Badge>
         <ul>
           <PropsItem
             icon={<FolderIcon width={16} />}
@@ -87,10 +178,13 @@ function Content({ memory, onClose, isMobile = false, source }: ContentProps) {
           />
         </ul>
       </div>
-      <div className="space-y-3 sm:space-y-4 border-b border-[#EAECF0] pb-8 sm:pb-10 lg:pb-14 mt-4">
-        <span className="block font-inter text-xs text-[#667085] uppercase">
-          stats
-        </span>
+
+      <Separator className="my-4 bg-v3-stroke-weak" />
+
+      <div className="space-y-2">
+        <Badge variant="outline" className={sectionBadgeClass}>
+          Stats
+        </Badge>
         <ul>
           <PropsItem
             icon={<ClipIcon width={13} />}
@@ -102,37 +196,130 @@ function Content({ memory, onClose, isMobile = false, source }: ContentProps) {
             title="tags:"
             className="!items-start"
             subtitle={
-              <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
-                {memory.tags.map(t => <span key={t} className="mem-tags text-xs sm:text-sm">{t}</span>)}
-                <span
+              <div className="flex flex-wrap items-center gap-1 sm:gap-2">
+                {memory.tags.map((t) => (
+                  <span key={t} className="mem-tags text-xs sm:text-sm">
+                    {t}
+                  </span>
+                ))}
+                <button
+                  type="button"
                   onClick={() => open("set-tag-permission", { memory, isNew: false })}
-                  className="mem-tags !border !border-[#1D2939] !bg-transparent text-xs sm:text-sm"
+                  className="mem-tags !border !border-v3-text-strong !bg-transparent text-left text-xs sm:text-sm"
                 >
                   + Add tag
-                </span>
+                </button>
               </div>
             }
           />
         </ul>
       </div>
-      <div className="space-y-3 sm:space-y-4 pb-8 sm:pb-10 lg:pb-14 mt-4">
-        <span className="block font-inter text-xs text-[#667085] uppercase">
-          actions
-        </span>
-        <ul>
-          <PropsItem
-            icon={<EditIcon width={13} />}
-            title="Edit permission & tags"
-            onClick={handleEditPermission}
-            className="cursor-pointer !text-sm !font-medium !text-grey-600"
-          />
-        </ul>
+    </>
+  );
+}
+
+function Content({
+  memory,
+  onClose,
+  isMobile = false,
+  source,
+  quickActions,
+  enableChatPreferencesTab = false,
+  activeTab = "memory",
+  onTabChange,
+}: ContentProps) {
+  const { open } = useModal();
+
+  const runAndMaybeCloseMobile = (fn: () => void) => {
+    fn();
+    if (isMobile) onClose();
+  };
+
+  const showChat = enableChatPreferencesTab && activeTab === "chat";
+
+  return (
+    <div
+      className={cn(
+        "flex h-full w-full min-w-0 flex-col gap-0 p-3 sm:p-4 lg:p-6",
+        showChat ? "min-w-[min(100%,320px)]" : "min-w-[min(100%,287px)]",
+      )}
+    >
+      <div className="mb-2 flex items-center gap-2">
+        {enableChatPreferencesTab && onTabChange ? (
+          <div
+            className="flex min-w-0 flex-1 rounded-full border border-v3-stroke-weak bg-v3-fill-weaker/50 p-0.5"
+            role="tablist"
+            aria-label="Panel sections"
+          >
+            <Button
+              type="button"
+              role="tab"
+              aria-selected={activeTab === "memory"}
+              variant={activeTab === "memory" ? "secondary" : "ghost"}
+              size="sm"
+              className="h-8 min-w-0 flex-1 rounded-full px-2 text-xs font-medium sm:text-sm"
+              onClick={() => onTabChange("memory")}
+            >
+              Memory
+            </Button>
+            <Button
+              type="button"
+              role="tab"
+              aria-selected={activeTab === "chat"}
+              variant={activeTab === "chat" ? "secondary" : "ghost"}
+              size="sm"
+              className="h-8 min-w-0 flex-1 rounded-full px-2 text-xs font-medium sm:text-sm"
+              onClick={() => onTabChange("chat")}
+            >
+              Chat
+            </Button>
+          </div>
+        ) : (
+          <div className="min-w-0 flex-1" />
+        )}
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-sm"
+          className="shrink-0 rounded-full text-v3-icon-neutral hover:bg-v3-fill-weaker"
+          onClick={onClose}
+          aria-label="Close panel"
+        >
+          <TimesIcon width={10} height={10} aria-hidden />
+        </Button>
       </div>
+
+      {showChat ? (
+        <ChatPreferencesPanel density="compact" className="min-h-0 flex-1 pb-4" />
+      ) : (
+        <MemorySections
+          memory={memory}
+          isMobile={isMobile}
+          source={source}
+          quickActions={quickActions}
+          open={open}
+          runAndMaybeCloseMobile={runAndMaybeCloseMobile}
+        />
+      )}
     </div>
   );
 }
 
-export default function SidebarDetails({ memory, onClose, isOpen, source }: SidebarDetailsProps) {
+export default function SidebarDetails({
+  memory,
+  onClose,
+  isOpen,
+  source,
+  quickActions,
+  enableChatPreferencesTab = false,
+  activeTab = "memory",
+  onTabChange,
+  desktopLayout = "overlay",
+}: SidebarDetailsProps) {
+  const desktopWidth =
+    isOpen && enableChatPreferencesTab && activeTab === "chat" ? 336 : 287;
+  const isInlineDesktop = desktopLayout === "inline";
+
   return (
     <>
       <Sheet
@@ -143,20 +330,67 @@ export default function SidebarDetails({ memory, onClose, isOpen, source }: Side
         snapPoints={[0.5, 0.75, 1]}
       >
         <Sheet.Container className="bg-sand-1">
-          <Sheet.Header className="bg-sand-1 rounded-3xl" />
+          <Sheet.Header className="rounded-3xl bg-sand-1" />
           <Sheet.Content className="bg-sand-1">
-            <Content memory={memory} onClose={onClose} isMobile source={source} />
+            <Content
+              memory={memory}
+              onClose={onClose}
+              isMobile
+              source={source}
+              quickActions={quickActions}
+              enableChatPreferencesTab={enableChatPreferencesTab}
+              activeTab={activeTab}
+              onTabChange={onTabChange}
+            />
           </Sheet.Content>
         </Sheet.Container>
         <Sheet.Backdrop />
       </Sheet>
 
-      <div
-        className={`h-full hidden md:block border-l border-[#EAECF0] transition-all duration-300 ease-in-out overflow-hidden ${isOpen ? 'w-60' : 'w-0'
-          }`}
+      <motion.div
+        initial={false}
+        animate={{
+          width: isOpen ? desktopWidth : 0,
+          opacity: isOpen ? 1 : 0,
+        }}
+        transition={{
+          type: "spring",
+          stiffness: 300,
+          damping: 30,
+          mass: 0.8,
+        }}
+        data-testid="memory-sidebar-desktop"
+        className={cn(
+          "hidden overflow-hidden border-l border-v3-stroke-weak bg-white md:flex md:flex-col",
+          isInlineDesktop ?
+            "relative z-auto h-full min-h-0 min-w-0 shrink-0 self-stretch" :
+            "fixed top-0 right-0 z-40 h-screen",
+        )}
       >
-        <Content memory={memory} onClose={onClose} isMobile={false} source={source} />
-      </div>
+        <div className="h-full min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
+          <Content
+            memory={memory}
+            onClose={onClose}
+            isMobile={false}
+            source={source}
+            quickActions={quickActions}
+            enableChatPreferencesTab={enableChatPreferencesTab}
+            activeTab={activeTab}
+            onTabChange={onTabChange}
+          />
+        </div>
+      </motion.div>
+      {isOpen && !isInlineDesktop ? (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+          className="fixed inset-0 z-30 hidden bg-black/20 md:block"
+          onClick={onClose}
+          aria-hidden
+        />
+      ) : null}
     </>
   );
 }

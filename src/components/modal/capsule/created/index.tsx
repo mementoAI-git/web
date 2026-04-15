@@ -124,7 +124,7 @@ export default function CreateCapsule({ data = null }: CreateCapsuleProps) {
             placeholder="Enter recipients email address"
             label={
               <div className="mb-2 flex items-center justify-between text-xs">
-                <span className="font-inter font-normal text-[#667085]">To (recipients):</span>
+                <span className="font-inter font-normal text-v3-text-weak">To (recipients):</span>
                 <span className="cursor-pointer" onClick={() => setShowBeneficiaryList(true)}>
                   Beneficiary list
                 </span>
@@ -135,13 +135,13 @@ export default function CreateCapsule({ data = null }: CreateCapsuleProps) {
           />
           <Dateinput
             id="delivery_date"
-            label={<span className="font-inter text-xs font-normal text-[#667085]">Message delivery date:</span>}
+            label={<span className="font-inter text-xs font-normal text-v3-text-weak">Message delivery date:</span>}
             {...getField("delivery_date")}
             name={getField("delivery_date")?.name as string}
             value={values.delivery_date}
             minDate={dayjs().toDate()}
           />
-          <div className="border-t border-[#0011661A] py-2 pr-10">
+          <div className="border-t border-v3-stroke-weak py-2 pr-10">
             <input
               placeholder="Enter title here"
               name="title"
