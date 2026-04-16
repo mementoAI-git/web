@@ -1,0 +1,142 @@
+# ──────────────────────────────────────────────────────────────
+# Frontend — Deploy to Production
+# Triggers on push to main. Requires manual approval via the
+# "production" GitHub environment before deploying.
+# ──────────────────────────────────────────────────────────────
+name: "Frontend: Deploy Prod"
+
+on:
+  push:
+    branches: ["main"]
+
+concurrency:
+  group: frontend-deploy-prod
+  cancel-in-progress: false
+
+jobs:
+  # ── 1. Lint & Test ─────────────────────────────────────────
+  quality:
+    name: Lint & Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Run tests
+        run: pnpm test
+
+  # ── 2. Build ───────────────────────────────────────────────
+  build:
+    name: Build
+    needs: quality
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+        env:
+          VITE_API_BASE_URL: ${{ secrets.PROD_VITE_API_BASE_URL }}
+
+      - name: Verify build output
+        run: |
+          if [ ! -f "dist/index.html" ]; then
+            echo "::error::dist/index.html is missing — build failed"
+            exit 1
+          fi
+          echo "Build output OK — $(find dist -type f | wc -l) files, $(du -sh dist | cut -f1) total"
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-prod-${{ github.sha }}
+          retention-days: 7
+          path: dist/
+
+  # ── 3. Deploy (requires manual approval) ───────────────────
+  deploy:
+    name: Deploy
+    needs: build
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-prod-${{ github.sha }}
+          path: dist/
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          echo "${{ secrets.DEPLOY_SSH_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
+
+      - name: Backup current deployment
+        run: |
+          ssh -i ~/.ssh/deploy_key -p ${{ secrets.DEPLOY_SSH_PORT || 22 }} \
+            ${{ secrets.DEPLOY_SSH_USER }}@${{ secrets.DEPLOY_SSH_HOST }} \
+            'DEPLOY_DIR=/opt/memento/frontend-prod && \
+             BACKUP_DIR=/opt/memento/backups/frontend-prod && \
+             mkdir -p "$BACKUP_DIR" && \
+             if [ -d "$DEPLOY_DIR" ] && [ "$(ls -A "$DEPLOY_DIR" 2>/dev/null)" ]; then \
+               tar -cf "$BACKUP_DIR/$(date +%Y%m%d-%H%M%S).tar" -C "$DEPLOY_DIR" .; \
+             fi && \
+             ls -t "$BACKUP_DIR"/*.tar 2>/dev/null | tail -n +4 | xargs rm -f'
+
+      - name: Rsync to server
+        run: |
+          rsync -az --delete \
+            -e "ssh -i ~/.ssh/deploy_key -p ${{ secrets.DEPLOY_SSH_PORT || 22 }}" \
+            ./dist/ \
+            ${{ secrets.DEPLOY_SSH_USER }}@${{ secrets.DEPLOY_SSH_HOST }}:/opt/memento/frontend-prod/
+
+      - name: Health check
+        run: |
+          ssh -i ~/.ssh/deploy_key -p ${{ secrets.DEPLOY_SSH_PORT || 22 }} \
+            ${{ secrets.DEPLOY_SSH_USER }}@${{ secrets.DEPLOY_SSH_HOST }} << 'REMOTE'
+          set -e
+          if [ ! -f /opt/memento/frontend-prod/index.html ]; then
+            echo "::error::index.html missing from deploy directory"
+            exit 1
+          fi
+          echo "Frontend deploy verified — index.html present"
+          REMOTE
+
+      - name: Cleanup SSH credentials
+        if: always()
+        run: rm -rf ~/.ssh/deploy_key ~/.ssh/known_hosts
