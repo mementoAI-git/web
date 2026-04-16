@@ -159,3 +159,85 @@ jobs:
       - name: Cleanup SSH credentials
         if: always()
         run: rm -rf ~/.ssh/deploy_key ~/.ssh/known_hosts
+
+  # ── 4. Notify Discord of deploy outcome ────────────────────
+  notify:
+    name: Notify Discord
+    needs: [quality, build, deploy]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Post deploy outcome to Discord
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          QUALITY_RESULT: ${{ needs.quality.result }}
+          BUILD_RESULT: ${{ needs.build.result }}
+          DEPLOY_RESULT: ${{ needs.deploy.result }}
+          COMMIT_MSG: ${{ github.event.head_commit.message }}
+          ENV_LABEL: Prod
+          ENV_URL: https://app.mymemento.io
+        run: |
+          if [ -z "$DISCORD_WEBHOOK_URL" ]; then
+            echo "::warning::DISCORD_WEBHOOK_URL not set — skipping notification"
+            exit 0
+          fi
+
+          if [ "$DEPLOY_RESULT" = "success" ]; then
+            title="Frontend ${ENV_LABEL} — Deploy succeeded ✅"
+            color=3066993
+            status="success"
+          elif [ "$DEPLOY_RESULT" = "failure" ]; then
+            title="Frontend ${ENV_LABEL} — Deploy failed ❌"
+            color=15158332
+            status="failure"
+          elif [ "$DEPLOY_RESULT" = "cancelled" ]; then
+            title="Frontend ${ENV_LABEL} — Deploy cancelled ⚠️"
+            color=15844367
+            status="cancelled"
+          else
+            title="Frontend ${ENV_LABEL} — Deploy skipped ⚠️"
+            color=15844367
+            status="skipped (quality=${QUALITY_RESULT}, build=${BUILD_RESULT})"
+          fi
+
+          run_url="https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          short_sha="${GITHUB_SHA:0:7}"
+          msg="${COMMIT_MSG:-(no message)}"
+          if [ ${#msg} -gt 900 ]; then msg="${msg:0:900}…"; fi
+
+          payload=$(jq -n \
+            --arg title "$title" \
+            --arg status "$status" \
+            --arg sha "$short_sha" \
+            --arg actor "$GITHUB_ACTOR" \
+            --arg branch "$GITHUB_REF_NAME" \
+            --arg run_url "$run_url" \
+            --arg env_url "$ENV_URL" \
+            --arg msg "$msg" \
+            --argjson color "$color" \
+            '{
+              embeds: [{
+                title: $title,
+                color: $color,
+                fields: [
+                  { name: "Environment", value: $env_url, inline: true },
+                  { name: "Branch",      value: $branch,  inline: true },
+                  { name: "Commit",      value: $sha,     inline: true },
+                  { name: "Actor",       value: $actor,   inline: true },
+                  { name: "Status",      value: $status,  inline: true },
+                  { name: "Message",     value: $msg,     inline: false },
+                  { name: "Run",         value: $run_url, inline: false }
+                ]
+              }]
+            }')
+
+          response=$(curl -s -w "\n%{http_code}" -X POST "$DISCORD_WEBHOOK_URL" \
+            -H "Content-Type: application/json" \
+            -d "$payload")
+          http_code=$(echo "$response" | tail -n1)
+          body=$(echo "$response" | sed '$d')
+          if [ "$http_code" -ge 400 ]; then
+            echo "::error::Discord webhook failed (HTTP $http_code): $body"
+            exit 1
+          fi
+          echo "Posted deploy outcome to Discord (HTTP $http_code)"
