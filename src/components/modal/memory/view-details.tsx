@@ -28,7 +28,7 @@ function getGroupColorClass(item: IMemoryAccessItem): string {
 function formatUserAccess(memory: IMemory | undefined): ReactNode {
   const groups = memory?.groups ?? [];
   const beneficiaries = memory?.beneficiaries ?? [];
-  const groupItems = groups.map((g, i) => ({ ...g, type: "group" as const }));
+  const groupItems = groups.map((g) => ({ ...g, type: "group" as const }));
   const beneficiaryItems = beneficiaries.map((b) => ({ ...b, type: "beneficiary" as const }));
   const items = [...groupItems, ...beneficiaryItems];
 

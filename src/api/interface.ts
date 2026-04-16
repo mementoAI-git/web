@@ -3,7 +3,7 @@ import type { AxiosRequestConfig } from "axios";
 export interface IResponse {
   message: string;
   success?: boolean;
-  data?: any;
+  data?: unknown;
   status?: number;
 }
 export type Fetcher = (
@@ -13,7 +13,7 @@ export type Fetcher = (
 
 export type MutationFetcher = (
   input: string,
-  body?: { arg: any },
+  body?: { arg: unknown },
 ) => Promise<IResponse>;
 
 export interface ApiError {
@@ -27,7 +27,7 @@ export interface RequestOptions extends AxiosRequestConfig {
   skipErrorHandling?: boolean;
 }
 
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   data: T;
   message?: string;
   status?: number;

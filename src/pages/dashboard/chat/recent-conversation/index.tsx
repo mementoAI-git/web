@@ -16,6 +16,7 @@ import GoBack from "@/components/go-back";
 dayjs.extend(calendar);
 
 // Simplified calendar date function using dayjs calendar plugin
+// eslint-disable-next-line react-refresh/only-export-components
 export const getCalendarDate = (date: Date | string) => {
   return dayjs(date).calendar(null, {
     sameDay: '[Today]',
@@ -79,7 +80,7 @@ export default function RecentConversation() {
   const [searchQuery, setSearchQuery] = useState("");
 
   // Get the key function for useSWRInfinite
-  const getKey = (pageIndex: number, previousPageData: any) => {
+  const getKey = (pageIndex: number, previousPageData: { data?: { hasNextPage?: boolean } } | null) => {
     // If we've reached the end, return null to stop fetching
     if (previousPageData && !previousPageData.data?.hasNextPage) return null;
 

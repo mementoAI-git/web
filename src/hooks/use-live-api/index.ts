@@ -111,8 +111,8 @@ export function useLiveAPI({ memoryId, turns = [] }: UseLiveAPIProps) {
       source.connect(scriptProcessor);
       scriptProcessor.connect(inputAudioContext.destination);
       setStatus('🔴 Recording... Capturing PCM chunks.');
-    } catch (err: any) {
-      setStatus(`Error: ${err.message}`);
+    } catch (err) {
+      setStatus(`Error: ${err instanceof Error ? err.message : String(err)}`);
       isRecordingRef.current = false;
       setIsRecording(false);
     }
@@ -235,7 +235,7 @@ export function useLiveAPI({ memoryId, turns = [] }: UseLiveAPIProps) {
         try {
           const existingSession = await sessionPromiseRef.current;
           existingSession.close();
-        } catch (e) {
+        } catch {
           // Ignore errors from closing existing session
         }
         sessionPromiseRef.current = null;
@@ -316,8 +316,9 @@ export function useLiveAPI({ memoryId, turns = [] }: UseLiveAPIProps) {
               nextStartTimeRef.current = 0;
             }
           },
-          onerror: (error: any) => {
-            setError(`Live API error: ${error.message || error}`);
+          onerror: (error: unknown) => {
+            const message = error instanceof Error ? error.message : String(error);
+            setError(`Live API error: ${message}`);
             setConnected(false);
             isConnectingRef.current = false;
             hasConnectedRef.current = false;
@@ -387,11 +388,11 @@ export function useLiveAPI({ memoryId, turns = [] }: UseLiveAPIProps) {
   }, []);
 
   useEffect(() => {
-    const inputCtx = new ((window as any).AudioContext || (window as any).webkitAudioContext)({
+    const inputCtx = new ((window as Window & { webkitAudioContext?: typeof AudioContext }).AudioContext || (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext!)({
       sampleRate: 16000,
     });
 
-    const outputCtx = new ((window as any).AudioContext || (window as any).webkitAudioContext)({
+    const outputCtx = new ((window as Window & { webkitAudioContext?: typeof AudioContext }).AudioContext || (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext!)({
       sampleRate: 24000,
     });
     inputAudioContextRef.current = inputCtx;

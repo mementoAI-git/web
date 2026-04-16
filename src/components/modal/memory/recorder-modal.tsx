@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ComponentRef } from "react";
 import { useModal } from "@/hooks/use-modal";
 import { MicIcon, TimesIcon, RefreshIcon, PlanePaperIcon, PauseRecIcon, PlayIcon } from "@/components/icons";
 import { useAudioLevels } from "@/hooks/use-audio-levels";
@@ -268,7 +268,7 @@ interface VideoRecorderModalProps {
 
 export function VideoRecorderModal({ data }: VideoRecorderModalProps) {
   const { close } = useModal();
-  const videoRef = useRef<any>(null);
+  const videoRef = useRef<ComponentRef<typeof VideoRecorder>>(null);
   const [recordedFile, setRecordedFile] = useState<File | null>(null);
   const [isUsing, setIsUsing] = useState(false);
 

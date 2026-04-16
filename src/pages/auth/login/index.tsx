@@ -61,8 +61,9 @@ export default function LoginPage() {
             navigate(result?.data?.onboarded ? "/overview" : "/onboard");
           }
         }
-      } catch (err: any) {
-        if (err && err.data?.requires_verification) {
+      } catch (err) {
+        const e = err as { data?: { requires_verification?: boolean } } | null;
+        if (e && e.data?.requires_verification) {
           navigate(`/verify-email?email=${payload.email}`);
         }
       }
@@ -105,8 +106,8 @@ export default function LoginPage() {
       setAuth?.(completeData.data);
       await clearCache();
       navigate(completeData.data?.onboarded ? "/overview" : "/onboard", { replace: true });
-    } catch (err: any) {
-      if (err?.name === "NotAllowedError") {
+    } catch (err) {
+      if (err instanceof Error && err.name === "NotAllowedError") {
         // User cancelled the biometric prompt — silent
         return;
       }

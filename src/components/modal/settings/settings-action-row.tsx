@@ -23,6 +23,7 @@ const pillBase =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-v3-stroke-strong focus-visible:ring-offset-2 " +
   "disabled:cursor-not-allowed disabled:opacity-60";
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const settingsPillButtonClass = {
   /** Outline, dark label — e.g. Log out, Change password */
   default: cn(pillBase, "border border-stroke-neutral-weak bg-transparent text-text-neutral-strong hover:bg-fill-neutral-weak"),

@@ -28,7 +28,13 @@ interface IMemoryListFilter {
   onSetDateRange: (range: { from?: Date; to?: Date }) => void;
 }
 
-function FilterCheckboxOption({ onClick, item, value }: any) {
+interface FilterCheckboxOptionProps {
+  onClick: (value: string) => void;
+  item: { value: string; label: string };
+  value: string;
+}
+
+function FilterCheckboxOption({ onClick, item, value }: FilterCheckboxOptionProps) {
   const isChecked = item.value === value;
 
   return (
@@ -73,7 +79,11 @@ export function StoriesListFilter({ value = "all", onChange, onSetDateRange }: I
   );
 }
 
-export function DatePickerFilter({ data }: any) {
+interface DatePickerFilterProps {
+  data?: { onSetDateRange?: (range: DateRange) => void };
+}
+
+export function DatePickerFilter({ data }: DatePickerFilterProps) {
   const { close } = useModal();
   const onSetDateRange = data?.onSetDateRange;
 

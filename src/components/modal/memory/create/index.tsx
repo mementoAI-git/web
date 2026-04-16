@@ -30,6 +30,7 @@ import { LinkInput } from "@/components/memory/text-area/link-input";
 import { SlashCommandPopup } from "@/components/memory/text-area/slash-command-popup";
 import { SLASH_COMMANDS } from "@/components/memory/text-area/slash-commands";
 import { VideoRecorder } from "@/components/recorder/video";
+import type { ComponentRef } from "react";
 import { FileThumbnails } from "./file-thumbnails";
 
 import addPlusSvg from "@/assets/icon/Add-plus.svg";
@@ -43,7 +44,7 @@ const initial = { title: "", body: "", attachments: [] as string[] };
 // ─── CreateMemory ─────────────────────────────────────────────────────────────
 
 interface CreateMemoryProps {
-  data: any;
+  data?: { payload?: Partial<typeof initial> };
   isMobile?: boolean;
 }
 
@@ -52,7 +53,7 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
   const fileInputMediaRef = useRef<HTMLInputElement>(null);
   const fileInputAllRef = useRef<HTMLInputElement>(null);
   const fileInputAudioRef = useRef<HTMLInputElement>(null);
-  const videoRecorderRef = useRef<any>(null);
+  const videoRecorderRef = useRef<ComponentRef<typeof VideoRecorder>>(null);
 
   const [showEmoji, setShowEmoji] = useState(false);
   const [showPlusMenu, setShowPlusMenu] = useState(false);
@@ -549,7 +550,7 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
                   >
                     <Picker
                       data={emojiData}
-                      onEmojiSelect={(e: any) => {
+                      onEmojiSelect={(e: { native: string }) => {
                         editor?.chain().focus().insertContent(e.native).run();
                         setShowEmoji(false);
                       }}

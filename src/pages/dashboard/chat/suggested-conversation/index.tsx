@@ -11,7 +11,7 @@ import GoBack from "@/components/go-back";
 
 export default function SuggestedConversation() {
   // Get the key function for useSWRInfinite
-  const getKey = (pageIndex: number, previousPageData: any) => {
+  const getKey = (pageIndex: number, previousPageData: { data?: { hasNextPage?: boolean } } | null) => {
     // If we've reached the end, return null to stop fetching
     if (previousPageData && !previousPageData.data?.hasNextPage) return null;
 

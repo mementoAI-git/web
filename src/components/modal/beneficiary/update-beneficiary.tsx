@@ -21,7 +21,13 @@ const schema = yup.object().shape({
 });
 
 interface UpdateBeneficiaryProps {
-  data: any;
+  data: {
+    _id: string;
+    email?: string;
+    name?: string;
+    relationship?: string;
+    level?: number;
+  };
 }
 
 const inputClass =
@@ -129,7 +135,7 @@ export function UpdateBeneficiary({ data: beneficiary }: UpdateBeneficiaryProps)
           <select
             name={levelField.name}
             value={String(values.level)}
-            onChange={(e) => levelField.onChange({ target: { name: levelField.name, value: Number(e.target.value) } } as any)}
+            onChange={(e) => levelField.onChange({ target: { name: levelField.name, value: Number(e.target.value) } } as unknown as React.ChangeEvent<HTMLInputElement>)}
             className="h-10 w-full rounded-xl border border-v3-stroke-weak bg-white px-3 font-inter text-sm text-v3-text-strong outline-none transition-colors hover:border-v3-stroke-strong focus:border-v3-stroke-strong"
           >
             {PERMISSION_LEVELS.map((lvl) => (

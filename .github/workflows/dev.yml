@@ -1,8 +1,9 @@
 name: Memento Frontend Dev
 
-on:
-  push:
-    branches: ["dev"]
+# on:
+#   push:
+#     branches: ["dev"]
+on: workflow_dispatch
 
 jobs:
   build:

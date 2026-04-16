@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ComponentRef } from "react";
 import { ModalWrapper } from "./modalLayout";
 import { useModal } from "@/hooks/use-modal";
 import { FooterBtnGroup } from "@/components/memory";
@@ -19,15 +19,23 @@ const initial = {
   prompt_id: "",
 };
 
+interface PromptMemory {
+  _id?: string;
+  prompt?: string;
+  title?: string;
+  body?: string;
+  attachments?: unknown;
+}
+
 interface PromptInputProps {
-  data: any;
+  data: PromptMemory;
   isMobile?: boolean;
 }
 
 export default function PromptInput({ data, isMobile = false }: PromptInputProps) {
   const { close, open, push } = useModal();
-  const audioRef = useRef<any>(null);
-  const videoRef = useRef<any>(null);
+  const audioRef = useRef<ComponentRef<typeof AudioRecorder>>(null);
+  const videoRef = useRef<ComponentRef<typeof VideoRecorder>>(null);
 
   const [memory, setMemory] = useState(data);
   const [editMode, setEditMode] = useState(false);
@@ -44,7 +52,7 @@ export default function PromptInput({ data, isMobile = false }: PromptInputProps
     initial,
     async onSubmit(payload) {
       payload.prompt_id = memory?.prompt;
-      const result = await trigger(payload as any);
+      const result = await trigger(payload as unknown as Parameters<typeof trigger>[0]);
       if (result?.success) {
         open?.("set-tag-permission", { memory: result.data, isNew: isEmpty(data?.prompt) });
         setEditMode(false);

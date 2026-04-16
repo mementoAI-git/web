@@ -15,7 +15,7 @@ export default function LogoutAccount({ close, open }: LogoutAccountProps) {
     try {
       await logout();
       toast.success("Logged out of all devices");
-    } catch (error) {
+    } catch {
       toast.error("Failed to logout");
     }
   };

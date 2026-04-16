@@ -4,7 +4,7 @@ import {
   getStep5Body,
   getPrimaryCTA,
 } from "./adaptive";
-import type { ExpressionMode, MotivationType } from "./types";
+import type { ExpressionMode } from "./types";
 
 describe("getStep4Headline", () => {
   it("returns emotional_depth headline", () => {

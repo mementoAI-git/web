@@ -2,7 +2,6 @@
  * Host onboarding chat: timing constants, intro copy, exchange-0 ack helper.
  * Composed assistant turns live in `compose-onboarding-turn.ts`.
  */
-import type { HostOnboardingExchangeIndex } from "./types";
 import {
   TOTAL_EXCHANGES,
   composeOnboardingTurn,
@@ -57,7 +56,7 @@ export function buildExchange0Acknowledgment(introUserMessage: string): string {
   }
 
   if (
-    /\!{2,}/.test(t) ||
+    /!{2,}/.test(t) ||
     /\b(loving|love it|love this|excited|pumped|stoked|can'?t wait)\b/i.test(t)
   ) {
     return "Nice.";

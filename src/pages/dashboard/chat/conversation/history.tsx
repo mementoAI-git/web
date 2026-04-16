@@ -28,7 +28,7 @@ interface IHistory extends PropsWithChildren {
   setMessages: Dispatch<SetStateAction<Partial<IMessage>[]>>;
   messages: Partial<IMessage>[];
   memory: IMemory;
-  scrollContainerRef: any;
+  scrollContainerRef: React.RefObject<HTMLDivElement | null>;
   onViewDetails: () => void
   onRetryFailedMessage?: () => void
   onReplyToMessage?: (quote: ChatReplyQuote) => void

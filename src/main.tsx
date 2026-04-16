@@ -18,6 +18,7 @@ import { ErrorPage } from "./pages";
 import { RootAppShell } from "@/components/layouts/root-app-shell";
 // Dev-only: admin tools for previewing empty states.
 // Gated behind import.meta.env.DEV — Vite tree-shakes this from production.
+// eslint-disable-next-line react-refresh/only-export-components
 let DevAdminProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => <>{children}</>;
 if (import.meta.env.DEV) {
   DevAdminProvider = (await import("@/dev/admin-tools")).DevAdminProvider;

@@ -79,7 +79,7 @@ export const deleteFetcher: MutationFetcher = async (url, body = { arg: {} }) =>
   return handleRequest("delete", url, body);
 };
 
-export const fileUploadFetcher = async (url: string, { arg }: any) => {
+export const fileUploadFetcher = async (url: string, { arg }: { arg: Record<string, unknown> & { file?: File; onProgress?: (p: number) => void } }) => {
   const { file, onProgress, ...payload } = arg;
   const formData = new FormData();
   if (file) {
@@ -139,7 +139,7 @@ export const fileUploadFetcher = async (url: string, { arg }: any) => {
   }
 };
 
-export const streamlineFetcher = async (url: string, { arg }: any) => {
+export const streamlineFetcher = async (url: string, { arg }: { arg: Record<string, unknown> & { onChunk: (chunk: string) => void; signal?: AbortSignal } }) => {
   const { onChunk, signal, ...payload } = arg;
   const storedAuth = localStorage.getItem(storageKeys.auth);
   const auth = storedAuth ? JSON.parse(storedAuth) : null;
@@ -172,7 +172,7 @@ export const streamlineFetcher = async (url: string, { arg }: any) => {
   }
 };
 
-const handleRequest = async (method: string, url: string, body?: any) => {
+const handleRequest = async (method: string, url: string, body?: { arg?: unknown }) => {
   try {
     const res = await axios({
       method,

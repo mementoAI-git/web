@@ -84,7 +84,7 @@ export default function UploadFiles({ data: id }: UploadFilesProps) {
         },
       };
 
-      const result = await uploadFile(payload as any);
+      const result = await uploadFile(payload as Parameters<typeof uploadFile>[0]);
 
       const uploadedFile = Array.isArray(result?.data) ? result?.data[0] : result?.data;
       if (!uploadedFile) {

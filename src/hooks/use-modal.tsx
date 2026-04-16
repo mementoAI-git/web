@@ -10,15 +10,16 @@ import type { PropsWithChildren } from "react";
 
 interface IState {
   name: string;
-  props?: any;
+  props?: unknown;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const initialStates: ModalContext = { state: [] };
 
 interface ModalContext {
   state: IState[];
-  open?: (name: string, props?: any) => void;
-  push?: (name: string, props?: any) => void;
+  open?: (name: string, props?: unknown) => void;
+  push?: (name: string, props?: unknown) => void;
   close?: (name?: string) => void;
 }
 
@@ -27,11 +28,11 @@ const modal = createContext<ModalContext>(initialStates);
 export function ModalProvider({ children }: PropsWithChildren) {
   const [state, setState] = useState<IState[]>([]);
 
-  const open = useCallback((name: string, props: any = null) => {
+  const open = useCallback((name: string, props: unknown = null) => {
     setState([{ name, props }]);
   }, []);
 
-  const push = useCallback((name: string, props: any = null) => {
+  const push = useCallback((name: string, props: unknown = null) => {
     setState((p) => [{ name, props }, ...p]);
   }, []);
 
@@ -51,5 +52,6 @@ export function ModalProvider({ children }: PropsWithChildren) {
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useModal = () => useContext(modal);
 

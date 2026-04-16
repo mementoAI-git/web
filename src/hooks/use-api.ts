@@ -9,7 +9,7 @@ import endpoints from '@/api/endpoint';
 import { replacePathParams } from '@/utility';
 import { useNavigate } from 'react-router-dom';
 
-export function useApi<T = any>(
+export function useApi<T = unknown>(
   endpoint: string | null,
   options?: {
     skipErrorHandling?: boolean;
@@ -58,7 +58,7 @@ export function useApi<T = any>(
   };
 }
 
-export function useMutation<TResponse = any, TRequest = any>(
+export function useMutation<TResponse = unknown, TRequest = unknown>(
   endpoint: string,
   options?: {
     skipErrorHandling?: boolean;

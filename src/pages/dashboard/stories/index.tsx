@@ -5,7 +5,6 @@ import useSWR from "swr";
 import { StatCard } from "../component/stat-card";
 import { DoubleHeartIcon, PlusIcon } from "@/components/icons";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 
 import totalMemoriesBg from "@/assets/icon/total-memories.svg";
 import mediaFilesBg from "@/assets/icon/media-files.svg";

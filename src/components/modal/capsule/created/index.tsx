@@ -34,7 +34,7 @@ const initial = {
 };
 
 interface CreateCapsuleProps {
-  data?: any;
+  data?: (Partial<typeof initial> & { _id?: string }) | null;
 }
 
 export default function CreateCapsule({ data = null }: CreateCapsuleProps) {
@@ -46,8 +46,8 @@ export default function CreateCapsule({ data = null }: CreateCapsuleProps) {
     isEmpty(data) ? "post" : "put",
   );
 
-  const onSubmit = async (payload: any, { setValues }: { setValues: (values: typeof initial) => void }) => {
-    const submission = { ...payload };
+  const onSubmit = async (payload: typeof initial, { setValues }: { setValues: (values: typeof initial) => void }) => {
+    const submission: typeof initial & { attachments?: string[] } = { ...payload };
     if (!isEmpty(files)) {
       submission.attachments = files
         .map((file) => file.uploadedFile?._id)
