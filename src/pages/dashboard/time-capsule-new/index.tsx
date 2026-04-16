@@ -54,8 +54,8 @@ export default function TimeCapsulePage() {
   };
 
   const getKey = useCallback(
-    (pageIndex: number, previousPageData: any) => {
-      if (previousPageData && !previousPageData.data.docs.length) return null;
+    (pageIndex: number, previousPageData: { data?: { docs?: unknown[] } } | null) => {
+      if (previousPageData && !previousPageData.data?.docs?.length) return null;
       return `${endpoint.capsule}?page=${pageIndex + 1}${getFilterQuery(filter)}`;
     },
     [filter],

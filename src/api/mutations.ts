@@ -3,24 +3,19 @@ import client from './client';
 import type { ApiResponse, RequestOptions } from './interface';
 
 
-export const get = async <T = any>(
+export const get = async <T = unknown>(
   url: string,
   config?: AxiosRequestConfig & RequestOptions
 ): Promise<ApiResponse<T>> => {
-  try {
-    const response = await client.get<ApiResponse<T>>(url, config);
+  const response = await client.get<ApiResponse<T>>(url, config);
 
-    return response.data as ApiResponse<T>;
-  } catch (error) {
-    // Re-throw error for SWR to handle
-    throw error;
-  }
+  return response.data as ApiResponse<T>;
 };
 
 /**
  * Helper function for POST requests
  */
-export const post = async <T = any, D = any>(
+export const post = async <T = unknown, D = unknown>(
   url: string,
   data?: D,
   config?: AxiosRequestConfig & RequestOptions
@@ -33,7 +28,7 @@ export const post = async <T = any, D = any>(
 /**
  * Helper function for PUT requests
  */
-export const put = async <T = any, D = any>(
+export const put = async <T = unknown, D = unknown>(
   url: string,
   data?: D,
   config?: AxiosRequestConfig & RequestOptions
@@ -46,7 +41,7 @@ export const put = async <T = any, D = any>(
 /**
  * Helper function for PATCH requests
  */
-export const patch = async <T = any, D = any>(
+export const patch = async <T = unknown, D = unknown>(
   url: string,
   data?: D,
   config?: AxiosRequestConfig & RequestOptions
@@ -59,7 +54,7 @@ export const patch = async <T = any, D = any>(
 /**
  * Helper function for DELETE requests
  */
-export const del = async <T = any>(
+export const del = async <T = unknown>(
   url: string,
   config?: AxiosRequestConfig & RequestOptions
 ): Promise<ApiResponse<T>> => {

@@ -12,7 +12,13 @@ import Spinner from "@/components/spinner";
 import useFileUpload from "@/hooks/use-file-upload";
 import { isEmpty, cn } from "@/utility";
 import useSWR, { mutate } from "swr";
-import type { IMemory, IFile } from "@/utility/interface";
+import type {
+  IMemory,
+  IFile,
+  ICapsule,
+  IOnUploadPayload,
+  IUser,
+} from "@/utility/interface";
 import SelectFromMemory from "../../select-from-memory";
 import SelectFromMedia from "../../select-from-media";
 import DateOptionsDropdown from "@/pages/dashboard/time-capsule-new/components/DateInputWithCustomDropdown";
@@ -20,7 +26,10 @@ import DatePicker from "@/components/date-picker";
 import BrowseFileBtn from "./browse-file-btn";
 import RecentRecipients from "@/pages/dashboard/time-capsule-new/components/RecentRecipients";
 import RecentMedia from "@/pages/dashboard/time-capsule-new/components/RecentMedia";
-import type { CardCustomization } from "@/pages/dashboard/time-capsule-new/components/CapsulePreviewCard";
+import type {
+  CardCustomization,
+  MediaAsset,
+} from "@/pages/dashboard/time-capsule-new/components/CapsulePreviewCard";
 import StyleControls from "@/pages/dashboard/time-capsule-new/components/StyleControls";
 import CapsulePreviewCard from "@/pages/dashboard/time-capsule-new/components/CapsulePreviewCard";
 import { useDragAndDrop } from "@/hooks/use-drag-and-drop";
@@ -54,8 +63,62 @@ const initial = {
   recipients: [] as string[],
 };
 
+type FormValues = typeof initial;
+
+// Shape of items tracked in selectedMedia — a mix of uploaded files,
+// previously saved attachments, and selected memories (isMemory=true).
+type SelectedMediaItem = {
+  id?: string;
+  _id?: string;
+  type?: string;
+  thumbnail?: string;
+  title?: string;
+  name?: string;
+  url?: string;
+  duration?: number | string;
+  isMemory?: boolean;
+  attachments?: IFile[];
+};
+
+// Recipient shape returned by the /beneficiaries docs and RecentRecipients component.
+type RecipientLike = {
+  _id?: string;
+  name?: string;
+  email?: string;
+  relationship?: string;
+  avatar?: string;
+  user?: {
+    name?: string;
+    picture_url?: string;
+  };
+};
+
+// Item shape coming from RecentMedia's onSelect callback.
+type MediaItemLike = {
+  id: string;
+  _id?: string;
+  type: "video" | "image" | "audio";
+  thumbnail: string;
+  title?: string;
+  url?: string;
+  name?: string;
+  duration?: number;
+};
+
+// Attachment shape as returned from the capsule API (loose — matches
+// IFile plus a few optional fields present on some payloads).
+type CapsuleAttachment = Partial<IFile> & {
+  _id?: string;
+  type?: string;
+  url?: string;
+  thumbnail?: string;
+  name?: string;
+  title?: string;
+  duration?: number;
+};
+
 interface CreateCapsuleProps {
-  data?: any;
+  data?: (Partial<ICapsule> & { _id?: string }) | null;
   mode?: "create" | "edit" | "view";
 }
 
@@ -164,6 +227,54 @@ const SheetBackground = () => (
   />
 );
 
+// Props shared by the mobile form sheet — mirrors sharedFormProps + a few extras.
+type MobileFormSheetProps = {
+  isOpen: boolean;
+  onClose: () => void;
+  values: FormValues;
+  errors: Record<string, string | undefined>;
+  handleChange: (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >,
+  ) => void;
+  handleValue: (name: string, value: unknown) => void;
+  handleSave: () => void | Promise<void>;
+  handleSaveToDraft: (e: React.FormEvent<HTMLButtonElement>) => void;
+  isEditMode: boolean;
+  isFormValid: boolean;
+  isMutating: boolean;
+  beneficiaries: { data?: { docs?: RecipientLike[] } } | undefined;
+  recentMedia: { data?: { docs?: MediaItemLike[] } } | undefined;
+  selectedMedia: SelectedMediaItem[];
+  handleRecipientSelect: (recipient: RecipientLike) => void;
+  handleMediaSelect: (item: MediaItemLike) => void;
+  onOpenMemory: () => void;
+  onOpenMedia: () => void;
+  onTapPreview: () => void;
+  dragHandlers: React.HTMLAttributes<HTMLDivElement>;
+  isDragging: boolean;
+  handleUpload: (file: IOnUploadPayload) => void;
+  cardStyle: CardCustomization;
+  onStyleChange: (updates: Partial<CardCustomization>) => void;
+  previewRecipients: string[];
+  previewAssets: MediaAsset[];
+  user: IUser | null;
+  isDirty: boolean;
+  pendingStatus: "draft" | "scheduled" | null;
+};
+
+type MobilePreviewSheetProps = {
+  isOpen: boolean;
+  onClose: () => void;
+  cardStyle: CardCustomization;
+  onStyleChange: (updates: Partial<CardCustomization>) => void;
+  previewRecipients: string[];
+  values: FormValues;
+  previewAssets: MediaAsset[];
+  user: IUser | null;
+};
+
 // ─── Form sheet ───────────────────────────────────────────────────────────────
 function MobileFormSheet({
   isOpen,
@@ -195,7 +306,7 @@ function MobileFormSheet({
   user,
   isDirty,
   pendingStatus,
-}: any) {
+}: MobileFormSheetProps) {
   return (
     <Sheet
       isOpen={isOpen}
@@ -311,9 +422,9 @@ function MobileFormSheet({
                 <div className="bg-v3-fill-weaker rounded-xl p-3">
                   <div className="flex items-center gap-2 overflow-x-auto">
                     <RecentMedia
-                      items={recentMedia?.data?.docs}
+                      items={recentMedia?.data?.docs ?? []}
                       selectedItems={selectedMedia.map(
-                        (m: any) => m.id || m._id,
+                        (m) => (m.id || m._id) as string,
                       )}
                       onSelect={handleMediaSelect}
                       onSeeMore={onOpenMedia}
@@ -503,7 +614,7 @@ function MobilePreviewSheet({
   values,
   previewAssets,
   user,
-}: any) {
+}: MobilePreviewSheetProps) {
   return (
     <Sheet
       isOpen={isOpen}
@@ -693,12 +804,12 @@ export default function CreateCapsule({
     revalidateIfStale: true,
   });
   const { data: recentMedia } = useSWR(`${endpoint.files}?page=${page}`);
-  const [selectedMedia, setSelectedMedia] = useState<any[]>([]);
+  const [selectedMedia, setSelectedMedia] = useState<SelectedMediaItem[]>([]);
 
   const [originalValues, setOriginalValues] = useState<typeof initial | null>(
     null,
   );
-  const [originalMedia, setOriginalMedia] = useState<any[]>([]);
+  const [originalMedia, setOriginalMedia] = useState<SelectedMediaItem[]>([]);
 
   // Desktop
   const [desktopShowMemory, setDesktopShowMemory] = useState(false);
@@ -711,25 +822,32 @@ export default function CreateCapsule({
   const [mediaSheetOpen, setMediaSheetOpen] = useState(false);
 
   const onSubmit = async (
-    payload: any,
+    payload: FormValues,
     { setValues }: { setValues: (v: typeof initial) => void },
   ) => {
-    const submission = { ...payload };
+    const submission: Partial<FormValues> & {
+      attachments?: string[];
+      memories?: string[];
+    } = { ...payload };
     if (submission.status === "draft") {
       delete submission.schedule_date;
     }
     const uploadedIds = !isEmpty(files)
-      ? files.map((f: any) => f.uploadedFile?._id).filter(Boolean)
+      ? files
+          .map((f) => f.uploadedFile?._id)
+          .filter((id): id is string => Boolean(id))
       : [];
 
-    const attachmentIds = [...uploadedIds];
+    const attachmentIds: string[] = [...uploadedIds];
     const memoryIds: string[] = [];
 
-    selectedMedia.forEach((m: any) => {
+    selectedMedia.forEach((m) => {
+      const id = m.id || m._id;
+      if (!id) return;
       if (m.isMemory) {
-        memoryIds.push(m.id || m._id);
+        memoryIds.push(id);
       } else {
-        attachmentIds.push(m.id || m._id);
+        attachmentIds.push(id);
       }
     });
 
@@ -770,7 +888,9 @@ export default function CreateCapsule({
       setOriginalValues(populated);
 
       if (data?.attachments?.length) {
-        const mapped = data.attachments.map((a: any) => ({
+        const mapped: SelectedMediaItem[] = (
+          data.attachments as CapsuleAttachment[]
+        ).map((a) => ({
           id: a._id,
           _id: a._id,
           type: a.type?.split("/")[0] || "image",
@@ -808,8 +928,8 @@ export default function CreateCapsule({
     headerColor: "#1A2419",
   });
 
-  const previewAssets = [
-    ...files.map((f: any) => ({
+  const previewAssets: MediaAsset[] = [
+    ...files.map((f) => ({
       id: f.id,
       type: (f.file?.type?.split("/")[0] || "image") as
         | "image"
@@ -819,22 +939,25 @@ export default function CreateCapsule({
       title: f.file?.name || "Uploaded file",
     })),
     ...selectedMedia.map((m) => ({
-      id: m.id || m._id,
+      id: (m.id || m._id) as string,
       type: (m.isMemory
         ? "memory"
         : m.type?.includes("video")
           ? "video"
           : m.type?.includes("audio")
             ? "audio"
-            : "image") as any,
+            : "image") as MediaAsset["type"],
       thumbnail: m.url || m.thumbnail || m.attachments?.[0]?.url || "",
       title: m.title || m.name || "Media file",
-      duration: m.duration,
+      duration: m.duration as MediaAsset["duration"],
     })),
   ];
 
   const previewRecipients = values.recipients.map((email) => {
-    const b = beneficiaries?.data?.docs?.find((b: any) => b.email === email);
+    const b = (
+      (beneficiaries as { data?: { docs?: RecipientLike[] } } | undefined)?.data
+        ?.docs ?? []
+    ).find((b) => b.email === email);
     return b?.name || b?.user?.name || email;
   });
 
@@ -864,11 +987,12 @@ export default function CreateCapsule({
       const MAX = 120 * 1024 * 1024;
       Array.from(droppedFiles).forEach((file) => {
         const ext = `.${file.name.split(".").pop()?.toLowerCase()}`;
+        type SupportedType = (typeof CAPSULE_SUPPORTED_FILE_TYPES)[number];
         const valid =
-          CAPSULE_SUPPORTED_FILE_TYPES.includes(file.type as any) ||
+          CAPSULE_SUPPORTED_FILE_TYPES.includes(file.type as SupportedType) ||
           (EXTENSION_TO_MIME[ext] &&
             CAPSULE_SUPPORTED_FILE_TYPES.includes(
-              EXTENSION_TO_MIME[ext] as any,
+              EXTENSION_TO_MIME[ext] as SupportedType,
             ));
         if (!valid) {
           toast.error(`File type "${file.type || ext}" is not supported`);
@@ -888,7 +1012,7 @@ export default function CreateCapsule({
     onDrop: handleFileDrop,
   });
 
-  const handleRecipientSelect = (recipient: any) => {
+  const handleRecipientSelect = (recipient: RecipientLike) => {
     const email = recipient.email;
     if (!email) return;
     const curr = values.recipients || [];
@@ -898,7 +1022,7 @@ export default function CreateCapsule({
     );
   };
 
-  const handleMediaSelect = (item: any) => {
+  const handleMediaSelect = (item: MediaItemLike) => {
     const id = item.id || item._id;
     setSelectedMedia((prev) =>
       prev.some((m) => (m.id || m._id) === id)

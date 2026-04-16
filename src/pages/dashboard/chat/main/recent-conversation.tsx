@@ -4,6 +4,8 @@ import endpoint from "@/api/endpoint";
 import ConversationBar, { ConversationBarSkeleton } from "@/components/conversation-bar";
 import { isEmpty } from "@/utility";
 
+type ConversationBarItem = React.ComponentProps<typeof ConversationBar>;
+
 export default function RecentConversations() {
   const { data, isLoading } = useSWR(`${endpoint.conversations}?page=1`);
 
@@ -25,7 +27,7 @@ export default function RecentConversations() {
             <ConversationBarSkeleton variant="compact" />
           </>
         ) : (
-          data?.data?.docs?.slice(0, 3)?.map((conversation: any, index: number) => (
+          (data?.data?.docs as ConversationBarItem[] | undefined)?.slice(0, 3)?.map((conversation, index: number) => (
             <ConversationBar key={conversation._id ?? index} {...conversation} variant="compact" />
           ))
         )}

@@ -41,7 +41,7 @@ describe("StoreProvider / useStore", () => {
     const { result } = renderHook(() => useStore(), { wrapper });
     await waitFor(() => expect(result.current.hydrated).toBe(true));
 
-    const user = { _id: "u1", email: "a@b.com", first_name: "A", last_name: "B" } as any;
+    const user = { _id: "u1", email: "a@b.com", first_name: "A", last_name: "B" } as unknown as import("@/utility/interface").IUser;
     act(() => result.current.setUser?.(user));
 
     expect(result.current.user).toEqual(user);

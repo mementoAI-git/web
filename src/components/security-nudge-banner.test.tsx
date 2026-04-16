@@ -3,10 +3,11 @@ import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "@/test";
 import { SecurityNudgeBanner } from "./security-nudge-banner";
+import type { IUser } from "@/utility/interface";
 
 const STORAGE_KEY = "memento:security:nudge:dismissed_at";
 const mockNavigate = vi.fn();
-let mockedUser: any = null;
+let mockedUser: IUser | null = null;
 let mockedHydrated = true;
 
 vi.mock("react-router-dom", async (importOriginal) => {

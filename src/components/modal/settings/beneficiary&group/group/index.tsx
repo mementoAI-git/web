@@ -27,7 +27,7 @@ interface RowMenuProps {
   onDelete: () => void;
 }
 
-function RowMenu({ group, onViewMembers, onEdit, onDelete }: RowMenuProps) {
+function RowMenu({ group: _group, onViewMembers, onEdit, onDelete }: RowMenuProps) {
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState({ top: 0, left: 0 });
   const btnRef = useRef<HTMLButtonElement>(null);

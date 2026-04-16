@@ -15,13 +15,13 @@ interface IHelper<T> {
   setValues: Dispatch<SetStateAction<T>>;
   setErrors: Dispatch<SetStateAction<Partial<Record<keyof T, string>>>>;
 }
-interface IUseForm<T extends Record<string, any>> {
+interface IUseForm<T extends Record<string, unknown>> {
   initial: T;
   schema?: ObjectSchema<AnyObject>;
   onSubmit: (p: T, helpers?: IHelper<T>) => void;
 }
 
-export default function useForm<T extends Record<string, any>>({
+export default function useForm<T extends Record<string, unknown>>({
   initial,
   schema,
   onSubmit,
@@ -59,16 +59,21 @@ export default function useForm<T extends Record<string, any>>({
     }
   }, [values, touchedFields, validation]);
 
-  const handleValue = (name: string, value: any) => {
+  const handleValue = (name: string, value: unknown) => {
     if (!touchedFields.includes(name)) {
       setTouchedfields((p) => [...p, name]);
     }
-    setValues((p: any) => ({ ...p, [name]: value }));
+    setValues((p) => ({ ...p, [name]: value }));
   };
 
-  const handleChange = (e: React.ChangeEvent<any>) => {
-    const { name, type, checked, value } = e.target;
-    const val = type === "checkbox" ? checked : value;
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const target = e.target;
+    const name = target.name;
+    const value = target.value;
+    const val =
+      target instanceof HTMLInputElement && target.type === "checkbox"
+        ? target.checked
+        : value;
     handleValue(name, val);
   };
 

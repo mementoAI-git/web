@@ -20,6 +20,7 @@ interface IState {
   hydrated: boolean;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const initialStates: IState = {
   headerTitle: null,
   auth: null,
@@ -78,5 +79,6 @@ export function StoreProvider({ children }: PropsWithChildren) {
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useStore = () => useContext(store);
 

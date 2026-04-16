@@ -2,7 +2,6 @@
 
 import {
   createContext,
-  useCallback,
   useContext,
   useState,
   type PropsWithChildren,
@@ -24,6 +23,7 @@ export function ChatSidebarProvider({ children }: PropsWithChildren) {
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useChatSidebar() {
   const ctx = useContext(ChatSidebarContext);
   return ctx ?? { chatOpen: false, setChatOpen: () => {} };

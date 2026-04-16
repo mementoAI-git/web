@@ -31,7 +31,7 @@ const schema = yup.object().shape({
     .matches(/[A-Z]/, "Password must contain at least one uppercase letter")
     .matches(/[a-z]/, "Password must contain at least one lowercase letter")
     .matches(/[0-9]/, "Password must contain at least one number")
-    .matches(/[!@#$%^&*(),.?\":{}|<>]/, "Password must contain at least one special character"),
+    .matches(/[!@#$%^&*(),.?":{}|<>]/, "Password must contain at least one special character"),
   c_password: yup
     .string()
     .oneOf([yup.ref("new_password"), null], "Passwords must match")
@@ -174,8 +174,8 @@ function PasskeyManager() {
 
       toast.success("Passkey added successfully");
       mutate(endpoint.listPasskeys);
-    } catch (err: any) {
-      if (err?.name === "NotAllowedError") return; // user cancelled
+    } catch (err) {
+      if (err instanceof Error && err.name === "NotAllowedError") return; // user cancelled
       toast.error("Could not add passkey. Try again.");
     } finally {
       setAdding(false);

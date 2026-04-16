@@ -3,9 +3,10 @@ import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "@/test";
 import { OnboardingNudgeBanner } from "./OnboardingNudgeBanner";
+import type { IUser } from "@/utility/interface";
 
 const mockNavigate = vi.fn();
-let mockedUser: any = null;
+let mockedUser: IUser | null = null;
 
 vi.mock("react-router-dom", async (importOriginal) => {
   const actual = await importOriginal<typeof import("react-router-dom")>();

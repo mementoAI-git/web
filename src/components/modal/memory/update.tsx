@@ -21,7 +21,7 @@ import { mutate } from "swr";
 import { v4 as uuidv4 } from "uuid";
 import { deleteFetcher } from "@/api/fetcher";
 import { cn, resolvePath } from "@/utility";
-import type { IFile, IOnUploadPayload } from "@/utility/interface";
+import type { IFile, IMemory, IOnUploadPayload } from "@/utility/interface";
 import { SUPPORTED_FILE_TYPES } from "@/utility/constant";
 import { FileThumbnails } from "./create/file-thumbnails";
 import { AccessField, type SearchResultItem } from "./create/access-field";
@@ -34,8 +34,24 @@ import videoRecorderSvg from "@/assets/icon/video-recorder.svg";
 
 const ACTIVE_BG = "bg-fill-neutral-strong";
 
+interface UpdateMemoryData {
+  memory?: IMemory;
+}
+
+type ContentData = UpdateMemoryData & Partial<IMemory>;
+
 interface ContentProps {
-  data: any;
+  data: ContentData;
+}
+
+interface UpdateMemoryPayload {
+  body?: string;
+  title?: string;
+  attachments?: string[];
+  removeAttachments?: string[];
+  groups?: string[];
+  beneficiaries?: string[];
+  tags?: string[];
 }
 
 function toSearchItems(
@@ -151,7 +167,7 @@ function Content({ data }: ContentProps) {
   const handleContinueBtn = async () => {
     if (isMutating) return;
 
-    const payload: any = {};
+    const payload: UpdateMemoryPayload = {};
 
     if (text !== memory.body) {
       payload.body = text;
@@ -559,7 +575,7 @@ function Content({ data }: ContentProps) {
                     >
                       <Picker
                         data={emojiData}
-                        onEmojiSelect={(e: any) => {
+                        onEmojiSelect={(e: { native: string }) => {
                           editor?.chain().focus().insertContent(e.native).run();
                           setShowEmoji(false);
                         }}

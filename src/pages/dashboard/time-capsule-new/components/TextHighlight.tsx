@@ -60,7 +60,7 @@ export default function TextHighlight({
   );
 }
 
-function autoSplitLines(text: string, maxLines: number = 2): string[] {
+function autoSplitLines(text: string, _maxLines: number = 2): string[] {
   if (!text || text.trim().length === 0) return [];
 
   const words = text.trim().split(/\s+/);

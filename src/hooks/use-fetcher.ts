@@ -20,7 +20,7 @@ const fetcherMap = {
 export default function useFetcher(
   url: string,
   method: keyof typeof fetcherMap = "post",
-  options?: SWRMutationConfiguration<IResponse, any>,
+  options?: SWRMutationConfiguration<IResponse, unknown>,
 ) {
   const fetcher = fetcherMap[method] || postFetcher;
   return useSWRMutation(url, fetcher, options);
@@ -31,7 +31,7 @@ export function useFileUploadFetcher(url: string = endpoint.upload) {
     IResponse,
     unknown,
     string,
-    { arg: any }
+    { arg: Record<string, unknown> & { file?: File; onProgress?: (p: number) => void } }
   >(url, fileUploadFetcher);
 }
 

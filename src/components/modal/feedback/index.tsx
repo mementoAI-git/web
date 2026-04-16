@@ -29,7 +29,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Spinner } from "@/components/ui/spinner";
-import { X, ChevronDown } from "lucide-react";
+import { X } from "lucide-react";
 
 const FEEDBACK_OPTIONS = [
   { label: "Bug", value: "Bug" },

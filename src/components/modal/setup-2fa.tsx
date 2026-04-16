@@ -44,7 +44,7 @@ function Content({ data }: Setup2FAContentProps) {
     try {
       const text = await navigator.clipboard.readText();
       handleValue("token", text);
-    } catch (error) {
+    } catch {
       toast.error("Failed to paste");
     }
   };
@@ -53,7 +53,7 @@ function Content({ data }: Setup2FAContentProps) {
     try {
       await navigator.clipboard.writeText(data.secret);
       toast.success("Secret code copied to clipboard");
-    } catch (error) {
+    } catch {
       toast.error("Failed to copy secret code");
     }
   };

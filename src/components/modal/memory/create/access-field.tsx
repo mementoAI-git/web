@@ -199,6 +199,7 @@ export function AccessField({ value: selectedAccess, onChange }: AccessFieldProp
 }
 
 /** Build create-memory payload with groups and beneficiaries from selected access items. */
+// eslint-disable-next-line react-refresh/only-export-components
 export function buildCreateMemoryPayload(
   title: string,
   body: string,

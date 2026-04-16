@@ -12,6 +12,7 @@ const AVATAR_BG_COLORS = [
 export type UserAvatarColor = (typeof AVATAR_BG_COLORS)[number];
 
 /** Stable avatar fallback color from any string (e.g. email). */
+// eslint-disable-next-line react-refresh/only-export-components
 export function avatarColorFromSeed(seed: string): UserAvatarColor {
   if (!seed) return AVATAR_BG_COLORS[0];
   let h = 0;

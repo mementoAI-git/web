@@ -66,7 +66,7 @@ client.interceptors.response.use(
 );
 
 // Helper function to make requests with type-safe options
-export const apiRequest = async <T = any>(
+export const apiRequest = async <T = unknown>(
   config: AxiosRequestConfig & RequestOptions
 ): Promise<T> => {
   const { skipAuth, skipErrorHandling, ...axiosConfig } = config;
@@ -75,7 +75,7 @@ export const apiRequest = async <T = any>(
     ...axiosConfig,
     skipAuth,
     skipErrorHandling,
-  } as any);
+  } as AxiosRequestConfig);
 
   // Return data from response
   return response.data;

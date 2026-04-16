@@ -60,6 +60,7 @@ export function InlineProfileDateField({ name, "aria-label": ariaLabel }: Inline
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function formatProfileDobDisplay(cached: string): string {
   if (!cached || !dayjs(cached).isValid()) return "";
   return dayjs(cached).format("MMMM D, YYYY");

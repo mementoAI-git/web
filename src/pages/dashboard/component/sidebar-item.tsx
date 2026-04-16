@@ -22,7 +22,7 @@ export default function SideBarItem({
   icon,
   emoji,
   title,
-  color = "#F06037",
+  color: _color = "#F06037",
 }: SideBarItemProps) {
   const navigate = useNavigate();
 

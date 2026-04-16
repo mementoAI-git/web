@@ -7,7 +7,6 @@ import { getRecentMemories, isEmpty } from "@/utility";
 import { useModal } from "@/hooks/use-modal";
 import { useStore } from "@/hooks/use-store";
 import useSWR from "swr";
-import { Input } from "@/components/ui/input";
 import { SearchIcon } from "@/components/icons";
 import { X } from "lucide-react";
 import SearchItem from "./search-item";

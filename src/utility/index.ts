@@ -125,7 +125,7 @@ export const getSocialShareLinks = (
 export const clearCache = () =>
   mutate(() => true, undefined, { revalidate: false });
 
-export const isEmpty = (mixedVar: any) => {
+export const isEmpty = (mixedVar: unknown) => {
   let undef;
   let key;
   let i;
@@ -197,15 +197,16 @@ export const formattedDate = (date: string) =>
     sameElse: "DD MMM YYYY",
   });
 
-export const concatStrings = (...args: any[]): string => {
+export const concatStrings = (...args: unknown[]): string => {
   if (args.length === 0) return "";
 
   const separator = args[args.length - 1];
   const strings = args.slice(0, -1);
+  const sep = typeof separator === "string" ? separator : "";
 
   return strings
-    .filter((str) => str && typeof str === "string" && str.trim() !== "")
-    .join(separator || "");
+    .filter((str): str is string => typeof str === "string" && str.trim() !== "")
+    .join(sep);
 };
 
 export const highlightText = (text: string, searchTerm: string): string => {
@@ -221,7 +222,16 @@ export const highlightText = (text: string, searchTerm: string): string => {
   );
 };
 
-export const addToRecentMemories = (memory: any, email: string) => {
+type RecentMemory = {
+  _id?: string;
+  title?: string;
+  attachments?: unknown;
+  body?: string;
+  opened_at?: string;
+  created_at?: string;
+};
+
+export const addToRecentMemories = (memory: RecentMemory, email: string) => {
   if (typeof window === "undefined") return;
 
   try {
@@ -229,16 +239,16 @@ export const addToRecentMemories = (memory: any, email: string) => {
     const maxItems = 5;
 
     const filtered = recentMemories.filter((m) => m._id !== memory._id);
-    memory = {
+    const normalized: RecentMemory = {
       _id: memory?._id,
       title: memory?.title,
       attachments: memory?.attachments,
-      body: memory?.body.substring(0, 150),
+      body: memory?.body?.substring(0, 150),
       opened_at: dayjs().toISOString(),
       created_at: memory?.created_at,
     };
 
-    const updated = [memory, ...filtered].slice(0, maxItems);
+    const updated = [normalized, ...filtered].slice(0, maxItems);
 
     localStorage.setItem(
       `${storageKeys.recentMemories}:${email}`,
@@ -249,7 +259,7 @@ export const addToRecentMemories = (memory: any, email: string) => {
   }
 };
 
-export const getRecentMemories = (email: string): any[] => {
+export const getRecentMemories = (email: string): RecentMemory[] => {
   if (typeof window === "undefined") return [];
 
   try {

@@ -24,9 +24,9 @@ export default function CategoryDetails({ category }: CategoryDetailsProps) {
   const { setHeaderTitle } = useStore();
 
   const getKey = useCallback(
-    (pageIndex: number, previousPageData: any) => {
+    (pageIndex: number, previousPageData: { data?: { docs?: unknown[] } } | null) => {
       if (!category?.slug) return null;
-      if (previousPageData && !previousPageData.data.docs.length) return null;
+      if (previousPageData && !previousPageData.data?.docs?.length) return null;
 
       const params = new URLSearchParams();
       params.append("page", String(pageIndex + 1));
@@ -121,7 +121,7 @@ export default function CategoryDetails({ category }: CategoryDetailsProps) {
               <div className="py-8 text-center text-gray-500">No prompts available for this category.</div>
             ) : (
               <div className="space-y-6">
-                {prompts.map((prompt: any, index: number) => (
+                {(prompts as React.ComponentProps<typeof CategoryPromptCard>[]).map((prompt, index: number) => (
                   <CategoryPromptCard key={prompt._id ?? index} {...prompt} />
                 ))}
               </div>

@@ -72,7 +72,7 @@ const actionButtonClass =
 
 function MemorySections({
   memory,
-  isMobile,
+  isMobile: _isMobile,
   source,
   quickActions,
   open,

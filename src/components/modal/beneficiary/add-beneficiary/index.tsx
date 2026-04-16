@@ -3,7 +3,6 @@ import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ModalCloseBtn } from "../../modalLayout";
 import useForm from "@/hooks/use-form";
 import * as yup from "yup";
 import { useModal } from "@/hooks/use-modal";

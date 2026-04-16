@@ -64,7 +64,7 @@ describe("Security settings — PasskeyManager", () => {
 
   it("calls startRegistration and shows success toast on passkey add", async () => {
     const mockStartRegistration = vi.mocked(startRegistration);
-    mockStartRegistration.mockResolvedValue({} as any);
+    mockStartRegistration.mockResolvedValue({} as Awaited<ReturnType<typeof startRegistration>>);
 
     await renderSecurity();
     await waitFor(() => {
