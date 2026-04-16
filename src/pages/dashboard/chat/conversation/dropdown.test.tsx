@@ -49,7 +49,7 @@ describe("MemoryDropdown", () => {
 
     const trigger = screen.getByRole("button", { name: /open memory sidebar/i });
     expect(trigger.querySelector("svg")).toBeTruthy();
-    expect(trigger.className).toMatch(/hover:bg-v3-fill-weak/);
+    expect(trigger.className).toMatch(/hover:bg-fill-neutral-weaker/);
   });
 
   it("calls onViewDetails when provided instead of opening a modal", async () => {

@@ -17,10 +17,10 @@ describe("DeepDiveNudge", () => {
       />,
     );
 
-    await user.click(screen.getByRole("button", { name: /start deep dive/i }));
+    await user.click(screen.getByRole("button", { name: /^start$/i }));
     expect(onDeepDive).toHaveBeenCalledTimes(1);
 
-    await user.click(screen.getByRole("button", { name: /not now/i }));
+    await user.click(screen.getByRole("button", { name: /^later$/i }));
     expect(onDismiss).toHaveBeenCalledTimes(1);
   });
 });

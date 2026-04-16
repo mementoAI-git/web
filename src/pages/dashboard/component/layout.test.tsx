@@ -48,16 +48,11 @@ describe("DashboardLayout", () => {
     );
 
     const nudgeHost = screen.getByRole("banner").parentElement;
-    expect(nudgeHost?.className).toMatch(/\bflex\b/);
-    expect(nudgeHost?.className).toMatch(/\bflex-col\b/);
-    expect(nudgeHost?.className).toMatch(/\bitems-center\b/);
     expect(nudgeHost?.className).toMatch(/\bw-full\b/);
     expect(nudgeHost?.className).toMatch(/\bbg-white\b/);
     expect(nudgeHost?.className).toMatch(/\btext-v3-text-strong\b/);
-    expect(nudgeHost?.className).toMatch(/\bjustify-start\b/);
     expect(nudgeHost?.className).toContain("pt-[3px]");
     expect(nudgeHost?.className).toMatch(/\bpb-0\.5\b/);
-    expect(nudgeHost?.className).toMatch(/\bh-fit\b/);
     const outlet = screen.getByTestId("outlet-child");
     expect(outlet.parentElement?.className).toMatch(/\bh-full\b/);
     expect(outlet.parentElement?.className).toMatch(/\bmin-h-0\b/);

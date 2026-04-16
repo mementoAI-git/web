@@ -24,7 +24,7 @@ describe("OnboardPage", () => {
     ).toBeInTheDocument();
 
     const cta = screen.getByRole("button", { name: /let's go!/i });
-    expect(cta).toHaveClass("!bg-orange");
+    expect(cta).toHaveClass("!bg-fill-brand-strong");
     expect(cta).toHaveClass("rounded-[64px]");
 
     await user.click(cta);

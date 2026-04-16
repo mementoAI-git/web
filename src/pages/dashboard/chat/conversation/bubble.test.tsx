@@ -17,13 +17,13 @@ describe("Bubble", () => {
     expect(screen.getByText("Hello from the assistant")).toBeInTheDocument();
     const bubble = screen.getByText("Hello from the assistant").closest("div.w-full");
     expect(bubble).toBeInTheDocument();
-    expect(bubble?.className.includes("bg-v3-fill-weak")).toBe(false);
+    expect(bubble?.className.includes("bg-fill-neutral-weaker")).toBe(false);
   });
 
-  it("uses v3 fill weak for user messages", () => {
+  it("uses fill neutral weaker for user messages", () => {
     render(<Bubble role="user" text="User said this" />);
 
-    const bubble = screen.getByText("User said this").closest(".bg-v3-fill-weak");
+    const bubble = screen.getByText("User said this").closest(".bg-fill-neutral-weaker");
     expect(bubble).toBeInTheDocument();
   });
 
