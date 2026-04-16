@@ -129,18 +129,39 @@ jobs:
             ./dist/ \
             ${{ secrets.DEPLOY_SSH_USER }}@${{ secrets.DEPLOY_SSH_HOST }}:/opt/memento/frontend-dev/
 
-      # Verify the deployed files are reachable via nginx.
-      - name: Health check
+      # Hash every file in the local build and in the deploy directory,
+      # compare. Fails if anything is missing, extra, or byte-different —
+      # regardless of whether nginx is running.
+      - name: Verify deployed tree matches build
         run: |
-          ssh -i ~/.ssh/deploy_key -p ${{ secrets.DEPLOY_SSH_PORT || 22 }} \
-            ${{ secrets.DEPLOY_SSH_USER }}@${{ secrets.DEPLOY_SSH_HOST }} << 'REMOTE'
-          set -e
-          if [ ! -f /opt/memento/frontend-dev/index.html ]; then
-            echo "::error::index.html missing from deploy directory"
+          hash_tree() {
+            # List files relative to cwd, byte-order sort, sha256sum each,
+            # then sha256sum the aggregate. Filename + contents both feed
+            # the final hash.
+            LC_ALL=C find . -type f -print0 \
+              | LC_ALL=C sort -z \
+              | xargs -0 sha256sum \
+              | sha256sum \
+              | awk '{print $1}'
+          }
+
+          LOCAL=$(cd dist && hash_tree)
+          REMOTE=$(ssh -i ~/.ssh/deploy_key -p ${{ secrets.DEPLOY_SSH_PORT || 22 }} \
+            ${{ secrets.DEPLOY_SSH_USER }}@${{ secrets.DEPLOY_SSH_HOST }} \
+            'cd /opt/memento/frontend-dev && LC_ALL=C find . -type f -print0 | LC_ALL=C sort -z | xargs -0 sha256sum | sha256sum | awk "{print \$1}"')
+
+          echo "local:  $LOCAL"
+          echo "remote: $REMOTE"
+
+          if [ -z "$LOCAL" ] || [ -z "$REMOTE" ]; then
+            echo "::error::empty tree hash — one side has no files"
             exit 1
           fi
-          echo "Frontend deploy verified — index.html present"
-          REMOTE
+          if [ "$LOCAL" != "$REMOTE" ]; then
+            echo "::error::deployed tree hash does not match build (commit ${GITHUB_SHA})"
+            exit 1
+          fi
+          echo "✓ deployed tree is byte-identical to the build"
 
       - name: Cleanup SSH credentials
         if: always()
