@@ -2,10 +2,14 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
-import SidebarDetails from "./sidebar-details";
+import SidebarDetails, { resolveSidebarDesktopWidthPx } from "./sidebar-details";
 import { type IMemory } from "@/utility/interface";
 import { ModalProvider } from "@/hooks/use-modal";
 import { MemoryRouter } from "react-router-dom";
+
+vi.mock("@/components/modal/chat-settings/chat-preferences-panel", () => ({
+  ChatPreferencesPanel: () => <div data-testid="mock-chat-preferences-panel" />,
+}));
 
 vi.mock("react-modal-sheet", () => {
   function MockSheet({ children }: { children: ReactNode }) {
@@ -84,6 +88,24 @@ vi.mock("@/hooks/use-modal", async (importOriginal) => {
   };
 });
 
+describe("resolveSidebarDesktopWidthPx", () => {
+  it("caps chat panel at 400px on wide viewports", () => {
+    expect(resolveSidebarDesktopWidthPx(1440, { wideChatPanel: true })).toBe(400);
+  });
+
+  it("shrinks chat panel when the viewport leaves limited budget for the sidebar", () => {
+    expect(resolveSidebarDesktopWidthPx(780, { wideChatPanel: true })).toBe(360);
+  });
+
+  it("floors chat panel width for very tight viewports", () => {
+    expect(resolveSidebarDesktopWidthPx(680, { wideChatPanel: true })).toBe(280);
+  });
+
+  it("shrinks memory panel similarly", () => {
+    expect(resolveSidebarDesktopWidthPx(700, { wideChatPanel: false })).toBe(280);
+  });
+});
+
 describe("SidebarDetails", () => {
   it("caps detail content at 287px width", () => {
     renderSidebar();
@@ -96,6 +118,72 @@ describe("SidebarDetails", () => {
     const { container } = renderSidebar({ isOpen: true });
     const desktopPanel = container.querySelector('[data-testid="memory-sidebar-desktop"]');
     expect(desktopPanel).toBeTruthy();
+  });
+
+  it("animates desktop overlay to 400px when chat preferences tab is active", () => {
+    const { container } = renderSidebar({
+      isOpen: true,
+      enableChatPreferencesTab: true,
+      activeTab: "chat",
+    });
+    const desktopPanel = container.querySelector(
+      '[data-testid="memory-sidebar-desktop"]',
+    ) as HTMLElement | null;
+    expect(desktopPanel).toBeTruthy();
+    expect(desktopPanel).toHaveStyle({ width: "400px" });
+
+    const content = desktopPanel?.querySelector('[class*="bg-v3-bg"]');
+    expect(content?.className).toContain("w-full");
+    expect(content?.className).toContain("min-w-0");
+    expect(content?.className).toContain("max-w-full");
+    expect(content?.className).toContain("p-2.5");
+    expect(content?.className).toContain("md:p-3");
+    expect(content?.className).not.toContain("min(100%,320px)");
+  });
+
+  it("narrows the chat sidebar when the window is too tight for the max width", () => {
+    const original = window.innerWidth;
+    Object.defineProperty(window, "innerWidth", {
+      configurable: true,
+      value: 780,
+    });
+    const { container } = renderSidebar({
+      isOpen: true,
+      enableChatPreferencesTab: true,
+      activeTab: "chat",
+    });
+    const desktopPanel = container.querySelector(
+      '[data-testid="memory-sidebar-desktop"]',
+    ) as HTMLElement | null;
+    expect(desktopPanel).toHaveStyle({ width: "360px" });
+    Object.defineProperty(window, "innerWidth", {
+      configurable: true,
+      value: original,
+    });
+  });
+
+  it("docks desktop overlay to the right and paints a card-style content shell", () => {
+    const { container } = renderSidebar({ isOpen: true });
+    const desktopPanel = container.querySelector('[data-testid="memory-sidebar-desktop"]');
+    expect(desktopPanel?.className).toContain("justify-start");
+    expect(desktopPanel?.className).toContain("items-stretch");
+    expect(desktopPanel?.className).toContain("right-[6px]");
+    expect(desktopPanel?.className).toContain("top-[6px]");
+    expect(desktopPanel?.className).toContain("bottom-[6px]");
+
+    const inset = desktopPanel?.querySelector(":scope > div");
+    expect(inset?.className).toContain("p-0");
+    expect(inset?.className).toContain("min-w-0");
+    expect(inset?.className).toContain("w-full");
+    expect(inset?.className).toContain("max-w-full");
+    expect(desktopPanel?.className).not.toContain("w-[400px]");
+
+    const content = desktopPanel?.querySelector('[class*="bg-v3-bg"]');
+    expect(content).toBeTruthy();
+    expect(content?.className).toContain("rounded-[24px]");
+    expect(content?.className).toContain("border-v3-stroke-weak");
+
+    expect(screen.getAllByText(/properties/i).length).toBeGreaterThan(0);
   });
 
   it("renders conversation quick actions and opens edit-memory on click", async () => {

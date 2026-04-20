@@ -1,3 +1,4 @@
+import type { IUser } from "@/utility/interface";
 import {
   hashEmail,
   isEmpty,
@@ -16,6 +17,7 @@ import {
   clearRecentMemories,
   formattedDate,
   getCategory,
+  createSystemContext,
 } from "./index";
 
 describe("hashEmail", () => {
@@ -325,6 +327,20 @@ describe("formattedDate", () => {
   it("uses dayjs calendar format", () => {
     const result = formattedDate("2024-01-01T10:30:00Z");
     expect(result).toMatch(/\d{2} \w{3} \d{4}|Today|Yesterday|\w+ \d{2}:\d{2} [AP]M/);
+  });
+});
+
+describe("createSystemContext", () => {
+  it("does not throw when preferences and context are missing", () => {
+    const user = {
+      email: "a@b.com",
+      fullname: "Test User",
+    } as IUser;
+    expect(() => createSystemContext(user)).not.toThrow();
+    const text = createSystemContext(user);
+    expect(text).toContain("USER PREFERENCES:");
+    expect(text).toContain("Communication style: friendly");
+    expect(text).toContain("Learning about user");
   });
 });
 

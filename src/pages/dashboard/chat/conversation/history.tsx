@@ -47,7 +47,8 @@ export default function History({
   hostChatDeepDive = false,
 }: IHistory) {
   const chatDetailMatch = useMatch({ path: "/chat/:id", end: true });
-  const hideInlineConversationHeader = Boolean(chatDetailMatch);
+  const chatVoiceMatch = useMatch({ path: "/chat/:id/voice", end: true });
+  const hideInlineConversationHeader = Boolean(chatDetailMatch || chatVoiceMatch);
 
   const isLoadingMoreRef = useRef(false);
   const containerRef = scrollContainerRef;

@@ -699,9 +699,9 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
     return (
       <>
         <Sheet detent="content" isOpen onClose={handleClose} snapPoints={[0.5, 0.75, 1]} initialSnap={1}>
-          <Sheet.Container className="bg-background">
-            <Sheet.Header className="bg-background rounded-t-3xl" />
-            <Sheet.Content className="bg-background px-4 pb-6 overflow-y-auto">
+          <Sheet.Container className="bg-v3-bg">
+            <Sheet.Header className="rounded-t-3xl bg-v3-bg" />
+            <Sheet.Content className="overflow-y-auto bg-v3-bg px-4 pb-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="font-garamond text-xl font-medium text-text-neutral-strong">Add New Story</h2>
                 <button
@@ -728,7 +728,7 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
   return (
     <>
 <div
-      className="absolute top-0 right-0 bottom-0 w-full max-w-[520px] bg-background flex flex-col shadow-2xl rounded-[24px] overflow-hidden"
+      className="absolute top-0 right-0 bottom-0 w-full max-w-[520px] flex flex-col overflow-hidden rounded-[24px] bg-v3-bg shadow-2xl"
       onClick={(e) => e.stopPropagation()}
     >
       {/* Header */}

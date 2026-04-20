@@ -16,7 +16,7 @@ import { toast } from "sonner";
 import SidebarDetails from "@/components/memory/sidebar-details";
 import useFetcher from "@/hooks/use-fetcher";
 import { useStore } from "@/hooks/use-store";
-import { useNavigate } from "react-router-dom";
+import { useMatch, useNavigate } from "react-router-dom";
 import { useConversationChrome } from "@/contexts/conversation-chrome";
 import {
   buildPromptWithReplyQuote,
@@ -34,7 +34,6 @@ import { dimensionLabel } from "@/features/host-chat/chat.types";
 import {
   DeepDiveBanner,
   DeepDiveNudge,
-  HostChatEnrichmentBar,
   HostChatJumpPills,
   MilestoneCard,
   dismissHostChatNudge,
@@ -65,6 +64,8 @@ export default function Conversation({ id, type = "memory" }) {
   const { setChrome } = useConversationChrome();
   const { open, push } = useModal();
   const navigate = useNavigate();
+  const voiceRouteMatch = useMatch({ path: "/chat/:id/voice", end: true });
+  const isVoiceRoute = Boolean(voiceRouteMatch);
   const [messages, setMessages] = useState<Partial<IMessage>[]>([])
   const [isSidebarOpen, setIsSidebarOpen] = useState(false) // Sidebar closed by default
   const [sidebarTab, setSidebarTab] = useState<"memory" | "chat">("memory")
@@ -155,15 +156,15 @@ export default function Conversation({ id, type = "memory" }) {
     setSidebarTab("memory");
   }, []);
 
-  // Open sidebar handler 
+  // Toggle sidebar handler
   const handleOpenSidebar = useCallback(() => {
     setSidebarTab("memory");
-    setIsSidebarOpen(true);
+    setIsSidebarOpen((prev) => !prev);
   }, []);
 
   const handleOpenChatPreferences = useCallback(() => {
     setSidebarTab("chat");
-    setIsSidebarOpen(true);
+    setIsSidebarOpen((prev) => !prev);
   }, []);
 
   const handleChuckArrival = useCallback((chunk: string) => {
@@ -428,7 +429,21 @@ export default function Conversation({ id, type = "memory" }) {
 
   useEffect(() => {
     if (loadingMemory || loadingPrompt) {
-      setChrome(null);
+      if (isVoiceRoute && voiceRouteMatch?.params?.id) {
+        setChrome({
+          memory: null,
+          onViewDetails: handleOpenSidebar,
+          onOpenChatPreferences: undefined,
+          onExportConversation: undefined,
+          hostChat: {
+            title: "Voicemode",
+            subtitle: undefined,
+            onSearch: () => open("search-memory"),
+          },
+        });
+      } else {
+        setChrome(null);
+      }
       return;
     }
     setChrome({
@@ -436,11 +451,11 @@ export default function Conversation({ id, type = "memory" }) {
       onViewDetails: handleOpenSidebar,
       onOpenChatPreferences: memory?._id ? handleOpenChatPreferences : undefined,
       onExportConversation: handleExportConversation,
-      ...(isHostChat ?
+      ...((isHostChat || isVoiceRoute) ?
         {
           hostChat: {
-            title: "Your Memento",
-            subtitle: hostChatSubtitle,
+            title: isVoiceRoute ? "Voicemode" : "Your Memento",
+            subtitle: isHostChat ? hostChatSubtitle : undefined,
             onSearch: () => open("search-memory"),
           },
         } :
@@ -457,11 +472,13 @@ export default function Conversation({ id, type = "memory" }) {
     isHostChat,
     hostChatSubtitle,
     open,
+    isVoiceRoute,
+    voiceRouteMatch?.params?.id,
   ]);
 
   useEffect(() => () => setChrome(null), [setChrome]);
 
-  if (loadingMemory || loadingPrompt) {
+  if ((loadingMemory || loadingPrompt) && !isVoiceRoute) {
     return <Loader />
   }
   const isTyping = isSending || startingConversation;
@@ -484,10 +501,6 @@ export default function Conversation({ id, type = "memory" }) {
               role="toolbar"
               aria-label="Host chat tools"
             >
-              <HostChatEnrichmentBar
-                enrichmentScore={enrichmentStats?.enrichment_score ?? 5}
-                deltaToday={deltaToday}
-              />
               <HostChatJumpPills
                 monthKeys={jumpMonthKeys}
                 onJump={jumpToMonth}
@@ -572,7 +585,7 @@ export default function Conversation({ id, type = "memory" }) {
           memory={memory}
           onClose={handleCloseSidebar}
           isOpen={isSidebarOpen}
-          desktopLayout="inline"
+          desktopLayout="overlay"
           source={type === "prompt" ? "prompt" : "conversation"}
           quickActions={{
             onViewFullDetails: () => push("view-memory-details", { memory }),
@@ -583,6 +596,8 @@ export default function Conversation({ id, type = "memory" }) {
           enableChatPreferencesTab
           activeTab={sidebarTab}
           onTabChange={setSidebarTab}
+          enrichmentScore={enrichmentStats?.enrichment_score ?? 5}
+          deltaToday={deltaToday}
         />
       }
     </div>

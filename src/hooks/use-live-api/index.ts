@@ -3,7 +3,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { GoogleGenAI, LiveServerMessage, Session, Modality } from "@google/genai";
 import { v4 as uuidv4 } from "uuid";
-import { createBlob, decode, decodeAudioData } from "./utils";
+import {
+  createPlaybackState,
+  scheduleGeminiLivePcmChunk,
+  stopAllGeminiLivePlayback,
+  type GeminiLivePlaybackState,
+} from "./playback";
+import { createBlob } from "./utils";
 import { GEMINI_CONFIG } from "./config";
 import { createSystemContext, isEmpty } from "@/utility";
 import useFetcher from "../use-fetcher";
@@ -19,9 +25,15 @@ export type TranscriptEntry = {
 interface UseLiveAPIProps {
   memoryId?: string | null;
   turns?: { role: "user" | "ai", text: string }[];
+  /** When false (default), the session is not opened until `connect()` runs (e.g. user taps “Start call”). */
+  autoConnect?: boolean;
 }
 
-export function useLiveAPI({ memoryId, turns = [] }: UseLiveAPIProps) {
+export function useLiveAPI({
+  memoryId,
+  turns = [],
+  autoConnect = false,
+}: UseLiveAPIProps) {
   const { user } = useStore();
   const [isRecording, setIsRecording] = useState(false);
   const [, setStatus] = useState('');
@@ -38,8 +50,7 @@ export function useLiveAPI({ memoryId, turns = [] }: UseLiveAPIProps) {
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const sourceNodeRef = useRef<MediaStreamAudioSourceNode | null>(null);
   const scriptProcessorNodeRef = useRef<ScriptProcessorNode | null>(null);
-  const nextStartTimeRef = useRef(0);
-  const sourcesRef = useRef<Set<AudioBufferSourceNode>>(new Set());
+  const playbackStateRef = useRef<GeminiLivePlaybackState | null>(null);
   const isConnectingRef = useRef(false);
   const sessionIdRef = useRef<string | null>(null);
   const ephemeralTokenRef = useRef<string | null>(null);
@@ -254,35 +265,24 @@ export function useLiveAPI({ memoryId, turns = [] }: UseLiveAPIProps) {
             turnTimerRef.current.duration = 0;
           },
           onmessage: async (message: LiveServerMessage) => {
-            const audio = message.serverContent?.modelTurn?.parts[0]?.inlineData;
+            const parts = message.serverContent?.modelTurn?.parts;
+            const playback = playbackStateRef.current;
 
-            if (audio) {
-              nextStartTimeRef.current = Math.max(
-                nextStartTimeRef.current,
-                outputAudioContext.currentTime,
-              );
-
-              try {
-                const audioBuffer = await decodeAudioData(
-                  decode(audio.data),
-                  outputAudioContext,
-                  24000,
-                  1,
-                );
-
-                const source = outputAudioContext.createBufferSource();
-                source.buffer = audioBuffer;
-                source.connect(outputNode!);
-
-                source.addEventListener('ended', () => {
-                  sourcesRef.current.delete(source);
-                });
-
-                source.start(nextStartTimeRef.current);
-                nextStartTimeRef.current = nextStartTimeRef.current + audioBuffer.duration;
-                sourcesRef.current.add(source);
-              } catch (error) {
-                console.error('Failed to play audio response:', error);
+            if (parts && playback) {
+              for (const part of parts) {
+                const data = part.inlineData?.data;
+                if (data) {
+                  try {
+                    await scheduleGeminiLivePcmChunk(
+                      data,
+                      outputAudioContext,
+                      outputNode!,
+                      playback,
+                    );
+                  } catch (error) {
+                    console.error('Failed to play audio response:', error);
+                  }
+                }
               }
             }
 
@@ -308,12 +308,8 @@ export function useLiveAPI({ memoryId, turns = [] }: UseLiveAPIProps) {
 
             // Handle interruption
             const interrupted = message.serverContent?.interrupted;
-            if (interrupted) {
-              for (const source of sourcesRef.current.values()) {
-                source.stop();
-                sourcesRef.current.delete(source);
-              }
-              nextStartTimeRef.current = 0;
+            if (interrupted && playbackStateRef.current) {
+              stopAllGeminiLivePlayback(playbackStateRef.current);
             }
           },
           onerror: (error: unknown) => {
@@ -336,7 +332,7 @@ export function useLiveAPI({ memoryId, turns = [] }: UseLiveAPIProps) {
             languageCode: 'en-US',
             voiceConfig: {
               prebuiltVoiceConfig: {
-                voiceName: user?.chat_voice || "Orus"
+                voiceName: user?.chat_voice || "Algenib"
               }
             }
           },
@@ -397,7 +393,7 @@ export function useLiveAPI({ memoryId, turns = [] }: UseLiveAPIProps) {
     });
     inputAudioContextRef.current = inputCtx;
     outputAudioContextRef.current = outputCtx;
-    nextStartTimeRef.current = outputCtx.currentTime;
+    playbackStateRef.current = createPlaybackState(outputCtx);
 
     const inNode = inputCtx.createGain();
     const outNode = outputCtx.createGain();
@@ -414,6 +410,7 @@ export function useLiveAPI({ memoryId, turns = [] }: UseLiveAPIProps) {
   }, []);
 
   useEffect(() => {
+    if (!autoConnect) return;
     if (
       outputNode &&
       !hasConnectedRef.current &&
@@ -423,7 +420,7 @@ export function useLiveAPI({ memoryId, turns = [] }: UseLiveAPIProps) {
       connect();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [outputNode, connected]);
+  }, [outputNode, connected, autoConnect]);
 
   return {
     connected,

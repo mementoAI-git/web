@@ -1,9 +1,9 @@
 import zapIcon from "@/assets/icon/zap.svg";
 import {
+  ChevronLeft,
   PanelLeft,
   PanelLeftClose,
   PanelLeftOpen,
-  Pencil,
   Share2,
 } from "lucide-react";
 import dayjs from "dayjs";
@@ -11,7 +11,7 @@ import { useEffect, useState } from "react";
 import { useModal } from "@/hooks/use-modal";
 import { useStore } from "@/hooks/use-store";
 import StreakTracker from "@/components/streak-tracker";
-import { useLocation, useMatch } from "react-router-dom";
+import { Link, useLocation, useMatch } from "react-router-dom";
 import { cn } from "@/utility";
 import { GearIcon, MenuIcon, SearchIcon } from "@/components/icons";
 import { SearchIcon as IconSearch } from "@/components/icons";
@@ -130,40 +130,36 @@ export function DashboardHeader({
       <div className="w-full h-[60px] fixed top-0 left-0 right-0 sm:relative z-[45] flex items-center border-b border-v3-stroke-weak bg-white px-3 sm:px-5">
         <header className="flex w-full min-w-0 items-center justify-between gap-3">
           <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
-            <button
-              type="button"
-              onClick={toggleMainSidebar}
-              className={convIconBtn}
-              aria-expanded={railExpanded}
-              aria-label={railExpanded ? "Collapse sidebar" : "Expand sidebar"}
-            >
-              {railExpanded ? (
-                <PanelLeftClose className="size-5" strokeWidth={1.75} aria-hidden />
-              ) : (
-                <PanelLeftOpen className="size-5" strokeWidth={1.75} aria-hidden />
-              )}
-            </button>
+            {chatVoiceMatch?.params?.id ? (
+              <Link
+                to={`/chat/${chatVoiceMatch.params.id}`}
+                replace
+                className={cn(convIconBtn, "no-underline")}
+                aria-label="Back to chat"
+              >
+                <ChevronLeft className="size-5" strokeWidth={1.75} aria-hidden />
+              </Link>
+            ) : (
+              <button
+                type="button"
+                onClick={toggleMainSidebar}
+                className={convIconBtn}
+                aria-expanded={railExpanded}
+                aria-label={railExpanded ? "Collapse sidebar" : "Expand sidebar"}
+              >
+                {railExpanded ? (
+                  <PanelLeftClose className="size-5" strokeWidth={1.75} aria-hidden />
+                ) : (
+                  <PanelLeftOpen className="size-5" strokeWidth={1.75} aria-hidden />
+                )}
+              </button>
+            )}
             <h1
               className="min-w-0 truncate font-inter text-sm font-semibold text-v3-text-strong sm:text-base"
               title={title}
             >
-              {title}
+              Chat
             </h1>
-            {chrome.memory?._id ? (
-              <button
-                type="button"
-                onClick={() =>
-                  open("set-tag-permission", {
-                    memory: chrome.memory!,
-                    isNew: false,
-                  })
-                }
-                className={cn(convHeaderActionGhost, "hidden sm:flex")}
-                aria-label="Edit topic"
-              >
-                <Pencil className="size-4 shrink-0" strokeWidth={1.75} aria-hidden />
-              </button>
-            ) : null}
             {metaLine ? (
               <span
                 className="hidden min-w-0 truncate font-inter text-xs text-v3-text-weaker lg:inline"
