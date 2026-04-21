@@ -6,6 +6,10 @@ import { toast } from "sonner";
 import { isEmpty } from "@/utility";
 import { storageKeys } from "@/utility/constant";
 import { authService } from "@/utility/auth-service";
+import {
+  notifySubscriptionGate,
+  parseSubscriptionGateFromBody,
+} from "@/features/pricing/subscription-errors";
 
 const baseURL = import.meta.env.VITE_API_BASE_URL;
 
@@ -123,6 +127,24 @@ export const fileUploadFetcher = async (url: string, { arg }: { arg: Record<stri
 
     if (Axios.isAxiosError(error)) {
       const axiosError = error as AxiosError<IResponse>;
+      const status = axiosError.response?.status;
+      const data = axiosError.response?.data;
+
+      if (status === 402 && data && typeof data === "object") {
+        const gate = parseSubscriptionGateFromBody(data);
+        if (gate) notifySubscriptionGate(gate);
+        message =
+          typeof (data as IResponse).message === "string" ?
+            (data as IResponse).message!
+          : "Upgrade to continue uploading.";
+        return {
+          success: false,
+          data: null,
+          message,
+          subscriptionGate: true as const,
+        };
+      }
+
       message = axiosError.response?.data?.message || axiosError.message;
 
       toast.error(message);
@@ -197,7 +219,9 @@ const handleRequest = async (method: string, url: string, body?: { arg?: unknown
 
       const data = axiosError.response?.data || { success: false };
       data.success = false;
-      throw data;
+      throw Object.assign(data, {
+        httpStatus: axiosError.response?.status,
+      });
     }
 
     if (method !== "get") {

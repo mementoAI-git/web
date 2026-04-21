@@ -5,6 +5,7 @@ import AuthCheck from "@/components/layouts/auth-check";
 import OnboardingGuard from "@/components/layouts/onboarding-guard";
 import { OnboardingNudgeBanner } from "@/features/onboarding-groot";
 import { SecurityNudgeBanner } from "@/components/security-nudge-banner";
+import { TrialBanner } from "@/components/trial-banner";
 import { useModal } from "@/hooks/use-modal";
 import { useChatSidebar } from "@/contexts/chat-sidebar";
 import { DashboardHeader } from "./dashboard-header";
@@ -90,6 +91,7 @@ export default function DashboardLayout() {
                     isVoiceChatRoute ? "bg-sand-1" : "bg-white"
                   )}>
                     <OnboardingNudgeBanner />
+                    <TrialBanner />
                     <SecurityNudgeBanner />
                   </div>
                 <div className="hide-scrollbar h-full min-h-0 w-full flex-1 overflow-y-auto">

@@ -33,6 +33,7 @@ import {
   NotFoundPage,
   ErrorPage,
   OAuthCallbackPage,
+  PricingPage,
 } from "@/pages";
 import TimeCapsulePage from "./pages/dashboard/time-capsule-new";
 
@@ -99,6 +100,7 @@ export const router = createBrowserRouter([
           { path: "stories", element: <StoriesPage /> },
           { path: "stories/:id", element: <StoriesDetailsPage /> },
           { path: "capsule", element: <TimeCapsulePage /> },
+          { path: "pricing", element: <PricingPage /> },
           { path: "settings", element: <Navigate to="/settings/general" replace /> },
           { path: "settings/:tab", element: <SettingsPage /> },
         ],

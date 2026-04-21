@@ -7,6 +7,7 @@ import Placeholder from "@tiptap/extension-placeholder";
 import Link from "@tiptap/extension-link";
 import Underline from "@tiptap/extension-underline";
 import { useModal } from "@/hooks/use-modal";
+import { useNavigate } from "react-router-dom";
 import useForm from "@/hooks/use-form";
 import useFileUpload from "@/hooks/use-file-upload";
 import useSWRMutation from "swr/mutation";
@@ -32,6 +33,7 @@ import { SLASH_COMMANDS } from "@/components/memory/text-area/slash-commands";
 import { VideoRecorder } from "@/components/recorder/video";
 import type { ComponentRef } from "react";
 import { FileThumbnails } from "./file-thumbnails";
+import { UpgradePrompt } from "@/features/pricing/upgrade-prompt";
 
 import addPlusSvg from "@/assets/icon/Add-plus.svg";
 import smileySvg from "@/assets/icon/noto_slightly-smiling-face.svg";
@@ -50,6 +52,8 @@ interface CreateMemoryProps {
 
 export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
   const { close, open, push } = useModal();
+  const navigate = useNavigate();
+  const [showUploadGate, setShowUploadGate] = useState(false);
   const fileInputMediaRef = useRef<HTMLInputElement>(null);
   const fileInputAllRef = useRef<HTMLInputElement>(null);
   const fileInputAudioRef = useRef<HTMLInputElement>(null);
@@ -100,6 +104,10 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
       );
 
       const result = await trigger(payload as Parameters<typeof trigger>[0]);
+      if (result && "subscriptionGate" in result && result.subscriptionGate) {
+        setShowUploadGate(true);
+        return;
+      }
       if (result?.success) {
         mutate((key) => typeof key === "string" && key.startsWith(endpoint.stories));
         open("share-post", { id: result.data?._id || result.data?.id });
@@ -375,6 +383,18 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
         onChange={handleFileSelect}
         className="hidden"
       />
+
+      {showUploadGate ? (
+        <div className="mb-3">
+          <UpgradePrompt
+            feature="storage"
+            variant="inline"
+            upgradeLabel="View plans"
+            onUpgrade={() => navigate("/pricing")}
+            onDismiss={() => setShowUploadGate(false)}
+          />
+        </div>
+      ) : null}
 
       {/* Title */}
       <input

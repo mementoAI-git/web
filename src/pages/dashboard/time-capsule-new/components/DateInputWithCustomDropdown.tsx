@@ -15,9 +15,12 @@ type DateOptionsDropdownProps = {
   showCustomDate?: boolean;
   defaultLabel?: string;
   dropDirection?: "up" | "down";
+  /** When set (e.g. free tier), selected dates are clamped to not exceed this instant. */
+  maxSelectableDate?: Date;
   CustomCalendarComponent?: React.ComponentType<{
     onDateSelect: (date: Date) => void;
     onClose: () => void;
+    maxDate?: Date;
   }>;
 };
 
@@ -34,6 +37,7 @@ export default function DateOptionsDropdown({
   showCustomDate = true,
   defaultLabel = "Select date",
   dropDirection = "down",
+  maxSelectableDate,
   CustomCalendarComponent,
 }: DateOptionsDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -50,6 +54,12 @@ export default function DateOptionsDropdown({
   const chevronClasses = cn("w-5 h-5 text-gray-400 transition-transform", {
     "rotate-180": isOpen,
   });
+
+  const clampDate = (d: Date) => {
+    if (!maxSelectableDate) return d;
+    const cap = dayjs(maxSelectableDate).endOf("day").toDate();
+    return d.getTime() > cap.getTime() ? cap : d;
+  };
 
   const calculateDate = (option: DateOption): Date => {
     const now = new Date();
@@ -79,7 +89,7 @@ export default function DateOptionsDropdown({
 
   const handleOptionClick = (option: DateOption) => {
     setSelectedLabel(option.label);
-    onDateSelect(calculateDate(option));
+    onDateSelect(clampDate(calculateDate(option)));
     setIsOpen(false);
   };
 
@@ -89,8 +99,9 @@ export default function DateOptionsDropdown({
   };
 
   const handleCustomCalendarSelect = (date: Date) => {
-    setSelectedLabel(dayjs(date).format("DD MMM YYYY"));
-    onDateSelect(date);
+    const next = clampDate(date);
+    setSelectedLabel(dayjs(next).format("DD MMM YYYY"));
+    onDateSelect(next);
     setShowCustomCalendar(false);
     setIsOpen(false);
   };
@@ -185,6 +196,7 @@ export default function DateOptionsDropdown({
           <CustomCalendarComponent
             onDateSelect={handleCustomCalendarSelect}
             onClose={handleCustomCalendarClose}
+            maxDate={maxSelectableDate}
           />
         </div>
       )}

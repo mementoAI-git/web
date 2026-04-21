@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { mutate } from "swr";
 import { SETTINGS_BENEFICIARIES_SWR_KEY } from "@/components/modal/settings/beneficiary&group/beneficiaries-list-swr-key";
 import { SelectGroup, type GroupSearchResultItem } from "./select-group";
+import { handleSubscriptionGateError } from "@/features/pricing/subscription-errors";
 
 const initial = {
   email: "",
@@ -37,14 +38,18 @@ export function AddBeneficiary() {
     initial,
     schema,
     async onSubmit(payload) {
-      const result = await trigger({
-        ...payload,
-        groups: selectedGroups.map((g) => g.id),
-      });
-      if (result.success) {
-        await mutate(SETTINGS_BENEFICIARIES_SWR_KEY);
-        toast.success(result?.message);
-        close?.("add-beneficiary");
+      try {
+        const result = await trigger({
+          ...payload,
+          groups: selectedGroups.map((g) => g.id),
+        });
+        if (result.success) {
+          await mutate(SETTINGS_BENEFICIARIES_SWR_KEY);
+          toast.success(result?.message);
+          close?.("add-beneficiary");
+        }
+      } catch (e) {
+        if (handleSubscriptionGateError(e)) return;
       }
     },
   });

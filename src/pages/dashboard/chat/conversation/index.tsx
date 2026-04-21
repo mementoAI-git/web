@@ -41,6 +41,8 @@ import {
   monthKeysFromMessages,
 } from "@/features/host-chat";
 import { useEnrichmentStats } from "@/features/enrichment";
+import { useSubscription } from "@/contexts/subscription";
+import { VoiceModePaywall } from "@/features/pricing/voice-mode-paywall";
 
 type StreamlinePayload = {
   text: string;
@@ -66,6 +68,7 @@ export default function Conversation({ id, type = "memory" }) {
   const navigate = useNavigate();
   const voiceRouteMatch = useMatch({ path: "/chat/:id/voice", end: true });
   const isVoiceRoute = Boolean(voiceRouteMatch);
+  const { canAccess, isLoading: subscriptionLoading } = useSubscription();
   const [messages, setMessages] = useState<Partial<IMessage>[]>([])
   const [isSidebarOpen, setIsSidebarOpen] = useState(false) // Sidebar closed by default
   const [sidebarTab, setSidebarTab] = useState<"memory" | "chat">("memory")
@@ -477,6 +480,14 @@ export default function Conversation({ id, type = "memory" }) {
   ]);
 
   useEffect(() => () => setChrome(null), [setChrome]);
+
+  if (isVoiceRoute && subscriptionLoading) {
+    return <Loader />;
+  }
+
+  if (isVoiceRoute && !canAccess("voice_mode")) {
+    return <VoiceModePaywall conversationId={id} />;
+  }
 
   if ((loadingMemory || loadingPrompt) && !isVoiceRoute) {
     return <Loader />

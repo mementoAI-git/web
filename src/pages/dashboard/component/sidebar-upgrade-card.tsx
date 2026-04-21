@@ -38,7 +38,7 @@ export function SidebarUpgradeCard({ onNavigate }: SidebarUpgradeCardProps) {
         variant="ghost"
         className="mt-4 h-10 min-w-0 rounded-full !border-0 !bg-white/20 !px-4 font-inter text-sm font-medium !text-white hover:!bg-white/30"
         onClick={() => {
-          navigate("/settings/general");
+          navigate("/pricing");
           onNavigate?.();
         }}
       >

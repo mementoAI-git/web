@@ -96,6 +96,15 @@ export default {
   /** Host onboarding chat — streams like `/ai/prompt`; trailer JSON for chips / completion */
   hostOnboardingChatPrompt: "/users/onboarding/chat/prompt",
 
+  // billing (Polar + Paystack; see docs/PRICING_BACKEND_HANDOFF.md)
+  billingSubscription: "/billing/subscription",
+  billingCheckout: "/billing/checkout",
+  billingPortal: "/billing/portal",
+  billingCancel: "/billing/cancel",
+  billingResume: "/billing/resume",
+  billingPromoRedeem: "/billing/promo/redeem",
+  billingInvoices: "/billing/invoices",
+
   // sentry
   tunnel: `${import.meta.env.VITE_API_BASE_URL}/sentry_tunnel`,
 };

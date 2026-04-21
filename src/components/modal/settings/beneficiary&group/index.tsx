@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import useSWR from "swr";
 import { useModal } from "@/hooks/use-modal";
@@ -11,11 +12,16 @@ import Beneficiary from "./beneficiary";
 import GroupManagement from "./group";
 import { SETTINGS_BENEFICIARIES_SWR_KEY } from "./beneficiaries-list-swr-key";
 import type { IBeneficiaryWithGroups } from "./beneficiary/beneficiary-types";
+import { useSubscription } from "@/contexts/subscription";
+import { UpgradePrompt } from "@/features/pricing/upgrade-prompt";
 
 type BeneficiaryTab = "beneficiary" | "groups";
 
 export default function BeneficiaryAndGroup() {
   const { push } = useModal();
+  const navigate = useNavigate();
+  const { isProOrAbove } = useSubscription();
+  const [beneficiaryGateOpen, setBeneficiaryGateOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<BeneficiaryTab>("beneficiary");
 
   const { data: beneficiariesRes } = useSWR<{ data?: IPagination<IBeneficiaryWithGroups> }>(
@@ -27,6 +33,7 @@ export default function BeneficiaryAndGroup() {
 
   const beneficiaryCount = beneficiariesRes?.data?.totalDocs ?? beneficiariesRes?.data?.docs?.length ?? 0;
   const groupCount = groupsPage?.totalDocs ?? 0;
+  const atBeneficiaryLimit = !isProOrAbove && beneficiaryCount >= 2;
 
   return (
     <div className="flex w-full flex-col gap-6">
@@ -89,7 +96,13 @@ export default function BeneficiaryAndGroup() {
               type="button"
               size="sm"
               className="h-8 shrink-0 rounded-full !bg-v3-fill-strong px-3 font-inter text-xs font-semibold !text-white hover:!opacity-90"
-              onClick={() => push?.("add-beneficiary")}
+              onClick={() => {
+                if (atBeneficiaryLimit) {
+                  setBeneficiaryGateOpen(true);
+                  return;
+                }
+                push?.("add-beneficiary");
+              }}
             >
               Add beneficiary
             </Button>
@@ -100,6 +113,14 @@ export default function BeneficiaryAndGroup() {
           {activeTab === "beneficiary" ? <Beneficiary /> : <GroupManagement />}
         </div>
       </div>
+
+      <UpgradePrompt
+        feature="beneficiaries"
+        variant="modal"
+        open={beneficiaryGateOpen}
+        onOpenChange={setBeneficiaryGateOpen}
+        onUpgrade={() => navigate("/pricing")}
+      />
     </div>
   );
 }

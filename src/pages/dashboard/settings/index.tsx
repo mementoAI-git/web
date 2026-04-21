@@ -6,7 +6,8 @@ import Security from "@/components/modal/settings/security";
 import Beneficiary from "@/components/modal/settings/beneficiary&group";
 import Privacy from "@/components/modal/settings/privacy";
 import Stats from "@/components/modal/settings/stats";
-import { Settings, Lock, Users, Shield, ChartColumn, Menu, X } from "lucide-react";
+import { Settings, Lock, Users, Shield, ChartColumn, Menu, X, CreditCard } from "lucide-react";
+import Billing from "@/components/modal/settings/billing";
 
 const navItemBase =
   "flex w-full items-center gap-2.5 rounded-lg px-3 py-2 font-inter text-sm text-v3-text-weak outline-none " +
@@ -52,11 +53,24 @@ const settings = {
     icon: <Shield size={16} strokeWidth={1.5} />,
     component: <Privacy />,
   },
+  billing: {
+    label: "Billing",
+    shortLabel: "Billing",
+    icon: <CreditCard size={16} strokeWidth={1.5} />,
+    component: <Billing />,
+  },
 } as const;
 
 type SettingKey = keyof typeof settings;
 
-const VALID_TABS: SettingKey[] = ["general", "stats", "security", "beneficiary", "privacy"];
+const VALID_TABS: SettingKey[] = [
+  "general",
+  "stats",
+  "security",
+  "beneficiary",
+  "privacy",
+  "billing",
+];
 
 function isValidTab(tab: string | undefined): tab is SettingKey {
   return !!tab && VALID_TABS.includes(tab as SettingKey);

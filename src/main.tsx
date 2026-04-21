@@ -16,6 +16,7 @@ import { ChatProvider } from "@/hooks/use-chat";
 import { BackgroundMusicProvider } from "@/hooks/use-background-music";
 import { ErrorPage } from "./pages";
 import { RootAppShell } from "@/components/layouts/root-app-shell";
+import { SubscriptionProvider } from "@/contexts/subscription";
 // Dev-only: admin tools for previewing empty states.
 // Gated behind import.meta.env.DEV — Vite tree-shakes this from production.
 // eslint-disable-next-line react-refresh/only-export-components
@@ -43,11 +44,13 @@ createRoot(document.getElementById("root")!, sentryHandler).render(
           <ModalProvider>
             <ChatProvider>
               <SWRConfig value={{ fetcher }}>
-                <DevAdminProvider>
-                <RootAppShell>
-                  <RouterProvider router={router} />
-                </RootAppShell>
-                </DevAdminProvider>
+                <SubscriptionProvider>
+                  <DevAdminProvider>
+                    <RootAppShell>
+                      <RouterProvider router={router} />
+                    </RootAppShell>
+                  </DevAdminProvider>
+                </SubscriptionProvider>
                 <Toaster
                   position="top-center"
                   closeButton

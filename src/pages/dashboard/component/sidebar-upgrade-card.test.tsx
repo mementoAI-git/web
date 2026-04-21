@@ -41,7 +41,7 @@ describe("SidebarUpgradeCard", () => {
     );
 
     await user.click(screen.getByRole("button", { name: /upgrade/i }));
-    expect(mockNavigate).toHaveBeenCalledWith("/settings/general");
+    expect(mockNavigate).toHaveBeenCalledWith("/pricing");
     expect(onNavigate).toHaveBeenCalledTimes(1);
   });
 });

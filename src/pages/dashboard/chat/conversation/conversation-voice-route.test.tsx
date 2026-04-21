@@ -34,8 +34,16 @@ vi.mock("@/components/memory/sidebar-details", () => ({
 }));
 
 describe("Conversation voice route", () => {
+  const proSubscription = http.get(`${API}/billing/subscription`, () =>
+    HttpResponse.json({
+      success: true,
+      data: { tier: "pro", status: "active", features: [] },
+    }),
+  );
+
   it("renders voice UI while memory is still loading (does not block on Loader)", async () => {
     server.use(
+      proSubscription,
       http.get(`${API}/memories/:id`, () => new Promise(() => {})),
     );
 
@@ -56,6 +64,7 @@ describe("Conversation voice route", () => {
 
   it("renders voice UI after memory loads", async () => {
     server.use(
+      proSubscription,
       http.get(`${API}/memories/:id`, () =>
         HttpResponse.json({
           success: true,
