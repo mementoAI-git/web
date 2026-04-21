@@ -1,9 +1,13 @@
 import { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { startAuthentication } from "@simplewebauthn/browser";
+import { Loader2 } from "lucide-react";
 import endpoint from "@/api/endpoint";
-import { Button } from "@/components/Buttons";
-import { Checkbox, Passwordinput, Textinput } from "@/components/Form";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import useForm from "@/hooks/use-form";
 import useFetcher from "@/hooks/use-fetcher";
 import { clearCache } from "@/utility";
@@ -37,7 +41,7 @@ export default function LoginPage() {
   const { trigger, isMutating } = useFetcher(endpoint.login);
   const [passkeyLoading, setPasskeyLoading] = useState(false);
 
-  const { handleSubmit, handleChange, values, getField } = useForm({
+  const { handleSubmit, handleChange, handleValue, values, errors } = useForm({
     schema,
     initial,
     async onSubmit(payload) {
@@ -119,8 +123,7 @@ export default function LoginPage() {
 
   return (
     <AuthLayout
-      title="Login to continue"
-      subtitle="Welcome back. Login to access your account"
+      title="Welcome back. Please login to continue"
       include_auth_socials
       footer={
         <span className="font-inter text-center text-gray-600">
@@ -135,37 +138,69 @@ export default function LoginPage() {
         </span>
       }
     >
-      <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-        <Textinput
-          label="Email"
-          placeholder="johndoe@mail.com"
-          {...getField("email")}
-          value={values.email}
-        />
-        <Passwordinput
-          label="Password"
-          {...getField("password")}
-          value={values.password}
-        />
+      <Card className="border border-v3-stroke-weak bg-v3-fill-weaker/20 py-0">
+        <CardContent className="p-4 sm:p-5">
+          <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+            <div className="grid gap-2">
+              <Label htmlFor="login-email" className="font-inter text-sm">
+                Email
+              </Label>
+              <Input
+                id="login-email"
+                name="email"
+                type="email"
+                placeholder="johndoe@mail.com"
+                className="rounded-[12px]"
+                value={values.email}
+                onChange={handleChange}
+                aria-invalid={Boolean(errors.email)}
+              />
+              {errors.email ? <p className="font-inter text-xs text-destructive">{errors.email}</p> : null}
+            </div>
 
-        <div className="flex items-center justify-between font-inter text-sm">
-          <Checkbox
-            label="Remember for 30 days"
-            name="remember_for_30_days"
-            checked={values.remember_for_30_days}
-            onChange={handleChange}
-          />
-          <Link to="/forget-password" className="cursor-pointer font-bold text-primary">
-            Forgot password?
-          </Link>
-        </div>
-        <Button
-          loading={isMutating}
-          type="submit"
-          title="Login"
-          className="mt-3 !rounded-full"
-        />
-      </form>
+            <div className="grid gap-2">
+              <Label htmlFor="login-password" className="font-inter text-sm">
+                Password
+              </Label>
+              <Input
+                id="login-password"
+                name="password"
+                type="password"
+                placeholder="Enter your password"
+                value={values.password}
+                onChange={handleChange}
+                aria-invalid={Boolean(errors.password)}
+              />
+              {errors.password ? <p className="font-inter text-xs text-destructive">{errors.password}</p> : null}
+            </div>
+
+            <div className="flex items-center justify-between gap-3">
+              <Label htmlFor="remember_for_30_days" className="font-inter text-sm font-normal text-v3-text-strong">
+                <Checkbox
+                  id="remember_for_30_days"
+                  checked={Boolean(values.remember_for_30_days)}
+                  onCheckedChange={(checked) => handleValue("remember_for_30_days", Boolean(checked))}
+                />
+                Remember for 30 days
+              </Label>
+              <Link to="/forget-password" className="font-inter text-sm font-semibold text-primary underline">
+                Forgot password?
+              </Link>
+            </div>
+
+            <Button type="submit" className="mt-1 w-full rounded-full" disabled={isMutating || passkeyLoading}>
+              {isMutating ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" />
+                  Logging in...
+                </>
+              ) : (
+                "Login"
+              )}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
 
       <div className="flex items-center gap-3">
         <div className="h-px flex-1 bg-v3-stroke-weak" />

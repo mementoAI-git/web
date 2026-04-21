@@ -1,11 +1,14 @@
-import AuthLayout from "../components/layout";
 import { useNavigate } from "react-router-dom";
+import { Loader2 } from "lucide-react";
 import endpoint from "@/api/endpoint";
-import { Button } from "@/components/Buttons";
-import { Textinput } from "@/components/Form";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import useForm from "@/hooks/use-form";
 import useFetcher from "@/hooks/use-fetcher";
 import * as yup from "yup";
+import AuthLayout from "../components/layout";
 
 const schema = yup.object().shape({
   email: yup
@@ -21,7 +24,7 @@ const initial = { email: "", type: "reset" };
 export default function ForgetPasswordPage() {
   const navigate = useNavigate();
   const { trigger, isMutating } = useFetcher(endpoint.sendLink);
-  const { handleSubmit, getField } = useForm({
+  const { handleSubmit, handleChange, values, errors } = useForm({
     schema,
     initial,
     async onSubmit(payload) {
@@ -38,21 +41,39 @@ export default function ForgetPasswordPage() {
       can_go_back
       subtitle="Please enter your email address. We will send instructions to reset your password if this email exists in our system."
     >
-      <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-        <Textinput
-          label="Email"
-          placeholder="johndoe@mail.com"
-          {...getField("email")}
-        />
-        <Button
-          title="Submit"
-          type="submit"
-          loading={isMutating}
-          className="mt-3 !rounded-full"
-        />
-      </form>
+      <Card className="border border-v3-stroke-weak bg-v3-fill-weaker/20 py-0">
+        <CardContent className="p-4 sm:p-5">
+          <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+            <div className="grid gap-2">
+              <Label htmlFor="forget-password-email" className="font-inter text-sm">
+                Email
+              </Label>
+              <Input
+                id="forget-password-email"
+                name="email"
+                type="email"
+                placeholder="johndoe@mail.com"
+                className="rounded-[12px]"
+                value={values.email}
+                onChange={handleChange}
+                aria-invalid={Boolean(errors.email)}
+              />
+              {errors.email ? <p className="font-inter text-xs text-destructive">{errors.email}</p> : null}
+            </div>
+
+            <Button type="submit" className="mt-1 w-full rounded-full" disabled={isMutating}>
+              {isMutating ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" />
+                  Sending...
+                </>
+              ) : (
+                "Submit"
+              )}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
     </AuthLayout>
   );
 }
-
-
