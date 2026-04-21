@@ -176,8 +176,6 @@ export async function previewGeminiChatVoice(params: PreviewGeminiChatVoiceParam
     await Promise.race(racers);
 
     await waitGeminiLivePlaybackTail(audioContext, state);
-  } catch (e) {
-    throw e;
   } finally {
     if (params.signal) {
       params.signal.removeEventListener("abort", onExternalAbort);
