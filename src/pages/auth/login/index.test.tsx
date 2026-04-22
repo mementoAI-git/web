@@ -36,9 +36,48 @@ describe("LoginPage", () => {
   it("renders shadcn auth card fields", () => {
     renderWithProviders(<LoginPage />, { route: "/login" });
 
+    expect(screen.getByRole("heading", { level: 1, name: /^welcome back$/i })).toBeInTheDocument();
+    expect(screen.getByText(/^please login to continue$/i)).toBeInTheDocument();
+
     expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^password$/i, { selector: "input" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /^login$/i })).toBeInTheDocument();
+  });
+
+  it("applies auth control heights and forgot-password link styles", () => {
+    renderWithProviders(<LoginPage />, { route: "/login" });
+
+    expect(screen.getByRole("button", { name: /^login$/i })).toHaveClass("h-11");
+
+    expect(screen.getByLabelText(/email/i)).toHaveClass("rounded-[8px]");
+    expect(screen.getByLabelText(/^password$/i, { selector: "input" })).toHaveClass("rounded-[8px]");
+
+    const passkey = screen.getByRole("button", { name: /sign in with a passkey/i });
+    expect(passkey).toHaveClass("h-11");
+    expect(passkey.querySelector("svg.lucide-fingerprint-pattern")).toBeInTheDocument();
+
+    const forgot = screen.getByRole("link", { name: /forgot password/i });
+    expect(forgot).toHaveClass("flex", "font-semibold");
+
+    const signup = screen.getByRole("link", { name: /create an account/i });
+    expect(signup).toHaveAttribute("href", "/signup");
+    expect(signup).toHaveClass("text-xs", "font-semibold");
+  });
+
+  it("does not duplicate the OAuth divider after the passkey control", () => {
+    renderWithProviders(<LoginPage />, { route: "/login" });
+    expect(screen.queryByText("Or", { exact: true })).not.toBeInTheDocument();
+  });
+
+  it("shows passkey and Google before the email and password fields in document order", () => {
+    renderWithProviders(<LoginPage />, { route: "/login" });
+
+    const email = screen.getByLabelText(/email/i);
+    const passkey = screen.getByRole("button", { name: /sign in with a passkey/i });
+    const google = screen.getByRole("button", { name: /continue with google/i });
+
+    expect(email.compareDocumentPosition(passkey) & Node.DOCUMENT_POSITION_PRECEDING).toBeTruthy();
+    expect(email.compareDocumentPosition(google) & Node.DOCUMENT_POSITION_PRECEDING).toBeTruthy();
   });
 
   it("submits valid credentials and navigates to overview when onboarded", async () => {
@@ -62,7 +101,7 @@ describe("LoginPage", () => {
     renderWithProviders(<LoginPage />, { route: "/login" });
 
     await user.type(screen.getByLabelText(/email/i), "test@example.com");
-    await user.type(screen.getByLabelText(/password/i), "password123");
+    await user.type(screen.getByLabelText(/^password$/i, { selector: "input" }), "password123");
     await user.click(screen.getByRole("button", { name: /^login$/i }));
 
     await waitFor(() => {

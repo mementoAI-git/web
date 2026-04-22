@@ -1,75 +1,86 @@
 import type { PropsWithChildren, ReactElement } from "react";
 import { Link } from "react-router-dom";
-import bg5 from "@/assets/image/bg/5.png"
-import Logo from "@/components/logo";
+import { ArrowLeft } from "lucide-react";
+import { AuthCenteredSplitShell } from "@/components/auth-split-layout";
+import { cn } from "@/lib/utils";
 import AuthSocials from "./auth-social";
 
-interface IAuthFormLayout extends PropsWithChildren {
+export interface AuthFormPanelProps extends PropsWithChildren {
   title: string;
-  subtitle: ReactElement | string;
+  subtitle?: ReactElement | string | null;
   footer?: ReactElement | string | null;
   can_go_back?: boolean;
   include_auth_socials?: boolean;
+  /** When true, omit the rule row above OAuth (e.g. login already has an “or” divider above passkey). */
+  hide_auth_socials_divider?: boolean;
   icon?: ReactElement | null;
   className?: string;
 }
 
-export default function AuthLayout({
+/** Right-column auth content only (no outer shell). Use inside {@link AuthCenteredSplitShell} or {@link AuthSplitShell} when the shell is already provided. */
+export function AuthFormPanel({
   children,
   subtitle,
   title,
   footer = null,
   can_go_back = false,
   include_auth_socials = false,
+  hide_auth_socials_divider = false,
   icon = null,
   className = "",
-}: IAuthFormLayout) {
+}: AuthFormPanelProps) {
   return (
-    <div className="min-h-screen h-[90%] relative">
-      <img
-        src={bg5}
-        alt="Cloudy BG"
-        className="absolute size-full object-cover top-0 bottom-0 left-0 right-0 mx-auto "
-      />
-      <div className="size-full z-auto absolute top-0 left-0 right-0 bottom-0">
-        <header className="flex mx-auto w-full max-w-[1440px] items-center justify-between px-4 sm:px-6 lg:px-20 py-4 sm:py-6">
-          <Logo />
-        </header>
-        <div className="size-full overflow-y-auto hide-scrollbar px-4 sm:px-6 lg:px-20 z-auto py-8 sm:py-12 lg:py-20">
-          <main className="mx-auto w-full max-w-[1440px]">
-            <div
-              className={`group mx-auto flex h-fit w-full max-w-[618px] flex-col justify-center gap-6 rounded-3xl bg-white p-6 sm:gap-8 lg:gap-10 lg:p-10 ${className}`}
-            >
-              <div className="flex flex-col gap-3 sm:gap-4">
-                {icon && (
-                  <div className="flex aspect-square w-16 items-center justify-center rounded-full bg-primary/5 text-[#5F48D9] group-[.error]:bg-danger/5 group-[.error]:text-danger group-[.success]:bg-[#0ACC92]/5 group-[.success]:text-success sm:w-18 lg:w-20">
-                    {icon}
-                  </div>
-                )}
-                <span className="font-garamond font-medium text-3xl text-gray-800 lg:text-[32px] lg:leading-[38px]">
-                  {title}
-                </span>
-                <span className="font-inter text-gray-600">{subtitle}</span>
-              </div>
+    <div className={cn("group/auth-root box-content flex w-full flex-col gap-5 sm:gap-5", className)}>
+      {can_go_back ?
+        <Link
+          to="/login"
+          className="inline-flex w-fit items-center gap-1.5 font-inter text-xs font-medium text-v3-text-weak transition-colors hover:text-v3-text-strong sm:text-sm"
+        >
+          <ArrowLeft className="size-3.5 shrink-0 sm:size-4" strokeWidth={2} aria-hidden />
+          Back to login
+        </Link>
+      : null}
 
-              <div className="flex flex-col gap-4 sm:gap-6">
-                {children}
-                {include_auth_socials && <AuthSocials />}
-                {footer}
-                {can_go_back && (
-                  <Link to="/login" className="block w-full cursor-pointer gap-2 text-center">
-                    <span className="font-geist text-center text-xs font-bold leading-5 text-grey-200 underline sm:text-sm">
-                      Back to Login
-                    </span>
-                  </Link>
-                )}
-              </div>
-            </div>
-          </main>
-          <div className="w-full h-30" />
+      {icon ?
+        <div
+          className={cn(
+            "flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary sm:size-14",
+            "group-[.error]/auth-root:bg-[var(--red-50)] group-[.error]/auth-root:text-[var(--red-1000)]",
+            "group-[.success]/auth-root:bg-[var(--green-50)] group-[.success]/auth-root:text-[var(--green-1000)]",
+          )}
+        >
+          {icon}
         </div>
+      : null}
+
+      <header className="flex flex-col gap-1.5 sm:gap-2">
+        <h1 className="font-garamond text-[1.625rem] font-normal leading-[32px] text-v3-text-strong sm:text-[1.875rem] lg:text-[1.75rem]">
+          {title}
+        </h1>
+        {subtitle ?
+          <p className="font-inter text-xs leading-relaxed text-v3-text-weak">{subtitle}</p>
+        : null}
+      </header>
+
+      <div className="flex flex-col gap-4 sm:gap-5">
+        {children}
+        {include_auth_socials ?
+          <AuthSocials showDivider={!hide_auth_socials_divider} />
+        : null}
+        {footer ?
+          <div className="flex items-center justify-center gap-2 text-center font-inter text-xs text-v3-text-weak sm:text-sm">
+            {footer}
+          </div>
+        : null}
       </div>
-    </div >
+    </div>
   );
 }
 
+export default function AuthLayout(props: AuthFormPanelProps) {
+  return (
+    <AuthCenteredSplitShell>
+      <AuthFormPanel {...props} />
+    </AuthCenteredSplitShell>
+  );
+}

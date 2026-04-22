@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { startAuthentication } from "@simplewebauthn/browser";
-import { Loader2 } from "lucide-react";
+import { Eye, EyeOff, Fingerprint, Loader2 } from "lucide-react";
 import endpoint from "@/api/endpoint";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -15,6 +15,7 @@ import { useStore } from "@/hooks/use-store";
 import { toast } from "sonner";
 import * as yup from "yup";
 import AuthLayout from "../components/layout";
+import AuthSocials from "../components/auth-social";
 
 const schema = yup.object().shape({
   email: yup
@@ -40,6 +41,7 @@ export default function LoginPage() {
   const { setAuth } = useStore();
   const { trigger, isMutating } = useFetcher(endpoint.login);
   const [passkeyLoading, setPasskeyLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const { handleSubmit, handleChange, handleValue, values, errors } = useForm({
     schema,
@@ -123,14 +125,14 @@ export default function LoginPage() {
 
   return (
     <AuthLayout
-      title="Welcome back. Please login to continue"
-      include_auth_socials
+      title="Welcome back"
+      subtitle="Please login to continue"
       footer={
-        <span className="font-inter text-center text-gray-600">
+        <span className="font-inter text-center text-xs text-v3-text-weak">
           New user?
           <Link
-            to="/register"
-            className="font-inter text-sm font-bold text-blue-6 underline"
+            to="/signup"
+            className="font-inter text-xs font-semibold text-primary underline underline-offset-2"
           >
             {" "}
             Create an account
@@ -138,9 +140,32 @@ export default function LoginPage() {
         </span>
       }
     >
-      <Card className="border border-v3-stroke-weak bg-v3-fill-weaker/20 py-0">
-        <CardContent className="p-4 sm:p-5">
-          <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+      <div className="flex flex-col gap-2">
+        <button
+          type="button"
+          onClick={handlePasskeyLogin}
+          disabled={passkeyLoading || isMutating}
+          className="flex h-11 w-full items-center justify-center gap-2 rounded-full border border-v3-stroke-weak bg-white px-4 font-inter text-sm font-medium text-v3-text-strong transition-colors hover:bg-v3-fill-weaker disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {passkeyLoading ? (
+            <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+          ) : (
+            <Fingerprint className="size-4 shrink-0" strokeWidth={2} aria-hidden />
+          )}
+          Sign in with a passkey
+        </button>
+        <AuthSocials showDivider={false} />
+      </div>
+
+      <div className="flex items-center gap-3">
+        <div className="h-px flex-1 bg-v3-stroke-weak" />
+        <span className="font-inter text-xs text-v3-text-weak">or</span>
+        <div className="h-px flex-1 bg-v3-stroke-weak" />
+      </div>
+
+      <Card className="rounded-none border-0 bg-transparent py-0 shadow-none ring-0">
+        <CardContent className="w-full p-0">
+          <form onSubmit={handleSubmit} className="box-content flex flex-col gap-3.5">
             <div className="grid gap-2">
               <Label htmlFor="login-email" className="font-inter text-sm">
                 Email
@@ -150,7 +175,7 @@ export default function LoginPage() {
                 name="email"
                 type="email"
                 placeholder="johndoe@mail.com"
-                className="rounded-[12px]"
+                className="rounded-[8px]"
                 value={values.email}
                 onChange={handleChange}
                 aria-invalid={Boolean(errors.email)}
@@ -162,20 +187,34 @@ export default function LoginPage() {
               <Label htmlFor="login-password" className="font-inter text-sm">
                 Password
               </Label>
-              <Input
-                id="login-password"
-                name="password"
-                type="password"
-                placeholder="Enter your password"
-                value={values.password}
-                onChange={handleChange}
-                aria-invalid={Boolean(errors.password)}
-              />
+              <div className="relative">
+                <Input
+                  id="login-password"
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Enter your password"
+                  className="rounded-[8px] pr-11"
+                  value={values.password}
+                  onChange={handleChange}
+                  aria-invalid={Boolean(errors.password)}
+                  autoComplete="current-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((p) => !p)}
+                  className="absolute right-1 top-1/2 flex size-9 -translate-y-1/2 items-center justify-center rounded-full text-v3-text-weak transition-colors hover:bg-v3-fill-weaker hover:text-v3-text-strong"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ?
+                    <EyeOff className="size-4 shrink-0" strokeWidth={2} aria-hidden />
+                  : <Eye className="size-4 shrink-0" strokeWidth={2} aria-hidden />}
+                </button>
+              </div>
               {errors.password ? <p className="font-inter text-xs text-destructive">{errors.password}</p> : null}
             </div>
 
             <div className="flex items-center justify-between gap-3">
-              <Label htmlFor="remember_for_30_days" className="font-inter text-sm font-normal text-v3-text-strong">
+              <Label htmlFor="remember_for_30_days" className="font-inter text-xs font-normal text-v3-text-strong">
                 <Checkbox
                   id="remember_for_30_days"
                   checked={Boolean(values.remember_for_30_days)}
@@ -183,12 +222,19 @@ export default function LoginPage() {
                 />
                 Remember for 30 days
               </Label>
-              <Link to="/forget-password" className="font-inter text-sm font-semibold text-primary underline">
+              <Link
+                to="/forget-password"
+                className="flex font-inter text-xs font-semibold text-primary underline"
+              >
                 Forgot password?
               </Link>
             </div>
 
-            <Button type="submit" className="mt-1 w-full rounded-full" disabled={isMutating || passkeyLoading}>
+            <Button
+              type="submit"
+              className="h-11 w-full rounded-[8px]"
+              disabled={isMutating || passkeyLoading}
+            >
               {isMutating ? (
                 <>
                   <Loader2 className="size-4 animate-spin" />
@@ -201,32 +247,6 @@ export default function LoginPage() {
           </form>
         </CardContent>
       </Card>
-
-      <div className="flex items-center gap-3">
-        <div className="h-px flex-1 bg-v3-stroke-weak" />
-        <span className="font-inter text-xs text-v3-text-weak">or</span>
-        <div className="h-px flex-1 bg-v3-stroke-weak" />
-      </div>
-
-      <button
-        type="button"
-        onClick={handlePasskeyLogin}
-        disabled={passkeyLoading || isMutating}
-        className="flex w-full items-center justify-center gap-2 rounded-full border border-v3-stroke-weak bg-white px-4 py-3 font-inter text-sm font-medium text-v3-text-strong transition-colors hover:bg-v3-fill-weaker disabled:cursor-not-allowed disabled:opacity-60"
-      >
-        {passkeyLoading ? (
-          <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-        ) : (
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-            <path d="M12 2C9.79 2 8 3.79 8 6s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4z" />
-            <path d="M15.5 14H17a2 2 0 0 1 2 2v1" />
-            <path d="M6.5 14H8a2 2 0 0 0 2-2v-1" />
-            <path d="M12 14v7" />
-            <path d="M9 21h6" />
-          </svg>
-        )}
-        Sign in with a passkey
-      </button>
     </AuthLayout>
   );
 }
