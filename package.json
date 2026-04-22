@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build ",
+    "preflight": "pnpm test && pnpm build",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run --project=unit",
