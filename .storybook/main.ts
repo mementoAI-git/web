@@ -13,6 +13,12 @@ const config: StorybookConfig = {
   ],
   "framework": "@storybook/react-vite",
   async viteFinal(config) {
+    const existingIgnored = config.server?.watch;
+    const ignoredPaths =
+      existingIgnored && Array.isArray(existingIgnored.ignored)
+        ? existingIgnored.ignored
+        : [];
+
     return {
       ...config,
       server: {
@@ -21,9 +27,7 @@ const config: StorybookConfig = {
           ...config.server?.watch,
           ignored: [
             "**/storybook-static/**",
-            ...(Array.isArray(config.server?.watch?.ignored)
-              ? config.server?.watch?.ignored
-              : []),
+            ...ignoredPaths,
           ],
         },
       },
