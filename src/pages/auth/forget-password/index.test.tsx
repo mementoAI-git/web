@@ -20,11 +20,18 @@ vi.mock("react-router-dom", async (importOriginal) => {
 });
 
 describe("ForgetPasswordPage", () => {
-  it("renders shadcn auth card with email field", () => {
-    renderWithProviders(<ForgetPasswordPage />, { route: "/forget-password" });
+  it("renders email field with register-aligned card, input, and submit control", () => {
+    const { container } = renderWithProviders(<ForgetPasswordPage />, { route: "/forget-password" });
 
     expect(screen.getByLabelText(/^email$/i)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /^submit$/i })).toBeInTheDocument();
+    const submit = screen.getByRole("button", { name: /^submit$/i });
+    expect(submit).toBeInTheDocument();
+    expect(submit).toHaveClass("h-11", "rounded-[8px]", "bg-v3-brand-strong", "text-white");
+
+    expect(screen.getByLabelText(/^email$/i)).toHaveClass("rounded-[8px]");
+
+    const card = container.querySelector(".group\\/card");
+    expect(card).toHaveClass("rounded-none", "border-0", "bg-transparent", "ring-0");
   });
 
   it("submits send-link request and navigates to check mail", async () => {

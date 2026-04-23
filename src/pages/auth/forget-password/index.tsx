@@ -41,10 +41,10 @@ export default function ForgetPasswordPage() {
       can_go_back
       subtitle="Please enter your email address. We will send instructions to reset your password if this email exists in our system."
     >
-      <Card className="border border-v3-stroke-weak bg-v3-fill-weaker/20 py-0">
-        <CardContent className="p-4 sm:p-5">
-          <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-            <div className="grid gap-2">
+      <Card className="rounded-none border-0 bg-transparent py-0 shadow-none ring-0">
+        <CardContent className="w-full p-0">
+          <form onSubmit={handleSubmit} className="box-content flex flex-col gap-3.5">
+            <div className="grid gap-2 box-content">
               <Label htmlFor="forget-password-email" className="font-inter text-sm">
                 Email
               </Label>
@@ -53,7 +53,7 @@ export default function ForgetPasswordPage() {
                 name="email"
                 type="email"
                 placeholder="johndoe@mail.com"
-                className="rounded-[12px]"
+                className="rounded-[8px]"
                 value={values.email}
                 onChange={handleChange}
                 aria-invalid={Boolean(errors.email)}
@@ -61,7 +61,7 @@ export default function ForgetPasswordPage() {
               {errors.email ? <p className="font-inter text-xs text-destructive">{errors.email}</p> : null}
             </div>
 
-            <Button type="submit" className="mt-1 w-full rounded-full" disabled={isMutating}>
+            <Button type="submit" className="h-11 w-full rounded-[8px] bg-v3-brand-strong text-white hover:bg-v3-brand-strong/90" disabled={isMutating}>
               {isMutating ? (
                 <>
                   <Loader2 className="size-4 animate-spin" />

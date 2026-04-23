@@ -232,7 +232,7 @@ export default function LoginPage() {
 
             <Button
               type="submit"
-              className="h-11 w-full rounded-[8px]"
+              className="h-11 w-full rounded-[8px] bg-v3-brand-strong text-white hover:bg-v3-brand-strong/90"
               disabled={isMutating || passkeyLoading}
             >
               {isMutating ? (

@@ -47,7 +47,7 @@ describe("LoginPage", () => {
   it("applies auth control heights and forgot-password link styles", () => {
     renderWithProviders(<LoginPage />, { route: "/login" });
 
-    expect(screen.getByRole("button", { name: /^login$/i })).toHaveClass("h-11");
+    expect(screen.getByRole("button", { name: /^login$/i })).toHaveClass("h-11", "bg-v3-brand-strong", "text-white");
 
     expect(screen.getByLabelText(/email/i)).toHaveClass("rounded-[8px]");
     expect(screen.getByLabelText(/^password$/i, { selector: "input" })).toHaveClass("rounded-[8px]");

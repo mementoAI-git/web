@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Loader2 } from "lucide-react";
 import { CheckIcon, TimesIcon } from "@/components/icons";
-import { Button } from "@/components/Buttons";
 import { AuthLoader } from "@/components/auth-loader";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import endpoint from "@/api/endpoint";
 import useFetcher from "@/hooks/use-fetcher";
 import { useStore } from "@/hooks/use-store";
@@ -25,7 +27,7 @@ export default function ConfirmEmailPage() {
     if (!token) {
       navigate("/login");
     }
-  }, [searchParams, navigate]);
+  }, [token, navigate]);
 
   const handleResendLink = () => {
     if (!email) {
@@ -57,12 +59,28 @@ export default function ConfirmEmailPage() {
   if (error) {
     return (
       <AuthLayout
-        title="Email Verification Failed"
+        title="Email verification failed"
         className="error"
         icon={<TimesIcon width={32} height={32} />}
         subtitle="We couldn’t verify your email. Please try again or request a new verification link."
       >
-        <Button loading={sending} onClick={handleResendLink} title="Resend link" />
+        <Card className="border border-v3-stroke-weak bg-v3-fill-weaker/30 py-0 shadow-none">
+          <CardContent className="p-4 sm:p-5">
+            <Button
+              type="button"
+              className="h-11 w-full rounded-full"
+              disabled={sending}
+              onClick={handleResendLink}
+            >
+              {sending ?
+                <>
+                  <Loader2 className="size-4 animate-spin" />
+                  Sending...
+                </>
+              : "Resend link"}
+            </Button>
+          </CardContent>
+        </Card>
       </AuthLayout>
     );
   }
@@ -72,13 +90,17 @@ export default function ConfirmEmailPage() {
         title="Email verified successfully"
         className="success"
         icon={<CheckIcon width={32} height={32} />}
-        subtitle="Your email has been confirmed. Click on the continue button to complete your onboarding process"
+        subtitle="Your email has been confirmed. Continue to complete your onboarding."
       >
-        <Button href="/onboard" title="Continue" className="!rounded-full" />
+        <Card className="border border-v3-stroke-weak bg-v3-fill-weaker/30 py-0 shadow-none">
+          <CardContent className="p-4 sm:p-5">
+            <Button asChild className="h-11 w-full rounded-full">
+              <Link to="/onboard">Continue</Link>
+            </Button>
+          </CardContent>
+        </Card>
       </AuthLayout>
     );
   }
-  return <AuthLoader title="Verifying your email, Please wait..." />;
+  return <AuthLoader title="Verifying your email, please wait…" />;
 }
-
-

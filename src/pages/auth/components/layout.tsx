@@ -62,7 +62,7 @@ export function AuthFormPanel({
         : null}
       </header>
 
-      <div className="flex flex-col gap-4 sm:gap-5">
+      <div className="box-content flex flex-col gap-4 sm:gap-5">
         {children}
         {include_auth_socials ?
           <AuthSocials showDivider={!hide_auth_socials_divider} />

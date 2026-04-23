@@ -1,8 +1,9 @@
 import { useEffect } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { TimesIcon } from "@/components/icons";
-import { Button } from "@/components/Buttons";
 import { AuthLoader } from "@/components/auth-loader";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import endpoint from "@/api/endpoint";
 import useFetcher from "@/hooks/use-fetcher";
 import { useStore } from "@/hooks/use-store";
@@ -30,7 +31,6 @@ export default function OAuthCallbackPage() {
 
     trigger({ code }).then(async (result) => {
       if (result?.data) {
-        // Extract only the IAuth-shaped fields for the store
         const { access_token, refresh_token, expires_at, refresh_expires_at } =
           result.data as IAuth & { onboarded: boolean; onboarding_status: string };
 
@@ -52,9 +52,14 @@ export default function OAuthCallbackPage() {
           error?.message ??
           "We couldn't sign you in with that provider. Please try again."
         }
-        can_go_back
       >
-        <Button href="/login" title="Back to login" className="!rounded-full" />
+        <Card className="border border-v3-stroke-weak bg-v3-fill-weaker/30 py-0 shadow-none">
+          <CardContent className="p-4 sm:p-5">
+            <Button asChild className="h-11 w-full rounded-full">
+              <Link to="/login">Back to login</Link>
+            </Button>
+          </CardContent>
+        </Card>
       </AuthLayout>
     );
   }

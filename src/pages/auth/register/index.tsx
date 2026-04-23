@@ -1,6 +1,6 @@
-import { Link } from "react-router-dom";
-import { useNavigate } from "react-router-dom";
-import { Loader2 } from "lucide-react";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 import endpoint from "@/api/endpoint";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -42,6 +42,7 @@ const initial = {
 
 export default function RegisterPage() {
   const navigate = useNavigate();
+  const [showPassword, setShowPassword] = useState(false);
   const { trigger, isMutating } = useFetcher(endpoint.register);
 
   const { handleSubmit, handleChange, values, errors } = useForm({
@@ -59,14 +60,13 @@ export default function RegisterPage() {
   return (
     <AuthLayout
       title="Create account"
-      subtitle="Create a new account on Memento to start crafting your stories."
       include_auth_socials
       footer={
-        <span className="font-inter text-center text-gray-600">
+        <span className="font-inter text-center text-xs text-v3-text-weak">
           Already have an account?
           <Link
             to="/login"
-            className="font-inter text-sm font-bold text-blue-6 underline"
+            className="font-inter text-xs font-medium text-primary underline underline-offset-2"
           >
             {" "}
             Login
@@ -74,11 +74,11 @@ export default function RegisterPage() {
         </span>
       }
     >
-      <Card className="border border-v3-stroke-weak bg-v3-fill-weaker/20 py-0">
-        <CardContent className="p-4 sm:p-5">
-          <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+      <Card className="rounded-none border-0 bg-transparent py-0 shadow-none ring-0">
+        <CardContent className="w-full p-0">
+          <form onSubmit={handleSubmit} className="box-content flex flex-col gap-3.5">
             <div className="grid gap-4 sm:grid-cols-2">
-              <div className="grid gap-2">
+              <div className="grid gap-2 box-content">
                 <Label htmlFor="register-first-name" className="font-inter text-sm">
                   First name
                 </Label>
@@ -86,13 +86,14 @@ export default function RegisterPage() {
                   id="register-first-name"
                   name="first_name"
                   placeholder="John"
+                  className="rounded-[8px]"
                   value={values.first_name}
                   onChange={handleChange}
                   aria-invalid={Boolean(errors.first_name)}
                 />
                 {errors.first_name ? <p className="font-inter text-xs text-destructive">{errors.first_name}</p> : null}
               </div>
-              <div className="grid gap-2">
+              <div className="grid gap-2 box-content">
                 <Label htmlFor="register-last-name" className="font-inter text-sm">
                   Last name
                 </Label>
@@ -100,6 +101,7 @@ export default function RegisterPage() {
                   id="register-last-name"
                   name="last_name"
                   placeholder="Doe"
+                  className="rounded-[8px]"
                   value={values.last_name}
                   onChange={handleChange}
                   aria-invalid={Boolean(errors.last_name)}
@@ -108,7 +110,7 @@ export default function RegisterPage() {
               </div>
             </div>
 
-            <div className="grid gap-2">
+            <div className="grid gap-2 box-content">
               <Label htmlFor="register-email" className="font-inter text-sm">
                 Email
               </Label>
@@ -117,6 +119,7 @@ export default function RegisterPage() {
                 name="email"
                 type="email"
                 placeholder="johndoe@mail.com"
+                className="rounded-[8px]"
                 value={values.email}
                 onChange={handleChange}
                 aria-invalid={Boolean(errors.email)}
@@ -124,23 +127,43 @@ export default function RegisterPage() {
               {errors.email ? <p className="font-inter text-xs text-destructive">{errors.email}</p> : null}
             </div>
 
-            <div className="grid gap-2">
+            <div className="grid gap-2 box-content">
               <Label htmlFor="register-password" className="font-inter text-sm">
                 Password
               </Label>
-              <Input
-                id="register-password"
-                name="password"
-                type="password"
-                placeholder="Create a secure password"
-                value={values.password}
-                onChange={handleChange}
-                aria-invalid={Boolean(errors.password)}
-              />
+              <div className="relative">
+                <Input
+                  id="register-password"
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Create a secure password"
+                  className="rounded-[8px] pr-11"
+                  value={values.password}
+                  onChange={handleChange}
+                  aria-invalid={Boolean(errors.password)}
+                  autoComplete="new-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((p) => !p)}
+                  className="absolute right-1 top-1/2 flex size-9 -translate-y-1/2 items-center justify-center rounded-full text-v3-text-weak transition-colors hover:bg-v3-fill-weaker hover:text-v3-text-strong"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ?
+                    <EyeOff className="size-4 shrink-0" strokeWidth={2} aria-hidden />
+                  : <Eye className="size-4 shrink-0" strokeWidth={2} aria-hidden />}
+                </button>
+              </div>
               {errors.password ? <p className="font-inter text-xs text-destructive">{errors.password}</p> : null}
             </div>
 
-            <Button type="submit" className="mt-1 w-full rounded-full" disabled={isMutating}>
+            <small className="px-1 text-center font-inter text-xs leading-5 text-v3-text-weak">
+              By clicking "Create account" you agree to the{" "}
+              <span className="text-xs font-medium text-primary underline">Terms of Use</span> and{" "}
+              <span className="text-xs font-medium text-primary underline">Privacy Policy</span>
+            </small>
+
+            <Button type="submit" className="h-11 w-full rounded-[8px] bg-v3-brand-strong text-white hover:bg-v3-brand-strong/90" disabled={isMutating}>
               {isMutating ? (
                 <>
                   <Loader2 className="size-4 animate-spin" />
@@ -150,12 +173,6 @@ export default function RegisterPage() {
                 "Create account"
               )}
             </Button>
-
-            <small className="px-1 text-center font-inter text-sm leading-5 text-gray-800">
-              By clicking "Create account" you agree to the{" "}
-              <span className="text-primary underline">Terms of Use</span> and{" "}
-              <span className="text-primary underline">Privacy Policy</span>
-            </small>
           </form>
         </CardContent>
       </Card>

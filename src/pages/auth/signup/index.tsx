@@ -35,7 +35,7 @@ export default function SignupChoicePage() {
               type="button"
               onClick={handleGoogleSignup}
               disabled={isMutating}
-              className="h-10 w-full rounded-[8px]"
+              className="h-10 w-full rounded-[8px] bg-v3-brand-strong text-white hover:bg-v3-brand-strong/90"
             >
               Sign up with Google
             </Button>
