@@ -88,6 +88,7 @@ export interface IUser {
   streak: number;
   bg_music?: string;
   chat_voice?: string | null;
+  chat_voice_provider?: "gemini" | "elevenlabs" | null;
   fullname?: string | null;
   newsletter_subscriber: boolean;
   created_at: string;

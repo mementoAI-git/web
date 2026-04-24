@@ -2,6 +2,7 @@ import { createBrowserRouter, Navigate } from "react-router-dom";
 import App from "@/App";
 import {
   AcceptInvitePage,
+  AiHealthPage,
   BeneficiaryPage,
   ChatLandingPage,
   ChatPage,
@@ -85,6 +86,12 @@ export const router = createBrowserRouter([
         children: [
           { index: true, element: <OverviewPage /> },
           { path: "overview", index: true, element: <OverviewPage /> },
+          ...(import.meta.env.DEV
+            ? [
+                { path: "ai-health", element: <AiHealthPage /> },
+                { path: "dashboard/ai-health", element: <AiHealthPage /> },
+              ]
+            : []),
           { path: "explore", element: <ExplorePage /> },
           { path: "explore/categories", element: <ExplorePage /> },
           { path: "explore/categories/:id", element: <ExploreCategoryPage /> },

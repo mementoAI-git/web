@@ -10,6 +10,7 @@ import { Visual3D } from "./AudioVisual3D";
 import ChatSettings from "../modal/chat-settings";
 import endpoint from "@/api/endpoint";
 import { mutate } from "swr";
+import { useStore } from "@/hooks/use-store";
 
 interface VoiceinputProps {
   onCancel: () => void;
@@ -18,6 +19,7 @@ interface VoiceinputProps {
 }
 
 export default function Voiceinput({ onCancel, memoryId, history = [] }: VoiceinputProps) {
+  const { user } = useStore();
   const {
     connected,
     connect,
@@ -35,7 +37,12 @@ export default function Voiceinput({ onCancel, memoryId, history = [] }: Voicein
   const [isDisconnecting, setIsDisconnecting] = useState(false);
   const [isStartingCall, setIsStartingCall] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [elevenLabsActive, setElevenLabsActive] = useState(false);
   const intervalRef = useRef<number | null>(null);
+  const isElevenLabsProvider = user?.chat_voice_provider === "elevenlabs";
+  const elevenLabsTalkToUrl =
+    import.meta.env.VITE_ELEVENLABS_TALK_TO_URL ||
+    "https://elevenlabs.io/app/talk-to?agent_id=agent_1701kpzx5njhfxp991evy221ybnj&branch_id=agtbrch_0401kpzx5qmbf76rx7zbsrety678";
 
   useEffect(() => {
     if (isRecording) {
@@ -67,6 +74,10 @@ export default function Voiceinput({ onCancel, memoryId, history = [] }: Voicein
     setMuted(false);
     setRecordingTime(0);
     try {
+      if (isElevenLabsProvider) {
+        setElevenLabsActive(true);
+        return;
+      }
       await connect();
       await startRecording();
     } catch (e) {
@@ -100,6 +111,7 @@ export default function Voiceinput({ onCancel, memoryId, history = [] }: Voicein
         disconnect();
         await new Promise((resolve) => setTimeout(resolve, 200));
       }
+      setElevenLabsActive(false);
 
       onCancel();
     } catch (err) {
@@ -166,7 +178,7 @@ export default function Voiceinput({ onCancel, memoryId, history = [] }: Voicein
       </header>
 
       <div className="flex min-h-0 flex-1 flex-col items-center justify-center px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-2 sm:px-8">
-        <div className="flex w-full max-w-md flex-col items-center gap-8 sm:gap-10">
+        <div className="flex w-full max-w-3xl flex-col items-center gap-8 sm:gap-10">
           <div
             className={cn(
               "flex flex-col items-center gap-6 sm:gap-8",
@@ -178,9 +190,15 @@ export default function Voiceinput({ onCancel, memoryId, history = [] }: Voicein
                 className="absolute inset-0 rounded-full bg-v3-fill-weak blur-xl"
                 aria-hidden
               />
-              <div className="relative mx-auto size-[120px] overflow-hidden rounded-full shadow-[0_12px_40px_-12px_rgba(60,40,20,0.25)] ring-1 ring-v3-stroke-weak/60 sm:size-[132px]">
-                <Visual3D inputNode={inputNode} outputNode={outputNode} />
-              </div>
+              {isElevenLabsProvider ? (
+                <div className="relative mx-auto flex size-[120px] items-center justify-center rounded-full border border-v3-stroke-weak/60 bg-v3-fill-weaker shadow-[0_12px_40px_-12px_rgba(60,40,20,0.25)] sm:size-[132px]">
+                  <span className="font-inter text-[11px] font-medium text-v3-text-weaker">ElevenLabs Agent</span>
+                </div>
+              ) : (
+                <div className="relative mx-auto size-[120px] overflow-hidden rounded-full shadow-[0_12px_40px_-12px_rgba(60,40,20,0.25)] ring-1 ring-v3-stroke-weak/60 sm:size-[132px]">
+                  <Visual3D inputNode={inputNode} outputNode={outputNode} />
+                </div>
+              )}
             </div>
 
             <div className="flex flex-col items-center gap-2 text-center">
@@ -191,7 +209,9 @@ export default function Voiceinput({ onCancel, memoryId, history = [] }: Voicein
                 {formatTime(recordingTime)}
               </p>
               <p className="font-inter text-xs text-v3-text-weaker sm:text-sm">
-                {isRecording ? (
+                {isElevenLabsProvider ? (
+                  elevenLabsActive ? "ElevenLabs session live" : "Ready for ElevenLabs voice agent"
+                ) : isRecording ? (
                   <>
                     <span
                       className={cn(
@@ -209,6 +229,17 @@ export default function Voiceinput({ onCancel, memoryId, history = [] }: Voicein
             </div>
           </div>
 
+          {isElevenLabsProvider && elevenLabsActive ? (
+            <div className="w-full overflow-hidden rounded-2xl border border-v3-stroke-weak bg-white">
+              <iframe
+                src={elevenLabsTalkToUrl}
+                title="ElevenLabs Agent"
+                className="h-[480px] w-full"
+                allow="microphone; autoplay"
+              />
+            </div>
+          ) : null}
+
           {error ? (
             <p className="max-w-sm text-center font-inter text-sm text-red-600" role="alert">
               {error}
@@ -216,7 +247,7 @@ export default function Voiceinput({ onCancel, memoryId, history = [] }: Voicein
           ) : null}
 
           <div className="flex w-full flex-col items-center justify-center gap-4">
-            {!isRecording ? (
+            {!isRecording && !elevenLabsActive ? (
               <button
                 type="button"
                 onClick={() => void handleStartCall()}

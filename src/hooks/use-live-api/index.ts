@@ -332,7 +332,10 @@ export function useLiveAPI({
             languageCode: 'en-US',
             voiceConfig: {
               prebuiltVoiceConfig: {
-                voiceName: user?.chat_voice || "Algenib"
+                voiceName:
+                  user?.chat_voice_provider === "gemini"
+                    ? (user?.chat_voice || GEMINI_CONFIG.VOICE_CONFIG.voiceName)
+                    : GEMINI_CONFIG.VOICE_CONFIG.voiceName
               }
             }
           },
@@ -368,6 +371,7 @@ export function useLiveAPI({
   }, [
     updateTranscriptText,
     user?.chat_voice,
+    user?.chat_voice_provider,
     context,
     outputNode,
     fetchEphemeralToken,

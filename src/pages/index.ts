@@ -5,6 +5,7 @@ export { default as AcceptInvitePage } from "./accept-invite";
 export * from "./post";
 export { default as DashboardLayout } from "./dashboard/component/layout";
 export { default as OverviewPage } from "./dashboard/overview";
+export { default as AiHealthPage } from "./dashboard/ai-health";
 export { default as ExplorePage } from "./dashboard/explore";
 export { default as ExploreCategoryPage } from "./dashboard/explore/category";
 

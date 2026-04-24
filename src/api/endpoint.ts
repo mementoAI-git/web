@@ -71,12 +71,17 @@ export default {
 
   // ai
   aiPrompt: "/ai/prompt",
+  aiVoices: "/ai/voices",
+  aiVoicePreview: "/ai/voice-preview",
   aiGreet: "/ai/prompt/greet",
   aiPromptMessage: "/ai/prompt/messages",
   transcription: "/ai/transcribe-audio",
   startConversation: "/ai/conversation/new",
   ephemeralToken: "/ai/ephemeral-token",
   generateTags: "/ai/generate-tags",
+  aiMetricsOverview: "/ai/metrics/overview",
+  aiMetricsTimeseries: "/ai/metrics/timeseries",
+  aiPromptGovernanceStatus: "/ai/prompt-governance/status",
 
   // capsule
   capsule: "/capsule",
