@@ -6,13 +6,36 @@ import { renderWithProviders } from "@/test";
 
 vi.mock("swr", async (importOriginal) => {
   const actual = await importOriginal<typeof import("swr")>();
-  return { ...actual, mutate: vi.fn() };
+  const useSWRMock = ((key: unknown) => {
+    const keyText = typeof key === "string" ? key : "";
+    if (keyText.includes("/ai/voices?provider=gemini")) {
+      return {
+        data: {
+          data: {
+            voices: [
+              { id: "kore", title: "Kore", subtitle: "warm", gender: "female", voiceName: "Kore" },
+              { id: "leda", title: "Leda", subtitle: "clear", gender: "female", voiceName: "Leda" },
+            ],
+          },
+        },
+      };
+    }
+    if (keyText.includes("/ai/voices?provider=elevenlabs")) {
+      return { data: { data: { voices: [] } } };
+    }
+    return { data: undefined };
+  }) as unknown as typeof actual.default;
+  return { ...actual, default: useSWRMock, mutate: vi.fn() };
 });
 
 const previewGeminiChatVoice = vi.fn().mockResolvedValue(undefined);
+const previewElevenLabsVoice = vi.fn().mockResolvedValue(undefined);
 
 vi.mock("@/lib/gemini-voice-preview", () => ({
   previewGeminiChatVoice: (...args: unknown[]) => previewGeminiChatVoice(...args),
+}));
+vi.mock("@/lib/elevenlabs-voice-preview", () => ({
+  previewElevenLabsVoice: (...args: unknown[]) => previewElevenLabsVoice(...args),
 }));
 
 const profileTrigger = vi.fn().mockResolvedValue({ data: {} });
@@ -39,6 +62,7 @@ vi.mock("sonner", () => ({
 describe("Voices", () => {
   it("saves the voice as default immediately then runs Gemini preview", async () => {
     previewGeminiChatVoice.mockClear();
+    previewElevenLabsVoice.mockClear();
     profileTrigger.mockClear();
     tokenTrigger.mockClear();
     const user = userEvent.setup();
@@ -48,11 +72,11 @@ describe("Voices", () => {
       route: "/overview",
     });
 
-    const clara = screen.getByRole("button", { name: /clara/i });
-    await user.click(clara);
+    const leda = screen.getByRole("button", { name: /leda/i });
+    await user.click(leda);
 
     await waitFor(() => {
-      expect(profileTrigger).toHaveBeenCalledWith({ chat_voice: "Leda" });
+      expect(profileTrigger).toHaveBeenCalledWith({ chat_voice: "Leda", chat_voice_provider: "gemini" });
     });
     await waitFor(() => {
       expect(previewGeminiChatVoice).toHaveBeenCalledWith(
@@ -68,10 +92,12 @@ describe("Voices", () => {
     };
     await expect(previewArgs.fetchToken()).resolves.toBeDefined();
     expect(tokenTrigger).toHaveBeenCalled();
+    expect(previewElevenLabsVoice).not.toHaveBeenCalled();
   });
 
   it("runs preview when re-selecting the current voice without profile put", async () => {
     previewGeminiChatVoice.mockClear();
+    previewElevenLabsVoice.mockClear();
     profileTrigger.mockClear();
     tokenTrigger.mockClear();
     const user = userEvent.setup();
@@ -81,20 +107,22 @@ describe("Voices", () => {
       route: "/overview",
     });
 
-    const vince = screen.getByRole("button", { name: /vince/i });
-    await user.click(vince);
+    const kore = screen.getByRole("button", { name: /kore/i });
+    await user.click(kore);
 
     await waitFor(() => {
       expect(previewGeminiChatVoice).toHaveBeenCalledWith(
-        expect.objectContaining({ voiceName: "Algenib" }),
+        expect.objectContaining({ voiceName: "Kore" }),
       );
     });
     expect(profileTrigger).not.toHaveBeenCalled();
+    expect(previewElevenLabsVoice).not.toHaveBeenCalled();
   });
 
   it("keeps the saved default when preview fails", async () => {
     toastError.mockClear();
     previewGeminiChatVoice.mockRejectedValueOnce(new Error("network"));
+    previewElevenLabsVoice.mockClear();
     profileTrigger.mockClear();
     const user = userEvent.setup();
 
@@ -103,11 +131,11 @@ describe("Voices", () => {
       route: "/overview",
     });
 
-    const clara = screen.getByRole("button", { name: /clara/i });
-    await user.click(clara);
+    const leda = screen.getByRole("button", { name: /leda/i });
+    await user.click(leda);
 
     await waitFor(() => {
-      expect(profileTrigger).toHaveBeenCalledWith({ chat_voice: "Leda" });
+      expect(profileTrigger).toHaveBeenCalledWith({ chat_voice: "Leda", chat_voice_provider: "gemini" });
     });
     await waitFor(() => {
       expect(toastError).toHaveBeenCalledWith("Could not play voice sample");
