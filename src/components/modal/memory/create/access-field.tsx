@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, useId } from "react";
 import useSWR from "swr";
 import { useModal } from "@/hooks/use-modal";
 import { cn } from "@/utility";
@@ -9,6 +9,9 @@ import { fetcher } from "@/api/fetcher";
 import { PlusIcon } from "@/components/icons";
 import type { IGroup, IBeneficiary } from "@/utility/interface";
 import { GROUP_COLORS } from "@/utility/constant";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 const LIST_LIMIT = 100;
 
@@ -42,6 +45,7 @@ function getColorClass(item: SearchResultItem): string {
 
 export function AccessField({ value: selectedAccess, onChange }: AccessFieldProps) {
   const { push } = useModal();
+  const accessInputId = useId();
   const [accessInput, setAccessInput] = useState("");
   const [showAccessDropdown, setShowAccessDropdown] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -96,13 +100,17 @@ export function AccessField({ value: selectedAccess, onChange }: AccessFieldProp
 
   return (
     <div>
-      <p className="font-inter text-sm font-medium text-gray-700 mb-2">
+      <Label htmlFor={accessInputId} className="font-inter font-medium text-text-neutral-strong mb-2">
         Who has access to this story?{" "}
-        <span className="text-gray-400 font-normal">(tag people or groups)</span>
-      </p>
+        <span className="text-text-neutral-weaker font-normal">(tag people or groups)</span>
+      </Label>
       <div
         ref={containerRef}
-        className="relative flex flex-wrap gap-2 min-h-[48px] px-3 py-2 border border-gray-200 rounded-xl bg-white cursor-text"
+        className={cn(
+          "relative flex flex-wrap gap-2 min-h-[48px] px-3 py-2 rounded-xl bg-v3-bg cursor-text",
+          "border border-stroke-neutral-weak transition-[color,box-shadow,border-color]",
+          "focus-within:border-ring focus-within:ring-[3px] focus-within:ring-inset focus-within:ring-ring/50",
+        )}
         onClick={(e) => {
           e.stopPropagation();
           setShowAccessDropdown(true);
@@ -113,7 +121,7 @@ export function AccessField({ value: selectedAccess, onChange }: AccessFieldProp
             key={a.id}
             className={cn(
               "flex items-center gap-1 px-2.5 py-1 rounded-full border font-inter text-xs font-medium",
-              getColorClass(a)
+              getColorClass(a),
             )}
           >
             @{a.name}
@@ -126,7 +134,8 @@ export function AccessField({ value: selectedAccess, onChange }: AccessFieldProp
             </button>
           </span>
         ))}
-        <input
+        <Input
+          id={accessInputId}
           value={accessInput}
           onChange={(e) => {
             setAccessInput(e.target.value);
@@ -136,60 +145,63 @@ export function AccessField({ value: selectedAccess, onChange }: AccessFieldProp
           onKeyDown={(e) => {
             if (e.key === "Escape") setShowAccessDropdown(false);
           }}
-          placeholder={
-            selectedAccess.length === 0 ? "Select people or groups..." : ""
-          }
-          className="flex-1 min-w-[120px] outline-none font-inter text-sm text-gray-700 placeholder:text-gray-400"
+          placeholder={selectedAccess.length === 0 ? "Select people or groups..." : ""}
+          className={cn(
+            "flex-1 min-w-[120px] h-8 min-h-0 border-0 bg-transparent shadow-none rounded-none px-0 py-1",
+            "focus-visible:ring-0 font-inter text-sm text-text-neutral-strong placeholder:text-neutral-weak",
+          )}
         />
         {showAccessDropdown && (
-          <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-20 overflow-hidden">
+          <div className="absolute top-full left-0 right-0 mt-1 z-20 overflow-hidden rounded-xl border border-stroke-neutral-weak bg-popover text-popover-foreground shadow-lg">
             <div className="flex flex-wrap gap-2 p-3 max-h-48 overflow-y-auto">
               {filteredOptions.length === 0 ? (
-                <p className="text-sm text-gray-400 py-1">
+                <p className="text-sm text-text-neutral-weaker py-1">
                   {allOptions.length === 0
                     ? "No groups or beneficiaries yet. Create a group to get started."
                     : "No matches"}
                 </p>
               ) : (
                 filteredOptions.map((item) => {
-                const isSelected = selectedAccess.some((a) => a.id === item.id);
-                const colorClass = getColorClass(item);
-                return (
-                  <button
-                    type="button"
-                    key={item.id}
-                    onClick={() => addAccess(item)}
-                    disabled={isSelected}
-                    className={cn(
-                      "flex items-center gap-1 px-2.5 py-1 rounded-full border font-inter text-xs font-medium transition-opacity hover:opacity-90 disabled:opacity-50 disabled:pointer-events-none",
-                      colorClass
-                    )}
-                  >
-                    @{item.name}
-                  </button>
-                );
-              })
+                  const isSelected = selectedAccess.some((a) => a.id === item.id);
+                  const colorClass = getColorClass(item);
+                  return (
+                    <button
+                      type="button"
+                      key={item.id}
+                      onClick={() => addAccess(item)}
+                      disabled={isSelected}
+                      className={cn(
+                        "flex items-center gap-1 px-2.5 py-1 rounded-full border font-inter text-xs font-medium transition-opacity hover:opacity-90 disabled:opacity-50 disabled:pointer-events-none",
+                        colorClass,
+                      )}
+                    >
+                      @{item.name}
+                    </button>
+                  );
+                })
               )}
             </div>
-            <div className="flex items-center justify-between gap-3 px-3 py-[3px] border-t border-gray-100 bg-[#fafafa]">
-              <div className="flex-1 min-w-0 text-gray-500 text-sm">
+            <div className="flex items-center justify-between gap-3 px-3 py-[3px] border-t border-stroke-neutral-weaker bg-fill-neutral-weaker">
+              <div className="flex-1 min-w-0 text-text-neutral-weak text-sm">
                 {accessInput.trim() && filteredOptions.length === 0
                   ? "No matches"
                   : !accessInput.trim() && allOptions.length === 0
                     ? "No groups or beneficiaries yet"
                     : null}
               </div>
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                size="xs"
                 onClick={() => {
                   setShowAccessDropdown(false);
                   push?.("add-group");
                 }}
-                className="shrink-0 flex items-center gap-1.5 px-2 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+                className="shrink-0 gap-1.5 rounded-lg font-medium text-text-neutral-strong"
               >
                 <PlusIcon width={12} height={12} />
                 New Group
-              </button>
+              </Button>
             </div>
           </div>
         )}
@@ -206,7 +218,7 @@ export function buildCreateMemoryPayload(
   tags: string[],
   status: string,
   selected: SearchResultItem[],
-  extra: Record<string, unknown> = {}
+  extra: Record<string, unknown> = {},
 ): Record<string, unknown> {
   const groupIds = selected.filter((s) => s.source === "group").map((s) => s.id);
   const beneficiaryIds = selected

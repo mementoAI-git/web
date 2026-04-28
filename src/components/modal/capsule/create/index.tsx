@@ -1031,13 +1031,11 @@ export default function CreateCapsule({
       const MAX = 120 * 1024 * 1024;
       Array.from(droppedFiles).forEach((file) => {
         const ext = `.${file.name.split(".").pop()?.toLowerCase()}`;
-        type SupportedType = (typeof CAPSULE_SUPPORTED_FILE_TYPES)[number];
+        const list = CAPSULE_SUPPORTED_FILE_TYPES as readonly string[];
+        const fromName = EXTENSION_TO_MIME[ext];
         const valid =
-          CAPSULE_SUPPORTED_FILE_TYPES.includes(file.type as SupportedType) ||
-          (EXTENSION_TO_MIME[ext] &&
-            CAPSULE_SUPPORTED_FILE_TYPES.includes(
-              EXTENSION_TO_MIME[ext] as SupportedType,
-            ));
+          list.includes(file.type.split(";")[0]!.trim().toLowerCase()) ||
+          (fromName && list.includes(fromName.split(";")[0]!.trim().toLowerCase()));
         if (!valid) {
           toast.error(`File type "${file.type || ext}" is not supported`);
           return;

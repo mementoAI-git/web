@@ -2,6 +2,9 @@
 
 import { useState } from "react";
 import { AutogenerateTagsButton } from "@/components/Buttons";
+import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
+import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 
 interface TagsFieldProps {
   tags: string[];
@@ -21,19 +24,24 @@ export function TagsField({ tags, setTags, title, body }: TagsFieldProps) {
 
   return (
     <div>
-      <p className="font-inter text-sm font-medium text-gray-700 mb-2">Tags</p>
+      <Label htmlFor="create-memory-tags" className="font-inter font-medium text-text-neutral-strong mb-2">
+        Tags
+      </Label>
       {tags.length > 0 && (
         <div className="flex flex-wrap gap-2 mb-2">
           {tags.map((t) => (
             <span
               key={t}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-gray-100 border border-gray-200 font-inter text-xs text-gray-700"
+              className={cn(
+                "flex items-center gap-1 px-3 py-1.5 rounded-full border font-inter text-xs",
+                "bg-fill-neutral-weak border-stroke-neutral-weak text-text-neutral-strong",
+              )}
             >
               {t}
               <button
                 type="button"
                 onClick={() => setTags((prev) => prev.filter((x) => x !== t))}
-                className="opacity-60 hover:opacity-100 leading-none ml-0.5"
+                className="opacity-60 hover:opacity-100 leading-none ml-0.5 text-text-neutral-weak hover:text-text-neutral-strong"
               >
                 ×
               </button>
@@ -41,8 +49,15 @@ export function TagsField({ tags, setTags, title, body }: TagsFieldProps) {
           ))}
         </div>
       )}
-      <div className="flex items-center border border-gray-200 rounded-xl overflow-hidden bg-white">
-        <input
+      <InputGroup
+        className={cn(
+          "h-auto min-h-12 rounded-xl border-stroke-neutral-weak bg-v3-bg",
+          /* shadow-none removes box-shadow and hides the group focus ring */
+          "has-[[data-slot=input-group-control]:focus-visible]:ring-inset",
+        )}
+      >
+        <InputGroupInput
+          id="create-memory-tags"
           value={tagInput}
           onChange={(e) => setTagInput(e.target.value)}
           onKeyDown={(e) => {
@@ -52,14 +67,16 @@ export function TagsField({ tags, setTags, title, body }: TagsFieldProps) {
             }
           }}
           placeholder="Manually add tags or click to autogenerate"
-          className="flex-1 outline-none font-inter text-sm text-gray-500 placeholder:text-gray-400 px-4 py-3"
+          className="min-h-12 py-3 px-4 font-inter md:text-sm text-text-neutral-strong placeholder:text-neutral-weak"
         />
-        <AutogenerateTagsButton
-          title={title}
-          body={body}
-          onTagsGenerated={(newTags) => setTags((prev) => [...new Set([...prev, ...newTags])])}
-        />
-      </div>
+        <InputGroupAddon align="inline-end" className="pr-2">
+          <AutogenerateTagsButton
+            title={title}
+            body={body}
+            onTagsGenerated={(newTags) => setTags((prev) => [...new Set([...prev, ...newTags])])}
+          />
+        </InputGroupAddon>
+      </InputGroup>
     </div>
   );
 }

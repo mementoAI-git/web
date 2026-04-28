@@ -14,6 +14,11 @@ export default function useFileUpload() {
   );
 
   const handleUpload = async (file: IOnUploadPayload) => {
+    if (!file.file) {
+      toast.error("No file to upload");
+      return;
+    }
+
     setFiles((prev) => [...prev, file]);
 
     const payload = {
@@ -26,21 +31,25 @@ export default function useFileUpload() {
       ...(file.duration !== undefined && { duration: file.duration }),
     };
 
-    const result = await uploadFile(payload as Parameters<typeof uploadFile>[0]);
+    try {
+      const result = await uploadFile(payload as Parameters<typeof uploadFile>[0]);
 
-    const uploadedFile = Array.isArray(result?.data)
-      ? result?.data[0]
-      : result?.data;
+      const uploadedFile = Array.isArray(result?.data)
+        ? result?.data[0]
+        : result?.data;
 
-    if (!uploadedFile) {
-      toast.error("Upload unsuccessful");
+      if (!uploadedFile || result?.success === false) {
+        toast.error(typeof result?.message === "string" ? result.message : "Upload unsuccessful");
+        setFiles((prev) => prev.filter((f) => f.id !== file.id));
+      } else {
+        setFiles((prev) =>
+          prev.map((f) =>
+            f.id === file.id ? { ...f, uploadedFile, progress: 100 } : f,
+          ),
+        );
+      }
+    } catch {
       setFiles((prev) => prev.filter((f) => f.id !== file.id));
-    } else {
-      setFiles((prev) =>
-        prev.map((f) =>
-          f.id === file.id ? { ...f, uploadedFile, progress: 100 } : f,
-        ),
-      );
     }
   };
 

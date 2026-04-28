@@ -102,15 +102,22 @@ export const fileUploadFetcher = async (url: string, { arg }: { arg: Record<stri
 
   try {
     const res = await axios.post(url, formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
       onUploadProgress: (event) => {
         if (onProgress && event.total) {
           const percent = Math.round((event.loaded * 80) / event.total);
           onProgress(percent);
         }
       },
+      // Axios default transformRequest JSON-stringifies FormData when Content-Type is
+      // application/json (from the shared instance). Multer then sees no file parts.
+      transformRequest: [
+        (data, headers) => {
+          if (typeof FormData !== "undefined" && data instanceof FormData) {
+            headers.setContentType(undefined);
+          }
+          return data;
+        },
+      ],
     });
 
     if (res.status === 200 && onProgress) {
