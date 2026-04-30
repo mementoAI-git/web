@@ -195,6 +195,7 @@ export default function History({
                       role={m.role}
                       text={m.text ?? ""}
                       createdAt={m.created_at}
+                      modelLabel={(m as { ai_model?: string }).ai_model}
                       attatchments={attachments}
                       sendFailed={failed}
                       onRetry={failed ? onRetryFailedMessage : undefined}

@@ -224,5 +224,6 @@ export interface IMessage {
   user: string;
   text: string;
   role: string; // user, ai
+  ai_model?: string;
   created_at: string;
 }

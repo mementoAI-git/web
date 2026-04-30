@@ -168,8 +168,8 @@ export const fileUploadFetcher = async (url: string, { arg }: { arg: Record<stri
   }
 };
 
-export const streamlineFetcher = async (url: string, { arg }: { arg: Record<string, unknown> & { onChunk: (chunk: string) => void; signal?: AbortSignal } }) => {
-  const { onChunk, signal, ...payload } = arg;
+export const streamlineFetcher = async (url: string, { arg }: { arg: Record<string, unknown> & { onChunk: (chunk: string) => void; onMeta?: (meta: { model?: string }) => void; signal?: AbortSignal } }) => {
+  const { onChunk, onMeta, signal, ...payload } = arg;
   const storedAuth = localStorage.getItem(storageKeys.auth);
   const auth = storedAuth ? JSON.parse(storedAuth) : null;
 
@@ -186,6 +186,8 @@ export const streamlineFetcher = async (url: string, { arg }: { arg: Record<stri
   const reader = response.body?.getReader();
   const decoder = new TextDecoder("utf-8");
   let is_done = false;
+  const modelFromHeader = response.headers.get("x-ai-model") || undefined;
+  onMeta?.({ model: modelFromHeader });
 
   if (response.ok && reader) {
     while (!is_done) {
