@@ -41,7 +41,10 @@ jobs:
         run: pnpm lint
 
       - name: Run tests
-        run: pnpm test --run
+        timeout-minutes: 10
+        env:
+          CI: true
+        run: pnpm test --run --reporter=basic
 
   # ── 2. Build + Deploy (no artifacts) ──────────────────────
   deploy:
