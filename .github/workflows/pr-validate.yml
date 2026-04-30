@@ -1,4 +1,4 @@
-name: Frontend: PR Validate
+name: "Frontend: PR Validate"
 
 on:
   pull_request:
