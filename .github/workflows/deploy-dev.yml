@@ -41,7 +41,7 @@ jobs:
         run: pnpm lint
 
       - name: Run tests
-        run: pnpm test
+        run: pnpm test --run
 
   # ── 2. Build + Deploy (no artifacts) ──────────────────────
   deploy:
