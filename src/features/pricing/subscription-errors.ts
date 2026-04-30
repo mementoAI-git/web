@@ -27,12 +27,23 @@ export function normalizeGateFeature(feature: string): FeatureKey {
 export function parseSubscriptionGateFromBody(body: unknown): SubscriptionGatePayload | null {
   if (!body || typeof body !== "object") return null;
   const o = body as Record<string, unknown>;
-  const feature = o.feature;
+  const nested = o.data && typeof o.data === "object" ? (o.data as Record<string, unknown>) : null;
+  const feature = typeof o.feature === "string" ? o.feature : nested?.feature;
   if (typeof feature !== "string") return null;
   return {
     feature: normalizeGateFeature(feature),
-    requiredTier: typeof o.requiredTier === "string" ? o.requiredTier : undefined,
-    message: typeof o.message === "string" ? o.message : undefined,
+    requiredTier:
+      typeof o.requiredTier === "string"
+        ? o.requiredTier
+        : typeof nested?.requiredTier === "string"
+          ? nested.requiredTier
+          : undefined,
+    message:
+      typeof o.message === "string"
+        ? o.message
+        : typeof nested?.message === "string"
+          ? nested.message
+          : undefined,
   };
 }
 

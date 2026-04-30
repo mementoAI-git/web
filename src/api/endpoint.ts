@@ -112,4 +112,9 @@ export default {
 
   // sentry
   tunnel: `${import.meta.env.VITE_API_BASE_URL}/sentry_tunnel`,
+
+  // feature flags
+  featureFlags: "/feature-flags",
+  featureFlag: "/feature-flags/:key",
+  featureFlagEvaluate: "/feature-flags/evaluate/:key",
 };

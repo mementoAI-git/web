@@ -25,6 +25,20 @@ describe("subscription-errors", () => {
     expect(gate?.message).toBe("Limit reached");
   });
 
+  it("parses nested gate payload under data envelope", () => {
+    const gate = parseSubscriptionGateFromBody({
+      status: 402,
+      message: "Storage limit exceeded",
+      data: {
+        error: "subscription_required",
+        feature: "storage",
+        requiredTier: "pro",
+      },
+    });
+    expect(gate?.feature).toBe("storage");
+    expect(gate?.requiredTier).toBe("pro");
+  });
+
   it("normalizes unknown feature to storage bucket copy", () => {
     expect(normalizeGateFeature("unknown_feature")).toBe("storage");
   });

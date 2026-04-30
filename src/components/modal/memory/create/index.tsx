@@ -41,6 +41,7 @@ import { VideoRecorder } from "@/components/recorder/video";
 import type { ComponentRef, ReactNode } from "react";
 import { FileThumbnails } from "./file-thumbnails";
 import { UpgradePrompt } from "@/features/pricing/upgrade-prompt";
+import { useFeatureFlags } from "@/contexts/feature-flags";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -102,6 +103,7 @@ interface CreateMemoryProps {
 
 export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
   const { close, open, push, registerCloseGuard } = useModal();
+  const { canUse } = useFeatureFlags();
   const navigate = useNavigate();
   const [showUploadGate, setShowUploadGate] = useState(false);
   const fileInputMediaRef = useRef<HTMLInputElement>(null);
@@ -135,6 +137,9 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
   const { values, handleChange, handleSubmit, handleValue, setValues } = useForm({
     initial: { ...initial, ...data?.payload },
     async onSubmit(p) {
+      if (!canUse("memory.create")) {
+        return toast.error("Creating memories is currently disabled.");
+      }
       if (isEmpty(p.title)) return toast.error("Title is required");
       const bodyHtml = editor?.getHTML() || "";
       const hasContent = editor?.getText()?.trim() || files.length > 0;
@@ -175,11 +180,27 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
 
   const queueFileUpload = useCallback(
     (file: File) => {
+      if (!canUse("attachments.doc_upload")) {
+        toast.error("File uploads are currently disabled.");
+        return;
+      }
       const resolvedType = file.type || inferMimeType(file.name);
       if (!isSupportedFileMime(resolvedType, SUPPORTED_FILE_TYPES)) {
         toast.error(
           "This file type isn’t supported. Add images, video, audio, PDF, Word (.doc, .docx), or plain text.",
         );
+        return;
+      }
+      if (uploadMimeBaseType(resolvedType).startsWith("image/") && !canUse("attachments.image_upload")) {
+        toast.error("Image uploads are currently disabled.");
+        return;
+      }
+      if (uploadMimeBaseType(resolvedType).startsWith("video/") && !canUse("attachments.video_upload")) {
+        toast.error("Video uploads are currently disabled.");
+        return;
+      }
+      if (uploadMimeBaseType(resolvedType).startsWith("audio/") && !canUse("attachments.audio_upload")) {
+        toast.error("Audio uploads are currently disabled.");
         return;
       }
       const isImage = uploadMimeBaseType(resolvedType).startsWith("image/");
@@ -193,7 +214,7 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
         handleUpload({ id: uuidv4(), file, progress: 0 });
       }
     },
-    [handleUpload],
+    [canUse, handleUpload],
   );
 
   const queueFileUploadRef = useRef(queueFileUpload);
