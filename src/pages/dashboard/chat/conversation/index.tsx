@@ -505,47 +505,61 @@ export default function Conversation({ id, type = "memory" }) {
   const isTyping = isSending || startingConversation;
 
   return (
-    <div className="flex flex-1 min-h-0 min-w-0 overflow-hidden items-stretch h-full">
+    <div className="flex h-full min-h-0 min-w-0 flex-1 items-stretch overflow-hidden">
       <div className="flex min-h-0 min-w-0 flex-1 justify-center overflow-hidden">
         <div
-          className="hide-scrollbar flex h-full min-h-0 w-full min-w-0 max-w-[800px] flex-col overflow-y-auto"
+          className="hide-scrollbar mx-auto flex h-full min-h-0 w-full min-w-0 max-w-[800px] flex-col overflow-y-auto overscroll-y-contain px-3 sm:px-4 md:px-5"
           ref={scrollContainerRef}
           onScroll={handleScroll}
         >
           {isHostChat ? (
             <div
               className={cn(
-                "sticky top-0 z-[5] flex w-full min-w-0 flex-nowrap items-center gap-2 overflow-x-auto border-b border-v3-stroke-weak/50 bg-white/95 py-2 backdrop-blur-md",
-                "sm:px-2 md:px-3",
+                "sticky top-0 z-[5] flex w-full min-w-0 flex-col gap-2 border-b border-v3-stroke-weak/50 bg-white/95 py-2 backdrop-blur-md",
+                "sm:flex-row sm:flex-nowrap sm:items-center sm:gap-2 sm:overflow-x-auto",
                 "[scrollbar-width:thin] [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:h-1.5",
               )}
               role="toolbar"
               aria-label="Host chat tools"
             >
-              <HostChatJumpPills
-                monthKeys={jumpMonthKeys}
-                onJump={jumpToMonth}
-                categoryPills={enrichmentStats?.jump_pills}
-                onCategoryPill={(starter) => handleSend({ text: starter, attachments: [] })}
-              />
-              {chatMode === "deep_dive" && deepDiveDimension ? (
-                <DeepDiveBanner
-                  dimensionLabel={dimensionLabel(deepDiveDimension)}
-                  onExit={handleExitDeepDive}
+              <div
+                className={cn(
+                  "min-w-0 overflow-x-auto [-webkit-overflow-scrolling:touch] [scrollbar-width:thin]",
+                  "empty:hidden sm:w-auto sm:shrink-0 sm:overflow-visible",
+                )}
+              >
+                <HostChatJumpPills
+                  monthKeys={jumpMonthKeys}
+                  onJump={jumpToMonth}
+                  categoryPills={enrichmentStats?.jump_pills}
+                  onCategoryPill={(starter) => handleSend({ text: starter, attachments: [] })}
                 />
-              ) : null}
-              <MilestoneCard
-                enrichmentDelta={sessionEnrichmentDelta}
-                milestoneLabel={milestoneJustReached ? enrichmentStats?.milestone?.reached_label : null}
-              />
-              {showDeepDiveNudge ? (
-                <DeepDiveNudge
-                  dimension={activeDimension}
-                  question={nudgeQuestion}
-                  onDeepDive={handleStartDeepDiveFromNudge}
-                  onDismiss={handleDismissNudge}
+              </div>
+              <div
+                className={cn(
+                  "flex min-w-0 flex-wrap content-start items-center gap-2",
+                  "sm:flex-nowrap sm:overflow-x-auto sm:pb-0",
+                )}
+              >
+                {chatMode === "deep_dive" && deepDiveDimension ? (
+                  <DeepDiveBanner
+                    dimensionLabel={dimensionLabel(deepDiveDimension)}
+                    onExit={handleExitDeepDive}
+                  />
+                ) : null}
+                <MilestoneCard
+                  enrichmentDelta={sessionEnrichmentDelta}
+                  milestoneLabel={milestoneJustReached ? enrichmentStats?.milestone?.reached_label : null}
                 />
-              ) : null}
+                {showDeepDiveNudge ? (
+                  <DeepDiveNudge
+                    dimension={activeDimension}
+                    question={nudgeQuestion}
+                    onDeepDive={handleStartDeepDiveFromNudge}
+                    onDismiss={handleDismissNudge}
+                  />
+                ) : null}
+              </div>
             </div>
           ) : null}
           <History
@@ -586,7 +600,7 @@ export default function Conversation({ id, type = "memory" }) {
                 />
             }
           </History>
-          <div className="sticky bottom-0 bg-white px-0 pb-2 sm:px-2 md:px-3">
+          <div className="sticky bottom-0 z-[4] bg-white pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-1">
             <div className="w-full">
               <ConversationChatinput
                 key={`chat-draft-${memory?._id ?? id}`}

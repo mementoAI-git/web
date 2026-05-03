@@ -36,6 +36,8 @@ export const SUPPORTED_FILE_TYPES = [
   "image/jpeg",
   "image/jpg",
   "image/heic",
+  "image/webp",
+  "image/gif",
   "application/pdf",
   "application/msword",
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -74,6 +76,22 @@ export const SUPPORTED_FILE_TYPES = [
 /** `accept` string for memory attachments (MIME list + extensions for OS file pickers). */
 export const MEMORY_ATTACHMENT_ACCEPT = [...SUPPORTED_FILE_TYPES, ".doc", ".docx", ".txt"].join(",");
 
+/** Image-only picker (photos). */
+export const MEMORY_ACCEPT_IMAGES =
+  "image/png,image/jpeg,image/jpg,image/heic,image/webp,image/gif,.jpg,.jpeg,.png,.heic,.webp,.gif";
+
+/** Video picker — matches supported story video types. */
+export const MEMORY_ACCEPT_VIDEOS =
+  "video/mp4,video/webm,video/quicktime,video/x-msvideo,.mp4,.webm,.mov,.avi";
+
+/** Audio & music picker. */
+export const MEMORY_ACCEPT_AUDIO =
+  "audio/mpeg,audio/mp3,audio/mp4,audio/m4a,audio/aac,audio/wav,audio/x-wav,audio/ogg,audio/webm,audio/flac,audio/opus,audio/aiff,audio/x-aiff,.mp3,.m4a,.wav,.flac,.aac,.ogg,.opus,.aiff,.aif,.webm";
+
+/** Documents & text files. */
+export const MEMORY_ACCEPT_DOCUMENTS =
+  "application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,.pdf,.doc,.docx,.txt";
+
 export const CAPSULE_SUPPORTED_FILE_TYPES = [
   "image/jpeg",
   "image/jpg",
@@ -101,7 +119,13 @@ export const EXTENSION_TO_MIME: Record<string, string> = {
   ".jpg": "image/jpeg",
   ".jpeg": "image/jpeg",
   ".png": "image/png",
+  ".webp": "image/webp",
+  ".gif": "image/gif",
+  ".heic": "image/heic",
   ".mp4": "video/mp4",
+  ".webm": "video/webm",
+  ".mov": "video/quicktime",
+  ".avi": "video/x-msvideo",
   ".mp3": "audio/mpeg",
   ".mpeg": "audio/mpeg",
   ".pdf": "application/pdf",

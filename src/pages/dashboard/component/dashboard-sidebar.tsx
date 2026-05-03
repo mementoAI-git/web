@@ -1,4 +1,5 @@
 import { useLocation } from "react-router-dom";
+import { PanelLeftClose } from "lucide-react";
 import { topNavigations, bottomNavigations } from "./navigation";
 import SideBarItem from "./sidebar-item";
 import { ProfileDropdown } from "./profile-dropdown";
@@ -6,12 +7,18 @@ import { SidebarUpgradeCard } from "./sidebar-upgrade-card";
 import { useModal } from "@/hooks/use-modal";
 import { useStore } from "@/hooks/use-store";
 import { isFeatureFlagAdminUser } from "@/contexts/feature-flags";
+import { cn } from "@/utility";
 
 interface DashboardSideBarProps {
   onClose?: () => void;
+  /** Collapse the desktop rail or close the mobile drawer */
+  onCollapse?: () => void;
 }
 
-export function DashboardSideBar({ onClose }: DashboardSideBarProps) {
+const sidebarChromeBtn =
+  "flex size-10 shrink-0 cursor-pointer items-center justify-center rounded-xl border border-black/10 bg-white text-text-neutral-strong transition-colors hover:bg-fill-neutral-weaker focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-v3-brand-strong focus-visible:ring-offset-2";
+
+export function DashboardSideBar({ onClose, onCollapse }: DashboardSideBarProps) {
   const location = useLocation();
   const { open } = useModal();
   const { user } = useStore();
@@ -21,8 +28,20 @@ export function DashboardSideBar({ onClose }: DashboardSideBarProps) {
 
   return (
     <div className="dynamic-height w-full min-h-screen overflow-x-hidden bg-white border-r border-black/5 flex flex-col">
-      <div className="p-4">
-        <ProfileDropdown />
+      <div className="flex items-center gap-2 p-4">
+        <div className="min-w-0 flex-1">
+          <ProfileDropdown />
+        </div>
+        {onCollapse ? (
+          <button
+            type="button"
+            onClick={onCollapse}
+            className={cn(sidebarChromeBtn)}
+            aria-label="Collapse sidebar"
+          >
+            <PanelLeftClose className="size-5" strokeWidth={1.75} aria-hidden />
+          </button>
+        ) : null}
       </div>
 
       <div className="flex-1 overflow-y-auto hide-scrollbar py-4 px-4 flex flex-col gap-1">
@@ -61,7 +80,7 @@ export function DashboardSideBar({ onClose }: DashboardSideBarProps) {
         ) : null}
         <SideBarItem
           emoji="📝"
-          title="Drop a feedback"
+          title="Drop feedback"
           onClick={() => {
             open("create-feedback");
             onClose?.();

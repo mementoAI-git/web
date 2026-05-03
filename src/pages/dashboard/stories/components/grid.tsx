@@ -8,6 +8,7 @@ import { Link } from "react-router-dom";
 import { useCallback, useEffect, useState } from "react";
 import { useModal } from "@/hooks/use-modal";
 import { cn } from "@/lib/utils";
+import { QuickCaptureProcessingBadge } from "@/components/memory/quick-capture-processing-badge";
 
 import { PlaySolidIcon, WaveIcon } from "@/components/icons";
 import recordBanner from "@/assets/icon/record-banner.png";
@@ -22,6 +23,13 @@ const MEDIA_ASPECTS = [
 ] as const;
 
 const TEXT_MIN_HEIGHTS = ["min-h-[200px]", "min-h-[260px]", "min-h-[228px]", "min-h-[244px]"] as const;
+
+function getStoryCardTitle(memory: IMemory): string {
+  if (memory.prompt_type && memory.prompt_text?.trim()) {
+    return memory.prompt_text.trim();
+  }
+  return memory.title;
+}
 
 function StoriesGridItem({
   memory,
@@ -54,6 +62,7 @@ function StoriesGridItem({
   const audioMedia = memory.attachments.find((a) => a.type.includes("audio"));
   const aspectClass = MEDIA_ASPECTS[index % MEDIA_ASPECTS.length];
   const textMinH = TEXT_MIN_HEIGHTS[index % TEXT_MIN_HEIGHTS.length];
+  const storyTitle = getStoryCardTitle(memory);
 
   const renderContent = () => {
     if (bannerMedia) {
@@ -65,10 +74,11 @@ function StoriesGridItem({
             aspectClass,
           )}
         >
+          <QuickCaptureProcessingBadge memory={memory} variant="overlay" />
           <img
             src={bannerMedia.url}
             className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover/card:scale-[1.03]"
-            alt={memory.title}
+            alt={storyTitle}
             loading="lazy"
           />
           {isVideo ? (
@@ -90,6 +100,7 @@ function StoriesGridItem({
             aspectClass,
           )}
         >
+          <QuickCaptureProcessingBadge memory={memory} variant="overlay" />
           <img
             src={recordBanner}
             className="absolute inset-0 h-full w-full object-cover opacity-90 transition-transform duration-500 ease-out group-hover/card:scale-[1.03]"
@@ -115,9 +126,12 @@ function StoriesGridItem({
           textMinH,
         )}
       >
-        <h4 className="line-clamp-2 font-inter text-base font-semibold leading-snug text-v3-text-strong">
-          {memory.title}
-        </h4>
+        <div className="flex flex-wrap items-center gap-2">
+          <h4 className="line-clamp-2 font-inter text-base font-semibold leading-snug text-v3-text-strong">
+            {storyTitle}
+          </h4>
+          <QuickCaptureProcessingBadge memory={memory} variant="inline" />
+        </div>
         <div
           className="line-clamp-[8] font-inter text-sm leading-relaxed text-v3-text-weak [&_a]:underline"
           dangerouslySetInnerHTML={{
@@ -140,7 +154,7 @@ function StoriesGridItem({
         to={`/stories/${memory._id}`}
         className="block rounded-2xl outline-none"
         onClick={handleClick}
-        aria-label={`Open story: ${memory.title}`}
+        aria-label={`Open story: ${storyTitle}`}
       >
         <div className="relative overflow-hidden rounded-2xl">
           {renderContent()}
@@ -167,7 +181,7 @@ function StoriesGridItem({
       </div>
 
       <p className="mt-2 line-clamp-2 px-0.5 text-center font-inter text-xs font-medium leading-snug text-v3-text-strong sm:text-[13px]">
-        {memory.title}
+        {storyTitle}
       </p>
     </article>
   );

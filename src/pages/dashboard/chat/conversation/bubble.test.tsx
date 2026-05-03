@@ -39,10 +39,10 @@ describe("Bubble", () => {
     expect(compact?.className).not.toMatch(/md:text-xl/);
   });
 
-  it("caps user message body width at 470px", () => {
+  it("caps user message body width at min(470px, 85%)", () => {
     render(<Bubble role="user" text="User said this" />);
     const body = screen.getByText("User said this").closest("div.rounded-\\[8px\\]");
-    expect(body?.className).toContain("max-w-[470px]");
+    expect(body?.className).toContain("max-w-[min(470px,85%)]");
   });
 
   it("uses 8px padding and radius on message bodies", () => {
@@ -52,10 +52,11 @@ describe("Bubble", () => {
     expect(body?.className).toMatch(/\bp-2\b/);
   });
 
-  it("adds horizontal gutter on the bubble column", () => {
+  it("uses horizontal gutter on sm+ for the bubble column", () => {
     const { container } = render(<Bubble role="ai" text="Assistant reply" />);
     const column = container.firstChild as HTMLElement;
-    expect(column.className).toMatch(/\bpx-2\b/);
+    expect(column.className).toMatch(/\bpx-0\b/);
+    expect(column.className).toMatch(/\bsm:px-1\b/);
   });
 
   it("renders created_at as a local time label", () => {

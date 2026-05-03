@@ -436,12 +436,12 @@ function ChatinputImpl({
 
   return (
     <div className={cn(wrapperClassName)} data-testid={shellTestId}>
-      <div className="w-full min-w-0 rounded-[30px] bg-fill-neutral-weaker/70 p-[6px]">
+      <div className="w-full min-w-0 rounded-[22px] bg-fill-neutral-weaker/70 p-1 sm:rounded-[26px] sm:p-[5px] md:rounded-[30px] md:p-[6px]">
         <div
           ref={inputWrapperRef}
           className={
             cn(
-              "flex min-h-[120px] w-full min-w-0 flex-col gap-3 rounded-3xl border border-stroke-neutral-weak px-4 py-3 shadow-[0px_4px_8px_0px_var(--brown-300-16)] focus-within:border-stroke-brand-strong bg-fill-neutral-weak md:gap-4 md:p-6",
+              "flex min-h-[92px] w-full min-w-0 flex-col gap-2 rounded-3xl border border-stroke-neutral-weak px-3 py-2.5 shadow-[0px_4px_8px_0px_var(--brown-300-16)] focus-within:border-stroke-brand-strong bg-fill-neutral-weak sm:min-h-[108px] sm:gap-3 sm:px-4 sm:py-3 md:min-h-[120px] md:gap-4 md:p-6",
               className
             )
           }

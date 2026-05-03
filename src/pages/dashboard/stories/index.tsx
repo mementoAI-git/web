@@ -1,6 +1,6 @@
 import endpoint from "@/api/endpoint";
 import { useModal } from "@/hooks/use-modal";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import useSWR from "swr";
 import { StatCard } from "../component/stat-card";
 import { DoubleHeartIcon, PlusIcon } from "@/components/icons";
@@ -73,9 +73,15 @@ export default function StoriesPage() {
   if (filter === "bookmarked") filterQuery = "&bookmarked=true";
   if (filter === "deleted") filterQuery = "&deleted=true";
 
-  const { data, isLoading } = useSWR(
-    `${endpoint.stories}?page=${page}${filterQuery}`,
+  const { data: userStatsData } = useSWR(endpoint.userStats);
+  const hasQuickPending = useMemo(
+    () => Number(userStatsData?.data?.quick_capture_pending_count) > 0,
+    [userStatsData?.data?.quick_capture_pending_count],
   );
+
+  const { data, isLoading } = useSWR(`${endpoint.stories}?page=${page}${filterQuery}`, {
+    refreshInterval: hasQuickPending ? 4000 : 0,
+  });
   const { data: stats } = useSWR(endpoint.memoriesStats);
 
   return (
@@ -99,6 +105,13 @@ export default function StoriesPage() {
                 className="h-9 sm:h-12 px-3 sm:px-5 rounded-full font-inter font-semibold text-xs sm:text-sm text-v3-text-strong border-v3-stroke-weak bg-v3-fill-weaker hover:bg-v3-fill-weak"
               >
                 View insights
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => open("quick-capture")}
+                className="h-9 sm:h-12 px-3 sm:px-5 rounded-full font-inter font-semibold text-xs sm:text-sm text-v3-text-strong border-v3-stroke-weak bg-v3-fill-weaker hover:bg-v3-fill-weak"
+              >
+                Quick add
               </Button>
               <Button
                 onClick={() => open("create-memory")}
@@ -148,6 +161,8 @@ export default function StoriesPage() {
             filter={filter}
             onChangeFilter={setFilter}
             count={stats?.data?.stories_count || 0}
+            bookmarkedCount={stats?.data?.stories_bookmarked_count || 0}
+            deletedCount={stats?.data?.stories_deleted_count || 0}
           />
           {mode === "grid" ? (
             <StoriesGrid data={data?.data} />

@@ -28,23 +28,23 @@ export function DeepDiveNudge({
   return (
     <div
       className={cn(
-        "flex max-w-[min(92vw,420px)] shrink-0 items-center gap-2 rounded-full border border-v3-stroke-weak bg-white px-2 py-1 shadow-sm ring-1 ring-v3-stroke-weak/80",
+        "flex w-full max-w-full shrink-0 flex-wrap items-center gap-x-2 gap-y-1.5 rounded-2xl border border-v3-stroke-weak bg-white px-2 py-1.5 shadow-sm ring-1 ring-v3-stroke-weak/80 sm:w-auto sm:max-w-[min(92vw,420px)] sm:flex-nowrap sm:rounded-full sm:py-1",
         className,
       )}
     >
       <Badge
         variant="outline"
-        className="h-6 shrink-0 border-v3-stroke-weak bg-v3-fill-weaker px-2 text-[10px] font-semibold text-v3-text-strong"
+        className="h-6 shrink-0 border-v3-stroke-weak bg-v3-fill-weaker px-1.5 text-[10px] font-semibold text-v3-text-strong sm:px-2"
       >
         Go deeper
       </Badge>
       <p
-        className="min-w-0 flex-1 truncate text-[11px] leading-tight text-v3-text-weak sm:text-xs"
+        className="min-w-0 flex-1 text-[11px] leading-snug text-v3-text-weak sm:truncate sm:text-xs"
         title={hint}
       >
         {question ?? `Try a focused chat on ${label}.`}
       </p>
-      <div className="flex shrink-0 items-center gap-1">
+      <div className="flex w-full shrink-0 items-center justify-end gap-1 sm:w-auto sm:justify-start">
         <Button
           type="button"
           size="xs"

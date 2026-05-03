@@ -1,15 +1,19 @@
 import { useState, useMemo } from "react";
 import useSWR from "swr";
+import { Heart, ListChecks, Sparkles, Target, UserRound } from "lucide-react";
 import { useModal } from "@/hooks/use-modal";
 import { useStore } from "@/hooks/use-store";
 import { useApi } from "@/hooks/use-api";
 import { TimesIcon, PlusIcon } from "@/components/icons";
 import endpoint from "@/api/endpoint";
-import { cn } from "@/utility";
 import type { IBeneficiary, IPersona, IUser } from "@/utility/interface";
-import { formatEnrichmentPriorityForDisplay } from "@/features/enrichment/enrichment-categories";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-/** Fields used to build summary and category lists (persona + legacy context) */
+/** Fields for category lists (persona + legacy context) */
 type MemoryInsightSource = {
   important_notes?: string[];
   key_preferences?: string[];
@@ -18,8 +22,13 @@ type MemoryInsightSource = {
   goals_and_aspirations?: string[];
   self_description?: string;
   join_reasons?: string[];
-  /** Persona API: string[]; legacy /users/context: string */
   current_priority?: string | string[];
+};
+
+type MemoryInsightsSummaryDto = {
+  summary: string | null;
+  generated_at: string | null;
+  cached: boolean;
 };
 
 function personaToInsightSource(persona: IPersona): MemoryInsightSource {
@@ -52,40 +61,33 @@ function userContextToInsightSource(
   };
 }
 
-function buildSummaryFromContext(ctx: MemoryInsightSource | undefined): string | null {
-  if (!ctx) return null;
-  const parts: string[] = [];
-  if (ctx.conversation_history_summary?.trim()) {
-    parts.push(ctx.conversation_history_summary.trim());
-  }
-  if (ctx.self_description?.trim()) {
-    parts.push(ctx.self_description.trim());
-  }
-  if (ctx.current_priority) {
-    const cpPretty = formatEnrichmentPriorityForDisplay(ctx.current_priority);
-    if (cpPretty.trim()) {
-      parts.push(`Currently focused on: ${cpPretty.trim()}`);
-    }
-  }
-  const bullets: string[] = [];
-  if (ctx.important_notes?.length) bullets.push(...ctx.important_notes);
-  if (ctx.key_preferences?.length) bullets.push(...ctx.key_preferences);
-  if (ctx.goals_and_aspirations?.length) bullets.push(...ctx.goals_and_aspirations);
-  if (ctx.emotional_state_trends?.length) bullets.push(...ctx.emotional_state_trends);
-  if (bullets.length) {
-    parts.push(bullets.map((b) => `• ${b}`).join("\n"));
-  }
-  return parts.length ? parts.join("\n\n") : null;
+function formatSummaryGeneratedAt(iso: string | null | undefined): string | null {
+  if (!iso) return null;
+  const t = Date.parse(iso);
+  if (Number.isNaN(t)) return null;
+  return new Date(t).toLocaleString(undefined, {
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
 }
 
+const SUMMARY_TAB_KEY = "summary";
+
 const CATEGORIES = [
-  { label: "Summary", key: "summary" },
+  { label: "Summary", key: SUMMARY_TAB_KEY },
   { label: "All", key: "all" },
-  { label: "Key Preferences", key: "key_preferences" },
-  { label: "Important Notes", key: "important_notes" },
-  { label: "Goals & Aspirations", key: "goals_and_aspirations" },
-  { label: "Emotional Trends", key: "emotional_state_trends" },
+  { label: "Preferences", key: "key_preferences" },
+  { label: "Notes", key: "important_notes" },
+  { label: "Goals", key: "goals_and_aspirations" },
+  { label: "Emotions", key: "emotional_state_trends" },
 ];
+
+const INSIGHT_ICONS: Record<string, typeof Target> = {
+  important_notes: ListChecks,
+  key_preferences: UserRound,
+  goals_and_aspirations: Target,
+  emotional_state_trends: Heart,
+};
 
 function getInitials(name: string) {
   return (name || "")
@@ -99,11 +101,14 @@ function getInitials(name: string) {
 export default function MemoryInsightsModal() {
   const { close, open } = useModal();
   const { user } = useStore();
-  const [activeCategory, setActiveCategory] = useState("summary");
+  const [activeCategory, setActiveCategory] = useState(SUMMARY_TAB_KEY);
 
-  const { data: personaRes, isLoading: personaLoading } = useApi<IPersona | null>(
-    endpoint.persona
-  );
+  const { data: personaRes } = useApi<IPersona | null>(endpoint.persona);
+  const {
+    data: summaryRes,
+    isLoading: summaryLoading,
+    error: summaryError,
+  } = useApi<MemoryInsightsSummaryDto>(endpoint.personaMemoryInsightsSummary);
   const { data: beneficiariesData } = useSWR(`${endpoint.beneficiaries}?page=1`);
   const { data: contextData } = useSWR(endpoint.userContext);
 
@@ -117,7 +122,8 @@ export default function MemoryInsightsModal() {
   }, [personaRes?.data, contextData?.data, user?.context]);
 
   const beneficiaries: IBeneficiary[] = beneficiariesData?.data?.docs || [];
-  const summary = buildSummaryFromContext(insightSource);
+  const aiSummary = summaryRes?.data?.summary?.trim() ?? null;
+  const summaryUpdatedLabel = formatSummaryGeneratedAt(summaryRes?.data?.generated_at);
 
   const allInsights = [
     ...(insightSource.important_notes || []).map((text: string) => ({
@@ -141,153 +147,176 @@ export default function MemoryInsightsModal() {
   const filtered =
     activeCategory === "all"
       ? allInsights
-      : activeCategory === "summary"
+      : activeCategory === SUMMARY_TAB_KEY
         ? []
         : allInsights.filter((i) => i.category === activeCategory);
 
   return (
     <div className="bg-white rounded-[24px] w-full max-w-3xl max-h-[88vh] flex flex-col overflow-hidden shadow-xl">
-      {/* Header */}
       <div className="flex items-center justify-between px-6 py-5 border-b border-v3-stroke-weak">
         <h2 className="font-garamond text-2xl font-medium text-v3-text-strong">Memory Insights</h2>
-        <button
+        <Button
           onClick={() => close()}
-          className="flex items-center justify-center size-8 rounded-full bg-v3-fill-weak hover:opacity-80 transition-colors shrink-0"
+          variant="ghost"
+          size="icon-xs"
+          className="size-8 rounded-full bg-v3-fill-weak text-v3-icon-neutral hover:bg-v3-fill-weak/80"
         >
           <TimesIcon width={10} height={10} className="text-v3-icon-neutral" />
-        </button>
+        </Button>
       </div>
 
-      <div className="flex flex-1 min-h-0">
-        {/* Sidebar */}
-        <div className="w-52 shrink-0 border-r border-v3-stroke-weak py-4 px-3 overflow-y-auto bg-v3-fill-weaker">
-          {CATEGORIES.map((cat) => (
-            <button
-              key={cat.key}
-              onClick={() => setActiveCategory(cat.key)}
-              className={cn(
-                "w-full text-left px-3 py-2.5 rounded-xl font-inter text-sm font-medium transition-all mb-1",
-                activeCategory === cat.key
-                  ? "bg-v3-fill-weak text-v3-text-strong"
-                  : "text-v3-text-weak hover:bg-v3-fill-weak hover:text-v3-text-strong"
-              )}
-            >
-              {cat.label}
-            </button>
-          ))}
-        </div>
+      <div className="flex-1 min-h-0 overflow-y-auto hide-scrollbar p-5 space-y-6">
+        <div>
+          <p className="font-inter text-[11px] font-semibold uppercase tracking-widest text-v3-text-weak mb-4">
+            Beneficiaries
+          </p>
+          {beneficiaries.length === 0 ? (
+            <div className="flex items-center gap-4">
+              <Button
+                onClick={() => open("add-beneficiary")}
+                variant="outline"
+                size="icon"
+                className="size-12 shrink-0 rounded-full border-2 border-dashed border-gray-300 hover:border-v3-brand-strong hover:bg-v3-brand-strong/10"
+              >
+                <PlusIcon className="size-4 text-v3-icon-neutral" />
+              </Button>
+              <div>
+                <p className="font-inter text-sm font-medium text-v3-text-strong">No beneficiaries yet</p>
+                <p className="font-inter text-xs text-v3-text-weak mt-0.5">Add people who can access your Memento.</p>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-start gap-4 flex-wrap">
+              {beneficiaries.slice(0, 5).map((b) => (
+                <div key={b._id} className="flex flex-col items-center gap-1.5 w-14">
+                  <Avatar className="size-12 bg-v3-fill-weak" size="lg">
+                    {b.user?.picture_url ? (
+                      <AvatarImage src={b.user.picture_url} alt={b.name} />
+                    ) : (
+                      <AvatarFallback className="font-inter text-sm font-semibold text-v3-text-strong bg-v3-fill-weak text-v3-text-strong">
+                        {getInitials(b.name)}
+                      </AvatarFallback>
+                    )}
+                  </Avatar>
+                  <span className="font-inter text-xs font-medium text-v3-text-strong text-center leading-tight truncate w-full text-center">
+                    {b.name?.split(" ")[0]}
+                  </span>
+                  <span className="font-inter text-[10px] text-v3-text-weak text-center capitalize leading-tight">
+                    {b.relationship}
+                  </span>
+                </div>
+              ))}
 
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto hide-scrollbar p-5 space-y-6">
-
-          {/* Beneficiaries */}
-          <div>
-            <p className="font-inter text-[11px] font-semibold uppercase tracking-widest text-v3-text-weak mb-4">
-              Beneficiaries
-            </p>
-            {beneficiaries.length === 0 ? (
-              <div className="flex items-center gap-4">
-                <button
+              <div className="flex flex-col items-center gap-1.5 w-14">
+                <Button
                   onClick={() => open("add-beneficiary")}
-                  className="size-12 shrink-0 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center transition-colors hover:border-v3-brand-strong hover:bg-v3-brand-strong/10"
+                  variant="outline"
+                  size="icon"
+                  className="size-12 rounded-full border-2 border-dashed border-gray-300 transition-colors hover:border-v3-brand-strong hover:bg-v3-brand-strong/10"
                 >
                   <PlusIcon className="size-4 text-v3-icon-neutral" />
-                </button>
-                <div>
-                  <p className="font-inter text-sm font-medium text-v3-text-strong">No beneficiaries yet</p>
-                  <p className="font-inter text-xs text-v3-text-weak mt-0.5">Add people who can access your Memento.</p>
-                </div>
+                </Button>
+                <span className="font-inter text-xs text-v3-text-weak text-center">Add</span>
               </div>
-            ) : (
-              <div className="flex items-start gap-4 flex-wrap">
-                {beneficiaries.slice(0, 5).map((b) => (
-                  <div key={b._id} className="flex flex-col items-center gap-1.5 w-14">
-                    <div className="size-12 rounded-full overflow-hidden bg-v3-fill-weak flex items-center justify-center shrink-0">
-                      {b.user?.picture_url ? (
-                        <img
-                          src={b.user.picture_url}
-                          alt={b.name}
-                          className="size-full object-cover"
-                        />
-                      ) : (
-                        <span className="font-inter text-sm font-semibold text-v3-text-strong">
-                          {getInitials(b.name)}
-                        </span>
-                      )}
-                    </div>
-                    <span className="font-inter text-xs font-medium text-v3-text-strong text-center leading-tight truncate w-full text-center">
-                      {b.name?.split(" ")[0]}
-                    </span>
-                    <span className="font-inter text-[10px] text-v3-text-weak text-center capitalize leading-tight">
-                      {b.relationship}
-                    </span>
-                  </div>
-                ))}
+            </div>
+          )}
+        </div>
 
-                {/* Add beneficiary */}
-                <div className="flex flex-col items-center gap-1.5 w-14">
-                  <button
-                    onClick={() => open("add-beneficiary")}
-                    className="flex size-12 items-center justify-center rounded-full border-2 border-dashed border-gray-300 transition-colors hover:border-v3-brand-strong hover:bg-v3-brand-strong/10"
-                  >
-                    <PlusIcon className="size-4 text-v3-icon-neutral" />
-                  </button>
-                  <span className="font-inter text-xs text-v3-text-weak text-center">Add</span>
-                </div>
-              </div>
-            )}
+        <Separator className="bg-v3-stroke-weak" />
+
+        <Tabs value={activeCategory} onValueChange={setActiveCategory} className="w-full">
+          <div className="relative">
+            <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-4 bg-gradient-to-r from-white to-transparent" />
+            <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-4 bg-gradient-to-l from-white to-transparent" />
+            <TabsList className="h-auto w-full justify-start gap-1.5 overflow-x-auto rounded-xl bg-v3-fill-weaker p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {CATEGORIES.map((cat) => (
+                <TabsTrigger
+                  key={cat.key}
+                  value={cat.key}
+                  className="shrink-0 whitespace-nowrap rounded-lg px-3 py-1.5 font-inter text-xs font-medium text-v3-text-weak data-[state=active]:bg-white data-[state=active]:text-v3-text-strong data-[state=active]:shadow-sm"
+                >
+                  {cat.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
           </div>
+        </Tabs>
 
-          {/* Divider */}
-          <div className="border-t border-v3-stroke-weak" />
-
-          {/* Insights list / Summary */}
-          <div>
-            <p className="font-inter text-[11px] font-semibold uppercase tracking-widest text-v3-text-weak mb-4">
-              {CATEGORIES.find((c) => c.key === activeCategory)?.label}
-            </p>
-
-            {personaLoading && activeCategory === "summary" && !summary ? (
-              <p className="font-inter text-sm text-v3-text-weak">Loading your persona…</p>
-            ) : activeCategory === "summary" ? (
-              summary ? (
-                <p className="font-inter text-sm text-v3-text-strong whitespace-pre-wrap leading-relaxed">
-                  {summary}
+        <div>
+          {activeCategory === SUMMARY_TAB_KEY ? (
+            <div className="mt-1">
+              {summaryLoading && !aiSummary ? (
+                <p className="font-inter text-sm text-v3-text-weak">Crafting your summary…</p>
+              ) : summaryError ? (
+                <p className="font-inter text-sm text-v3-text-weak">
+                  We couldn&apos;t generate your summary right now. Try again in a moment.
                 </p>
+              ) : aiSummary ? (
+                <Card className="rounded-xl border-v3-stroke-weak bg-v3-fill-weak px-4 py-3">
+                  <div className="font-inter text-sm text-v3-text-strong leading-relaxed space-y-3">
+                    {aiSummary.split("\n\n").map((block, i) => (
+                      <p key={i} className="m-0">
+                        {block}
+                      </p>
+                    ))}
+                  </div>
+                  {summaryUpdatedLabel ? (
+                    <p className="mt-2.5 font-inter text-xs text-v3-text-weak">
+                      Last updated {summaryUpdatedLabel}
+                    </p>
+                  ) : null}
+                </Card>
               ) : (
-                <div className="flex flex-col items-center justify-center py-16 text-center">
+                <div className="flex flex-col items-center justify-center rounded-xl border border-v3-stroke-weak bg-v3-fill-weak/40 py-12 text-center px-4">
                   <div className="size-12 rounded-full bg-v3-fill-weak flex items-center justify-center mb-3">
-                    <span className="text-xl">📝</span>
+                    <Sparkles className="size-5 text-v3-icon-neutral" />
                   </div>
                   <p className="font-inter text-sm font-medium text-v3-text-strong">Your summary is being built</p>
                   <p className="font-inter text-xs text-v3-text-weak mt-1 max-w-[220px]">
-                    Add memories and chat to build your personal summary over time.
+                    Add memories and chat so we can reflect who you are in your own words.
                   </p>
                 </div>
-              )
-            ) : filtered.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-16 text-center">
-                <div className="size-12 rounded-full bg-v3-fill-weak flex items-center justify-center mb-3">
-                  <span className="text-xl">🧠</span>
-                </div>
-                <p className="font-inter text-sm font-medium text-v3-text-strong">No insights yet</p>
-                <p className="font-inter text-xs text-v3-text-weak mt-1 max-w-[220px]">
-                  Keep using Memento — your AI will learn more about you over time.
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {filtered.map((insight, i) => (
-                  <div
-                    key={i}
-                    className="rounded-[12px] border border-v3-stroke-weak bg-v3-fill-weak px-4 py-3 font-inter text-sm text-v3-text-strong leading-relaxed hover:border-v3-stroke-strong transition-colors"
-                  >
-                    {insight.text}
+              )}
+            </div>
+          ) : (
+            <>
+              <p className="font-inter text-[11px] font-semibold uppercase tracking-widest text-v3-text-weak mb-4">
+                {CATEGORIES.find((c) => c.key === activeCategory)?.label}
+              </p>
+
+              {filtered.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16 text-center">
+                  <div className="size-12 rounded-full bg-v3-fill-weak flex items-center justify-center mb-3">
+                    <Sparkles className="size-5 text-v3-icon-neutral" />
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
+                  <p className="font-inter text-sm font-medium text-v3-text-strong">No insights yet</p>
+                  <p className="font-inter text-xs text-v3-text-weak mt-1 max-w-[220px]">
+                    Keep using Memento — your AI will learn more about you over time.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {filtered.map((insight, i) => {
+                    const InsightIcon = INSIGHT_ICONS[insight.category] ?? Sparkles;
+                    return (
+                      <Card
+                        key={i}
+                        size="sm"
+                        className="rounded-xl border border-v3-stroke-weak bg-v3-fill-weak px-3.5 py-3 transition-colors hover:border-v3-stroke-strong"
+                      >
+                        <div className="flex items-start gap-2.5">
+                          <div className="mt-0.5 rounded-md bg-white/80 p-1.5">
+                            <InsightIcon className="size-3.5 text-v3-icon-neutral" />
+                          </div>
+                          <p className="font-inter text-sm text-v3-text-strong leading-relaxed">{insight.text}</p>
+                        </div>
+                      </Card>
+                    );
+                  })}
+                </div>
+              )}
+            </>
+          )}
         </div>
       </div>
     </div>

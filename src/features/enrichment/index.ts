@@ -11,6 +11,8 @@ export {
   enrichmentCategoryLabel,
   formatEnrichmentPriorityTokenForDisplay,
   formatEnrichmentPriorityForDisplay,
+  enrichmentPriorityDisplayParts,
+  formatCurrentPriorityAsFocusSentence,
 } from "./enrichment-categories";
 
 export type {
