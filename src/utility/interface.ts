@@ -88,6 +88,7 @@ export interface IUser {
   streak: number;
   bg_music?: string;
   chat_voice?: string | null;
+  chat_voice_provider?: "gemini" | "elevenlabs" | null;
   fullname?: string | null;
   newsletter_subscriber: boolean;
   created_at: string;
@@ -223,5 +224,6 @@ export interface IMessage {
   user: string;
   text: string;
   role: string; // user, ai
+  ai_model?: string;
   created_at: string;
 }

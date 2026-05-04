@@ -6,6 +6,10 @@ import { toast } from "sonner";
 import { isEmpty } from "@/utility";
 import { storageKeys } from "@/utility/constant";
 import { authService } from "@/utility/auth-service";
+import {
+  notifySubscriptionGate,
+  parseSubscriptionGateFromBody,
+} from "@/features/pricing/subscription-errors";
 
 const baseURL = import.meta.env.VITE_API_BASE_URL;
 
@@ -98,15 +102,22 @@ export const fileUploadFetcher = async (url: string, { arg }: { arg: Record<stri
 
   try {
     const res = await axios.post(url, formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
       onUploadProgress: (event) => {
         if (onProgress && event.total) {
           const percent = Math.round((event.loaded * 80) / event.total);
           onProgress(percent);
         }
       },
+      // Axios default transformRequest JSON-stringifies FormData when Content-Type is
+      // application/json (from the shared instance). Multer then sees no file parts.
+      transformRequest: [
+        (data, headers) => {
+          if (typeof FormData !== "undefined" && data instanceof FormData) {
+            headers.setContentType(undefined);
+          }
+          return data;
+        },
+      ],
     });
 
     if (res.status === 200 && onProgress) {
@@ -123,6 +134,24 @@ export const fileUploadFetcher = async (url: string, { arg }: { arg: Record<stri
 
     if (Axios.isAxiosError(error)) {
       const axiosError = error as AxiosError<IResponse>;
+      const status = axiosError.response?.status;
+      const data = axiosError.response?.data;
+
+      if (status === 402 && data && typeof data === "object") {
+        const gate = parseSubscriptionGateFromBody(data);
+        if (gate) notifySubscriptionGate(gate);
+        message =
+          typeof (data as IResponse).message === "string" ?
+            (data as IResponse).message!
+          : "Upgrade to continue uploading.";
+        return {
+          success: false,
+          data: null,
+          message,
+          subscriptionGate: true as const,
+        };
+      }
+
       message = axiosError.response?.data?.message || axiosError.message;
 
       toast.error(message);
@@ -139,8 +168,8 @@ export const fileUploadFetcher = async (url: string, { arg }: { arg: Record<stri
   }
 };
 
-export const streamlineFetcher = async (url: string, { arg }: { arg: Record<string, unknown> & { onChunk: (chunk: string) => void; signal?: AbortSignal } }) => {
-  const { onChunk, signal, ...payload } = arg;
+export const streamlineFetcher = async (url: string, { arg }: { arg: Record<string, unknown> & { onChunk: (chunk: string) => void; onMeta?: (meta: { model?: string }) => void; signal?: AbortSignal } }) => {
+  const { onChunk, onMeta, signal, ...payload } = arg;
   const storedAuth = localStorage.getItem(storageKeys.auth);
   const auth = storedAuth ? JSON.parse(storedAuth) : null;
 
@@ -157,6 +186,8 @@ export const streamlineFetcher = async (url: string, { arg }: { arg: Record<stri
   const reader = response.body?.getReader();
   const decoder = new TextDecoder("utf-8");
   let is_done = false;
+  const modelFromHeader = response.headers.get("x-ai-model") || undefined;
+  onMeta?.({ model: modelFromHeader });
 
   if (response.ok && reader) {
     while (!is_done) {
@@ -197,7 +228,9 @@ const handleRequest = async (method: string, url: string, body?: { arg?: unknown
 
       const data = axiosError.response?.data || { success: false };
       data.success = false;
-      throw data;
+      throw Object.assign(data, {
+        httpStatus: axiosError.response?.status,
+      });
     }
 
     if (method !== "get") {

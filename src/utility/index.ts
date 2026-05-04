@@ -342,20 +342,20 @@ USER INFORMATION:
 - Member since: ${dayjs(user?.created_at).toDate().toLocaleDateString()}
 
 USER PREFERENCES:
-- Communication style: ${userPreferences.communication_style || "friendly"}
-- Topics of interest: ${userPreferences.topics_of_interest?.join(", ") ||
+- Communication style: ${userPreferences?.communication_style || "friendly"}
+- Topics of interest: ${userPreferences?.topics_of_interest?.join(", ") ||
     "Learning user interests..."
     }
-- Conversation tone: ${userPreferences.conversation_tone || "warm"}
-- Response length preference: ${userPreferences.response_length || "medium"}
+- Conversation tone: ${userPreferences?.conversation_tone || "warm"}
+- Response length preference: ${userPreferences?.response_length || "medium"}
 
 IMPORTANT USER NOTES:
-${userContext.important_notes?.map((note) => `- ${note}`).join("\n") ||
+${userContext?.important_notes?.map((note) => `- ${note}`).join("\n") ||
     "Learning about user..."
     }
 
 KEY PREFERENCES:
-${userContext.key_preferences?.map((pref) => `- ${pref}`).join("\n") ||
+${userContext?.key_preferences?.map((pref) => `- ${pref}`).join("\n") ||
     "Learning user preferences..."
     }
 

@@ -1,11 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Button } from "@/components/Buttons";
+import { Loader2, ShieldCheck } from "lucide-react";
+import endpoint from "@/api/endpoint";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { useStore } from "@/hooks/use-store";
 import { clearCache } from "@/utility";
 import { toast } from "sonner";
 import AuthLayout from "../components/layout";
-import endpoint from "@/api/endpoint";
 
 export default function TwoFactorPage() {
   const navigate = useNavigate();
@@ -79,41 +82,55 @@ export default function TwoFactorPage() {
   return (
     <AuthLayout
       title="Two-factor authentication"
+      icon={<ShieldCheck className="size-7 sm:size-8" strokeWidth={1.75} aria-hidden />}
       subtitle="Enter the 6-digit code from your authenticator app."
       footer={
         <button
           type="button"
-          className="font-inter text-sm text-gray-500 underline"
+          className="font-inter text-sm text-primary underline underline-offset-4"
           onClick={() => navigate("/login")}
         >
           Back to login
         </button>
       }
     >
-      <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-        <div className="flex justify-between gap-2" onPaste={handlePaste}>
-          {code.map((digit, i) => (
-            <input
-              key={i}
-              ref={(el) => { inputRefs.current[i] = el; }}
-              type="text"
-              inputMode="numeric"
-              maxLength={1}
-              value={digit}
-              onChange={(e) => handleDigit(i, e.target.value)}
-              onKeyDown={(e) => handleKeyDown(i, e)}
-              className="h-14 w-full rounded-xl border border-v3-stroke-weak bg-white text-center font-inter text-xl font-semibold text-v3-text-strong outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20"
-            />
-          ))}
-        </div>
-        <Button
-          loading={loading}
-          type="submit"
-          title="Verify"
-          className="mt-2 !rounded-full"
-          disabled={code.join("").length < 6}
-        />
-      </form>
+      <Card className="border border-v3-stroke-weak bg-v3-fill-weaker/30 py-0 shadow-none">
+        <CardContent className="p-4 sm:p-5">
+          <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+            <div className="flex justify-between gap-1.5 sm:gap-2" onPaste={handlePaste}>
+              {code.map((digit, i) => (
+                <Input
+                  key={i}
+                  ref={(el) => {
+                    inputRefs.current[i] = el;
+                  }}
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  maxLength={1}
+                  value={digit}
+                  onChange={(e) => handleDigit(i, e.target.value)}
+                  onKeyDown={(e) => handleKeyDown(i, e)}
+                  className="h-12 rounded-xl px-0 text-center font-inter text-lg font-semibold tabular-nums sm:h-14 sm:text-xl"
+                  aria-label={`Digit ${i + 1} of 6`}
+                />
+              ))}
+            </div>
+            <Button
+              type="submit"
+              className="h-11 w-full rounded-full"
+              disabled={code.join("").length < 6 || loading}
+            >
+              {loading ?
+                <>
+                  <Loader2 className="size-4 animate-spin" />
+                  Verifying...
+                </>
+              : "Verify"}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
     </AuthLayout>
   );
 }

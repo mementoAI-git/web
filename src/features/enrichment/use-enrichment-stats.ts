@@ -86,9 +86,10 @@ export function useEnrichmentStats(): UseEnrichmentStatsResult {
     }
 
     const lastThreshold = getLastMilestoneThreshold();
-    if (stats.milestone.reached_threshold > lastThreshold) {
+    const reached = stats.milestone?.reached_threshold;
+    if (reached != null && reached > lastThreshold) {
       milestoneJustReached = true;
-      setLastMilestoneThreshold(stats.milestone.reached_threshold);
+      setLastMilestoneThreshold(reached);
     }
   }
 

@@ -47,7 +47,8 @@ export default function History({
   hostChatDeepDive = false,
 }: IHistory) {
   const chatDetailMatch = useMatch({ path: "/chat/:id", end: true });
-  const hideInlineConversationHeader = Boolean(chatDetailMatch);
+  const chatVoiceMatch = useMatch({ path: "/chat/:id/voice", end: true });
+  const hideInlineConversationHeader = Boolean(chatDetailMatch || chatVoiceMatch);
 
   const isLoadingMoreRef = useRef(false);
   const containerRef = scrollContainerRef;
@@ -194,6 +195,7 @@ export default function History({
                       role={m.role}
                       text={m.text ?? ""}
                       createdAt={m.created_at}
+                      modelLabel={(m as { ai_model?: string }).ai_model}
                       attatchments={attachments}
                       sendFailed={failed}
                       onRetry={failed ? onRetryFailedMessage : undefined}

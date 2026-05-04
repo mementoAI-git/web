@@ -2,6 +2,7 @@ import { createBrowserRouter, Navigate } from "react-router-dom";
 import App from "@/App";
 import {
   AcceptInvitePage,
+  AiHealthPage,
   BeneficiaryPage,
   ChatLandingPage,
   ChatPage,
@@ -25,14 +26,17 @@ import {
   PostPage,
   RegisterPage,
   ReplyPage,
+  SignupChoicePage,
   SetPasswordPage,
   VerifyEmailPage,
   StoriesPage,
   StoriesDetailsPage,
   SettingsPage,
+  AdminFeatureFlagsPage,
   NotFoundPage,
   ErrorPage,
   OAuthCallbackPage,
+  PricingPage,
 } from "@/pages";
 import TimeCapsulePage from "./pages/dashboard/time-capsule-new";
 
@@ -43,6 +47,7 @@ export const router = createBrowserRouter([
     errorElement: <ErrorPage />,
     children: [
       { path: "login", element: <LoginPage /> },
+      { path: "signup", element: <SignupChoicePage /> },
       { path: "two-factor", element: <TwoFactorPage /> },
       { path: "register", element: <RegisterPage /> },
       { path: "forget-password", element: <ForgetPasswordPage /> },
@@ -82,6 +87,12 @@ export const router = createBrowserRouter([
         children: [
           { index: true, element: <OverviewPage /> },
           { path: "overview", index: true, element: <OverviewPage /> },
+          ...(import.meta.env.DEV
+            ? [
+                { path: "ai-health", element: <AiHealthPage /> },
+                { path: "dashboard/ai-health", element: <AiHealthPage /> },
+              ]
+            : []),
           { path: "explore", element: <ExplorePage /> },
           { path: "explore/categories", element: <ExplorePage /> },
           { path: "explore/categories/:id", element: <ExploreCategoryPage /> },
@@ -99,8 +110,10 @@ export const router = createBrowserRouter([
           { path: "stories", element: <StoriesPage /> },
           { path: "stories/:id", element: <StoriesDetailsPage /> },
           { path: "capsule", element: <TimeCapsulePage /> },
+          { path: "pricing", element: <PricingPage /> },
           { path: "settings", element: <Navigate to="/settings/general" replace /> },
           { path: "settings/:tab", element: <SettingsPage /> },
+          { path: "admin/feature-flags", element: <AdminFeatureFlagsPage /> },
         ],
       },
       { path: "*", element: <NotFoundPage /> },

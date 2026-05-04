@@ -3,6 +3,7 @@
 import {
   useState,
   useEffect,
+  useCallback,
   type PropsWithChildren,
   isValidElement,
   cloneElement,
@@ -38,23 +39,36 @@ function Content({ onClose }: { onClose: () => void }) {
   );
 }
 
-export default function ChatSettings({ children }: PropsWithChildren) {
+type ChatSettingsProps = PropsWithChildren & {
+  /** Fires when the sheet / side panel opens or closes (e.g. to hide the trigger in voice mode). */
+  onOpenChange?: (open: boolean) => void;
+};
+
+export default function ChatSettings({ children, onOpenChange }: ChatSettingsProps) {
   const [isOpen, setIsOpen] = useState(false);
+
+  const updateOpen = useCallback(
+    (next: boolean) => {
+      setIsOpen(next);
+      onOpenChange?.(next);
+    },
+    [onOpenChange],
+  );
 
   useEffect(() => {
     if (!isOpen) return;
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setIsOpen(false);
+      if (e.key === "Escape") updateOpen(false);
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [isOpen]);
+  }, [isOpen, updateOpen]);
 
   const trigger = isValidElement(children)
     ? cloneElement(children as ReactElement<{ onClick?: (e: MouseEvent) => void }>, {
         onClick: (e: MouseEvent) => {
           (children as ReactElement<{ onClick?: (e: MouseEvent) => void }>).props.onClick?.(e);
-          setIsOpen(true);
+          updateOpen(true);
         },
       })
     : children;
@@ -64,37 +78,38 @@ export default function ChatSettings({ children }: PropsWithChildren) {
       {trigger}
       {isOpen && (
         <div>
-          <div className="block sm:hidden">
+          {/* Full-screen stacking wrapper so the sheet stacks above voice mode (z-200). */}
+          <div className="fixed inset-0 z-[210] block sm:hidden">
             <Sheet
               detent="content"
-              className="block sm:hidden"
+              className="block h-full sm:hidden"
               isOpen={isOpen}
-              onClose={() => setIsOpen(false)}
+              onClose={() => updateOpen(false)}
             >
               <Sheet.Container className="bg-white">
                 <Sheet.Header className="rounded-3xl bg-white" />
                 <Sheet.Content className="flex max-h-[min(90dvh,calc(100dvh-24px))] min-h-0 flex-col overflow-y-auto overscroll-contain bg-white">
-                  <Content onClose={() => setIsOpen(false)} />
+                  <Content onClose={() => updateOpen(false)} />
                 </Sheet.Content>
               </Sheet.Container>
-              <Sheet.Backdrop onTap={() => setIsOpen(false)} />
+              <Sheet.Backdrop onTap={() => updateOpen(false)} />
             </Sheet>
           </div>
           {createPortal(
             <>
               <div
-                className="fixed inset-0 z-[125] hidden bg-overlay-backdrop sm:block"
+                className="fixed inset-0 z-[210] hidden bg-overlay-backdrop sm:block"
                 aria-hidden
-                onClick={() => setIsOpen(false)}
+                onClick={() => updateOpen(false)}
               />
               <div
-                className="fixed top-1.5 right-1.5 bottom-1.5 z-[130] hidden w-full max-w-[442px] min-h-0 flex-col overflow-hidden rounded-[24px] border border-stroke-neutral-weaker bg-white shadow-2xl sm:flex sm:max-h-[calc(100dvh-12px)]"
+                className="fixed top-1.5 right-1.5 bottom-1.5 z-[220] hidden w-full max-w-[442px] min-h-0 flex-col overflow-hidden rounded-[24px] border border-stroke-neutral-weaker bg-white shadow-2xl sm:flex sm:max-h-[calc(100dvh-12px)]"
                 role="dialog"
                 aria-modal="true"
                 aria-label="Chat settings"
                 onClick={(e) => e.stopPropagation()}
               >
-                <Content onClose={() => setIsOpen(false)} />
+                <Content onClose={() => updateOpen(false)} />
               </div>
             </>,
             document.body,

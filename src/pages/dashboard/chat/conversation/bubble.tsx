@@ -28,9 +28,11 @@ interface IBubbleProps {
   onReply?: () => void
   /** Host Chat: deep-dive accent on assistant bubbles */
   hostChatDeepDive?: boolean
+  modelLabel?: string
 }
 
-interface ITypingBubbleProps extends Pick<IBubbleProps, "text"> {
+interface ITypingBubbleProps extends Pick<IBubbleProps, "text" | "modelLabel"> {
+  streamDone: boolean
   onFinish: (text: string) => void
 }
 
@@ -55,6 +57,7 @@ export default function Bubble({
   replyQuote,
   onReply,
   hostChatDeepDive = false,
+  modelLabel,
 }: IBubbleProps) {
 
   const isUser = role === "user"
@@ -82,6 +85,14 @@ export default function Bubble({
     if (!is_voice) return getDuration(0)
     return getDuration(duration)
   }, [is_voice, duration])
+  const showDevModelLabel = Boolean(
+    !isUser &&
+      modelLabel &&
+      (import.meta.env.DEV ||
+        (typeof window !== "undefined" &&
+          ["localhost", "127.0.0.1"].includes(window.location.hostname))),
+  );
+
   return (
     <div
       className={cn("flex flex-col space-y-1 px-2", isUser && "items-end")}
@@ -123,6 +134,13 @@ export default function Bubble({
               "border-l-[3px] border-stroke-brand-strong bg-fill-neutral-weakest pl-3",
           )}
         >
+          {showDevModelLabel ? (
+            <div className="mb-1.5">
+              <span className="inline-flex rounded-md bg-fill-brand-weak px-1.5 py-0.5 font-inter text-[10px] font-semibold uppercase tracking-wide text-text-brand-strong">
+                {modelLabel}
+              </span>
+            </div>
+          ) : null}
           {isUser && replyQuote?.text?.trim() ? (
             <div className="mb-2 border-b border-stroke-neutral-weaker pb-2">
               <p className="font-inter text-[10px] font-semibold uppercase tracking-wide text-text-neutral-weak">
@@ -257,96 +275,84 @@ export default function Bubble({
 }
 
 
-export function TypingBubble({ text, onFinish }: ITypingBubbleProps) {
-  const [displayText, setDisplayText] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
-  const intervalRef = useRef(null);
-  const lastTextLengthRef = useRef(0);
+export function TypingBubble({ text, streamDone, onFinish, modelLabel }: ITypingBubbleProps) {
+  const [displayLength, setDisplayLength] = useState(0);
+  const finishedTextRef = useRef("");
+  const safeText = text || "";
 
   useEffect(() => {
-    if (!text) {
-      setDisplayText("");
-      setIsTyping(false);
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
+    if (!safeText) {
+      setDisplayLength(0);
+      finishedTextRef.current = "";
       return;
     }
 
-    // If this is a completely new message (starting from empty)
-    if (lastTextLengthRef.current === 0) {
-      setDisplayText("");
-      setIsTyping(true);
-      lastTextLengthRef.current = text.length;
+    const interval = setInterval(() => {
+      setDisplayLength((prev) => {
+        if (prev >= safeText.length) return prev;
+        // Reveal 1-3 chars per tick for smoother typing.
+        const next = prev + (safeText.length - prev > 24 ? 3 : 1);
+        return Math.min(next, safeText.length);
+      });
+    }, 16);
 
-      // Start typing effect from the beginning
-      let currentIndex = 0;
+    return () => clearInterval(interval);
+  }, [safeText]);
 
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-
-      intervalRef.current = setInterval(() => {
-        currentIndex += 1;
-
-        if (currentIndex <= text.length) {
-          setDisplayText(text.slice(0, currentIndex));
-        } else {
-          clearInterval(intervalRef.current);
-          intervalRef.current = null;
-          setIsTyping(false);
-          onFinish(text);
-        }
-      }, 20);
-    } else {
-      // This is an update to existing text (new chunks arriving)
-      const newChars = text.slice(lastTextLengthRef.current);
-
-      if (newChars.length > 0) {
-        // Add new characters immediately without typing effect
-        setDisplayText(text);
-        lastTextLengthRef.current = text.length;
-
-        // If we were typing, stop and show the new content
-        if (isTyping && intervalRef.current) {
-          clearInterval(intervalRef.current);
-          intervalRef.current = null;
-          setIsTyping(false);
-        }
-      }
-    }
-
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-    };
-  }, [text, onFinish, isTyping]);
-
-  // Reset when text becomes empty (new message starting)
   useEffect(() => {
-    if (!text) {
-      lastTextLengthRef.current = 0;
-      setDisplayText("");
-      setIsTyping(false);
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-    }
-  }, [text]);
+    if (!safeText) return;
+    if (!streamDone) return;
+    if (displayLength < safeText.length) return;
+    if (finishedTextRef.current === safeText) return;
+    finishedTextRef.current = safeText;
+    onFinish(safeText);
+  }, [displayLength, onFinish, safeText, streamDone]);
 
-  return <Bubble role="ai" text={displayText} />
+  return <Bubble role="ai" text={safeText.slice(0, displayLength)} modelLabel={modelLabel} />
 }
 
 export function Typing() {
+  const loadingPhrases = [
+    "Stirring stardust",
+    "Tickling neurons",
+    "Polishing moonbeams",
+    "Herding wild ideas",
+    "Brewing word-tea",
+    "Chasing sparkles",
+    "Weaving thought-ribbons",
+    "Dusting off genius",
+    "Tuning tiny violins",
+    "Summoning cleverness",
+    "Juggling metaphors",
+    "Untangling noodle-thoughts",
+    "Whispering to commas",
+    "Folding clouds into sentences",
+    "Feeding the brain gremlins",
+    "Conducting the idea orchestra",
+    "Aligning cosmic vibes",
+    "Gluing thoughts with glitter",
+    "Warming up the wisdom engine",
+    "Adding a pinch of whimsy",
+  ];
+  const [phraseIdx, setPhraseIdx] = useState(0);
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      setPhraseIdx((prev) => (prev + 1) % loadingPhrases.length);
+    }, 1800);
+    return () => clearInterval(id);
+  }, [loadingPhrases.length]);
+
   return (
-    <div className="flex items-center gap-1 px-5 py-3">
-      <div className="w-2 h-2 bg-icon-neutral-weaker rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-      <div className="w-2 h-2 bg-icon-neutral-weaker rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-      <div className="w-2 h-2 bg-icon-neutral-weaker rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+    <div className="flex items-center gap-2 px-5 py-3" aria-live="polite" aria-label="Assistant is typing">
+      <div
+        className="h-3.5 w-3.5 animate-spin rounded-full border border-solid border-[#1ED348] border-t-transparent"
+        aria-hidden
+      />
+      <span className="font-inter text-sm" style={{ color: "#1ED348" }}>{loadingPhrases[phraseIdx]}</span>
+      <div className="w-1.5 h-1.5 bg-icon-neutral-weaker rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+      <div className="w-1.5 h-1.5 bg-icon-neutral-weaker rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+      <div className="w-1.5 h-1.5 bg-icon-neutral-weaker rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
     </div>
   )
 }

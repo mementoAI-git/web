@@ -97,7 +97,7 @@ export default function StoriesHeader({
               value="grid"
               aria-label="Grid view"
               className={cn(
-                "rounded-[64px] p-2 data-[state=on]:bg-white data-[state=on]:shadow-sm",
+                "rounded-[100px] p-2 data-[state=on]:bg-white data-[state=on]:shadow-sm",
                 "hover:bg-transparent"
               )}
             >
@@ -107,7 +107,7 @@ export default function StoriesHeader({
               value="list"
               aria-label="List view"
               className={cn(
-                "rounded-[64px] p-2 data-[state=on]:bg-white data-[state=on]:shadow-sm",
+                "rounded-[100px] p-2 data-[state=on]:bg-white data-[state=on]:shadow-sm",
                 "hover:bg-transparent"
               )}
             >

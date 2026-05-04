@@ -71,12 +71,17 @@ export default {
 
   // ai
   aiPrompt: "/ai/prompt",
+  aiVoices: "/ai/voices",
+  aiVoicePreview: "/ai/voice-preview",
   aiGreet: "/ai/prompt/greet",
   aiPromptMessage: "/ai/prompt/messages",
   transcription: "/ai/transcribe-audio",
   startConversation: "/ai/conversation/new",
   ephemeralToken: "/ai/ephemeral-token",
   generateTags: "/ai/generate-tags",
+  aiMetricsOverview: "/ai/metrics/overview",
+  aiMetricsTimeseries: "/ai/metrics/timeseries",
+  aiPromptGovernanceStatus: "/ai/prompt-governance/status",
 
   // capsule
   capsule: "/capsule",
@@ -96,6 +101,20 @@ export default {
   /** Host onboarding chat — streams like `/ai/prompt`; trailer JSON for chips / completion */
   hostOnboardingChatPrompt: "/users/onboarding/chat/prompt",
 
+  // billing (Polar + Paystack; see docs/PRICING_BACKEND_HANDOFF.md)
+  billingSubscription: "/billing/subscription",
+  billingCheckout: "/billing/checkout",
+  billingPortal: "/billing/portal",
+  billingCancel: "/billing/cancel",
+  billingResume: "/billing/resume",
+  billingPromoRedeem: "/billing/promo/redeem",
+  billingInvoices: "/billing/invoices",
+
   // sentry
   tunnel: `${import.meta.env.VITE_API_BASE_URL}/sentry_tunnel`,
+
+  // feature flags
+  featureFlags: "/feature-flags",
+  featureFlag: "/feature-flags/:key",
+  featureFlagEvaluate: "/feature-flags/evaluate/:key",
 };

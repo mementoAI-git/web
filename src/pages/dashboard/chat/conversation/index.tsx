@@ -2,7 +2,7 @@ import {
   ConversationChatinput,
   type IOnSendPayload,
 } from "@/components/Chatinput";
-import Bubble, { Typing } from "./bubble";
+import Bubble, { Typing, TypingBubble } from "./bubble";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import useSWR, { mutate } from "swr";
 import endpoint from "@/api/endpoint";
@@ -16,7 +16,7 @@ import { toast } from "sonner";
 import SidebarDetails from "@/components/memory/sidebar-details";
 import useFetcher from "@/hooks/use-fetcher";
 import { useStore } from "@/hooks/use-store";
-import { useNavigate } from "react-router-dom";
+import { useMatch, useNavigate } from "react-router-dom";
 import { useConversationChrome } from "@/contexts/conversation-chrome";
 import {
   buildPromptWithReplyQuote,
@@ -34,7 +34,6 @@ import { dimensionLabel } from "@/features/host-chat/chat.types";
 import {
   DeepDiveBanner,
   DeepDiveNudge,
-  HostChatEnrichmentBar,
   HostChatJumpPills,
   MilestoneCard,
   dismissHostChatNudge,
@@ -42,6 +41,8 @@ import {
   monthKeysFromMessages,
 } from "@/features/host-chat";
 import { useEnrichmentStats } from "@/features/enrichment";
+import { useSubscription } from "@/contexts/subscription";
+import { VoiceModePaywall } from "@/features/pricing/voice-mode-paywall";
 
 type StreamlinePayload = {
   text: string;
@@ -49,6 +50,7 @@ type StreamlinePayload = {
   memory: string;
   signal: AbortSignal;
   onChunk: (chunk: string) => void;
+  onMeta?: (meta: { model?: string }) => void;
   chatMode?: ChatMode;
   deepDiveDimension?: LifeDimension | null;
   dismissedNudgeDimensions?: string[];
@@ -56,6 +58,7 @@ type StreamlinePayload = {
 
 export default function Conversation({ id, type = "memory" }) {
   const [aiMessage, setAiMessage] = useState("")
+  const [streamModelLabel, setStreamModelLabel] = useState<string | undefined>(undefined);
   const abortCtrl = useRef(null)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const wasAtBottomRef = useRef(true);
@@ -65,6 +68,9 @@ export default function Conversation({ id, type = "memory" }) {
   const { setChrome } = useConversationChrome();
   const { open, push } = useModal();
   const navigate = useNavigate();
+  const voiceRouteMatch = useMatch({ path: "/chat/:id/voice", end: true });
+  const isVoiceRoute = Boolean(voiceRouteMatch);
+  const { canAccess, isLoading: subscriptionLoading } = useSubscription();
   const [messages, setMessages] = useState<Partial<IMessage>[]>([])
   const [isSidebarOpen, setIsSidebarOpen] = useState(false) // Sidebar closed by default
   const [sidebarTab, setSidebarTab] = useState<"memory" | "chat">("memory")
@@ -73,6 +79,7 @@ export default function Conversation({ id, type = "memory" }) {
   const [deepDiveDimension, setDeepDiveDimension] = useState<LifeDimension | null>(null);
   const [nudgeHidden, setNudgeHidden] = useState(false);
   const [sessionEnrichmentDelta, setSessionEnrichmentDelta] = useState<number | null>(null);
+  const [streamDone, setStreamDone] = useState(false);
   const sessionStartScoreRef = useRef<number | null>(null);
 
   const {
@@ -155,15 +162,15 @@ export default function Conversation({ id, type = "memory" }) {
     setSidebarTab("memory");
   }, []);
 
-  // Open sidebar handler 
+  // Toggle sidebar handler
   const handleOpenSidebar = useCallback(() => {
     setSidebarTab("memory");
-    setIsSidebarOpen(true);
+    setIsSidebarOpen((prev) => !prev);
   }, []);
 
   const handleOpenChatPreferences = useCallback(() => {
     setSidebarTab("chat");
-    setIsSidebarOpen(true);
+    setIsSidebarOpen((prev) => !prev);
   }, []);
 
   const handleChuckArrival = useCallback((chunk: string) => {
@@ -192,14 +199,16 @@ export default function Conversation({ id, type = "memory" }) {
         {
           text,
           role: "ai",
+          ai_model: streamModelLabel,
           created_at: new Date().toISOString(),
         },
       ]));
     }
     setAiMessage("");
+    setStreamModelLabel(undefined);
     // Refetch enrichment stats after each AI response to update delta + milestone
     mutate(endpoint.userStats);
-  }, []);
+  }, [streamModelLabel]);
 
   const sendChatMessage = useCallback(
     async (
@@ -244,6 +253,8 @@ export default function Conversation({ id, type = "memory" }) {
 
         if (memory?._id) {
           abortCtrl.current = new AbortController();
+          setStreamDone(false);
+          setStreamModelLabel(undefined);
 
           await sendMessage({
             text: apiText,
@@ -251,10 +262,12 @@ export default function Conversation({ id, type = "memory" }) {
             memory: memory?._id,
             signal: abortCtrl.current.signal,
             onChunk: handleChuckArrival,
+            onMeta: ({ model }) => setStreamModelLabel(model),
             chatMode,
             deepDiveDimension: chatMode === "deep_dive" ? deepDiveDimension : null,
             dismissedNudgeDimensions: getDismissedHostChatNudges(),
           })
+          setStreamDone(true);
           return;
         }
 
@@ -285,6 +298,7 @@ export default function Conversation({ id, type = "memory" }) {
             });
           }
         }
+        setStreamDone(true);
       } finally {
         abortCtrl.current = null
       }
@@ -428,7 +442,21 @@ export default function Conversation({ id, type = "memory" }) {
 
   useEffect(() => {
     if (loadingMemory || loadingPrompt) {
-      setChrome(null);
+      if (isVoiceRoute && voiceRouteMatch?.params?.id) {
+        setChrome({
+          memory: null,
+          onViewDetails: handleOpenSidebar,
+          onOpenChatPreferences: undefined,
+          onExportConversation: undefined,
+          hostChat: {
+            title: "Voicemode",
+            subtitle: undefined,
+            onSearch: () => open("search-memory"),
+          },
+        });
+      } else {
+        setChrome(null);
+      }
       return;
     }
     setChrome({
@@ -436,11 +464,11 @@ export default function Conversation({ id, type = "memory" }) {
       onViewDetails: handleOpenSidebar,
       onOpenChatPreferences: memory?._id ? handleOpenChatPreferences : undefined,
       onExportConversation: handleExportConversation,
-      ...(isHostChat ?
+      ...((isHostChat || isVoiceRoute) ?
         {
           hostChat: {
-            title: "Your Memento",
-            subtitle: hostChatSubtitle,
+            title: isVoiceRoute ? "Voicemode" : "Your Memento",
+            subtitle: isHostChat ? hostChatSubtitle : undefined,
             onSearch: () => open("search-memory"),
           },
         } :
@@ -457,11 +485,21 @@ export default function Conversation({ id, type = "memory" }) {
     isHostChat,
     hostChatSubtitle,
     open,
+    isVoiceRoute,
+    voiceRouteMatch?.params?.id,
   ]);
 
   useEffect(() => () => setChrome(null), [setChrome]);
 
-  if (loadingMemory || loadingPrompt) {
+  if (isVoiceRoute && subscriptionLoading) {
+    return <Loader />;
+  }
+
+  if (isVoiceRoute && !canAccess("voice_mode")) {
+    return <VoiceModePaywall conversationId={id} />;
+  }
+
+  if ((loadingMemory || loadingPrompt) && !isVoiceRoute) {
     return <Loader />
   }
   const isTyping = isSending || startingConversation;
@@ -484,10 +522,6 @@ export default function Conversation({ id, type = "memory" }) {
               role="toolbar"
               aria-label="Host chat tools"
             >
-              <HostChatEnrichmentBar
-                enrichmentScore={enrichmentStats?.enrichment_score ?? 5}
-                deltaToday={deltaToday}
-              />
               <HostChatJumpPills
                 monthKeys={jumpMonthKeys}
                 onJump={jumpToMonth}
@@ -528,20 +562,28 @@ export default function Conversation({ id, type = "memory" }) {
           >
             {(isTyping && isEmpty(aiMessage)) ?
               <Typing /> :
-              <Bubble
-                role="ai"
-                text={aiMessage}
-                hostChatDeepDive={isHostChat && chatMode === "deep_dive"}
-                onReply={
-                  aiMessage.trim() ?
-                    () =>
-                      handleReplyToMessage({
-                        role: "ai",
-                        text: aiMessage.trim(),
-                      }) :
-                    undefined
-                }
-              />
+              aiMessage.trim() ?
+                <TypingBubble
+                  text={aiMessage}
+                  streamDone={streamDone}
+                  onFinish={handleOnFinishTyping}
+                  modelLabel={streamModelLabel}
+                /> :
+                <Bubble
+                  role="ai"
+                  text={aiMessage}
+                  modelLabel={streamModelLabel}
+                  hostChatDeepDive={isHostChat && chatMode === "deep_dive"}
+                  onReply={
+                    aiMessage.trim() ?
+                      () =>
+                        handleReplyToMessage({
+                          role: "ai",
+                          text: aiMessage.trim(),
+                        }) :
+                      undefined
+                  }
+                />
             }
           </History>
           <div className="sticky bottom-0 bg-white px-0 pb-2 sm:px-2 md:px-3">
@@ -572,7 +614,7 @@ export default function Conversation({ id, type = "memory" }) {
           memory={memory}
           onClose={handleCloseSidebar}
           isOpen={isSidebarOpen}
-          desktopLayout="inline"
+          desktopLayout="overlay"
           source={type === "prompt" ? "prompt" : "conversation"}
           quickActions={{
             onViewFullDetails: () => push("view-memory-details", { memory }),
@@ -583,6 +625,8 @@ export default function Conversation({ id, type = "memory" }) {
           enableChatPreferencesTab
           activeTab={sidebarTab}
           onTabChange={setSidebarTab}
+          enrichmentScore={enrichmentStats?.enrichment_score ?? 5}
+          deltaToday={deltaToday}
         />
       }
     </div>

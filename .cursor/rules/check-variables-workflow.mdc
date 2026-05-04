@@ -1,0 +1,16 @@
+---
+description: Run /check-variables after UI component/page styling updates
+alwaysApply: true
+---
+
+# Variable Validation Workflow
+
+After creating or updating any page/component UI (especially colors, borders, backgrounds, icons, and text styles), run the `/check-variables` command guidance in `.cursor/commands/check-variables.md`.
+
+Expected output format:
+- One line per issue
+- If no issues: `All variables applied correctly.`
+
+Validation source of truth:
+- `docs/COLOR_INVENTORY.md`
+- `.cursor/rules/v3-color-system-usage.mdc`

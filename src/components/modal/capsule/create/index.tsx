@@ -1,4 +1,5 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
+import dayjs from "dayjs";
 import * as yup from "yup";
 import ReactDOM from "react-dom";
 import { Taginput } from "@/components/Form";
@@ -41,6 +42,8 @@ import {
 import { Sheet } from "react-modal-sheet";
 import TimeCapsuleBadge from "@/pages/dashboard/time-capsule-new/components/TimeCapsuleBadge";
 import { useStore } from "@/hooks/use-store";
+import { useSubscription } from "@/contexts/subscription";
+import { handleSubscriptionGateError } from "@/features/pricing/subscription-errors";
 import { X } from "lucide-react";
 
 const schema = yup.object().shape({
@@ -144,9 +147,11 @@ function MobileSheetPortal({ children }: { children: React.ReactNode }) {
 function DatePickerWrapper({
   onDateSelect,
   onClose,
+  maxDate,
 }: {
   onDateSelect: (date: Date) => void;
   onClose: () => void;
+  maxDate?: Date;
 }) {
   const [show, setShow] = useState(true);
   return (
@@ -163,7 +168,10 @@ function DatePickerWrapper({
           onClose();
         }}
         position="bottom"
-        options={{ minDate: new Date() }}
+        options={{
+          minDate: new Date(),
+          ...(maxDate ? { maxDate } : {}),
+        }}
       >
         <div className="invisible h-0" />
       </DatePicker>
@@ -483,7 +491,17 @@ function MobileFormSheet({
                 <p className="text-xs text-v3-text-weak mb-2">
                   Capsule delivery date:
                 </p>
+                {capsuleMaxDate ? (
+                  <p className="mb-2 font-inter text-[11px] leading-snug text-v3-text-weaker">
+                    Free plan: latest delivery{" "}
+                    <span className="font-medium text-v3-text-weak">
+                      {dayjs(capsuleMaxDate).format("MMM D, YYYY")}
+                    </span>
+                    . Upgrade for longer schedules.
+                  </p>
+                ) : null}
                 <DateOptionsDropdown
+                  maxSelectableDate={capsuleMaxDate}
                   onDateSelect={(date) =>
                     handleValue("schedule_date", date.toISOString())
                   }
@@ -794,6 +812,11 @@ export default function CreateCapsule({
 
   const { close, push } = useModal();
   const { user } = useStore();
+  const { canAccess } = useSubscription();
+  const capsuleMaxDate = useMemo(() => {
+    if (canAccess("time_capsule_window")) return undefined;
+    return dayjs().add(6, "month").toDate();
+  }, [canAccess]);
   const { files, handleUpload } = useFileUpload();
   const { trigger, isMutating } = useFetcher(
     isEmpty(data) ? endpoint.capsule : `${endpoint.capsule}/${data?._id}`,
@@ -853,18 +876,39 @@ export default function CreateCapsule({
 
     submission.attachments = Array.from(new Set(attachmentIds));
     submission.memories = Array.from(new Set(memoryIds));
-    const result = await trigger(submission);
-    if (result?.success) {
-      if (isEditMode) {
-        toast.success("Time Capsule Updated Successfully");
-      } else if (submission.status === "draft") {
-        toast.success("Time Capsule Saved to Draft");
-      } else {
-        toast.custom(() => <TimeCapsuleBadge />);
+
+    if (
+      submission.status === "scheduled" &&
+      capsuleMaxDate &&
+      submission.schedule_date
+    ) {
+      const scheduled = dayjs(submission.schedule_date);
+      const cap = dayjs(capsuleMaxDate).endOf("day");
+      if (scheduled.isAfter(cap)) {
+        toast.error(
+          "Free accounts can schedule delivery up to 6 months ahead. Choose an earlier date or upgrade.",
+        );
+        return;
       }
-      mutate(`${endpoint.capsule}?page=1`);
-      setValues(initial);
-      handleCloseClick();
+    }
+
+    try {
+      const result = await trigger(submission);
+      if (result?.success) {
+        if (isEditMode) {
+          toast.success("Time Capsule Updated Successfully");
+        } else if (submission.status === "draft") {
+          toast.success("Time Capsule Saved to Draft");
+        } else {
+          toast.custom(() => <TimeCapsuleBadge />);
+        }
+        mutate(`${endpoint.capsule}?page=1`);
+        setValues(initial);
+        handleCloseClick();
+      }
+    } catch (e) {
+      if (handleSubscriptionGateError(e)) return;
+      toast.error("Could not save your timed message. Try again.");
     }
   };
 
@@ -987,13 +1031,11 @@ export default function CreateCapsule({
       const MAX = 120 * 1024 * 1024;
       Array.from(droppedFiles).forEach((file) => {
         const ext = `.${file.name.split(".").pop()?.toLowerCase()}`;
-        type SupportedType = (typeof CAPSULE_SUPPORTED_FILE_TYPES)[number];
+        const list = CAPSULE_SUPPORTED_FILE_TYPES as readonly string[];
+        const fromName = EXTENSION_TO_MIME[ext];
         const valid =
-          CAPSULE_SUPPORTED_FILE_TYPES.includes(file.type as SupportedType) ||
-          (EXTENSION_TO_MIME[ext] &&
-            CAPSULE_SUPPORTED_FILE_TYPES.includes(
-              EXTENSION_TO_MIME[ext] as SupportedType,
-            ));
+          list.includes(file.type.split(";")[0]!.trim().toLowerCase()) ||
+          (fromName && list.includes(fromName.split(";")[0]!.trim().toLowerCase()));
         if (!valid) {
           toast.error(`File type "${file.type || ext}" is not supported`);
           return;
@@ -1383,7 +1425,17 @@ export default function CreateCapsule({
                 <span className="text-base text-gray-800 block">
                   Capsule delivery date:
                 </span>
+                {capsuleMaxDate ? (
+                  <p className="font-inter text-xs text-gray-600">
+                    Free plan: latest delivery{" "}
+                    <span className="font-medium text-gray-800">
+                      {dayjs(capsuleMaxDate).format("MMM D, YYYY")}
+                    </span>
+                    .
+                  </p>
+                ) : null}
                 <DateOptionsDropdown
+                  maxSelectableDate={capsuleMaxDate}
                   dropDirection="up"
                   onDateSelect={(date) =>
                     handleValue("schedule_date", date.toISOString())

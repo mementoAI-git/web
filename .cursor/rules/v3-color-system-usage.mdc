@@ -1,0 +1,67 @@
+---
+description: Enforce V3 color token usage and token-to-context mapping
+alwaysApply: true
+---
+
+# V3 Color System Usage (`memento-web`)
+
+Use V3 semantic tokens from `docs/COLOR_INVENTORY.md` for all new UI work. Prefer semantic classes (`text-*`, `bg-*`, `border-*`, `fill-*`, `icon-*`) over hex colors or legacy variables.
+
+## Core neutral tokens (default UI)
+
+- `text-neutral-strong`: primary headings, body text, form labels, high-emphasis copy.
+- `text-neutral-weak`: secondary text, descriptions, helper text.
+- `text-neutral-weaker`: metadata, timestamps, tertiary labels.
+- `text-neutral-disabled`: disabled text only.
+- `border-neutral-weak` / `stroke-neutral-weak`: input borders, card borders, separators, table dividers.
+- `border-neutral-strong` / `stroke-neutral-strong`: active/focused borders and emphasized separators.
+- `bg-neutral`: page backgrounds and white surfaces.
+- `bg-neutral-weak` / `fill-neutral-weak`: subtle containers, hover rows, quiet sections.
+- `bg-neutral-weaker` / `fill-neutral-weaker`: very low-emphasis backgrounds and striped rows.
+- `bg-neutral-strong` / `fill-neutral-strong`: dark chips, inverse surfaces, overlays.
+- `icon-neutral-strong|weak|weaker|disabled`: icon emphasis ladder matching adjacent text hierarchy.
+
+## Intent token families (status + brand)
+
+- **Brand (`*-brand-*`)**: primary CTA, brand links, selected brand accents.
+- **Info (`*-info-*`)**: informational banners, hint states, neutral notifications.
+- **Success (`*-success-*`)**: success messages, confirmations, positive badges.
+- **Warning (`*-warning-*`)**: cautionary callouts, warning labels.
+- **Error (`*-error-*`)**: validation errors, destructive states, danger messaging.
+
+Apply by property type:
+- Text color -> `text-{intent}-{strength}`
+- Border/ring/stroke -> `border-{intent}-{strength}` or `stroke-{intent}-{strength}`
+- Icon color -> `icon-{intent}-{strength}`
+- Solid/subtle fill -> `fill-{intent}-{strength}` or `bg-{intent}-{strength}`
+
+Strength semantics:
+- `strong`: primary emphasis/action
+- `weak`: secondary emphasis
+- `weaker`: tertiary/subtle emphasis
+- `disabled`: disabled/non-interactive states
+
+## Overlay and modal usage
+
+- `bg-overlay-backdrop`: modal/drawer backdrop in light mode.
+- `bg-overlay-backdrop-dark`: modal/drawer backdrop in dark mode.
+
+## Primitive token policy
+
+- Primitive tokens (`--brown-*`, `--neutral-*`, `--orange-*`, `--red-*`, `--amber-*`, `--green-*`, `--blue-*`, `--purple-*`) are source-of-truth implementation tokens.
+- In component code, prefer semantic tokens; only use primitives when defining or adjusting token foundations/themes.
+
+## Legacy variable and hex policy
+
+- Do not introduce new hardcoded hex values in app UI.
+- Allowed exceptions: SVG/illustration assets, unavoidable third-party overrides, one-off decorative assets explicitly approved.
+- Prefer these replacements:
+  - `--color-grey-*`, `--color-gray-*` -> nearest `text-neutral-*`, `border-neutral-*`, `bg-neutral-*`, or `fill-neutral-*`
+  - onboarding custom colors -> V3 neutral/brand/status equivalents unless intentionally preserving branded onboarding art direction
+  - `--overlay-backdrop` / `--overlay-backdrop-dark` -> `bg-overlay-backdrop` / `bg-overlay-backdrop-dark`
+
+## Shadcn + Tailwind implementation guidance
+
+- Use tokenized Tailwind utilities in JSX (`text-neutral-strong`, `border-neutral-weak`, `bg-brand-strong`).
+- Keep component color decisions semantic-first: choose intent + strength before choosing a class.
+- For states, maintain progression: default `weak/weaker` -> hover `weak/strong` -> active/focus `strong`.

@@ -4,6 +4,80 @@ import { mockUser } from "../fixtures";
 const BASE_URL = "http://localhost:3000/api";
 
 export const handlers = [
+  http.get(`${BASE_URL}/billing/subscription`, () => {
+    return HttpResponse.json({
+      success: true,
+      data: {
+        tier: "free",
+        status: "active",
+        features: [],
+        usage: {
+          storage_used_bytes: 512 * 1024 * 1024,
+          beneficiary_count: 0,
+          timed_message_count: 0,
+        },
+      },
+    });
+  }),
+
+  http.post(`${BASE_URL}/billing/checkout`, () => {
+    return HttpResponse.json({
+      success: true,
+      data: { checkout_url: "https://checkout.test/polar-session" },
+    });
+  }),
+
+  http.post(`${BASE_URL}/billing/portal`, () => {
+    return HttpResponse.json({
+      success: true,
+      data: { portal_url: "https://billing.test/portal" },
+    });
+  }),
+
+  http.post(`${BASE_URL}/billing/promo/redeem`, () => {
+    return HttpResponse.json({
+      success: true,
+      data: {},
+      message: "Promo applied",
+    });
+  }),
+
+  http.get(`${BASE_URL}/billing/invoices`, () => {
+    return HttpResponse.json({
+      success: true,
+      data: [],
+    });
+  }),
+
+  http.get(`${BASE_URL}/capsule/stats`, () => {
+    return HttpResponse.json({
+      success: true,
+      data: {
+        scheduled_count: 0,
+        delivered_count: 0,
+        paused_count: 0,
+        draft_count: 0,
+      },
+    });
+  }),
+
+  http.get(`${BASE_URL}/capsule`, () => {
+    return HttpResponse.json({
+      success: true,
+      data: {
+        docs: [],
+        totalDocs: 0,
+        page: 1,
+        totalPages: 0,
+        hasNextPage: false,
+        hasPrevPage: false,
+        nextPage: null,
+        prevPage: null,
+        limit: 20,
+      },
+    });
+  }),
+
   http.get(`${BASE_URL}/users/profile`, () => {
     return HttpResponse.json({
       success: true,

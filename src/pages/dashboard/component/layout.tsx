@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { cn } from "@/utility";
-import { Outlet, useLocation, useNavigate } from "react-router-dom";
+import { Outlet, useLocation, useMatch, useNavigate } from "react-router-dom";
 import AuthCheck from "@/components/layouts/auth-check";
 import OnboardingGuard from "@/components/layouts/onboarding-guard";
 import { OnboardingNudgeBanner } from "@/features/onboarding-groot";
 import { SecurityNudgeBanner } from "@/components/security-nudge-banner";
+import { TrialBanner } from "@/components/trial-banner";
 import { useModal } from "@/hooks/use-modal";
 import { useChatSidebar } from "@/contexts/chat-sidebar";
 import { DashboardHeader } from "./dashboard-header";
@@ -20,6 +21,9 @@ export default function DashboardLayout() {
   const location = useLocation();
   const navigate = useNavigate();
   const { open } = useModal();
+  const isVoiceChatRoute = Boolean(
+    useMatch({ path: "/chat/:id/voice", end: true }),
+  );
 
   useEffect(() => {
     const modalName = (location.state as { openModal?: string } | null)?.openModal;
@@ -67,18 +71,29 @@ export default function DashboardLayout() {
         </div>
         <main className="flex min-w-0 flex-1 flex-col overflow-hidden dynamic-height-content">
           <ConversationChromeProvider>
-            <DashboardHeader
-              onMenuClick={() => setSidebarOpen(true)}
-              mobileSidebarOpen={sidebarOpen}
-              mainSidebarCollapsed={mainSidebarCollapsed}
-              onMainSidebarToggle={handleMainSidebarToggle}
-            />
-            <div className="flex flex-1 flex-col overflow-hidden pt-[60px] sm:pt-0 md:flex-row">
-              <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-                <div className="w-full min-w-0 shrink-0 bg-white px-4 pt-[3px] pb-0.5 text-v3-text-strong sm:px-6">
-                  <OnboardingNudgeBanner />
-                  <SecurityNudgeBanner />
-                </div>
+            {!isVoiceChatRoute ? (
+              <DashboardHeader
+                onMenuClick={() => setSidebarOpen(true)}
+                mobileSidebarOpen={sidebarOpen}
+                mainSidebarCollapsed={mainSidebarCollapsed}
+                onMainSidebarToggle={handleMainSidebarToggle}
+              />
+            ) : null}
+            <div
+              className={cn(
+                "flex flex-1 flex-col overflow-hidden md:flex-row",
+                !isVoiceChatRoute && "pt-[60px] sm:pt-0",
+              )}
+            >
+<div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+                  <div className={cn(
+                    "w-full min-w-0 shrink-0 px-4 pt-[3px] pb-0.5 text-v3-text-strong sm:px-6",
+                    isVoiceChatRoute ? "bg-sand-1" : "bg-white"
+                  )}>
+                    <OnboardingNudgeBanner />
+                    <TrialBanner />
+                    <SecurityNudgeBanner />
+                  </div>
                 <div className="hide-scrollbar h-full min-h-0 w-full flex-1 overflow-y-auto">
                   <Outlet />
                 </div>

@@ -27,4 +27,14 @@ describe("StoriesHeader", () => {
     // The search area is a clickable div with the text "Search"
     expect(screen.getByText("Search")).toBeInTheDocument();
   });
+
+  it("uses pill-shaped mode toggle items (100px radius) so spacing=0 does not square corners", () => {
+    renderWithProviders(
+      <StoriesHeader onChangeMode={vi.fn()} filter="all" onChangeFilter={vi.fn()} count={0} />,
+      { route: "/stories", auth: true },
+    );
+
+    expect(screen.getByRole("radio", { name: "Grid view" })).toHaveClass("rounded-[100px]");
+    expect(screen.getByRole("radio", { name: "List view" })).toHaveClass("rounded-[100px]");
+  });
 });

@@ -7,16 +7,24 @@ import Placeholder from "@tiptap/extension-placeholder";
 import Link from "@tiptap/extension-link";
 import Underline from "@tiptap/extension-underline";
 import { useModal } from "@/hooks/use-modal";
+import { useNavigate } from "react-router-dom";
 import useForm from "@/hooks/use-form";
 import useFileUpload from "@/hooks/use-file-upload";
 import useSWRMutation from "swr/mutation";
-import { fileUploadFetcher } from "@/api/fetcher";
+import { postFetcher } from "@/api/fetcher";
 import endpoint from "@/api/endpoint";
+import { parseSubscriptionGateError } from "@/features/pricing/subscription-errors";
 import { cn, isEmpty } from "@/utility";
 import { toast } from "sonner";
 import { mutate } from "swr";
 import { v4 as uuidv4 } from "uuid";
-import { SUPPORTED_FILE_TYPES } from "@/utility/constant";
+import {
+  SUPPORTED_FILE_TYPES,
+  MEMORY_ATTACHMENT_ACCEPT,
+  inferMimeType,
+  isSupportedFileMime,
+  uploadMimeBaseType,
+} from "@/utility/constant";
 import { HeadingIcon, TimesIcon, LinkIcon, UnorderedListIcon } from "@/components/icons";
 import { AccessField, buildCreateMemoryPayload } from "./access-field";
 import { TagsField } from "./tags-field";
@@ -30,16 +38,61 @@ import { LinkInput } from "@/components/memory/text-area/link-input";
 import { SlashCommandPopup } from "@/components/memory/text-area/slash-command-popup";
 import { SLASH_COMMANDS } from "@/components/memory/text-area/slash-commands";
 import { VideoRecorder } from "@/components/recorder/video";
-import type { ComponentRef } from "react";
+import type { ComponentRef, ReactNode } from "react";
 import { FileThumbnails } from "./file-thumbnails";
+import { UpgradePrompt } from "@/features/pricing/upgrade-prompt";
+import { useFeatureFlags } from "@/contexts/feature-flags";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import type { IOnUploadPayload } from "@/utility/interface";
+import {
+  Image as ImageIcon,
+  ListOrdered,
+  Mic,
+  Music,
+  Paperclip,
+  Plus,
+  Quote,
+  Smile,
+  Video,
+} from "lucide-react";
 
-import addPlusSvg from "@/assets/icon/Add-plus.svg";
-import smileySvg from "@/assets/icon/noto_slightly-smiling-face.svg";
-import micSvg from "@/assets/icon/microphone-01.svg";
-import videoRecorderSvg from "@/assets/icon/video-recorder.svg";
-
-const ACTIVE_BG = "bg-fill-neutral-strong";
+const ACTIVE_BG = "bg-fill-neutral-strong text-inverse-strong hover:bg-fill-neutral-strong hover:text-inverse-strong";
 const initial = { title: "", body: "", attachments: [] as string[] };
+const DRAFT_STORAGE_KEY = "create-memory-drafts";
+const MAX_DRAFTS = 10;
+
+interface MemoryDraft {
+  id: string;
+  title: string;
+  body: string;
+  tags: string[];
+  attachments: NonNullable<IOnUploadPayload["uploadedFile"]>[];
+  updatedAt: string;
+}
 
 // ─── CreateMemory ─────────────────────────────────────────────────────────────
 
@@ -49,22 +102,23 @@ interface CreateMemoryProps {
 }
 
 export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
-  const { close, open, push } = useModal();
+  const { close, open, push, registerCloseGuard } = useModal();
+  const { canUse } = useFeatureFlags();
+  const navigate = useNavigate();
+  const [showUploadGate, setShowUploadGate] = useState(false);
   const fileInputMediaRef = useRef<HTMLInputElement>(null);
   const fileInputAllRef = useRef<HTMLInputElement>(null);
   const fileInputAudioRef = useRef<HTMLInputElement>(null);
   const videoRecorderRef = useRef<ComponentRef<typeof VideoRecorder>>(null);
 
   const [showEmoji, setShowEmoji] = useState(false);
-  const [showPlusMenu, setShowPlusMenu] = useState(false);
   const [showLinkInput, setShowLinkInput] = useState(false);
   const [linkPosition, setLinkPosition] = useState({ top: 0, left: 0 });
   const [showSlashMenu, setShowSlashMenu] = useState(false);
   const [slashPosition, setSlashPosition] = useState({ top: 0, left: 0 });
   const [slashSelectedIndex, setSlashSelectedIndex] = useState(0);
   const [showCloseConfirmation, setShowCloseConfirmation] = useState(false);
-  const plusMenuRef = useRef<HTMLDivElement>(null);
-  const plusMenuPortalRef = useRef<HTMLDivElement>(null);
+  const [drafts, setDrafts] = useState<MemoryDraft[]>([]);
   const emojiPickerRef = useRef<HTMLDivElement>(null);
   const emojiPickerPortalRef = useRef<HTMLDivElement>(null);
   const [selectedAccess, setSelectedAccess] = useState<
@@ -77,12 +131,15 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
   const [isUsingVideo, setIsUsingVideo] = useState(false);
   const [audioRecordingCount, setAudioRecordingCount] = useState(1);
 
-  const { trigger, isMutating } = useSWRMutation(endpoint.memories, fileUploadFetcher);
+  const { trigger, isMutating } = useSWRMutation(endpoint.memories, postFetcher);
   const { files, handleUpload, handleDeleteFile, setFiles } = useFileUpload();
 
   const { values, handleChange, handleSubmit, handleValue, setValues } = useForm({
     initial: { ...initial, ...data?.payload },
     async onSubmit(p) {
+      if (!canUse("memory.create")) {
+        return toast.error("Creating memories is currently disabled.");
+      }
       if (isEmpty(p.title)) return toast.error("Title is required");
       const bodyHtml = editor?.getHTML() || "";
       const hasContent = editor?.getText()?.trim() || files.length > 0;
@@ -99,17 +156,71 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
         uploadedFiles.length > 0 ? { attachments: uploadedFiles } : {}
       );
 
-      const result = await trigger(payload as Parameters<typeof trigger>[0]);
-      if (result?.success) {
-        mutate((key) => typeof key === "string" && key.startsWith(endpoint.stories));
-        open("share-post", { id: result.data?._id || result.data?.id });
-        setValues(initial);
-        setFiles([]);
-        setTags([]);
-        setSelectedAccess([]);
+      try {
+        const result = await trigger(payload as Parameters<typeof trigger>[0]);
+        if (result?.success) {
+          mutate((key) => typeof key === "string" && key.startsWith(endpoint.stories));
+          open("share-post", { id: result.data?._id || result.data?.id });
+          setValues(initial);
+          setFiles([]);
+          setTags([]);
+          setSelectedAccess([]);
+        } else {
+          toast.error(
+            typeof result?.message === "string" ? result.message : "Could not save your story. Try again.",
+          );
+        }
+      } catch (err) {
+        if (parseSubscriptionGateError(err)) {
+          setShowUploadGate(true);
+        }
       }
     },
   });
+
+  const queueFileUpload = useCallback(
+    (file: File) => {
+      if (!canUse("attachments.doc_upload")) {
+        toast.error("File uploads are currently disabled.");
+        return;
+      }
+      const resolvedType = file.type || inferMimeType(file.name);
+      if (!isSupportedFileMime(resolvedType, SUPPORTED_FILE_TYPES)) {
+        toast.error(
+          "This file type isn’t supported. Add images, video, audio, PDF, Word (.doc, .docx), or plain text.",
+        );
+        return;
+      }
+      if (uploadMimeBaseType(resolvedType).startsWith("image/") && !canUse("attachments.image_upload")) {
+        toast.error("Image uploads are currently disabled.");
+        return;
+      }
+      if (uploadMimeBaseType(resolvedType).startsWith("video/") && !canUse("attachments.video_upload")) {
+        toast.error("Video uploads are currently disabled.");
+        return;
+      }
+      if (uploadMimeBaseType(resolvedType).startsWith("audio/") && !canUse("attachments.audio_upload")) {
+        toast.error("Audio uploads are currently disabled.");
+        return;
+      }
+      const isImage = uploadMimeBaseType(resolvedType).startsWith("image/");
+      if (isImage) {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          handleUpload({ id: uuidv4(), file, base64: reader.result as string, progress: 0 });
+        };
+        reader.readAsDataURL(file);
+      } else {
+        handleUpload({ id: uuidv4(), file, progress: 0 });
+      }
+    },
+    [canUse, handleUpload],
+  );
+
+  const queueFileUploadRef = useRef(queueFileUpload);
+  queueFileUploadRef.current = queueFileUpload;
+
+  const latestDirtyRef = useRef<() => boolean>(() => false);
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -122,7 +233,7 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
       Link.configure({
         openOnClick: false,
         HTMLAttributes: {
-          class: "text-blue-500 underline cursor-pointer",
+          class: "text-text-brand-strong underline cursor-pointer",
           target: "_blank",
           rel: "noopener noreferrer",
         },
@@ -133,6 +244,21 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
     editorProps: {
       attributes: {
         class: "prose prose-sm focus:outline-none min-h-[140px] px-4 py-4 text-sm text-text-neutral-strong",
+      },
+      handleDOMEvents: {
+        paste: (_view, event) => {
+          const e = event as ClipboardEvent;
+          const items = Array.from(e.clipboardData?.items || []);
+          const fileItems = items.filter((item) => item.kind === "file");
+          if (fileItems.length === 0) return false;
+          e.preventDefault();
+          fileItems.forEach((item) => {
+            const file = item.getAsFile();
+            if (!file) return;
+            queueFileUploadRef.current(file);
+          });
+          return true;
+        },
       },
     },
     onUpdate: ({ editor }) => {
@@ -160,43 +286,80 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
     },
   });
 
-  const handlePaste = useCallback(
-    (e: ClipboardEvent) => {
-      const items = Array.from(e.clipboardData?.items || []);
-      const fileItems = items.filter((item) => item.kind === "file");
-      if (fileItems.length === 0) return;
-      e.preventDefault();
-      fileItems.forEach((item) => {
-        const file = item.getAsFile();
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          handleUpload({ id: uuidv4(), file, base64: reader.result as string, progress: 0 });
-        };
-        reader.readAsDataURL(file);
-      });
-    },
-    [handleUpload],
-  );
+  latestDirtyRef.current = () =>
+    files.length > 0 ||
+    values.title.trim().length > 0 ||
+    (editor?.getText()?.trim().length ?? 0) > 0 ||
+    tags.length > 0 ||
+    selectedAccess.length > 0;
 
   useEffect(() => {
-    document.addEventListener("paste", handlePaste);
-    return () => document.removeEventListener("paste", handlePaste);
-  }, [handlePaste]);
+    if (!registerCloseGuard) return;
+    return registerCloseGuard("create-memory", () => {
+      if (!latestDirtyRef.current()) return true;
+      setShowCloseConfirmation(true);
+      return false;
+    });
+  }, [registerCloseGuard]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const storedDrafts = localStorage.getItem(DRAFT_STORAGE_KEY);
+    if (!storedDrafts) return;
+    try {
+      const parsed = JSON.parse(storedDrafts) as MemoryDraft[];
+      if (Array.isArray(parsed)) {
+        setDrafts(
+          parsed.map((draft) => ({
+            ...draft,
+            attachments: Array.isArray(draft.attachments) ? draft.attachments : [],
+          })),
+        );
+      }
+    } catch {
+      setDrafts([]);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const hasDraftContent = values.title.trim().length > 0 || (editor?.getText()?.trim().length ?? 0) > 0;
+    if (!hasDraftContent) return;
+    const uploadedAttachments = files
+      .map((file) => file.uploadedFile)
+      .filter((file): file is NonNullable<IOnUploadPayload["uploadedFile"]> => Boolean(file));
+
+    const timeout = window.setTimeout(() => {
+      const nextDraft: MemoryDraft = {
+        id: uuidv4(),
+        title: values.title,
+        body: editor?.getHTML() || "",
+        tags,
+        attachments: uploadedAttachments,
+        updatedAt: new Date().toISOString(),
+      };
+
+      setDrafts((prev) => {
+        const deduped = prev.filter((draft) => draft.title !== nextDraft.title || draft.body !== nextDraft.body);
+        const next = [nextDraft, ...deduped].slice(0, MAX_DRAFTS);
+        localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(next));
+        return next;
+      });
+    }, 900);
+
+    return () => window.clearTimeout(timeout);
+  }, [values.title, values.body, tags, editor, files]);
 
   useEffect(() => {
     const handle = (e: MouseEvent) => {
       const target = e.target as Node;
       if (
-        plusMenuRef.current?.contains(target) ||
-        plusMenuPortalRef.current?.contains(target) ||
         emojiPickerRef.current?.contains(target) ||
         emojiPickerPortalRef.current?.contains(target)
       ) {
         return;
       }
       setShowEmoji(false);
-      setShowPlusMenu(false);
     };
     document.addEventListener("click", handle, true);
     return () => document.removeEventListener("click", handle, true);
@@ -204,18 +367,7 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = Array.from(e.target.files || []);
-    selectedFiles.forEach((file) => {
-      const isImage = file.type.startsWith("image/");
-      if (isImage) {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          handleUpload({ id: uuidv4(), file, base64: reader.result as string, progress: 0 });
-        };
-        reader.readAsDataURL(file);
-      } else {
-        handleUpload({ id: uuidv4(), file, progress: 0 });
-      }
-    });
+    selectedFiles.forEach(queueFileUpload);
     e.target.value = "";
   };
 
@@ -256,20 +408,14 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
     reader.readAsDataURL(videoRecordedFile);
   };
 
-  const handleClose = () => {
-    if (files.length > 0) {
-      setShowCloseConfirmation(true);
-    } else {
-      close("create-memory");
-    }
-  };
+  const handleClose = () => close("create-memory");
 
   const handleConfirmClose = async () => {
     setShowCloseConfirmation(false);
     const deletes = files.filter((f) => f.uploadedFile).map((f) => handleDeleteFile(f));
     await Promise.all(deletes);
     setFiles([]);
-    close("create-memory");
+    close("create-memory", { force: true });
   };
 
   const handleLinkClick = () => {
@@ -300,6 +446,32 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
         .focus()
         .run();
     }
+  };
+
+  const handleLoadDraft = (draft: MemoryDraft) => {
+    setValues((prev) => ({ ...prev, title: draft.title, body: draft.body }));
+    setTags(draft.tags || []);
+    const draftFiles: IOnUploadPayload[] = (draft.attachments || []).map((attachment) => ({
+      id: attachment._id || uuidv4(),
+      file: null,
+      progress: 100,
+      uploadedFile: attachment,
+    }));
+    setFiles(draftFiles);
+    editor?.commands.setContent(draft.body || "");
+  };
+
+  const handleDeleteDraft = (draftId: string) => {
+    setDrafts((prev) => {
+      const next = prev.filter((draft) => draft.id !== draftId);
+      localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(next));
+      return next;
+    });
+  };
+
+  const handleClearAllDrafts = () => {
+    setDrafts([]);
+    localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify([]));
   };
 
   const handleSlashCommandSelect = (command: (typeof SLASH_COMMANDS)[0]) => {
@@ -334,19 +506,21 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
   const previousUrl = editor?.getAttributes("link").href || "";
   const isUploading = files.some((f) => !f.uploadedFile);
 
-  const toolbarBtn = (isActive: boolean, onClick: () => void, children: React.ReactNode, title?: string) => (
-    <button
+  const toolbarBtn = (isActive: boolean, onClick: () => void, children: ReactNode, title?: string) => (
+    <Button
       type="button"
       onMouseDown={(e) => e.preventDefault()}
       onClick={onClick}
       title={title}
+      variant="ghost"
+      size="icon"
       className={cn(
-        "size-9 flex items-center justify-center rounded-lg transition-colors hover:bg-fill-neutral-weak",
+        "size-9 rounded-lg text-icon-neutral-strong transition-colors hover:bg-fill-neutral-weak [&_svg]:pointer-events-none",
         isActive && ACTIVE_BG,
       )}
     >
       {children}
-    </button>
+    </Button>
   );
 
   const formContent = (
@@ -363,7 +537,7 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
         ref={fileInputAllRef}
         type="file"
         multiple
-        accept={SUPPORTED_FILE_TYPES.join(",")}
+        accept={MEMORY_ATTACHMENT_ACCEPT}
         onChange={handleFileSelect}
         className="hidden"
       />
@@ -376,19 +550,47 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
         className="hidden"
       />
 
-      {/* Title */}
-      <input
-        placeholder="Enter title here"
-        value={values.title}
-        name="title"
-        onChange={handleChange}
-        className="create-memory-title font-inter text-base w-full outline-none border border-stroke-neutral-weaker rounded-xl px-4 py-3 text-text-neutral-strong"
-      />
+      {showUploadGate ? (
+        <div className="mb-3">
+          <UpgradePrompt
+            feature="storage"
+            variant="inline"
+            upgradeLabel="View plans"
+            onUpgrade={() => navigate("/pricing")}
+            onDismiss={() => setShowUploadGate(false)}
+          />
+        </div>
+      ) : null}
 
-      {/* Editor box */}
-      <div className="rounded-[24px] border border-stroke-neutral-weaker flex flex-col overflow-hidden">
+      {/* Title */}
+      <div className="space-y-2">
+        <Label htmlFor="create-memory-title" className="text-text-neutral-weak">
+          Title
+        </Label>
+        <Input
+          id="create-memory-title"
+          placeholder="Enter title here"
+          value={values.title}
+          name="title"
+          onChange={handleChange}
+          className={cn(
+            "font-inter text-base md:text-base w-full rounded-xl border-stroke-neutral-weak px-4 py-3 h-auto text-text-neutral-strong bg-transparent",
+            "placeholder:text-neutral-weak transition-[color,box-shadow,border-color]",
+            "focus-visible:ring-inset",
+          )}
+        />
+      </div>
+
+      {/* Composer: bordered region (not nested Card) to avoid extra group/card padding */}
+      <section
+        className={cn(
+          "flex flex-col overflow-hidden rounded-[24px] border border-stroke-neutral-weak bg-card text-card-foreground shadow-none",
+          "transition-[color,box-shadow,border-color]",
+          "focus-within:border-ring focus-within:ring-[3px] focus-within:ring-inset focus-within:ring-ring/50",
+        )}
+      >
         {/* Formatting toolbar */}
-        <div className="flex items-center gap-0.5 pt-4 px-4 pb-3">
+        <div className="flex items-center gap-0.5 pt-1 px-3 pb-1">
           {toolbarBtn(
             !!editor?.isActive("heading", { level: 2 }),
             () => editor?.chain().focus().toggleHeading({ level: 2 }).run(),
@@ -420,22 +622,104 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
             "Underline",
           )}
 
-          <div className="w-px h-5 bg-stroke-neutral-weaker mx-1.5" />
+          <Separator orientation="vertical" className="mx-1 h-5 bg-stroke-neutral-weak" />
 
           {toolbarBtn(!!editor?.isActive("link"), handleLinkClick, <LinkIcon width={16} height={11} />, "Link")}
           {toolbarBtn(
             !!editor?.isActive("bulletList"),
             () => editor?.chain().focus().toggleBulletList().run(),
             <UnorderedListIcon width={16} height={14} />,
-            "List",
+            "Bullet list",
+          )}
+          {toolbarBtn(
+            !!editor?.isActive("orderedList"),
+            () => editor?.chain().focus().toggleOrderedList().run(),
+            <ListOrdered className="size-4" />,
+            "Numbered list",
+          )}
+          {toolbarBtn(
+            !!editor?.isActive("blockquote"),
+            () => editor?.chain().focus().toggleBlockquote().run(),
+            <Quote className="size-4" />,
+            "Quote",
           )}
 
-          <button
-            type="button"
-            className="ml-auto font-inter text-sm text-text-neutral-weak hover:text-text-neutral-strong px-2 py-1 rounded-lg hover:bg-fill-neutral-weak transition-colors"
-          >
-            Drafts
-          </button>
+          <Separator orientation="vertical" className="mx-1 h-5 bg-stroke-neutral-weak" />
+
+          <div className="ml-auto">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="font-inter text-sm text-text-neutral-weak hover:text-text-neutral-strong"
+                >
+                  Drafts
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="end"
+                side="bottom"
+                className="w-[280px] max-h-[280px] overflow-y-auto border border-stroke-neutral-weak bg-popover text-popover-foreground"
+              >
+                {drafts.length > 0 ? (
+                  <div className="mb-1 flex items-center justify-end px-2 py-1">
+                    <Button
+                      type="button"
+                      onClick={handleClearAllDrafts}
+                      variant="ghost"
+                      size="sm"
+                      className="h-auto px-1 py-0 text-xs text-text-neutral-weak hover:text-text-neutral-strong"
+                    >
+                      Clear all
+                    </Button>
+                  </div>
+                ) : null}
+                {drafts.length === 0 ? (
+                  <div className="px-3 py-2 text-sm text-text-neutral-weak">No drafts yet</div>
+                ) : (
+                  drafts.map((draft) => (
+                    <div
+                      key={draft.id}
+                      className="flex items-start gap-2 rounded-lg px-2 py-1 hover:bg-fill-neutral-weaker transition-colors"
+                    >
+                      <Button
+                        type="button"
+                        onClick={() => handleLoadDraft(draft)}
+                        variant="ghost"
+                        size="sm"
+                        className="min-w-0 flex-1 h-auto justify-start rounded-lg px-1 py-1 text-left"
+                      >
+                        <div className="text-sm font-medium text-text-neutral-strong truncate">
+                          {draft.title || "Untitled draft"}
+                        </div>
+                        <div className="mt-0.5 text-xs text-text-neutral-weak truncate">
+                          {(draft.body || "").replace(/<[^>]+>/g, "").trim() || "No content"}
+                        </div>
+                        <div className="mt-1 text-[11px] text-text-neutral-weaker">
+                          {new Date(draft.updatedAt).toLocaleString()}
+                        </div>
+                      </Button>
+                      <Button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteDraft(draft.id);
+                        }}
+                        variant="ghost"
+                        size="sm"
+                        className="mt-1 h-auto rounded-md px-2 py-1 text-[11px] text-text-neutral-weak hover:text-text-neutral-strong"
+                        title="Delete draft"
+                      >
+                        Delete
+                      </Button>
+                    </div>
+                  ))
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
 
         {/* Editor */}
@@ -465,127 +749,137 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
           </div>
         </div>
 
-        {/* File thumbnails */}
-        <FileThumbnails files={files} onRemove={handleRemoveFile} />
-
-        {/* Icons bar */}
-        <div className="mt-6 mx-4 mb-4" onClick={(e) => e.stopPropagation()}>
-          <div className="bg-bg-neutral-weak rounded-2xl flex items-center justify-start gap-3 px-[12px] py-[9px]">
-            {/* Plus menu */}
-            <div ref={plusMenuRef} className="relative h-[40px]">
-              <button
-                type="button"
-                onClick={() => {
-                  setShowPlusMenu((p) => !p);
-                  setShowEmoji(false);
+        {/* Attachments & media toolbar */}
+        <div className="mt-3 mb-3 w-full min-w-0 px-3" onClick={(e) => e.stopPropagation()}>
+          <div className="flex min-h-[48px] items-center justify-start gap-1 rounded-2xl border border-stroke-neutral-weak bg-fill-neutral-weaker/60 px-2 py-1.5">
+              {/* Attachments & media */}
+              <DropdownMenu
+                onOpenChange={(open) => {
+                  if (open) setShowEmoji(false);
                 }}
-                className="shrink-0 rounded-[10px] overflow-hidden hover:opacity-80 transition-opacity"
               >
-                <img src={addPlusSvg} alt="Add" width={40} height={40} />
-              </button>
-              {showPlusMenu &&
-                createPortal(
-                  <div
-                    ref={plusMenuPortalRef}
-                    className="fixed z-[9999] bg-background rounded-xl shadow-lg border border-stroke-neutral-weaker py-1 min-w-[180px]"
-                    style={(() => {
-                      const rect = plusMenuRef.current?.getBoundingClientRect();
-                      return rect
-                        ? {
-                            left: rect.left,
-                            bottom: window.innerHeight - rect.top + 12,
-                          }
-                        : { left: 0, bottom: 0 };
-                    })()}
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-lg"
+                    className="rounded-xl text-icon-neutral-strong hover:bg-fill-neutral-weak"
+                    aria-label="Add attachment"
                   >
-                    <button
-                      type="button"
-                      onClick={() => { fileInputMediaRef.current?.click(); setShowPlusMenu(false); }}
-                      className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-text-neutral-weak hover:bg-fill-neutral-weaker text-left"
-                    >
-                      <span className="text-base">📷</span> Photos & Videos
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => { fileInputAudioRef.current?.click(); setShowPlusMenu(false); }}
-                      className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-text-neutral-weak hover:bg-fill-neutral-weaker text-left"
-                    >
-                      <span className="text-base">🎵</span> Audio
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => { fileInputAllRef.current?.click(); setShowPlusMenu(false); }}
-                      className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-text-neutral-weak hover:bg-fill-neutral-weaker text-left"
-                    >
-                      <span className="text-base">📎</span> Files
-                    </button>
-                  </div>,
-                  document.body,
-                )}
-            </div>
+                    <Plus className="size-5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  side="top"
+                  align="start"
+                  className="w-56 border border-stroke-neutral-weak bg-popover text-popover-foreground"
+                >
+                  <DropdownMenuLabel className="text-text-neutral-weaker">Add to story</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    className="gap-2 text-text-neutral-weak"
+                    onClick={() => fileInputMediaRef.current?.click()}
+                  >
+                    <ImageIcon className="size-4 shrink-0 text-icon-neutral-strong" />
+                    Photos & videos
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="gap-2 text-text-neutral-weak"
+                    onClick={() => fileInputAudioRef.current?.click()}
+                  >
+                    <Music className="size-4 shrink-0 text-icon-neutral-strong" />
+                    Audio files
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="gap-2 text-text-neutral-weak"
+                    onClick={() => fileInputAllRef.current?.click()}
+                  >
+                    <Paperclip className="size-4 shrink-0 text-icon-neutral-strong" />
+                    Documents & files
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <p className="px-2 pb-2 text-[11px] leading-snug text-text-neutral-weaker">
+                    PDF, Word (.doc, .docx), plain text, and other supported types.
+                  </p>
+                </DropdownMenuContent>
+              </DropdownMenu>
 
-            {/* Emoji */}
-            <div ref={emojiPickerRef} className="relative">
-              <button
+              {/* Emoji */}
+              <div ref={emojiPickerRef} className="relative">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-lg"
+                  onClick={() => setShowEmoji((p) => !p)}
+                  className="rounded-xl text-icon-neutral-strong hover:bg-fill-neutral-weaker"
+                  aria-label="Insert emoji"
+                >
+                  <Smile className="size-5" />
+                </Button>
+                {showEmoji &&
+                  createPortal(
+                    <div
+                      ref={emojiPickerPortalRef}
+                      className="fixed z-[9999]"
+                      style={(() => {
+                        const rect = emojiPickerRef.current?.getBoundingClientRect();
+                        return rect
+                          ? {
+                              left: rect.left,
+                              bottom: window.innerHeight - rect.top + 12,
+                            }
+                          : { left: 0, bottom: 0 };
+                      })()}
+                    >
+                      <Card className="overflow-hidden border-stroke-neutral-weak p-0 shadow-lg">
+                        <Picker
+                          data={emojiData}
+                          onEmojiSelect={(e: { native: string }) => {
+                            editor?.chain().focus().insertContent(e.native).run();
+                            setShowEmoji(false);
+                          }}
+                          theme="light"
+                          previewPosition="none"
+                        />
+                      </Card>
+                    </div>,
+                    document.body,
+                  )}
+              </div>
+
+              <Separator orientation="vertical" className="mx-1 h-6 bg-stroke-neutral-weak" />
+
+              <Button
                 type="button"
-                onClick={() => { setShowEmoji((p) => !p); setShowPlusMenu(false); }}
-                className="size-10 flex items-center justify-center rounded-xl hover:bg-black/5 transition-colors"
+                variant="ghost"
+                size="icon-lg"
+                onClick={() => push("audio-recorder", { onFinish: handleAddAudioFile, recordingNumber: audioRecordingCount })}
+                className="rounded-xl text-icon-neutral-strong hover:bg-fill-neutral-weaker"
+                title="Record audio"
+                aria-label="Record audio"
               >
-                <img src={smileySvg} alt="Emoji" width={20} height={20} />
-              </button>
-              {showEmoji &&
-                createPortal(
-                  <div
-                    ref={emojiPickerPortalRef}
-                    className="fixed z-[9999] shadow-xl"
-                    style={(() => {
-                      const rect = emojiPickerRef.current?.getBoundingClientRect();
-                      return rect
-                        ? {
-                            left: rect.left,
-                            bottom: window.innerHeight - rect.top + 12,
-                          }
-                        : { left: 0, bottom: 0 };
-                    })()}
-                  >
-                    <Picker
-                      data={emojiData}
-                      onEmojiSelect={(e: { native: string }) => {
-                        editor?.chain().focus().insertContent(e.native).run();
-                        setShowEmoji(false);
-                      }}
-                      theme="light"
-                      previewPosition="none"
-                    />
-                  </div>,
-                  document.body,
-                )}
-            </div>
+                <Mic className="size-5" />
+              </Button>
 
-            <div className="w-px h-6 bg-stroke-neutral-weak shrink-0" />
-
-            {/* Record audio */}
-            <button
-              type="button"
-              onClick={() => push("audio-recorder", { onFinish: handleAddAudioFile, recordingNumber: audioRecordingCount })}
-              className="size-10 flex items-center justify-center rounded-xl hover:bg-black/5 transition-colors"
-              title="Record audio"
-            >
-              <img src={micSvg} alt="Record audio" width={20} height={20} />
-            </button>
-
-            {/* Record video */}
-            <button
-              type="button"
-              onClick={() => { setVideoRecordedFile(null); setShowVideoRecorder(true); }}
-              className="size-10 flex items-center justify-center rounded-xl hover:bg-black/5 transition-colors"
-              title="Record video"
-            >
-              <img src={videoRecorderSvg} alt="Record video" width={20} height={20} />
-            </button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-lg"
+                onClick={() => {
+                  setVideoRecordedFile(null);
+                  setShowVideoRecorder(true);
+                }}
+                className="rounded-xl text-icon-neutral-strong hover:bg-fill-neutral-weaker"
+                title="Record video"
+                aria-label="Record video"
+              >
+                <Video className="size-5" />
+              </Button>
           </div>
         </div>
-      </div>
+      </section>
+
+      <FileThumbnails files={files} onRemove={handleRemoveFile} />
 
       <AccessField value={selectedAccess} onChange={setSelectedAccess} />
 
@@ -600,22 +894,25 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
 
   const footer = (
     <div className="flex items-center justify-end gap-3">
-      <button
+      <Button
         type="button"
         onClick={handleClose}
-        className="h-11 px-6 rounded-full font-inter font-semibold text-sm text-text-neutral-weak border border-stroke-neutral-weaker hover:bg-fill-neutral-weaker transition-colors"
+        variant="outline"
+        size="lg"
+        className="h-11 rounded-full border-stroke-neutral-weak bg-bg-neutral px-6 font-inter font-semibold text-sm text-text-neutral-weak hover:bg-fill-neutral-weaker"
       >
         Dismiss
-      </button>
-      <button
+      </Button>
+      <Button
         type="button"
         onClick={handleSubmit}
         disabled={isMutating || isUploading}
-        className="h-11 rounded-full bg-fill-brand-strong px-6 font-inter font-semibold text-sm text-white transition-opacity hover:opacity-90 disabled:opacity-50 flex items-center gap-2"
+        size="lg"
+        className="h-11 rounded-full bg-fill-brand-strong px-6 font-inter font-semibold text-sm text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
       >
         Continue
         <Spinner loading={isMutating} className="size-4!" />
-      </button>
+      </Button>
     </div>
   );
 
@@ -630,96 +927,110 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
     )
     : null;
 
-  // Video recorder portal popup
-  const videoRecorderPortal = showVideoRecorder
-    ? createPortal(
-      <div
-        className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 px-4"
+  const resetVideoRecorder = () => {
+    videoRecorderRef.current?.reset?.();
+    videoRecorderRef.current?.resetStream?.();
+    setVideoRecordedFile(null);
+  };
+
+  const videoRecorderDialog = (
+    <Dialog
+      open={showVideoRecorder}
+      onOpenChange={(open) => {
+        if (!open) {
+          resetVideoRecorder();
+          setShowVideoRecorder(false);
+        }
+      }}
+    >
+      <DialogContent
+        showCloseButton={false}
+        className="max-h-[90vh] gap-0 overflow-hidden rounded-[28px] border border-stroke-neutral-weak bg-background p-0 sm:max-w-[480px]"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="bg-background rounded-[28px] w-full max-w-[480px] overflow-hidden shadow-2xl" onClick={(e) => e.stopPropagation()}>
-          <div className="flex items-center justify-between px-6 pt-6 pb-4">
+        <DialogHeader className="space-y-0 border-b border-stroke-neutral-weak px-6 pt-6 pb-4">
+          <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-2">
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                <path d="M6 0L7.2 4H11L8 6.5L9.2 10.5L6 8L2.8 10.5L4 6.5L1 4H4.8L6 0Z" fill="#7C3AED" />
-              </svg>
-              <span className="font-inter text-xs font-bold text-text-brand-strong tracking-widest uppercase">Record Video</span>
+              <span className="size-2.5 shrink-0 rounded-full bg-fill-brand-strong" aria-hidden />
+              <DialogTitle className="font-inter text-xs font-bold uppercase tracking-widest text-text-brand-strong">
+                Record video
+              </DialogTitle>
             </div>
-            <button
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
               onClick={() => {
-                if (videoRecorderRef.current?.reset) videoRecorderRef.current.reset();
-                if (videoRecorderRef.current?.resetStream) videoRecorderRef.current.resetStream();
-                setVideoRecordedFile(null);
+                resetVideoRecorder();
                 setShowVideoRecorder(false);
               }}
-              className="size-8 flex items-center justify-center rounded-full bg-fill-neutral-weaker hover:bg-fill-neutral-weak transition-colors"
+              className="rounded-full bg-fill-neutral-weaker text-icon-neutral-weak hover:bg-fill-neutral-weak"
+              aria-label="Close recorder"
             >
               <TimesIcon width={10} height={10} />
-            </button>
+            </Button>
           </div>
-          <div className="px-6 pb-6">
-            <VideoRecorder
-              ref={videoRecorderRef}
-              onStart={() => { }}
-              onFinish={setVideoRecordedFile}
-            />
-            {videoRecordedFile && (
-              <div className="flex items-center gap-3 mt-4">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setVideoRecordedFile(null);
-                    if (videoRecorderRef.current?.reset) videoRecorderRef.current.reset();
-                    if (videoRecorderRef.current?.resetStream) videoRecorderRef.current.resetStream();
-                  }}
-                  className="flex-1 h-10 rounded-full bg-fill-neutral-weaker text-text-neutral-weak font-inter font-semibold text-sm hover:bg-fill-neutral-weak transition-colors"
-                >
-                  Re-record
-                </button>
-                <button
-                  type="button"
-                  onClick={handleUseVideo}
-                  disabled={isUsingVideo}
-                  className="flex-1 h-10 rounded-full bg-fill-neutral-strong text-white font-inter font-semibold text-sm hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2 transition-opacity"
-                >
-                  Add to post
-                  <Spinner loading={isUsingVideo} className="size-4!" />
-                </button>
-              </div>
-            )}
-          </div>
+        </DialogHeader>
+        <div className="px-6 pb-6 pt-4">
+          <VideoRecorder ref={videoRecorderRef} onStart={() => {}} onFinish={setVideoRecordedFile} />
+          {videoRecordedFile ? (
+            <DialogFooter className="mt-4 flex w-full flex-col gap-3 sm:flex-row sm:justify-stretch">
+              <Button
+                type="button"
+                variant="outline"
+                size="lg"
+                onClick={() => {
+                  resetVideoRecorder();
+                }}
+                className="h-10 flex-1 rounded-full border-stroke-neutral-weak bg-fill-neutral-weaker font-inter font-semibold text-sm text-text-neutral-weak hover:bg-fill-neutral-weak"
+              >
+                Re-record
+              </Button>
+              <Button
+                type="button"
+                size="lg"
+                onClick={handleUseVideo}
+                disabled={isUsingVideo}
+                className="h-10 flex-1 rounded-full bg-fill-neutral-strong font-inter font-semibold text-sm text-inverse-strong hover:opacity-90 disabled:opacity-50"
+              >
+                Add to post
+                <Spinner loading={isUsingVideo} className="size-4!" />
+              </Button>
+            </DialogFooter>
+          ) : null}
         </div>
-      </div>,
-      document.body,
-    )
-    : null;
+      </DialogContent>
+    </Dialog>
+  );
 
   // Mobile
   if (isMobile) {
     return (
       <>
         <Sheet detent="content" isOpen onClose={handleClose} snapPoints={[0.5, 0.75, 1]} initialSnap={1}>
-          <Sheet.Container className="bg-background">
-            <Sheet.Header className="bg-background rounded-t-3xl" />
-            <Sheet.Content className="bg-background px-4 pb-6 overflow-y-auto">
+          <Sheet.Container className="bg-v3-bg">
+            <Sheet.Header className="rounded-t-3xl bg-v3-bg" />
+            <Sheet.Content className="overflow-y-auto bg-v3-bg px-4 pb-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="font-garamond text-xl font-medium text-text-neutral-strong">Add New Story</h2>
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
+                  size="icon-sm"
                   onClick={handleClose}
-                  className="size-8 flex items-center justify-center rounded-full bg-fill-neutral-weaker hover:bg-fill-neutral-weak transition-colors"
+                  className="rounded-full bg-fill-neutral-weaker text-icon-neutral-weak hover:bg-fill-neutral-weak"
                 >
                   <TimesIcon width={10} height={10} />
-                </button>
+                </Button>
               </div>
               <div className="space-y-4">{formContent}</div>
-              <div className="mt-4 pt-4 border-t border-stroke-neutral-weaker">{footer}</div>
+              <div className="mt-4 pt-4 border-t border-stroke-neutral-weak">{footer}</div>
             </Sheet.Content>
           </Sheet.Container>
           <Sheet.Backdrop onTap={handleClose} />
         </Sheet>
         {closeConfirmationPortal}
-        {videoRecorderPortal}
+        {videoRecorderDialog}
       </>
     );
   }
@@ -727,26 +1038,23 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
   // Desktop
   return (
     <>
-<div
-      className="absolute top-0 right-0 bottom-0 w-full max-w-[520px] bg-background flex flex-col shadow-2xl rounded-[24px] overflow-hidden"
-      onClick={(e) => e.stopPropagation()}
-    >
-      {/* Header */}
-      <div className="flex items-center px-6 py-5 border-b border-stroke-neutral-weaker shrink-0">
-        <h2 className="font-garamond text-2xl font-medium text-text-neutral-strong">Add New Story</h2>
-      </div>
-
-      {/* Scrollable content */}
-      <div className="flex-1 overflow-y-auto hide-scrollbar px-6 pt-5 pb-16 space-y-5">
-        {formContent}
-      </div>
-
-      {/* Sticky footer */}
-      <div className="shrink-0 border-t border-stroke-neutral-weaker px-6 py-4">{footer}</div>
-    </div>
+      <Card
+        className="absolute top-0 right-0 bottom-0 flex h-full w-full max-w-[520px] flex-col gap-0 overflow-hidden rounded-[24px] border-stroke-neutral-weak bg-v3-bg py-0 shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <CardHeader className="shrink-0 border-b border-stroke-neutral-weak px-6 py-5">
+          <h2 className="font-garamond text-2xl font-medium text-text-neutral-strong">
+            Add New Story
+          </h2>
+        </CardHeader>
+        <CardContent className="flex min-h-0 flex-1 flex-col overflow-y-auto px-6 pt-5 pb-16 hide-scrollbar space-y-5">
+          {formContent}
+        </CardContent>
+        <CardFooter className="shrink-0 border-t border-stroke-neutral-weak px-6 py-4">{footer}</CardFooter>
+      </Card>
 
       {closeConfirmationPortal}
-      {videoRecorderPortal}
+      {videoRecorderDialog}
     </>
   );
 }

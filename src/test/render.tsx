@@ -4,6 +4,7 @@ import { SWRConfig } from "swr";
 import { StoreProvider } from "@/hooks/use-store";
 import { ModalProvider } from "@/hooks/use-modal";
 import { ChatProvider } from "@/hooks/use-chat";
+import { SubscriptionProvider } from "@/contexts/subscription";
 import { fetcher } from "@/api/fetcher";
 import type { ReactElement } from "react";
 import { seedAuth, clearAuth } from "./auth-helpers";
@@ -36,12 +37,14 @@ function createWrapper(options: ProviderOptions = {}) {
                 provider: () => new Map(),
               }}
             >
-              <MemoryRouter
-                initialEntries={[route]}
-                {...routerProps}
-              >
-                {children}
-              </MemoryRouter>
+              <SubscriptionProvider>
+                <MemoryRouter
+                  initialEntries={[route]}
+                  {...routerProps}
+                >
+                  {children}
+                </MemoryRouter>
+              </SubscriptionProvider>
             </SWRConfig>
           </ChatProvider>
         </ModalProvider>

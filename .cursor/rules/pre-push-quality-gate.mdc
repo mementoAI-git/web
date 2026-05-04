@@ -1,0 +1,11 @@
+---
+description: Enforce lint and build before every push
+alwaysApply: true
+---
+
+# Push Quality Gate
+
+- Before any `git push`, run checks in this order: `npm run lint` then `npm run build`.
+- Do not push if either command fails.
+- If checks fail, fix the issue first, then rerun both commands sequentially.
+- When asked to push, report lint/build outcomes before executing the push.

@@ -1,4 +1,5 @@
 import { ModalCloseBtn } from "../modalLayout";
+import { Button } from "@/components/ui/button";
 
 interface CloseWithFilesConfirmationProps {
   open?: boolean;
@@ -6,34 +7,51 @@ interface CloseWithFilesConfirmationProps {
   onConfirm: () => void;
 }
 
-export function CloseWithFilesConfirmation({ open = false, close, onConfirm }: CloseWithFilesConfirmationProps) {
+export function CloseWithFilesConfirmation({
+  open = false,
+  close,
+  onConfirm,
+}: CloseWithFilesConfirmationProps) {
   return (
-    <div className={`modal-overlay z-[100] bg-overlay-backdrop ${open ? "flex" : "hidden"}`}>
+    <div
+      className={`modal-overlay z-[100] bg-overlay-backdrop ${open ? "flex" : "hidden"}`}
+      role="alertdialog"
+      aria-modal="true"
+      aria-labelledby="discard-story-title"
+      aria-describedby="discard-story-desc"
+    >
       <div className="modal-container w-full max-w-full sm:!max-w-96 md:!max-w-120 p-4 sm:p-6">
         <ModalCloseBtn onClick={close} />
         <div className="space-y-4 sm:space-y-6 mt-4 sm:mt-5">
           <div className="space-y-3 sm:space-y-4">
-            <h4 className="modal-title text-lg sm:text-xl">Close with files</h4>
-            <span className="text-grey-600 text-sm font-inter">
-              You have files attached to this memory. Are you sure you want to close without saving? Any unsaved changes will be lost.
-            </span>
+            <h4 id="discard-story-title" className="modal-title text-lg sm:text-xl font-semibold text-text-neutral-strong">
+              Discard this story?
+            </h4>
+            <p id="discard-story-desc" className="text-sm font-inter text-text-neutral-weak leading-relaxed">
+              You have unsaved text, attachments, tags, or access settings. If you close now, those changes will be
+              lost.
+            </p>
           </div>
-          <div className="flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-4">
-            <button
-              className="w-full sm:flex-1 cursor-pointer bg-white/1 border border-stroke-neutral-weak rounded-lg h-10 font-inter font-semibold text-sm shadow"
+          <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 sm:gap-4">
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full sm:flex-1 h-10 rounded-lg border-stroke-neutral-weak bg-bg-neutral font-inter font-semibold text-sm text-text-neutral-strong"
               onClick={close}
             >
-              Cancel
-            </button>
-            <button
+              Keep editing
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              className="w-full sm:flex-1 h-10 rounded-lg font-inter font-semibold text-sm"
               onClick={onConfirm}
-              className="w-full sm:flex-1 cursor-pointer bg-orange-500 text-white rounded-lg h-10 font-inter font-semibold text-sm"
             >
-              Yes, Close
-            </button>
+              Discard
+            </Button>
           </div>
         </div>
       </div>
     </div>
-  )
+  );
 }

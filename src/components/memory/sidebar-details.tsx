@@ -1,5 +1,7 @@
 "use client";
 
+import { useCallback, useEffect, useState } from "react";
+
 import PropsItem from "@/components/props-item";
 import type { IMemory } from "@/utility/interface";
 import { getPostTypeLabel, type PostTypeSource } from "@/utility/memory";
@@ -10,7 +12,6 @@ import {
   LockIcon,
   ClipIcon,
   TagIcon,
-  TimesIcon,
   EditIcon,
   TrashIcon,
 } from "@/components/icons";
@@ -25,6 +26,37 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import * as motion from "motion/react-client";
 import { ChatPreferencesPanel } from "@/components/modal/chat-settings/chat-preferences-panel";
+import { HostChatEnrichmentBar } from "@/features/host-chat/components/host-chat-enrichment-bar";
+import { resolveSidebarDesktopWidthPx } from "@/components/memory/sidebar-desktop-width";
+
+function useAnimatedSidebarWidthPx(
+  isOpen: boolean,
+  wideChatPanel: boolean,
+): number {
+  const compute = useCallback(() => {
+    if (typeof window === "undefined") {
+      return isOpen ?
+          resolveSidebarDesktopWidthPx(1440, { wideChatPanel }) :
+          0;
+    }
+    if (!isOpen) return 0;
+    return resolveSidebarDesktopWidthPx(window.innerWidth, {
+      wideChatPanel,
+    });
+  }, [isOpen, wideChatPanel]);
+
+  const [widthPx, setWidthPx] = useState(() => compute());
+
+  useEffect(() => {
+    setWidthPx(compute());
+    if (typeof window === "undefined") return;
+    const onResize = () => setWidthPx(compute());
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, [compute]);
+
+  return widthPx;
+}
 
 export type MemorySidebarQuickActions = {
   onViewFullDetails: () => void;
@@ -46,6 +78,9 @@ interface SidebarDetailsProps {
   enableChatPreferencesTab?: boolean;
   activeTab?: SidebarPanelTab;
   onTabChange?: (tab: SidebarPanelTab) => void;
+  /** Enrichment stats to show in the Memory tab (moved from conversation toolbar). */
+  enrichmentScore?: number;
+  deltaToday?: number;
   /**
    * Desktop only. `overlay` = fixed right panel + dimmed backdrop (stories, etc.).
    * `inline` = third column in page flex row, no backdrop (chat conversation).
@@ -62,6 +97,10 @@ interface ContentProps {
   enableChatPreferencesTab?: boolean;
   activeTab?: SidebarPanelTab;
   onTabChange?: (tab: SidebarPanelTab) => void;
+  /** Enrichment stats to show in the Memory tab. */
+  enrichmentScore?: number;
+  deltaToday?: number;
+  desktopLayout?: "overlay" | "inline";
 }
 
 const sectionBadgeClass =
@@ -77,12 +116,23 @@ function MemorySections({
   quickActions,
   open,
   runAndMaybeCloseMobile,
-}: Pick<ContentProps, "memory" | "isMobile" | "source" | "quickActions"> & {
+  enrichmentScore,
+  deltaToday,
+}: Pick<ContentProps, "memory" | "isMobile" | "source" | "quickActions" | "enrichmentScore" | "deltaToday"> & {
   open: ReturnType<typeof useModal>["open"];
   runAndMaybeCloseMobile: (fn: () => void) => void;
 }) {
   return (
     <>
+      {enrichmentScore !== undefined && (
+        <div className="mb-4">
+          <HostChatEnrichmentBar
+            enrichmentScore={enrichmentScore}
+            deltaToday={deltaToday ?? 0}
+            className="w-full !justify-start"
+          />
+        </div>
+      )}
       {quickActions ? (
         <>
           <div className="space-y-1">
@@ -220,74 +270,41 @@ function MemorySections({
 
 function Content({
   memory,
-  onClose,
+  onClose: _onClose,
   isMobile = false,
   source,
   quickActions,
   enableChatPreferencesTab = false,
   activeTab = "memory",
-  onTabChange,
+  onTabChange: _onTabChange,
+  enrichmentScore,
+  deltaToday,
+  desktopLayout = "overlay",
 }: ContentProps) {
   const { open } = useModal();
 
   const runAndMaybeCloseMobile = (fn: () => void) => {
     fn();
-    if (isMobile) onClose();
+    if (isMobile) _onClose();
   };
 
   const showChat = enableChatPreferencesTab && activeTab === "chat";
+  const isDesktopOverlayCard = !isMobile && desktopLayout === "overlay";
 
   return (
     <div
       className={cn(
-        "flex h-full w-full min-w-0 flex-col gap-0 p-3 sm:p-4 lg:p-6",
-        showChat ? "min-w-[min(100%,320px)]" : "min-w-[min(100%,287px)]",
+        "flex h-full w-full min-w-0 max-w-full flex-col gap-0 bg-v3-bg",
+        showChat ? "p-2.5 sm:p-3 md:p-3 lg:p-6" : "p-3 sm:p-4 lg:p-6",
+        showChat ? "w-full min-w-0" : "min-w-[min(100%,287px)]",
+        showChat && "min-h-0 flex-1 overflow-hidden",
+        isDesktopOverlayCard &&
+          cn(
+            "rounded-[24px] border border-v3-stroke-weak shadow-[0_8px_32px_rgba(15,23,42,0.08)]",
+            !showChat && "min-h-0 overflow-y-auto overflow-x-hidden",
+          ),
       )}
     >
-      <div className="mb-2 flex items-center gap-2">
-        {enableChatPreferencesTab && onTabChange ? (
-          <div
-            className="flex min-w-0 flex-1 rounded-full border border-v3-stroke-weak bg-v3-fill-weaker/50 p-0.5"
-            role="tablist"
-            aria-label="Panel sections"
-          >
-            <Button
-              type="button"
-              role="tab"
-              aria-selected={activeTab === "memory"}
-              variant={activeTab === "memory" ? "secondary" : "ghost"}
-              size="sm"
-              className="h-8 min-w-0 flex-1 rounded-full px-2 text-xs font-medium sm:text-sm"
-              onClick={() => onTabChange("memory")}
-            >
-              Memory
-            </Button>
-            <Button
-              type="button"
-              role="tab"
-              aria-selected={activeTab === "chat"}
-              variant={activeTab === "chat" ? "secondary" : "ghost"}
-              size="sm"
-              className="h-8 min-w-0 flex-1 rounded-full px-2 text-xs font-medium sm:text-sm"
-              onClick={() => onTabChange("chat")}
-            >
-              Chat
-            </Button>
-          </div>
-        ) : (
-          <div className="min-w-0 flex-1" />
-        )}
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          className="shrink-0 rounded-full text-v3-icon-neutral hover:bg-v3-fill-weaker"
-          onClick={onClose}
-          aria-label="Close panel"
-        >
-          <TimesIcon width={10} height={10} aria-hidden />
-        </Button>
-      </div>
 
       {showChat ? (
         <ChatPreferencesPanel density="compact" className="min-h-0 flex-1 pb-4" />
@@ -299,6 +316,8 @@ function Content({
           quickActions={quickActions}
           open={open}
           runAndMaybeCloseMobile={runAndMaybeCloseMobile}
+          enrichmentScore={enrichmentScore}
+          deltaToday={deltaToday}
         />
       )}
     </div>
@@ -314,10 +333,13 @@ export default function SidebarDetails({
   enableChatPreferencesTab = false,
   activeTab = "memory",
   onTabChange,
+  enrichmentScore,
+  deltaToday,
   desktopLayout = "overlay",
 }: SidebarDetailsProps) {
-  const desktopWidth =
-    isOpen && enableChatPreferencesTab && activeTab === "chat" ? 336 : 287;
+  const wideChatPanel =
+    Boolean(isOpen && enableChatPreferencesTab && activeTab === "chat");
+  const desktopWidthPx = useAnimatedSidebarWidthPx(isOpen, wideChatPanel);
   const isInlineDesktop = desktopLayout === "inline";
 
   return (
@@ -336,11 +358,14 @@ export default function SidebarDetails({
               memory={memory}
               onClose={onClose}
               isMobile
+              desktopLayout={desktopLayout}
               source={source}
               quickActions={quickActions}
               enableChatPreferencesTab={enableChatPreferencesTab}
               activeTab={activeTab}
               onTabChange={onTabChange}
+              enrichmentScore={enrichmentScore}
+              deltaToday={deltaToday}
             />
           </Sheet.Content>
         </Sheet.Container>
@@ -350,7 +375,7 @@ export default function SidebarDetails({
       <motion.div
         initial={false}
         animate={{
-          width: isOpen ? desktopWidth : 0,
+          width: isOpen ? desktopWidthPx : 0,
           opacity: isOpen ? 1 : 0,
         }}
         transition={{
@@ -361,22 +386,26 @@ export default function SidebarDetails({
         }}
         data-testid="memory-sidebar-desktop"
         className={cn(
-          "hidden overflow-hidden border-l border-v3-stroke-weak bg-white md:flex md:flex-col",
-          isInlineDesktop ?
-            "relative z-auto h-full min-h-0 min-w-0 shrink-0 self-stretch" :
-            "fixed top-0 right-0 z-40 h-screen",
+          // Desktop overlay: docked to the right; inline: flow in page flex row
+          "hidden min-w-0 overflow-x-hidden md:flex md:flex-col justify-start items-stretch",
+          isInlineDesktop
+            ? "relative z-auto h-full min-h-0 min-w-0 shrink-0 self-stretch"
+            : "fixed top-[6px] right-[6px] bottom-[6px] z-50 min-h-0 min-w-0",
         )}
       >
-        <div className="h-full min-h-0 flex-1 overflow-x-hidden overflow-y-auto">
+        <div className="box-border h-full min-h-0 min-w-0 w-full max-w-full bg-transparent p-0">
           <Content
             memory={memory}
             onClose={onClose}
             isMobile={false}
+            desktopLayout={desktopLayout}
             source={source}
             quickActions={quickActions}
             enableChatPreferencesTab={enableChatPreferencesTab}
             activeTab={activeTab}
             onTabChange={onTabChange}
+            enrichmentScore={enrichmentScore}
+            deltaToday={deltaToday}
           />
         </div>
       </motion.div>
@@ -386,7 +415,7 @@ export default function SidebarDetails({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className="fixed inset-0 z-30 hidden bg-black/20 md:block"
+          className="fixed inset-0 z-[45] bg-black/40 backdrop-blur-[2px]"
           onClick={onClose}
           aria-hidden
         />

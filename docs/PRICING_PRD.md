@@ -3,13 +3,15 @@
 **Version:** 1.0
 **Status:** Ready for implementation
 **Stack:** React + TypeScript (frontend), Node.js (backend), Gemini (AI), Supermemory, Cloudinary, DigitalOcean Spaces
-**Payment Providers:** Lemon Squeezy (global), Paystack (Nigeria)
+**Payment providers:** **Paystack-first checkout** with broad payment-method support (cards, bank transfer, wallets, USSD, etc., where available), plus optional Polar support if retained by backend. See [PRICING_BACKEND_HANDOFF.md](./PRICING_BACKEND_HANDOFF.md) for implementation notes.
+
+**Implementation tracking:** [PRICING_IMPLEMENTATION_STATUS.md](./PRICING_IMPLEMENTATION_STATUS.md) · [PRICING_TODO.md](./PRICING_TODO.md)
 
 ---
 
 ## 1. Overview
 
-This PRD defines the full subscription and paywall system for Memento. The goal is to introduce three tiers — **Free**, **Pro**, and **Legacy** — with soft-gated paywalls, trial logic, promo code support, and dual payment provider routing. All existing functionality must remain intact for free users; no current behaviour should break.
+This PRD defines the full subscription and paywall system for Memento. The goal is to introduce three tiers — **Free**, **Pro**, and **Legacy** — with soft-gated paywalls, trial logic, promo code support, and robust checkout payment options. All existing functionality must remain intact for free users; no current behaviour should break.
 
 ---
 
@@ -117,7 +119,7 @@ subscription {
   trial_ends_at           // timestamp | null
   has_used_trial          // boolean
   cancelled_at            // timestamp | null
-  payment_provider        // "lemonsqueezy" | "paystack"
+  payment_provider        // "polar" | "paystack"
   provider_customer_id    // external ID from payment provider
   provider_subscription_id
   promo_code_used         // string | null
@@ -162,80 +164,25 @@ promo_code {
 
 ## 5. Payment Provider Integration
 
-### 5.1 Routing Logic
+### 5.1 Checkout strategy
 
-Detect user country at signup (IP geolocation + optional manual selection). Route accordingly:
+Use a backend-controlled checkout strategy that prioritizes broad payment-method support via Paystack where possible.
 
-```
-if (user.country === "NG" && user.currency === "NGN") {
-  → Paystack
-} else {
-  → Lemon Squeezy
-}
-```
+- The frontend should call one checkout endpoint (`POST /billing/checkout`) and redirect to the returned URL.
+- The backend decides provider routing and enabled methods.
+- Do not hardcode provider logic in frontend.
 
-Store `payment_provider` on the subscription record at checkout initiation. Do not switch providers mid-subscription.
+Store `payment_provider` on the subscription record at checkout initiation when applicable.
 
-### 5.2 Lemon Squeezy (Global)
+### 5.2 Paystack (Primary)
 
-**Acts as Merchant of Record** — handles VAT, sales tax, global compliance automatically. No tax logic needed on your end.
+Paystack is the primary checkout path. Configure as many supported payment methods as possible per market and account capability (for example card, bank transfer, wallet, USSD, and other options Paystack enables).
 
 **Setup:**
-- Create a Lemon Squeezy store
-- Create Products: Pro Monthly, Pro Annual, Legacy Monthly, Legacy Annual, Legacy Lifetime
-- Store each `variant_id` in environment variables
-- Enable webhook endpoint on your server
-
-**Key environment variables:**
-```
-LS_STORE_ID
-LS_API_KEY
-LS_WEBHOOK_SECRET
-LS_VARIANT_PRO_MONTHLY
-LS_VARIANT_PRO_ANNUAL
-LS_VARIANT_LEGACY_MONTHLY
-LS_VARIANT_LEGACY_ANNUAL
-LS_VARIANT_LEGACY_LIFETIME
-```
-
-**Checkout creation (with trial):**
-```ts
-POST https://api.lemonsqueezy.com/v1/checkouts
-{
-  store_id: LS_STORE_ID,
-  variant_id: LS_VARIANT_PRO_MONTHLY,
-  checkout_options: { dark: false },
-  checkout_data: {
-    email: user.email,
-    custom: { user_id: user.id }
-  },
-  trial_ends_at: new Date(Date.now() + 14 * 86400000).toISOString()
-}
-```
-
-**Webhooks to handle:**
-| Event | Action |
-|-------|--------|
-| `subscription_created` | Set tier + status to `trialing`, store `provider_subscription_id` |
-| `subscription_updated` | Sync status, billing dates, tier changes |
-| `subscription_payment_success` | Set status to `active` |
-| `subscription_payment_failed` | Set status to `past_due`, trigger in-app + email alert |
-| `subscription_cancelled` | Set `cancelled_at`, keep access until `current_period_end` |
-| `subscription_expired` | Downgrade tier to `free` |
-| `order_refunded` | Downgrade tier, mark refunded |
-
-**Verify all webhooks** using the `LS_WEBHOOK_SECRET` signature before processing.
-
----
-
-### 5.3 Paystack (Nigeria)
-
-**Not a Merchant of Record** — you handle Nigerian compliance (low risk for domestic NGN transactions).
-
-**Setup:**
-- Paystack dashboard: create plans for Pro Monthly, Pro Annual, Legacy Monthly, Legacy Annual
-- Store plan codes in environment variables
-- Enable webhook endpoint
+- Paystack dashboard: create plans for Pro Monthly, Pro Annual, Legacy Monthly, Legacy Annual (and any supported lifetime equivalent flow).
+- Store plan codes in environment variables.
+- Enable webhook endpoint.
+- Enable and verify all payment methods you want customers to see in checkout.
 
 **Key environment variables:**
 ```
@@ -253,17 +200,17 @@ PAYSTACK_PLAN_LEGACY_ANNUAL
 POST https://api.paystack.co/transaction/initialize
 {
   email: user.email,
-  amount: 800000, // kobo — ₦8,000 = 800000 kobo
+  amount: 800000, // kobo — example for ₦8,000
   plan: PAYSTACK_PLAN_PRO_MONTHLY,
   metadata: { user_id: user.id },
   callback_url: "https://app.mymemento.co/payment/callback"
 }
 ```
 
-**Trial handling:** Paystack does not natively support trials on plans. Implement manually:
-- Create subscription immediately on trial start
-- Set `trial_ends_at = now + 14 days` in your DB
-- On `trial_ends_at`, if no successful charge, cancel the Paystack subscription via API and downgrade to Free
+**Trial handling:** If Paystack plan flow does not provide native trial behavior for your setup, implement trial lifecycle in your DB/jobs:
+- Set `trial_ends_at = now + 14 days`.
+- Enforce `has_used_trial`.
+- On `trial_ends_at`, if no successful charge, cancel/disable recurring billing and downgrade to Free.
 
 **Webhooks to handle:**
 | Event | Action |
@@ -276,6 +223,51 @@ POST https://api.paystack.co/transaction/initialize
 **Verify all webhooks** by hashing payload with `PAYSTACK_WEBHOOK_SECRET` (HMAC SHA-512).
 
 ---
+
+### 5.3 Polar.sh (Optional / secondary)
+
+**Billing platform** for non–Nigeria checkouts: products, checkout sessions, subscriptions, and webhooks. Confirm current tax and compliance posture for your regions in [Polar’s documentation](https://docs.polar.sh); do not assume MoR parity with legacy Lemon Squeezy without verification.
+
+**Setup:**
+- Polar organization; create **Products** (and catalog **Prices**) for: Pro Monthly, Pro Annual, Legacy Monthly, Legacy Annual, Legacy Lifetime (one-time or subscription per Polar’s model).
+- Server-side **access token** and webhook endpoint registered in the Polar dashboard.
+- Map each sellable SKU to a stable identifier (e.g. `product_id` or `price_id`) stored in environment variables.
+
+**Key environment variables (names are illustrative — align with your Polar API usage):**
+```
+POLAR_ACCESS_TOKEN
+POLAR_WEBHOOK_SECRET
+POLAR_PRODUCT_PRO_MONTHLY
+POLAR_PRODUCT_PRO_ANNUAL
+POLAR_PRODUCT_LEGACY_MONTHLY
+POLAR_PRODUCT_LEGACY_ANNUAL
+POLAR_PRODUCT_LEGACY_LIFETIME
+```
+
+**Checkout creation:**
+- Use Polar’s **Checkout API** or SDK to create a checkout session for the selected product(s).
+- Pass **`external_customer_id`** (or the field Polar documents for your user id) = your app’s `user.id` so webhooks and customer records reconcile.
+- Return the session **`url`** to the frontend for redirect.
+
+**14-day trial (PRD §2.2):** Implement using Polar’s supported trial or introductory pricing options where available; otherwise record `trial_ends_at` in your DB when checkout completes and enforce downgrade via scheduled jobs (see §9.2). Ensure `has_used_trial` is enforced in your backend.
+
+**Webhooks to handle (Polar event names — subscribe to the full set your integration needs; confirm in current Polar docs):**
+
+| Polar event (examples) | Action |
+|------------------------|--------|
+| `subscription.created` | Create or link subscription; set `provider_subscription_id`; if trialing, set `status = trialing`, `trial_ends_at` |
+| `subscription.active` | Set `status = active`, sync tier from product mapping, sync period dates |
+| `subscription.updated` | Catch-all for status transitions (cancel scheduled, uncancel, etc.); sync `current_period_*` |
+| `subscription.past_due` | Set `past_due`, trigger in-app + email alert |
+| `subscription.canceled` | Set `cancelled_at` where applicable; keep access until `current_period_end` (end-of-period cancel) |
+| `subscription.revoked` | Subscription ended; downgrade to `free` when access must end |
+| `order.created` / `order.paid` | Confirm payment; use `billing_reason` where documented (`subscription_create`, `subscription_cycle`, etc.) |
+| `order.refunded` | Downgrade tier, mark refunded |
+
+**Verify all webhooks** using Polar’s documented signature scheme and **`POLAR_WEBHOOK_SECRET`** before processing. Process deliveries **idempotently** (e.g. store event id, ignore duplicates).
+
+---
+
 
 ## 6. Enforcement Layer (Backend)
 
@@ -387,9 +379,9 @@ Show a persistent but dismissible banner in the app header during trial:
 - Toggle: Monthly / Annual (default to Annual)
 - Annual shows per-month equivalent price + "Pay for X months, get Y free" label
 - Legacy shows Lifetime option as a third billing option
-- Nigeria: detect locale and render ₦ pricing automatically
+- Detect locale and render ₦ or $ pricing automatically
 - CTA states: "Get started free" / "Start 14-day trial" / "Start 14-day trial"
-- All CTAs route to checkout (LS or Paystack based on locale)
+- All CTAs route to backend checkout URL; backend decides provider/method availability
 
 ### 7.5 Settings → Billing Tab
 
@@ -429,7 +421,7 @@ Single endpoint: `POST /api/webhooks/payments`
 
 Route to provider-specific handler based on a `provider` query param or header:
 ```
-POST /api/webhooks/payments?provider=lemonsqueezy
+POST /api/webhooks/payments?provider=polar
 POST /api/webhooks/payments?provider=paystack
 ```
 
@@ -455,8 +447,8 @@ After implementation, verify each of the following before shipping:
 - [ ] Pro trial initiates correctly — `status = trialing`, `trial_ends_at` set correctly
 - [ ] Legacy trial initiates correctly
 - [ ] Trial auto-downgrades to Free on day 14 with no payment (test with mocked date)
-- [ ] Lemon Squeezy checkout opens correctly for non-NG users
-- [ ] Paystack checkout opens correctly for NG users
+- [ ] Checkout opens correctly for users in supported markets
+- [ ] Paystack checkout shows expected payment methods for target markets/accounts
 - [ ] Successful payment activates subscription: `status = active`, `tier` updated
 - [ ] Failed payment sets `status = past_due`, user sees in-app alert
 - [ ] Cancellation keeps access until `current_period_end`, then downgrades
@@ -529,7 +521,7 @@ After implementation, verify each of the following before shipping:
 - [ ] Confirm Cloudinary plan and transformation credit budget for HD uploads
 - [ ] Confirm DigitalOcean Spaces pricing tier and storage ceiling
 - [ ] Define exact upload size cap for Pro/Legacy (200MB or higher?)
-- [ ] Confirm whether Paystack trials will be handled manually or via a workaround
+- [ ] Finalize Paystack trial implementation (native behavior vs DB/job-managed flow)
 - [ ] Decide job queue solution for async webhook processing (e.g. BullMQ, Inngest)
 - [ ] Confirm admin dashboard scope — is promo code UI part of this sprint or separate?
 

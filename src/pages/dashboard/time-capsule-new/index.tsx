@@ -15,18 +15,29 @@ import { ZapIcon } from "./components/icons/ZapIcon";
 import { UnpdfIcon } from "./components/icons/UnpdfIcon";
 import CapsuleList from "./components/list";
 import Button from "./components/Button";
+import { useNavigate } from "react-router-dom";
+import { useSubscription } from "@/contexts/subscription";
+import { UpgradePrompt } from "@/features/pricing/upgrade-prompt";
 import ScheduledBg from "./components/assets/scheduled.svg";
 import DeliveredBg from "./components/assets/delivered.svg";
 import DraftsBg from "./components/assets/drafts.svg";
 import FrozenBg from "./components/assets/frozen.svg";
 import { PauseIcon } from "./components/icons/PauseIcon";
+import { useFeatureFlags } from "@/contexts/feature-flags";
 
 export default function TimeCapsulePage() {
+  const navigate = useNavigate();
+  const { isProOrAbove, usage } = useSubscription();
+  const [timedGateOpen, setTimedGateOpen] = useState(false);
   const [mode, setMode] = useState(
     localStorage.getItem(storageKeys.listmode) || "list",
   );
   const [filter, setFilter] = useState("all");
   const { open } = useModal();
+  const { canUse } = useFeatureFlags();
+  const timedCount = usage?.timed_message_count ?? 0;
+  const atTimedMessageLimit = !isProOrAbove && timedCount >= 5;
+  const canCreateCapsule = canUse("capsule.create");
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -142,7 +153,20 @@ export default function TimeCapsulePage() {
               </p>
             </div>
 
-            <Button onClick={() => open("create-capsule")}>Create New</Button>
+            <Button
+              onClick={() => {
+                if (!canCreateCapsule) return;
+                if (atTimedMessageLimit) {
+                  setTimedGateOpen(true);
+                  return;
+                }
+                open("create-capsule");
+              }}
+              disabled={!canCreateCapsule}
+              title={!canCreateCapsule ? "Time capsule creation is disabled by admin." : undefined}
+            >
+              Create New
+            </Button>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
@@ -195,6 +219,14 @@ export default function TimeCapsulePage() {
           )}
         </div>
       </div>
+
+      <UpgradePrompt
+        feature="timed_messages"
+        variant="modal"
+        open={timedGateOpen}
+        onOpenChange={setTimedGateOpen}
+        onUpgrade={() => navigate("/pricing")}
+      />
     </div>
   );
 }

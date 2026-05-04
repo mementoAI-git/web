@@ -59,4 +59,24 @@ describe("ModalProvider / useModal", () => {
       { name: "Modal2", props: null },
     ]);
   });
+
+  it("close respects registerCloseGuard when guard returns false", () => {
+    const { result } = renderHook(() => useModal(), { wrapper });
+    act(() => result.current.open?.("Guarded"));
+    act(() =>
+      result.current.registerCloseGuard?.("Guarded", () => false),
+    );
+    act(() => result.current.close?.("Guarded"));
+    expect(result.current.state).toEqual([{ name: "Guarded", props: null }]);
+  });
+
+  it("close(force: true) bypasses guard", () => {
+    const { result } = renderHook(() => useModal(), { wrapper });
+    act(() => result.current.open?.("Guarded"));
+    act(() =>
+      result.current.registerCloseGuard?.("Guarded", () => false),
+    );
+    act(() => result.current.close?.("Guarded", { force: true }));
+    expect(result.current.state).toEqual([]);
+  });
 });
