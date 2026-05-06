@@ -41,17 +41,13 @@ jobs:
         run: pnpm lint
 
       - name: Run tests
-        timeout-minutes: 10
-        env:
-          CI: true
-        run: pnpm test --run
+        run: pnpm test
 
-  # ── 2. Build + Deploy (no artifacts) ──────────────────────
-  deploy:
-    name: Build + Deploy
+  # ── 2. Build ───────────────────────────────────────────────
+  build:
+    name: Build
     needs: quality
     runs-on: ubuntu-latest
-    environment: development
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -75,6 +71,7 @@ jobs:
         env:
           VITE_API_BASE_URL: ${{ secrets.DEV_VITE_API_BASE_URL }}
 
+      # Verify the build produced an index.html and assets.
       - name: Verify build output
         run: |
           if [ ! -f "dist/index.html" ]; then
@@ -82,6 +79,26 @@ jobs:
             exit 1
           fi
           echo "Build output OK — $(find dist -type f | wc -l) files, $(du -sh dist | cut -f1) total"
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dev-${{ github.sha }}
+          retention-days: 1
+          path: dist/
+
+  # ── 3. Deploy ──────────────────────────────────────────────
+  deploy:
+    name: Deploy
+    needs: build
+    runs-on: ubuntu-latest
+    environment: development
+    steps:
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-dev-${{ github.sha }}
+          path: dist/
 
       - name: Setup SSH
         run: |
@@ -150,10 +167,10 @@ jobs:
         if: always()
         run: rm -rf ~/.ssh/deploy_key ~/.ssh/known_hosts
 
-  # ── 3. Notify Discord of deploy outcome ────────────────────
+  # ── 4. Notify Discord of deploy outcome ────────────────────
   notify:
     name: Notify Discord
-    needs: [quality, deploy]
+    needs: [quality, build, deploy]
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -161,6 +178,7 @@ jobs:
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
           QUALITY_RESULT: ${{ needs.quality.result }}
+          BUILD_RESULT: ${{ needs.build.result }}
           DEPLOY_RESULT: ${{ needs.deploy.result }}
           COMMIT_MSG: ${{ github.event.head_commit.message }}
           ENV_LABEL: Dev
@@ -184,10 +202,10 @@ jobs:
             color=15844367
             status="cancelled"
           else
-            # deploy skipped — quality failed upstream
+            # deploy skipped — quality or build failed upstream
             title="Frontend ${ENV_LABEL} — Deploy skipped ⚠️"
             color=15844367
-            status="skipped (quality=${QUALITY_RESULT})"
+            status="skipped (quality=${QUALITY_RESULT}, build=${BUILD_RESULT})"
           fi
 
           run_url="https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
