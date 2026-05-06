@@ -14,6 +14,7 @@ import { SETTINGS_BENEFICIARIES_SWR_KEY } from "./beneficiaries-list-swr-key";
 import type { IBeneficiaryWithGroups } from "./beneficiary/beneficiary-types";
 import { useSubscription } from "@/contexts/subscription";
 import { UpgradePrompt } from "@/features/pricing/upgrade-prompt";
+import { useFeatureFlags } from "@/contexts/feature-flags";
 
 type BeneficiaryTab = "beneficiary" | "groups";
 
@@ -21,6 +22,7 @@ export default function BeneficiaryAndGroup() {
   const { push } = useModal();
   const navigate = useNavigate();
   const { isProOrAbove } = useSubscription();
+  const { canUse } = useFeatureFlags();
   const [beneficiaryGateOpen, setBeneficiaryGateOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<BeneficiaryTab>("beneficiary");
 
@@ -34,6 +36,8 @@ export default function BeneficiaryAndGroup() {
   const beneficiaryCount = beneficiariesRes?.data?.totalDocs ?? beneficiariesRes?.data?.docs?.length ?? 0;
   const groupCount = groupsPage?.totalDocs ?? 0;
   const atBeneficiaryLimit = !isProOrAbove && beneficiaryCount >= 2;
+  const canCreateBeneficiary = canUse("beneficiary.create");
+  const canCreateGroup = canUse("group.create");
 
   return (
     <div className="flex w-full flex-col gap-6">
@@ -49,6 +53,7 @@ export default function BeneficiaryAndGroup() {
             type="button"
             size="sm"
             className="h-8 shrink-0 rounded-full !bg-v3-fill-strong px-3 font-inter text-xs font-semibold !text-white hover:!opacity-90"
+            disabled={!canCreateGroup}
             onClick={() => push?.("add-group")}
           >
             Add group
@@ -96,7 +101,9 @@ export default function BeneficiaryAndGroup() {
               type="button"
               size="sm"
               className="h-8 shrink-0 rounded-full !bg-v3-fill-strong px-3 font-inter text-xs font-semibold !text-white hover:!opacity-90"
+              disabled={!canCreateBeneficiary}
               onClick={() => {
+                if (!canCreateBeneficiary) return;
                 if (atBeneficiaryLimit) {
                   setBeneficiaryGateOpen(true);
                   return;

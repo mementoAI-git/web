@@ -21,7 +21,7 @@ import { type IFile, type IOnUploadPayload } from "@/utility/interface";
 import { v4 as uuidv4 } from "uuid";
 import ImagePreview from "./ImagePreveiw";
 import { isEmpty } from "lodash";
-import { SUPPORTED_FILE_TYPES, inferMimeType } from "@/utility/constant";
+import { SUPPORTED_FILE_TYPES, inferMimeType, isSupportedFileMime } from "@/utility/constant";
 import { getTextareaCaretCoordinates } from "@/utility/textarea-caret";
 import { SlashCommandPopup } from "@/components/memory/text-area/slash-command-popup";
 import {
@@ -196,19 +196,17 @@ function ChatinputImpl({
   const processFileForUpload = useCallback(
     async (file: File) => {
       const resolvedType = file.type || inferMimeType(file.name);
-      if (!(SUPPORTED_FILE_TYPES as readonly string[]).includes(resolvedType)) {
+      if (!isSupportedFileMime(resolvedType, SUPPORTED_FILE_TYPES)) {
         alert(
           "Please select a supported file type (images, PDF, video, or audio)",
         );
         return;
       }
 
-      const maxSize = resolvedType.startsWith("video/")
-        ? 15 * 1024 * 1024
-        : 5 * 1024 * 1024;
+      // Match API multer limit (api/src/middleware/file-upload.ts)
+      const maxSize = 15 * 1024 * 1024;
       if (file.size > maxSize) {
-        const maxSizeMB = file.type.startsWith("video/") ? 15 : 5;
-        alert(`File size must be less than ${maxSizeMB}MB`);
+        alert("File size must be less than 15MB");
         return;
       }
 

@@ -271,13 +271,13 @@ export function DashboardHeader({
 
         <div className="col-start-2 flex items-center justify-end gap-2 lg:col-start-3">
           <StreakTracker>
-            <div className="flex shrink-0 cursor-pointer items-center gap-1.5 rounded-lg bg-transparent px-2.5 py-1.5 transition-colors hover:bg-v3-fill-weak">
+            <div className="flex shrink-0 cursor-pointer items-center gap-1.5 rounded-lg bg-transparent px-2.5 py-1.5 transition-colors hover:bg-fill-neutral-weak">
               <img
                 src={zapIcon}
                 alt="Streak"
-                className="size-4 object-contain opacity-70"
+                className="size-4 object-contain opacity-80"
               />
-              <span className="text-[13px] font-semibold text-gray-700">
+              <span className="text-[13px] font-semibold text-text-neutral-strong">
                 {user?.streak || 0}
               </span>
             </div>

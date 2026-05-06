@@ -2,6 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 import useClickAway from "@/hooks/use-clickaway";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 interface LinkInputProps {
   show: boolean;
@@ -12,6 +15,12 @@ interface LinkInputProps {
   onRemove?: () => void;
   onClose: () => void;
 }
+
+const linkFieldClass = cn(
+  "min-w-[280px] rounded-lg md:text-sm h-auto py-2",
+  "border-stroke-neutral-weak bg-transparent text-text-neutral-strong",
+  "placeholder:text-neutral-weak",
+);
 
 export function LinkInput({
   show,
@@ -53,51 +62,48 @@ export function LinkInput({
   return (
     <div
       ref={containerRef}
-      className="fixed z-50 rounded-xl border border-gray-200 bg-white p-3 shadow-lg"
+      className="fixed z-50 rounded-xl border border-stroke-neutral-weak bg-popover p-3 text-popover-foreground shadow-lg"
       style={{
         top: `${position.top}px`,
         left: `${position.left}px`,
       }}
     >
       <form onSubmit={handleSubmit} className="flex flex-col gap-2">
-        <input
+        <Input
           ref={textInputRef}
           type="text"
           value={text}
           onChange={(event) => setText(event.target.value)}
           placeholder="Enter text to display..."
-          className="min-w-[280px] rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500"
+          className={linkFieldClass}
         />
-        <input
+        <Input
           type="url"
           value={url}
           onChange={(event) => setUrl(event.target.value)}
           placeholder="Enter URL..."
-          className="min-w-[280px] rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-blue-500"
+          className={linkFieldClass}
         />
-        <div className="flex justify-end gap-2">
+        <div className="flex justify-end gap-2 pt-0.5">
           {initialUrl && onRemove && (
-            <button
-              type="button"
-              onClick={handleRemove}
-              className="rounded-lg px-3 py-1.5 text-sm text-red-600 transition-colors hover:bg-red-50"
-            >
+            <Button type="button" variant="destructive" size="sm" onClick={handleRemove} className="rounded-lg">
               Remove
-            </button>
+            </Button>
           )}
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-lg px-3 py-1.5 text-sm text-gray-600 transition-colors hover:bg-gray-100"
-          >
+          <Button type="button" variant="ghost" size="sm" onClick={onClose} className="rounded-lg">
             Cancel
-          </button>
-          <button
+          </Button>
+          <Button
             type="submit"
-            className="rounded-lg bg-v3-brand-strong px-3 py-1.5 text-sm text-white transition-colors hover:opacity-90"
+            variant="ghost"
+            size="sm"
+            className={cn(
+              "rounded-lg border border-transparent bg-fill-brand-strong text-primary-foreground shadow-none",
+              "hover:bg-fill-brand-strong/90 hover:text-primary-foreground focus-visible:border-ring",
+            )}
           >
             {initialUrl ? "Update" : "Insert"}
-          </button>
+          </Button>
         </div>
       </form>
     </div>

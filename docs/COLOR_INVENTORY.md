@@ -77,8 +77,8 @@ Primitive color scales for the V3 design system. Each color has Light (on light 
 **Light Mode (on white backgrounds)**
 
 
-| Token               | Hex Value | Opacity | Composited Hex | Usage              |
-| ------------------- | --------- | ------- | -------------- | ------------------ |
+| Token            | Hex Value | Opacity | Composited Hex | Usage              |
+| ---------------- | --------- | ------- | -------------- | ------------------ |
 | `--neutral-1000` | `#000000` | 100%    | `#000000`      | Primary text       |
 | `--neutral-700`  | `#000000` | 60%     | `#666666`      | Secondary text     |
 | `--neutral-500`  | `#000000` | 45%     | `#8C8C8C`      | Tertiary text      |
@@ -90,8 +90,8 @@ Primitive color scales for the V3 design system. Each color has Light (on light 
 **Dark Mode (on dark backgrounds)**
 
 
-| Token               | Hex Value | Opacity | Composited Hex | Usage              |
-| ------------------- | --------- | ------- | -------------- | ------------------ |
+| Token            | Hex Value | Opacity | Composited Hex | Usage              |
+| ---------------- | --------- | ------- | -------------- | ------------------ |
 | `--neutral-1000` | `#FFFFFF` | 100%    | `#FFFFFF`      | Primary text       |
 | `--neutral-700`  | `#FFFFFF` | 78%     | `#D9D9D9`      | Secondary text     |
 | `--neutral-500`  | `#FFFFFF` | 60%     | `#999999`      | Tertiary text      |
@@ -107,8 +107,8 @@ The V3 design system base color scale. Used for the brown-based semantic tokens 
 **Light Mode (on white backgrounds)**
 
 
-| Token             | Hex Value | Opacity | Composited Hex | Usage                                  |
-| ----------------- | --------- | ------- | -------------- | -------------------------------------- |
+| Token          | Hex Value | Opacity | Composited Hex | Usage                                  |
+| -------------- | --------- | ------- | -------------- | -------------------------------------- |
 | `--brown-1000` | `#170B00` | 90%     | `#2A1500`      | Primary text (text-neutral-strong)     |
 | `--brown-700`  | `#170B00` | 65%     | `#6B5D53`      | Secondary text (text-neutral-weak)     |
 | `--brown-500`  | `#170B00` | 45%     | `#9E8D7D`      | Tertiary text (text-neutral-weaker)    |
@@ -120,8 +120,8 @@ The V3 design system base color scale. Used for the brown-based semantic tokens 
 **Dark Mode (on dark backgrounds)**
 
 
-| Token             | Hex Value | Opacity | Composited Hex | Usage              |
-| ----------------- | --------- | ------- | -------------- | ------------------ |
+| Token          | Hex Value | Opacity | Composited Hex | Usage              |
+| -------------- | --------- | ------- | -------------- | ------------------ |
 | `--brown-1000` | `#FFFFFF` | 100%    | `#FFFFFF`      | Primary text       |
 | `--brown-700`  | `#FFFFFF` | 78%     | `#D9D9D9`      | Secondary text     |
 | `--brown-500`  | `#FFFFFF` | 60%     | `#999999`      | Tertiary text      |
@@ -135,8 +135,8 @@ The V3 design system base color scale. Used for the brown-based semantic tokens 
 **Light Mode**
 
 
-| Token              | Hex Value | Opacity | Composited Hex | Usage                  |
-| ------------------ | --------- | ------- | -------------- | ---------------------- |
+| Token           | Hex Value | Opacity | Composited Hex | Usage                  |
+| --------------- | --------- | ------- | -------------- | ---------------------- |
 | `--orange-1000` | `#FF5E00` | 100%    | `#FF5E00`      | Primary buttons, links |
 | `--orange-800`  | `#FF5E00` | 80%     | `#FF7E33`      | Hover states           |
 | `--orange-200`  | `#FF5E00` | 20%     | `#FFD1B3`      | Light accents          |
@@ -146,8 +146,8 @@ The V3 design system base color scale. Used for the brown-based semantic tokens 
 **Dark Mode**
 
 
-| Token              | Hex Value | Opacity | Composited Hex | Usage                  |
-| ------------------ | --------- | ------- | -------------- | ---------------------- |
+| Token           | Hex Value | Opacity | Composited Hex | Usage                  |
+| --------------- | --------- | ------- | -------------- | ---------------------- |
 | `--orange-1000` | `#FF5E00` | 100%    | `#FF5E00`      | Primary buttons, links |
 | `--orange-800`  | `#FF5E00` | 80%     | `#FF7E33`      | Hover states           |
 | `--orange-200`  | `#FF5E00` | 20%     | `#331200`      | Light accents          |
@@ -159,8 +159,8 @@ The V3 design system base color scale. Used for the brown-based semantic tokens 
 **Light Mode**
 
 
-| Token           | Hex Value | Opacity | Composited Hex | Usage             |
-| --------------- | --------- | ------- | -------------- | ----------------- |
+| Token        | Hex Value | Opacity | Composited Hex | Usage             |
+| ------------ | --------- | ------- | -------------- | ----------------- |
 | `--red-1000` | `#C73A3A` | 100%    | `#C73A3A`      | Error text, icons |
 | `--red-800`  | `#C73A3A` | 80%     | `#D66161`      | Error hover       |
 | `--red-200`  | `#C73A3A` | 14%     | `#F4D4D4`      | Error backgrounds |
@@ -170,8 +170,8 @@ The V3 design system base color scale. Used for the brown-based semantic tokens 
 **Dark Mode**
 
 
-| Token           | Hex Value | Opacity | Composited Hex | Usage             |
-| --------------- | --------- | ------- | -------------- | ----------------- |
+| Token        | Hex Value | Opacity | Composited Hex | Usage             |
+| ------------ | --------- | ------- | -------------- | ----------------- |
 | `--red-1000` | `#FF9C9C` | 100%    | `#FF9C9C`      | Error text, icons |
 | `--red-800`  | `#FF9C9C` | 80%     | `#FFB0B0`      | Error hover       |
 | `--red-200`  | `#FF9C9C` | 20%     | `#330505`      | Error backgrounds |
@@ -183,8 +183,8 @@ The V3 design system base color scale. Used for the brown-based semantic tokens 
 **Light Mode**
 
 
-| Token             | Hex Value | Opacity | Composited Hex | Usage               |
-| ----------------- | --------- | ------- | -------------- | ------------------- |
+| Token          | Hex Value | Opacity | Composited Hex | Usage               |
+| -------------- | --------- | ------- | -------------- | ------------------- |
 | `--amber-1000` | `#8F6C1A` | 100%    | `#8F6C1A`      | Warning text        |
 | `--amber-800`  | `#8F6C1A` | 80%     | `#A58947`      | Warning hover       |
 | `--amber-200`  | `#8F6C1A` | 20%     | `#E9DEC5`      | Warning backgrounds |
@@ -194,8 +194,8 @@ The V3 design system base color scale. Used for the brown-based semantic tokens 
 **Dark Mode**
 
 
-| Token             | Hex Value | Opacity | Composited Hex | Usage               |
-| ----------------- | --------- | ------- | -------------- | ------------------- |
+| Token          | Hex Value | Opacity | Composited Hex | Usage               |
+| -------------- | --------- | ------- | -------------- | ------------------- |
 | `--amber-1000` | `#E0BE70` | 100%    | `#E0BE70`      | Warning text        |
 | `--amber-800`  | `#E0BE70` | 80%     | `#E8CB8D`      | Warning hover       |
 | `--amber-200`  | `#E0BE70` | 20%     | `#2E250E`      | Warning backgrounds |
@@ -207,8 +207,8 @@ The V3 design system base color scale. Used for the brown-based semantic tokens 
 **Light Mode**
 
 
-| Token             | Hex Value | Opacity | Composited Hex | Usage               |
-| ----------------- | --------- | ------- | -------------- | ------------------- |
+| Token          | Hex Value | Opacity | Composited Hex | Usage               |
+| -------------- | --------- | ------- | -------------- | ------------------- |
 | `--green-1000` | `#067A57` | 100%    | `#067A57`      | Success text, icons |
 | `--green-800`  | `#067A57` | 80%     | `#389579`      | Success hover       |
 | `--green-200`  | `#067A57` | 20%     | `#D1E8E0`      | Success backgrounds |
@@ -218,8 +218,8 @@ The V3 design system base color scale. Used for the brown-based semantic tokens 
 **Dark Mode**
 
 
-| Token             | Hex Value | Opacity | Composited Hex | Usage               |
-| ----------------- | --------- | ------- | -------------- | ------------------- |
+| Token          | Hex Value | Opacity | Composited Hex | Usage               |
+| -------------- | --------- | ------- | -------------- | ------------------- |
 | `--green-1000` | `#77C7AF` | 100%    | `#77C7AF`      | Success text, icons |
 | `--green-800`  | `#77C7AF` | 80%     | `#92D2BF`      | Success hover       |
 | `--green-200`  | `#77C7AF` | 20%     | `#0F2A23`      | Success backgrounds |
@@ -231,8 +231,8 @@ The V3 design system base color scale. Used for the brown-based semantic tokens 
 **Light Mode**
 
 
-| Token            | Hex Value | Opacity | Composited Hex | Usage            |
-| ---------------- | --------- | ------- | -------------- | ---------------- |
+| Token         | Hex Value | Opacity | Composited Hex | Usage            |
+| ------------- | --------- | ------- | -------------- | ---------------- |
 | `--blue-1000` | `#1A80F7` | 100%    | `#1A80F7`      | Info text, links |
 | `--blue-800`  | `#1A80F7` | 80%     | `#489FF9`      | Info hover       |
 | `--blue-200`  | `#1A80F7` | 20%     | `#D4E9FD`      | Info backgrounds |
@@ -242,8 +242,8 @@ The V3 design system base color scale. Used for the brown-based semantic tokens 
 **Dark Mode**
 
 
-| Token            | Hex Value | Opacity | Composited Hex | Usage            |
-| ---------------- | --------- | ------- | -------------- | ---------------- |
+| Token         | Hex Value | Opacity | Composited Hex | Usage            |
+| ------------- | --------- | ------- | -------------- | ---------------- |
 | `--blue-1000` | `#52A1DD` | 100%    | `#52A1DD`      | Info text, links |
 | `--blue-800`  | `#52A1DD` | 80%     | `#75B4E4`      | Info hover       |
 | `--blue-200`  | `#52A1DD` | 20%     | `#0F2436`      | Info backgrounds |
@@ -255,8 +255,8 @@ The V3 design system base color scale. Used for the brown-based semantic tokens 
 **Light Mode**
 
 
-| Token              | Hex Value | Opacity | Composited Hex | Usage              |
-| ------------------ | --------- | ------- | -------------- | ------------------ |
+| Token           | Hex Value | Opacity | Composited Hex | Usage              |
+| --------------- | --------- | ------- | -------------- | ------------------ |
 | `--purple-1000` | `#7E47CC` | 100%    | `#7E47CC`      | Accent text        |
 | `--purple-800`  | `#7E47CC` | 80%     | `#9B75D6`      | Accent hover       |
 | `--purple-200`  | `#7E47CC` | 20%     | `#E2D4F4`      | Accent backgrounds |
@@ -266,8 +266,8 @@ The V3 design system base color scale. Used for the brown-based semantic tokens 
 **Dark Mode**
 
 
-| Token              | Hex Value | Opacity | Composited Hex | Usage              |
-| ------------------ | --------- | ------- | -------------- | ------------------ |
+| Token           | Hex Value | Opacity | Composited Hex | Usage              |
+| --------------- | --------- | ------- | -------------- | ------------------ |
 | `--purple-1000` | `#D2B2FF` | 100%    | `#D2B2FF`      | Accent text        |
 | `--purple-800`  | `#D2B2FF` | 80%     | `#DBC4FF`      | Accent hover       |
 | `--purple-200`  | `#D2B2FF` | 20%     | `#2D1F3D`      | Accent backgrounds |
@@ -335,10 +335,11 @@ Semantic color tokens organized by purpose and intent. Format: `type-intent-stre
 
 #### Overlay Colors
 
-| Token | Value | Usage |
-| ----- | ----- | ----- |
-| `bg-overlay-backdrop` | `rgba(94, 94, 94, 0.5)` | Modal/drawer backdrops (light mode) |
-| `bg-overlay-backdrop-dark` | `rgba(0, 0, 0, 0.6)` | Modal/drawer backdrops (dark mode) |
+
+| Token                      | Value                   | Usage                               |
+| -------------------------- | ----------------------- | ----------------------------------- |
+| `bg-overlay-backdrop`      | `rgba(94, 94, 94, 0.5)` | Modal/drawer backdrops (light mode) |
+| `bg-overlay-backdrop-dark` | `rgba(0, 0, 0, 0.6)`    | Modal/drawer backdrops (dark mode)  |
 
 
 ### Semantic to Primitive Mapping
@@ -348,8 +349,8 @@ Semantic tokens inherit from primitive tokens. Changing a primitive updates all 
 #### Text → Brown Scale (Light Mode)
 
 
-| Semantic Token          | Primitive Token      | Primitive Hex |
-| ----------------------- | -------------------- | ------------- |
+| Semantic Token          | Primitive Token   | Primitive Hex |
+| ----------------------- | ----------------- | ------------- |
 | `text-neutral-strong`   | `brown-1000`      | `#2A1500`     |
 | `text-neutral-weak`     | `brown-700`       | `#6B5D53`     |
 | `text-neutral-weaker`   | `brown-500`       | `#9E8D7D`     |
@@ -363,35 +364,35 @@ Semantic tokens inherit from primitive tokens. Changing a primitive updates all 
 #### Text → Intent Colors (Light Mode)
 
 
-| Semantic Token          | Primitive Token  | Primitive Hex |
-| ----------------------- | ---------------- | ------------- |
-| `text-brand-strong`     | `orange-1000` | `#FF5E00`     |
-| `text-brand-weak`       | `orange-800`  | `#FF7E33`     |
-| `text-brand-weaker`     | `orange-200`  | `#FFD1B3`     |
-| `text-brand-disabled`   | `orange-50`   | `#FFF0E6`     |
-| `text-info-strong`      | `blue-1000`   | `#1A80F7`     |
-| `text-info-weak`        | `blue-800`    | `#489FF9`     |
-| `text-info-weaker`      | `blue-200`    | `#D4E9FD`     |
-| `text-info-disabled`    | `blue-50`     | `#EBF4FE`     |
-| `text-success-strong`   | `green-1000`  | `#067A57`     |
-| `text-success-weak`     | `green-800`   | `#389579`     |
-| `text-success-weaker`   | `green-200`   | `#D1E8E0`     |
-| `text-success-disabled` | `green-50`    | `#E6FAF3`     |
-| `text-warning-strong`   | `amber-1000`  | `#8F6C1A`     |
-| `text-warning-weak`     | `amber-800`   | `#A58947`     |
-| `text-warning-weaker`   | `amber-200`   | `#E9DEC5`     |
-| `text-warning-disabled` | `amber-50`    | `#FFF9EB`     |
-| `text-error-strong`     | `red-1000`    | `#C73A3A`     |
-| `text-error-weak`       | `red-800`     | `#D66161`     |
-| `text-error-weaker`     | `red-200`     | `#F4D4D4`     |
-| `text-error-disabled`   | `red-50`      | `#FFF0F0`     |
+| Semantic Token          | Primitive Token | Primitive Hex |
+| ----------------------- | --------------- | ------------- |
+| `text-brand-strong`     | `orange-1000`   | `#FF5E00`     |
+| `text-brand-weak`       | `orange-800`    | `#FF7E33`     |
+| `text-brand-weaker`     | `orange-200`    | `#FFD1B3`     |
+| `text-brand-disabled`   | `orange-50`     | `#FFF0E6`     |
+| `text-info-strong`      | `blue-1000`     | `#1A80F7`     |
+| `text-info-weak`        | `blue-800`      | `#489FF9`     |
+| `text-info-weaker`      | `blue-200`      | `#D4E9FD`     |
+| `text-info-disabled`    | `blue-50`       | `#EBF4FE`     |
+| `text-success-strong`   | `green-1000`    | `#067A57`     |
+| `text-success-weak`     | `green-800`     | `#389579`     |
+| `text-success-weaker`   | `green-200`     | `#D1E8E0`     |
+| `text-success-disabled` | `green-50`      | `#E6FAF3`     |
+| `text-warning-strong`   | `amber-1000`    | `#8F6C1A`     |
+| `text-warning-weak`     | `amber-800`     | `#A58947`     |
+| `text-warning-weaker`   | `amber-200`     | `#E9DEC5`     |
+| `text-warning-disabled` | `amber-50`      | `#FFF9EB`     |
+| `text-error-strong`     | `red-1000`      | `#C73A3A`     |
+| `text-error-weak`       | `red-800`       | `#D66161`     |
+| `text-error-weaker`     | `red-200`       | `#F4D4D4`     |
+| `text-error-disabled`   | `red-50`        | `#FFF0F0`     |
 
 
 #### Stroke → Brown Scale (Light Mode)
 
 
-| Semantic Token            | Primitive Token     | Primitive Hex |
-| ------------------------- | ------------------- | ------------- |
+| Semantic Token            | Primitive Token  | Primitive Hex |
+| ------------------------- | ---------------- | ------------- |
 | `stroke-neutral-strong`   | `brown-500`      | `#9E8D7D`     |
 | `stroke-neutral-weak`     | `brown-100`      | `#E9E7E6`     |
 | `stroke-neutral-weaker`   | `brown-50`       | `#F9F9F8`     |
@@ -405,8 +406,8 @@ Semantic tokens inherit from primitive tokens. Changing a primitive updates all 
 #### Icon → Brown Scale (Light Mode)
 
 
-| Semantic Token          | Primitive Token      | Primitive Hex |
-| ----------------------- | -------------------- | ------------- |
+| Semantic Token          | Primitive Token   | Primitive Hex |
+| ----------------------- | ----------------- | ------------- |
 | `icon-neutral-strong`   | `brown-1000`      | `#2A1500`     |
 | `icon-neutral-weak`     | `brown-500`       | `#9E8D7D`     |
 | `icon-neutral-weaker`   | `brown-100`       | `#E9E7E6`     |
@@ -420,8 +421,8 @@ Semantic tokens inherit from primitive tokens. Changing a primitive updates all 
 #### Fill → Brown Scale (Light Mode)
 
 
-| Semantic Token          | Primitive Token      | Primitive Hex |
-| ----------------------- | -------------------- | ------------- |
+| Semantic Token          | Primitive Token   | Primitive Hex |
+| ----------------------- | ----------------- | ------------- |
 | `fill-neutral-strong`   | `brown-1000`      | `#2A1500`     |
 | `fill-neutral-weak`     | `brown-50`        | `#F9F9F8`     |
 | `fill-neutral-weaker`   | `brown-25`        | `#FCFCFB`     |
@@ -435,8 +436,8 @@ Semantic tokens inherit from primitive tokens. Changing a primitive updates all 
 #### Background → Neutral Scale (Light Mode)
 
 
-| Semantic Token        | Primitive Token       | Primitive Hex |
-| --------------------- | --------------------- | ------------- |
+| Semantic Token        | Primitive Token    | Primitive Hex |
+| --------------------- | ------------------ | ------------- |
 | `bg-neutral-strong`   | `neutral-100`      | `#E6E6E6`     |
 | `bg-neutral-weak`     | `neutral-50`       | `#F5F5F5`     |
 | `bg-neutral-weaker`   | `neutral-25`       | `#FAFAFA`     |
@@ -450,8 +451,8 @@ Semantic tokens inherit from primitive tokens. Changing a primitive updates all 
 #### All Intents → Fill/Background (Light Mode)
 
 
-| Intent      | Strong                      | Weak                       | Weaker                     | Disabled                   |
-| ----------- | --------------------------- | -------------------------- | -------------------------- | -------------------------- |
+| Intent      | Strong                   | Weak                    | Weaker                  | Disabled                |
+| ----------- | ------------------------ | ----------------------- | ----------------------- | ----------------------- |
 | **Brand**   | `orange-200` / `#FFD1B3` | `orange-50` / `#FFF0E6` | `orange-50` / `#FFF0E6` | `orange-50` / `#FFF0E6` |
 | **Info**    | `blue-200` / `#D4E9FD`   | `blue-50` / `#EBF4FE`   | `blue-50` / `#EBF4FE`   | `blue-50` / `#EBF4FE`   |
 | **Success** | `green-200` / `#D1E8E0`  | `green-50` / `#E6FAF3`  | `green-50` / `#E6FAF3`  | `green-50` / `#E6FAF3`  |
@@ -527,31 +528,31 @@ Semantic tokens inherit from primitive tokens. Changing a primitive updates all 
 These colors are used in SVG icon and illustration files. They are **not recommended** for UI components (use V3 tokens instead), but should be preserved for visual assets.
 
 
-| Hex Code    | Color Name       | Usage | SVG Files |
-| ----------- | ---------------- | ----- | --------- |
-| `#667085`   | Gray             | 1     | `src/assets/icon/dashboard/search.svg` |
-| `#E26A24`   | Orange           | 4     | `src/assets/image/Avatar 2 orange.svg` |
-| `#98A2B3`   | Slate Gray       | 3     | `DotsVerticalIcon.tsx`, `DotsVerticalIcon.tsx` (icons) |
-| `#1DA1FF`   | Sky Blue         | 2     | `src/components/icons/blue-folder-icon.tsx` |
-| `#4285F4`   | Google Blue      | 1     | `src/components/icons/google-icon.tsx` |
-| `#34A853`   | Google Green     | 1     | `src/components/icons/google-icon.tsx` |
-| `#FBBC04`   | Google Yellow    | 1     | `src/components/icons/google-icon.tsx` |
-| `#EA4335`   | Google Red       | 1     | `src/components/icons/google-icon.tsx` |
-| `#412C09`   | Dark Brown       | 1     | `src/components/icons/info-icon.tsx` |
-| `#B1C6A9`   | Sage Green       | 5     | Various time capsule letter theme files |
-| `#F0FCD4`   | Light Green      | 3     | `themes.config.tsx`, `Sage.tsx`, `modal/capsule/create/index.tsx` |
-| `#FFE5D9`   | Peach            | 2     | `Peach.tsx` |
-| `#472EFF`   | Purple           | 1     | `ZapIcon.tsx` |
-| `#CF561A`   | Burnt Orange     | 1     | `UnpdfIcon.tsx` |
-| `#F5854D`   | Light Orange     | 1     | `UnpdfIcon.tsx` |
-| `#B0BEC5`   | Blue Gray        | 1     | `UnpdfIcon.tsx` |
-| `#429EDF`   | Info Blue        | 1     | `TimerFillIcon.tsx` |
-| `#4276DF`   | Dark Blue        | 1     | `TimerFillIcon.tsx` |
-| `#D4F4FC`   | Light Cyan       | 1     | `Modern.tsx` |
-| `#FFE3F7`   | Light Pink       | 1     | `Bead.tsx` |
-| `#252525`   | Dark Gray        | 1     | `Dark.tsx` |
-| `#DDBF8F`   | Tan              | 1     | `CapsulePreviewCard.tsx` |
-| `#1E1E1E`   | Almost Black     | 1     | `CapsulePreviewCard.tsx` |
+| Hex Code  | Color Name    | Usage | SVG Files                                                         |
+| --------- | ------------- | ----- | ----------------------------------------------------------------- |
+| `#667085` | Gray          | 1     | `src/assets/icon/dashboard/search.svg`                            |
+| `#E26A24` | Orange        | 4     | `src/assets/image/Avatar 2 orange.svg`                            |
+| `#98A2B3` | Slate Gray    | 3     | `DotsVerticalIcon.tsx`, `DotsVerticalIcon.tsx` (icons)            |
+| `#1DA1FF` | Sky Blue      | 2     | `src/components/icons/blue-folder-icon.tsx`                       |
+| `#4285F4` | Google Blue   | 1     | `src/components/icons/google-icon.tsx`                            |
+| `#34A853` | Google Green  | 1     | `src/components/icons/google-icon.tsx`                            |
+| `#FBBC04` | Google Yellow | 1     | `src/components/icons/google-icon.tsx`                            |
+| `#EA4335` | Google Red    | 1     | `src/components/icons/google-icon.tsx`                            |
+| `#412C09` | Dark Brown    | 1     | `src/components/icons/info-icon.tsx`                              |
+| `#B1C6A9` | Sage Green    | 5     | Various time capsule letter theme files                           |
+| `#F0FCD4` | Light Green   | 3     | `themes.config.tsx`, `Sage.tsx`, `modal/capsule/create/index.tsx` |
+| `#FFE5D9` | Peach         | 2     | `Peach.tsx`                                                       |
+| `#472EFF` | Purple        | 1     | `ZapIcon.tsx`                                                     |
+| `#CF561A` | Burnt Orange  | 1     | `UnpdfIcon.tsx`                                                   |
+| `#F5854D` | Light Orange  | 1     | `UnpdfIcon.tsx`                                                   |
+| `#B0BEC5` | Blue Gray     | 1     | `UnpdfIcon.tsx`                                                   |
+| `#429EDF` | Info Blue     | 1     | `TimerFillIcon.tsx`                                               |
+| `#4276DF` | Dark Blue     | 1     | `TimerFillIcon.tsx`                                               |
+| `#D4F4FC` | Light Cyan    | 1     | `Modern.tsx`                                                      |
+| `#FFE3F7` | Light Pink    | 1     | `Bead.tsx`                                                        |
+| `#252525` | Dark Gray     | 1     | `Dark.tsx`                                                        |
+| `#DDBF8F` | Tan           | 1     | `CapsulePreviewCard.tsx`                                          |
+| `#1E1E1E` | Almost Black  | 1     | `CapsulePreviewCard.tsx`                                          |
 
 
 ## Hardcoded Hex Colors
@@ -561,66 +562,66 @@ These colors are used in SVG icon and illustration files. They are **not recomme
 ### High Usage (15+ occurrences) - Remaining
 
 
-| Hex Code    | Color Name       | V3 Equivalent                     | Usage Count | Primary Usage                          | Status |
-| ----------- | ---------------- | --------------------------------- | ----------- | -------------------------------------- | ------ |
-| `#C8956C`   | Amber/Brown      | `text-brand-strong` ≈ `#ff5e00`   | 32          | Onboarding accent, decorative elements | Review |
-| `#2C1F15`   | Dark Brown       | `text-neutral-strong` ≈ `#2A1500` | 30          | Onboarding primary text                | Review |
-| `#E4D9CC`   | Light Sand       | `border-neutral-weak` ≈ `#E9E7E6` | 16          | Onboarding borders, backgrounds        | Review |
-| `#7A6A5E`   | Taupe            | `text-neutral-weak` ≈ `#6B5D53`   | 16          | Onboarding secondary text              | Review |
-| `#B0A098`   | Warm Gray        | `text-neutral-weaker` ≈ `#9E8D7D` | 14          | Onboarding muted text                  | Review |
-| `#FFFCF8`   | Cream            | `bg-neutral-weaker` ≈ `#FCFCFB`   | 12          | Onboarding backgrounds                 | Review |
+| Hex Code  | Color Name  | V3 Equivalent                     | Usage Count | Primary Usage                          | Status |
+| --------- | ----------- | --------------------------------- | ----------- | -------------------------------------- | ------ |
+| `#C8956C` | Amber/Brown | `text-brand-strong` ≈ `#ff5e00`   | 32          | Onboarding accent, decorative elements | Review |
+| `#2C1F15` | Dark Brown  | `text-neutral-strong` ≈ `#2A1500` | 30          | Onboarding primary text                | Review |
+| `#E4D9CC` | Light Sand  | `border-neutral-weak` ≈ `#E9E7E6` | 16          | Onboarding borders, backgrounds        | Review |
+| `#7A6A5E` | Taupe       | `text-neutral-weak` ≈ `#6B5D53`   | 16          | Onboarding secondary text              | Review |
+| `#B0A098` | Warm Gray   | `text-neutral-weaker` ≈ `#9E8D7D` | 14          | Onboarding muted text                  | Review |
+| `#FFFCF8` | Cream       | `bg-neutral-weaker` ≈ `#FCFCFB`   | 12          | Onboarding backgrounds                 | Review |
 
 
 ### Medium Usage (5-14 occurrences) - Remaining
 
 
-| Hex Code    | Color Name        | V3 Equivalent                     | Usage Count | Primary Usage      | Status |
-| ----------- | ----------------- | --------------------------------- | ----------- | ------------------ | ------ |
-| `#FFFFFF`   | Pure White        | `bg-neutral` ≈ `#ffffff`          | 18          | Card backgrounds   | ✅ Keep |
+| Hex Code    | Color Name        | V3 Equivalent                     | Usage Count | Primary Usage      | Status  |
+| ----------- | ----------------- | --------------------------------- | ----------- | ------------------ | ------- |
+| `#FFFFFF`   | Pure White        | `bg-neutral` ≈ `#ffffff`          | 18          | Card backgrounds   | ✅ Keep  |
 | `#ffffff`   | White (lowercase) | `bg-neutral` ≈ `#ffffff`          | 8           | Backgrounds        | Migrate |
-| `#F3F3F3`   | Off-White         | `bg-neutral-weaker` ≈ `#FCFCFB`   | 7           | Legacy backgrounds | Review |
-| `#101828`   | Near Black        | `text-neutral-strong` ≈ `#2A1500` | 7           | Legacy headings    | Review |
+| `#F3F3F3`   | Off-White         | `bg-neutral-weaker` ≈ `#FCFCFB`   | 7           | Legacy backgrounds | Review  |
+| `#101828`   | Near Black        | `text-neutral-strong` ≈ `#2A1500` | 7           | Legacy headings    | Review  |
 | `#FCFCFD`   | Ghost White       | `bg-neutral` ≈ `#ffffff`          | 6           | Card backgrounds   | Migrate |
-| `#F9FAFB`   | Snow              | `bg-neutral-weaker` ≈ `#FCFCFB`   | 5           | Backgrounds        | Review |
-| `#155FFF36` | Transparent Blue  | —                                 | 5           | Legacy accent      | Review |
+| `#F9FAFB`   | Snow              | `bg-neutral-weaker` ≈ `#FCFCFB`   | 5           | Backgrounds        | Review  |
+| `#155FFF36` | Transparent Blue  | —                                 | 5           | Legacy accent      | Review  |
 
 
 ### Low Usage (1-4 occurrences) - Review for Removal
 
 
-| Hex Code    | Color Name       | Usage Count | Notes                      | Status |
-| ----------- | ---------------- | ----------- | -------------------------- | ------ |
-| `#FEE4E2`   | Light Red        | 0           | Migrated to `fill-error-weak` | ✅ Migrated |
-| `#E3E3E3`   | Light Gray       | 4           | Borders                    | Review |
-| `#B87333`   | Copper           | 0           | Migrated to `text-brand-weak` | ✅ Migrated |
-| `#A4A7AE`   | Gray             | 0           | Migrated to `text-neutral-weaker` | ✅ Migrated |
-| `#5A00E8`   | Purple           | 4           | Rare accent                | Review |
-| `#535862`   | Gray             | 0           | Migrated to `text-neutral-weak` | ✅ Migrated |
-| `#52A1DD`   | Sky Blue         | 0           | Migrated to `text-info-strong` | ✅ Migrated |
-| `#314FDF`   | Blue             | 0           | Migrated to `fill-info-strong` | ✅ Migrated |
-| `#050709`   | Near Black       | 0           | Migrated to `text-neutral-strong` | ✅ Migrated |
-| `#C7C9C8`   | Silver           | 3           | Disabled states            | Review |
-| `#717680`   | Gray             | 0           | Migrated to `text-neutral-weaker` | ✅ Migrated |
-| `#414651`   | Dark Gray        | 0           | Migrated to `text-neutral-strong` | ✅ Migrated |
-| `#412C09`   | Dark Brown       | 3           | Sand color system          | Review |
-| `#293039`   | Dark Slate       | 0           | Migrated to `text-neutral-strong` | ✅ Migrated |
-| `#1E1E1E`   | Almost Black     | 0           | Migrated to `text-neutral-strong` | ✅ Migrated |
-| `#10182866` | Semi-transparent | 3           | Borders                    | Review |
-| `#fafafa`   | Near White       | 2           | Backgrounds                | Review |
-| `#d1d5db`   | Gray 300         | 2           | Borders                    | Review |
-| `#FFFF00`   | Yellow           | 2           | Highlights (should remove) | Remove |
-| `#0011661A` | Transparent Blue | 0           | Migrated to `stroke-neutral-weak` | ✅ Migrated |
-| `#000D4D73` | Navy Transparent | 0           | Migrated to `text-neutral-weaker` | ✅ Migrated |
-| `#4A4A4A`   | Dark Gray        | 0           | Migrated to `text-neutral-weak` | ✅ Migrated |
-| `#C55A1D`   | Burnt Orange     | 0           | Migrated to `text-brand-strong` | ✅ Migrated |
-| `#4A90E2`   | Blue             | 0           | Migrated to `text-info-strong` | ✅ Migrated |
-| `#3C3F3E`   | Dark Teal        | 0           | Migrated to `text-neutral-strong` | ✅ Migrated |
-| `#344054`   | Graphite         | 0           | Migrated to `text-neutral-weak` | ✅ Migrated |
-| `#F97066`   | Coral Red        | 0           | Migrated to `text-error-strong` | ✅ Migrated |
+| Hex Code    | Color Name       | Usage Count | Notes                               | Status     |
+| ----------- | ---------------- | ----------- | ----------------------------------- | ---------- |
+| `#FEE4E2`   | Light Red        | 0           | Migrated to `fill-error-weak`       | ✅ Migrated |
+| `#E3E3E3`   | Light Gray       | 4           | Borders                             | Review     |
+| `#B87333`   | Copper           | 0           | Migrated to `text-brand-weak`       | ✅ Migrated |
+| `#A4A7AE`   | Gray             | 0           | Migrated to `text-neutral-weaker`   | ✅ Migrated |
+| `#5A00E8`   | Purple           | 4           | Rare accent                         | Review     |
+| `#535862`   | Gray             | 0           | Migrated to `text-neutral-weak`     | ✅ Migrated |
+| `#52A1DD`   | Sky Blue         | 0           | Migrated to `text-info-strong`      | ✅ Migrated |
+| `#314FDF`   | Blue             | 0           | Migrated to `fill-info-strong`      | ✅ Migrated |
+| `#050709`   | Near Black       | 0           | Migrated to `text-neutral-strong`   | ✅ Migrated |
+| `#C7C9C8`   | Silver           | 3           | Disabled states                     | Review     |
+| `#717680`   | Gray             | 0           | Migrated to `text-neutral-weaker`   | ✅ Migrated |
+| `#414651`   | Dark Gray        | 0           | Migrated to `text-neutral-strong`   | ✅ Migrated |
+| `#412C09`   | Dark Brown       | 3           | Sand color system                   | Review     |
+| `#293039`   | Dark Slate       | 0           | Migrated to `text-neutral-strong`   | ✅ Migrated |
+| `#1E1E1E`   | Almost Black     | 0           | Migrated to `text-neutral-strong`   | ✅ Migrated |
+| `#10182866` | Semi-transparent | 3           | Borders                             | Review     |
+| `#fafafa`   | Near White       | 2           | Backgrounds                         | Review     |
+| `#d1d5db`   | Gray 300         | 2           | Borders                             | Review     |
+| `#FFFF00`   | Yellow           | 2           | Highlights (should remove)          | Remove     |
+| `#0011661A` | Transparent Blue | 0           | Migrated to `stroke-neutral-weak`   | ✅ Migrated |
+| `#000D4D73` | Navy Transparent | 0           | Migrated to `text-neutral-weaker`   | ✅ Migrated |
+| `#4A4A4A`   | Dark Gray        | 0           | Migrated to `text-neutral-weak`     | ✅ Migrated |
+| `#C55A1D`   | Burnt Orange     | 0           | Migrated to `text-brand-strong`     | ✅ Migrated |
+| `#4A90E2`   | Blue             | 0           | Migrated to `text-info-strong`      | ✅ Migrated |
+| `#3C3F3E`   | Dark Teal        | 0           | Migrated to `text-neutral-strong`   | ✅ Migrated |
+| `#344054`   | Graphite         | 0           | Migrated to `text-neutral-weak`     | ✅ Migrated |
+| `#F97066`   | Coral Red        | 0           | Migrated to `text-error-strong`     | ✅ Migrated |
 | `#8BAF8B`   | Sage Green       | 0           | Migrated to `stroke-success-strong` | ✅ Migrated |
-| `#98A2B3`   | Slate Gray       | 0           | Migrated to `text-neutral-weaker` | ✅ Migrated |
-| `#667085`   | Gray             | 0           | Migrated to `text-neutral-weak` | ✅ Migrated |
-| `#1D2939`   | Charcoal         | 0           | Migrated to `text-neutral-strong` | ✅ Migrated |
+| `#98A2B3`   | Slate Gray       | 0           | Migrated to `text-neutral-weaker`   | ✅ Migrated |
+| `#667085`   | Gray             | 0           | Migrated to `text-neutral-weak`     | ✅ Migrated |
+| `#1D2939`   | Charcoal         | 0           | Migrated to `text-neutral-strong`   | ✅ Migrated |
 
 
 ---
@@ -680,18 +681,18 @@ Defined in `src/index.css` and used across the application.
 ### Semantic Colors
 
 
-| Variable             | Hex/RGBA Value             | Usage                             |
-| -------------------- | -------------------------- | --------------------------------- |
-| `--color-success`    | `#067a57`                  | Success states                    |
-| `--color-danger`     | `#f97066`                  | Error states, destructive actions |
-| `--color-primary`    | `var(--text-brand-strong)` | Primary brand (maps to `#ff5e00`) |
-| `--color-secondary`  | `rgba(0, 6, 38, 0.9)`      | Text color                        |
-| `--color-background` | `#fefbf8`                  | Page background                   |
-| `--color-surface`    | `#f5f6fa`                  | Card/surface backgrounds          |
-| `--color-orange`     | `var(--text-brand-strong)` | Accent (maps to `#ff5e00`)        |
-| `--color-green-0`    | `#b1c6a9`                  | Success accents                   |
-| `--overlay-backdrop` | `rgba(94, 94, 94, 0.5)`    | Modal/drawer backdrops            |
-| `--overlay-backdrop-dark` | `rgba(0, 0, 0, 0.6)`   | Dark mode modal backdrops         |
+| Variable                  | Hex/RGBA Value             | Usage                             |
+| ------------------------- | -------------------------- | --------------------------------- |
+| `--color-success`         | `#067a57`                  | Success states                    |
+| `--color-danger`          | `#f97066`                  | Error states, destructive actions |
+| `--color-primary`         | `var(--text-brand-strong)` | Primary brand (maps to `#ff5e00`) |
+| `--color-secondary`       | `rgba(0, 6, 38, 0.9)`      | Text color                        |
+| `--color-background`      | `#fefbf8`                  | Page background                   |
+| `--color-surface`         | `#f5f6fa`                  | Card/surface backgrounds          |
+| `--color-orange`          | `var(--text-brand-strong)` | Accent (maps to `#ff5e00`)        |
+| `--color-green-0`         | `#b1c6a9`                  | Success accents                   |
+| `--overlay-backdrop`      | `rgba(94, 94, 94, 0.5)`    | Modal/drawer backdrops            |
+| `--overlay-backdrop-dark` | `rgba(0, 0, 0, 0.6)`       | Dark mode modal backdrops         |
 
 
 ---
@@ -777,21 +778,21 @@ These colors should be avoided in new code and gradually replaced.
 ### Most Frequently Used Colors (Top 10)
 
 
-| Rank | Color                  | Composited Hex | Color Description | Usage Count | Type      | Status |
-| ---- | ---------------------- | -------------- | ----------------- | ----------- | --------- | ------ |
-| 1    | `text-neutral-strong`  | `#2A1500`      | Dark brown        | 183         | V3 Token  | ✅ Active |
-| 2    | `text-neutral-weak`    | `#6B5D53`      | Medium brown-gray | 126         | V3 Token  | ✅ Active |
-| 3    | `border-neutral-weak`  | `#E9E7E6`      | Very light gray   | 109         | V3 Token  | ✅ Active |
-| 4    | `bg-neutral-weak`      | `#F9F9F8`      | Off-white         | 99          | V3 Token  | ✅ Active |
-| 5    | `text-neutral-weaker`  | `#9E8D7D`      | Warm gray-brown   | 46          | V3 Token  | ✅ Active |
-| 6    | `bg-neutral-weaker`    | `#FCFCFB`      | Near-white        | 46          | V3 Token  | ✅ Active |
-| 7    | `bg-brand-strong`      | `#ff5e00`      | Vibrant orange    | 35          | V3 Token  | ✅ Active |
-| 8    | `icon-neutral-weak`    | `#9E8D7D`      | Warm gray-brown   | 20          | V3 Token  | ✅ Active |
-| 9    | `border-neutral-strong`| `#9E8D7D`      | Warm gray-brown   | 16          | V3 Token  | ✅ Active |
-| 10   | `bg-neutral-strong`    | `#2A1500`      | Dark brown        | 16          | V3 Token  | ✅ Active |
+| Rank | Color                   | Composited Hex | Color Description | Usage Count | Type     | Status   |
+| ---- | ----------------------- | -------------- | ----------------- | ----------- | -------- | -------- |
+| 1    | `text-neutral-strong`   | `#2A1500`      | Dark brown        | 183         | V3 Token | ✅ Active |
+| 2    | `text-neutral-weak`     | `#6B5D53`      | Medium brown-gray | 126         | V3 Token | ✅ Active |
+| 3    | `border-neutral-weak`   | `#E9E7E6`      | Very light gray   | 109         | V3 Token | ✅ Active |
+| 4    | `bg-neutral-weak`       | `#F9F9F8`      | Off-white         | 99          | V3 Token | ✅ Active |
+| 5    | `text-neutral-weaker`   | `#9E8D7D`      | Warm gray-brown   | 46          | V3 Token | ✅ Active |
+| 6    | `bg-neutral-weaker`     | `#FCFCFB`      | Near-white        | 46          | V3 Token | ✅ Active |
+| 7    | `bg-brand-strong`       | `#ff5e00`      | Vibrant orange    | 35          | V3 Token | ✅ Active |
+| 8    | `icon-neutral-weak`     | `#9E8D7D`      | Warm gray-brown   | 20          | V3 Token | ✅ Active |
+| 9    | `border-neutral-strong` | `#9E8D7D`      | Warm gray-brown   | 16          | V3 Token | ✅ Active |
+| 10   | `bg-neutral-strong`     | `#2A1500`      | Dark brown        | 16          | V3 Token | ✅ Active |
+
 
 **Note:** All top 10 colors are now V3 semantic tokens after migration.
-
 
 ### Color Distribution by System
 
@@ -799,7 +800,7 @@ These colors should be avoided in new code and gradually replaced.
 | System                 | Percentage | Status                      |
 | ---------------------- | ---------- | --------------------------- |
 | V3 Design Tokens       | ~65%       | ✅ Recommended               |
-| Hardcoded Hex          | ~15%       | ⚠️ Only in SVGs/onboarding   |
+| Hardcoded Hex          | ~15%       | ⚠️ Only in SVGs/onboarding  |
 | CSS Variables (Legacy) | ~15%       | ⚠️ Review for consolidation |
 | Shadcn Theme           | ~5%        | ✅ Use for shadcn components |
 
@@ -811,6 +812,7 @@ These colors should be avoided in new code and gradually replaced.
 ### Completed Migration (April 2026)
 
 ✅ **Successfully migrated hardcoded colors to V3 semantic tokens:**
+
 - `#F97066` → `text-error-strong` / `bg-fill-error-strong`
 - `#C55A1D` → `text-brand-strong` / `bg-fill-brand-weak`
 - `#4A90E2` → `text-info-strong`
@@ -856,12 +858,12 @@ These colors should be avoided in new code and gradually replaced.
 ### Migration Status
 
 
-| Status | Count | Colors |
-| ------ | ----- | ------ |
-| ✅ Migrated | 25+ | Most hardcoded colors now use V3 tokens |
-| ⚠️ Remaining | 15 | Onboarding-specific, SVG assets |
-| 🔍 Review | 8 | Legacy CSS variables |
-| 🗑️ Remove | 2 | Yellow highlights, duplicates |
+| Status       | Count | Colors                                  |
+| ------------ | ----- | --------------------------------------- |
+| ✅ Migrated   | 25+   | Most hardcoded colors now use V3 tokens |
+| ⚠️ Remaining | 15    | Onboarding-specific, SVG assets         |
+| 🔍 Review    | 8     | Legacy CSS variables                    |
+| 🗑️ Remove   | 2     | Yellow highlights, duplicates           |
 
 
 ---

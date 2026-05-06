@@ -8,6 +8,7 @@ import endpoint from "@/api/endpoint";
 import { fetcher, postFetcher } from "@/api/fetcher";
 import { Button } from "@/components/ui/button";
 import { useSubscription } from "@/contexts/subscription";
+import { useFeatureFlags } from "@/contexts/feature-flags";
 import { openCustomerPortal } from "@/features/pricing/open-customer-portal";
 import { cn } from "@/utility";
 import { SettingsSectionCard } from "./settings-section-card";
@@ -16,6 +17,11 @@ import { StorageUsageCard } from "@/features/pricing/storage-usage-card";
 export default function Billing() {
   const navigate = useNavigate();
   const { summary, isLoading, refresh, isProOrAbove } = useSubscription();
+  const { canUse } = useFeatureFlags();
+  const canViewSummary = canUse("billing.subscription_summary", true);
+  const canOpenPortal = canUse("billing.portal", true);
+  const canCheckout = canUse("billing.checkout", true);
+  const canViewUsage = canUse("billing.usage_limits", true);
   const [promo, setPromo] = useState("");
   const [promoBusy, setPromoBusy] = useState(false);
   const [portalBusy, setPortalBusy] = useState(false);
@@ -88,6 +94,10 @@ export default function Billing() {
       <SettingsSectionCard title="Current plan">
         {isLoading ? (
           <p className="font-inter text-sm text-v3-text-weak">Loading subscription…</p>
+        ) : !canViewSummary ? (
+          <p className="font-inter text-sm text-v3-text-weak">
+            Subscription summary is currently unavailable.
+          </p>
         ) : (
           <dl className="grid gap-4 sm:grid-cols-2">
             <div>
@@ -120,22 +130,23 @@ export default function Billing() {
             type="button"
             variant="outline"
             className={cn("rounded-full")}
-            disabled={!isProOrAbove || portalBusy}
+            disabled={!canOpenPortal || !isProOrAbove || portalBusy}
             onClick={() => void handlePortal()}
           >
-            {portalBusy ? "Opening…" : "Manage billing"}
+            {!canOpenPortal ? "Portal unavailable" : portalBusy ? "Opening…" : "Manage billing"}
           </Button>
           <Button
             type="button"
             className="rounded-full"
+            disabled={!canCheckout}
             onClick={() => navigate("/pricing")}
           >
-            {isProOrAbove ? "Change plan" : "Upgrade"}
+            {!canCheckout ? "Checkout unavailable" : isProOrAbove ? "Change plan" : "Upgrade"}
           </Button>
         </div>
       </SettingsSectionCard>
 
-      {!isLoading && summary ? (
+      {!isLoading && summary && canViewUsage ? (
         <StorageUsageCard usage={summary.usage} isProOrAbove={isProOrAbove} />
       ) : null}
 

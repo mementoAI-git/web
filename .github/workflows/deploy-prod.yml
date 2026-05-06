@@ -82,7 +82,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: frontend-prod-${{ github.sha }}
-          retention-days: 7
+          retention-days: 1
           path: dist/
 
   # ── 3. Deploy (requires manual approval) ───────────────────

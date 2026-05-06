@@ -37,6 +37,9 @@ export const SUPPORTED_FILE_TYPES = [
   "image/jpg",
   "image/heic",
   "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "text/plain",
   "video/mp4",
   "video/webm",
   "video/quicktime",
@@ -46,6 +49,7 @@ export const SUPPORTED_FILE_TYPES = [
   "audio/mp3",
   "audio/mpeg3",
   "audio/mp4",
+  "audio/m4a",
   "audio/x-m4a",
   "audio/aac",
   "audio/wav",
@@ -66,6 +70,9 @@ export const SUPPORTED_FILE_TYPES = [
   "audio/basic",
   "audio/speex",
 ] as const;
+
+/** `accept` string for memory attachments (MIME list + extensions for OS file pickers). */
+export const MEMORY_ATTACHMENT_ACCEPT = [...SUPPORTED_FILE_TYPES, ".doc", ".docx", ".txt"].join(",");
 
 export const CAPSULE_SUPPORTED_FILE_TYPES = [
   "image/jpeg",
@@ -127,6 +134,17 @@ export function inferMimeType(nameOrUrl: string | undefined | null): string {
   if (dot === -1) return "";
   const ext = name.slice(dot).toLowerCase();
   return EXTENSION_TO_MIME[ext] ?? "";
+}
+
+/** Strip MIME parameters (e.g. `codecs=`) so allowlists match `MediaRecorder` and browser quirks. */
+export function uploadMimeBaseType(mimetype: string): string {
+  return mimetype.split(";")[0]!.trim().toLowerCase();
+}
+
+export function isSupportedFileMime(mimetype: string, allowed: readonly string[]): boolean {
+  if (!mimetype) return false;
+  const base = uploadMimeBaseType(mimetype);
+  return (allowed as readonly string[]).includes(base);
 }
 
 // File input accept attribute strings

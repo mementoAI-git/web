@@ -284,27 +284,27 @@
   --font-inter: "Inter", sans-serif;
   --font-geist: "Geist", sans-serif;
 
-  /* SHADCN */
+  /* SHADCN — aligned to V3 semantic tokens (docs/COLOR_INVENTORY.md, .cursor/rules/v3-color-system-usage.mdc) */
   --radius: 0.5rem;
   --background: #fefbf8;
-  --foreground: rgba(0, 6, 38, 0.9);
+  --foreground: var(--text-neutral-strong);
   --card: #ffffff;
-  --card-foreground: rgba(0, 6, 38, 0.9);
+  --card-foreground: var(--text-neutral-strong);
   --popover: #ffffff;
-  --popover-foreground: rgba(0, 6, 38, 0.9);
-  --primary: #52a1dd;
+  --popover-foreground: var(--text-neutral-strong);
+  --primary: var(--text-brand-strong);
   --primary-foreground: #ffffff;
-  --secondary: #f5f6fa;
-  --secondary-foreground: rgba(0, 6, 38, 0.9);
-  --muted: #f5f6fa;
-  --muted-foreground: rgba(0, 9, 51, 0.65);
-  --accent: #0000000d;
-  --accent-foreground: #412c09;
+  --secondary: var(--fill-neutral-weak);
+  --secondary-foreground: var(--text-neutral-strong);
+  --muted: var(--fill-neutral-weak);
+  --muted-foreground: var(--text-neutral-weak);
+  --accent: var(--fill-neutral-weaker);
+  --accent-foreground: var(--text-neutral-strong);
   --destructive: #f97066;
   --destructive-foreground: #ffffff;
-  --border: rgba(0, 17, 102, 0.1);
-  --input: rgba(0, 17, 102, 0.1);
-  --ring: #52a1dd;
+  --border: var(--stroke-neutral-weak);
+  --input: var(--stroke-neutral-weak);
+  --ring: var(--stroke-brand-strong);
 }
 
 @theme {
@@ -998,14 +998,10 @@ body {
     height: 100% !important;
   }
 
-  .create-memory-title::placeholder {
-    color: rgba(23, 11, 0, 0.45);
-  }
-
   .tiptap-editor .ProseMirror p.is-editor-empty:first-child::before {
     content: attr(data-placeholder);
     float: left;
-    color: rgba(23, 11, 0, 0.45);
+    color: var(--text-neutral-weak);
     pointer-events: none;
     height: 0;
   }

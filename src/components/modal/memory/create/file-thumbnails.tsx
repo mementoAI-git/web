@@ -212,8 +212,8 @@ export function FileThumbnails({ files, onRemove }: FileThumbnailsProps) {
   if (files.length === 0) return null;
 
   return (
-    <div className="mt-6 flex justify-start items-start overflow-x-auto pt-2 px-4 hide-scrollbar">
-      <div className="flex gap-3 pb-1 w-full">
+    <div className="flex w-full justify-start items-start overflow-x-auto hide-scrollbar">
+      <div className="flex w-full gap-3 pb-1">
         {files.map((f) => {
           const rawType = f.file?.type || f.uploadedFile?.type || "";
           const mimeType = rawType || inferMimeType(f.file?.name ?? f.uploadedFile?.name ?? f.uploadedFile?.url);
@@ -235,12 +235,13 @@ export function FileThumbnails({ files, onRemove }: FileThumbnailsProps) {
               <button
                 type="button"
                 onClick={() => onRemove(f.id)}
-                className="absolute -top-2 -right-2 z-50 size-6 rounded-full bg-gray-100 hover:bg-gray-700 flex items-center justify-center transition-colors shadow border-2 border-white"
+                className="absolute -top-2 -right-2 z-50 flex size-6 items-center justify-center rounded-full border-2 border-background bg-fill-neutral-weaker text-icon-neutral-strong shadow-sm transition-colors hover:bg-fill-neutral-weak hover:text-text-neutral-strong"
+                aria-label="Remove attachment"
               >
                 <TimesIcon width={8} height={8} />
               </button>
 
-              <div className="w-[70px] h-[70px] rounded-xl overflow-visible relative bg-gray-100">
+              <div className="relative h-[70px] w-[70px] overflow-visible rounded-xl bg-fill-neutral-weaker">
                 {isVideo ? (
                   <VideoThumbnail
                     file={f}

@@ -4,6 +4,8 @@ import SideBarItem from "./sidebar-item";
 import { ProfileDropdown } from "./profile-dropdown";
 import { SidebarUpgradeCard } from "./sidebar-upgrade-card";
 import { useModal } from "@/hooks/use-modal";
+import { useStore } from "@/hooks/use-store";
+import { isFeatureFlagAdminUser } from "@/contexts/feature-flags";
 
 interface DashboardSideBarProps {
   onClose?: () => void;
@@ -12,6 +14,8 @@ interface DashboardSideBarProps {
 export function DashboardSideBar({ onClose }: DashboardSideBarProps) {
   const location = useLocation();
   const { open } = useModal();
+  const { user } = useStore();
+  const showAdminFlags = isFeatureFlagAdminUser(user?.email);
 
   const pathname = location.pathname;
 
@@ -46,6 +50,15 @@ export function DashboardSideBar({ onClose }: DashboardSideBarProps) {
             onClick={onClose}
           />
         ))}
+        {showAdminFlags ? (
+          <SideBarItem
+            emoji="⚙️"
+            title="Feature flags"
+            link="/admin/feature-flags"
+            active={pathname.startsWith("/admin/feature-flags")}
+            onClick={onClose}
+          />
+        ) : null}
         <SideBarItem
           emoji="📝"
           title="Drop a feedback"

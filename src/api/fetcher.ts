@@ -102,15 +102,22 @@ export const fileUploadFetcher = async (url: string, { arg }: { arg: Record<stri
 
   try {
     const res = await axios.post(url, formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
       onUploadProgress: (event) => {
         if (onProgress && event.total) {
           const percent = Math.round((event.loaded * 80) / event.total);
           onProgress(percent);
         }
       },
+      // Axios default transformRequest JSON-stringifies FormData when Content-Type is
+      // application/json (from the shared instance). Multer then sees no file parts.
+      transformRequest: [
+        (data, headers) => {
+          if (typeof FormData !== "undefined" && data instanceof FormData) {
+            headers.setContentType(undefined);
+          }
+          return data;
+        },
+      ],
     });
 
     if (res.status === 200 && onProgress) {
@@ -161,8 +168,8 @@ export const fileUploadFetcher = async (url: string, { arg }: { arg: Record<stri
   }
 };
 
-export const streamlineFetcher = async (url: string, { arg }: { arg: Record<string, unknown> & { onChunk: (chunk: string) => void; signal?: AbortSignal } }) => {
-  const { onChunk, signal, ...payload } = arg;
+export const streamlineFetcher = async (url: string, { arg }: { arg: Record<string, unknown> & { onChunk: (chunk: string) => void; onMeta?: (meta: { model?: string }) => void; signal?: AbortSignal } }) => {
+  const { onChunk, onMeta, signal, ...payload } = arg;
   const storedAuth = localStorage.getItem(storageKeys.auth);
   const auth = storedAuth ? JSON.parse(storedAuth) : null;
 
@@ -179,6 +186,8 @@ export const streamlineFetcher = async (url: string, { arg }: { arg: Record<stri
   const reader = response.body?.getReader();
   const decoder = new TextDecoder("utf-8");
   let is_done = false;
+  const modelFromHeader = response.headers.get("x-ai-model") || undefined;
+  onMeta?.({ model: modelFromHeader });
 
   if (response.ok && reader) {
     while (!is_done) {

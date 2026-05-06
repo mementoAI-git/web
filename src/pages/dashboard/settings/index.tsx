@@ -8,6 +8,7 @@ import Privacy from "@/components/modal/settings/privacy";
 import Stats from "@/components/modal/settings/stats";
 import { Settings, Lock, Users, Shield, ChartColumn, Menu, X, CreditCard } from "lucide-react";
 import Billing from "@/components/modal/settings/billing";
+import { useFeatureFlags } from "@/contexts/feature-flags";
 
 const navItemBase =
   "flex w-full items-center gap-2.5 rounded-lg px-3 py-2 font-inter text-sm text-v3-text-weak outline-none " +
@@ -79,12 +80,23 @@ function isValidTab(tab: string | undefined): tab is SettingKey {
 export default function SettingsPage() {
   const { tab } = useParams<{ tab: string }>();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { canUse } = useFeatureFlags();
+  const canUseBillingTab = canUse("settings.billing_tab", true);
 
   if (!isValidTab(tab)) {
     return <Navigate to="/settings/general" replace />;
   }
+  if (tab === "billing" && !canUseBillingTab) {
+    return <Navigate to="/settings/general" replace />;
+  }
 
-  const navLinks = (Object.entries(settings) as [SettingKey, (typeof settings)[SettingKey]][]).map(
+  const availableSettings = canUseBillingTab ?
+      settings
+    : Object.fromEntries(
+        Object.entries(settings).filter(([key]) => key !== "billing"),
+      );
+
+  const navLinks = (Object.entries(availableSettings) as [SettingKey, (typeof settings)[SettingKey]][]).map(
     ([key, setting]) => (
       <NavLink
         key={key}
@@ -104,7 +116,7 @@ export default function SettingsPage() {
   );
 
   // Horizontal scrollable nav for tablet/mobile
-  const mobileNavLinks = (Object.entries(settings) as [SettingKey, (typeof settings)[SettingKey]][]).map(
+  const mobileNavLinks = (Object.entries(availableSettings) as [SettingKey, (typeof settings)[SettingKey]][]).map(
     ([key, setting]) => (
       <NavLink
         key={key}

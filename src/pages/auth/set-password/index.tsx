@@ -1,14 +1,16 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { useMemo } from "react";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import * as yup from "yup";
-import { Button } from "@/components/Buttons";
-import { Passwordinput } from "@/components/Form";
-import StrengthIndicator from "@/components/strength-indicator";
 import endpoint from "@/api/endpoint";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import StrengthIndicator from "@/components/strength-indicator";
 import useFetcher from "@/hooks/use-fetcher";
 import useForm from "@/hooks/use-form";
 import AuthLayout from "../components/layout";
@@ -39,7 +41,7 @@ export default function SetPasswordPage() {
   const token = searchParams.get("token") || "";
   const initial = { confirm_password: "", password: "", token };
 
-  const { handleSubmit, values, getField } = useForm({
+  const { handleSubmit, handleChange, values, errors } = useForm({
     schema,
     initial,
     async onSubmit(payload) {
@@ -50,6 +52,7 @@ export default function SetPasswordPage() {
       }
     },
   });
+
   const level = useMemo(() => {
     let strength = 0;
     if (/[A-Z]/.test(values.password)) {
@@ -83,19 +86,60 @@ export default function SetPasswordPage() {
       can_go_back
       subtitle="Your new password must be different from previously used passwords on this platform."
     >
-      <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-        <Passwordinput label="Password" {...getField("password")} />
-        <Passwordinput label="Confirm Password" {...getField("confirm_password")} />
-        <StrengthIndicator level={level} />
-        <Button
-          loading={isMutating}
-          type="submit"
-          title="Set new password"
-          className="mt-3 !rounded-full"
-        />
-      </form>
+      <Card className="border border-v3-stroke-weak bg-v3-fill-weaker/20 py-0 shadow-none">
+        <CardContent className="p-4 sm:p-5">
+          <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+            <div className="grid gap-2">
+              <Label htmlFor="set-password-new" className="font-inter text-sm">
+                Password
+              </Label>
+              <Input
+                id="set-password-new"
+                name="password"
+                type="password"
+                placeholder="New password"
+                className="rounded-[12px]"
+                value={values.password}
+                onChange={handleChange}
+                aria-invalid={Boolean(errors.password)}
+                autoComplete="new-password"
+              />
+              {errors.password ? <p className="font-inter text-xs text-destructive">{errors.password}</p> : null}
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="set-password-confirm" className="font-inter text-sm">
+                Confirm password
+              </Label>
+              <Input
+                id="set-password-confirm"
+                name="confirm_password"
+                type="password"
+                placeholder="Confirm password"
+                className="rounded-[12px]"
+                value={values.confirm_password}
+                onChange={handleChange}
+                aria-invalid={Boolean(errors.confirm_password)}
+                autoComplete="new-password"
+              />
+              {errors.confirm_password ?
+                <p className="font-inter text-xs text-destructive">{errors.confirm_password}</p>
+              : null}
+            </div>
+
+            <StrengthIndicator level={level} />
+
+            <Button type="submit" className="mt-1 h-11 w-full rounded-full" disabled={isMutating}>
+              {isMutating ?
+                <>
+                  <Loader2 className="size-4 animate-spin" />
+                  Saving...
+                </>
+              : "Set new password"}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
     </AuthLayout>
   );
 }
-
-

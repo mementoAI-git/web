@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { Check } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { useFeatureFlags } from "@/contexts/feature-flags";
 import { cn } from "@/utility";
 import { startCheckout } from "@/features/pricing/start-checkout";
 import type { PlanTier } from "@/features/pricing/types";
@@ -54,7 +55,10 @@ function formatMoney(amount: number, currency: "USD" | "NGN") {
 
 export default function PricingPage() {
   const navigate = useNavigate();
+  const { canUse } = useFeatureFlags();
   const currency = useMemo(() => detectCurrency(), []);
+  const canViewPricing = canUse("billing.pricing_page", true);
+  const canStartCheckout = canUse("billing.checkout", true);
   const table = currency === "NGN" ? NGN : USD;
   const [interval, setInterval] = useState<BillingInterval>("annual");
   const [checkoutLoading, setCheckoutLoading] = useState<PlanTier | null>(null);
@@ -92,6 +96,28 @@ export default function PricingPage() {
     interval === "annual" ? table.pro.annual / 12 : table.pro.monthly;
   const legacyPrice =
     interval === "annual" ? table.legacy.annual / 12 : table.legacy.monthly;
+
+  if (!canViewPricing) {
+    return (
+      <div className="page-viewport hide-scrollbar w-full px-4 pb-16 pt-8 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-3xl rounded-2xl border border-v3-stroke-weak bg-white p-8 text-center">
+          <h1 className="font-garamond text-3xl font-medium text-v3-text-strong">
+            Pricing is currently unavailable
+          </h1>
+          <p className="mt-3 font-inter text-sm text-v3-text-weak">
+            Billing access is currently disabled for your account/environment.
+          </p>
+          <Button
+            type="button"
+            className="mt-6 rounded-full"
+            onClick={() => navigate("/overview")}
+          >
+            Back to overview
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="page-viewport hide-scrollbar w-full px-4 pb-16 pt-8 sm:px-6 lg:px-8">
@@ -205,10 +231,14 @@ export default function PricingPage() {
             <Button
               type="button"
               className="mt-6 rounded-full"
-              disabled={checkoutLoading !== null || lifetimeLoading}
+              disabled={!canStartCheckout || checkoutLoading !== null || lifetimeLoading}
               onClick={() => void runCheckout("pro", interval)}
             >
-              {checkoutLoading === "pro" ? "Opening checkout…" : "Start 14-day trial"}
+              {!canStartCheckout ?
+                "Checkout unavailable" :
+              checkoutLoading === "pro" ?
+                "Opening checkout…" :
+                "Start 14-day trial"}
             </Button>
             <ul className="mt-8 flex flex-col gap-3 font-inter text-sm text-v3-text-strong">
               <li className="flex gap-2">
@@ -260,19 +290,27 @@ export default function PricingPage() {
               type="button"
               variant="secondary"
               className="mt-4 rounded-full"
-              disabled={checkoutLoading !== null || lifetimeLoading}
+              disabled={!canStartCheckout || checkoutLoading !== null || lifetimeLoading}
               onClick={() => void runCheckout("legacy", interval)}
             >
-              {checkoutLoading === "legacy" ? "Opening checkout…" : "Start 14-day trial"}
+              {!canStartCheckout ?
+                "Checkout unavailable" :
+              checkoutLoading === "legacy" ?
+                "Opening checkout…" :
+                "Start 14-day trial"}
             </Button>
             <Button
               type="button"
               variant="outline"
               className="mt-2 w-full rounded-full"
-              disabled={checkoutLoading !== null || lifetimeLoading}
+              disabled={!canStartCheckout || checkoutLoading !== null || lifetimeLoading}
               onClick={() => void runCheckout("legacy", "lifetime")}
             >
-              {lifetimeLoading ? "Opening checkout…" : "Buy lifetime"}
+              {!canStartCheckout ?
+                "Checkout unavailable" :
+              lifetimeLoading ?
+                "Opening checkout…" :
+                "Buy lifetime"}
             </Button>
           </section>
         </div>

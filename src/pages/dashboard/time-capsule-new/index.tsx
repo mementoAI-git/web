@@ -23,6 +23,7 @@ import DeliveredBg from "./components/assets/delivered.svg";
 import DraftsBg from "./components/assets/drafts.svg";
 import FrozenBg from "./components/assets/frozen.svg";
 import { PauseIcon } from "./components/icons/PauseIcon";
+import { useFeatureFlags } from "@/contexts/feature-flags";
 
 export default function TimeCapsulePage() {
   const navigate = useNavigate();
@@ -33,8 +34,10 @@ export default function TimeCapsulePage() {
   );
   const [filter, setFilter] = useState("all");
   const { open } = useModal();
+  const { canUse } = useFeatureFlags();
   const timedCount = usage?.timed_message_count ?? 0;
   const atTimedMessageLimit = !isProOrAbove && timedCount >= 5;
+  const canCreateCapsule = canUse("capsule.create");
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -152,12 +155,15 @@ export default function TimeCapsulePage() {
 
             <Button
               onClick={() => {
+                if (!canCreateCapsule) return;
                 if (atTimedMessageLimit) {
                   setTimedGateOpen(true);
                   return;
                 }
                 open("create-capsule");
               }}
+              disabled={!canCreateCapsule}
+              title={!canCreateCapsule ? "Time capsule creation is disabled by admin." : undefined}
             >
               Create New
             </Button>

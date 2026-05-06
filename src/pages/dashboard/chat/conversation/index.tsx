@@ -2,7 +2,7 @@ import {
   ConversationChatinput,
   type IOnSendPayload,
 } from "@/components/Chatinput";
-import Bubble, { Typing } from "./bubble";
+import Bubble, { Typing, TypingBubble } from "./bubble";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import useSWR, { mutate } from "swr";
 import endpoint from "@/api/endpoint";
@@ -50,6 +50,7 @@ type StreamlinePayload = {
   memory: string;
   signal: AbortSignal;
   onChunk: (chunk: string) => void;
+  onMeta?: (meta: { model?: string }) => void;
   chatMode?: ChatMode;
   deepDiveDimension?: LifeDimension | null;
   dismissedNudgeDimensions?: string[];
@@ -57,6 +58,7 @@ type StreamlinePayload = {
 
 export default function Conversation({ id, type = "memory" }) {
   const [aiMessage, setAiMessage] = useState("")
+  const [streamModelLabel, setStreamModelLabel] = useState<string | undefined>(undefined);
   const abortCtrl = useRef(null)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const wasAtBottomRef = useRef(true);
@@ -77,6 +79,7 @@ export default function Conversation({ id, type = "memory" }) {
   const [deepDiveDimension, setDeepDiveDimension] = useState<LifeDimension | null>(null);
   const [nudgeHidden, setNudgeHidden] = useState(false);
   const [sessionEnrichmentDelta, setSessionEnrichmentDelta] = useState<number | null>(null);
+  const [streamDone, setStreamDone] = useState(false);
   const sessionStartScoreRef = useRef<number | null>(null);
 
   const {
@@ -196,14 +199,16 @@ export default function Conversation({ id, type = "memory" }) {
         {
           text,
           role: "ai",
+          ai_model: streamModelLabel,
           created_at: new Date().toISOString(),
         },
       ]));
     }
     setAiMessage("");
+    setStreamModelLabel(undefined);
     // Refetch enrichment stats after each AI response to update delta + milestone
     mutate(endpoint.userStats);
-  }, []);
+  }, [streamModelLabel]);
 
   const sendChatMessage = useCallback(
     async (
@@ -248,6 +253,8 @@ export default function Conversation({ id, type = "memory" }) {
 
         if (memory?._id) {
           abortCtrl.current = new AbortController();
+          setStreamDone(false);
+          setStreamModelLabel(undefined);
 
           await sendMessage({
             text: apiText,
@@ -255,10 +262,12 @@ export default function Conversation({ id, type = "memory" }) {
             memory: memory?._id,
             signal: abortCtrl.current.signal,
             onChunk: handleChuckArrival,
+            onMeta: ({ model }) => setStreamModelLabel(model),
             chatMode,
             deepDiveDimension: chatMode === "deep_dive" ? deepDiveDimension : null,
             dismissedNudgeDimensions: getDismissedHostChatNudges(),
           })
+          setStreamDone(true);
           return;
         }
 
@@ -289,6 +298,7 @@ export default function Conversation({ id, type = "memory" }) {
             });
           }
         }
+        setStreamDone(true);
       } finally {
         abortCtrl.current = null
       }
@@ -552,20 +562,28 @@ export default function Conversation({ id, type = "memory" }) {
           >
             {(isTyping && isEmpty(aiMessage)) ?
               <Typing /> :
-              <Bubble
-                role="ai"
-                text={aiMessage}
-                hostChatDeepDive={isHostChat && chatMode === "deep_dive"}
-                onReply={
-                  aiMessage.trim() ?
-                    () =>
-                      handleReplyToMessage({
-                        role: "ai",
-                        text: aiMessage.trim(),
-                      }) :
-                    undefined
-                }
-              />
+              aiMessage.trim() ?
+                <TypingBubble
+                  text={aiMessage}
+                  streamDone={streamDone}
+                  onFinish={handleOnFinishTyping}
+                  modelLabel={streamModelLabel}
+                /> :
+                <Bubble
+                  role="ai"
+                  text={aiMessage}
+                  modelLabel={streamModelLabel}
+                  hostChatDeepDive={isHostChat && chatMode === "deep_dive"}
+                  onReply={
+                    aiMessage.trim() ?
+                      () =>
+                        handleReplyToMessage({
+                          role: "ai",
+                          text: aiMessage.trim(),
+                        }) :
+                      undefined
+                  }
+                />
             }
           </History>
           <div className="sticky bottom-0 bg-white px-0 pb-2 sm:px-2 md:px-3">

@@ -11,6 +11,7 @@ import { pickRandomVoicePreviewPassage } from "@/lib/voice-preview-passages";
 const VOICE_PREVIEW_SYSTEM_INSTRUCTION = `You are reading a short passage from classic literature aloud for a voice demonstration. Read naturally: varied pacing, light emotional colour where the text invites it, as if you are reading from a well-loved book—not robotic, not like a commercial. Do not greet anyone, do not mention apps, settings, or "samples", and do not add lines that are not in the user's text. Speak only the words the user sends.`;
 
 const PREVIEW_SESSION_TIMEOUT_MS = 20_000;
+const PREVIEW_PLAYBACK_CAP_MS = 6_000;
 
 function getAudioContextCtor(): (typeof AudioContext) | null {
   if (typeof window === "undefined") return null;
@@ -23,6 +24,7 @@ export type PreviewGeminiChatVoiceParams = {
   fetchToken: () => Promise<string | null | undefined>;
   /** Cancels an in-flight preview (e.g. user picked another voice). */
   signal?: AbortSignal;
+  onFirstAudio?: (latencyMs: number) => void;
 };
 
 /**
@@ -73,6 +75,8 @@ export async function previewGeminiChatVoice(params: PreviewGeminiChatVoiceParam
   });
 
   let timeoutId = 0;
+  const startedAt = Date.now();
+  let firstAudioEmitted = false;
 
   let rejectAbort!: (e: Error) => void;
   const abortPromise = new Promise<never>((_, reject) => {
@@ -116,6 +120,10 @@ export async function previewGeminiChatVoice(params: PreviewGeminiChatVoiceParam
               if (data) {
                 try {
                   await scheduleGeminiLivePcmChunk(data, audioContext, gain, state);
+                  if (!firstAudioEmitted) {
+                    firstAudioEmitted = true;
+                    params.onFirstAudio?.(Date.now() - startedAt);
+                  }
                 } catch (e) {
                   console.error("Voice preview chunk failed:", e);
                 }
@@ -168,12 +176,15 @@ export async function previewGeminiChatVoice(params: PreviewGeminiChatVoiceParam
         PREVIEW_SESSION_TIMEOUT_MS,
       );
     });
+    const playbackCapPromise = new Promise<void>((resolve) => {
+      window.setTimeout(() => resolve(), PREVIEW_PLAYBACK_CAP_MS);
+    });
 
     const racers: Promise<unknown>[] = [turnCompletePromise, timeoutPromise];
     if (params.signal) {
       racers.push(abortPromise);
     }
-    await Promise.race(racers);
+    await Promise.race([...racers, playbackCapPromise]);
 
     await waitGeminiLivePlaybackTail(audioContext, state);
   } finally {
