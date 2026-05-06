@@ -349,11 +349,11 @@ export default function SidebarDetails({
         isOpen={isOpen}
         className="block md:hidden"
         onClose={onClose}
-        snapPoints={[0.5, 0.75, 1]}
+        snapPoints={[0, 0.8]}
       >
-        <Sheet.Container className="bg-sand-1">
+        <Sheet.Container className="max-h-[80dvh] overflow-hidden bg-sand-1">
           <Sheet.Header className="rounded-3xl bg-sand-1" />
-          <Sheet.Content className="bg-sand-1">
+          <Sheet.Content className="max-h-[80dvh] min-h-0 overflow-y-auto overscroll-contain bg-sand-1">
             <Content
               memory={memory}
               onClose={onClose}

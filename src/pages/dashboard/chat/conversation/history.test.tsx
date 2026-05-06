@@ -67,7 +67,7 @@ describe("History", () => {
       expect(screen.queryByTestId("conversation-header")).toBeNull();
     });
     expect(
-      document.querySelector('[class*="md:px-[30px]"]'),
+      document.querySelector(".min-w-0.space-y-6.px-0"),
     ).toBeTruthy();
   });
 

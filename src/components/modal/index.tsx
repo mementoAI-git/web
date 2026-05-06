@@ -9,6 +9,7 @@ import PromptInput from "./prompt-input";
 import {
   BookmarkMemory,
   CreateMemory,
+  QuickCapture,
   DeleteMemory,
   UpdateMemory,
   ViewMemory,
@@ -50,6 +51,9 @@ import { ExitConfirmation } from "./capsule/create/exit-confirmation";
 
 const RIGHT_PANEL_MODALS = ["create-memory", "view-memory"];
 
+/** Centered horizontally, anchored to the top (tall content / readability). */
+const TOP_ALIGNED_MODALS = ["memory-insights"];
+
 const MODAL_COMPONENTS = {
   "share-post": SharePost,
   welcome: Welcome,
@@ -58,6 +62,7 @@ const MODAL_COMPONENTS = {
   "edit-memory": UpdateMemory,
   "search-memory": SearchMemoriesV2,
   "create-memory": CreateMemory,
+  "quick-capture": QuickCapture,
   "delete-memory": DeleteMemory,
   "bookmark-memory": BookmarkMemory,
   "set-tag-permission": SetTagPermissions,
@@ -124,7 +129,7 @@ export default function Modal() {
 
   return (
     <div
-      className={`modal-overlay relative z-100 w-full h-full flex flex-col justify-start items-center bg-overlay-backdrop ${state ? "flex" : "hidden"}`}
+      className={`modal-overlay relative z-100 w-full h-full flex flex-col justify-center items-center bg-overlay-backdrop ${state ? "flex" : "hidden"}`}
       onClick={() => close(topModal.name)}
     >
       {[...state].reverse().map((modal, i) => {
@@ -133,6 +138,8 @@ export default function Modal() {
 
         const isRightPanel =
           RIGHT_PANEL_MODALS.includes(modal.name) && !isMobile;
+        const isTopAligned =
+          TOP_ALIGNED_MODALS.includes(modal.name) && !isMobile && !isRightPanel;
         const isTop = modal.name === topModal.name;
         const stackIndex = state.length - 1 - i;
         const hasModalsBehind = i > 0;
@@ -143,7 +150,9 @@ export default function Modal() {
             key={`${modal.name}-${i}`}
             className={`absolute inset-1.5 flex ${isRightPanel
                 ? "flex-row justify-start items-start"
-                : "flex-row justify-center items-center"
+                : isTopAligned
+                  ? "flex-row justify-center items-start pt-6 sm:pt-8 lg:pt-10"
+                  : "flex-row justify-center items-center"
               }`}
             style={{ zIndex: isTop ? 10 : stackIndex + 1 }}
             onClick={!isRightPanel ? (e) => {
@@ -154,7 +163,10 @@ export default function Modal() {
             {needsOverlay && (
               <div className="absolute -inset-1.5 bg-overlay-backdrop backdrop-blur-sm pointer-events-none" />
             )}
-            {isTop && !isMobile && (
+            {isTop &&
+              !isMobile &&
+              topModal.name !== "quick-capture" &&
+              topModal.name !== "share-post" && (
               <button
                 type="button"
                 onClick={(e) => {

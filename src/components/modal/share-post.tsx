@@ -6,7 +6,7 @@ import { CircleCheckIcon, CopyIcon, PlusIcon } from "@/components/icons";
 import { ModalCloseBtn } from "./modalLayout";
 import { useModal } from "@/hooks/use-modal";
 import useCopy from "@/hooks/use-copy";
-import { cn, getSocialShareLinks } from "@/utility";
+import { getSocialShareLinks } from "@/utility";
 import confetti from "@/assets/image/confetti.png";
 import facebook from "@/assets/image/Facebook.png";
 import twitter from "@/assets/image/twitter.png";
@@ -15,9 +15,17 @@ import linkedin from "@/assets/image/linkedin.png";
 
 interface SharePostProps {
   data: { id: string };
+  isMobile?: boolean;
 }
 
-function Content({ data }: SharePostProps) {
+/** Match delete-prompt-modal secondary / primary control sizing. */
+const cancelClass =
+  "h-10 cursor-pointer rounded-full border border-stroke-neutral-weak bg-white/1 px-4 py-2.5 font-inter text-sm font-semibold shadow";
+
+const primaryClass =
+  "flex h-10 cursor-pointer items-center justify-center gap-2 rounded-full bg-fill-brand-strong px-4 py-2.5 font-inter text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90";
+
+function SharePostContent({ data }: SharePostProps) {
   const { close, open } = useModal();
   const [copied, handleCopy] = useCopy();
   const [link, setLink] = useState<string>("");
@@ -31,119 +39,118 @@ function Content({ data }: SharePostProps) {
     shareText: "Check out this story",
     onCopy: handleCopy,
     images: { facebook, linkedin, twitter, instagram },
-    // platforms: ["facebook", "twitter"], // optional: pass to limit to specific platforms
   });
 
   return (
-    <div className="w-full !max-w-120">
-      <div className="space-y-6">
-        <div className="mx-auto flex w-fit sm:mx-0">
-          <img src={confetti} alt="Confetti" className="size-14 object-contain" />
-        </div>
-        <div className="text-center sm:text-left">
-          <h4 className="modal-title text-5xl !font-medium text-text-neutral-strong">Story added successfully</h4>
-          <p className="text-text-neutral-weak">You have added a new story to your Memento</p>
-        </div>
-
-        <div className="space-y-4 rounded-lg border border-gray-200 p-6">
-          <div className="font-inter text-sm font-medium !text-grey-600">
-            <span className="font-normal">Share link</span>
-            <div className="relative mt-2 flex items-center justify-between gap-2 rounded-lg border border-gray-200 p-2">
-              <span className="truncate font-normal whitespace-nowrap">{link}</span>
-
-              <button
-                type="button"
-                onClick={() => handleCopy(link, "Link copied successfully")}
-                className="cursor-pointer border-l border-gray-200 text-blue-6"
-              >
-                <div className="flex items-center justify-center gap-1 px-3 py-2">
-                  {copied ? (
-                    <>
-                      <CircleCheckIcon width={16} />
-                      <span>Copied</span>
-                    </>
-                  ) : (
-                    <>
-                      <CopyIcon width={16} />
-                      <span>Copy</span>
-                    </>
-                  )}
-                </div>
-              </button>
-            </div>
+    <div className="space-y-6">
+      <div className="space-y-4">
+        <div className="flex items-start gap-3">
+          <img src={confetti} alt="" className="size-12 shrink-0 object-contain" aria-hidden />
+          <div className="min-w-0 space-y-2">
+            <h4 className="modal-title text-text-neutral-strong">Story added successfully</h4>
+            <p className="font-inter text-sm text-text-neutral-weak">
+              You have added a new story to your Memento.
+            </p>
           </div>
+        </div>
+      </div>
 
-          <div className="flex items-center gap-3">
-            <div className="flex-1 border-t border-grey-500" />
-            <span className="font-inter text-xs text-v3-text-weak">Or share on Social Media</span>
-            <div className="flex-1 border-t border-grey-500" />
-          </div>
-
-          <div className="flex items-center justify-center gap-3 md:justify-between md:gap-11">
-            {socialPlatforms.map((platform) => (
-              <button
-                key={platform.name}
-                type="button"
-                onClick={platform.onClick}
-                className="flex size-[56px] shrink-0 cursor-pointer items-center justify-center rounded-full border border-grey-400 transition-colors hover:border-grey-500 hover:bg-gray-50"
-                aria-label={`Share on ${platform.name}`}
-              >
-                <img
-                  className="size-[28px] object-contain"
-                  src={platform.img}
-                  alt=""
-                  aria-hidden
-                />
-              </button>
-            ))}
+      <div className="space-y-4 rounded-2xl border border-stroke-neutral-weak bg-fill-neutral-weaker/50 p-4 sm:p-5">
+        <div>
+          <span className="font-inter text-sm font-medium text-text-neutral-strong">Share link</span>
+          <div className="relative mt-2 flex min-h-10 items-stretch gap-0 overflow-hidden rounded-xl border border-stroke-neutral-weak bg-v3-bg">
+            <span className="min-w-0 flex-1 truncate px-3 py-2.5 font-inter text-sm text-text-neutral-strong">
+              {link}
+            </span>
+            <button
+              type="button"
+              onClick={() => handleCopy(link, "Link copied successfully")}
+              className="shrink-0 border-l border-stroke-neutral-weak px-3 font-inter text-sm font-semibold text-text-brand-strong transition-colors hover:bg-fill-neutral-weaker"
+            >
+              <span className="flex items-center justify-center gap-1.5 py-2">
+                {copied ? (
+                  <>
+                    <CircleCheckIcon width={16} />
+                    Copied
+                  </>
+                ) : (
+                  <>
+                    <CopyIcon width={16} />
+                    Copy
+                  </>
+                )}
+              </span>
+            </button>
           </div>
         </div>
 
-        <div className="mt-6 flex justify-center gap-3 md:justify-end">
-          <button type="button" onClick={() => close("share-post")} className="btn-outline border">
-            Dismiss
-          </button>
-          <button
-            type="button"
-            onClick={() => open?.("create-memory")}
-            className={cn("btn", "!rounded-full w-fit")}
-          >
-            <PlusIcon width={9} />
-            <span>Add Story</span>
-          </button>
+        <div className="flex items-center gap-3">
+          <div className="h-px flex-1 bg-stroke-neutral-weak" />
+          <span className="shrink-0 font-inter text-xs text-text-neutral-weaker">Or share on social</span>
+          <div className="h-px flex-1 bg-stroke-neutral-weak" />
         </div>
+
+        <div className="flex flex-wrap items-center justify-center gap-3 sm:justify-between sm:gap-4">
+          {socialPlatforms.map((platform) => (
+            <button
+              key={platform.name}
+              type="button"
+              onClick={platform.onClick}
+              className="flex size-14 shrink-0 cursor-pointer items-center justify-center rounded-full border border-stroke-neutral-weak bg-v3-bg transition-colors hover:border-stroke-neutral-strong hover:bg-fill-neutral-weaker"
+              aria-label={`Share on ${platform.name}`}
+            >
+              <img className="size-7 object-contain" src={platform.img} alt="" aria-hidden />
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="flex items-center justify-end gap-3">
+        <button type="button" className={cancelClass} onClick={() => close("share-post")}>
+          Dismiss
+        </button>
+        <button
+          type="button"
+          onClick={() => open?.("create-memory")}
+          className={primaryClass}
+        >
+          <PlusIcon width={9} />
+          <span>Add story</span>
+        </button>
       </div>
     </div>
   );
 }
 
-export function SharePost({ data }: SharePostProps) {
+export function SharePost({ data, isMobile = false }: SharePostProps) {
   const { close } = useModal();
 
   const handleClose = () => close("share-post");
 
-  return (
-    <div>
-      <div className="modal-container hidden sm:flex">
-        <ModalCloseBtn onClick={handleClose} />
-        <Content data={data} />
-      </div>
-      <Sheet
-        detent="content"
-        className="block sm:hidden"
-        isOpen
-        onClose={handleClose}
-        snapPoints={[0.5, 0.75, 1]}
-      >
-        <Sheet.Container className="bg-white">
-          <Sheet.Header className="rounded-3xl bg-white" />
-          <Sheet.Content className="bg-white px-4 pb-6">
-            <ModalCloseBtn className="!relative ml-auto mb-1 !right-0 !top-0" onClick={handleClose} />
-            <Content data={data} />
+  if (isMobile) {
+    return (
+      <Sheet detent="content" isOpen onClose={handleClose} snapPoints={[0, 0.88]} initialSnap={1}>
+        <Sheet.Container className="max-h-[88dvh] overflow-hidden rounded-t-3xl border border-stroke-neutral-weak bg-fill-neutral-weaker shadow-lg">
+          <Sheet.Header className="rounded-t-3xl bg-fill-neutral-weaker" />
+          <Sheet.Content className="max-h-[88dvh] min-h-0 overflow-y-auto overscroll-contain px-5 pb-6 pt-1">
+            <ModalCloseBtn className="!relative ml-auto mb-2 !right-0 !top-0" onClick={handleClose} />
+            <SharePostContent data={data} />
           </Sheet.Content>
         </Sheet.Container>
-        <Sheet.Backdrop />
+        <Sheet.Backdrop onTap={handleClose} />
       </Sheet>
+    );
+  }
+
+  return (
+    <div
+      className="mx-auto w-full max-w-lg shrink-0 px-4"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <div className="modal-container !max-w-120 !p-5">
+        <ModalCloseBtn onClick={handleClose} />
+        <SharePostContent data={data} />
+      </div>
     </div>
   );
 }

@@ -95,7 +95,10 @@ export default function Bubble({
 
   return (
     <div
-      className={cn("flex flex-col space-y-1 px-2", isUser && "items-end")}
+      className={cn(
+        "flex min-w-0 max-w-full flex-col space-y-1 px-0 sm:px-1",
+        isUser && "items-end",
+      )}
       title={bubbleTimeTitle}
     >
       {
@@ -121,11 +124,17 @@ export default function Bubble({
           }
         </div>
       }
-      <div className={cn(isUser && "w-fit max-w-[85%]")}>
+      <div
+        className={cn(
+          "min-w-0 max-w-full",
+          isUser && "w-fit max-w-[min(470px,85%)]",
+          !isUser && "w-full",
+        )}
+      >
         <div
           className={cn(
-            "w-full rounded-[8px] p-2",
-            isUser && "max-w-[470px]",
+            "w-full max-w-full rounded-[8px] p-2 sm:p-2.5",
+            isUser && "max-w-[min(470px,85%)]",
             isUser && compact && "bg-fill-neutral-weaker",
             isUser && !compact && "bg-fill-neutral-weaker",
             !isUser && "bg-transparent",
@@ -154,7 +163,7 @@ export default function Bubble({
           ) : null}
           <span
             className={cn(
-              "text-text-neutral-strong font-georgia font-normal",
+              "block min-w-0 max-w-full text-text-neutral-strong font-georgia font-normal break-words [&_pre]:max-w-full [&_pre]:overflow-x-auto [&_table]:block [&_table]:max-w-full [&_table]:overflow-x-auto",
               compact
                 ? "text-[14px] leading-relaxed [&_p]:m-0 [&_p]:text-[14px] [&_p]:leading-relaxed"
                 : "text-base leading-relaxed md:text-xl md:leading-snug [&_p]:m-0 [&_p]:text-base [&_p]:leading-relaxed [&_p]:md:text-xl [&_p]:md:leading-snug",
@@ -198,9 +207,9 @@ export default function Bubble({
         </div>
         {metaVisible &&
           (timeLabel || canCopy || (onReply && hasReplyableContent)) && (
-          <div
+            <div
             className={cn(
-              "mt-1 flex max-w-[470px] flex-wrap items-center gap-1 px-0.5",
+              "mt-1 flex max-w-[min(470px,100%)] flex-wrap items-center gap-1 px-0.5",
               isUser && "ml-auto justify-end",
               !isUser && "justify-start",
             )}
@@ -242,7 +251,7 @@ export default function Bubble({
         {isUser && sendFailed && onRetry ? (
           <div
             className={cn(
-              "mt-2 flex max-w-[470px] flex-wrap items-center gap-2 px-0.5",
+              "mt-2 flex max-w-[min(470px,100%)] flex-wrap items-center gap-2 px-0.5",
               "ml-auto justify-end",
             )}
           >
@@ -344,12 +353,21 @@ export function Typing() {
   }, [loadingPhrases.length]);
 
   return (
-    <div className="flex items-center gap-2 px-5 py-3" aria-live="polite" aria-label="Assistant is typing">
+    <div
+      className="flex min-w-0 flex-wrap items-center gap-2 px-0 py-3 sm:flex-nowrap sm:px-1"
+      aria-live="polite"
+      aria-label="Assistant is typing"
+    >
       <div
-        className="h-3.5 w-3.5 animate-spin rounded-full border border-solid border-[#1ED348] border-t-transparent"
+        className="h-3.5 w-3.5 shrink-0 animate-spin rounded-full border border-solid border-[#1ED348] border-t-transparent"
         aria-hidden
       />
-      <span className="font-inter text-sm" style={{ color: "#1ED348" }}>{loadingPhrases[phraseIdx]}</span>
+      <span
+        className="min-w-0 max-w-full font-inter text-xs text-[#1ED348] sm:text-sm"
+        style={{ wordBreak: "break-word" }}
+      >
+        {loadingPhrases[phraseIdx]}
+      </span>
       <div className="w-1.5 h-1.5 bg-icon-neutral-weaker rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
       <div className="w-1.5 h-1.5 bg-icon-neutral-weaker rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
       <div className="w-1.5 h-1.5 bg-icon-neutral-weaker rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>

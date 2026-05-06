@@ -26,7 +26,7 @@ export default function CategoryCard({
       <img
         src={image}
         alt={title || subtitle}
-        className="size-full h-[164px] object-cover object-center transition-transform duration-300 ease-in-out group-hover:scale-110"
+        className="size-full h-[132px] object-cover object-center transition-transform duration-300 ease-in-out group-hover:scale-110 sm:h-[152px] md:h-[164px]"
       />
       <div className="flex font-garamond text-gray-950/90 flex-col gap-2">
         {
@@ -34,7 +34,7 @@ export default function CategoryCard({
             <h5 className="font-semibold  text-2xl">{title}</h5>
           )
         }
-        <span className="font-georgia text-[18px] font-normal text-gray-950/90 line-clamp-3">{subtitle}</span>
+        <span className="font-georgia text-[16px] font-normal text-gray-950/90 line-clamp-3 sm:text-[18px]">{subtitle}</span>
       </div>
     </Link>
   );

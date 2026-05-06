@@ -4,6 +4,7 @@ import Spinner from "@/components/spinner";
 import { cn } from "@/utility";
 
 export { AutogenerateTagsButton } from "./AutogenerateTagsButton";
+export { AutogenerateTitleButton } from "./AutogenerateTitleButton";
 
 interface IButton extends ButtonHTMLAttributes<HTMLButtonElement> {
   title: string;

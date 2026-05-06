@@ -291,11 +291,11 @@ export function SearchMemoriesV2() {
         className="block sm:hidden"
         isOpen
         onClose={() => close?.("search-memory")}
-        snapPoints={[0.5, 0.75, 1]}
+        snapPoints={[0, 0.8]}
       >
-        <Sheet.Container className="bg-white">
+        <Sheet.Container className="max-h-[80dvh] overflow-hidden bg-white">
           <Sheet.Header className="rounded-3xl bg-white" />
-          <Sheet.Content className="bg-white px-0 pb-6">
+          <Sheet.Content className="max-h-[80dvh] min-h-0 overflow-y-auto overscroll-contain bg-white px-0 pb-6">
             <SearchModalContent />
           </Sheet.Content>
         </Sheet.Container>

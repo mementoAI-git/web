@@ -23,8 +23,14 @@ export default function useRecorder(stream: MediaStream | null, mimeType = "vide
   };
 
   const stop = () => {
-    if (!recorderRef.current) return;
-    recorderRef.current.stop();
+    const rec = recorderRef.current;
+    if (rec && rec.state !== "inactive") {
+      try {
+        rec.stop();
+      } catch {
+        /* MediaRecorder.stop() throws if already inactive in some browsers */
+      }
+    }
     stream?.getTracks().forEach((track) => track.stop());
   };
 
@@ -39,13 +45,17 @@ export default function useRecorder(stream: MediaStream | null, mimeType = "vide
   };
 
   const reset = () => {
-    stop();
-    setUrl(null);
-    setRecording(false);
-    setTimer(0);
     if (timerRef.current) {
       clearInterval(timerRef.current);
+      timerRef.current = undefined;
     }
+    setRecording(false);
+    setTimer(0);
+    if (url) {
+      URL.revokeObjectURL(url);
+    }
+    setUrl(null);
+    stop();
   };
 
   const setupRecorder = useCallback(() => {

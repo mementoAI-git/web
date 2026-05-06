@@ -654,12 +654,12 @@ export function UpdateMemory({ data }: ContentProps) {
         className="block sm:hidden"
         isOpen
         onClose={() => close("edit-memory")}
-        snapPoints={[0.5, 0.75, 1]}
+        snapPoints={[0, 0.8]}
         initialSnap={1}
       >
-        <Sheet.Container className="bg-fill-neutral-weaker">
+        <Sheet.Container className="max-h-[80dvh] overflow-hidden bg-fill-neutral-weaker">
           <Sheet.Header className="rounded-3xl bg-fill-neutral-weaker" />
-          <Sheet.Content className="bg-fill-neutral-weaker px-4 pb-6">
+          <Sheet.Content className="max-h-[80dvh] min-h-0 overflow-y-auto overscroll-contain bg-fill-neutral-weaker px-4 pb-6">
             <ModalCloseBtn className="!relative ml-auto mb-2 !right-0 !top-0" onClick={() => close("edit-memory")} />
             <Content data={data} />
           </Sheet.Content>

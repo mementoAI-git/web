@@ -7,10 +7,19 @@ import { isEmpty } from "@/utility";
 import { DocsClipIcon } from "@/components/icons";
 import type { IMemory } from "@/utility/interface";
 import { useModal } from "@/hooks/use-modal";
+import { QuickCaptureProcessingBadge } from "@/components/memory/quick-capture-processing-badge";
+
+function getStoryRowTitle(memory: IMemory): string {
+  if (memory.prompt_type && memory.prompt_text?.trim()) {
+    return memory.prompt_text.trim();
+  }
+  return memory.title;
+}
 
 export default function StoriesTableRow({ memory }: { memory: IMemory }) {
   const navigate = useNavigate();
   const { open } = useModal();
+  const rowTitle = getStoryRowTitle(memory);
 
   const handleClick = () => {
     const isMobile = window.innerWidth < 640;
@@ -36,8 +45,9 @@ export default function StoriesTableRow({ memory }: { memory: IMemory }) {
           </div>
           <span className="max-w-75 truncate font-inter text-sm font-medium whitespace-nowrap text-v3-text-strong">
             {" "}
-            {memory.title}
+            {rowTitle}
           </span>
+          <QuickCaptureProcessingBadge memory={memory} />
         </div>
       </td>
       <td className="text-sm whitespace-nowrap text-v3-text-weak">

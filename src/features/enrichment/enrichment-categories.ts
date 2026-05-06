@@ -200,3 +200,52 @@ export function formatEnrichmentPriorityForDisplay(
     : raw.split(",").map((s) => s.trim()).filter(Boolean);
   return parts.map(formatEnrichmentPriorityTokenForDisplay).filter(Boolean).join(", ");
 }
+
+function cleanFocusFragment(s: string): string {
+  return s
+    .replace(/\s+/g, " ")
+    .replace(/[.…,;]+$/g, "")
+    .trim();
+}
+
+/** Resolved, trimmed focus labels (one entry per priority token). */
+export function enrichmentPriorityDisplayParts(
+  raw: string | string[] | undefined,
+): string[] {
+  if (raw == null) return [];
+  const tokens = Array.isArray(raw)
+    ? raw
+    : raw.split(",").map((t) => t.trim()).filter(Boolean);
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const t of tokens) {
+    const displayed = formatEnrichmentPriorityTokenForDisplay(t);
+    if (!displayed) continue;
+    const cleaned = cleanFocusFragment(displayed);
+    if (!cleaned) continue;
+    const key = cleaned.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(cleaned);
+  }
+  return out;
+}
+
+/**
+ * One readable first-person sentence for Memory Insights (avoids "My focus: A, B, C" comma splices).
+ */
+export function formatCurrentPriorityAsFocusSentence(
+  raw: string | string[] | undefined,
+): string {
+  const parts = enrichmentPriorityDisplayParts(raw);
+  if (parts.length === 0) return "";
+  if (parts.length === 1) {
+    return `Right now I'm most focused on ${parts[0]}.`;
+  }
+  if (parts.length === 2) {
+    return `Right now I'm most focused on ${parts[0]} and ${parts[1]}.`;
+  }
+  const head = parts.slice(0, -1).join(", ");
+  const last = parts[parts.length - 1];
+  return `Right now I'm most focused on ${head}, and ${last}.`;
+}

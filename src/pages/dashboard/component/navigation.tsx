@@ -20,7 +20,7 @@ export const topNavigations = [
   { icon: chatsIcon, title: "Chat", link: "/chat" },
   { icon: cardFileBoxIcon, title: "My stories", link: "/stories" },
   { icon: compassIcon, title: "Explore topics", link: "/explore" },
-  { icon: hourglassIcon, title: "Time capsule", link: "/capsule" },
+  { icon: hourglassIcon, title: "Time capsules", link: "/capsule" },
 ];
 
 export const bottomNavigations = [

@@ -12,7 +12,10 @@ interface IStoriesHeader {
   onChangeMode: (m: string) => void;
   filter: string;
   onChangeFilter: (f: string) => void;
+  /** Active stories (same as GET /memories/stories? filter=all). */
   count?: number;
+  bookmarkedCount?: number;
+  deletedCount?: number;
 }
 
 export default function StoriesHeader({
@@ -20,14 +23,16 @@ export default function StoriesHeader({
   onChangeMode,
   filter,
   onChangeFilter,
-  count = 0
+  count = 0,
+  bookmarkedCount = 0,
+  deletedCount = 0,
 }: IStoriesHeader) {
   const { open } = useModal()
 
   const filters = [
     { label: "All", value: "all", count: count },
-    { label: "Bookmarked", value: "bookmarked" },
-    { label: "Deleted", value: "deleted" },
+    { label: "Bookmarked", value: "bookmarked", count: bookmarkedCount },
+    { label: "Deleted", value: "deleted", count: deletedCount },
   ];
 
   const handleChangeMode = (m: string) => {

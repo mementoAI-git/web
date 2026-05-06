@@ -317,9 +317,10 @@ function MobileFormSheet({
 }: MobileFormSheetProps) {
   return (
     <Sheet
+      detent="content"
       isOpen={isOpen}
       onClose={onClose}
-      snapPoints={[0, 1]}
+      snapPoints={[0, 0.8]}
       initialSnap={1}
       style={{ zIndex: 9995 }}
     >
@@ -341,9 +342,9 @@ function MobileFormSheet({
           </div>
         </Sheet.Header>
 
-        <Sheet.Content className="relative z-10">
+        <Sheet.Content className="relative z-10 max-h-[80dvh] min-h-0 overflow-y-auto overscroll-contain">
           {/* Scrollable body */}
-          <div className="flex flex-col h-full">
+          <div className="flex min-h-0 flex-col">
             <div className="flex-1 overflow-auto px-4 pb-4">
               <SheetHeader
                 title={isEditMode ? "Edit Time Capsule" : "Create Time Capsule"}
@@ -635,9 +636,10 @@ function MobilePreviewSheet({
 }: MobilePreviewSheetProps) {
   return (
     <Sheet
+      detent="content"
       isOpen={isOpen}
       onClose={onClose}
-      snapPoints={[0, 1]}
+      snapPoints={[0, 0.8]}
       initialSnap={1}
       style={{ zIndex: 9998 }}
     >
@@ -657,8 +659,8 @@ function MobilePreviewSheet({
             <div className="w-10 h-1 rounded-full bg-gray-300" />
           </div>
         </Sheet.Header>
-        <Sheet.Content className="relative z-10">
-          <div className="flex flex-col h-full overflow-auto px-4 pb-8">
+        <Sheet.Content className="relative z-10 max-h-[80dvh] min-h-0 overflow-y-auto overscroll-contain">
+          <div className="flex min-h-0 flex-col overflow-auto px-4 pb-8">
             <SheetHeader title="Preview Capsule" onClose={onClose} />
             {/* Style controls (Theme + Size) */}
             <div className="mb-4">
@@ -702,9 +704,10 @@ function MobileMemorySheet({
 }) {
   return (
     <Sheet
+      detent="content"
       isOpen={isOpen}
       onClose={onClose}
-      snapPoints={[0, 1]}
+      snapPoints={[0, 0.8]}
       initialSnap={1}
       style={{ zIndex: 9999 }}
     >
@@ -724,7 +727,7 @@ function MobileMemorySheet({
             <div className="w-10 h-1 rounded-full bg-gray-300" />
           </div>
         </Sheet.Header>
-        <Sheet.Content className="relative z-10">
+        <Sheet.Content className="relative z-10 max-h-[80dvh] min-h-0 overflow-y-auto overscroll-contain">
           <div className="h-full overflow-auto px-4 pb-8">
             <SheetHeader title="Select item from memory" onClose={onClose} />
             <SelectFromMemory
@@ -756,9 +759,10 @@ function MobileMediaSheet({
 }) {
   return (
     <Sheet
+      detent="content"
       isOpen={isOpen}
       onClose={onClose}
-      snapPoints={[0, 1]}
+      snapPoints={[0, 0.8]}
       initialSnap={1}
       style={{ zIndex: 9999 }}
     >
@@ -778,7 +782,7 @@ function MobileMediaSheet({
             <div className="w-10 h-1 rounded-full bg-gray-300" />
           </div>
         </Sheet.Header>
-        <Sheet.Content className="relative z-10">
+        <Sheet.Content className="relative z-10 max-h-[80dvh] min-h-0 overflow-y-auto overscroll-contain">
           <div className="h-full overflow-auto px-4 pb-8">
             <SheetHeader
               title="Select item from Recent Media"

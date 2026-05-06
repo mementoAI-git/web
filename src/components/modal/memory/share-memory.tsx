@@ -125,11 +125,11 @@ export default function ShareMemory({ data }: ShareMemoryProps) {
         className="block sm:hidden"
         isOpen
         onClose={handleClose}
-        snapPoints={[0.5, 0.75, 1]}
+        snapPoints={[0, 0.8]}
       >
-        <Sheet.Container className="bg-background">
+        <Sheet.Container className="max-h-[80dvh] overflow-hidden bg-background">
           <Sheet.Header className="rounded-3xl bg-background" />
-          <Sheet.Content className="bg-background px-4 pb-6">
+          <Sheet.Content className="max-h-[80dvh] min-h-0 overflow-y-auto overscroll-contain bg-background px-4 pb-6">
             <ModalCloseBtn className="!relative ml-auto mb-1 !right-0 !top-0" onClick={handleClose} />
             <Content data={data} />
           </Sheet.Content>
