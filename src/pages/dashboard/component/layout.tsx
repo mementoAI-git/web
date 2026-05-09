@@ -99,15 +99,10 @@ export default function DashboardLayout() {
                 !isVoiceChatRoute && "pt-[60px] sm:pt-0",
               )}
             >
-<div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-                  <div className={cn(
-                    "w-full min-w-0 shrink-0 px-4 pt-[3px] pb-0.5 text-v3-text-strong sm:px-6",
-                    isVoiceChatRoute ? "bg-sand-1" : "bg-white"
-                  )}>
-                    <OnboardingNudgeBanner />
-                    <TrialBanner />
-                    <SecurityNudgeBanner />
-                  </div>
+              <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+                <OnboardingNudgeBanner />
+                <TrialBanner />
+                <SecurityNudgeBanner />
                 <div
                   className={cn(
                     "hide-scrollbar h-full min-h-0 w-full flex-1",

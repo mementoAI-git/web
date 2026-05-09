@@ -132,6 +132,8 @@ export interface IMemory {
   capture_source?: "standard" | "quick";
   /** AI title/tags enrichment for Quick Capture */
   enrichment_status?: "pending" | "complete" | "failed";
+  /** Story visibility; omitted on older documents means private */
+  visibility?: "private" | "everyone";
 }
 
 export interface IPagination<T> {

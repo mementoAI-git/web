@@ -29,7 +29,12 @@ import {
   uploadMimeBaseType,
 } from "@/utility/constant";
 import { HeadingIcon, TimesIcon, LinkIcon, UnorderedListIcon } from "@/components/icons";
-import { AccessField, buildCreateMemoryPayload, type SearchResultItem } from "./access-field";
+import {
+  AccessField,
+  buildCreateMemoryPayload,
+  type MemoryShareAudience,
+  type SearchResultItem,
+} from "./access-field";
 import { beneficiaryToAccessItem } from "./beneficiary-to-access-item";
 import {
   htmlFromQuickCaptureNote,
@@ -132,6 +137,7 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
   const emojiPickerRef = useRef<HTMLDivElement>(null);
   const emojiPickerPortalRef = useRef<HTMLDivElement>(null);
   const [selectedAccess, setSelectedAccess] = useState<SearchResultItem[]>([]);
+  const [shareAudience, setShareAudience] = useState<MemoryShareAudience>("private");
   const [tags, setTags] = useState<string[]>([]);
   const [quickCaptureDraftNonce, setQuickCaptureDraftNonce] = useState(0);
 
@@ -173,7 +179,8 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
         tags,
         "save",
         selectedAccess,
-        uploadedFiles.length > 0 ? { attachments: uploadedFiles } : {}
+        shareAudience,
+        uploadedFiles.length > 0 ? { attachments: uploadedFiles } : {},
       );
 
       try {
@@ -185,6 +192,7 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
           setFiles([]);
           setTags([]);
           setSelectedAccess([]);
+          setShareAudience("private");
         } else {
           toast.error(
             typeof result?.message === "string" ? result.message : "Could not save your story. Try again.",
@@ -291,7 +299,8 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
     values.title.trim().length > 0 ||
     (editor?.getText()?.trim().length ?? 0) > 0 ||
     tags.length > 0 ||
-    selectedAccess.length > 0;
+    selectedAccess.length > 0 ||
+    shareAudience !== "private";
 
   useEffect(() => {
     if (!registerCloseGuard) return;
@@ -484,6 +493,7 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
         .map((b) => beneficiaryToAccessItem(b))
         .filter((x): x is SearchResultItem => x != null && ids.has(x.id));
       setSelectedAccess(access);
+      setShareAudience("private");
     },
     [beneficiaryDocs, editor, setFiles, setValues, setTags, setSelectedAccess],
   );
@@ -990,7 +1000,12 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
 
       <FileThumbnails files={files} onRemove={handleRemoveFile} />
 
-      <AccessField value={selectedAccess} onChange={setSelectedAccess} />
+      <AccessField
+        value={selectedAccess}
+        onChange={setSelectedAccess}
+        shareAudience={shareAudience}
+        onShareAudienceChange={setShareAudience}
+      />
 
       <TagsField
         tags={tags}
@@ -1156,7 +1171,7 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
             Add New Story
           </h2>
         </CardHeader>
-        <CardContent className="flex min-h-0 flex-1 flex-col overflow-y-auto px-6 pt-5 pb-16 hide-scrollbar space-y-5">
+        <CardContent className="flex h-[700px] min-h-0 flex-col overflow-y-auto px-6 pt-5 pb-16 hide-scrollbar space-y-5">
           {formContent}
         </CardContent>
         <CardFooter className="shrink-0 border-t border-stroke-neutral-weak px-6 py-4">{footer}</CardFooter>

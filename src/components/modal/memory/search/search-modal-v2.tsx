@@ -278,7 +278,7 @@ export function SearchMemoriesV2() {
         onClick={() => close?.("search-memory")}
       >
         <div
-          className="flex w-full justify-center px-4"
+          className="flex w-fit justify-center"
           onClick={(e) => e.stopPropagation()}
         >
           <div className="w-full max-w-[640px] min-w-[min(100%,640px)] overflow-hidden rounded-2xl border border-v3-stroke-weak bg-white shadow-[0px_8px_40px_var(--brown-100)]">

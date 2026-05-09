@@ -20,7 +20,11 @@ import { cn, resolvePath } from "@/utility";
 import type { IFile, IMemory, IOnUploadPayload } from "@/utility/interface";
 import { SUPPORTED_FILE_TYPES } from "@/utility/constant";
 import { FileThumbnails } from "./create/file-thumbnails";
-import { AccessField, type SearchResultItem } from "./create/access-field";
+import {
+  AccessField,
+  type MemoryShareAudience,
+  type SearchResultItem,
+} from "./create/access-field";
 import { TagsField } from "./create/tags-field";
 import { HeadingIcon, LinkIcon, UnorderedListIcon } from "@/components/icons";
 import { useMemoryEditor } from "@/components/memory/text-area/use-memory-editor";
@@ -49,6 +53,7 @@ interface UpdateMemoryPayload {
   groups?: string[];
   beneficiaries?: string[];
   tags?: string[];
+  visibility?: MemoryShareAudience;
 }
 
 function toSearchItems(
@@ -64,8 +69,13 @@ function toSearchItems(
   return [...groupItems, ...beneficiaryItems];
 }
 
+function memoryShareAudience(m: IMemory): MemoryShareAudience {
+  return m.visibility === "everyone" ? "everyone" : "private";
+}
+
 function Content({ data }: ContentProps) {
   const memory = data.memory ?? data;
+  const savedShareAudience = memoryShareAudience(memory);
   const { push, close } = useModal();
   const fileInputMediaRef = useRef<HTMLInputElement>(null);
   const fileInputAllRef = useRef<HTMLInputElement>(null);
@@ -77,6 +87,7 @@ function Content({ data }: ContentProps) {
   const [selectedAccess, setSelectedAccess] = useState<SearchResultItem[]>(() =>
     toSearchItems(memory?.groups, memory?.beneficiaries)
   );
+  const [shareAudience, setShareAudience] = useState<MemoryShareAudience>(() => savedShareAudience);
   const [tags, setTags] = useState<string[]>(memory?.tags || []);
   const { trigger, isMutating } = useFetcher(`${endpoint.memories}/${memory._id}`, "put");
   const { files, handleUpload, handleDeleteFile, setFiles } = useFileUpload();
@@ -166,6 +177,11 @@ function Content({ data }: ContentProps) {
     const tagsChanged = JSON.stringify([...tags].sort()) !== JSON.stringify([...(memory?.tags || [])].sort());
     if (tagsChanged) {
       payload.tags = tags;
+    }
+
+    const visibilityChanged = shareAudience !== savedShareAudience;
+    if (visibilityChanged) {
+      payload.visibility = shareAudience;
     }
 
     if (Object.keys(payload).length > 0) {
@@ -298,13 +314,15 @@ function Content({ data }: ContentProps) {
     );
   const tagsChanged =
     JSON.stringify([...tags].sort()) !== JSON.stringify([...(memory?.tags || [])].sort());
+  const visibilityChanged = shareAudience !== savedShareAudience;
   const hasChanges =
     title !== (memory?.title ?? "") ||
     text !== (memory.body ?? "") ||
     removedAttachmentIds.length > 0 ||
     files.some((f) => f.uploadedFile) ||
     accessChanged ||
-    tagsChanged;
+    tagsChanged ||
+    visibilityChanged;
   const hasUploadingFiles = files.some((file) => !file.uploadedFile);
 
   return (
@@ -536,7 +554,12 @@ function Content({ data }: ContentProps) {
           </div>
         </div>
 
-        <AccessField value={selectedAccess} onChange={setSelectedAccess} />
+        <AccessField
+          value={selectedAccess}
+          onChange={setSelectedAccess}
+          shareAudience={shareAudience}
+          onShareAudienceChange={setShareAudience}
+        />
 
         <TagsField
           tags={tags}

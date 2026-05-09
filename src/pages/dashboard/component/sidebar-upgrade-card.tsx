@@ -14,7 +14,7 @@ export function SidebarUpgradeCard({ onNavigate }: SidebarUpgradeCardProps) {
 
   return (
     <div
-      className="flex flex-col overflow-hidden rounded-[24px] bg-cover bg-center p-[12px] text-white shadow-[0_4px_16px_var(--brown-100)]"
+      className="flex h-fit flex-col overflow-hidden rounded-[16px] bg-cover bg-center p-[12px] text-white shadow-[0_4px_16px_var(--brown-100)]"
       style={{ backgroundImage: `url(${upgradeCardBg})` }}
     >
       <div className="flex flex-col items-start gap-1">
