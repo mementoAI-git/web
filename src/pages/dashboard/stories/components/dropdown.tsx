@@ -66,44 +66,44 @@ export function MemoryItemActions({ memory }: { memory: IMemory }) {
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="end"
-        className="w-48 rounded-xl border-v3-stroke-weak bg-white p-1 shadow-lg"
+        className="w-32 rounded-lg border border-v3-stroke-weak bg-popover p-0.5 text-popover-foreground shadow-md"
       >
         {isDeleted ? (
           <DropdownMenuItem
             onClick={handleRestore}
-            className="rounded-lg px-2.5 py-2 text-sm text-v3-text-strong focus:bg-v3-fill-weaker focus:text-v3-text-strong cursor-pointer"
+            className="cursor-pointer rounded-md px-2 py-1.5 text-xs text-v3-text-strong focus:bg-v3-fill-weaker focus:text-v3-text-strong"
           >
-            <RestoreIcon className="size-4 mr-2" strokeWidth={1.5} />
+            <RestoreIcon className="mr-1.5 size-3.5" strokeWidth={1.5} />
             Restore
           </DropdownMenuItem>
         ) : (
           <>
             <DropdownMenuItem
               onClick={() => open("edit-memory", { memory })}
-              className="rounded-lg px-2.5 py-2 text-sm text-v3-text-strong focus:bg-v3-fill-weaker focus:text-v3-text-strong cursor-pointer"
+              className="cursor-pointer rounded-md px-2 py-1.5 text-xs text-v3-text-strong focus:bg-v3-fill-weaker focus:text-v3-text-strong"
             >
-              <EditIcon className="size-4 mr-2" />
+              <EditIcon className="mr-1.5 size-3.5" />
               Edit story
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => open("share-memory", { memory })}
-              className="rounded-lg px-2.5 py-2 text-sm text-v3-text-strong focus:bg-v3-fill-weaker focus:text-v3-text-strong cursor-pointer"
+              className="cursor-pointer rounded-md px-2 py-1.5 text-xs text-v3-text-strong focus:bg-v3-fill-weaker focus:text-v3-text-strong"
             >
-              <LaunchIcon className="size-3.5 mr-2" strokeWidth={1.5} />
+              <LaunchIcon className="mr-1.5 size-3.5" strokeWidth={1.5} />
               Share story
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={toggleBookmark}
-              className="rounded-lg px-2.5 py-2 text-sm text-v3-text-strong focus:bg-v3-fill-weaker focus:text-v3-text-strong cursor-pointer"
+              className="cursor-pointer rounded-md px-2 py-1.5 text-xs text-v3-text-strong focus:bg-v3-fill-weaker focus:text-v3-text-strong"
             >
               {memory.bookmarked ? (
                 <>
-                  <RemoveBookmarkIcon className="size-4 mr-2" />
+                  <RemoveBookmarkIcon className="mr-1.5 size-3.5" />
                   Remove bookmark
                 </>
               ) : (
                 <>
-                  <AddBookmarkIcon className="size-4 mr-2" />
+                  <AddBookmarkIcon className="mr-1.5 size-3.5" />
                   Add bookmark
                 </>
               )}
@@ -113,9 +113,9 @@ export function MemoryItemActions({ memory }: { memory: IMemory }) {
         <DropdownMenuSeparator className="bg-v3-stroke-weak my-1" />
         <DropdownMenuItem
           onClick={() => open("delete-memory", { memory })}
-          className="rounded-lg px-2.5 py-2 text-sm text-red-600 focus:bg-red-50 focus:text-red-600 cursor-pointer"
+          className="cursor-pointer rounded-md px-2 py-1.5 text-xs text-red-600 focus:bg-red-50 focus:text-red-600"
         >
-          <TrashIcon className="size-4 mr-2" />
+          <TrashIcon className="mr-1.5 size-3.5" />
           Delete
         </DropdownMenuItem>
       </DropdownMenuContent>
@@ -146,7 +146,7 @@ export function MemoryListFilter({
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="start"
-        className="w-40 rounded-xl border-v3-stroke-weak bg-white p-1 shadow-lg"
+        className="w-36 rounded-lg border border-v3-stroke-weak bg-popover p-0.5 text-popover-foreground shadow-md"
       >
         {(Object.keys(FILTER_LABELS) as Array<keyof typeof FILTER_LABELS>).map(
           (key) => (
@@ -154,13 +154,13 @@ export function MemoryListFilter({
               key={key}
               onClick={() => onChange(key)}
               className={cn(
-                "rounded-lg px-2.5 py-2 text-sm cursor-pointer",
+                "cursor-pointer rounded-md px-2 py-1.5 text-xs",
                 value === key
                   ? "bg-v3-fill-weaker text-v3-text-strong"
                   : "text-v3-text-weak focus:bg-v3-fill-weaker focus:text-v3-text-strong"
               )}
             >
-              <span className={cn("size-4 mr-2 flex items-center justify-center", value === key && "text-v3-brand-strong")}>
+              <span className={cn("mr-1.5 flex size-3.5 items-center justify-center", value === key && "text-v3-brand-strong")}>
                 {value === key && "✓"}
               </span>
               {FILTER_LABELS[key]}

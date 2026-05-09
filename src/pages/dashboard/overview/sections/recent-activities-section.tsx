@@ -9,6 +9,7 @@ import recentActivityIcon from "@/assets/icon/homepage/recent activities icon.sv
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import { TypographyH2, TypographyMuted } from "@/components/ui/typography";
 
 dayjs.extend(calendar);
 
@@ -53,12 +54,12 @@ function RecentActivityItem({ activity }: { activity: Activity }) {
         />
       </div>
       <div className="min-w-0 flex-1">
-        <p className="line-clamp-2 font-inter text-[14px] font-medium text-text-neutral-strong sm:line-clamp-none sm:truncate">
+        <TypographyH2 className="line-clamp-2 font-inter text-base font-normal text-text-neutral-strong sm:text-base md:text-base lg:text-base sm:line-clamp-none sm:truncate">
           {activity.description}
-        </p>
-        <p className="font-inter text-xs text-text-neutral-weak">
+        </TypographyH2>
+        <TypographyMuted className="font-inter text-xs text-text-neutral-weak">
           {formattedDate}
-        </p>
+        </TypographyMuted>
       </div>
     </div>
   );
@@ -90,10 +91,10 @@ export default function RecentActivitiesSection() {
   return (
     <div className="flex flex-1 flex-col gap-3 sm:gap-4">
       <header className="flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
-        <h2 className="font-garamond font-normal text-text-neutral-strong text-xl leading-tight sm:text-2xl sm:leading-[38px] lg:text-[32px]">
+        <TypographyH2 className="font-garamond font-normal text-xl leading-tight text-text-neutral-strong sm:text-2xl sm:leading-[38px] lg:text-[32px]">
           Recent{" "}
           <i className="text-text-neutral-weaker">Activities</i>
-        </h2>
+        </TypographyH2>
         <Button
           variant="link"
           asChild
@@ -121,9 +122,9 @@ export default function RecentActivitiesSection() {
               ))
             : (
               <div className="py-8 text-center">
-                <p className="font-inter text-sm text-text-neutral-weak">
+                <TypographyMuted className="font-inter text-sm text-text-neutral-weak">
                   No recent activities
-                </p>
+                </TypographyMuted>
               </div>
             )}
       </div>

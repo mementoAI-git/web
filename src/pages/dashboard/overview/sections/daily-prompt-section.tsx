@@ -9,6 +9,7 @@ import type { DailyPromptCapturePayload } from "@/lib/quick-capture-drafts";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { TypographyH2, TypographyMuted } from "@/components/ui/typography";
 
 function DailyPromptSkeleton() {
   return (
@@ -118,15 +119,15 @@ export default function DailyPromptSection() {
       )}
 
       <div className="flex min-w-0 flex-1 flex-col gap-2">
-        <p className="flex flex-1 flex-col text-left font-inter text-lg font-medium leading-snug text-text-neutral-strong sm:text-xl md:text-[20px] md:leading-relaxed">
+        <TypographyH2 className="flex flex-1 flex-col text-left font-inter text-base font-normal leading-relaxed text-text-neutral-strong sm:text-base md:text-base lg:text-base">
           {promptBodyText(activeRow)}
-        </p>
+        </TypographyH2>
       </div>
 
       {activeRow.answered ? (
-        <p className="font-inter text-sm text-text-neutral-weak">
+        <TypographyMuted className="font-inter text-sm text-text-neutral-weak">
           You&apos;ve already shared a reflection for this one today.
-        </p>
+        </TypographyMuted>
       ) : (
         <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-start">
           <Button

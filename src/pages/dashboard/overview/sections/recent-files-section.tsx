@@ -13,6 +13,7 @@ import {
   VolumeIcon,
 } from "@/components/icons";
 import type { IMemory, IFile } from "@/utility/interface";
+import { TypographyH2, TypographyMuted } from "@/components/ui/typography";
 
 dayjs.extend(calendar);
 
@@ -129,12 +130,12 @@ function RecentFileItem({ memory }: RecentFileItemProps) {
         <Icon className="size-5 text-icon-neutral" />
       </div>
       <div className="min-w-0 flex-1">
-        <p className="truncate font-inter text-sm font-semibold text-text-neutral-strong">
+        <TypographyH2 className="truncate font-inter text-sm font-semibold text-text-neutral-strong">
           {memory.title || "Untitled"}
-        </p>
-        <p className="font-inter text-xs text-text-neutral-weak">
+        </TypographyH2>
+        <TypographyMuted className="font-inter text-xs text-text-neutral-weak">
           {formatSubDescription(fileType, firstAttachment, memory.created_at)}
-        </p>
+        </TypographyMuted>
       </div>
       <span className="shrink-0 rounded-full bg-fill-success-weak px-2.5 py-1 font-inter text-xs font-medium text-text-success-strong">
         {tagLabel}
@@ -193,9 +194,9 @@ export default function RecentFilesSection() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <FolderIcon className="size-5 text-icon-neutral" />
-          <h3 className="font-inter text-base font-semibold text-text-neutral-strong">
+          <TypographyH2 className="font-inter text-base font-semibold text-text-neutral-strong">
             Recent Files
-          </h3>
+          </TypographyH2>
         </div>
         <Link
           to="/stories"
@@ -208,9 +209,9 @@ export default function RecentFilesSection() {
       <div className="border-t border-stroke-neutral-weaker" />
       <div className="space-y-2">
         {memories.length === 0 ? (
-          <p className="py-8 text-center font-inter text-sm text-text-neutral-weak">
+          <TypographyMuted className="py-8 text-center font-inter text-sm text-text-neutral-weak">
             No recent files yet
-          </p>
+          </TypographyMuted>
         ) : (
           memories.map((memory) => (
             <RecentFileItem key={memory._id} memory={memory} />

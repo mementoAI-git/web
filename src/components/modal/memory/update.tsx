@@ -1,11 +1,7 @@
 import { useRef, useState, useCallback, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { Sheet } from "react-modal-sheet";
-import { useEditor, EditorContent } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
-import Placeholder from "@tiptap/extension-placeholder";
-import Link from "@tiptap/extension-link";
-import Underline from "@tiptap/extension-underline";
+import { EditorContent } from "@tiptap/react";
 import Picker from "@emoji-mart/react";
 import emojiData from "@emoji-mart/data";
 import endpoint from "@/api/endpoint";
@@ -27,6 +23,7 @@ import { FileThumbnails } from "./create/file-thumbnails";
 import { AccessField, type SearchResultItem } from "./create/access-field";
 import { TagsField } from "./create/tags-field";
 import { HeadingIcon, LinkIcon, UnorderedListIcon } from "@/components/icons";
+import { useMemoryEditor } from "@/components/memory/text-area/use-memory-editor";
 import addPlusSvg from "@/assets/icon/Add-plus.svg";
 import smileySvg from "@/assets/icon/noto_slightly-smiling-face.svg";
 import micSvg from "@/assets/icon/microphone-01.svg";
@@ -86,64 +83,30 @@ function Content({ data }: ContentProps) {
 
   const [showEmoji, setShowEmoji] = useState(false);
   const [showPlusMenu, setShowPlusMenu] = useState(false);
-  const [showLinkInput, setShowLinkInput] = useState(false);
-  const [linkPosition, setLinkPosition] = useState({ top: 0, left: 0 });
-  const [showSlashMenu, setShowSlashMenu] = useState(false);
-  const [slashPosition, setSlashPosition] = useState({ top: 0, left: 0 });
-  const [slashSelectedIndex, setSlashSelectedIndex] = useState(0);
   const [audioRecordingCount, setAudioRecordingCount] = useState(1);
   const plusMenuRef = useRef<HTMLDivElement>(null);
   const plusMenuPortalRef = useRef<HTMLDivElement>(null);
   const emojiPickerRef = useRef<HTMLDivElement>(null);
   const emojiPickerPortalRef = useRef<HTMLDivElement>(null);
 
-  const editor = useEditor({
-    immediatelyRender: false,
-    extensions: [
-      StarterKit.configure({
-        heading: { levels: [1, 2, 3, 4] },
-        link: false,
-      }),
-      Placeholder.configure({ placeholder: "What's on your mind today? Type / for formatting options" }),
-      Link.configure({
-        openOnClick: false,
-        HTMLAttributes: {
-          class: "text-blue-500 underline cursor-pointer",
-          target: "_blank",
-          rel: "noopener noreferrer",
-        },
-      }),
-      Underline,
-    ],
-    content: memory.body || "",
-    editorProps: {
-      attributes: {
-        class: "prose prose-sm focus:outline-none px-4 py-4 text-sm text-text-neutral-strong",
-      },
-    },
-    onUpdate: ({ editor }) => {
-      setText(editor.getHTML());
-
-      const { state } = editor;
-      const { selection } = state;
-      const { $anchor } = selection;
-      const textBefore = $anchor.parent.textContent.slice(0, $anchor.parentOffset);
-      const lastSlashIndex = textBefore.lastIndexOf("/");
-
-      if (lastSlashIndex === -1) {
-        setShowSlashMenu(false);
-      } else {
-        const query = textBefore.slice(lastSlashIndex + 1);
-        if (query.includes(" ") || query.includes("\n")) {
-          setShowSlashMenu(false);
-        } else {
-          const coords = editor.view.coordsAtPos(selection.from);
-          setSlashPosition({ top: coords.top + 20, left: coords.left });
-          setShowSlashMenu(true);
-          setSlashSelectedIndex(0);
-        }
-      }
-    },
+  const {
+    editor,
+    showLinkInput,
+    setShowLinkInput,
+    linkPosition,
+    showSlashMenu,
+    slashPosition,
+    slashSelectedIndex,
+    setSlashSelectedIndex,
+    openLinkInputAtSelection,
+    submitLink,
+    selectSlashCommand,
+  } = useMemoryEditor({
+    initialContent: memory.body || "",
+    placeholder: "What's on your mind today? Type / for formatting options",
+    editorClassName: "prose prose-sm focus:outline-none px-4 py-4 text-sm text-text-neutral-strong",
+    linkClassName: "text-blue-500 underline cursor-pointer",
+    onHtmlChange: setText,
   });
 
   useEffect(() => {
@@ -274,60 +237,15 @@ function Content({ data }: ContentProps) {
   };
 
   const handleLinkClick = () => {
-    if (!editor) return;
-    const { from } = editor.state.selection;
-    const coords = editor.view.coordsAtPos(from);
-    setLinkPosition({ top: coords.top - 100, left: coords.left });
-    setShowLinkInput(true);
+    openLinkInputAtSelection();
   };
 
   const handleLinkSubmit = (linkText: string, url: string) => {
-    if (!editor) return;
-    if (!editor.state.selection.empty) {
-      editor
-        .chain()
-        .focus()
-        .deleteSelection()
-        .insertContent({ type: "text", marks: [{ type: "link", attrs: { href: url } }], text: linkText })
-        .insertContent(" ")
-        .focus()
-        .run();
-    } else {
-      editor
-        .chain()
-        .focus()
-        .insertContent({ type: "text", marks: [{ type: "link", attrs: { href: url } }], text: linkText })
-        .insertContent(" ")
-        .focus()
-        .run();
-    }
+    submitLink(linkText, url);
   };
 
   const handleSlashCommandSelect = (command: (typeof SLASH_COMMANDS)[0]) => {
-    if (!editor) return;
-    const { state } = editor;
-    const { selection } = state;
-    const { $anchor } = selection;
-    const textBefore = $anchor.parent.textContent.slice(0, $anchor.parentOffset);
-    const lastSlashIndex = textBefore.lastIndexOf("/");
-
-    if (lastSlashIndex !== -1) {
-      const from = selection.from - (textBefore.length - lastSlashIndex);
-      const to = selection.from;
-
-      editor
-        .chain()
-        .focus()
-        .deleteRange({ from, to })
-        .run();
-
-      command.command({
-        editor,
-        range: { from, to },
-      });
-    }
-
-    setShowSlashMenu(false);
+    selectSlashCommand(command);
   };
 
   const attachmentsAsPayloads: IOnUploadPayload[] = currentAttachments.map((att) => ({

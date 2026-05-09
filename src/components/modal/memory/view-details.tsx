@@ -5,7 +5,6 @@ import { ModalCloseBtn } from "../modalLayout";
 import PropsItem from "@/components/props-item";
 import endpoint from "@/api/endpoint";
 import type { IMemory, IMemoryAccessItem } from "@/utility/interface";
-import { getPostTypeLabel } from "@/utility/memory";
 import { GROUP_COLORS } from "@/utility/constant";
 import dayjs from "dayjs";
 import {
@@ -15,6 +14,7 @@ import {
   ClipIcon,
   TagIcon,
 } from "@/components/icons";
+import { TypographyH2, TypographyMuted } from "@/components/ui/typography";
 
 interface ViewMemoryDetailsProps {
   data: { memory: IMemory };
@@ -51,6 +51,13 @@ function formatUserAccess(memory: IMemory | undefined): ReactNode {
   );
 }
 
+function getStoryType(memory: IMemory | undefined): string {
+  const type = memory?.type?.toLowerCase();
+  if (type === "prompt") return "Daily prompt";
+  if (memory?.capture_source === "quick") return "Quick capture";
+  return "Journal";
+}
+
 export function ViewMemoryDetails({ data: { memory: initialMemory } }: ViewMemoryDetailsProps) {
   const { close } = useModal();
 
@@ -67,26 +74,28 @@ export function ViewMemoryDetails({ data: { memory: initialMemory } }: ViewMemor
       <ModalCloseBtn onClick={() => close("view-memory-details")} />
       <div className="space-y-6">
         <div className="space-y-1">
-          <h4 className="modal-title">Story Details</h4>
-          <p className="font-inter text-sm text-gray-500 truncate border-b border-gray-100 pb-3">
-            {memory?.title}
-          </p>
+          <TypographyH2 className="modal-title">Story Details</TypographyH2>
         </div>
 
         <div className="space-y-3 border-b border-gray-100 pb-5">
-          <span className="block font-inter text-xs text-gray-400 uppercase tracking-wide">
+          <TypographyMuted className="block text-xs uppercase tracking-wide text-gray-400">
             Properties
-          </span>
+          </TypographyMuted>
           <ul>
             <PropsItem
               icon={<FolderIcon width={16} />}
-              title="Post type:"
-              subtitle={getPostTypeLabel(memory)}
+              title="Story type:"
+              subtitle={getStoryType(memory)}
             />
             <PropsItem
               icon={<Calendar1Icon width={13} />}
               title="Created:"
               subtitle={dayjs(memory?.created_at).format("MMM DD, YYYY")}
+            />
+            <PropsItem
+              icon={<Calendar1Icon width={13} />}
+              title="Time:"
+              subtitle={dayjs(memory?.created_at).format("hh:mm A")}
             />
             <PropsItem
               icon={<Calendar1Icon width={13} />}
@@ -103,9 +112,9 @@ export function ViewMemoryDetails({ data: { memory: initialMemory } }: ViewMemor
         </div>
 
         <div className="space-y-3">
-          <span className="block font-inter text-xs text-gray-400 uppercase tracking-wide">
+          <TypographyMuted className="block text-xs uppercase tracking-wide text-gray-400">
             Stats
-          </span>
+          </TypographyMuted>
           <ul>
             <PropsItem
               icon={<ClipIcon width={13} />}

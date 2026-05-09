@@ -1,17 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { EditorContent, useEditor } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
-import Placeholder from "@tiptap/extension-placeholder";
-import Link from "@tiptap/extension-link";
-import Underline from "@tiptap/extension-underline";
+import { EditorContent } from "@tiptap/react";
 import type { IFile, IOnUploadPayload } from "@/utility/interface";
 import { EditorToolbar } from "./editor-toolbar";
 import { LinkInput } from "./link-input";
 import { SlashCommandPopup } from "./slash-command-popup";
 import { SLASH_COMMANDS } from "./slash-commands";
 import { FilePreview } from "./file-preview";
+import { useMemoryEditor } from "./use-memory-editor";
 
 interface TextAreaProps {
   attachments?: IFile[];
@@ -33,74 +30,27 @@ export function TextArea({
   onRemoveAttachment,
   onRemoveFile,
 }: TextAreaProps) {
-  const [showSlashMenu, setShowSlashMenu] = useState(false);
-  const [slashPosition, setSlashPosition] = useState({ top: 0, left: 0 });
-  const [slashSelectedIndex, setSlashSelectedIndex] = useState(0);
-  const [showLinkInput, setShowLinkInput] = useState(false);
-  const [linkPosition, setLinkPosition] = useState({ top: 0, left: 0 });
   const [editorStateVersion, setEditorStateVersion] = useState(0);
 
-  const editor = useEditor({
-    immediatelyRender: false,
-    extensions: [
-      StarterKit.configure({
-        heading: {
-          levels: [1, 2, 3, 4],
-        },
-      }),
-      Placeholder.configure({
-        placeholder: "Type / to search for formatting options",
-      }),
-      Link.configure({
-        openOnClick: false,
-        HTMLAttributes: {
-          class: "text-blue-6 underline cursor-pointer",
-          target: "_blank",
-          rel: "noopener noreferrer",
-        },
-      }),
-      Underline,
-    ],
-    content: value || "",
-    editorProps: {
-      attributes: {
-        class:
-          "prose prose-sm sm:prose lg:prose-lg xl:prose-2xl focus:outline-none min-h-[300px]",
-      },
-    },
-    onUpdate: ({ editor }) => {
-      const html = editor.getHTML();
-      onChange?.({ target: { value: html, name } });
-
-      const { state } = editor;
-      const { selection } = state;
-      const { $anchor } = selection;
-      const textBefore = $anchor.parent.textContent.slice(0, $anchor.parentOffset);
-
-      const lastSlashIndex = textBefore.lastIndexOf("/");
-      if (lastSlashIndex === -1) {
-        setShowSlashMenu(false);
-      } else {
-        const query = textBefore.slice(lastSlashIndex + 1);
-        if (query.includes(" ") || query.includes("\n")) {
-          setShowSlashMenu(false);
-        } else {
-          const coords = editor.view.coordsAtPos(selection.from);
-          setSlashPosition({
-            top: coords.top + 20,
-            left: coords.left,
-          });
-          setShowSlashMenu(true);
-          setSlashSelectedIndex(0);
-        }
-      }
-    },
-    onSelectionUpdate: () => {
-      setEditorStateVersion((v) => v + 1);
-    },
-    onTransaction: () => {
-      setEditorStateVersion((v) => v + 1);
-    },
+  const {
+    editor,
+    showLinkInput,
+    setShowLinkInput,
+    linkPosition,
+    showSlashMenu,
+    setShowSlashMenu,
+    slashPosition,
+    slashSelectedIndex,
+    setSlashSelectedIndex,
+    submitLink,
+    selectSlashCommand,
+  } = useMemoryEditor({
+    initialContent: value || "",
+    placeholder: "Type / to search for formatting options",
+    editorClassName:
+      "prose prose-sm sm:prose lg:prose-lg xl:prose-2xl focus:outline-none min-h-[300px]",
+    linkClassName: "text-blue-6 underline cursor-pointer",
+    onHtmlChange: (html) => onChange?.({ target: { value: html, name } }),
   });
 
   useEffect(() => {
@@ -109,67 +59,37 @@ export function TextArea({
     }
   }, [editor, value]);
 
-  const handleLinkSubmit = (text: string, url: string) => {
+  useEffect(() => {
     if (!editor) return;
-    if (!editor.state.selection.empty) {
-      editor
-        .chain()
-        .focus()
-        .deleteSelection()
-        .insertContent({
-          type: "text",
-          marks: [{ type: "link", attrs: { href: url } }],
-          text,
-        })
-        .insertContent(" ")
-        .focus()
-        .run();
-    } else {
-      editor
-        .chain()
-        .focus()
-        .insertContent({
-          type: "text",
-          marks: [{ type: "link", attrs: { href: url } }],
-          text,
-        })
-        .insertContent(" ")
-        .focus()
-        .run();
-    }
+    const bump = () => setEditorStateVersion((v) => v + 1);
+    editor.on("selectionUpdate", bump);
+    editor.on("transaction", bump);
+    return () => {
+      editor.off("selectionUpdate", bump);
+      editor.off("transaction", bump);
+    };
+  }, [editor]);
+
+  const handleLinkSubmit = (text: string, url: string) => {
+    submitLink(text, url);
   };
 
   const handleCommandSelect = (command: (typeof SLASH_COMMANDS)[0]) => {
     if (!editor) return;
-
-    const { state } = editor;
-    const { selection } = state;
-    const { $anchor } = selection;
-    const textBefore = $anchor.parent.textContent.slice(0, $anchor.parentOffset);
-    const lastSlashIndex = textBefore.lastIndexOf("/");
-
-    if (lastSlashIndex !== -1) {
+    if (command.label === "Link") {
+      const { state } = editor;
+      const { selection } = state;
+      const { $anchor } = selection;
+      const textBefore = $anchor.parent.textContent.slice(0, $anchor.parentOffset);
+      const lastSlashIndex = textBefore.lastIndexOf("/");
+      if (lastSlashIndex === -1) return;
       const from = selection.from - (textBefore.length - lastSlashIndex);
       const to = selection.from;
-
-      editor
-        .chain()
-        .focus()
-        .deleteRange({ from, to })
-        .run();
-
-      if (command.label === "Link") {
-        setLinkPosition({ top: slashPosition.top + 40, left: slashPosition.left });
-        setShowLinkInput(true);
-      } else {
-        command.command({
-          editor,
-          range: { from, to },
-        });
-      }
+      editor.chain().focus().deleteRange({ from, to }).run();
+      setShowLinkInput(true);
+      return;
     }
-
-    setShowSlashMenu(false);
+    selectSlashCommand(command);
   };
 
   if (!editor) {

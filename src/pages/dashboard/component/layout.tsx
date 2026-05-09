@@ -81,10 +81,7 @@ export default function DashboardLayout() {
             mainSidebarCollapsed && "md:!w-0 md:!min-w-0 md:overflow-hidden md:opacity-0",
           )}
         >
-          <DashboardSideBar
-            onClose={() => setSidebarOpen(false)}
-            onCollapse={collapseMainSidebar}
-          />
+          <DashboardSideBar onCollapse={collapseMainSidebar} />
         </div>
         <main className="flex min-w-0 flex-1 flex-col overflow-hidden dynamic-height-content">
           <ConversationChromeProvider>

@@ -7,6 +7,7 @@ import categoryData from "@/utility/data/categories";
 import endpoint from "@/api/endpoint";
 import type { DashboardPromptSlot } from "@/utility/interface";
 import PromptCard from "./prompt-card";
+import { TypographyH2 } from "@/components/ui/typography";
 
 const categories = categoryData as Record<string, { title: string; subtitle: string; image: string; slug: string }>;
 
@@ -26,9 +27,9 @@ export default function ExplorePage() {
         {staticPrompts.length > 0 && (
           <div className="flex flex-col gap-4 pt-6 sm:gap-10 md:pt-12">
             <div className="font-garamond md:space-y-2">
-              <h2 className="text-2xl text-sand-12 md:text-[32px] md:font-normal md:leading-[48px] md:text-gray-950/90">
+              <TypographyH2 className="text-2xl text-sand-12 md:text-[32px] md:font-normal md:leading-[48px] md:text-gray-950/90">
                 Continue reflecting
-              </h2>
+              </TypographyH2>
             </div>
 
             <div className="block md:hidden">
@@ -49,9 +50,9 @@ export default function ExplorePage() {
 
         <div className="space-y-6 py-6 md:py-12">
           <div className="flex w-full items-center justify-between">
-            <span className="font-garamond text-[30px] leading-[32px] text-gray-950/90 sm:text-[40px] sm:leading-[48px] sm:text-gray-950/90">
+            <TypographyH2 className="font-garamond text-[30px] leading-[32px] text-gray-950/90 sm:text-[40px] sm:leading-[48px] sm:text-gray-950/90">
               Explore categories
-            </span>
+            </TypographyH2>
             <Link to="/explore/categories" className="hidden text-lg font-inter font-semibold text-blue-6 underline">
               See all
             </Link>

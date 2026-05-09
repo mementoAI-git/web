@@ -17,6 +17,7 @@ import SidebarDetails from "@/components/memory/sidebar-details";
 import FileGallery from "@/components/file-gallery";
 import DOMPurify from "isomorphic-dompurify";
 import { DetailsSkeleton } from "./components/skeleton";
+import { TypographyH1, TypographyMuted } from "@/components/ui/typography";
 
 export default function StoriesDetails() {
   const { id } = useParams();
@@ -82,17 +83,17 @@ export default function StoriesDetails() {
               />
             </div>
 
-            <span className="font-garamond text-xl sm:text-2xl md:text-3xl lg:text-[40px] lg:leading-[48px] font-medium text-text-neutral-strong leading-tight">
+            <TypographyH1 className="font-garamond text-xl font-medium leading-tight text-text-neutral-strong sm:text-2xl md:text-3xl lg:text-[40px] lg:leading-[48px]">
               {memory?.title}
-            </span>
+            </TypographyH1>
           </div>
           <div className="flex-1 h-full pb-4 sm:pb-6">
             {!isEmpty(memory?.attachments) && (
               <FileGallery files={memory?.attachments || []} />
             )}
             <div className="tiptap-editor">
-              <div
-                className="font-inter text-sm sm:text-base text-text-neutral-weak mt-4 sm:mt-6 leading-relaxed tiptap-editor"
+              <TypographyMuted
+                className="tiptap-editor mt-4 font-inter text-sm leading-relaxed text-text-neutral-weak sm:mt-6 sm:text-base"
                 dangerouslySetInnerHTML={{
                   __html: ensureLinksOpenInNewTab(DOMPurify.sanitize(memory?.body || "")),
                 }}
