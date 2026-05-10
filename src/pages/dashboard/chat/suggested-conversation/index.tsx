@@ -8,6 +8,7 @@ import useIntersectionObserver from "@/hooks/use-intersection-observer";
 import { getCategory } from "@/utility";
 import { fetcher } from "@/api/fetcher";
 import GoBack from "@/components/go-back";
+import { TypographyH1, TypographyH2, TypographyMuted } from "@/components/ui/typography";
 
 export default function SuggestedConversation() {
   // Get the key function for useSWRInfinite
@@ -59,9 +60,9 @@ export default function SuggestedConversation() {
           <div>
             <GoBack />
           </div>
-          <h2 className="text-[24px] leading-[32px] sm:text-[32px] sm:leading-[40px] md:text-[40px] md:leading-[48px] font-normal font-garamond text-sand-12">
+          <TypographyH1 className="font-garamond text-[24px] font-normal leading-[32px] text-sand-12 sm:text-[32px] sm:leading-[40px] md:text-[40px] md:leading-[48px]">
             Suggested conversations
-          </h2>
+          </TypographyH1>
         </div>
         <div className="overflow-y-auto hide-scrollbar scroll-smooth pt-2 sm:pt-8" style={{ maxHeight: 'calc(100vh - 200px)' }}>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-6">
@@ -93,8 +94,8 @@ export default function SuggestedConversation() {
           {!isLoading && isEmpty && (
             <div className="flex flex-col items-center justify-center py-16">
               <div className="text-center space-y-2">
-                <h3 className="text-lg font-medium text-sand-11">No suggestions available</h3>
-                <p className="text-sm text-sand-10">Check back later for new conversation suggestions.</p>
+                <TypographyH2 className="text-lg font-medium text-sand-11">No suggestions available</TypographyH2>
+                <TypographyMuted className="text-sm text-sand-10">Check back later for new conversation suggestions.</TypographyMuted>
               </div>
             </div>
           )}

@@ -3,6 +3,7 @@ import useSWR from "swr";
 import endpoint from "@/api/endpoint";
 import ConversationBar, { ConversationBarSkeleton } from "@/components/conversation-bar";
 import { isEmpty } from "@/utility";
+import { TypographyH2 } from "@/components/ui/typography";
 
 type ConversationBarItem = React.ComponentProps<typeof ConversationBar>;
 
@@ -13,7 +14,9 @@ export default function RecentConversations() {
   return (
     <div className="flex w-full max-w-[560px] flex-col gap-3">
       <div className="flex items-center justify-between">
-        <h4 className="font-inter font-semibold text-base text-text-neutral-strong">Recent Conversations</h4>
+        <TypographyH2 className="font-inter text-base font-semibold text-text-neutral-strong">
+          Recent Conversations
+        </TypographyH2>
         <Link to="/chat/conversations" className="cursor-pointer text-sm font-inter font-semibold text-text-brand-strong md:underline">
           See more
         </Link>

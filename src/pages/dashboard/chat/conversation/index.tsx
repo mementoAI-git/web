@@ -628,7 +628,7 @@ export default function Conversation({ id, type = "memory" }) {
           memory={memory}
           onClose={handleCloseSidebar}
           isOpen={isSidebarOpen}
-          desktopLayout="overlay"
+          desktopLayout="inline"
           source={type === "prompt" ? "prompt" : "conversation"}
           quickActions={{
             onViewFullDetails: () => push("view-memory-details", { memory }),
@@ -641,6 +641,7 @@ export default function Conversation({ id, type = "memory" }) {
           onTabChange={setSidebarTab}
           enrichmentScore={enrichmentStats?.enrichment_score ?? 5}
           deltaToday={deltaToday}
+          categoryScores={enrichmentStats?.category_scores}
         />
       }
     </div>

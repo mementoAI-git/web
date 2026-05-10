@@ -1,0 +1,10 @@
+---
+description: Restrict changes to UI-only scope unless explicitly authorized
+alwaysApply: true
+---
+
+# UI-Only Change Scope
+
+- Do not change backend code or non-UI logic when the request is for UI fixes.
+- Do not change backend code or non-UI logic unless the user explicitly gives permission in the current conversation.
+- Keep changes focused on presentation-layer files (UI components, styling, UI copy, and UI interaction polish) unless explicit authorization is provided.

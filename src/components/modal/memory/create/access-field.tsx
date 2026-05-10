@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useMemo, useId } from "react";
 import useSWR from "swr";
-import { ChevronDown, ChevronUp, Globe } from "lucide-react";
+import { ChevronDown, ChevronUp, Globe, Lock, Users } from "lucide-react";
 import { useModal } from "@/hooks/use-modal";
 import { cn } from "@/utility";
 import endpoint from "@/api/endpoint";
@@ -24,9 +24,14 @@ const GROUP_ACCESS_CHIP_CLASS =
 
 export type { SearchResultItem } from "./access-field-types";
 
+/** Stored on the memory as `visibility`; must align with API. */
+export type MemoryShareAudience = "private" | "everyone";
+
 interface AccessFieldProps {
   value: SearchResultItem[];
   onChange: (selected: SearchResultItem[]) => void;
+  shareAudience: MemoryShareAudience;
+  onShareAudienceChange: (audience: MemoryShareAudience) => void;
 }
 
 function toSearchItem(g: IGroup): SearchResultItem {
@@ -39,7 +44,12 @@ function getColorClass(item: SearchResultItem): string {
   return GROUP_COLORS[Math.min(idx, GROUP_COLORS.length - 1)];
 }
 
-export function AccessField({ value: selectedAccess, onChange }: AccessFieldProps) {
+export function AccessField({
+  value: selectedAccess,
+  onChange,
+  shareAudience,
+  onShareAudienceChange,
+}: AccessFieldProps) {
   const { push } = useModal();
   const accessInputId = useId();
   const [accessInput, setAccessInput] = useState("");
@@ -75,10 +85,21 @@ export function AccessField({ value: selectedAccess, onChange }: AccessFieldProp
   }, [allOptions, searchLower]);
 
   const visibilityLabel = useMemo(() => {
-    if (selectedAccess.length === 0) return "Everyone can see this";
     if (selectedAccess.length === 1) return `Shared with ${selectedAccess[0].name}`;
-    return `Shared with ${selectedAccess.length} people and groups`;
-  }, [selectedAccess]);
+    if (selectedAccess.length > 1) {
+      return `Shared with ${selectedAccess.length} people and groups`;
+    }
+    return shareAudience === "everyone" ? "Visible to everyone" : "Private — only you";
+  }, [selectedAccess, shareAudience]);
+
+  const summaryIcon =
+    selectedAccess.length > 0 ? (
+      <Users className="size-4 shrink-0 text-text-neutral-weaker" aria-hidden />
+    ) : shareAudience === "everyone" ? (
+      <Globe className="size-4 shrink-0 text-text-neutral-weaker" aria-hidden />
+    ) : (
+      <Lock className="size-4 shrink-0 text-text-neutral-weaker" aria-hidden />
+    );
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -92,24 +113,49 @@ export function AccessField({ value: selectedAccess, onChange }: AccessFieldProp
 
   const addAccess = (item: SearchResultItem) => {
     if (selectedAccess.some((a) => a.id === item.id)) return;
+    onShareAudienceChange("private");
     onChange([...selectedAccess, item]);
     setAccessInput("");
   };
 
   const removeAccess = (id: string) => {
-    onChange(selectedAccess.filter((x) => x.id !== id));
+    const next = selectedAccess.filter((x) => x.id !== id);
+    onChange(next);
+    if (next.length === 0) onShareAudienceChange("private");
+  };
+
+  const setPrivate = () => {
+    onChange([]);
+    onShareAudienceChange("private");
+    setAccessInput("");
+  };
+
+  const setEveryone = () => {
+    onChange([]);
+    onShareAudienceChange("everyone");
+    setAccessInput("");
   };
 
   return (
-    <div>
-      <Label htmlFor={accessInputId} className="font-inter font-medium text-text-neutral-strong mb-2">
-        Who has access to this story?{" "}
-        <span className="text-text-neutral-weaker font-normal">(tag people or groups)</span>
-      </Label>
+    <div className="space-y-2">
+      <div>
+        <Label
+          htmlFor={accessInputId}
+          className="font-inter font-medium text-text-neutral-strong"
+        >
+          Who can see this story?
+        </Label>
+        <p className="mt-1.5 font-inter text-xs leading-relaxed text-text-neutral-weaker">
+          Stories are <span className="text-text-neutral-strong">private by default</span>
+          —only you can see them. Choose{" "}
+          <span className="text-text-neutral-strong">Everyone</span> to share openly, or search below for{" "}
+          <span className="text-text-neutral-strong">specific people and groups</span>.
+        </p>
+      </div>
       <div ref={containerRef} className="relative">
         <div
           className={cn(
-            "rounded-xl border border-stroke-neutral-weak bg-v3-bg transition-[color,box-shadow,border-color]",
+            "rounded-xl border border-stroke-neutral-weak bg-fill-neutral-weaker/40 transition-[color,box-shadow,border-color]",
             "focus-within:border-ring focus-within:ring-[3px] focus-within:ring-inset focus-within:ring-ring/50",
           )}
         >
@@ -117,13 +163,14 @@ export function AccessField({ value: selectedAccess, onChange }: AccessFieldProp
             type="button"
             id={accessInputId}
             aria-expanded={showAccessDropdown}
+            aria-haspopup="listbox"
             onClick={(e) => {
               e.stopPropagation();
               setShowAccessDropdown((o) => !o);
             }}
-            className="flex w-full items-center gap-2 px-3 py-2.5 text-left font-inter text-xs text-text-neutral-weak hover:text-text-neutral-strong"
+            className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left font-inter text-sm text-text-neutral-strong hover:bg-fill-neutral-weaker/60"
           >
-            <Globe className="size-4 shrink-0 text-text-neutral-weaker" aria-hidden />
+            {summaryIcon}
             <span className="min-w-0 flex-1 truncate">{visibilityLabel}</span>
             {showAccessDropdown ? (
               <ChevronUp className="size-3.5 shrink-0 opacity-70" aria-hidden />
@@ -132,7 +179,7 @@ export function AccessField({ value: selectedAccess, onChange }: AccessFieldProp
             )}
           </button>
           {selectedAccess.length > 0 ? (
-            <div className="flex flex-wrap gap-2 border-t border-stroke-neutral-weaker px-3 py-2">
+            <div className="flex flex-wrap gap-1.5 border-t border-stroke-neutral-weaker bg-v3-bg/50 px-3 py-2">
               {selectedAccess.map((a) => (
                 <span
                   key={a.id}
@@ -149,6 +196,7 @@ export function AccessField({ value: selectedAccess, onChange }: AccessFieldProp
                       removeAccess(a.id);
                     }}
                     className="ml-0.5 leading-none opacity-60 hover:opacity-100"
+                    aria-label={`Remove ${a.name}`}
                   >
                     ×
                   </button>
@@ -158,39 +206,83 @@ export function AccessField({ value: selectedAccess, onChange }: AccessFieldProp
           ) : null}
         </div>
         {showAccessDropdown ? (
-          <div className="absolute top-full left-0 right-0 z-20 mt-1 overflow-hidden rounded-xl border border-stroke-neutral-weak bg-popover text-popover-foreground shadow-lg">
-            <div className="border-b border-stroke-neutral-weaker p-2">
+          <div
+            className="absolute top-full left-0 right-0 z-20 mt-1 overflow-hidden rounded-xl border border-stroke-neutral-weak bg-popover text-popover-foreground shadow-lg"
+            role="listbox"
+            aria-label="Sharing options"
+          >
+            <div className="space-y-0.5 border-b border-stroke-neutral-weaker p-2">
               <button
                 type="button"
+                role="option"
+                aria-selected={selectedAccess.length === 0 && shareAudience === "private"}
                 onClick={() => {
-                  onChange([]);
-                  setAccessInput("");
+                  setPrivate();
                 }}
                 className={cn(
-                  "w-full rounded-lg px-2 py-1.5 text-left font-inter text-sm transition-colors",
-                  selectedAccess.length === 0
+                  "flex w-full flex-col gap-0.5 rounded-lg px-3 py-2 text-left font-inter transition-colors",
+                  selectedAccess.length === 0 && shareAudience === "private"
                     ? "bg-fill-brand-weak text-text-brand-strong"
-                    : "hover:bg-fill-neutral-weaker",
+                    : "hover:bg-fill-neutral-weaker text-text-neutral-strong",
                 )}
               >
-                Everyone
+                <span className="text-sm font-medium">Private</span>
+                <span
+                  className={cn(
+                    "text-xs",
+                    selectedAccess.length === 0 && shareAudience === "private"
+                      ? "text-text-brand-strong/90"
+                      : "text-text-neutral-weaker",
+                  )}
+                >
+                  Only you can see this story
+                </span>
+              </button>
+              <button
+                type="button"
+                role="option"
+                aria-selected={selectedAccess.length === 0 && shareAudience === "everyone"}
+                onClick={() => {
+                  setEveryone();
+                }}
+                className={cn(
+                  "flex w-full flex-col gap-0.5 rounded-lg px-3 py-2 text-left font-inter transition-colors",
+                  selectedAccess.length === 0 && shareAudience === "everyone"
+                    ? "bg-fill-brand-weak text-text-brand-strong"
+                    : "hover:bg-fill-neutral-weaker text-text-neutral-strong",
+                )}
+              >
+                <span className="text-sm font-medium">Everyone</span>
+                <span
+                  className={cn(
+                    "text-xs",
+                    selectedAccess.length === 0 && shareAudience === "everyone"
+                      ? "text-text-brand-strong/90"
+                      : "text-text-neutral-weaker",
+                  )}
+                >
+                  Anyone can view this story
+                </span>
               </button>
             </div>
-            <div className="px-3 pt-2">
+            <div className="px-3 pt-3 pb-1">
+              <p className="mb-2 font-inter text-[11px] font-medium uppercase tracking-wide text-text-neutral-weaker">
+                Specific people or groups
+              </p>
               <Input
                 value={accessInput}
                 onChange={(e) => setAccessInput(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === "Escape") setShowAccessDropdown(false);
                 }}
-                placeholder="Search groups and people…"
+                placeholder="Search…"
                 className={cn(
                   "h-9 rounded-lg border-stroke-neutral-weak bg-v3-bg font-inter text-sm text-text-neutral-strong",
                   "placeholder:text-text-neutral-weaker",
                 )}
               />
             </div>
-            <div className="flex max-h-48 flex-wrap gap-2 overflow-y-auto p-3">
+            <div className="flex max-h-48 flex-wrap gap-2 overflow-y-auto px-3 pb-2 pt-1">
               {filteredOptions.length === 0 ? (
                 <p className="w-full py-1 font-inter text-sm text-text-neutral-weaker">
                   {allOptions.length === 0
@@ -251,17 +343,21 @@ export function buildCreateMemoryPayload(
   tags: string[],
   status: string,
   selected: SearchResultItem[],
+  shareAudience: MemoryShareAudience,
   extra: Record<string, unknown> = {},
 ): Record<string, unknown> {
   const groupIds = selected.filter((s) => s.source === "group").map((s) => s.id);
   const beneficiaryIds = selected
     .filter((s) => s.source === "beneficiary")
     .map((s) => s.id);
+  const hasSpecificShares = groupIds.length > 0 || beneficiaryIds.length > 0;
+  const visibility: MemoryShareAudience = hasSpecificShares ? "private" : shareAudience;
   const payload: Record<string, unknown> = {
     title,
     body,
     status,
     tags,
+    visibility,
     ...extra,
   };
   if (groupIds.length > 0) payload.groups = groupIds;

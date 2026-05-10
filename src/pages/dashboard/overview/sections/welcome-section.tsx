@@ -27,6 +27,7 @@ import {
 } from "./welcome-section-helpers";
 import { Zap } from "lucide-react";
 import { cn } from "@/utility";
+import { TypographyH1, TypographyH2, TypographyMuted } from "@/components/ui/typography";
 
 const overviewMobileCtaLabel =
   "w-full max-w-[6.25rem] text-center font-inter text-[10px] font-medium leading-tight text-text-neutral-strong line-clamp-3 sm:hidden";
@@ -108,7 +109,7 @@ export default function WelcomeSection() {
             alt=""
             className="size-7 sm:size-10 shrink-0"
           />
-          <h2 className="min-w-0 font-garamond text-text-neutral-strong font-normal text-[22px] leading-[1.2] sm:text-[32px] lg:text-[40px]">
+          <TypographyH1 className="min-w-0 font-garamond font-normal text-[22px] leading-[1.2] text-text-neutral-strong sm:text-[32px] lg:text-[40px]">
             {greeting}
             {(user?.nickname || user?.first_name || user?.last_name) && (
               <i className="text-text-success-strong">
@@ -117,7 +118,7 @@ export default function WelcomeSection() {
                 {getGreetingPunctuation(greeting)}
               </i>
             )}
-          </h2>
+          </TypographyH1>
         </div>
       </div>
       <div className="flex flex-col items-stretch gap-5 sm:gap-6 xl:flex-row">
@@ -129,9 +130,9 @@ export default function WelcomeSection() {
           />
           <div className="absolute left-0 top-0 flex size-full flex-col justify-between p-5 sm:p-7 lg:p-8">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
-              <h2 className="min-w-0 font-garamond text-[20px] font-normal text-text-neutral-strong lg:text-[24px]">
+              <TypographyH2 className="min-w-0 font-garamond text-[20px] font-normal text-text-neutral-strong lg:text-[24px]">
                 What’s on your mind today?
-              </h2>
+              </TypographyH2>
               <div className="flex shrink-0 items-center gap-3">
                 <span className="flex items-center gap-1.5 font-inter text-sm font-semibold text-text-neutral-weak">
                   <img src={zapIcon} alt="streak" className="size-5" />
@@ -183,7 +184,7 @@ export default function WelcomeSection() {
                 <span className={overviewMobileCtaLabel}>Quick add</span>
               </button>
               <Link
-                to="/chat/new"
+                to="/chat"
                 className={cn(
                   "flex min-w-0 flex-1 flex-col items-center gap-1.5 outline-none transition-opacity hover:opacity-90",
                   "focus-visible:ring-2 focus-visible:ring-v3-brand-strong focus-visible:ring-offset-2",
@@ -195,10 +196,10 @@ export default function WelcomeSection() {
                 </span>
                 <ChatIcon className="hidden size-4 shrink-0 sm:block" />
                 <span className="hidden whitespace-nowrap font-inter text-sm font-medium sm:inline">
-                  Start a conversation
+                  Chat
                 </span>
                 <span className={overviewMobileCtaLabel}>
-                  Start a conversation
+                  Chat
                 </span>
               </Link>
             </div>
@@ -220,10 +221,10 @@ export default function WelcomeSection() {
                   Enrichment score
                 </span>
               </div>
-              <p className="font-inter text-xs text-text-neutral-weak leading-relaxed sm:text-sm">
+              <TypographyMuted className="font-inter text-xs leading-relaxed text-text-neutral-weak sm:text-sm">
                 Share stories &amp; files to build context. Link apps to enrich
                 your Memento.
-              </p>
+              </TypographyMuted>
             </div>
             <div className="flex flex-wrap items-stretch gap-2 sm:items-center">
               <button

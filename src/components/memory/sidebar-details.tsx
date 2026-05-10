@@ -28,6 +28,7 @@ import * as motion from "motion/react-client";
 import { ChatPreferencesPanel } from "@/components/modal/chat-settings/chat-preferences-panel";
 import { HostChatEnrichmentBar } from "@/features/host-chat/components/host-chat-enrichment-bar";
 import { resolveSidebarDesktopWidthPx } from "@/components/memory/sidebar-desktop-width";
+import type { CategoryScore } from "@/features/enrichment";
 
 function useAnimatedSidebarWidthPx(
   isOpen: boolean,
@@ -81,6 +82,8 @@ interface SidebarDetailsProps {
   /** Enrichment stats to show in the Memory tab (moved from conversation toolbar). */
   enrichmentScore?: number;
   deltaToday?: number;
+  /** Per-category completion from GET /users/stats (optional breakdown in the enrichment bar). */
+  categoryScores?: CategoryScore[] | null;
   /**
    * Desktop only. `overlay` = fixed right panel + dimmed backdrop (stories, etc.).
    * `inline` = third column in page flex row, no backdrop (chat conversation).
@@ -100,6 +103,7 @@ interface ContentProps {
   /** Enrichment stats to show in the Memory tab. */
   enrichmentScore?: number;
   deltaToday?: number;
+  categoryScores?: CategoryScore[] | null;
   desktopLayout?: "overlay" | "inline";
 }
 
@@ -118,24 +122,35 @@ function MemorySections({
   runAndMaybeCloseMobile,
   enrichmentScore,
   deltaToday,
-}: Pick<ContentProps, "memory" | "isMobile" | "source" | "quickActions" | "enrichmentScore" | "deltaToday"> & {
+  categoryScores,
+}: Pick<
+  ContentProps,
+  | "memory"
+  | "isMobile"
+  | "source"
+  | "quickActions"
+  | "enrichmentScore"
+  | "deltaToday"
+  | "categoryScores"
+> & {
   open: ReturnType<typeof useModal>["open"];
   runAndMaybeCloseMobile: (fn: () => void) => void;
 }) {
   return (
     <>
       {enrichmentScore !== undefined && (
-        <div className="mb-4">
+        <div className="mb-4 w-full min-w-0">
           <HostChatEnrichmentBar
             enrichmentScore={enrichmentScore}
             deltaToday={deltaToday ?? 0}
-            className="w-full !justify-start"
+            categoryScores={categoryScores}
+            className="w-full"
           />
         </div>
       )}
       {quickActions ? (
         <>
-          <div className="space-y-1">
+          <div className="w-full min-w-0 space-y-1">
             <Badge variant="outline" className={sectionBadgeClass}>
               Memory
             </Badge>
@@ -201,7 +216,7 @@ function MemorySections({
         </>
       ) : null}
 
-      <div className="space-y-2">
+      <div className="w-full min-w-0 space-y-2">
         <Badge variant="outline" className={sectionBadgeClass}>
           Properties
         </Badge>
@@ -231,7 +246,7 @@ function MemorySections({
 
       <Separator className="my-4 bg-v3-stroke-weak" />
 
-      <div className="space-y-2">
+      <div className="w-full min-w-0 space-y-2">
         <Badge variant="outline" className={sectionBadgeClass}>
           Stats
         </Badge>
@@ -279,6 +294,7 @@ function Content({
   onTabChange: _onTabChange,
   enrichmentScore,
   deltaToday,
+  categoryScores,
   desktopLayout = "overlay",
 }: ContentProps) {
   const { open } = useModal();
@@ -307,7 +323,7 @@ function Content({
     >
 
       {showChat ? (
-        <ChatPreferencesPanel density="compact" className="min-h-0 flex-1 pb-4" />
+        <ChatPreferencesPanel density="compact" className="h-full w-full min-h-0 flex-1 pb-4" />
       ) : (
         <MemorySections
           memory={memory}
@@ -318,6 +334,7 @@ function Content({
           runAndMaybeCloseMobile={runAndMaybeCloseMobile}
           enrichmentScore={enrichmentScore}
           deltaToday={deltaToday}
+          categoryScores={categoryScores}
         />
       )}
     </div>
@@ -335,6 +352,7 @@ export default function SidebarDetails({
   onTabChange,
   enrichmentScore,
   deltaToday,
+  categoryScores,
   desktopLayout = "overlay",
 }: SidebarDetailsProps) {
   const wideChatPanel =
@@ -366,6 +384,7 @@ export default function SidebarDetails({
               onTabChange={onTabChange}
               enrichmentScore={enrichmentScore}
               deltaToday={deltaToday}
+              categoryScores={categoryScores}
             />
           </Sheet.Content>
         </Sheet.Container>
@@ -389,7 +408,7 @@ export default function SidebarDetails({
           // Desktop overlay: docked to the right; inline: flow in page flex row
           "hidden min-w-0 overflow-x-hidden md:flex md:flex-col justify-start items-stretch",
           isInlineDesktop
-            ? "relative z-auto h-full min-h-0 min-w-0 shrink-0 self-stretch"
+            ? "relative z-auto h-full min-h-0 min-w-0 shrink-0 self-stretch border-l border-stroke-neutral-weak"
             : "fixed top-[6px] right-[6px] bottom-[6px] z-50 min-h-0 min-w-0",
         )}
       >
@@ -406,6 +425,7 @@ export default function SidebarDetails({
             onTabChange={onTabChange}
             enrichmentScore={enrichmentScore}
             deltaToday={deltaToday}
+            categoryScores={categoryScores}
           />
         </div>
       </motion.div>

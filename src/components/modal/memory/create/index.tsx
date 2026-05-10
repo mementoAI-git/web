@@ -1,11 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
-import { useEditor, EditorContent } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
-import Placeholder from "@tiptap/extension-placeholder";
-import Link from "@tiptap/extension-link";
-import Underline from "@tiptap/extension-underline";
+import { EditorContent } from "@tiptap/react";
 import { useModal } from "@/hooks/use-modal";
 import { useStore } from "@/hooks/use-store";
 import { useInlineAudioCapture } from "@/hooks/use-inline-audio-capture";
@@ -33,7 +29,12 @@ import {
   uploadMimeBaseType,
 } from "@/utility/constant";
 import { HeadingIcon, TimesIcon, LinkIcon, UnorderedListIcon } from "@/components/icons";
-import { AccessField, buildCreateMemoryPayload, type SearchResultItem } from "./access-field";
+import {
+  AccessField,
+  buildCreateMemoryPayload,
+  type MemoryShareAudience,
+  type SearchResultItem,
+} from "./access-field";
 import { beneficiaryToAccessItem } from "./beneficiary-to-access-item";
 import {
   htmlFromQuickCaptureNote,
@@ -53,6 +54,7 @@ import { Sheet } from "react-modal-sheet";
 import { LinkInput } from "@/components/memory/text-area/link-input";
 import { SlashCommandPopup } from "@/components/memory/text-area/slash-command-popup";
 import { SLASH_COMMANDS } from "@/components/memory/text-area/slash-commands";
+import { useMemoryEditor } from "@/components/memory/text-area/use-memory-editor";
 import { VideoRecorder } from "@/components/recorder/video";
 import { InlineVoiceRecorder } from "@/components/recorder/inline-voice-recorder";
 import type { ComponentRef, ReactNode } from "react";
@@ -130,16 +132,12 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
   const videoRecorderRef = useRef<ComponentRef<typeof VideoRecorder>>(null);
 
   const [showEmoji, setShowEmoji] = useState(false);
-  const [showLinkInput, setShowLinkInput] = useState(false);
-  const [linkPosition, setLinkPosition] = useState({ top: 0, left: 0 });
-  const [showSlashMenu, setShowSlashMenu] = useState(false);
-  const [slashPosition, setSlashPosition] = useState({ top: 0, left: 0 });
-  const [slashSelectedIndex, setSlashSelectedIndex] = useState(0);
   const [showCloseConfirmation, setShowCloseConfirmation] = useState(false);
   const [drafts, setDrafts] = useState<MemoryDraft[]>([]);
   const emojiPickerRef = useRef<HTMLDivElement>(null);
   const emojiPickerPortalRef = useRef<HTMLDivElement>(null);
   const [selectedAccess, setSelectedAccess] = useState<SearchResultItem[]>([]);
+  const [shareAudience, setShareAudience] = useState<MemoryShareAudience>("private");
   const [tags, setTags] = useState<string[]>([]);
   const [quickCaptureDraftNonce, setQuickCaptureDraftNonce] = useState(0);
 
@@ -181,7 +179,8 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
         tags,
         "save",
         selectedAccess,
-        uploadedFiles.length > 0 ? { attachments: uploadedFiles } : {}
+        shareAudience,
+        uploadedFiles.length > 0 ? { attachments: uploadedFiles } : {},
       );
 
       try {
@@ -193,6 +192,7 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
           setFiles([]);
           setTags([]);
           setSelectedAccess([]);
+          setShareAudience("private");
         } else {
           toast.error(
             typeof result?.message === "string" ? result.message : "Could not save your story. Try again.",
@@ -250,76 +250,57 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
 
   const latestDirtyRef = useRef<() => boolean>(() => false);
 
-  const editor = useEditor({
-    immediatelyRender: false,
-    extensions: [
-      StarterKit.configure({
-        heading: { levels: [1, 2, 3, 4] },
-        link: false,
-      }),
-      Placeholder.configure({ placeholder: "What's on your mind today? Type / for formatting options" }),
-      Link.configure({
-        openOnClick: false,
-        HTMLAttributes: {
-          class: "text-text-brand-strong underline cursor-pointer",
-          target: "_blank",
-          rel: "noopener noreferrer",
-        },
-      }),
-      Underline,
-    ],
-    content: values.body || "",
-    editorProps: {
-      attributes: {
-        class: "prose prose-sm focus:outline-none min-h-[140px] px-4 py-4 text-sm text-text-neutral-strong",
-      },
-      handleDOMEvents: {
-        paste: (_view, event) => {
-          const e = event as ClipboardEvent;
-          const items = Array.from(e.clipboardData?.items || []);
-          const fileItems = items.filter((item) => item.kind === "file");
-          if (fileItems.length === 0) return false;
-          e.preventDefault();
-          fileItems.forEach((item) => {
-            const file = item.getAsFile();
-            if (!file) return;
-            queueFileUploadRef.current(file);
-          });
-          return true;
-        },
-      },
-    },
-    onUpdate: ({ editor }) => {
-      handleValue("body", editor.getHTML());
-
-      const { state } = editor;
-      const { selection } = state;
-      const { $anchor } = selection;
-      const textBefore = $anchor.parent.textContent.slice(0, $anchor.parentOffset);
-      const lastSlashIndex = textBefore.lastIndexOf("/");
-
-      if (lastSlashIndex === -1) {
-        setShowSlashMenu(false);
-      } else {
-        const query = textBefore.slice(lastSlashIndex + 1);
-        if (query.includes(" ") || query.includes("\n")) {
-          setShowSlashMenu(false);
-        } else {
-          const coords = editor.view.coordsAtPos(selection.from);
-          setSlashPosition({ top: coords.top + 20, left: coords.left });
-          setShowSlashMenu(true);
-          setSlashSelectedIndex(0);
-        }
-      }
-    },
+  const {
+    editor,
+    showLinkInput,
+    setShowLinkInput,
+    linkPosition,
+    showSlashMenu,
+    slashPosition,
+    slashSelectedIndex,
+    setSlashSelectedIndex,
+    openLinkInputAtSelection,
+    submitLink,
+    selectSlashCommand,
+  } = useMemoryEditor({
+    initialContent: values.body || "",
+    placeholder: "What's on your mind today? Type / for formatting options",
+    editorClassName: "prose prose-sm focus:outline-none min-h-[140px] px-4 py-4 text-sm text-text-neutral-strong",
+    linkClassName: "text-text-brand-strong underline cursor-pointer",
+    onHtmlChange: (html) => handleValue("body", html),
   });
+
+  useEffect(() => {
+    if (!editor) return;
+    editor.setOptions({
+      editorProps: {
+        ...(editor.options?.editorProps ?? {}),
+        handleDOMEvents: {
+          paste: (_view, event) => {
+            const e = event as ClipboardEvent;
+            const items = Array.from(e.clipboardData?.items || []);
+            const fileItems = items.filter((item) => item.kind === "file");
+            if (fileItems.length === 0) return false;
+            e.preventDefault();
+            fileItems.forEach((item) => {
+              const file = item.getAsFile();
+              if (!file) return;
+              queueFileUploadRef.current(file);
+            });
+            return true;
+          },
+        },
+      },
+    });
+  }, [editor]);
 
   latestDirtyRef.current = () =>
     files.length > 0 ||
     values.title.trim().length > 0 ||
     (editor?.getText()?.trim().length ?? 0) > 0 ||
     tags.length > 0 ||
-    selectedAccess.length > 0;
+    selectedAccess.length > 0 ||
+    shareAudience !== "private";
 
   useEffect(() => {
     if (!registerCloseGuard) return;
@@ -458,33 +439,11 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
   };
 
   const handleLinkClick = () => {
-    if (!editor) return;
-    const { from } = editor.state.selection;
-    const coords = editor.view.coordsAtPos(from);
-    setLinkPosition({ top: coords.top - 100, left: coords.left });
-    setShowLinkInput(true);
+    openLinkInputAtSelection();
   };
 
   const handleLinkSubmit = (text: string, url: string) => {
-    if (!editor) return;
-    if (!editor.state.selection.empty) {
-      editor
-        .chain()
-        .focus()
-        .deleteSelection()
-        .insertContent({ type: "text", marks: [{ type: "link", attrs: { href: url } }], text })
-        .insertContent(" ")
-        .focus()
-        .run();
-    } else {
-      editor
-        .chain()
-        .focus()
-        .insertContent({ type: "text", marks: [{ type: "link", attrs: { href: url } }], text })
-        .insertContent(" ")
-        .focus()
-        .run();
-    }
+    submitLink(text, url);
   };
 
   const handleLoadDraft = (draft: MemoryDraft) => {
@@ -534,6 +493,7 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
         .map((b) => beneficiaryToAccessItem(b))
         .filter((x): x is SearchResultItem => x != null && ids.has(x.id));
       setSelectedAccess(access);
+      setShareAudience("private");
     },
     [beneficiaryDocs, editor, setFiles, setValues, setTags, setSelectedAccess],
   );
@@ -561,30 +521,7 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
   };
 
   const handleSlashCommandSelect = (command: (typeof SLASH_COMMANDS)[0]) => {
-    if (!editor) return;
-    const { state } = editor;
-    const { selection } = state;
-    const { $anchor } = selection;
-    const textBefore = $anchor.parent.textContent.slice(0, $anchor.parentOffset);
-    const lastSlashIndex = textBefore.lastIndexOf("/");
-
-    if (lastSlashIndex !== -1) {
-      const from = selection.from - (textBefore.length - lastSlashIndex);
-      const to = selection.from;
-
-      editor
-        .chain()
-        .focus()
-        .deleteRange({ from, to })
-        .run();
-
-      command.command({
-        editor,
-        range: { from, to },
-      });
-    }
-
-    setShowSlashMenu(false);
+    selectSlashCommand(command);
   };
 
   const { from, to } = editor?.state.selection || { from: 0, to: 0 };
@@ -919,10 +856,10 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
                 <DropdownMenuContent
                   side="top"
                   align="start"
-                  className="z-[220] min-w-[10.5rem] max-w-[13rem] border border-stroke-neutral-weak bg-popover p-0.5 text-popover-foreground shadow-md"
+                  className="z-[220] min-w-[8.5rem] max-w-[9.5rem] border border-stroke-neutral-weak bg-popover p-0.5 text-popover-foreground shadow-md"
                 >
                   <DropdownMenuItem
-                    className="gap-2 rounded-lg px-2 py-1.5 text-xs text-text-neutral-strong focus:bg-fill-neutral-weaker"
+                    className="gap-2 rounded-lg px-1.5 py-1 text-xs text-text-neutral-strong focus:bg-fill-neutral-weaker"
                     onClick={() => fileInputImageRef.current?.click()}
                     title="JPG, PNG, HEIC, WebP, GIF…"
                   >
@@ -930,7 +867,7 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
                     Photos
                   </DropdownMenuItem>
                   <DropdownMenuItem
-                    className="gap-2 rounded-lg px-2 py-1.5 text-xs text-text-neutral-strong focus:bg-fill-neutral-weaker"
+                    className="gap-2 rounded-lg px-1.5 py-1 text-xs text-text-neutral-strong focus:bg-fill-neutral-weaker"
                     onClick={() => fileInputVideoRef.current?.click()}
                     title="MP4, WebM, MOV, AVI…"
                   >
@@ -938,7 +875,7 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
                     Videos
                   </DropdownMenuItem>
                   <DropdownMenuItem
-                    className="gap-2 rounded-lg px-2 py-1.5 text-xs text-text-neutral-strong focus:bg-fill-neutral-weaker"
+                    className="gap-2 rounded-lg px-1.5 py-1 text-xs text-text-neutral-strong focus:bg-fill-neutral-weaker"
                     onClick={() => fileInputAudioRef.current?.click()}
                     title="MP3, M4A, WAV, FLAC, AAC, OGG…"
                   >
@@ -946,7 +883,7 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
                     Audio
                   </DropdownMenuItem>
                   <DropdownMenuItem
-                    className="gap-2 rounded-lg px-2 py-1.5 text-xs text-text-neutral-strong focus:bg-fill-neutral-weaker"
+                    className="gap-2 rounded-lg px-1.5 py-1 text-xs text-text-neutral-strong focus:bg-fill-neutral-weaker"
                     onClick={() => fileInputDocsRef.current?.click()}
                     title="PDF, Word, plain text…"
                   >
@@ -955,7 +892,7 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
                   </DropdownMenuItem>
                   <DropdownMenuSeparator className="my-0.5" />
                   <DropdownMenuItem
-                    className="gap-2 rounded-lg px-2 py-1.5 text-xs text-text-neutral-strong focus:bg-fill-neutral-weaker"
+                    className="gap-2 rounded-lg px-1.5 py-1 text-xs text-text-neutral-strong focus:bg-fill-neutral-weaker"
                     onClick={() => fileInputAllRef.current?.click()}
                     title="Mixed selection in one picker"
                   >
@@ -1063,7 +1000,12 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
 
       <FileThumbnails files={files} onRemove={handleRemoveFile} />
 
-      <AccessField value={selectedAccess} onChange={setSelectedAccess} />
+      <AccessField
+        value={selectedAccess}
+        onChange={setSelectedAccess}
+        shareAudience={shareAudience}
+        onShareAudienceChange={setShareAudience}
+      />
 
       <TagsField
         tags={tags}
@@ -1229,7 +1171,7 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
             Add New Story
           </h2>
         </CardHeader>
-        <CardContent className="flex min-h-0 flex-1 flex-col overflow-y-auto px-6 pt-5 pb-16 hide-scrollbar space-y-5">
+        <CardContent className="flex h-[700px] min-h-0 flex-col overflow-y-auto px-6 pt-5 pb-16 hide-scrollbar space-y-5">
           {formContent}
         </CardContent>
         <CardFooter className="shrink-0 border-t border-stroke-neutral-weak px-6 py-4">{footer}</CardFooter>

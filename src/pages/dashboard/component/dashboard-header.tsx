@@ -26,8 +26,8 @@ const defaultHeaderTitle: Record<string, string> = {
   explore: "explore",
   overview: "overview",
   settings: "settings",
-  capsule: "time capsule",
-  "time-capsule": "time capsule",
+  capsule: "time capsules",
+  "time-capsule": "time capsules",
   "": "overview",
 };
 

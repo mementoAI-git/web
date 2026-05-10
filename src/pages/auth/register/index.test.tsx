@@ -37,7 +37,7 @@ describe("RegisterPage", () => {
     renderWithProviders(<RegisterPage />, { route: "/register" });
 
     const disclaimer = screen.getByText(/By clicking "Create account" you agree to the/i);
-    expect(disclaimer.tagName).toBe("SMALL");
+    expect(disclaimer.tagName).toBe("P");
     expect(disclaimer).toHaveClass("text-xs");
 
     const terms = screen.getByText("Terms of Use");
@@ -53,7 +53,7 @@ describe("RegisterPage", () => {
     expect(form).toBeTruthy();
     const children = Array.from(form!.children);
     const disclaimer = screen.getByText(/By clicking "Create account" you agree to the/i);
-    expect(disclaimer.tagName).toBe("SMALL");
+    expect(disclaimer.tagName).toBe("P");
     const disclaimerIdx = children.indexOf(disclaimer);
     const buttonIdx = children.indexOf(screen.getByRole("button", { name: /create account/i }));
     expect(disclaimerIdx).toBeGreaterThanOrEqual(0);

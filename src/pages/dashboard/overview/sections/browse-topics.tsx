@@ -4,6 +4,7 @@ import endpoint from "@/api/endpoint";
 import CategoryCard from "@/components/category-card";
 import { TopicSkeleton } from "@/components/topic";
 import { getCategory } from "@/utility";
+import { TypographyH2 } from "@/components/ui/typography";
 
 export default function BrowseTopics() {
   const { data, isLoading } = useSWR(endpoint.overviewPrompt);
@@ -11,10 +12,10 @@ export default function BrowseTopics() {
   return (
     <div className="flex w-full min-w-0 flex-col gap-5 py-0 pb-12 sm:gap-6 sm:pb-16">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
-        <h2 className="min-w-0 font-garamond font-normal text-text-neutral-strong text-xl sm:text-2xl lg:text-[32px] leading-tight sm:leading-[38px]">
+        <TypographyH2 className="min-w-0 font-garamond font-normal text-xl leading-tight text-text-neutral-strong sm:text-2xl sm:leading-[38px] lg:text-[32px]">
           Browse conversations
           <i className="text-text-neutral-weaker"> by topics</i>
-        </h2>
+        </TypographyH2>
         <Link
           className="inline-flex min-h-[44px] shrink-0 items-center font-inter text-base font-semibold text-text-brand-strong underline hover:opacity-90 sm:min-h-0"
           to="/explore"

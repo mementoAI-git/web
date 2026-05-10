@@ -9,6 +9,7 @@ import { cn, isEmpty } from "@/utility";
 import { fetcher } from "@/api/fetcher";
 import useIntersectionObserver from "@/hooks/use-intersection-observer";
 import { useStore } from "@/hooks/use-store";
+import { TypographyH2, TypographyMuted } from "@/components/ui/typography";
 
 interface CategoryDetailsProps {
   category: {
@@ -86,8 +87,8 @@ export default function CategoryDetails({ category }: CategoryDetailsProps) {
               <img src={category.image} className="size-full object-cover" alt={category.title} />
             </div>
             <div className="flex flex-1 flex-col gap-3 sm:gap-6">
-              <h5 className="font-garamond text-2xl leading-[38px] text-sand-12 sm:text-[32px]">{category.title}</h5>
-              <p className="font-georgia text-sand-11 sm:text-xl">{category.subtitle}</p>
+              <TypographyH2 className="font-garamond text-2xl leading-[38px] text-sand-12 sm:text-[32px]">{category.title}</TypographyH2>
+              <TypographyMuted className="font-georgia text-sand-11 sm:text-xl">{category.subtitle}</TypographyMuted>
               <div className="flex gap-3">
                 <span className="flex items-center gap-[6px] rounded-full border-[1.5px] border-sand-10 px-3 py-1 text-xs text-sand-10">
                   <span className="size-[6px] rounded-full bg-sand-10" />
@@ -118,7 +119,7 @@ export default function CategoryDetails({ category }: CategoryDetailsProps) {
               ))}
             </div>
             {isEmptyData ? (
-              <div className="py-8 text-center text-gray-500">No prompts available for this category.</div>
+              <TypographyMuted className="py-8 text-center text-gray-500">No prompts available for this category.</TypographyMuted>
             ) : (
               <div className="space-y-6">
                 {(prompts as React.ComponentProps<typeof CategoryPromptCard>[]).map((prompt, index: number) => (
