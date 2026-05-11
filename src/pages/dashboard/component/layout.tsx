@@ -49,18 +49,6 @@ export default function DashboardLayout() {
     }
   };
 
-  const collapseMainSidebar = () => {
-    if (
-      typeof window !== "undefined" &&
-      typeof window.matchMedia === "function" &&
-      window.matchMedia("(min-width: 768px)").matches
-    ) {
-      setMainSidebarCollapsed(true);
-    } else {
-      setSidebarOpen(false);
-    }
-  };
-
   return (
     <AuthCheck>
       <OnboardingGuard>
@@ -81,7 +69,7 @@ export default function DashboardLayout() {
             mainSidebarCollapsed && "md:!w-0 md:!min-w-0 md:overflow-hidden md:opacity-0",
           )}
         >
-          <DashboardSideBar onCollapse={collapseMainSidebar} />
+          <DashboardSideBar />
         </div>
         <main className="flex min-w-0 flex-1 flex-col overflow-hidden dynamic-height-content">
           <ConversationChromeProvider>

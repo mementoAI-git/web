@@ -7,9 +7,10 @@ import { MicIcon } from "@/components/icons";
 import { useModal } from "@/hooks/use-modal";
 import type { DailyPromptCapturePayload } from "@/lib/quick-capture-drafts";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { TypographyH2, TypographyMuted } from "@/components/ui/typography";
+import { cn } from "@/utility";
 
 function DailyPromptSkeleton() {
   return (
@@ -98,24 +99,40 @@ export default function DailyPromptSection() {
   return (
     <div className="flex h-full flex-col gap-5 rounded-2xl bg-fill-neutral-weaker p-4 shadow-sm sm:gap-6 sm:p-5">
       {hasMultiple && (
-        <ToggleGroup
-          type="single"
-          value={activeTab}
-          onValueChange={(value) => {
-            if (value) setActiveTab(value);
-          }}
+        <div
+          role="radiogroup"
+          aria-label="Daily prompts"
           className="flex w-full flex-wrap gap-2"
         >
-          {rows.map((row, i) => (
-            <ToggleGroupItem
-              key={`${row.slot_kind}-${row.reflection_day_key}-${i}`}
-              value={`${i}`}
-              className="min-h-[40px] rounded-full border border-stroke-neutral-weaker bg-fill-neutral-weaker px-3 py-1.5 font-inter text-[12px] font-medium text-text-neutral-strong transition-colors hover:bg-fill-neutral-weak sm:min-h-0 sm:px-2 sm:py-1 data-[state=on]:border-fill-brand-strong data-[state=on]:bg-fill-brand-strong data-[state=on]:text-white"
-            >
-              {tabLabel(row, i)}
-            </ToggleGroupItem>
-          ))}
-        </ToggleGroup>
+          {rows.map((row, i) => {
+            const value = `${i}`;
+            const inputId = `daily-prompt-${row.slot_kind}-${row.reflection_day_key}-${i}`;
+            return (
+              <div key={inputId} className="relative">
+                <input
+                  type="radio"
+                  id={inputId}
+                  name="daily-prompt-slot"
+                  value={value}
+                  checked={activeTab === value}
+                  onChange={() => setActiveTab(value)}
+                  className="peer sr-only"
+                />
+                <Label
+                  htmlFor={inputId}
+                  className={cn(
+                    "inline-flex min-h-[40px] cursor-pointer items-center justify-center rounded-full border border-stroke-neutral-weaker bg-fill-neutral-weaker px-3 py-1.5 font-inter text-[12px] font-medium text-text-neutral-strong transition-colors hover:bg-fill-neutral-weak sm:min-h-0 sm:px-2 sm:py-1",
+                    "peer-focus-visible:ring-2 peer-focus-visible:ring-black peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-v3-fill-weaker",
+                    "peer-checked:border-black peer-checked:bg-black peer-checked:text-white",
+                    "peer-checked:hover:!border-black peer-checked:hover:!bg-black",
+                  )}
+                >
+                  {tabLabel(row, i)}
+                </Label>
+              </div>
+            );
+          })}
+        </div>
       )}
 
       <div className="flex min-w-0 flex-1 flex-col gap-2">

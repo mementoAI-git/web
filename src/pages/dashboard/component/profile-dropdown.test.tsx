@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { screen } from "@testing-library/react";
+import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "@/test";
 import { ProfileDropdown } from "./profile-dropdown";
@@ -26,11 +26,29 @@ describe("ProfileDropdown", () => {
     expect(avatar).toHaveClass("!rounded-full");
   });
 
+  it("shows plan label under the name when subscription is loaded", async () => {
+    renderWithProviders(<ProfileDropdown />, { auth: true });
+    const trigger = await screen.findByRole("button", { name: /user/i });
+    expect(within(trigger).getByText("Free")).toBeInTheDocument();
+  });
+
+  it("lets the sidebar trigger and account name fill the available width", async () => {
+    renderWithProviders(<ProfileDropdown />, { auth: true });
+
+    const trigger = await screen.findByRole("button", { name: /user/i });
+    expect(trigger).toHaveClass("w-full");
+
+    const accountRow = trigger.querySelector(".flex.min-w-0.flex-1.items-center.gap-2");
+    expect(accountRow).toHaveClass("w-full");
+
+    expect(within(trigger).getByText("User")).toHaveClass("w-full");
+  });
+
   it("opens menu and exposes Contact us, social links, and settings actions", async () => {
     const user = userEvent.setup();
     renderWithProviders(<ProfileDropdown />, { auth: true });
 
-    const trigger = screen.getByRole("button", { name: /^user$/i });
+    const trigger = screen.getByRole("button", { name: /user/i });
     await user.click(trigger);
 
     const menu = await screen.findByRole("menu");
@@ -55,7 +73,7 @@ describe("ProfileDropdown", () => {
     const user = userEvent.setup();
     renderWithProviders(<ProfileDropdown />, { auth: true });
 
-    await user.click(screen.getByRole("button", { name: /^user$/i }));
+    await user.click(screen.getByRole("button", { name: /user/i }));
     const menu = await screen.findByRole("menu");
     expect(menu).toHaveAttribute("aria-label", "Account menu");
 

@@ -32,6 +32,12 @@ import { TypographyH1, TypographyH2, TypographyMuted } from "@/components/ui/typ
 const overviewMobileCtaLabel =
   "w-full max-w-[6.25rem] text-center font-inter text-[10px] font-medium leading-tight text-text-neutral-strong line-clamp-3 sm:hidden";
 
+/** Outline CTAs (Quick add, Chat) — shared so hover / motion match. */
+const overviewWelcomeSecondaryCtaClassName = cn(
+  "flex min-w-0 flex-1 cursor-pointer flex-col items-center gap-1.5 transition-colors",
+  "sm:h-12 sm:w-auto sm:flex-none sm:flex-row sm:items-center sm:gap-2 sm:rounded-full sm:border sm:border-stroke-neutral-weak sm:bg-white sm:px-5 sm:font-inter sm:text-sm sm:font-medium sm:text-text-neutral-strong sm:hover:bg-fill-neutral-weaker",
+);
+
 function getGreeting(): string {
   const hour = new Date().getHours();
   const greetings =
@@ -165,10 +171,7 @@ export default function WelcomeSection() {
               <button
                 type="button"
                 onClick={() => open("quick-capture")}
-                className={cn(
-                  "flex min-w-0 flex-1 cursor-pointer flex-col items-center gap-1.5 transition-colors",
-                  "sm:h-12 sm:w-auto sm:flex-none sm:flex-row sm:items-center sm:gap-2 sm:rounded-full sm:border sm:border-stroke-neutral-weak sm:bg-white sm:px-5 sm:font-inter sm:text-sm sm:font-medium sm:text-text-neutral-strong sm:hover:bg-fill-neutral-weaker",
-                )}
+                className={overviewWelcomeSecondaryCtaClassName}
               >
                 <span className="flex size-[52px] shrink-0 items-center justify-center rounded-full border border-stroke-neutral-weak bg-white text-text-neutral-strong shadow-sm sm:hidden">
                   <Zap className="size-5" strokeWidth={2} aria-hidden />
@@ -183,14 +186,7 @@ export default function WelcomeSection() {
                 </span>
                 <span className={overviewMobileCtaLabel}>Quick add</span>
               </button>
-              <Link
-                to="/chat"
-                className={cn(
-                  "flex min-w-0 flex-1 flex-col items-center gap-1.5 outline-none transition-opacity hover:opacity-90",
-                  "focus-visible:ring-2 focus-visible:ring-v3-brand-strong focus-visible:ring-offset-2",
-                  "sm:h-12 sm:w-auto sm:flex-none sm:flex-row sm:items-center sm:gap-2 sm:rounded-full sm:border sm:border-stroke-neutral-weak sm:bg-white sm:px-5 sm:font-inter sm:text-sm sm:font-medium sm:text-text-neutral-strong",
-                )}
-              >
+              <Link to="/chat" className={overviewWelcomeSecondaryCtaClassName}>
                 <span className="flex size-[52px] shrink-0 items-center justify-center rounded-full border border-stroke-neutral-weak bg-white text-text-neutral-strong shadow-sm sm:hidden">
                   <ChatIcon className="size-5" />
                 </span>
