@@ -34,7 +34,7 @@ export default function RecentRecipients({
   if (!recipients.length) {
     return (
       <div className="flex flex-col items-center justify-center py-6 gap-2">
-        <UserAvatar alt="No recipients" size="md" className="size-10 opacity-30" />
+        <UserAvatar alt="No recipients" size="lg" className="opacity-30" />
         <p className="text-xs text-gray-400">No recent recipients</p>
       </div>
     );
@@ -75,7 +75,7 @@ export default function RecentRecipients({
                 name={initialsSource || undefined}
                 email={recipient.email}
                 size="sm"
-                className="!size-6 !rounded-full"
+                className="!rounded-full"
               />
             </div>
             {/* Name */}

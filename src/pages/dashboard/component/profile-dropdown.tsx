@@ -1,4 +1,5 @@
 import { UserAvatar } from "@/components/user-avatar";
+import { useSubscription } from "@/contexts/subscription";
 import { useStore } from "@/hooks/use-store";
 import { isEmpty } from "@/utility";
 import { cn } from "@/utility";
@@ -34,9 +35,17 @@ const itemLabelClass = "flex-1 text-left text-[13px]";
 
 export function ProfileDropdown({ hideName = false }: { hideName?: boolean }) {
   const { user, unsetAuth } = useStore();
+  const { tier, isLoading: subscriptionLoading } = useSubscription();
   const navigate = useNavigate();
   const rawName = [user?.first_name, user?.last_name].filter(Boolean).join(" ").trim();
   const photo = user?.picture_url || user?.picture;
+
+  const planLabel =
+    !subscriptionLoading ?
+      tier === "pro" || tier === "legacy" ?
+        "Pro"
+      : "Free"
+    : null;
 
   const handleLogout = () => {
     unsetAuth?.();
@@ -47,7 +56,7 @@ export function ProfileDropdown({ hideName = false }: { hideName?: boolean }) {
     <DropdownMenu>
       <DropdownMenuTrigger
         className={cn(
-          "flex items-center gap-2 rounded-lg bg-transparent px-4 py-2.5 outline-none transition-colors",
+          "flex w-full items-center gap-2 rounded-lg bg-transparent px-2 py-1 outline-none transition-colors",
           "hover:bg-v3-fill-weak",
           "focus-visible:ring-2 focus-visible:ring-v3-brand-strong focus-visible:ring-offset-2",
         )}
@@ -58,21 +67,28 @@ export function ProfileDropdown({ hideName = false }: { hideName?: boolean }) {
             src={!isEmpty(photo) ? photo : undefined}
             name={rawName || undefined}
             email={user?.email}
-            size="sm"
-            className="!size-5 !rounded-full"
+            size="lg"
+            className="!rounded-full"
           />
         </span>
         {!hideName && (
-          <>
-            <span className="font-inter text-sm font-semibold text-gray-800">
-              {user?.first_name ?? "User"}
-            </span>
-            <ChevronDown
-              className="size-3.5 shrink-0 text-gray-400"
-              strokeWidth={2}
-              aria-hidden
-            />
-          </>
+          <div className="flex w-full min-w-0 flex-1 items-center gap-2">
+            <div className="flex min-w-0 flex-1 flex-col items-start gap-0 text-left">
+              <span className="flex w-full min-w-0 items-center gap-1">
+                <span className="w-full truncate font-inter text-sm font-semibold text-gray-800">
+                  {user?.first_name ?? "User"}
+                </span>
+                <ChevronDown
+                  className="size-3.5 shrink-0 text-gray-400"
+                  strokeWidth={2}
+                  aria-hidden
+                />
+              </span>
+              {planLabel != null ? (
+                <span className="font-inter text-xs font-normal text-gray-500">{planLabel}</span>
+              ) : null}
+            </div>
+          </div>
         )}
       </DropdownMenuTrigger>
       <DropdownMenuContent

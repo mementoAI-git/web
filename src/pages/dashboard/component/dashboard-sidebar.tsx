@@ -8,12 +8,7 @@ import { useModal } from "@/hooks/use-modal";
 import { useStore } from "@/hooks/use-store";
 import { isFeatureFlagAdminUser } from "@/contexts/feature-flags";
 
-interface DashboardSideBarProps {
-  /** Collapse the desktop rail or close the mobile drawer */
-  onCollapse?: () => void;
-}
-
-export function DashboardSideBar({ onCollapse }: DashboardSideBarProps) {
+export function DashboardSideBar() {
   const location = useLocation();
   const { open } = useModal();
   const { user } = useStore();
@@ -37,7 +32,6 @@ export function DashboardSideBar({ onCollapse }: DashboardSideBarProps) {
               (n.link === "/overview" && pathname === "/")
             }
             key={i}
-            onClick={onCollapse}
           />
         ))}
       </div>
@@ -49,7 +43,6 @@ export function DashboardSideBar({ onCollapse }: DashboardSideBarProps) {
             {...n}
             active={pathname.includes(n.link)}
             key={i}
-            onClick={onCollapse}
           />
         ))}
         {showAdminFlags ? (
@@ -58,7 +51,6 @@ export function DashboardSideBar({ onCollapse }: DashboardSideBarProps) {
             title="Feature flags"
             link="/admin/feature-flags"
             active={pathname.startsWith("/admin/feature-flags")}
-            onClick={onCollapse}
           />
         ) : null}
         <SideBarItem
@@ -66,11 +58,10 @@ export function DashboardSideBar({ onCollapse }: DashboardSideBarProps) {
           title="Drop feedback"
           onClick={() => {
             open("create-feedback");
-            onCollapse?.();
           }}
         />
-        <div className="mt-4 flex shrink-0 flex-col">
-          <SidebarUpgradeCard onNavigate={onCollapse} />
+        <div className="mt-4 flex w-full min-w-0 shrink-0 flex-col">
+          <SidebarUpgradeCard />
         </div>
         <div className="mt-4 min-w-0">
           <ProfileDropdown />
