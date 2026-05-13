@@ -194,17 +194,19 @@ export const streamlineFetcher = async (url: string, { arg }: { arg: Record<stri
 
   const reader = response.body?.getReader();
   const decoder = new TextDecoder("utf-8");
-  let is_done = false;
   const modelFromHeader = response.headers.get("x-ai-model") || undefined;
   onMeta?.({ model: modelFromHeader });
 
   if (response.ok && reader) {
-    while (!is_done) {
+    while (true) {
       const { value, done } = await reader.read();
-      if (done) is_done = true;
-
-      const chunk = decoder.decode(value, { stream: true });
-      onChunk(chunk);
+      if (value !== undefined && value.byteLength > 0) {
+        onChunk(decoder.decode(value, { stream: true }));
+      }
+      if (done) {
+        onChunk(decoder.decode());
+        break;
+      }
     }
   } else {
     const data = await response.json().catch(() => null);

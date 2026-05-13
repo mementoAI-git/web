@@ -39,7 +39,7 @@ export function AuthCenteredSplitShell({ children }: PropsWithChildren) {
       <main className="mx-auto flex w-full flex-1 items-center justify-center py-6 sm:py-8 lg:py-12">
         <section className="flex w-full max-h-[560px] max-w-4xl gap-6 overflow-hidden rounded-3xl">
           <AuthCenteredHeroAside />
-          <div className="flex min-h-0 max-h-full w-full flex-col items-start justify-center overflow-y-auto p-6 sm:p-8 md:w-[420px] md:p-10">
+          <div className="flex min-h-0 max-h-full w-full flex-col items-start justify-center overflow-y-auto scrollbar-hide p-6 sm:p-8 md:w-[420px] md:p-10">
             {children}
           </div>
         </section>
