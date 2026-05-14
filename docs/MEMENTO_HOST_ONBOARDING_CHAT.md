@@ -10,6 +10,10 @@ The **Groot multi-step flow** (`/onboarding`, forms, priorities) is separate; se
 
 After nickname (and related pre-chat steps), the host can have a **short guided chat** with the AI. The **shape and length of the conversation are not hard-coded** in the app: the **backend + model** decide each assistant turn. The browser **streams** replies like dashboard **`POST /ai/prompt`**, and uses a **trailer** on the stream for chips and completion.
 
+### Approved policy: how we use this conversation
+
+**Decision (product):** Treat onboarding chat as **personalization input only**. Use what the host shares to shape **their experience inside Memento** (tone, relevance, continuity with host chat). **Do not** surface raw onboarding lines in marketing-style suggestions, broad “prompt of the day” surfaces, or other cross-feature copy unless the user has **explicitly saved** that material as a memory (or equivalent durable artifact). Derived signals (e.g. topics of interest) may inform ranking **for this user** without quoting the transcript.
+
 ---
 
 ## 2. What leaves the browser on every assistant turn (request contract)

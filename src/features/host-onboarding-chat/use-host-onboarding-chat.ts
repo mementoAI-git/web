@@ -251,7 +251,6 @@ export function useHostOnboardingChat(
       if (introAcknowledged || isTyping || isComplete) return;
       const text = (overrideText ?? introDraft).trim();
       if (!text) return;
-      if (persist && !nicknameRef.current.trim()) return;
 
       const userMsg: HostOnboardingMessage = {
         id: nextId(),
