@@ -33,6 +33,7 @@ These **do** depend on this repo’s tech stack (React + TypeScript + Vite, Tail
 - **React + TypeScript component work**
   - Implement or modify components under `src/` using idiomatic React 18/19 patterns.
   - Respect existing state management patterns and hooks.
+  - Prefer existing shadcn-style and shared components before inventing new custom UI primitives.
 
 - **Styling and design**
   - Use Tailwind CSS utilities and existing design tokens/components.
@@ -46,5 +47,15 @@ These **do** depend on this repo’s tech stack (React + TypeScript + Vite, Tail
   - Respect this repo’s ESLint, TypeScript, and formatting configuration.
   - Use the existing test and build scripts defined in `package.json`.
 
-The **generic workflows** above should be captured as reusable skills in a shared location, while the **project-specific workflows** should be guided by `.cursor/rules` and any project-scoped skills you add in this repo.
+The **generic workflows** above should be handled by reusable global skills, while the **project-specific workflows** should be guided by `.cursor/rules` and the conventions documented in this repo.
 
+### Recommended global skills
+
+These are the main reusable skills this repo expects agents to lean on without you having to name them every time:
+
+- **Push / PR work** -> `git-pr`
+- **Existing component choice and composition** -> `shadcn`
+- **Broader page/interface design** -> `frontend-design`
+- **Polish, refinement, and design taste** -> `emil-design-eng`
+- **Library/framework documentation lookups** -> `documentation-lookup`
+- **Browser or end-to-end UI verification** -> `webapp-testing`

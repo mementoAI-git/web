@@ -6,6 +6,8 @@ alwaysApply: true
 
 Every time you build, modify, or add a feature, component, hook, utility, or page — you MUST write tests for it before considering the work complete.
 
+When the task involves browser behavior, local app flows, multi-step UI validation, or end-to-end interaction checks, prefer the global `webapp-testing` skill from `/Users/admin/.codex/skills/webapp-testing/SKILL.md`.
+
 ## Rules
 
 1. **Write tests alongside the code.** After implementing a feature, immediately write the corresponding test file before moving on.

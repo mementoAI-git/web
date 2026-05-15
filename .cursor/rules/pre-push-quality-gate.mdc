@@ -5,6 +5,8 @@ alwaysApply: true
 
 # Push Quality Gate
 
+- For any push, branch sync, or pull-request workflow, prefer the global `git-pr` skill from `/Users/admin/.codex/skills/git-pr/SKILL.md`.
+- Treat this rule as the **minimum gate** inside that larger workflow.
 - Before any `git push`, run checks in this order: `npm run lint` then `npm run build`.
 - Do not push if either command fails.
 - If checks fail, fix the issue first, then rerun both commands sequentially.

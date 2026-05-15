@@ -7,6 +7,8 @@ alwaysApply: true
 
 Use V3 semantic tokens from `docs/COLOR_INVENTORY.md` for all new UI work. Prefer semantic classes (`text-*`, `bg-*`, `border-*`, `fill-*`, `icon-*`) over hex colors or legacy variables.
 
+If the task is broader UI/page construction rather than a tiny token fix, prefer the global `shadcn` skill for choosing/composing existing UI primitives, the global `frontend-design` skill for the overall interface, and the global `emil-design-eng` skill for final polish and taste. This rule still governs the color/token layer.
+
 ## Core neutral tokens (default UI)
 
 - `text-neutral-strong`: primary headings, body text, form labels, high-emphasis copy.
