@@ -93,6 +93,8 @@ export interface IUser {
   newsletter_subscriber: boolean;
   created_at: string;
   onboarding_step_reached?: number;
+  /** Host chat thread id from GET /users/profile (when set). */
+  primary_conversation_id?: string | null;
 }
 
 export interface IMemoryAccessItem {

@@ -1,4 +1,5 @@
 import { http, HttpResponse } from "msw";
+import { ALL_ENRICHMENT_CATEGORY_KEYS } from "@/features/enrichment/enrichment-categories";
 import { mockUser } from "../fixtures";
 
 const BASE_URL = "http://localhost:3000/api";
@@ -160,9 +161,50 @@ export const handlers = [
   }),
 
   http.get(`${BASE_URL}/users/stats`, () => {
+    const category_scores = ALL_ENRICHMENT_CATEGORY_KEYS.map((key, i) => ({
+      key,
+      label: key
+        .split("_")
+        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+        .join(" "),
+      score: 8 + (i % 7),
+      weight: 0.1,
+      itemCount: key === "identity_self" ? 4 : i % 5 === 0 ? 1 : 0,
+      unlocked: true,
+    }));
     return HttpResponse.json({
       success: true,
-      data: { streak: 5, total_memories: 12, total_stories: 3 },
+      data: {
+        streak_count: 5,
+        reflections_count: 0,
+        stories_count: 3,
+        pending_insights_count: 0,
+        enrichment_score: 24,
+        category_scores,
+        lowest_category: "hopes_legacy",
+        beneficiary_access_unlocked: true,
+        milestone: {
+          reached_threshold: 0,
+          reached_label: "Start",
+          reached_description: "",
+          next_threshold: 25,
+          next_label: "Growing",
+          is_max: false,
+        },
+        nudge: {
+          category_key: "hopes_legacy",
+          category_label: "Hopes & legacy",
+          question: "What's one hope you'd want someone to remember about you?",
+        },
+        jump_pills: [
+          {
+            category_key: "hopes_legacy",
+            category_label: "Hopes & legacy",
+            starter: "One hope I carry is…",
+          },
+        ],
+        spotlight: null,
+      },
     });
   }),
 
@@ -412,6 +454,13 @@ export const handlers = [
           full_name: "Jane Doe",
           age_range: "30s_40s",
           location: "London",
+          age_bracket: "30s_40s",
+          priority_dimensions: ["relationships_people", "memories_experiences"],
+          expression_mode: "voice",
+          chronotype: "night",
+          sharing_intent: "shared_legacy",
+          onboarding_step_reached: 12,
+          skipped_deep_personalization: false,
         },
         persona: {
           join_reasons: ["memory_preservation", "family_history_heritage"],
@@ -419,6 +468,12 @@ export const handlers = [
           current_priority: ["people_relationships", "memories_stories"],
           communication_style: [],
           prefered_communication_style: "voice",
+          motivation: "memory_preservation",
+          motivation_detail: "",
+          life_situation: "caregiver",
+          life_situation_detail: "",
+          personality_traits: ["warm_caring", "strong_dependable"],
+          memory_treasures: ["quiet_mornings", "family_gatherings"],
         },
       },
     });

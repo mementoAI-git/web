@@ -3,120 +3,97 @@ import { renderHook, act } from "@testing-library/react";
 import { useOnboardQuestionsState } from "./useOnboardQuestionsState";
 
 describe("useOnboardQuestionsState", () => {
-  it("adds passion freetext item on addPassionFreetext", () => {
+  it("starts at step 1", () => {
     const { result } = renderHook(() => useOnboardQuestionsState());
-    expect(result.current.state.passionsFreetext).toEqual([]);
-
-    act(() => {
-      result.current.addPassionFreetext("gardening");
-    });
-    expect(result.current.state.passionsFreetext).toEqual(["gardening"]);
-
-    act(() => {
-      result.current.addPassionFreetext("vintage cars");
-    });
-    expect(result.current.state.passionsFreetext).toEqual(["gardening", "vintage cars"]);
+    expect(result.current.state.step).toBe(1);
   });
 
-  it("ignores empty or whitespace-only addPassionFreetext", () => {
+  it("requires motivation on step 1", () => {
     const { result } = renderHook(() => useOnboardQuestionsState());
+    expect(result.current.canAdvance(1)).toBe(false);
     act(() => {
-      result.current.addPassionFreetext("");
+      result.current.setMotivationChip("explorer");
     });
-    expect(result.current.state.passionsFreetext).toEqual([]);
-
-    act(() => {
-      result.current.addPassionFreetext("   ");
-    });
-    expect(result.current.state.passionsFreetext).toEqual([]);
+    expect(result.current.canAdvance(1)).toBe(true);
   });
 
-  it("trims whitespace when adding passion freetext", () => {
+  it("requires motivation detail when something_else", () => {
     const { result } = renderHook(() => useOnboardQuestionsState());
     act(() => {
-      result.current.addPassionFreetext("  photography  ");
+      result.current.setMotivationChip("something_else");
     });
-    expect(result.current.state.passionsFreetext).toEqual(["photography"]);
+    expect(result.current.canAdvance(1)).toBe(false);
+    act(() => {
+      result.current.setMotivationDetail("  curious  ");
+    });
+    expect(result.current.canAdvance(1)).toBe(true);
   });
 
-  it("removes passion freetext item on removePassionFreetext", () => {
+  it("advances from branch to deep phase on goToDeepPhase", () => {
     const { result } = renderHook(() => useOnboardQuestionsState());
     act(() => {
-      result.current.addPassionFreetext("gardening");
-      result.current.addPassionFreetext("vintage cars");
+      result.current.update("step", 6);
     });
-    expect(result.current.state.passionsFreetext).toEqual(["gardening", "vintage cars"]);
-
+    expect(result.current.state.step).toBe(6);
     act(() => {
-      result.current.removePassionFreetext(0);
+      result.current.goToDeepPhase();
     });
-    expect(result.current.state.passionsFreetext).toEqual(["vintage cars"]);
-
-    act(() => {
-      result.current.removePassionFreetext(0);
-    });
-    expect(result.current.state.passionsFreetext).toEqual([]);
+    expect(result.current.state.step).toBe(7);
+    expect(result.current.state.skippedDeepPersonalization).toBe(false);
   });
 
-  it("adds mementoFor freetext item on addMementoForFreetext", () => {
+  it("caps personality traits at 2 via setter usage", () => {
     const { result } = renderHook(() => useOnboardQuestionsState());
-    expect(result.current.state.mementoForFreetext).toEqual([]);
-
     act(() => {
-      result.current.addMementoForFreetext("my mentor");
+      result.current.setPersonalityTraits(["warm_caring", "funny_lighthearted"]);
     });
-    expect(result.current.state.mementoForFreetext).toEqual(["my mentor"]);
-
-    act(() => {
-      result.current.addMementoForFreetext("a community");
-    });
-    expect(result.current.state.mementoForFreetext).toEqual(["my mentor", "a community"]);
+    expect(result.current.state.personalityTraits).toHaveLength(2);
   });
 
-  it("requires mementoForFreetext when only something_else selected (step 2)", () => {
+  it("requires home text on step 4", () => {
     const { result } = renderHook(() => useOnboardQuestionsState());
-    expect(result.current.canAdvance(2)).toBe(false);
-
-    act(() => {
-      result.current.setMementoFor(["something_else"]);
-    });
-    expect(result.current.canAdvance(2)).toBe(false);
-
-    act(() => {
-      result.current.addMementoForFreetext("my mentor");
-    });
-    expect(result.current.canAdvance(2)).toBe(true);
-
-    act(() => {
-      result.current.setMementoFor(["children", "something_else"]);
-    });
-    expect(result.current.canAdvance(2)).toBe(true);
-  });
-
-  it("requires at least one enrichment priority dimension (step 5)", () => {
-    const { result } = renderHook(() => useOnboardQuestionsState());
-    expect(result.current.canAdvance(5)).toBe(false);
-
-    act(() => {
-      result.current.setPriorityDimensions(["relationships_people"]);
-    });
-    expect(result.current.canAdvance(5)).toBe(true);
-  });
-
-  it("supports All of the above for motivation (step 4)", () => {
-    const { result } = renderHook(() => useOnboardQuestionsState());
-    expect(result.current.state.motivationType).toBeNull();
     expect(result.current.canAdvance(4)).toBe(false);
-
     act(() => {
-      result.current.setMotivationType("__all__");
+      result.current.setHomePlace("  Lisbon  ");
     });
-    expect(result.current.state.motivationType).toBe("__all__");
     expect(result.current.canAdvance(4)).toBe(true);
+  });
 
-    act(() => {
-      result.current.setMotivationType(null);
+  it("hydrates from an initial misc revisit state", () => {
+    const { result } = renderHook(() =>
+      useOnboardQuestionsState({
+        step: 12,
+        motivationChip: "memory_preservation",
+        homePlace: "Lagos",
+        chronotype: "night",
+      }),
+    );
+
+    expect(result.current.state.step).toBe(12);
+    expect(result.current.state.motivationChip).toBe("memory_preservation");
+    expect(result.current.state.homePlace).toBe("Lagos");
+    expect(result.current.state.chronotype).toBe("night");
+  });
+
+  it("hydrates when revisit state arrives after first render", () => {
+    const { result, rerender } = renderHook(
+      ({ initialState }: { initialState?: Parameters<typeof useOnboardQuestionsState>[0] }) =>
+        useOnboardQuestionsState(initialState),
+      { initialProps: { initialState: undefined } },
+    );
+
+    expect(result.current.state.step).toBe(1);
+
+    rerender({
+      initialState: {
+        step: 12,
+        homePlace: "Lagos",
+        chronotype: "night",
+      },
     });
-    expect(result.current.state.motivationType).toBeNull();
+
+    expect(result.current.state.step).toBe(12);
+    expect(result.current.state.homePlace).toBe("Lagos");
+    expect(result.current.state.chronotype).toBe("night");
   });
 });

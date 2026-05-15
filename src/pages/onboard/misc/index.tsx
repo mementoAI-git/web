@@ -1,62 +1,127 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useStore } from "@/hooks/use-store";
 import { isEmpty } from "@/utility";
 import {
   AGE_BAND_OPTIONS,
-  MEMENTO_FOR_OPTIONS,
-  PASSION_OPTIONS,
-  MOTIVATION_OPTIONS,
-  ONBOARDING_DIMENSION_OPTIONS,
-  EXPRESSION_OPTIONS,
+  MISC_MOTIVATION_OPTIONS,
+  LIFE_SITUATION_OPTIONS,
+  PERSONALITY_TRAIT_OPTIONS,
+  MEMORY_TREASURE_OPTIONS,
+  HOME_PLACE_SUGGESTION_OPTIONS,
+  MISC_PASSION_OPTIONS,
+  CHRONOTYPE_OPTIONS,
+  SHARING_INTENT_OPTIONS,
+  ONBOARDING_FOCUS_FIRST_OPTIONS,
+} from "@/features/onboarding-groot/types";
+import type {
+  MiscMotivationChip,
+  MotivationType,
+  PersonalityTraitKey,
+  MemoryTreasureKey,
+  PassionKey,
 } from "@/features/onboarding-groot/types";
 import { getPrimaryCTA, getStep5Body } from "@/features/onboarding-groot/adaptive";
 import { OnboardSelectionCard } from "./OnboardSelectionCard";
-import { useOnboardQuestionsState, ONBOARD_QUESTIONS_STEP_LABELS } from "./useOnboardQuestionsState";
+import { OnboardQuestionHeader } from "./OnboardQuestionHeader";
+import {
+  useOnboardQuestionsState,
+  ONBOARD_QUESTIONS_STEP_LABELS,
+  MAX_PERSONALITY_TRAITS,
+  MAX_MEMORY_TREASURES,
+  MAX_PASSIONS_MISC,
+  MAX_FOCUS_FIRST,
+} from "./useOnboardQuestionsState";
+import type { OnboardQuestionsStep } from "./useOnboardQuestionsState";
+import { ONBOARD_MISC_WHY } from "./onboard-misc-copy";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import endpoint from "@/api/endpoint";
 import useFetcher from "@/hooks/use-fetcher";
 import { mutate } from "swr";
+import {
+  fetchOnboardingDetails,
+  mapOnboardingDetailsToMiscState,
+} from "@/api/onboarding";
+import {
+  deriveTouchedCategoriesFromMiscState,
+  saveOnboardingSummarySnapshot,
+  type PostOnboardingAction,
+} from "../summary-helpers";
 
+function motivationForApi(
+  chip: MiscMotivationChip | null,
+): MotivationType {
+  if (!chip || chip === "something_else") return "explorer";
+  return chip as MotivationType;
+}
 
-const MAX_EXPRESSION = 2;
-const ALL_EXPRESSION_MODES = EXPRESSION_OPTIONS.map((o) => o.value);
-const ALL_MOTIVATION_TYPES = MOTIVATION_OPTIONS.map((o) => o.value);
+function progressDots(step: OnboardQuestionsStep): {
+  completed: (i: number) => boolean;
+  current: (i: number) => boolean;
+} {
+  return {
+    completed: (i: number) =>
+      step === 12 ||
+      (step <= 5 && i < step) ||
+      (step === 6 && i < 5) ||
+      (step >= 7 && step <= 11 && i < step - 1),
+    current: (i: number) =>
+      step !== 12 &&
+      ((step <= 5 && step === i) ||
+        (step === 6 && i === 5) ||
+        (step >= 7 && step <= 11 && step - 1 === i)),
+  };
+}
+
+const TOTAL_QUESTION_DOTS = 10;
 
 export default function MiscPage() {
   const { user, setUser } = useStore();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const isRevisitMode = searchParams.get("mode") === "revisit";
   const nickname = (user?.nickname as string) || "there";
   const [validationAttempted, setValidationAttempted] = useState(false);
-  const [passionsInputValue, setPassionsInputValue] = useState("");
-  const [mementoForInputValue, setMementoForInputValue] = useState("");
+  const [prefill, setPrefill] = useState<
+    Partial<import("./useOnboardQuestionsState").OnboardQuestionsState> | null
+  >(isRevisitMode ? null : undefined);
 
   const {
     state,
     nextStep,
     prevStep,
+    goToDeepPhase,
     canAdvance,
+    setMotivationChip,
+    setMotivationDetail,
     setAgeBand,
-    setWhereFrom,
-    setMementoFor,
-    addMementoForFreetext,
-    removeMementoForFreetext,
-    setPriorityDimensions,
+    setLifeSituation,
+    setLifeSituationDetail,
+    setHomePlace,
+    setPersonalityTraits,
+    setPersonalityDetail,
+    setMemoryTreasures,
+    setMemoryTreasuresDetail,
     setPassions,
-    addPassionFreetext,
-    removePassionFreetext,
-    setMotivationType,
-    setExpressionMode,
-  } = useOnboardQuestionsState();
+    setPassionsDetail,
+    setChronotype,
+    setSharingIntent,
+    setPriorityDimensions,
+    setDimensionsDetail,
+  } = useOnboardQuestionsState(prefill ?? undefined);
 
   const { trigger: completeOnboarding, isMutating } = useFetcher(endpoint.completeOnboarding);
 
   const step = state.step;
   const canProceed = canAdvance(step);
   const contentRef = useRef<HTMLDivElement>(null);
+  const dots = progressDots(step);
 
   useEffect(() => {
     contentRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -68,78 +133,74 @@ export default function MiscPage() {
     }
   }, [user, navigate]);
 
-  const toggleMementoFor = (v: (typeof MEMENTO_FOR_OPTIONS)[0]["value"]) => {
-    if (state.mementoFor.includes(v)) {
-      setMementoFor(state.mementoFor.filter((m) => m !== v));
-    } else {
-      setMementoFor([...state.mementoFor, v]);
-    }
-  };
+  useEffect(() => {
+    if (!isRevisitMode) return;
 
-  const togglePassion = (v: (typeof PASSION_OPTIONS)[0]["value"]) => {
-    if (state.passions.includes(v)) {
-      setPassions(state.passions.filter((p) => p !== v));
-    } else {
-      setPassions([...state.passions, v]);
-    }
-  };
+    let cancelled = false;
+    fetchOnboardingDetails().then((data) => {
+      if (cancelled) return;
+      setPrefill(data ? mapOnboardingDetailsToMiscState(data) : {});
+    });
 
-  const toggleDimension = (v: (typeof ONBOARDING_DIMENSION_OPTIONS)[0]["value"]) => {
-    if (state.priorityDimensions.includes(v)) {
-      setPriorityDimensions(state.priorityDimensions.filter((d) => d !== v));
-    } else {
-      setPriorityDimensions([...state.priorityDimensions, v]);
-    }
-  };
-
-  const allExpressionSelected = state.expressionMode.length === ALL_EXPRESSION_MODES.length;
-  const toggleExpression = (v: (typeof EXPRESSION_OPTIONS)[0]["value"]) => {
-    if (state.expressionMode.includes(v)) {
-      setExpressionMode(state.expressionMode.filter((m) => m !== v));
-    } else if (allExpressionSelected || state.expressionMode.length < MAX_EXPRESSION) {
-      setExpressionMode([...state.expressionMode, v]);
-    }
-  };
-  const handleAllExpression = () => {
-    setExpressionMode(allExpressionSelected ? [] : [...ALL_EXPRESSION_MODES]);
-  };
-
-  const allMotivationSelected = state.motivationType === "__all__";
-  const handleAllMotivation = () => {
-    setMotivationType(allMotivationSelected ? null : "__all__");
-  };
+    return () => {
+      cancelled = true;
+    };
+  }, [isRevisitMode]);
 
   const completeAndNavigate = useCallback(
-    async (action: string) => {
+    async (action: PostOnboardingAction, opts?: { skippedDeep?: boolean }) => {
+      const skipped = opts?.skippedDeep ?? state.skippedDeepPersonalization;
+      const motivationApi = motivationForApi(state.motivationChip);
+      const joinExtras = [
+        motivationApi,
+        ...state.passions,
+        ...(state.passionsDetail.trim() ? [state.passionsDetail.trim()] : []),
+        ...state.memoryTreasures,
+        ...state.personalityTraits.filter((p) => p !== "something_else"),
+        ...(state.personalityTraits.includes("something_else") &&
+        state.personalityDetail.trim()
+          ? [state.personalityDetail.trim()]
+          : []),
+      ];
+      const selfDescription = [
+        state.personalityTraits.join(", "),
+        state.homePlace.trim().slice(0, 240),
+      ]
+        .filter(Boolean)
+        .join(" · ");
+
       try {
         await completeOnboarding({
           fullName: nickname,
           displayName: nickname,
           ageBand: state.ageBand ?? "",
-          whereFrom: state.whereFrom.trim() || undefined,
-          mementoFor: state.mementoFor,
-          mementoForFreetext: state.mementoForFreetext.length > 0 ? state.mementoForFreetext.join(", ") : undefined,
+          whereFrom: state.homePlace.trim() || undefined,
+          mementoFor: [],
           passions: state.passions,
-          passionsFreetext: state.passionsFreetext.length > 0 ? state.passionsFreetext.join(", ") : undefined,
-          lifeContext: state.lifeContext,
-          motivationType:
-            state.motivationType === "__all__"
-              ? "all"
-              : (state.motivationType ?? ""),
+          passionsFreetext: state.passionsDetail.trim() || undefined,
+          lifeContext: [],
+          motivationType: motivationApi,
           priorityDimensions: state.priorityDimensions,
-          expressionMode: state.expressionMode,
+          dimensionsFreetext: state.dimensionsDetail.trim() || undefined,
+          expressionMode: [],
           isComplete: true,
-          stepReached: 7,
+          stepReached: skipped ? 6 : 12,
+          lifeSituation: state.lifeSituation ?? undefined,
+          lifeSituationDetail: state.lifeSituationDetail.trim() || undefined,
+          personalityTraits: state.personalityTraits,
+          memoryTreasures: state.memoryTreasures,
+          chronotype: skipped ? undefined : state.chronotype ?? undefined,
+          sharingIntent: skipped ? undefined : state.sharingIntent ?? undefined,
+          motivationDetail:
+            state.motivationChip === "something_else"
+              ? state.motivationDetail.trim() || undefined
+              : undefined,
+          skippedDeepPersonalization: skipped,
         });
         await completeOnboarding({
           dob: "",
-          join_reasons:
-            state.motivationType === "__all__"
-              ? ALL_MOTIVATION_TYPES
-              : state.motivationType
-                ? [state.motivationType]
-                : [],
-          self_description: state.passions.join(", ") || state.passionsFreetext.join(", "),
+          join_reasons: joinExtras,
+          self_description: selfDescription || state.passions.join(", "),
           current_priority: state.priorityDimensions.join(", ") || "",
         });
         await mutate(endpoint.profile);
@@ -152,65 +213,108 @@ export default function MiscPage() {
         }
       }
 
-      switch (action) {
-        case "voice_recorder":
-          navigate("/overview", { state: { openModal: "create-memory" } });
-          break;
-        case "reflection_prompt":
-          navigate("/explore");
-          break;
-        case "file_upload":
-          navigate("/overview", { state: { openModal: "create-memory" } });
-          break;
-        case "time_capsule":
-          navigate("/capsule");
-          break;
-        default:
-          navigate("/overview");
-      }
+      saveOnboardingSummarySnapshot({
+        nextAction: action,
+        skippedDeepPersonalization: skipped,
+        touchedCategories: deriveTouchedCategoriesFromMiscState(state),
+        priorityDimensions: state.priorityDimensions,
+        motivationType: motivationApi,
+        nickname,
+        motivationDetail: state.motivationDetail.trim() || undefined,
+        lifeSituation: state.lifeSituation,
+        lifeSituationDetail: state.lifeSituationDetail.trim() || undefined,
+        homePlace: state.homePlace.trim() || undefined,
+        personalityTraits: state.personalityTraits,
+        personalityDetail: state.personalityDetail.trim() || undefined,
+        memoryTreasures: state.memoryTreasures,
+        sharingIntent: skipped ? undefined : state.sharingIntent,
+      });
+
+      navigate("/onboard/summary");
     },
-    [
-      nickname,
-      state,
-      completeOnboarding,
-      navigate,
-    ]
+    [nickname, state, completeOnboarding, navigate, user, setUser],
   );
 
+  if (prefill === null) {
+    return (
+      <div className="flex min-h-[40vh] items-center justify-center font-inter text-sm text-v3-text-weak">
+        Loading your story…
+      </div>
+    );
+  }
+
   const handleContinue = () => {
+    if (step === 6) return;
     setValidationAttempted(true);
-    if (!canProceed && step !== 7) return;
+    if (!canProceed && step !== 12) return;
     setValidationAttempted(false);
 
-    if (step === 7) {
-      const motivationForCTA =
-        state.motivationType === "__all__" ? "explorer" : state.motivationType;
-      const { action } = getPrimaryCTA(motivationForCTA, state.expressionMode);
-      completeAndNavigate(action);
+    if (step === 12) {
+      const motivationApi = motivationForApi(state.motivationChip);
+      const { action } = getPrimaryCTA(motivationApi, []);
+      void completeAndNavigate(action);
     } else {
       nextStep();
     }
   };
 
+  const appendHomeSuggestion = (label: string) => {
+    const t = state.homePlace.trim();
+    setHomePlace(t ? `${t}; ${label}` : label);
+  };
+
+  const togglePersonality = (v: PersonalityTraitKey) => {
+    if (state.personalityTraits.includes(v)) {
+      setPersonalityTraits(state.personalityTraits.filter((p) => p !== v));
+    } else if (state.personalityTraits.length < MAX_PERSONALITY_TRAITS) {
+      setPersonalityTraits([...state.personalityTraits, v]);
+    }
+  };
+
+  const toggleMemory = (v: MemoryTreasureKey) => {
+    if (state.memoryTreasures.includes(v)) {
+      setMemoryTreasures(state.memoryTreasures.filter((m) => m !== v));
+    } else if (state.memoryTreasures.length < MAX_MEMORY_TREASURES) {
+      setMemoryTreasures([...state.memoryTreasures, v]);
+    }
+  };
+
+  const togglePassion = (v: PassionKey) => {
+    if (state.passions.includes(v)) {
+      setPassions(state.passions.filter((p) => p !== v));
+    } else if (state.passions.length < MAX_PASSIONS_MISC) {
+      setPassions([...state.passions, v]);
+    }
+  };
+
+  const toggleFocus = (v: (typeof ONBOARDING_FOCUS_FIRST_OPTIONS)[0]["value"]) => {
+    if (state.priorityDimensions.includes(v)) {
+      setPriorityDimensions(state.priorityDimensions.filter((d) => d !== v));
+    } else if (state.priorityDimensions.length < MAX_FOCUS_FIRST) {
+      setPriorityDimensions([...state.priorityDimensions, v]);
+    }
+  };
+
   const showIntro = step === 1;
-  const TOTAL_STEPS = 7;
+  const motivationApi = motivationForApi(state.motivationChip);
+
+  const whyFor = (s: keyof typeof ONBOARD_MISC_WHY) => ONBOARD_MISC_WHY[s];
 
   return (
     <div ref={contentRef} className="flex w-full flex-col gap-10">
-      {/* Step dots and label - matches image design */}
       <div className="flex shrink-0 flex-col items-center gap-3">
-        <div className="flex items-center gap-2" aria-hidden>
-          {Array.from({ length: TOTAL_STEPS }, (_, i) => {
-            const stepNum = i + 1;
-            const isCompleted = stepNum < step;
-            const isCurrent = stepNum === step;
+        <div className="flex flex-wrap items-center justify-center gap-2" aria-hidden>
+          {Array.from({ length: TOTAL_QUESTION_DOTS }, (_, i) => {
+            const n = i + 1;
+            const isCompleted = dots.completed(n);
+            const isCurrent = dots.current(n);
             return (
               <span
-                key={stepNum}
+                key={n}
                 className={cn(
-                  "h-2.5 w-2.5 rounded-full transition-colors",
+                  "h-2.5 w-2.5 rounded-full transition-colors duration-150 ease-out",
                   (isCompleted || isCurrent) && "bg-fill-brand-strong",
-                  !isCompleted && !isCurrent && "bg-v3-stroke-weak"
+                  !isCompleted && !isCurrent && "bg-v3-stroke-weak",
                 )}
               />
             );
@@ -225,185 +329,114 @@ export default function MiscPage() {
             Okay, <span className="capitalize">{nickname}</span>. I&apos;ve got some questions for you.
           </h3>
           <p className="font-garamond text-[20px] font-normal leading-[28px] text-v3-text-strong">
-            These questions will help Memento better personalize your experience
-            <br />
-            on the product.
+            These questions will help Memento better personalize your experience on the product.
           </p>
         </div>
       )}
 
       {step === 1 && (
-        <div className="flex flex-col space-y-6">
-          <div className="flex flex-col gap-2">
-<p className="font-garamond text-lg sm:text-xl font-normal text-v3-text-strong">
-            How old are you?<span className="text-text-info-strong">*</span>
-          </p>
-            {validationAttempted && !state.ageBand && (
-              <p className="text-sm text-text-error-strong">Please pick an age range.</p>
-            )}
-            <div className="flex flex-wrap gap-2">
-              {AGE_BAND_OPTIONS.map((opt) => (
-                <OnboardSelectionCard
-                  key={opt.value}
-                  value={opt.value}
-                  label={opt.label}
-                  icon={opt.icon}
-                  isSelected={state.ageBand === opt.value}
-                  onClick={() => setAgeBand(opt.value)}
-                />
-              ))}
+        <div className="space-y-4">
+          <OnboardQuestionHeader
+            title={<>What brings you to Memento?</>}
+            required
+            hint={whyFor(1).hint}
+            whyDetail={whyFor(1).detail}
+          />
+          {validationAttempted && !canAdvance(1) && (
+            <p className="text-sm text-text-error-strong">Please choose one option (and add a note if you pick Something else).</p>
+          )}
+          <div className="flex flex-wrap gap-2">
+            {MISC_MOTIVATION_OPTIONS.map((opt) => (
+              <OnboardSelectionCard
+                key={opt.value}
+                value={opt.value}
+                label={opt.label}
+                icon={opt.icon}
+                isSelected={state.motivationChip === opt.value}
+                onClick={() => setMotivationChip(opt.value as MiscMotivationChip)}
+              />
+            ))}
+          </div>
+          {state.motivationChip === "something_else" && (
+            <div className="space-y-2">
+              <Label htmlFor="motivation-other" className="text-sm text-v3-text-weak">
+                In your own words
+              </Label>
+              <Textarea
+                id="motivation-other"
+                value={state.motivationDetail}
+                onChange={(e) => setMotivationDetail(e.target.value)}
+                placeholder="Tell us in a sentence or two"
+                maxLength={400}
+                className="min-h-[88px] border-v3-stroke-weak bg-v3-fill-weaker text-v3-text-strong placeholder:text-v3-text-weaker focus-visible:border-v3-brand-strong focus-visible:ring-v3-brand-strong/30"
+              />
             </div>
-          </div>
-          <div className="flex flex-col gap-0 space-y-2">
-            <label htmlFor="where-from" className="block font-garamond text-lg sm:text-xl font-normal text-v3-text-strong">
-              Where are you from? <span className="text-[#4A4A4A]/60">(optional)</span>
-            </label>
-            <input
-              id="where-from"
-              type="text"
-              value={state.whereFrom}
-              onChange={(e) => setWhereFrom(e.target.value)}
-              placeholder="City, country — or just the region"
-              maxLength={120}
-              className="w-full rounded-xl border-[1.5px] border-v3-stroke-weak bg-v3-fill-weaker px-4 py-3 text-v3-text-strong placeholder:text-v3-text-weaker focus:border-v3-brand-strong focus:outline-none"
-            />
-          </div>
+          )}
         </div>
       )}
 
       {step === 2 && (
         <div className="space-y-4">
-          <p className="font-garamond text-lg sm:text-xl font-normal text-v3-text-strong">
-            Who is this Memento mostly for?<span className="text-text-info-strong">*</span>{" "}
-            <span className="text-text-brand-weak text-base">(multi-select)</span>
-          </p>
-          {validationAttempted && state.mementoFor.length < 1 && (
-            <p className="text-sm text-text-error-strong">Please pick at least one.</p>
+          <OnboardQuestionHeader
+            title={<>A little about you: how old are you?</>}
+            required
+            hint={whyFor(2).hint}
+            whyDetail={whyFor(2).detail}
+          />
+          {validationAttempted && !state.ageBand && (
+            <p className="text-sm text-text-error-strong">Please pick an age range.</p>
           )}
-          {validationAttempted &&
-            state.mementoFor.includes("something_else") &&
-            state.mementoFor.length === 1 &&
-            state.mementoForFreetext.length < 1 && (
-              <p className="text-sm text-text-error-strong">Please add at least one.</p>
-            )}
           <div className="flex flex-wrap gap-2">
-            {MEMENTO_FOR_OPTIONS.map((opt) => (
+            {AGE_BAND_OPTIONS.map((opt) => (
               <OnboardSelectionCard
                 key={opt.value}
                 value={opt.value}
                 label={opt.label}
-                icon={opt.icon || undefined}
-                isSelected={state.mementoFor.includes(opt.value)}
-                onClick={() => toggleMementoFor(opt.value)}
-                variant={opt.value === "something_else" ? "add" : undefined}
+                icon={opt.icon}
+                isSelected={state.ageBand === opt.value}
+                onClick={() => setAgeBand(opt.value)}
               />
             ))}
           </div>
-          {state.mementoFor.includes("something_else") && (
-            <div className="mt-2 space-y-2">
-              {state.mementoForFreetext.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {state.mementoForFreetext.map((item, i) => (
-                    <span
-                      key={`${item}-${i}`}
-                      className="inline-flex items-center gap-1 rounded-lg border border-v3-brand-strong/20 bg-v3-brand-strong/[0.06] px-2 py-1 text-sm text-v3-text-strong"
-                    >
-                      {item}
-                      <button
-                        type="button"
-                        onClick={() => removeMementoForFreetext(i)}
-                        className="ml-0.5 rounded p-0.5 text-v3-text-weaker hover:bg-v3-brand-strong/10 hover:text-v3-text-strong"
-                        aria-label={`Remove ${item}`}
-                      >
-                        ×
-                      </button>
-                    </span>
-                  ))}
-                </div>
-              )}
-              <input
-                type="text"
-                value={mementoForInputValue}
-                onChange={(e) => setMementoForInputValue(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    addMementoForFreetext(mementoForInputValue);
-                    setMementoForInputValue("");
-                  }
-                }}
-                placeholder="e.g. my mentor, a community... (press Enter to add)"
-                maxLength={200}
-                className="w-full rounded-xl border-[1.5px] border-v3-stroke-weak bg-v3-fill-weaker px-4 py-3 text-v3-text-strong placeholder:text-v3-text-weaker focus:border-v3-brand-strong focus:outline-none"
-              />
-            </div>
-          )}
         </div>
       )}
 
       {step === 3 && (
-        <div className="flex flex-col gap-6">
-          <div>
-            <p className="font-garamond text-lg sm:text-xl font-normal text-v3-text-strong">
-              What are some things that interest you?<span className="text-text-info-strong">*</span>{" "}
-              <span className="text-text-brand-weak text-base">(multi-select)</span>
-            </p>
-            <p className="mt-1 font-inter text-sm text-v3-text-weak">
-              This helps us personalize your Memento experience.
-            </p>
-          </div>
-          {validationAttempted && state.passions.length < 1 && (
-            <p className="text-sm text-text-error-strong">Pick at least one.</p>
+        <div className="space-y-4">
+          <OnboardQuestionHeader
+            title={<>What do you do?</>}
+            required
+            hint={whyFor(3).hint}
+            whyDetail={whyFor(3).detail}
+          />
+          {validationAttempted && !canAdvance(3) && (
+            <p className="text-sm text-text-error-strong">Please pick one (and add a note if you pick Something else).</p>
           )}
           <div className="flex flex-wrap gap-2">
-            {PASSION_OPTIONS.map((opt) => (
+            {LIFE_SITUATION_OPTIONS.map((opt) => (
               <OnboardSelectionCard
                 key={opt.value}
                 value={opt.value}
                 label={opt.label}
-                icon={opt.icon || undefined}
-                isSelected={state.passions.includes(opt.value)}
-                onClick={() => togglePassion(opt.value)}
+                icon={opt.icon}
+                isSelected={state.lifeSituation === opt.value}
+                onClick={() => setLifeSituation(opt.value)}
                 variant={opt.value === "something_else" ? "add" : undefined}
               />
             ))}
           </div>
-          {state.passions.includes("something_else") && (
-            <div className="mt-2 space-y-2">
-              {state.passionsFreetext.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {state.passionsFreetext.map((item, i) => (
-                    <span
-                      key={`${item}-${i}`}
-                      className="inline-flex items-center gap-1 rounded-lg border border-v3-brand-strong/20 bg-v3-brand-strong/[0.06] px-2 py-1 text-sm text-v3-text-strong"
-                    >
-                      {item}
-                      <button
-                        type="button"
-                        onClick={() => removePassionFreetext(i)}
-                        className="ml-0.5 rounded p-0.5 text-v3-text-weaker hover:bg-v3-brand-strong/10 hover:text-v3-text-strong"
-                        aria-label={`Remove ${item}`}
-                      >
-                        ×
-                      </button>
-                    </span>
-                  ))}
-                </div>
-              )}
-              <input
-                type="text"
-                value={passionsInputValue}
-                onChange={(e) => setPassionsInputValue(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    addPassionFreetext(passionsInputValue);
-                    setPassionsInputValue("");
-                  }
-                }}
-                placeholder="e.g. gardening, vintage cars... (press Enter to add)"
+          {state.lifeSituation === "something_else" && (
+            <div className="space-y-2">
+              <Label htmlFor="work-other" className="text-sm text-v3-text-weak">
+                Something else
+              </Label>
+              <Input
+                id="work-other"
+                value={state.lifeSituationDetail}
+                onChange={(e) => setLifeSituationDetail(e.target.value)}
                 maxLength={200}
-                className="w-full rounded-xl border-[1.5px] border-v3-stroke-weak bg-v3-fill-weaker px-4 py-3 text-v3-text-strong placeholder:text-v3-text-weaker focus:border-v3-brand-strong focus:outline-none"
+                className="border-v3-stroke-weak bg-v3-fill-weaker text-v3-text-strong placeholder:text-v3-text-weaker"
+                placeholder="Briefly describe what you do"
               />
             </div>
           )}
@@ -412,134 +445,350 @@ export default function MiscPage() {
 
       {step === 4 && (
         <div className="space-y-4">
-          <p className="font-garamond text-lg sm:text-xl font-normal text-v3-text-strong">
-            What brings you to Memento?<span className="text-text-info-strong">*</span>
-          </p>
-          {validationAttempted && !state.motivationType && (
-            <p className="text-sm text-text-error-strong">Please choose one.</p>
+          <OnboardQuestionHeader
+            title={
+              <>Is there a specific place in the world that feels most like &quot;home&quot; to you?</>
+            }
+            required
+            hint={whyFor(4).hint}
+            whyDetail={whyFor(4).detail}
+          />
+          {validationAttempted && !state.homePlace.trim() && (
+            <p className="text-sm text-text-error-strong">Please add a few words—there&apos;s no wrong answer.</p>
           )}
+          <Textarea
+            value={state.homePlace}
+            onChange={(e) => setHomePlace(e.target.value)}
+            placeholder="Places, people, a feeling—whatever home means to you"
+            maxLength={500}
+            className="min-h-[100px] border-v3-stroke-weak bg-v3-fill-weaker text-v3-text-strong placeholder:text-v3-text-weaker focus-visible:border-v3-brand-strong focus-visible:ring-v3-brand-strong/30"
+          />
+          <p className="text-xs font-medium uppercase tracking-wide text-v3-text-weaker">
+            Quick prompts
+          </p>
           <div className="flex flex-wrap gap-2">
-            {MOTIVATION_OPTIONS.map((opt) => (
+            {HOME_PLACE_SUGGESTION_OPTIONS.map((opt) => (
               <OnboardSelectionCard
                 key={opt.value}
                 value={opt.value}
                 label={opt.label}
                 icon={opt.icon}
-                isSelected={state.motivationType === opt.value}
-                onClick={() => setMotivationType(opt.value)}
+                isSelected={false}
+                onClick={() => appendHomeSuggestion(opt.label)}
               />
             ))}
-            <OnboardSelectionCard
-              value="__all__"
-              label="All of the above"
-              icon="✨"
-              isSelected={allMotivationSelected}
-              onClick={handleAllMotivation}
-            />
           </div>
         </div>
       )}
 
       {step === 5 && (
         <div className="space-y-4">
-          <p className="font-garamond text-lg sm:text-xl font-normal text-v3-text-strong">
-            What matters most to you now?<span className="text-text-info-strong">*</span>{" "}
-            <span className="text-text-brand-weak text-base">(multi-select)</span>
+          <OnboardQuestionHeader
+            title={<>How would the people closest to you describe you?</>}
+            required
+            hint={whyFor(5).hint}
+            whyDetail={whyFor(5).detail}
+          />
+          <p className="text-sm text-v3-text-weak">
+            Pick up to {MAX_PERSONALITY_TRAITS}
+            {validationAttempted && !canAdvance(5) && (
+              <span className="ml-2 text-text-error-strong">Choose at least one.</span>
+            )}
           </p>
-          {validationAttempted && state.priorityDimensions.length < 1 && (
-            <p className="text-sm text-text-error-strong">Pick at least one.</p>
-          )}
           <div className="flex flex-wrap gap-2">
-            {ONBOARDING_DIMENSION_OPTIONS.map((opt) => (
-              <OnboardSelectionCard
-                key={opt.value}
-                value={opt.value}
-                label={opt.label}
-                icon={opt.icon || undefined}
-                isSelected={state.priorityDimensions.includes(opt.value)}
-                onClick={() => toggleDimension(opt.value)}
-              />
-            ))}
-          </div>
-        </div>
-      )}
-
-      {step === 6 && (
-        <div className="space-y-4">
-          <p className="font-garamond text-lg sm:text-xl font-normal text-v3-text-strong">
-            How would you most like to add to your Memento?<span className="text-text-info-strong">*</span>{" "}
-            <span className="text-text-brand-weak text-base">(pick up to 2)</span>
-          </p>
-          {validationAttempted && state.expressionMode.length < 1 && (
-            <p className="text-sm text-text-error-strong">Pick at least one.</p>
-          )}
-          <div className="flex flex-wrap gap-2">
-            {EXPRESSION_OPTIONS.map((opt) => (
+            {PERSONALITY_TRAIT_OPTIONS.map((opt) => (
               <OnboardSelectionCard
                 key={opt.value}
                 value={opt.value}
                 label={opt.label}
                 icon={opt.icon}
-                isSelected={state.expressionMode.includes(opt.value)}
-                onClick={() => toggleExpression(opt.value)}
+                isSelected={state.personalityTraits.includes(opt.value)}
+                onClick={() => togglePersonality(opt.value)}
+                variant={opt.value === "something_else" ? "add" : undefined}
               />
             ))}
-            <OnboardSelectionCard
-              value="__all__"
-              label="All of the above"
-              icon="✨"
-              isSelected={allExpressionSelected}
-              onClick={handleAllExpression}
-            />
+          </div>
+          {state.personalityTraits.includes("something_else") && (
+            <div className="space-y-2">
+              <Label htmlFor="personality-other" className="text-sm text-v3-text-weak">
+                Something else
+              </Label>
+              <Input
+                id="personality-other"
+                value={state.personalityDetail}
+                onChange={(e) => setPersonalityDetail(e.target.value)}
+                maxLength={200}
+                className="border-v3-stroke-weak bg-v3-fill-weaker"
+              />
+            </div>
+          )}
+        </div>
+      )}
+
+      {step === 6 && (
+        <div className="flex flex-col gap-6 text-center sm:text-left">
+          <h3 className="font-garamond text-xl font-normal text-v3-text-strong sm:text-2xl">
+            You&apos;re off to a great start
+          </h3>
+          <p className="font-garamond text-base leading-relaxed text-v3-text-weak">
+            You can wrap up now and head into Memento, or spend another minute so we can personalize your space a
+            little more.
+          </p>
+          <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
+            <Button
+              type="button"
+              variant="secondary"
+              disabled={isMutating}
+              className="rounded-full border-v3-stroke-weak bg-v3-fill-weaker px-6 py-6 text-v3-text-strong transition-transform duration-150 ease-out active:scale-[0.98] sm:flex-1"
+              onClick={() => {
+                void completeAndNavigate("dashboard", { skippedDeep: true });
+              }}
+            >
+              Continue later
+            </Button>
+            <Button
+              type="button"
+              disabled={isMutating}
+              className="rounded-full !bg-fill-brand-strong px-6 py-6 text-white transition-transform duration-150 ease-out active:scale-[0.98] hover:!bg-fill-brand-weak sm:flex-1"
+              onClick={() => {
+                goToDeepPhase();
+              }}
+            >
+              Keep going to personalize my AI
+            </Button>
           </div>
         </div>
       )}
 
       {step === 7 && (
+        <div className="space-y-4">
+          <OnboardQuestionHeader
+            title={<>What kind of moments do you treasure most?</>}
+            required
+            hint={whyFor(7).hint}
+            whyDetail={whyFor(7).detail}
+          />
+          <p className="text-sm text-v3-text-weak">Pick up to {MAX_MEMORY_TREASURES}</p>
+          {validationAttempted && state.memoryTreasures.length < 1 && (
+            <p className="text-sm text-text-error-strong">Pick at least one.</p>
+          )}
+          <div className="flex flex-wrap gap-2">
+            {MEMORY_TREASURE_OPTIONS.map((opt) => (
+              <OnboardSelectionCard
+                key={opt.value}
+                value={opt.value}
+                label={opt.label}
+                icon={opt.icon}
+                isSelected={state.memoryTreasures.includes(opt.value)}
+                onClick={() => toggleMemory(opt.value)}
+              />
+            ))}
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="memory-extra" className="text-sm text-v3-text-weak">
+              Anything else? <span className="font-normal">(optional)</span>
+            </Label>
+            <Textarea
+              id="memory-extra"
+              value={state.memoryTreasuresDetail}
+              onChange={(e) => setMemoryTreasuresDetail(e.target.value)}
+              maxLength={300}
+              className="min-h-[72px] border-v3-stroke-weak bg-v3-fill-weaker text-v3-text-strong"
+              placeholder="A moment only you would think to mention"
+            />
+          </div>
+        </div>
+      )}
+
+      {step === 8 && (
+        <div className="space-y-4">
+          <OnboardQuestionHeader
+            title={<>What pulls you in outside of work?</>}
+            required
+            hint={whyFor(8).hint}
+            whyDetail={whyFor(8).detail}
+          />
+          <p className="text-sm text-v3-text-weak">Pick up to {MAX_PASSIONS_MISC}</p>
+          {validationAttempted && state.passions.length < 1 && (
+            <p className="text-sm text-text-error-strong">Pick at least one.</p>
+          )}
+          <div className="flex flex-wrap gap-2">
+            {MISC_PASSION_OPTIONS.map((opt) => (
+              <OnboardSelectionCard
+                key={opt.value}
+                value={opt.value}
+                label={opt.label}
+                icon={opt.icon || undefined}
+                isSelected={state.passions.includes(opt.value)}
+                onClick={() => togglePassion(opt.value)}
+              />
+            ))}
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="passion-extra" className="text-sm text-v3-text-weak">
+              Add your own <span className="font-normal">(optional)</span>
+            </Label>
+            <Input
+              id="passion-extra"
+              value={state.passionsDetail}
+              onChange={(e) => setPassionsDetail(e.target.value)}
+              maxLength={200}
+              className="border-v3-stroke-weak bg-v3-fill-weaker"
+              placeholder="e.g. chess, local history…"
+            />
+          </div>
+        </div>
+      )}
+
+      {step === 9 && (
+        <div className="space-y-4">
+          <OnboardQuestionHeader
+            title={<>Are you a morning person or a night owl?</>}
+            required
+            hint={whyFor(9).hint}
+            whyDetail={whyFor(9).detail}
+          />
+          {validationAttempted && !state.chronotype && (
+            <p className="text-sm text-text-error-strong">Please pick one.</p>
+          )}
+          <div className="flex flex-wrap gap-2">
+            {CHRONOTYPE_OPTIONS.map((opt) => (
+              <OnboardSelectionCard
+                key={opt.value}
+                value={opt.value}
+                label={opt.label}
+                icon={opt.icon}
+                isSelected={state.chronotype === opt.value}
+                onClick={() => setChronotype(opt.value)}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {step === 10 && (
+        <div className="space-y-4">
+          <OnboardQuestionHeader
+            title={<>Memento can be a private vault or a shared legacy. Which sounds most like you today?</>}
+            required
+            hint={whyFor(10).hint}
+            whyDetail={whyFor(10).detail}
+          />
+          {validationAttempted && !state.sharingIntent && (
+            <p className="text-sm text-text-error-strong">Please pick one.</p>
+          )}
+          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+            {SHARING_INTENT_OPTIONS.map((opt) => (
+              <OnboardSelectionCard
+                key={opt.value}
+                value={opt.value}
+                label={opt.label}
+                icon={opt.icon}
+                isSelected={state.sharingIntent === opt.value}
+                onClick={() => setSharingIntent(opt.value)}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {step === 11 && (
+        <div className="space-y-4">
+          <OnboardQuestionHeader
+            title={<>Where should Memento focus first?</>}
+            required
+            hint={whyFor(11).hint}
+            whyDetail={whyFor(11).detail}
+          />
+          <p className="text-sm text-v3-text-weak">Pick up to {MAX_FOCUS_FIRST}</p>
+          {validationAttempted && state.priorityDimensions.length < 1 && (
+            <p className="text-sm text-text-error-strong">Pick at least one.</p>
+          )}
+          <div className="flex flex-wrap gap-2">
+            {ONBOARDING_FOCUS_FIRST_OPTIONS.map((opt) => (
+              <OnboardSelectionCard
+                key={opt.value}
+                value={opt.value}
+                label={opt.label}
+                icon={opt.icon}
+                isSelected={state.priorityDimensions.includes(opt.value)}
+                onClick={() => toggleFocus(opt.value)}
+              />
+            ))}
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="focus-extra" className="text-sm text-v3-text-weak">
+              Something else <span className="font-normal">(optional)</span>
+            </Label>
+            <Input
+              id="focus-extra"
+              value={state.dimensionsDetail}
+              onChange={(e) => setDimensionsDetail(e.target.value)}
+              maxLength={200}
+              className="border-v3-stroke-weak bg-v3-fill-weaker"
+            />
+          </div>
+        </div>
+      )}
+
+      {step === 12 && (
         <div className="flex flex-col items-center gap-6 text-center">
-          <h1 className="font-garamond text-2xl sm:text-[28px] font-normal leading-tight text-v3-text-strong">
+          <h1 className="font-garamond text-2xl font-normal leading-tight text-v3-text-strong sm:text-[28px]">
             You&apos;re all set, <span className="capitalize">{nickname}</span>. Let&apos;s begin.
           </h1>
-          <p className="font-garamond text-base text-v3-text-weak">
-            {getStep5Body(
-              state.motivationType === "__all__" ? "explorer" : state.motivationType
-            )}
+          <p className="max-w-md font-garamond text-base leading-relaxed text-v3-text-weak">
+            {getStep5Body(motivationApi, {
+              partialPersonalization: state.skippedDeepPersonalization,
+            })}
           </p>
           <button
             type="button"
-            onClick={() => completeAndNavigate("dashboard")}
-            className="text-sm text-v3-text-weaker hover:text-v3-text-weak"
+            onClick={() => void completeAndNavigate("dashboard")}
+            className="text-sm text-v3-text-weaker transition-colors duration-150 ease-out hover:text-v3-text-weak"
           >
             Or take me to the dashboard — I&apos;ll explore on my own →
           </button>
         </div>
       )}
 
-      <div className="w-full border-t border-[var(--v3-stroke-weak)]" />
-      <div className="flex items-center justify-between gap-3 sm:gap-4">
-        <Button
-          type="button"
-          variant="secondary"
-          onClick={prevStep}
-          disabled={step === 1}
-          className="!bg-transparent border border-black/10 rounded-full px-6 sm:px-8 py-[14px] h-fit text-sm font-semibold leading-[20px] disabled:opacity-40 disabled:pointer-events-none"
-        >
-          Prev
-        </Button>
-        <Button
-          type="button"
-          onClick={handleContinue}
-          disabled={(step < 7 && !canProceed) || isMutating}
-          className="flex h-auto items-center gap-2 rounded-full !bg-fill-brand-strong hover:!bg-fill-brand-weak px-6 sm:px-8 py-3.5 sm:py-[14px] text-sm font-semibold leading-[20px] text-white shadow-sm disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {step === 7
-            ? getPrimaryCTA(
-              state.motivationType === "__all__" ? "explorer" : state.motivationType,
-              state.expressionMode
-            ).label
-            : "Continue"}
-        </Button>
-      </div>
+      {step !== 6 && (
+        <>
+          <div className="w-full border-t border-v3-stroke-weak" />
+          <div className="flex items-center justify-between gap-3 sm:gap-4">
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={prevStep}
+              disabled={step === 1 || isMutating}
+              className="h-fit rounded-full border-v3-stroke-weak !bg-transparent px-6 py-[14px] text-sm font-semibold leading-5 text-v3-text-strong transition-transform duration-150 ease-out active:scale-[0.98] disabled:pointer-events-none disabled:opacity-40 sm:px-8"
+            >
+              Prev
+            </Button>
+            <Button
+              type="button"
+              onClick={() => void handleContinue()}
+              disabled={(step < 12 && !canProceed) || isMutating}
+              className="flex h-auto items-center gap-2 rounded-full !bg-fill-brand-strong px-6 py-3.5 text-sm font-semibold leading-5 text-white shadow-sm transition-transform duration-150 ease-out hover:!bg-fill-brand-weak active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 sm:px-8 sm:py-[14px]"
+            >
+              {step === 12 ? getPrimaryCTA(motivationApi, []).label : "Continue"}
+            </Button>
+          </div>
+        </>
+      )}
+
+      {step === 6 && (
+        <div className="w-full border-t border-v3-stroke-weak pt-6">
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={prevStep}
+            disabled={isMutating}
+            className="rounded-full border-v3-stroke-weak !bg-transparent px-6 py-[14px] text-sm font-semibold text-v3-text-strong transition-transform duration-150 ease-out active:scale-[0.98]"
+          >
+            Prev
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

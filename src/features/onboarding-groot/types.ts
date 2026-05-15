@@ -45,6 +45,8 @@ export type PassionKey =
   | "nature_outdoors"
   | "art_creativity"
   | "family_history_heritage"
+  | "family_relationships"
+  | "ideas_how_things_work"
   | "business_entrepreneurship"
   | "community_service"
   | "technology"
@@ -69,11 +71,60 @@ export type HostArchetype =
   | "other";
 
 export type MotivationType =
-  | "emotional_depth"
+  | "self_understanding"
+  | "personal_space"
   | "memory_preservation"
+  | "emotional_depth"
+  | "explorer"
+  /** @deprecated Legacy persisted profiles */
   | "external"
-  | "practical"
-  | "explorer";
+  /** @deprecated Legacy persisted profiles */
+  | "practical";
+
+/** Misc onboarding Q1 — includes Something else (stored as `something_else` + freetext). */
+export type MiscMotivationChip = MotivationType | "something_else";
+
+export type LifeSituationKey =
+  | "run_business"
+  | "work_organization"
+  | "retired"
+  | "caregiver"
+  | "student"
+  | "between_things"
+  | "something_else";
+
+export type PersonalityTraitKey =
+  | "warm_caring"
+  | "thoughtful_quiet"
+  | "funny_lighthearted"
+  | "driven_focused"
+  | "creative_expressive"
+  | "spiritual_reflective"
+  | "curious_everything"
+  | "strong_dependable"
+  | "something_else";
+
+export type MemoryTreasureKey =
+  | "quiet_mornings"
+  | "family_gatherings"
+  | "big_adventures"
+  | "turning_points"
+  | "everyday_small_things"
+  | "people_shaped_me"
+  | "funny_stories"
+  | "learned_hard_way";
+
+export type HomePlaceSuggestionKey =
+  | "city_grew_up"
+  | "where_live_now"
+  | "where_people_from"
+  | "somewhere_changed_me"
+  | "rooted_many_places"
+  | "prefer_own_words";
+
+export type ChronotypeKey = "morning" | "night";
+
+export type SharingIntentKey = "private_vault" | "shared_legacy";
 
 export type OnboardingStep = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
 
@@ -169,10 +220,25 @@ export const PASSION_OPTIONS: PassionOption[] = [
   { value: "nature_outdoors", label: "Nature & the outdoors", icon: "🌲" },
   { value: "art_creativity", label: "Art & creativity", icon: "🎨" },
   { value: "family_history_heritage", label: "Family history & heritage", icon: "📜" },
+  { value: "family_relationships", label: "Family & relationships", icon: "👨‍👩‍👧" },
+  { value: "ideas_how_things_work", label: "Ideas & how things work", icon: "💡" },
   { value: "business_entrepreneurship", label: "Business & entrepreneurship", icon: "💼" },
   { value: "community_service", label: "Community & service", icon: "🤲" },
   { value: "technology", label: "Technology", icon: "💻" },
   { value: "something_else", label: "Add something else", icon: "" },
+];
+
+/** `/onboard/misc` Q7 — curated passions (subset of `PassionKey`). */
+export const MISC_PASSION_OPTIONS: PassionOption[] = [
+  { value: "faith_spirituality", label: "Faith & spirituality", icon: "🕯️" },
+  { value: "family_relationships", label: "Family & relationships", icon: "👨‍👩‍👧" },
+  { value: "food_cooking", label: "Food & cooking", icon: "🍳" },
+  { value: "music", label: "Music", icon: "🎵" },
+  { value: "travel_places", label: "Travel & places", icon: "✈️" },
+  { value: "ideas_how_things_work", label: "Ideas & how things work", icon: "💡" },
+  { value: "nature_outdoors", label: "Nature & the outdoors", icon: "🌲" },
+  { value: "art_creativity", label: "Art & creativity", icon: "🎨" },
+  { value: "reading_learning", label: "Reading & learning", icon: "📚" },
 ];
 
 export const LIFE_CONTEXT_OPTIONS: LifeContextOption[] = [
@@ -220,10 +286,16 @@ export const ARCHETYPE_OPTIONS: ArchetypeOption[] = [
 
 export const MOTIVATION_OPTIONS: MotivationOption[] = [
   {
-    value: "emotional_depth",
-    label: "I want the people I love to truly know me",
-    sublabel: "The full picture, not just the highlights",
-    icon: "💛",
+    value: "self_understanding",
+    label: "I want to know myself better",
+    sublabel: "A clearer sense of who I am over time",
+    icon: "🪞",
+  },
+  {
+    value: "personal_space",
+    label: "I want a space that holds my life as I live it",
+    sublabel: "Media, stories, and context in one place",
+    icon: "🏡",
   },
   {
     value: "memory_preservation",
@@ -232,16 +304,10 @@ export const MOTIVATION_OPTIONS: MotivationOption[] = [
     icon: "🫙",
   },
   {
-    value: "external",
-    label: "Someone I love asked me to do this",
-    sublabel: "I'm here because they asked",
-    icon: "🤍",
-  },
-  {
-    value: "practical",
-    label: "I'm being practical about the future",
-    sublabel: "Getting important things in order",
-    icon: "🗂️",
+    value: "emotional_depth",
+    label: "I want the people I love to truly know me",
+    sublabel: "The full picture, not just the highlights",
+    icon: "💛",
   },
   {
     value: "explorer",
@@ -249,6 +315,143 @@ export const MOTIVATION_OPTIONS: MotivationOption[] = [
     sublabel: "Exploring for now",
     icon: "🔍",
   },
+];
+
+export interface MiscMotivationOption {
+  value: MiscMotivationChip;
+  label: string;
+  sublabel: string;
+  icon: string;
+}
+
+/** `/onboard/misc` Q1 — includes Something else (freetext). */
+export const MISC_MOTIVATION_OPTIONS: MiscMotivationOption[] = [
+  ...MOTIVATION_OPTIONS.map((o) => ({
+    value: o.value as MiscMotivationChip,
+    label: o.label,
+    sublabel: o.sublabel,
+    icon: o.icon,
+  })),
+  {
+    value: "something_else",
+    label: "Something else",
+    sublabel: "In your own words",
+    icon: "➕",
+  },
+];
+
+export interface LifeSituationOption {
+  value: LifeSituationKey;
+  label: string;
+  icon: string;
+}
+
+export const LIFE_SITUATION_OPTIONS: LifeSituationOption[] = [
+  { value: "run_business", label: "I run my own business", icon: "💼" },
+  { value: "work_organization", label: "I work for an organization", icon: "🏢" },
+  { value: "retired", label: "I'm retired", icon: "🌅" },
+  { value: "caregiver", label: "I'm a caregiver", icon: "🤲" },
+  { value: "student", label: "I'm a student", icon: "🎓" },
+  { value: "between_things", label: "Between things right now", icon: "🌀" },
+  { value: "something_else", label: "Something else", icon: "➕" },
+];
+
+export interface PersonalityTraitOption {
+  value: PersonalityTraitKey;
+  label: string;
+  icon: string;
+}
+
+export const PERSONALITY_TRAIT_OPTIONS: PersonalityTraitOption[] = [
+  { value: "warm_caring", label: "Warm and caring", icon: "💛" },
+  { value: "thoughtful_quiet", label: "Thoughtful and quiet", icon: "🌙" },
+  { value: "funny_lighthearted", label: "Funny and lighthearted", icon: "😄" },
+  { value: "driven_focused", label: "Driven and focused", icon: "🎯" },
+  { value: "creative_expressive", label: "Creative and expressive", icon: "🎨" },
+  { value: "spiritual_reflective", label: "Spiritual and reflective", icon: "🕯️" },
+  { value: "curious_everything", label: "Curious about everything", icon: "🔍" },
+  { value: "strong_dependable", label: "Strong and dependable", icon: "🛡️" },
+  { value: "something_else", label: "Something else", icon: "➕" },
+];
+
+export interface MemoryTreasureOption {
+  value: MemoryTreasureKey;
+  label: string;
+  icon: string;
+}
+
+export const MEMORY_TREASURE_OPTIONS: MemoryTreasureOption[] = [
+  { value: "quiet_mornings", label: "Quiet mornings", icon: "🌅" },
+  { value: "family_gatherings", label: "Family gatherings", icon: "🍽️" },
+  { value: "big_adventures", label: "Big adventures", icon: "✈️" },
+  { value: "turning_points", label: "Turning points", icon: "🔀" },
+  { value: "everyday_small_things", label: "The everyday small things", icon: "☕" },
+  { value: "people_shaped_me", label: "People who shaped me", icon: "💞" },
+  { value: "funny_stories", label: "Funny stories", icon: "😂" },
+  { value: "learned_hard_way", label: "Things I learned the hard way", icon: "🎓" },
+];
+
+export interface HomePlaceSuggestionOption {
+  value: HomePlaceSuggestionKey;
+  label: string;
+  icon: string;
+}
+
+export const HOME_PLACE_SUGGESTION_OPTIONS: HomePlaceSuggestionOption[] = [
+  { value: "city_grew_up", label: "A city I grew up in", icon: "🏙️" },
+  { value: "where_live_now", label: "Where I live now", icon: "🏠" },
+  { value: "where_people_from", label: "Where my people are from", icon: "🌍" },
+  { value: "somewhere_changed_me", label: "Somewhere that changed me", icon: "✨" },
+  { value: "rooted_many_places", label: "I'm rooted in more than one place", icon: "🌐" },
+  { value: "prefer_own_words", label: "Prefer to describe in my own words", icon: "✍️" },
+];
+
+export interface ChronotypeOption {
+  value: ChronotypeKey;
+  label: string;
+  icon: string;
+}
+
+export const CHRONOTYPE_OPTIONS: ChronotypeOption[] = [
+  { value: "morning", label: "Morning person", icon: "☀️" },
+  { value: "night", label: "Night owl", icon: "🦉" },
+];
+
+export interface SharingIntentOption {
+  value: SharingIntentKey;
+  label: string;
+  icon: string;
+}
+
+export const SHARING_INTENT_OPTIONS: SharingIntentOption[] = [
+  {
+    value: "private_vault",
+    label: "I want to keep this for myself for now",
+    icon: "🔒",
+  },
+  {
+    value: "shared_legacy",
+    label: "I eventually want to share this with loved ones",
+    icon: "💞",
+  },
+];
+
+/** `/onboard/misc` Q10 — maps to `EnrichmentCategory` (non-deferred only). */
+export interface OnboardingFocusFirstOption {
+  value: EnrichmentCategory;
+  label: string;
+  icon: string;
+}
+
+export const ONBOARDING_FOCUS_FIRST_OPTIONS: OnboardingFocusFirstOption[] = [
+  { value: "relationships_people", label: "My relationships", icon: "🤝" },
+  { value: "work_purpose", label: "My career & work", icon: "🔨" },
+  { value: "beliefs_worldview", label: "My beliefs & values", icon: "🕯️" },
+  { value: "memories_experiences", label: "My memories & stories", icon: "📚" },
+  { value: "heritage_roots", label: "My heritage & where I'm from", icon: "🗺️" },
+  { value: "identity_self", label: "Who I am", icon: "🪞" },
+  { value: "passions_interests", label: "What I love", icon: "🌟" },
+  { value: "everyday_life", label: "Everyday life", icon: "☕" },
 ];
 
 /** All enrichment categories (e.g. settings copy, migrations). */

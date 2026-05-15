@@ -1,161 +1,221 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import type {
   AgeBand,
-  MementoFor,
   PassionKey,
-  LifeContextKey,
-  MotivationType,
-  EnrichmentCategory,
-  ExpressionMode,
+  MiscMotivationChip,
+  LifeSituationKey,
+  PersonalityTraitKey,
+  MemoryTreasureKey,
+  ChronotypeKey,
+  SharingIntentKey,
 } from "@/features/onboarding-groot/types";
+import type { EnrichmentCategory } from "@/features/enrichment/enrichment-categories";
 
-export type OnboardQuestionsStep = 1 | 2 | 3 | 4 | 5 | 6 | 7;
+/** 1–5 hook, 6 branch, 7–11 deep (Q6–Q10), 12 closing */
+export type OnboardQuestionsStep = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
 
 export const ONBOARD_QUESTIONS_STEP_LABELS: Record<OnboardQuestionsStep, string> = {
-  1: "Let's get started",
-  2: "Who is this for?",
-  3: "What you love",
-  4: "What brings you here",
-  5: "What matters most",
-  6: "How you'll add to Memento",
-  7: "You're all set",
+  1: "Why you're here",
+  2: "A little about you",
+  3: "Your work",
+  4: "Home",
+  5: "How people see you",
+  6: "Your pace",
+  7: "Moments you treasure",
+  8: "What pulls you in",
+  9: "Your rhythm",
+  10: "Privacy",
+  11: "Where to start",
+  12: "You're all set",
 };
+
+export const MAX_PERSONALITY_TRAITS = 2;
+export const MAX_MEMORY_TREASURES = 3;
+export const MAX_PASSIONS_MISC = 3;
+export const MAX_FOCUS_FIRST = 2;
 
 export interface OnboardQuestionsState {
   step: OnboardQuestionsStep;
+  /** Q1 — includes `something_else` + `motivationDetail` */
+  motivationChip: MiscMotivationChip | null;
+  motivationDetail: string;
   ageBand: AgeBand | null;
-  whereFrom: string;
-  mementoFor: MementoFor[];
-  mementoForFreetext: string[];
+  lifeSituation: LifeSituationKey | null;
+  lifeSituationDetail: string;
+  homePlace: string;
+  personalityTraits: PersonalityTraitKey[];
+  personalityDetail: string;
+  memoryTreasures: MemoryTreasureKey[];
+  memoryTreasuresDetail: string;
   passions: PassionKey[];
-  passionsFreetext: string[];
-  lifeContext: LifeContextKey[];
-  motivationType: MotivationType | "__all__" | null;
+  passionsDetail: string;
+  chronotype: ChronotypeKey | null;
+  sharingIntent: SharingIntentKey | null;
   priorityDimensions: EnrichmentCategory[];
-  dimensionsFreetext: string[];
-  expressionMode: ExpressionMode[];
+  dimensionsDetail: string;
+  /** True after “Continue later” on step 6 — closing copy uses partial mode */
+  skippedDeepPersonalization: boolean;
 }
 
 const INITIAL: OnboardQuestionsState = {
   step: 1,
+  motivationChip: null,
+  motivationDetail: "",
   ageBand: null,
-  whereFrom: "",
-  mementoFor: [],
-  mementoForFreetext: [],
+  lifeSituation: null,
+  lifeSituationDetail: "",
+  homePlace: "",
+  personalityTraits: [],
+  personalityDetail: "",
+  memoryTreasures: [],
+  memoryTreasuresDetail: "",
   passions: [],
-  passionsFreetext: [],
-  lifeContext: [],
-  motivationType: null,
+  passionsDetail: "",
+  chronotype: null,
+  sharingIntent: null,
   priorityDimensions: [],
-  dimensionsFreetext: [],
-  expressionMode: [],
+  dimensionsDetail: "",
+  skippedDeepPersonalization: false,
 };
 
-export function useOnboardQuestionsState() {
-  const [state, setState] = useState<OnboardQuestionsState>(INITIAL);
+export function useOnboardQuestionsState(
+  initialState?: Partial<OnboardQuestionsState>,
+) {
+  const [state, setState] = useState<OnboardQuestionsState>(() => ({
+    ...INITIAL,
+    ...initialState,
+  }));
+
+  useEffect(() => {
+    if (!initialState) return;
+    setState((prev) => {
+      const next = { ...prev, ...initialState };
+      const changed = (Object.keys(initialState) as Array<keyof OnboardQuestionsState>).some(
+        (key) => prev[key] !== next[key],
+      );
+      return changed ? next : prev;
+    });
+  }, [initialState]);
 
   const update = useCallback(<K extends keyof OnboardQuestionsState>(
     key: K,
-    value: OnboardQuestionsState[K]
+    value: OnboardQuestionsState[K],
   ) => {
     setState((prev) => ({ ...prev, [key]: value }));
   }, []);
 
   const nextStep = useCallback(() => {
     setState((prev) => {
-      if (prev.step >= 7) return prev;
+      if (prev.step >= 12) return prev;
       return { ...prev, step: (prev.step + 1) as OnboardQuestionsStep };
     });
+  }, []);
+
+  const goToDeepPhase = useCallback(() => {
+    setState((prev) => ({
+      ...prev,
+      step: 7,
+      skippedDeepPersonalization: false,
+    }));
   }, []);
 
   const prevStep = useCallback(() => {
     setState((prev) => {
       if (prev.step <= 1) return prev;
+      if (prev.step === 7) return { ...prev, step: 6 };
       return { ...prev, step: (prev.step - 1) as OnboardQuestionsStep };
     });
   }, []);
 
   const canAdvance = useCallback((step: OnboardQuestionsStep): boolean => {
     switch (step) {
-      case 1:
-        return state.ageBand !== null;
-      case 2:
-        if (state.mementoFor.length < 1) return false;
-        if (state.mementoFor.includes("something_else") && state.mementoFor.length === 1) {
-          return state.mementoForFreetext.length >= 1;
+      case 1: {
+        if (!state.motivationChip) return false;
+        if (state.motivationChip === "something_else") {
+          return state.motivationDetail.trim().length > 0;
         }
         return true;
-      case 3:
-        return state.passions.length >= 1;
+      }
+      case 2:
+        return state.ageBand !== null;
+      case 3: {
+        if (!state.lifeSituation) return false;
+        if (state.lifeSituation === "something_else") {
+          return state.lifeSituationDetail.trim().length > 0;
+        }
+        return true;
+      }
       case 4:
-        return state.motivationType !== null;
-      case 5:
-        return state.priorityDimensions.length >= 1;
+        return state.homePlace.trim().length > 0;
+      case 5: {
+        if (state.personalityTraits.length < 1) return false;
+        if (
+          state.personalityTraits.includes("something_else") &&
+          state.personalityTraits.length === 1
+        ) {
+          return state.personalityDetail.trim().length > 0;
+        }
+        return true;
+      }
       case 6:
-        return state.expressionMode.length >= 1;
+        return true;
       case 7:
+        return state.memoryTreasures.length >= 1;
+      case 8:
+        return state.passions.length >= 1;
+      case 9:
+        return state.chronotype !== null;
+      case 10:
+        return state.sharingIntent !== null;
+      case 11:
+        return state.priorityDimensions.length >= 1;
+      case 12:
         return true;
       default:
         return false;
     }
   }, [state]);
 
+  const setMotivationChip = (v: MiscMotivationChip | null) => update("motivationChip", v);
+  const setMotivationDetail = (v: string) => update("motivationDetail", v);
+  const setAgeBand = (v: AgeBand | null) => update("ageBand", v);
+  const setLifeSituation = (v: LifeSituationKey | null) => update("lifeSituation", v);
+  const setLifeSituationDetail = (v: string) => update("lifeSituationDetail", v);
+  const setHomePlace = (v: string) => update("homePlace", v);
+  const setPersonalityTraits = (v: PersonalityTraitKey[]) => update("personalityTraits", v);
+  const setPersonalityDetail = (v: string) => update("personalityDetail", v);
+  const setMemoryTreasures = (v: MemoryTreasureKey[]) => update("memoryTreasures", v);
+  const setMemoryTreasuresDetail = (v: string) => update("memoryTreasuresDetail", v);
+  const setPassions = (v: PassionKey[]) => update("passions", v);
+  const setPassionsDetail = (v: string) => update("passionsDetail", v);
+  const setChronotype = (v: ChronotypeKey | null) => update("chronotype", v);
+  const setSharingIntent = (v: SharingIntentKey | null) => update("sharingIntent", v);
+  const setPriorityDimensions = (v: EnrichmentCategory[]) =>
+    update("priorityDimensions", v);
+  const setDimensionsDetail = (v: string) => update("dimensionsDetail", v);
+
   return {
     state,
     update,
     nextStep,
     prevStep,
+    goToDeepPhase,
     canAdvance,
-    setAgeBand: (v: AgeBand | null) => update("ageBand", v),
-    setWhereFrom: (v: string) => update("whereFrom", v),
-    setMementoFor: (v: MementoFor[]) => update("mementoFor", v),
-    addMementoForFreetext: (item: string) => {
-      const trimmed = item.trim();
-      if (!trimmed) return;
-      setState((prev) => ({
-        ...prev,
-        mementoForFreetext: [...prev.mementoForFreetext, trimmed],
-      }));
-    },
-    removeMementoForFreetext: (index: number) => {
-      setState((prev) => ({
-        ...prev,
-        mementoForFreetext: prev.mementoForFreetext.filter((_, i) => i !== index),
-      }));
-    },
-    setPassions: (v: PassionKey[]) => update("passions", v),
-    setPassionsFreetext: (v: string[]) => update("passionsFreetext", v),
-    addPassionFreetext: (item: string) => {
-      const trimmed = item.trim();
-      if (!trimmed) return;
-      setState((prev) => ({
-        ...prev,
-        passionsFreetext: [...prev.passionsFreetext, trimmed],
-      }));
-    },
-    removePassionFreetext: (index: number) => {
-      setState((prev) => ({
-        ...prev,
-        passionsFreetext: prev.passionsFreetext.filter((_, i) => i !== index),
-      }));
-    },
-    setLifeContext: (v: LifeContextKey[]) => update("lifeContext", v),
-    setMotivationType: (v: MotivationType | "__all__" | null) => update("motivationType", v),
-    setPriorityDimensions: (v: EnrichmentCategory[]) => update("priorityDimensions", v),
-    addDimensionsFreetext: (item: string) => {
-      const trimmed = item.trim();
-      if (!trimmed) return;
-      setState((prev) => ({
-        ...prev,
-        dimensionsFreetext: [...prev.dimensionsFreetext, trimmed],
-      }));
-    },
-    removeDimensionsFreetext: (index: number) => {
-      setState((prev) => ({
-        ...prev,
-        dimensionsFreetext: prev.dimensionsFreetext.filter((_, i) => i !== index),
-      }));
-    },
-    setExpressionMode: (v: ExpressionMode[]) => update("expressionMode", v),
+    setMotivationChip,
+    setMotivationDetail,
+    setAgeBand,
+    setLifeSituation,
+    setLifeSituationDetail,
+    setHomePlace,
+    setPersonalityTraits,
+    setPersonalityDetail,
+    setMemoryTreasures,
+    setMemoryTreasuresDetail,
+    setPassions,
+    setPassionsDetail,
+    setChronotype,
+    setSharingIntent,
+    setPriorityDimensions,
+    setDimensionsDetail,
   };
 }

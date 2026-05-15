@@ -34,6 +34,15 @@ export interface JumpPill {
   starter: string;
 }
 
+/** Recent memory thread for insight hero (GET /users/stats → spotlight). */
+export interface MemorySpotlight {
+  memory_id: string;
+  title: string | null;
+  excerpt: string;
+  source: "explicit" | "conversation";
+  updated_at: string | null;
+}
+
 /** Shape of GET /users/stats → data */
 export interface UserStatsData {
   streak_count: number;
@@ -47,6 +56,8 @@ export interface UserStatsData {
   milestone: MilestoneInfo;
   nudge: NudgeQuestion | null;
   jump_pills: JumpPill[];
+  /** Present when API returns Phase B spotlight; omit on older API responses. */
+  spotlight?: MemorySpotlight | null;
 }
 
 /** Shape of GET /memories/:id/enrichment → data */

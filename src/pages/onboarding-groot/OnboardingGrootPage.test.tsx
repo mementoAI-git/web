@@ -184,7 +184,7 @@ describe("OnboardingGrootPage", () => {
   );
 
   it(
-    "time_capsule CTA navigates to /capsule",
+    "voice_recorder CTA navigates to overview with create-memory",
     async () => {
       const user = userEvent.setup();
       renderWithProviders(<OnboardingGrootPage />, {
@@ -192,13 +192,15 @@ describe("OnboardingGrootPage", () => {
         auth: true,
       });
       await advanceThroughAllSteps(user, {
-        motivation: /I'm being practical about the future/i,
-        expression: /guided questions/i,
+        motivation: /memories I'm afraid of losing/i,
+        expression: /talking/i,
       });
       await user.click(
-        screen.getByRole("button", { name: /create your first time capsule/i }),
+        screen.getByRole("button", { name: /record your first memory/i }),
       );
-      expect(mockNavigate).toHaveBeenCalledWith("/capsule");
+      expect(mockNavigate).toHaveBeenCalledWith("/overview", {
+        state: { openModal: "create-memory" },
+      });
     },
     15_000,
   );

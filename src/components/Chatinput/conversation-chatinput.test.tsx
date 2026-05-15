@@ -97,4 +97,18 @@ describe("ConversationChatinput", () => {
     expect(onSend).toHaveBeenCalled();
     expect(localStorage.getItem(DRAFT_KEY)).toBeNull();
   });
+
+  it("prefills draft from ?starter= in the URL", async () => {
+    localStorage.removeItem(DRAFT_KEY);
+    renderWithProviders(
+      <ConversationChatinput draftStorageKey={DRAFT_KEY} onSend={() => {}} memoryId="thread-99" />,
+      { auth: true, route: "/chat/thread-99?starter=From%20URL" },
+    );
+
+    const ta = screen.getByPlaceholderText("Type text here... Type / for formatting");
+    await waitFor(() => {
+      expect(ta).toHaveValue("From URL");
+    });
+    expect(localStorage.getItem(DRAFT_KEY)).toBe("From URL");
+  });
 });

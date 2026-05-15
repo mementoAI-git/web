@@ -50,14 +50,6 @@ describe("SettingsPage", () => {
     expect(settingsNavs.length).toBeGreaterThanOrEqual(1);
     expect(screen.getByRole("link", { name: /personal info/i })).toHaveAttribute("href", "/settings/general");
 
-    const statsLinks = screen.getAllByRole("link", { name: /^stats$/i });
-    const statsLink = statsLinks.find((el) => el.getAttribute("href") === "/settings/stats");
-    expect(statsLink).toBeTruthy();
-    await user.click(statsLink!);
-    await waitFor(() => {
-      expect(screen.getByText(/highlights from your activity/i)).toBeInTheDocument();
-    });
-
     const securityLinks = screen.getAllByRole("link", { name: /security/i });
     const securityLink = securityLinks.find((el) => el.getAttribute("href") === "/settings/security");
     expect(securityLink).toBeTruthy();
@@ -65,6 +57,15 @@ describe("SettingsPage", () => {
 
     await waitFor(() => {
       expect(screen.getByText("Manage your Memento account security")).toBeInTheDocument();
+    });
+
+    const personalLinks = screen.getAllByRole("link", { name: /personal info/i });
+    const personalLink = personalLinks.find((el) => el.getAttribute("href") === "/settings/general");
+    expect(personalLink).toBeTruthy();
+    await user.click(personalLink!);
+
+    await waitFor(() => {
+      expect(screen.getByText("Profile details")).toBeInTheDocument();
     });
   });
 });

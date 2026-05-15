@@ -91,31 +91,41 @@ This section is about **this React codebase only**. Backend may already do more;
 
 **File reference (for developers):** `src/pages/dashboard/overview/sections/welcome-section.tsx`
 
-### 4.2 Host chat — **placeholder UI, not real data**
+### 4.2 Host chat — **live stats from `GET /users/stats`**
 
-- On the main **host chat** screen there is an **“Enrichment”** bar component.
-- Today it uses a **fixed stub** (hardcoded **47%** and text like **“Grew today +0”**). Comments in code say to replace this when an API exists.
-- A **“Milestone”** card (e.g. “Your Memento grew by +X% this exchange”) exists in the layout, but the value that would trigger it is **never set** from the server yet—so users normally **do not** see that card.
+- The **host conversation** screen uses **`useEnrichmentStats()`** (same **`GET /users/stats`** cache as elsewhere) for **jump-month pills**, **category starter pills** (`jump_pills`), **deep-dive nudge** copy, **milestone** detection (with client-side baseline/delta helpers in `use-enrichment-stats.ts`), and **session enrichment delta** for the milestone chip.
+- The **Memory** tab of the **inline chat sidebar** shows **`HostChatEnrichmentBar`**: overall **`enrichment_score`**, **today’s delta** (`deltaToday`), and optional **per-category** rows from **`category_scores`** when the API returns them. Values are passed from `src/pages/dashboard/chat/conversation/index.tsx` into `SidebarDetails`.
+- **`GET /users/stats`** also returns optional **`spotlight`** (one recent story or conversation **summary** excerpt for the Memory Insights modal—never raw chat). Implemented server-side in the API repo (e.g. `memory-spotlight.ts`).
 
 **File references:**  
+`src/features/enrichment/use-enrichment-stats.ts`  
 `src/features/host-chat/components/host-chat-enrichment-bar.tsx`  
+`src/features/host-chat/components/host-chat-jump-pills.tsx`  
 `src/features/host-chat/components/milestone-card.tsx`  
-`src/pages/dashboard/chat/conversation/index.tsx`
+`src/pages/dashboard/chat/conversation/index.tsx`  
+`src/components/memory/sidebar-details.tsx`  
+`src/features/enrichment/enrichment-api.types.ts` (`UserStatsData`, `MemorySpotlight`, `JumpPill`)
 
-### 4.3 Sidebar, profile, beneficiary gate, Supermemory — **not implemented in this UI (as of this doc)**
+**Deep link:** Opening host chat with a **prefilled composer** is supported via **`?starter=`** on `/chat/...` or `/chat` (preserved through the `/chat` → `/chat/:id` redirect). `ConversationChatinput` reads the query once, writes the draft to `localStorage`, and strips **`starter`** from the URL.
 
-A search of this repo shows **no** implementation of:
+### 4.3 Memory Insights modal — **Insights vs At a glance**
 
-- The **sidebar** enrichment widget (Lora font, amber ring, 10-bar chart, tooltips) from your spec  
-- **Profile page** enrichment breakdown  
-- **`beneficiary_access_unlocked`** (or any **20%** gate) in the **TypeScript user model** used here  
+- **`src/components/modal/memory-insights/index.tsx`** — hero (spotlight, AI summary, nudge, jump pills, breadth), **Insights** narrative block, **At a glance** horizontal KPI cards, beneficiaries, **All observations** `<details>`.
+- **`src/features/enrichment/narrative-insights.tsx`** — narrative “mirror” cards with **View** + **Sources**.
+- **`src/features/enrichment/at-a-glance-cards.tsx`** — KPI-style strip (counts, streak, breadth-adjacent copy); shared with Settings stats where applicable.
+- Users can **hide the snapshot hero for a week** (localStorage: `memento:memory-insights-hero-snooze-until`); **Insights** / **At a glance** stay visible.
+
+### 4.4 Profile, beneficiary gate, Supermemory — **still mostly spec vs this UI**
+
+A search of this repo still shows **gaps** relative to the full spec for:
+
+- **Profile page** enrichment breakdown widget  
+- **`beneficiary_access_unlocked`** (or any **20%** gate) in the **TypeScript user model** used everywhere (some stats payloads may expose a flag—UI coverage may still be partial)  
 - **Supermemory** naming, auto-accepted chat-derived insights, or **0.9×** weighting logic in frontend code  
 - **Decay** or **weighted category** math in the browser (that would live on the server anyway)  
-- **Dashboard nudge** logic based on “lowest category”
+- **Dashboard nudge** logic based on “lowest category” beyond what the API returns in **`nudge`**
 
-So: **the product vision in your spec goes much further than what visitors see in the web app today**, except for **one number on the overview** (if the API sends it).
-
-### 4.4 Onboarding and Host Chat use the same enrichment categories
+### 4.5 Onboarding and Host Chat use the same enrichment categories
 
 **Onboarding** “what matters most” and **Host Chat deep dive** both use **`EnrichmentCategory`** (10 keys). Definitions live in **`src/features/enrichment/enrichment-categories.ts`**. **`DIMENSION_OPTIONS`** in onboarding types re-exports the full list; **`ONBOARDING_DIMENSION_OPTIONS`** is the subset **without** deferred categories (`lessons_wisdom`, `hopes_legacy`) for the initial onboarding step.
 
@@ -135,26 +145,27 @@ Use this table when talking to product or backend: **left = your spec, right = w
 | Topic | Your spec says… | In memento-web today… |
 |--------|-----------------|------------------------|
 | **Category taxonomy** | 10 `EnrichmentCategory` keys | **Implemented** in `src/features/enrichment/enrichment-categories.ts`; onboarding + host chat aligned. Legacy API values are migrated on read. |
-| **Overall score display** | Dashboard widget + profile + chat context | **Overview** shows **one** `%` from **`/users/stats` → `enrichment_score`**. Chat shows a **stub** (fake 47%). **No** sidebar/profile breakdown UI. |
-| **Category breakdown UI** | 10-bar mini chart, tooltips | **Not built** here. |
+| **Overall score display** | Dashboard widget + profile + chat context | **Overview** shows **one** `%` from **`/users/stats` → `enrichment_score`**. **Host chat sidebar** shows the same source + optional category breakdown. **No** dedicated profile breakdown widget yet. |
+| **Category breakdown UI** | 10-bar mini chart, tooltips | **Partially**: `HostChatEnrichmentBar` lists categories when **`category_scores`** is present. Not the full spec sidebar (Lora, amber ring, etc.). |
 | **Weighted average & seed weights** | Formula + onboarding-based weights | **Not in frontend**; would be server-side. No UI exposes weights. |
 | **Decay & floor** | 14-day rule, weekly decay, 5% floor, pause rules | **Not in frontend**; not visible in API types in this repo. |
-| **20% beneficiary gate** | Unlock Memento AI for beneficiaries at 20%; permanent flag | **No** `beneficiary_access_unlocked` (or similar) in `IUser` / UI flows found in this repo. |
+| **20% beneficiary gate** | Unlock Memento AI for beneficiaries at 20%; permanent flag | **Limited / evolving** — confirm against API and beneficiary flows; not fully modeled in `IUser` here. |
 | **Supermemory** | Auto-accepted, 0.9× weight, “From conversation” label | **No** references in this codebase. |
 | **Insight JSON tagging** | AI appends `{"category": "…"}` | **Not implemented** in this frontend repo (generation is backend / prompt). |
 | **Deferred categories & unlock schedule** | Week 2 / week 3, session rules | **Not implemented** in this repo. |
-| **Milestone after chat** | `enrichmentDelta` after an exchange | **UI exists** but **`enrichmentDelta` is always unset**—card never shows. |
+| **Milestone after chat** | `enrichmentDelta` after an exchange | **Partially**: server **`milestone`** + client **`useEnrichmentStats`** baseline; **MilestoneCard** shows session delta when the server signals a newly reached threshold. |
 | **Visual design details** | Lora serif, amber ring | Host chat enrichment uses **Inter** + **v3** tokens; overview enrichment card uses **Garamond** for the big %—**not** the spec’s Lora/amber sidebar widget. |
 
-**Bottom line:** Your document describes a **full engine + UX system**. This repository implements the **shared 10-category taxonomy** in the web app and **(a)** **one** server-provided **`enrichment_score`** on the **overview**, and **(b)** **placeholder** enrichment UI in **host chat** waiting for real APIs and data. Scoring math, decay, Supermemory, beneficiary gate, and breakdown UI remain **mostly backend / future frontend** work.
+**Bottom line:** Your document describes a **full engine + UX system**. This repository implements the **shared 10-category taxonomy**, **live `GET /users/stats` wiring** on **overview**, **host chat** (toolbar + sidebar), and the **Memory Insights** experience (including optional **`spotlight`**). Scoring math, decay, Supermemory, beneficiary gate edge cases, and the full profile/spec sidebar remain **mostly backend / future frontend** work.
 
 ---
 
 ## 6. Suggested next steps (for product + engineering)
 
-1. **API contract:** Define what `/users/stats` (or new endpoints) returns: overall %, per-category scores, deltas, unlock flags, beneficiary gate, etc.  
-2. **Frontend milestones:** (1) Wire **host chat** bar + milestone to real API fields. (2) Add **profile** breakdown when design + data exist. (3) Implement **beneficiary gate** once `beneficiary_access_unlocked` (or equivalent) exists on the user or settings payload.  
-3. **Keep this doc updated** when the spec or the API changes.
+1. **API contract:** Keep **`/users/stats`** the single enrichment surface for the web: overall %, **`category_scores`**, **`nudge`**, **`jump_pills`**, **`milestone`**, **`spotlight`**, unlock flags, etc.  
+2. **Deploy order:** Ship the **API** change that adds **`spotlight`** (nullable) **with or before** the web build that reads it—older clients ignore unknown fields; the field is optional on `UserStatsData`.  
+3. **Frontend:** Profile breakdown when design + data exist; beneficiary gate UI once the user/settings payload is authoritative.  
+4. **Keep this doc updated** when the spec or the API changes.
 
 ---
 
@@ -163,8 +174,14 @@ Use this table when talking to product or backend: **left = your spec, right = w
 | Area | Location |
 |------|-----------|
 | Overview enrichment % | `src/pages/dashboard/overview/sections/welcome-section.tsx` |
-| Chat enrichment stub + milestone | `src/features/host-chat/components/host-chat-enrichment-bar.tsx`, `milestone-card.tsx` |
+| Stats hook (delta, milestone, nudge) | `src/features/enrichment/use-enrichment-stats.ts` |
+| Host chat enrichment UI | `src/features/host-chat/components/host-chat-enrichment-bar.tsx`, `milestone-card.tsx`, `host-chat-jump-pills.tsx` |
 | Chat screen wiring | `src/pages/dashboard/chat/conversation/index.tsx` |
+| `/chat` → primary thread redirect + query preservation | `src/pages/dashboard/chat/main/host-chat-entry.tsx` |
+| Composer `?starter=` handling | `src/components/Chatinput/index.tsx` (`ConversationChatinput`) |
+| Memory Insights modal | `src/components/modal/memory-insights/index.tsx` |
+| Narrative insights cards | `src/features/enrichment/narrative-insights.tsx` |
+| At a glance KPI strip | `src/features/enrichment/at-a-glance-cards.tsx` |
 | Stats endpoint path | `src/api/endpoint.ts` → `userStats: "/users/stats"` |
 | Enrichment categories (canonical) | `src/features/enrichment/enrichment-categories.ts` |
 | Onboarding re-exports | `src/features/onboarding-groot/types.ts` |

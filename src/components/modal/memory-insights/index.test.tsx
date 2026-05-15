@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "@/test";
@@ -9,11 +9,44 @@ import MemoryInsightsModal from "./index";
 
 const API_BASE = "http://localhost:3000/api";
 
+const HERO_SNOOZE_KEY = "memento:memory-insights-hero-snooze-until";
+
+beforeEach(() => {
+  localStorage.removeItem(HERO_SNOOZE_KEY);
+});
+afterEach(() => {
+  localStorage.removeItem(HERO_SNOOZE_KEY);
+});
+
+const minimalUserStats = {
+  streak_count: 0,
+  reflections_count: 0,
+  stories_count: 0,
+  pending_insights_count: 0,
+  enrichment_score: 10,
+  category_scores: [],
+  lowest_category: null,
+  beneficiary_access_unlocked: true,
+  milestone: {
+    reached_threshold: 0,
+    reached_label: "Start",
+    reached_description: "",
+    next_threshold: 25,
+    next_label: "Growing",
+    is_max: false,
+  },
+  nudge: null,
+  jump_pills: [],
+  spotlight: null,
+};
+
 describe("MemoryInsightsModal", () => {
-  it("shows Summary as default tab with summary in tab panel", () => {
+  it("shows reflection hero first and tucks category tabs behind All observations", async () => {
+    const user = userEvent.setup();
     renderWithProviders(<MemoryInsightsModal />, { route: "/overview", auth: true });
-    expect(screen.getByRole("tab", { name: /^summary$/i })).toHaveAttribute("aria-selected", "true");
-    expect(screen.getByRole("tab", { name: /^all$/i })).toHaveAttribute("aria-selected", "false");
+    expect(screen.queryByRole("tab", { name: /^preferences$/i })).not.toBeInTheDocument();
+    await user.click(screen.getByTestId("memory-insights-observations-toggle"));
+    expect(await screen.findByRole("tab", { name: /^all$/i })).toBeInTheDocument();
   });
 
   it("shows empty summary when no context", async () => {
@@ -35,11 +68,12 @@ describe("MemoryInsightsModal", () => {
           data: { summary: null, generated_at: null, cached: false },
         }),
       ),
+      http.get(`${API_BASE}/users/stats`, () =>
+        HttpResponse.json({ success: true, data: minimalUserStats }),
+      ),
     );
     renderWithProviders(<MemoryInsightsModal />, { route: "/overview", auth: true });
-    expect(
-      await screen.findByText(/your summary is being built/i),
-    ).toBeInTheDocument();
+    expect(await screen.findByText(/your summary is being built/i)).toBeInTheDocument();
   });
 
   it("shows AI summary from endpoint when returned", async () => {
@@ -72,6 +106,9 @@ describe("MemoryInsightsModal", () => {
             cached: false,
           },
         }),
+      ),
+      http.get(`${API_BASE}/users/stats`, () =>
+        HttpResponse.json({ success: true, data: minimalUserStats }),
       ),
     );
     renderWithProviders(<MemoryInsightsModal />, { route: "/overview", auth: true });
@@ -108,11 +145,14 @@ describe("MemoryInsightsModal", () => {
           },
         }),
       ),
+      http.get(`${API_BASE}/users/stats`, () =>
+        HttpResponse.json({ success: true, data: minimalUserStats }),
+      ),
     );
     renderWithProviders(<MemoryInsightsModal />, { route: "/overview", auth: true });
     const summary = await screen.findByText(/I enjoy reading and quiet weekends/i);
     expect(summary.textContent ?? "").not.toMatch(/The user/i);
-    expect(screen.getByText(/Last updated/i)).toBeInTheDocument();
+    expect(screen.getByText(/Updated/i)).toBeInTheDocument();
   });
 
   it("prefers GET /users/persona over context for insight lists", async () => {
@@ -145,9 +185,13 @@ describe("MemoryInsightsModal", () => {
           data: { summary: null, generated_at: null, cached: false },
         }),
       ),
+      http.get(`${API_BASE}/users/stats`, () =>
+        HttpResponse.json({ success: true, data: minimalUserStats }),
+      ),
     );
     renderWithProviders(<MemoryInsightsModal />, { route: "/overview", auth: true });
-    await user.click(screen.getByRole("tab", { name: /^all$/i }));
+    await user.click(screen.getByTestId("memory-insights-observations-toggle"));
+    await user.click(await screen.findByRole("tab", { name: /^all$/i }));
     expect(await screen.findByText("Persona-only preference")).toBeInTheDocument();
     expect(screen.queryByText("Should not appear — from context only.")).not.toBeInTheDocument();
   });
@@ -179,10 +223,111 @@ describe("MemoryInsightsModal", () => {
           data: { summary: null, generated_at: null, cached: false },
         }),
       ),
+      http.get(`${API_BASE}/users/stats`, () =>
+        HttpResponse.json({ success: true, data: minimalUserStats }),
+      ),
     );
     const u = userEvent.setup();
     renderWithProviders(<MemoryInsightsModal />, { route: "/overview", auth: true });
-    await u.click(screen.getByRole("tab", { name: /^all$/i }));
+    await u.click(screen.getByTestId("memory-insights-observations-toggle"));
+    await u.click(await screen.findByRole("tab", { name: /^all$/i }));
     expect(await screen.findByText("Pref one")).toBeInTheDocument();
+  });
+
+  it("shows spotlight thread when stats include spotlight", async () => {
+    server.use(
+      http.get(`${API_BASE}/users/stats`, () =>
+        HttpResponse.json({
+          success: true,
+          data: {
+            ...minimalUserStats,
+            spotlight: {
+              memory_id: "mem-spot-1",
+              title: "Sunday letters",
+              excerpt:
+                "A long enough excerpt to pass the server threshold and appear in the panel for the user.",
+              source: "explicit",
+              updated_at: "2026-01-01T12:00:00.000Z",
+            },
+          },
+        }),
+      ),
+    );
+    renderWithProviders(<MemoryInsightsModal />, { route: "/overview", auth: true });
+    expect(await screen.findByText(/A thread from your Memento/i)).toBeInTheDocument();
+    expect(screen.getByText("Sunday letters")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /open this memory/i })).toHaveAttribute(
+      "href",
+      "/stories/mem-spot-1",
+    );
+  });
+
+  it("links spotlight conversation to host chat", async () => {
+    server.use(
+      http.get(`${API_BASE}/users/stats`, () =>
+        HttpResponse.json({
+          success: true,
+          data: {
+            ...minimalUserStats,
+            spotlight: {
+              memory_id: "conv-9",
+              title: "Chat summary title",
+              excerpt:
+                "Summary text long enough for the modal to display it here without issues for the reader.",
+              source: "conversation",
+              updated_at: null,
+            },
+          },
+        }),
+      ),
+    );
+    renderWithProviders(<MemoryInsightsModal />, { route: "/overview", auth: true });
+    const link = await screen.findByRole("link", { name: /open this memory/i });
+    expect(link).toHaveAttribute("href", "/chat/conv-9");
+    expect(screen.getByText("From conversation")).toBeInTheDocument();
+  });
+
+  it("shows snoozed strip when snapshot hero is snoozed in localStorage", async () => {
+    const future = new Date(Date.now() + 86400000).toISOString();
+    localStorage.setItem(HERO_SNOOZE_KEY, future);
+    server.use(
+      http.get(`${API_BASE}/users/stats`, () =>
+        HttpResponse.json({ success: true, data: minimalUserStats }),
+      ),
+    );
+    renderWithProviders(<MemoryInsightsModal />, { route: "/overview", auth: true });
+    expect(await screen.findByText(/Snapshot hidden until/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Crafting your summary/i)).not.toBeInTheDocument();
+  });
+
+  it("links jump pills to host chat with starter query when primary conversation exists", async () => {
+    server.use(
+      http.get(`${API_BASE}/users/profile`, () =>
+        HttpResponse.json({
+          success: true,
+          data: { ...createMockUser(), primary_conversation_id: "thread-primary" },
+          message: "Profile fetched successfully",
+        }),
+      ),
+      http.get(`${API_BASE}/users/stats`, () =>
+        HttpResponse.json({
+          success: true,
+          data: {
+            ...minimalUserStats,
+            jump_pills: [
+              {
+                category_key: "identity_self",
+                starter: "Tell me about a formative place.",
+              },
+            ],
+          },
+        }),
+      ),
+    );
+    renderWithProviders(<MemoryInsightsModal />, { route: "/overview", auth: true });
+    const link = await screen.findByRole("link", { name: /Tell me about a formative place/i });
+    const href = link.getAttribute("href") ?? "";
+    expect(href).toContain("/chat/thread-primary");
+    expect(href).toContain("starter=");
   });
 });

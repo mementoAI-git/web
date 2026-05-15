@@ -1,5 +1,5 @@
 /**
- * Host Onboarding (Groot) — Adaptive logic for Steps 4 and 5
+ * Host Onboarding (Groot) — Adaptive closing copy and primary CTA
  * @see memento-onboarding-prd.md §6
  */
 
@@ -15,8 +15,13 @@ export interface CTAConfig {
     | "dashboard";
 }
 
+export interface Step5BodyOptions {
+  /** User exited after hook phase (“Continue later”). */
+  partialPersonalization?: boolean;
+}
+
 /**
- * Step 4 headline — adaptive based on motivationType
+ * Step 4 headline — adaptive based on motivationType (Groot flow).
  */
 export function getStep4Headline(motivation: MotivationType | null): string {
   if (!motivation) return "What feels most like you?";
@@ -27,6 +32,9 @@ export function getStep4Headline(motivation: MotivationType | null): string {
     case "memory_preservation":
     case "practical":
       return "How would you most like to add to your Memento?";
+    case "self_understanding":
+    case "personal_space":
+      return "What feels most like you?";
     case "explorer":
     default:
       return "What feels most like you?";
@@ -34,11 +42,23 @@ export function getStep4Headline(motivation: MotivationType | null): string {
 }
 
 /**
- * Step 5 body copy — adaptive based on motivationType
+ * Closing body copy — adaptive based on motivationType.
  */
-export function getStep5Body(motivation: MotivationType | null): string {
-  if (!motivation) return "No pressure — take a look around and start wherever feels right.";
+export function getStep5Body(
+  motivation: MotivationType | null,
+  options?: Step5BodyOptions,
+): string {
+  if (options?.partialPersonalization) {
+    return "You've made a solid start. Whenever you're ready, we can go deeper together.";
+  }
+  if (!motivation) {
+    return "No pressure — take a look around and start wherever feels right.";
+  }
   switch (motivation) {
+    case "self_understanding":
+      return "Take your time. This space is yours to discover yourself in.";
+    case "personal_space":
+      return "Make yourself at home. Add whatever you want, however you want.";
     case "emotional_depth":
       return "Start with something that matters to you — even a small memory is the beginning of something lasting.";
     case "memory_preservation":
@@ -54,11 +74,13 @@ export function getStep5Body(motivation: MotivationType | null): string {
 }
 
 /**
- * Step 5 primary CTA — adaptive based on motivationType × expressionMode
+ * Primary CTA after onboarding.
+ * When `modes` is non-empty (Groot flow), legacy motivation × expression rules apply.
+ * When `modes` is empty (`/onboard/misc`), CTA is derived from motivation only.
  */
 export function getPrimaryCTA(
   motivation: MotivationType | null,
-  modes: ExpressionMode[]
+  modes: ExpressionMode[] = [],
 ): CTAConfig {
   if (!motivation) {
     return { label: "Go to dashboard", action: "dashboard" };
@@ -69,23 +91,40 @@ export function getPrimaryCTA(
   const hasMedia = modes.includes("media");
   const hasGuided = modes.includes("guided");
 
-  if (motivation === "practical") {
-    return { label: "Create your first time capsule", action: "time_capsule" };
-  }
-  if (motivation === "explorer") {
+  if (modes.length > 0) {
+    if (motivation === "practical") {
+      return { label: "Create your first time capsule", action: "time_capsule" };
+    }
+    if (motivation === "explorer") {
+      return { label: "Go to dashboard", action: "dashboard" };
+    }
+    if (motivation === "memory_preservation" && hasMedia) {
+      return { label: "Upload something precious", action: "file_upload" };
+    }
+    if (hasVoice) {
+      return { label: "Record your first memory", action: "voice_recorder" };
+    }
+    if (hasGuided || hasWriting) {
+      return { label: "Answer your first prompt", action: "reflection_prompt" };
+    }
+    if (hasMedia) {
+      return { label: "Upload something precious", action: "file_upload" };
+    }
     return { label: "Go to dashboard", action: "dashboard" };
   }
-  if (motivation === "memory_preservation" && hasMedia) {
-    return { label: "Upload something precious", action: "file_upload" };
+
+  switch (motivation) {
+    case "self_understanding":
+    case "personal_space":
+      return { label: "Open your space", action: "dashboard" };
+    case "memory_preservation":
+    case "emotional_depth":
+      return { label: "Record your first memory", action: "voice_recorder" };
+    case "practical":
+      return { label: "Create your first time capsule", action: "time_capsule" };
+    case "explorer":
+    case "external":
+    default:
+      return { label: "Go to dashboard", action: "dashboard" };
   }
-  if (hasVoice) {
-    return { label: "Record your first memory", action: "voice_recorder" };
-  }
-  if (hasGuided || hasWriting) {
-    return { label: "Answer your first prompt", action: "reflection_prompt" };
-  }
-  if (hasMedia) {
-    return { label: "Upload something precious", action: "file_upload" };
-  }
-  return { label: "Go to dashboard", action: "dashboard" };
 }

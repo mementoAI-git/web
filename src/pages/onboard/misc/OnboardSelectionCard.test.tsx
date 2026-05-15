@@ -58,8 +58,8 @@ describe("OnboardSelectionCard", () => {
       />
     );
     const button = screen.getByRole("button");
-    expect(button).toHaveClass("bg-v3-brand-strong/[0.06]");
-    expect(button).toHaveClass("border-v3-brand-strong/20");
+    expect(button).toHaveClass("bg-v3-brand-strong/[0.08]");
+    expect(button).toHaveClass("border-v3-brand-strong/30");
   });
 
   it("does not apply selected styling when not selected", () => {
@@ -73,10 +73,10 @@ describe("OnboardSelectionCard", () => {
       />
     );
     const button = screen.getByRole("button");
-    expect(button).not.toHaveClass("bg-v3-brand-strong/[0.06]");
-    expect(button).not.toHaveClass("border-v3-brand-strong/20");
-    expect(button).toHaveClass("border-gray-200");
-    expect(button).toHaveClass("bg-white");
+    expect(button).not.toHaveClass("bg-v3-brand-strong/[0.08]");
+    expect(button).not.toHaveClass("border-v3-brand-strong/30");
+    expect(button).toHaveClass("border-v3-stroke-weak");
+    expect(button).toHaveClass("bg-v3-fill-weaker");
   });
 
   it("applies grey add variant styling and hides icon when variant is add", () => {
@@ -90,8 +90,8 @@ describe("OnboardSelectionCard", () => {
       />
     );
     const button = screen.getByRole("button");
-    expect(button).toHaveClass("border-black/[0.12]");
-    expect(button).toHaveClass("bg-black/[0.04]");
+    expect(button).toHaveClass("border-v3-stroke-weak");
+    expect(button).toHaveClass("bg-v3-fill-weaker");
     expect(screen.queryByText("✨")).not.toBeInTheDocument();
     expect(screen.getByText("Add something else")).toBeInTheDocument();
   });
