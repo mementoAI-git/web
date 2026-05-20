@@ -1,42 +1,48 @@
-import { type IOnUploadPayload } from "@/utility/interface";
+import { type IOnUploadPayload, type IFile } from "@/utility/interface";
+import ImageThumbnail from "@/components/image-thumbnail";
 import CirclarProgress from "../circlar-progress";
 
 interface IImagePreviewProps {
   files: IOnUploadPayload[]
   handleRemoveFile: (id: string) => void
 }
-export default function ImagePreview({ files, handleRemoveFile }: IImagePreviewProps) {
 
+export default function ImagePreview({ files, handleRemoveFile }: IImagePreviewProps) {
   return (
     <div className="flex flex-wrap gap-1.5 mb-2">
-      {files.map((file) => (
-        <div key={file.id} className="relative group">
-          <div className="relative w-12 h-12 rounded-md border border-sand-4">
-            <div className="overflow-hidden size-full rounded-md">
-              <img
-                src={file.base64}
-                alt="Preview"
-                className="w-full h-full object-cover"
-              />
-            </div>
+      {files.map((file) => {
+        const mappedFile: IFile = file.uploadedFile || {
+          _id: file.id,
+          url: file.base64 || "",
+          name: file.file?.name || "",
+          size: file.file?.size || 0,
+          type: file.file?.type || "",
+        };
 
-            {
-              file.progress !== 100 &&
-              <div className="absolute rounded-lg top-0 right-0 bottom-0 left-0 size-full flex items-center bg-black/20 justify-center">
-                <CirclarProgress progress={file.progress} className="size-7" />
+        return (
+          <div key={file.id} className="relative group">
+            <div className="relative w-12 h-12 rounded-md border border-sand-4 flex items-center justify-center overflow-hidden">
+              <div className="overflow-hidden size-full rounded-md">
+                <ImageThumbnail images={[mappedFile]} size={48} />
               </div>
-            }
 
-            {/* Delete Button */}
-            <button
-              onClick={() => handleRemoveFile(file.id)}
-              className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full flex items-center justify-center text-[10px] font-bold opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-red-600"
-            >
-              ×
-            </button>
+              {file.progress !== 100 && (
+                <div className="absolute rounded-lg top-0 right-0 bottom-0 left-0 size-full flex items-center bg-black/20 justify-center">
+                  <CirclarProgress progress={file.progress} className="size-7" />
+                </div>
+              )}
+
+              {/* Delete Button */}
+              <button
+                onClick={() => handleRemoveFile(file.id)}
+                className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full flex items-center justify-center text-[10px] font-bold opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-red-600 z-40"
+              >
+                ×
+              </button>
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
-  )
+  );
 }

@@ -19,6 +19,19 @@ import DOMPurify from "isomorphic-dompurify";
 import { DetailsSkeleton } from "./components/skeleton";
 import { TypographyH1, TypographyMuted } from "@/components/ui/typography";
 
+function getTopicColor(topic: string) {
+  let hash = 0;
+  for (let i = 0; i < topic.length; i++) {
+    hash = topic.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const hue = Math.abs(hash) % 360;
+  return {
+    bg: `hsla(${hue}, 85%, 97%, 0.8)`,
+    border: `hsla(${hue}, 60%, 88%, 0.9)`,
+    text: `hsl(${hue}, 65%, 28%)`,
+  };
+}
+
 export default function StoriesDetails() {
   const { id } = useParams();
   const router = useNavigate();
@@ -88,6 +101,39 @@ export default function StoriesDetails() {
             </TypographyH1>
           </div>
           <div className="flex-1 h-full pb-4 sm:pb-6">
+            {memory.summary?.trim() || (Array.isArray(memory.topics) && memory.topics.length > 0) ? (
+              <div className="mb-6 space-y-4 rounded-2xl bg-fill-neutral-weakest/50 border border-stroke-neutral-weaker/40 p-5 backdrop-blur-sm shadow-sm">
+                {memory.summary?.trim() ? (
+                  <div className="border-l-4 border-stroke-brand-strong pl-4">
+                    <p className="font-georgia italic text-base sm:text-lg leading-relaxed text-text-neutral-strong">
+                      "{memory.summary.trim()}"
+                    </p>
+                  </div>
+                ) : null}
+
+                {Array.isArray(memory.topics) && memory.topics.length > 0 ? (
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    {memory.topics.map((topic) => {
+                      const colors = getTopicColor(topic);
+                      return (
+                        <span
+                          key={topic}
+                          style={{
+                            backgroundColor: colors.bg,
+                            borderColor: colors.border,
+                            color: colors.text,
+                          }}
+                          className="inline-flex items-center rounded-full border px-3 py-1 font-inter text-xs font-semibold transition-colors"
+                        >
+                          #{topic}
+                        </span>
+                      );
+                    })}
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+
             {!isEmpty(memory?.attachments) && (
               <FileGallery files={memory?.attachments || []} />
             )}

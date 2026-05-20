@@ -227,10 +227,11 @@ function ChatinputImpl({
 
   const handleFileUpload = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
+      const selected = Array.from(e.target.files || []);
       e.target.value = "";
-      if (!file) return;
-      await processFileForUpload(file);
+      for (const file of selected) {
+        await processFileForUpload(file);
+      }
     },
     [processFileForUpload],
   );
@@ -513,6 +514,7 @@ function ChatinputImpl({
                 <input
                   id="chat-file-trigger"
                   type="file"
+                  multiple
                   accept={SUPPORTED_FILE_TYPES.join(",")}
                   onChange={handleFileUpload}
                   className="hidden"
