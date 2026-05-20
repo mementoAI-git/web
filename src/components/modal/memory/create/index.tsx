@@ -4,7 +4,6 @@ import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { EditorContent } from "@tiptap/react";
 import { useModal } from "@/hooks/use-modal";
 import { useStore } from "@/hooks/use-store";
-import { useInlineAudioCapture } from "@/hooks/use-inline-audio-capture";
 import { useNavigate } from "react-router-dom";
 import useForm from "@/hooks/use-form";
 import useFileUpload from "@/hooks/use-file-upload";
@@ -56,7 +55,6 @@ import { SlashCommandPopup } from "@/components/memory/text-area/slash-command-p
 import { SLASH_COMMANDS } from "@/components/memory/text-area/slash-commands";
 import { useMemoryEditor } from "@/components/memory/text-area/use-memory-editor";
 import { VideoRecorder } from "@/components/recorder/video";
-import { InlineVoiceRecorder } from "@/components/recorder/inline-voice-recorder";
 import type { ComponentRef, ReactNode } from "react";
 import { FileThumbnails } from "./file-thumbnails";
 import { UpgradePrompt } from "@/features/pricing/upgrade-prompt";
@@ -119,7 +117,7 @@ interface CreateMemoryProps {
 }
 
 export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
-  const { close, open, registerCloseGuard } = useModal();
+  const { close, open, push, registerCloseGuard } = useModal();
   const { user } = useStore();
   const { canUse } = useFeatureFlags();
   const navigate = useNavigate();
@@ -144,7 +142,7 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
   const [showVideoRecorder, setShowVideoRecorder] = useState(false);
   const [videoRecordedFile, setVideoRecordedFile] = useState<File | null>(null);
   const [isUsingVideo, setIsUsingVideo] = useState(false);
-  const [showInlineRecorder, setShowInlineRecorder] = useState(false);
+  const [audioRecordingCount, setAudioRecordingCount] = useState(1);
 
   const { trigger, isMutating } = useSWRMutation(endpoint.memories, postFetcher);
   const { files, handleUpload, handleDeleteFile, setFiles } = useFileUpload();
@@ -396,18 +394,7 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
       handleUpload({ id: uuidv4(), file, base64: reader.result as string, progress: 0, ...(duration !== undefined && { duration }) });
     };
     reader.readAsDataURL(file);
-  };
-
-  const inlineRecorder = useInlineAudioCapture({
-    onRecordingReady: async (file, durationSec) => {
-      handleAddAudioFile(file, durationSec);
-      setShowInlineRecorder(false);
-    },
-    fileNamePrefix: "memory-audio",
-  });
-
-  const toggleInlineRecording = () => {
-    inlineRecorder.toggleRecording(isUploading);
+    setAudioRecordingCount((c) => c + 1);
   };
 
   const handleUseVideo = () => {
@@ -951,10 +938,12 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
                 type="button"
                 variant="ghost"
                 size="icon-lg"
-                onClick={() => {
-                  setShowInlineRecorder(true);
-                  toggleInlineRecording();
-                }}
+                onClick={() =>
+                  push("audio-recorder", {
+                    onFinish: handleAddAudioFile,
+                    recordingNumber: audioRecordingCount,
+                  })
+                }
                 className="rounded-xl text-icon-neutral-strong hover:bg-fill-neutral-weaker"
                 title="Record audio"
                 aria-label="Record audio"
@@ -977,24 +966,6 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
                 <Video className="size-5" />
               </Button>
           </div>
-          {showInlineRecorder ? (
-            <InlineVoiceRecorder
-              className="mt-2"
-              recording={inlineRecorder.recording}
-              busy={inlineRecorder.busy}
-              timerSec={inlineRecorder.timerSec}
-              levels={inlineRecorder.levels}
-              onToggleRecording={toggleInlineRecording}
-              onDismiss={() => setShowInlineRecorder(false)}
-              title="Story voice recorder"
-              idleLabel="Record a quick audio memory"
-              recordingLabel="Listening..."
-              error={
-                inlineRecorder.micDenied ? "Microphone access is needed to record."
-                : inlineRecorder.error
-              }
-            />
-          ) : null}
         </div>
       </section>
 

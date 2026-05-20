@@ -927,6 +927,7 @@ export function QuickCapture(props: { isMobile?: boolean; data?: unknown }) {
         accept="image/*"
         className="hidden"
         onChange={handleFileSelect}
+        multiple
       />
       <input
         ref={fileInputVideoRef}
@@ -934,6 +935,7 @@ export function QuickCapture(props: { isMobile?: boolean; data?: unknown }) {
         accept="video/*"
         className="hidden"
         onChange={handleFileSelect}
+        multiple
       />
       <input
         ref={fileInputAudioRef}
@@ -941,6 +943,7 @@ export function QuickCapture(props: { isMobile?: boolean; data?: unknown }) {
         accept={AUDIO_INPUT_ACCEPT}
         className="hidden"
         onChange={handleFileSelect}
+        multiple
       />
     </>
   );
