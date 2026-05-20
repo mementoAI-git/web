@@ -360,7 +360,7 @@ export function QuickCapture(props: { isMobile?: boolean; data?: unknown }) {
         return;
       }
       if (file.size > MAX_FILE_BYTES) {
-        setAttachError(`File is too large. Max size is ${QUICK_MAX_MB}MB.`);
+        toast.error(`File is too large. Max size is ${QUICK_MAX_MB}MB.`);
         return;
       }
       const resolvedType = file.type || inferMimeType(file.name);
