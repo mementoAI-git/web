@@ -1,5 +1,6 @@
 import { TimesIcon } from "@/components/icons";
 import { cn, toBase64 } from "@/utility";
+import { toast } from "sonner";
 import {
   type ChatReplyQuote,
   snippetReplyText,
@@ -197,7 +198,7 @@ function ChatinputImpl({
     async (file: File) => {
       const resolvedType = file.type || inferMimeType(file.name);
       if (!isSupportedFileMime(resolvedType, SUPPORTED_FILE_TYPES)) {
-        alert(
+        toast.error(
           "Please select a supported file type (images, PDF, video, or audio)",
         );
         return;
@@ -206,7 +207,7 @@ function ChatinputImpl({
       // Match API multer limit (api/src/middleware/file-upload.ts)
       const maxSize = 15 * 1024 * 1024;
       if (file.size > maxSize) {
-        alert("File size must be less than 15MB");
+        toast.error("File size must be less than 15MB");
         return;
       }
 

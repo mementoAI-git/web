@@ -125,7 +125,6 @@ export function QuickCapture(props: { isMobile?: boolean; data?: unknown }) {
 
   const [draftsOpen, setDraftsOpen] = useState(false);
   const [storageKeyOverride, setStorageKeyOverride] = useState<string | null>(null);
-  const [attachError, setAttachError] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [showEmoji, setShowEmoji] = useState(false);
 
@@ -354,9 +353,8 @@ export function QuickCapture(props: { isMobile?: boolean; data?: unknown }) {
 
   const queueFileUpload = useCallback(
     (file: File) => {
-      setAttachError(null);
       if (!canUse("attachments.doc_upload")) {
-        setAttachError("File uploads are currently disabled.");
+        toast.error("File uploads are currently disabled.");
         return;
       }
       if (file.size > MAX_FILE_BYTES) {
@@ -365,15 +363,15 @@ export function QuickCapture(props: { isMobile?: boolean; data?: unknown }) {
       }
       const resolvedType = file.type || inferMimeType(file.name);
       if (!isSupportedFileMime(resolvedType, SUPPORTED_FILE_TYPES)) {
-        setAttachError("That file type isn't supported.");
+        toast.error("That file type isn't supported.");
         return;
       }
       if (uploadMimeBaseType(resolvedType).startsWith("image/") && !canUse("attachments.image_upload")) {
-        setAttachError("Image uploads are currently disabled.");
+        toast.error("Image uploads are currently disabled.");
         return;
       }
       if (uploadMimeBaseType(resolvedType).startsWith("video/") && !canUse("attachments.video_upload")) {
-        setAttachError("Video uploads are currently disabled.");
+        toast.error("Video uploads are currently disabled.");
         return;
       }
       const reader = new FileReader();
@@ -910,9 +908,6 @@ export function QuickCapture(props: { isMobile?: boolean; data?: unknown }) {
               }
             />
           ) : null}
-          {attachError ?
-            <p className="font-inter text-xs text-danger">{attachError}</p>
-          : null}
           <QuickCaptureMediaStack files={files} voiceNoteIds={voiceNoteIds} onRemove={handleRemoveFile} />
         </div>
       </div>
