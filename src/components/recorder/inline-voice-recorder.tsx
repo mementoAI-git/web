@@ -105,7 +105,7 @@ export function InlineVoiceRecorder({
         </div>
       ) : null}
 
-      {error ? <p className="mt-2 font-inter text-xs text-red-600">{error}</p> : null}
+      {error ? <p className="mt-2 font-inter text-xs text-danger">{error}</p> : null}
     </div>
   );
 }

@@ -911,7 +911,7 @@ export function QuickCapture(props: { isMobile?: boolean; data?: unknown }) {
             />
           ) : null}
           {attachError ?
-            <p className="font-inter text-xs text-red-600">{attachError}</p>
+            <p className="font-inter text-xs text-danger">{attachError}</p>
           : null}
           <QuickCaptureMediaStack files={files} voiceNoteIds={voiceNoteIds} onRemove={handleRemoveFile} />
         </div>
@@ -961,7 +961,7 @@ export function QuickCapture(props: { isMobile?: boolean; data?: unknown }) {
       {scrollBody}
       {privacyRow}
       {saveError ?
-        <p className="shrink-0 px-4 pb-1 font-inter text-sm text-red-600">{saveError}</p>
+        <p className="shrink-0 px-4 pb-1 font-inter text-sm text-danger">{saveError}</p>
       : null}
       {actionBar}
       {hiddenInputs}
