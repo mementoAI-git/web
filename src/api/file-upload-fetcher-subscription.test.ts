@@ -17,7 +17,7 @@ vi.mock("axios", async () => {
         },
       })),
     },
-    isAxiosError: (err: any) => err && err.isAxiosError === true,
+    isAxiosError: (err: unknown) => !!err && (err as { isAxiosError?: boolean }).isAxiosError === true,
   };
 });
 

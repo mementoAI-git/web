@@ -115,7 +115,7 @@ export default function Bubble({
           )}
         >
           {
-            attatchments.map(({ url, name, type, _id, size }, i) => {
+            attatchments.map(({ url, name, type, _id, size: _size }, i) => {
               const ext = name?.split(".").pop()?.toLowerCase() || "";
               const isVideoFile =
                 type?.startsWith("video/") ||
