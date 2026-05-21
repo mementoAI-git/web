@@ -125,7 +125,6 @@ export function QuickCapture(props: { isMobile?: boolean; data?: unknown }) {
 
   const [draftsOpen, setDraftsOpen] = useState(false);
   const [storageKeyOverride, setStorageKeyOverride] = useState<string | null>(null);
-  const [attachError, setAttachError] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [showEmoji, setShowEmoji] = useState(false);
 
@@ -354,26 +353,25 @@ export function QuickCapture(props: { isMobile?: boolean; data?: unknown }) {
 
   const queueFileUpload = useCallback(
     (file: File) => {
-      setAttachError(null);
       if (!canUse("attachments.doc_upload")) {
-        setAttachError("File uploads are currently disabled.");
+        toast.error("File uploads are currently disabled.");
         return;
       }
       if (file.size > MAX_FILE_BYTES) {
-        setAttachError(`File is too large. Max size is ${QUICK_MAX_MB}MB.`);
+        toast.error(`File is too large. Max size is ${QUICK_MAX_MB}MB.`);
         return;
       }
       const resolvedType = file.type || inferMimeType(file.name);
       if (!isSupportedFileMime(resolvedType, SUPPORTED_FILE_TYPES)) {
-        setAttachError("That file type isn't supported.");
+        toast.error("That file type isn't supported.");
         return;
       }
       if (uploadMimeBaseType(resolvedType).startsWith("image/") && !canUse("attachments.image_upload")) {
-        setAttachError("Image uploads are currently disabled.");
+        toast.error("Image uploads are currently disabled.");
         return;
       }
       if (uploadMimeBaseType(resolvedType).startsWith("video/") && !canUse("attachments.video_upload")) {
-        setAttachError("Video uploads are currently disabled.");
+        toast.error("Video uploads are currently disabled.");
         return;
       }
       const reader = new FileReader();
@@ -910,9 +908,6 @@ export function QuickCapture(props: { isMobile?: boolean; data?: unknown }) {
               }
             />
           ) : null}
-          {attachError ?
-            <p className="font-inter text-xs text-red-600">{attachError}</p>
-          : null}
           <QuickCaptureMediaStack files={files} voiceNoteIds={voiceNoteIds} onRemove={handleRemoveFile} />
         </div>
       </div>
@@ -927,6 +922,7 @@ export function QuickCapture(props: { isMobile?: boolean; data?: unknown }) {
         accept="image/*"
         className="hidden"
         onChange={handleFileSelect}
+        multiple
       />
       <input
         ref={fileInputVideoRef}
@@ -934,6 +930,7 @@ export function QuickCapture(props: { isMobile?: boolean; data?: unknown }) {
         accept="video/*"
         className="hidden"
         onChange={handleFileSelect}
+        multiple
       />
       <input
         ref={fileInputAudioRef}
@@ -941,6 +938,7 @@ export function QuickCapture(props: { isMobile?: boolean; data?: unknown }) {
         accept={AUDIO_INPUT_ACCEPT}
         className="hidden"
         onChange={handleFileSelect}
+        multiple
       />
     </>
   );
@@ -958,7 +956,7 @@ export function QuickCapture(props: { isMobile?: boolean; data?: unknown }) {
       {scrollBody}
       {privacyRow}
       {saveError ?
-        <p className="shrink-0 px-4 pb-1 font-inter text-sm text-red-600">{saveError}</p>
+        <p className="shrink-0 px-4 pb-1 font-inter text-sm text-danger">{saveError}</p>
       : null}
       {actionBar}
       {hiddenInputs}

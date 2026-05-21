@@ -179,7 +179,7 @@ export default function History({
               const isAi = m.role !== "user";
 
               return (
-                <Fragment key={m._id ?? `msg-${i}`}>
+                <Fragment key={`${m._id ?? "msg"}-${i}`}>
                   {showDayDivider && validIso && iso ? (
                     <div
                       className="flex justify-center py-2"

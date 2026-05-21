@@ -177,11 +177,79 @@ export function QuickCaptureMediaStack({
     setPlayingId(id);
   };
 
+  // Separate images and other files
+  const imageFiles = files.filter(
+    (f) =>
+      mimeOf(f).startsWith("image/") &&
+      (mediaSrc(f) || f.base64) &&
+      !(f.progress !== undefined && f.progress < 100)
+  );
+
+  const nonImageFiles = files.filter(
+    (f) =>
+      !(
+        mimeOf(f).startsWith("image/") &&
+        (mediaSrc(f) || f.base64) &&
+        !(f.progress !== undefined && f.progress < 100)
+      )
+  );
+
   return (
     <div className="flex flex-col gap-3">
-      {files.map((f) => {
+      {/* Render images in grid */}
+      {imageFiles.length > 0 && (
+        <div
+          className={cn(
+            "grid gap-2",
+            imageFiles.length === 1 ? "grid-cols-1" : "grid-cols-2"
+          )}
+        >
+          {imageFiles.slice(0, 4).map((f, index) => {
+            const src = mediaSrc(f);
+            const isLastOfFour = index === 3;
+            const hasMore = imageFiles.length > 4;
+            const isColSpan = imageFiles.length === 3 && index === 2;
+
+            return (
+              <div
+                key={f.id}
+                className={cn(
+                  "relative group overflow-visible",
+                  imageFiles.length === 1 ? "w-full" : "aspect-square",
+                  isColSpan && "col-span-2 aspect-[2/1]"
+                )}
+              >
+                <button
+                  type="button"
+                  onClick={() => onRemove(f.id)}
+                  className="absolute -top-1.5 -right-1.5 z-25 flex size-7 items-center justify-center rounded-full border-2 border-background bg-fill-neutral-weaker text-icon-neutral-strong shadow-sm hover:bg-fill-neutral-weak"
+                  aria-label="Remove attachment"
+                >
+                  <TimesIcon width={8} height={8} />
+                </button>
+                <img
+                  src={src || (f.base64 as string)}
+                  alt=""
+                  className={cn(
+                    "rounded-xl object-cover w-full h-full",
+                    imageFiles.length === 1 && "max-h-48"
+                  )}
+                />
+                {isLastOfFour && hasMore && (
+                  <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] rounded-xl flex items-center justify-center pointer-events-none">
+                    <span className="font-inter text-white text-base font-bold">
+                      +{imageFiles.length - 4} more
+                    </span>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {nonImageFiles.map((f) => {
         const mime = mimeOf(f);
-        const isImage = mime.startsWith("image/");
         const isVideo = mime.startsWith("video/");
         const isVoice = !!voiceNoteIds[f.id];
         const isAudio = mime.startsWith("audio/") && !isVoice;
@@ -195,22 +263,6 @@ export function QuickCaptureMediaStack({
               className="relative flex items-center justify-center rounded-xl border border-dashed border-stroke-neutral-weaker py-8"
             >
               <span className="font-inter text-xs text-text-neutral-weaker">Uploading… {f.progress}%</span>
-            </div>
-          );
-        }
-
-        if (isImage && (src || f.base64)) {
-          return (
-            <div key={f.id} className="relative">
-              <button
-                type="button"
-                onClick={() => onRemove(f.id)}
-                className="absolute -top-1 -right-1 z-10 flex size-7 items-center justify-center rounded-full border-2 border-background bg-fill-neutral-weaker text-icon-neutral-strong shadow-sm hover:bg-fill-neutral-weak"
-                aria-label="Remove attachment"
-              >
-                <TimesIcon width={8} height={8} />
-              </button>
-              <img src={src || (f.base64 as string)} alt="" className="max-h-48 w-full rounded-xl object-cover" />
             </div>
           );
         }

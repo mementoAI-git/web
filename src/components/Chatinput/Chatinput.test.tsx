@@ -170,10 +170,10 @@ describe("Chatinput", () => {
     fireEvent.paste(textarea, { clipboardData: clipboardData as never });
 
     await waitFor(() => {
-      expect(screen.getByAltText("Preview")).toBeInTheDocument();
+      expect(screen.getByAltText("clip.png")).toBeInTheDocument();
     });
 
-    expect(textarea.compareDocumentPosition(screen.getByAltText("Preview"))).toBe(
+    expect(textarea.compareDocumentPosition(screen.getByAltText("clip.png"))).toBe(
       Node.DOCUMENT_POSITION_PRECEDING,
     );
   });

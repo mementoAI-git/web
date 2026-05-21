@@ -24,6 +24,19 @@ const MEDIA_ASPECTS = [
 
 const TEXT_MIN_HEIGHTS = ["min-h-[200px]", "min-h-[260px]", "min-h-[228px]", "min-h-[244px]"] as const;
 
+export function getTopicColor(topic: string) {
+  let hash = 0;
+  for (let i = 0; i < topic.length; i++) {
+    hash = topic.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const hue = Math.abs(hash) % 360;
+  return {
+    bg: `hsla(${hue}, 85%, 97%, 0.8)`,
+    border: `hsla(${hue}, 60%, 88%, 0.9)`,
+    text: `hsl(${hue}, 65%, 28%)`,
+  };
+}
+
 function getStoryCardTitle(memory: IMemory): string {
   if (memory.prompt_type && memory.prompt_text?.trim()) {
     return memory.prompt_text.trim();
@@ -119,10 +132,14 @@ function StoriesGridItem({
       );
     }
 
+    const hasSummary = Boolean(memory.summary?.trim());
+    const hasTopics = Array.isArray(memory.topics) && memory.topics.length > 0;
+
     return (
       <div
         className={cn(
-          "relative flex w-full flex-col gap-2 overflow-hidden rounded-2xl border border-v3-stroke-weak bg-v3-fill-weaker p-5 shadow-sm",
+          "relative flex w-full flex-col gap-3 overflow-hidden rounded-2xl p-5 shadow-sm transition-all duration-300",
+          "backdrop-blur-md bg-white/40 border border-white/40 hover:border-white/60 hover:bg-white/50",
           textMinH,
         )}
       >
@@ -132,13 +149,46 @@ function StoriesGridItem({
           </h4>
           <QuickCaptureProcessingBadge memory={memory} variant="inline" />
         </div>
+
+        {hasSummary ? (
+          <div className="rounded-xl border-l-[3px] border-v3-brand-strong bg-white/20 px-3 py-2 my-0.5">
+            <p className="font-georgia italic text-xs leading-relaxed text-v3-text-strong">
+              "{memory.summary?.trim()}"
+            </p>
+          </div>
+        ) : null}
+
+        {hasTopics ? (
+          <div className="flex flex-wrap gap-1 mt-0.5">
+            {memory.topics?.map((topic) => {
+              const colors = getTopicColor(topic);
+              return (
+                <span
+                  key={topic}
+                  style={{
+                    backgroundColor: colors.bg,
+                    borderColor: colors.border,
+                    color: colors.text,
+                  }}
+                  className="inline-flex items-center rounded-full border px-2 py-0.5 font-inter text-[10px] font-medium transition-colors"
+                >
+                  #{topic}
+                </span>
+              );
+            })}
+          </div>
+        ) : null}
+
         <div
-          className="line-clamp-[8] font-inter text-sm leading-relaxed text-v3-text-weak [&_a]:underline"
+          className={cn(
+            "font-inter text-sm leading-relaxed text-v3-text-weak [&_a]:underline",
+            hasSummary ? "line-clamp-[4]" : "line-clamp-[8]"
+          )}
           dangerouslySetInnerHTML={{
             __html: ensureLinksOpenInNewTab(DOMPurify.sanitize(memory?.body || "")),
           }}
         />
-        <div className="pointer-events-none absolute bottom-0 left-0 mt-auto h-20 w-full bg-gradient-to-t from-v3-fill-weaker via-v3-fill-weaker/85 to-transparent" />
+        <div className="pointer-events-none absolute bottom-0 left-0 mt-auto h-16 w-full bg-gradient-to-t from-white/40 to-transparent" />
       </div>
     );
   };
@@ -146,7 +196,7 @@ function StoriesGridItem({
   return (
     <article
       className={cn(
-        "group/card relative mb-4 w-full break-inside-avoid sm:mb-5",
+        "group/card relative mb-4 w-full break-inside-avoid sm:mb-5 transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-xl hover:shadow-brand-strong/5",
         "focus-within:ring-2 focus-within:ring-v3-brand-strong/40 focus-within:ring-offset-2",
       )}
     >
