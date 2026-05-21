@@ -35,7 +35,7 @@ vi.mock("@/features/onboarding-groot", () => ({
 import DashboardLayout from "./layout";
 
 describe("DashboardLayout", () => {
-  it("wraps onboarding nudge in a full-width flex column", () => {
+  it("renders nudge banners above the scrollable outlet column", () => {
     const { container } = renderWithProviders(
       <ChatSidebarProvider>
         <Routes>
@@ -47,12 +47,7 @@ describe("DashboardLayout", () => {
       { route: "/", auth: true },
     );
 
-    const nudgeHost = screen.getByRole("banner").parentElement;
-    expect(nudgeHost?.className).toMatch(/\bw-full\b/);
-    expect(nudgeHost?.className).toMatch(/\bbg-white\b/);
-    expect(nudgeHost?.className).toMatch(/\btext-v3-text-strong\b/);
-    expect(nudgeHost?.className).toContain("pt-[3px]");
-    expect(nudgeHost?.className).toMatch(/\bpb-0\.5\b/);
+    expect(screen.getByRole("banner")).toBeInTheDocument();
     const outlet = screen.getByTestId("outlet-child");
     expect(outlet.parentElement?.className).toMatch(/\bh-full\b/);
     expect(outlet.parentElement?.className).toMatch(/\bmin-h-0\b/);

@@ -3,6 +3,7 @@ import Topic, { TopicSkeleton } from "@/components/topic";
 import { getCategory } from "@/utility";
 import { Link } from "react-router-dom";
 import useSWR from "swr";
+import { TypographyH2 } from "@/components/ui/typography";
 
 export default function SuggestedCategories() {
   const { data, isLoading } = useSWR(endpoint.overviewPrompt);
@@ -10,7 +11,9 @@ export default function SuggestedCategories() {
   return (
     <div className="w-full max-w-[560px] space-y-3 md:space-y-6">
       <div className="container flex items-center justify-between w-full">
-        <h4 className="font-inter font-semibold text-xl md:text-base md:leading-[24px] text-text-neutral-strong">Suggested Conversations</h4>
+        <TypographyH2 className="font-inter text-xl font-semibold text-text-neutral-strong md:text-base md:leading-[24px]">
+          Suggested Conversations
+        </TypographyH2>
         <Link to="/chat/conversations/suggested" className="text-text-brand-strong underline font-semibold font-inter text-sm cursor-pointer">
           See more
         </Link>

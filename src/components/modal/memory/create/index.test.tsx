@@ -20,6 +20,8 @@ vi.mock("@tiptap/react", () => {
     getAttributes: () => ({}),
     isActive: () => false,
     chain: () => chainable(),
+    options: {editorProps: {}},
+    setOptions: vi.fn(),
     state: {
       selection: {
         from: 0,

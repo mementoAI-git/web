@@ -26,7 +26,6 @@ import {
   PostPage,
   RegisterPage,
   ReplyPage,
-  SignupChoicePage,
   SetPasswordPage,
   VerifyEmailPage,
   StoriesPage,
@@ -47,7 +46,7 @@ export const router = createBrowserRouter([
     errorElement: <ErrorPage />,
     children: [
       { path: "login", element: <LoginPage /> },
-      { path: "signup", element: <SignupChoicePage /> },
+      { path: "signup", element: <Navigate to="/register" replace /> },
       { path: "two-factor", element: <TwoFactorPage /> },
       { path: "register", element: <RegisterPage /> },
       { path: "forget-password", element: <ForgetPasswordPage /> },

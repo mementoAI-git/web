@@ -21,6 +21,8 @@ export default {
   deletePasskey: "/users/passkeys/:credential_id",
   userContext: "/users/context",
   persona: "/users/persona",
+  /** AI-written Memory Insights summary (persona + memories + session + pending insights) */
+  personaMemoryInsightsSummary: "/users/persona/memory-insights-summary",
   completeOnboarding: "/users/complete-onboarding",
   uploadPicture: "/users/upload-picture",
   changePassword: "/users/change-password",
@@ -58,6 +60,7 @@ export default {
 
   // memories
   memories: "/memories",
+  memoriesQuickCapture: "/memories/quick-capture",
   memory: "/memories/:id",
   bookmarkMemory: "/memories/:id/bookmark",
   conversations: "/memories/conversations",
@@ -79,6 +82,7 @@ export default {
   startConversation: "/ai/conversation/new",
   ephemeralToken: "/ai/ephemeral-token",
   generateTags: "/ai/generate-tags",
+  generateStoryTitle: "/ai/generate-story-title",
   aiMetricsOverview: "/ai/metrics/overview",
   aiMetricsTimeseries: "/ai/metrics/timeseries",
   aiPromptGovernanceStatus: "/ai/prompt-governance/status",

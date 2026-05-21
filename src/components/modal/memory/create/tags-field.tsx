@@ -73,7 +73,22 @@ export function TagsField({ tags, setTags, title, body }: TagsFieldProps) {
           <AutogenerateTagsButton
             title={title}
             body={body}
-            onTagsGenerated={(newTags) => setTags((prev) => [...new Set([...prev, ...newTags])])}
+            onTagsGenerated={(newTags) =>
+              setTags((prev) => {
+                const seen = new Set(prev.map((t) => t.toLowerCase()));
+                const next = [...prev];
+                for (const raw of newTags) {
+                  const t = raw.trim();
+                  if (!t) continue;
+                  const key = t.toLowerCase();
+                  if (!seen.has(key)) {
+                    seen.add(key);
+                    next.push(t);
+                  }
+                }
+                return next;
+              })
+            }
           />
         </InputGroupAddon>
       </InputGroup>

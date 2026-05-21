@@ -877,3 +877,9 @@ These colors should be avoided in new code and gradually replaced.
 ---
 
 *This document is auto-generated. To update, run color analysis scripts in the project root.*
+
+
+
+States & Edge Cases
+ScenarioBehaviourUser saves with no contentDisabled save button — but no error message shownVoice transcript is unclearSaved as-is, AI flags it gently in chatUser closes sheet mid-captureDraft auto-saved, recoverable on next openNo internetSaves locally, syncs when connection returns
+

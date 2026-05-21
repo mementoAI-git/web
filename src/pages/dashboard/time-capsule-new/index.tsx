@@ -145,7 +145,7 @@ export default function TimeCapsulePage() {
           <div className="flex flex-col md:items-end md:flex-row md:justify-between gap-2">
             <div>
               <p className="font-garamond font-medium text-[32px] md:text-4xl lg:text-[40px] leading-tight sm:leading-snug md:leading-[48px]">
-                <span>Timed Messages</span>
+                <span>Time Capsules</span>
               </p>
 
               <p className="font-garamond font-normal text-base sm:text-[20px] leading-6 tracking-[0px] text-gray-700 pt-3 rounded-md">

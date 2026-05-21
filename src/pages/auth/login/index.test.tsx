@@ -60,7 +60,7 @@ describe("LoginPage", () => {
     expect(forgot).toHaveClass("flex", "font-semibold");
 
     const signup = screen.getByRole("link", { name: /create an account/i });
-    expect(signup).toHaveAttribute("href", "/signup");
+    expect(signup).toHaveAttribute("href", "/register");
     expect(signup).toHaveClass("text-xs", "font-semibold");
   });
 

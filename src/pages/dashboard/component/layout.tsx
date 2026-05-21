@@ -20,6 +20,8 @@ export default function DashboardLayout() {
   const { chatOpen, setChatOpen } = useChatSidebar();
   const location = useLocation();
   const navigate = useNavigate();
+  /** Chat handles its own scroll column; outer overflow-y-auto breaks sticky composer on small viewports. */
+  const isChatRoute = location.pathname.startsWith("/chat");
   const { open } = useModal();
   const isVoiceChatRoute = Boolean(
     useMatch({ path: "/chat/:id/voice", end: true }),
@@ -67,7 +69,7 @@ export default function DashboardLayout() {
             mainSidebarCollapsed && "md:!w-0 md:!min-w-0 md:overflow-hidden md:opacity-0",
           )}
         >
-          <DashboardSideBar onClose={() => setSidebarOpen(false)} />
+          <DashboardSideBar />
         </div>
         <main className="flex min-w-0 flex-1 flex-col overflow-hidden dynamic-height-content">
           <ConversationChromeProvider>
@@ -85,16 +87,16 @@ export default function DashboardLayout() {
                 !isVoiceChatRoute && "pt-[60px] sm:pt-0",
               )}
             >
-<div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-                  <div className={cn(
-                    "w-full min-w-0 shrink-0 px-4 pt-[3px] pb-0.5 text-v3-text-strong sm:px-6",
-                    isVoiceChatRoute ? "bg-sand-1" : "bg-white"
-                  )}>
-                    <OnboardingNudgeBanner />
-                    <TrialBanner />
-                    <SecurityNudgeBanner />
-                  </div>
-                <div className="hide-scrollbar h-full min-h-0 w-full flex-1 overflow-y-auto">
+              <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+                <OnboardingNudgeBanner />
+                <TrialBanner />
+                <SecurityNudgeBanner />
+                <div
+                  className={cn(
+                    "hide-scrollbar h-full min-h-0 w-full flex-1",
+                    isChatRoute ? "overflow-hidden" : "overflow-y-auto",
+                  )}
+                >
                   <Outlet />
                 </div>
               </div>

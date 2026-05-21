@@ -50,8 +50,10 @@ export function BackgroundMusicProvider({ children }: PropsWithChildren) {
       audioRef.current.addEventListener("play", () => setIsPlaying(true));
       audioRef.current.addEventListener("pause", () => setIsPlaying(false));
       audioRef.current.addEventListener("ended", () => setIsPlaying(false));
-      audioRef.current.addEventListener("error", (e) => {
-        console.error("Audio error:", e);
+      audioRef.current.addEventListener("error", () => {
+        if (import.meta.env.DEV) {
+          console.debug("Background audio failed to load or decode (expected if file missing or autoplay blocked).");
+        }
       });
     }
   }, []);

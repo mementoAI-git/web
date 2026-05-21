@@ -30,7 +30,7 @@ export function AuthFormPanel({
   className = "",
 }: AuthFormPanelProps) {
   return (
-    <div className={cn("group/auth-root box-content flex w-full flex-col gap-5 sm:gap-5", className)}>
+    <div className={cn("group/auth-root box-content flex w-full flex-col gap-5 px-0.5 sm:gap-5", className)}>
       {can_go_back ?
         <Link
           to="/login"
@@ -62,11 +62,12 @@ export function AuthFormPanel({
         : null}
       </header>
 
+      {include_auth_socials ?
+        <AuthSocials showDivider={!hide_auth_socials_divider} />
+      : null}
+
       <div className="box-content flex flex-col gap-4 sm:gap-5">
         {children}
-        {include_auth_socials ?
-          <AuthSocials showDivider={!hide_auth_socials_divider} />
-        : null}
         {footer ?
           <div className="flex items-center justify-center gap-2 text-center font-inter text-xs text-v3-text-weak sm:text-sm">
             {footer}

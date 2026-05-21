@@ -1,31 +1,49 @@
-import { describe, expect, it, beforeEach } from "vitest";
-import { http, HttpResponse } from "msw";
+import { describe, expect, it, beforeEach, vi } from "vitest";
+
+const { mockAxiosPost } = vi.hoisted(() => ({
+  mockAxiosPost: vi.fn(),
+}));
+
+vi.mock("axios", async () => {
+  const actual = await vi.importActual<typeof import("axios")>("axios");
+  return {
+    default: {
+      ...actual.default,
+      create: vi.fn(() => ({
+        post: mockAxiosPost,
+        interceptors: {
+          request: { use: vi.fn() },
+          response: { use: vi.fn() },
+        },
+      })),
+    },
+    isAxiosError: (err: any) => err && err.isAxiosError === true,
+  };
+});
 
 import endpoint from "./endpoint";
 import { fileUploadFetcher } from "./fetcher";
-import { server } from "@/test/mocks/server";
 import { seedAuth } from "@/test/auth-helpers";
-
-const UPLOAD_URL = `http://localhost:3000/api${endpoint.upload}`;
 
 describe("fileUploadFetcher — subscription gate (402)", () => {
   beforeEach(() => {
     seedAuth(true);
-    server.use(
-      http.post(UPLOAD_URL, () =>
-        HttpResponse.json(
-          {
-            success: false,
-            feature: "storage",
-            message: "Storage limit reached",
-          },
-          { status: 402 },
-        ),
-      ),
-    );
+    vi.clearAllMocks();
   });
 
   it("returns subscriptionGate and message when upload is denied", async () => {
+    mockAxiosPost.mockRejectedValue({
+      isAxiosError: true,
+      response: {
+        status: 402,
+        data: {
+          success: false,
+          feature: "storage",
+          message: "Storage limit reached",
+        },
+      },
+    });
+
     const file = new File(["x"], "photo.png", { type: "image/png" });
     const result = await fileUploadFetcher(endpoint.upload, { arg: { file } });
 

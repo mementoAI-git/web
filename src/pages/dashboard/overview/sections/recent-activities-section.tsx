@@ -1,11 +1,15 @@
 import { Link } from "react-router-dom";
-import { useMemo } from "react";
+import { Fragment, useMemo } from "react";
 import useSWR from "swr";
 import dayjs from "dayjs";
 import calendar from "dayjs/plugin/calendar";
 import endpoint from "@/api/endpoint";
 import { isEmpty } from "@/utility";
 import recentActivityIcon from "@/assets/icon/homepage/recent activities icon.svg";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
+import { TypographyH2, TypographyMuted } from "@/components/ui/typography";
 
 dayjs.extend(calendar);
 
@@ -34,22 +38,14 @@ interface ActivitiesResponse {
   };
 }
 
-function RecentActivityItem({
-  activity,
-  isFirst,
-}: {
-  activity: Activity;
-  isFirst?: boolean;
-}) {
+function RecentActivityItem({ activity }: { activity: Activity }) {
   const formattedDate = useMemo(
     () => formatActivityDate(activity.created_at),
     [activity.created_at],
   );
 
   return (
-    <div
-      className={`flex w-full items-start gap-3 py-3 ${!isFirst ? "border-t border-stroke-neutral-weaker" : ""}`}
-    >
+    <div className="flex w-full items-start gap-3 py-3">
       <div className="flex size-9 shrink-0 items-center justify-center">
         <img
           src={recentActivityIcon}
@@ -58,12 +54,12 @@ function RecentActivityItem({
         />
       </div>
       <div className="min-w-0 flex-1">
-        <p className="truncate font-inter text-[14px] font-medium text-text-neutral-strong">
+        <TypographyH2 className="line-clamp-2 font-inter text-base font-normal text-text-neutral-strong sm:text-base md:text-base lg:text-base sm:line-clamp-none sm:truncate">
           {activity.description}
-        </p>
-        <p className="font-inter text-xs text-text-neutral-weak">
+        </TypographyH2>
+        <TypographyMuted className="font-inter text-xs text-text-neutral-weak">
           {formattedDate}
-        </p>
+        </TypographyMuted>
       </div>
     </div>
   );
@@ -71,15 +67,18 @@ function RecentActivityItem({
 
 function RecentActivitySkeleton({ isFirst }: { isFirst?: boolean }) {
   return (
-    <div
-      className={`flex w-full items-start gap-3 py-3 animate-pulse ${!isFirst ? "border-t border-stroke-neutral-weaker" : ""}`}
-    >
-      <div className="size-9 shrink-0 rounded bg-fill-neutral-weaker" />
-      <div className="flex-1 space-y-2">
-        <div className="h-4 w-full rounded bg-fill-neutral-weaker" />
-        <div className="h-3 w-24 rounded bg-fill-neutral-weaker" />
+    <Fragment>
+      {!isFirst ? (
+        <Separator className="bg-stroke-neutral-weaker" />
+      ) : null}
+      <div className="flex w-full items-start gap-3 py-3">
+        <Skeleton className="size-9 shrink-0 rounded-md" />
+        <div className="flex-1 space-y-2">
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-3 w-24" />
+        </div>
       </div>
-    </div>
+    </Fragment>
   );
 }
 
@@ -90,18 +89,19 @@ export default function RecentActivitiesSection() {
   const activities = data?.data?.docs ?? [];
 
   return (
-    <div className="flex flex-1 flex-col gap-4">
-      <header className="flex w-full items-center justify-between gap-3">
-        <h2 className="font-garamond font-normal text-text-neutral-strong text-xl sm:text-2xl lg:text-[32px] leading-[38px]">
+    <div className="flex flex-1 flex-col gap-3 sm:gap-4">
+      <header className="flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+        <TypographyH2 className="font-garamond font-normal text-xl leading-tight text-text-neutral-strong sm:text-2xl sm:leading-[38px] lg:text-[32px]">
           Recent{" "}
           <i className="text-text-neutral-weaker">Activities</i>
-        </h2>
-        <Link
-          to="/stories"
-          className="shrink-0 font-inter text-sm font-medium text-text-brand-strong underline hover:no-underline"
+        </TypographyH2>
+        <Button
+          variant="link"
+          asChild
+          className="inline-flex min-h-[44px] shrink-0 items-center px-0 font-inter text-sm font-medium text-text-brand-strong underline hover:no-underline sm:min-h-0"
         >
-          See all
-        </Link>
+          <Link to="/stories">See all</Link>
+        </Button>
       </header>
       <div className="flex flex-col">
         {isLoading
@@ -113,17 +113,18 @@ export default function RecentActivitiesSection() {
             ))
           : !isEmpty(activities)
             ? activities.map((activity, index) => (
-                <RecentActivityItem
-                  key={activity._id ?? `activity-${index}`}
-                  activity={activity}
-                  isFirst={index === 0}
-                />
+                <Fragment key={activity._id ?? `activity-${index}`}>
+                  {index > 0 ? (
+                    <Separator className="bg-stroke-neutral-weaker" />
+                  ) : null}
+                  <RecentActivityItem activity={activity} />
+                </Fragment>
               ))
             : (
               <div className="py-8 text-center">
-                <p className="font-inter text-sm text-text-neutral-weak">
+                <TypographyMuted className="font-inter text-sm text-text-neutral-weak">
                   No recent activities
-                </p>
+                </TypographyMuted>
               </div>
             )}
       </div>

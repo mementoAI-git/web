@@ -5,6 +5,7 @@ import {
   ONBOARDING_ENRICHMENT_CATEGORY_OPTIONS,
   ENRICHMENT_CATEGORY_OPTIONS,
   DEFERRED_ENRICHMENT_CATEGORIES,
+  formatCurrentPriorityAsFocusSentence,
 } from "./enrichment-categories";
 
 describe("enrichment-categories", () => {
@@ -39,6 +40,22 @@ describe("enrichment-categories", () => {
     expect(
       migrateLegacyPriorityList(["relationships_people", "relationships_people"]),
     ).toEqual(["relationships_people"]);
+  });
+
+  it("formatCurrentPriorityAsFocusSentence reads as a first-person sentence", () => {
+    expect(formatCurrentPriorityAsFocusSentence("Self growth, building a family")).toBe(
+      "Right now I'm most focused on Self growth and building a family.",
+    );
+    expect(
+      formatCurrentPriorityAsFocusSentence(["memories_stories", "people_relationships"]),
+    ).toBe(
+      "Right now I'm most focused on Memories & Experiences and Relationships & People.",
+    );
+    expect(
+      formatCurrentPriorityAsFocusSentence("identity_self, work_purpose, everyday_life"),
+    ).toBe(
+      "Right now I'm most focused on Identity & Self, Work & Purpose, and Everyday Life.",
+    );
   });
 
   it("onboarding options exclude deferred categories", () => {

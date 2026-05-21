@@ -14,6 +14,7 @@ import useSWR from "swr";
 import { MemoryDropdown } from "@/pages/dashboard/chat/conversation/dropdown";
 import FileGallery from "@/components/file-gallery";
 import DOMPurify from "isomorphic-dompurify";
+import { TypographyH2 } from "@/components/ui/typography";
 
 /** Converts plain text to HTML with paragraphs for display when body has no HTML structure */
 function ensureHtmlFormat(body: string): string {
@@ -63,9 +64,9 @@ export function ViewMemory({ data, isMobile }: ViewMemoryProps) {
     >
       {/* Header */}
       <div className="flex items-center justify-between px-6 py-5 border-b border-stroke-neutral-weaker shrink-0">
-        <h2 className="font-garamond text-2xl font-medium text-text-neutral-strong truncate pr-4">
+        <TypographyH2 className="truncate pr-4 font-garamond text-2xl font-medium text-text-neutral-strong">
           {loading ? "" : memory?.title || "Story"}
-        </h2>
+        </TypographyH2>
         <div className="flex items-center gap-1 shrink-0">
           <div
             className="aspect-square flex justify-center items-center p-1.5 size-8 rounded-lg hover:bg-fill-neutral-weaker cursor-pointer"

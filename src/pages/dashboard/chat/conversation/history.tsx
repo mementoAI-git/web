@@ -94,15 +94,16 @@ export default function History({
 
       // Re-adjust scroll position after new messages are loaded
       setTimeout(() => {
-        if (container && oldScrollHeight > 0) {
-          const newScrollHeight = container.scrollHeight;
+        const el = containerRef.current;
+        if (!el) return;
+        if (oldScrollHeight > 0) {
+          const newScrollHeight = el.scrollHeight;
           const heightDifference = newScrollHeight - oldScrollHeight;
-          container.scrollTop = container.scrollTop + heightDifference;
+          el.scrollTop = el.scrollTop + heightDifference;
         } else {
-          // For the initial load, scroll to the bottom
-          container.scrollTo({
-            top: container.scrollHeight,
-            behavior: 'smooth'
+          el.scrollTo({
+            top: el.scrollHeight,
+            behavior: "smooth",
           });
         }
       }, 50);
@@ -147,7 +148,7 @@ export default function History({
           <ConversationHeader {...{ onViewDetails, memory }} />
         </div>
       ) : null}
-      <div className="px-0 sm:px-3 md:px-[30px] space-y-6">
+      <div className="min-w-0 space-y-6 px-0">
         {isLoadingMore && (
           <div className="py-3 flex justify-center items-center">
             <div className="flex gap-1.5 text-sm text-text-neutral-weaker">
@@ -163,7 +164,7 @@ export default function History({
             let lastMonthKey: string | null = null;
             return messages.map((m, i) => {
               const failed = Boolean((m as { sendFailed?: boolean }).sendFailed);
-              const attachments = (m as { attatchments?: { url: string; name: string }[] })
+              const attachments = (m as { attatchments?: { url: string; name: string; type?: string; _id?: string; size?: string | number }[] })
                 .attatchments;
               const storedReply = (m as { replyTo?: ChatReplyQuote }).replyTo;
               const replyBody = replyQuoteBodyFromMessage(m.text, attachments);
@@ -178,7 +179,7 @@ export default function History({
               const isAi = m.role !== "user";
 
               return (
-                <Fragment key={m._id ?? `msg-${i}`}>
+                <Fragment key={`${m._id ?? "msg"}-${i}`}>
                   {showDayDivider && validIso && iso ? (
                     <div
                       className="flex justify-center py-2"

@@ -11,6 +11,30 @@ const baseURL = import.meta.env.VITE_API_BASE_URL;
 class AuthService {
   private refreshPromise: Promise<IAuth> | null = null;
 
+  private readAuthRaw(): string | null {
+    try {
+      return localStorage.getItem(storageKeys.auth);
+    } catch {
+      return null;
+    }
+  }
+
+  private writeAuthRaw(value: string): void {
+    try {
+      localStorage.setItem(storageKeys.auth, value);
+    } catch {
+      // Ignore storage-write failures in restricted contexts.
+    }
+  }
+
+  private removeAuthRaw(): void {
+    try {
+      localStorage.removeItem(storageKeys.auth);
+    } catch {
+      // Ignore storage-clear failures in restricted contexts.
+    }
+  }
+
   isAccessTokenExpired(auth: IAuth): boolean {
     if (!auth?.expires_at) return true;
     return dayjs().add(5, "minutes").isAfter(dayjs(auth.expires_at));
@@ -57,7 +81,7 @@ class AuthService {
   }
 
   private async performTokenRefresh(): Promise<IAuth> {
-    const auth = localStorage.getItem(storageKeys.auth);
+    const auth = this.readAuthRaw();
 
     if (!auth) {
       throw new Error("No authentication data found");
@@ -78,10 +102,7 @@ class AuthService {
       if (response.data?.success && response.data?.data) {
         const newAuthData: IAuth = response.data.data;
 
-        localStorage.setItem(
-          storageKeys.auth,
-          JSON.stringify(newAuthData),
-        );
+        this.writeAuthRaw(JSON.stringify(newAuthData));
 
         return newAuthData;
       } else {
@@ -94,12 +115,12 @@ class AuthService {
   }
 
   clearAuth(): void {
-    localStorage.removeItem(storageKeys.auth);
+    this.removeAuthRaw();
   }
 
   async logout(): Promise<void> {
     try {
-      const auth = localStorage.getItem(storageKeys.auth);
+      const auth = this.readAuthRaw();
 
       if (auth) {
         const authData: IAuth = JSON.parse(auth);
@@ -118,12 +139,12 @@ class AuthService {
   }
 
   getAuthData(): IAuth | null {
-    const auth = localStorage.getItem(storageKeys.auth);
+    const auth = this.readAuthRaw();
     return auth ? JSON.parse(auth) : null;
   }
 
   setAuthData(authData: IAuth): void {
-    localStorage.setItem(storageKeys.auth, JSON.stringify(authData));
+    this.writeAuthRaw(JSON.stringify(authData));
   }
 }
 

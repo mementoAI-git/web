@@ -27,11 +27,16 @@ export type UserAvatarProps = {
   name?: string;
   email?: string;
   colorSeed?: string;
+  /** Maps to shadcn `Avatar` sizes: sm → `sm`, md → `default`, lg → `lg`. */
   size?: "sm" | "md" | "lg";
   src?: string | null;
 };
 
-const sizeMap = { sm: "size-6", md: "size-8", lg: "size-10" } as const;
+const userSizeToAvatarSize = {
+  sm: "sm",
+  md: "default",
+  lg: "lg",
+} as const satisfies Record<NonNullable<UserAvatarProps["size"]>, "sm" | "default" | "lg">;
 
 /**
  * Avatar with gradient fallbacks (no initials).
@@ -52,7 +57,8 @@ export function UserAvatar({
 
   return (
     <Avatar
-      className={cn("user-avatar shrink-0", sizeMap[size], className)}
+      size={userSizeToAvatarSize[size]}
+      className={cn("user-avatar shrink-0", className)}
       {...(showImage ? {} : { "aria-label": alt })}
     >
       {showImage ? <AvatarImage src={src!} alt={alt} /> : null}

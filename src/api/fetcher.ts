@@ -10,6 +10,7 @@ import {
   notifySubscriptionGate,
   parseSubscriptionGateFromBody,
 } from "@/features/pricing/subscription-errors";
+import endpoint from "./endpoint";
 
 const baseURL = import.meta.env.VITE_API_BASE_URL;
 
@@ -18,11 +19,20 @@ const axios = Axios.create({
   headers: { "Content-Type": "application/json" },
 });
 
-axios.interceptors.request.use((config) => {
-  const auth = localStorage.getItem(storageKeys.auth);
+function readAuthFromStorage(): { access_token?: string } | null {
+  try {
+    const raw = localStorage.getItem(storageKeys.auth);
+    if (!raw) return null;
+    return JSON.parse(raw) as { access_token?: string };
+  } catch {
+    return null;
+  }
+}
 
-  if (auth) {
-    const { access_token } = JSON.parse(auth);
+axios.interceptors.request.use((config) => {
+  const auth = readAuthFromStorage();
+  if (auth?.access_token) {
+    const { access_token } = auth;
     config.headers.Authorization = `Bearer ${access_token}`;
   }
 
@@ -101,24 +111,29 @@ export const fileUploadFetcher = async (url: string, { arg }: { arg: Record<stri
   }
 
   try {
-    const res = await axios.post(url, formData, {
-      onUploadProgress: (event) => {
-        if (onProgress && event.total) {
-          const percent = Math.round((event.loaded * 80) / event.total);
-          onProgress(percent);
-        }
-      },
+    const config: Record<string, any> = {
       // Axios default transformRequest JSON-stringifies FormData when Content-Type is
       // application/json (from the shared instance). Multer then sees no file parts.
       transformRequest: [
-        (data, headers) => {
+        (data: any, headers: any) => {
           if (typeof FormData !== "undefined" && data instanceof FormData) {
             headers.setContentType(undefined);
           }
           return data;
         },
       ],
-    });
+    };
+
+    if (onProgress) {
+      config.onUploadProgress = (event: any) => {
+        if (event.total) {
+          const percent = Math.round((event.loaded * 80) / event.total);
+          onProgress(percent);
+        }
+      };
+    }
+
+    const res = await axios.post(url, formData, config);
 
     if (res.status === 200 && onProgress) {
       onProgress(100);
@@ -170,8 +185,7 @@ export const fileUploadFetcher = async (url: string, { arg }: { arg: Record<stri
 
 export const streamlineFetcher = async (url: string, { arg }: { arg: Record<string, unknown> & { onChunk: (chunk: string) => void; onMeta?: (meta: { model?: string }) => void; signal?: AbortSignal } }) => {
   const { onChunk, onMeta, signal, ...payload } = arg;
-  const storedAuth = localStorage.getItem(storageKeys.auth);
-  const auth = storedAuth ? JSON.parse(storedAuth) : null;
+  const auth = readAuthFromStorage();
 
   const response = await fetch(`${baseURL}${url}`, {
     method: "POST",
@@ -185,23 +199,61 @@ export const streamlineFetcher = async (url: string, { arg }: { arg: Record<stri
 
   const reader = response.body?.getReader();
   const decoder = new TextDecoder("utf-8");
-  let is_done = false;
   const modelFromHeader = response.headers.get("x-ai-model") || undefined;
   onMeta?.({ model: modelFromHeader });
 
   if (response.ok && reader) {
-    while (!is_done) {
+    while (true) {
       const { value, done } = await reader.read();
-      if (done) is_done = true;
-
-      const chunk = decoder.decode(value, { stream: true });
-      onChunk(chunk);
+      if (value !== undefined && value.byteLength > 0) {
+        onChunk(decoder.decode(value, { stream: true }));
+      }
+      if (done) {
+        onChunk(decoder.decode());
+        break;
+      }
     }
   } else {
     const data = await response.json().catch(() => null);
     toast.error(data?.message || "Something went wrong, try again");
   }
 };
+
+/**
+ * POST JSON without surfacing error toasts (e.g. background offline queue sync).
+ * Returns whether the server responded with a successful payload.
+ */
+export async function postJsonQuiet(url: string, body: unknown): Promise<boolean> {
+  try {
+    const res = await axios.post(url, body, {
+      headers: { "Content-Type": "application/json" },
+    });
+    const payload = res.data as { status?: number; success?: boolean } | undefined;
+    if (res.status !== 200) return false;
+    if (payload?.success === false) return false;
+    if (typeof payload?.status === "number" && payload.status >= 400) return false;
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Transcription: no error toasts (Quick Capture voice notes). */
+export async function postTranscribeQuiet(file_id: string): Promise<{ full_text?: string } | null> {
+  try {
+    const res = await axios.post(
+      endpoint.transcription,
+      { file_id },
+      { headers: { "Content-Type": "application/json" } },
+    );
+    if (res.status !== 200) return null;
+    const payload = res.data as { success?: boolean; data?: { full_text?: string } } | undefined;
+    if (payload?.success === false) return null;
+    return payload?.data ?? null;
+  } catch {
+    return null;
+  }
+}
 
 const handleRequest = async (method: string, url: string, body?: { arg?: unknown }) => {
   try {

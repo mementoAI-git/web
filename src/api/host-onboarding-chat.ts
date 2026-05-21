@@ -119,14 +119,17 @@ export async function streamHostOnboardingChat(
   }
 
   let accumulated = "";
-  let streamDone = false;
-  while (!streamDone) {
+  // ReadableStream default reader often yields `{ done: true, value: undefined }` last.
+  // `TextDecoder.decode(undefined)` throws — skip empty chunks and flush at end.
+  while (true) {
     const { value, done } = await reader.read();
-    streamDone = done;
-    const chunk = decoder.decode(value, { stream: true });
-    if (chunk) {
-      accumulated += chunk;
+    if (value !== undefined && value.byteLength > 0) {
+      accumulated += decoder.decode(value, { stream: true });
       onVisibleUpdate(visibleOnboardingStreamPrefix(accumulated));
+    }
+    if (done) {
+      accumulated += decoder.decode();
+      break;
     }
   }
 

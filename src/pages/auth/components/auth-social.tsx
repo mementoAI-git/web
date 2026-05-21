@@ -47,6 +47,9 @@ function SocialButton({ title, desc, icon: Icon }: Provider) {
 export default function AuthSocials({ showDivider = true }: { showDivider?: boolean }) {
   return (
     <div className="flex flex-col gap-2">
+      {providers.map((p) => (
+        <SocialButton key={p.title} {...p} />
+      ))}
       {showDivider ?
         <div className="flex items-center justify-between gap-3">
           <div className="h-px flex-1 bg-v3-stroke-weak" />
@@ -54,9 +57,6 @@ export default function AuthSocials({ showDivider = true }: { showDivider?: bool
           <div className="h-px flex-1 bg-v3-stroke-weak" />
         </div>
       : null}
-      {providers.map((p) => (
-        <SocialButton key={p.title} {...p} />
-      ))}
     </div>
   );
 }

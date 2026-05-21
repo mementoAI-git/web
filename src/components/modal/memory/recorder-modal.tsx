@@ -120,25 +120,24 @@ export function AudioRecorderModal({ data }: RecorderModalProps) {
       className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 px-4"
       onClick={(e) => e.stopPropagation()}
     >
-      {/* Card with gradient border (orange/pink left, teal bottom) */}
-      <div
-        className="relative w-full max-w-[380px] rounded-3xl p-[2px] shadow-2xl"
-        style={{
-          background: "linear-gradient(135deg, rgba(234,179,168,0.6) 0%, transparent 40%, transparent 60%, rgba(94,192,191,0.5) 100%)",
-        }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="relative rounded-2xl bg-white/95 backdrop-blur-sm overflow-hidden">
+      <div className="relative w-full max-w-[400px] overflow-hidden rounded-3xl border border-stroke-neutral-weak bg-v3-bg shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <div className="relative overflow-hidden rounded-3xl bg-v3-bg">
           <button
             type="button"
             onClick={handleClose}
-            className="absolute top-3 right-3 size-8 flex items-center justify-center rounded-full bg-gray-100/80 hover:bg-gray-200 transition-colors text-gray-500 z-10"
+            className="absolute right-4 top-4 z-10 flex size-8 items-center justify-center rounded-full bg-fill-neutral-weaker text-icon-neutral-weak transition-colors hover:bg-fill-neutral-weak"
             aria-label="Close"
           >
             <TimesIcon width={10} height={10} />
           </button>
 
-          <div className="px-8 pt-8 pb-6 flex flex-col items-center">
+          <div className="flex flex-col items-center px-8 pb-6 pt-8">
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-stroke-neutral-weaker bg-fill-neutral-weaker/70 px-3 py-1">
+              <span className="size-2 rounded-full bg-fill-brand-strong" aria-hidden />
+              <p className="font-inter text-[11px] font-semibold uppercase tracking-[0.08em] text-text-neutral-weak">
+                Voice recorder
+              </p>
+            </div>
             {/* Main control: Mic (start) / Pause / Play (continue) */}
             <button
               type="button"
@@ -152,7 +151,7 @@ export function AudioRecorderModal({ data }: RecorderModalProps) {
                       : undefined
               }
               disabled={isDone}
-              className="size-20 rounded-full bg-gray-100 flex items-center justify-center mb-1 border border-gray-200/80 transition-opacity hover:opacity-90 disabled:pointer-events-none disabled:opacity-100"
+              className="mb-1 flex size-20 items-center justify-center rounded-full border border-stroke-neutral-weak bg-fill-neutral-weaker text-icon-neutral-strong transition-opacity hover:opacity-90 disabled:pointer-events-none disabled:opacity-100"
               aria-label={
                 isIdle
                   ? "Start recording"
@@ -163,20 +162,20 @@ export function AudioRecorderModal({ data }: RecorderModalProps) {
                       : "Recording"
               }
             >
-              {isIdle && <MicIcon className="size-9 shrink-0 text-gray-600" />}
-              {isRecording && <PauseRecIcon className="size-9 shrink-0 text-gray-600" />}
-              {isPaused && <PlayIcon className="size-9 shrink-0 text-gray-600" />}
-              {isDone && <MicIcon className="size-9 shrink-0 text-gray-400" />}
+              {isIdle && <MicIcon className="size-9 shrink-0 text-icon-neutral-strong" />}
+              {isRecording && <PauseRecIcon className="size-9 shrink-0 text-icon-neutral-strong" />}
+              {isPaused && <PlayIcon className="size-9 shrink-0 text-icon-neutral-strong" />}
+              {isDone && <MicIcon className="size-9 shrink-0 text-icon-neutral-weak" />}
             </button>
-            <p className="font-inter text-xs text-gray-500 mb-4" aria-live="polite">
-              {isIdle && "Click to record"}
-              {isRecording && "Pause"}
-              {isPaused && "Continue recording"}
+            <p className="mb-4 font-inter text-xs text-text-neutral-weak" aria-live="polite">
+              {isIdle && "Tap to start recording"}
+              {isRecording && "Tap to pause"}
+              {isPaused && "Tap to continue"}
               {isDone && "Recording ready"}
             </p>
 
             {/* Timer */}
-            <span className="font-mono text-lg text-gray-500 tabular-nums mb-5">
+            <span className="mb-5 font-mono text-lg tabular-nums text-text-neutral-strong">
               {formatTimer(rec.timer)}
             </span>
 
@@ -189,17 +188,13 @@ export function AudioRecorderModal({ data }: RecorderModalProps) {
                     const isFilled = heightPx > MIN_BAR_HEIGHT_PX;
                     if (!isFilled) {
                       return (
-                        <div
-                          key={i}
-                          className="size-1 rounded-full shrink-0 self-center bg-orange/35 transition-all duration-75 ease-out"
-                          aria-hidden
-                        />
+                        <div key={i} className="size-1 shrink-0 self-center rounded-full bg-fill-brand-strong/30 transition-all duration-75 ease-out" aria-hidden />
                       );
                     }
                     return (
                       <div
                         key={i}
-                        className="w-1 rounded-sm bg-orange transition-all duration-75 ease-out"
+                        className="w-1 rounded-sm bg-fill-brand-strong transition-all duration-75 ease-out"
                         style={{ height: `${heightPx}px` }}
                         aria-hidden
                       />
@@ -213,7 +208,7 @@ export function AudioRecorderModal({ data }: RecorderModalProps) {
                     return (
                       <div
                         key={i}
-                        className="size-1 rounded-full shrink-0 self-center bg-orange/35 transition-all duration-75 ease-out"
+                        className="size-1 shrink-0 self-center rounded-full bg-fill-brand-strong/30 transition-all duration-75 ease-out"
                         aria-hidden
                       />
                     );
@@ -221,7 +216,7 @@ export function AudioRecorderModal({ data }: RecorderModalProps) {
                   return (
                     <div
                       key={i}
-                      className="w-1 rounded-sm bg-orange transition-all duration-75 ease-out"
+                      className="w-1 rounded-sm bg-fill-brand-strong transition-all duration-75 ease-out"
                       style={{ height: `${heightPx}px` }}
                       aria-hidden
                     />
@@ -236,7 +231,7 @@ export function AudioRecorderModal({ data }: RecorderModalProps) {
                 <button
                   type="button"
                   onClick={handleReset}
-                  className="size-12 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center hover:bg-gray-200 transition-colors"
+                  className="flex size-12 items-center justify-center rounded-full border border-stroke-neutral-weak bg-fill-neutral-weaker text-icon-neutral-strong transition-colors hover:bg-fill-neutral-weak"
                   aria-label="Undo / Re-record"
                 >
                   <RefreshIcon className="size-5" />
@@ -244,13 +239,16 @@ export function AudioRecorderModal({ data }: RecorderModalProps) {
                 <button
                   type="button"
                   onClick={handleAddToPost}
-                  className="size-12 rounded-full bg-gray-200 text-gray-700 flex items-center justify-center hover:bg-gray-300 transition-colors"
+                  className="flex size-12 items-center justify-center rounded-full bg-fill-brand-strong text-primary-foreground transition-opacity hover:opacity-90"
                   aria-label="Send"
                 >
                   <PlanePaperIcon className="size-5" />
                 </button>
               </div>
             )}
+            <p className="mt-5 text-center font-inter text-[11px] text-text-neutral-weaker">
+              Audio stays private until you add it to your memory.
+            </p>
           </div>
         </div>
       </div>

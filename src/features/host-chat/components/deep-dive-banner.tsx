@@ -12,7 +12,7 @@ export function DeepDiveBanner({ dimensionLabel, onExit, className }: DeepDiveBa
   return (
     <div
       className={cn(
-        "flex shrink-0 items-center gap-2 rounded-full border border-v3-brand-strong/35 bg-[color-mix(in_srgb,var(--v3-brand-strong)_10%,white)] px-2 py-1 shadow-none ring-1 ring-v3-brand-strong/20",
+        "flex max-w-full shrink-0 flex-wrap items-center gap-1.5 rounded-2xl border border-v3-brand-strong/35 bg-[color-mix(in_srgb,var(--v3-brand-strong)_10%,white)] px-2 py-1.5 shadow-none ring-1 ring-v3-brand-strong/20 sm:flex-nowrap sm:rounded-full sm:py-1",
         className,
       )}
       role="status"

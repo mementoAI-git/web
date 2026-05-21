@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import * as yup from "yup";
 import AuthLayout from "../components/layout";
 import AuthSocials from "../components/auth-social";
+import { TypographyMuted } from "@/components/ui/typography";
 
 const schema = yup.object().shape({
   email: yup
@@ -128,16 +129,16 @@ export default function LoginPage() {
       title="Welcome back"
       subtitle="Please login to continue"
       footer={
-        <span className="font-inter text-center text-xs text-v3-text-weak">
+        <TypographyMuted className="text-center font-inter text-xs text-v3-text-weak">
           New user?
           <Link
-            to="/signup"
+            to="/register"
             className="font-inter text-xs font-semibold text-primary underline underline-offset-2"
           >
             {" "}
             Create an account
           </Link>
-        </span>
+        </TypographyMuted>
       }
     >
       <div className="flex flex-col gap-2">
@@ -165,7 +166,7 @@ export default function LoginPage() {
 
       <Card className="rounded-none border-0 bg-transparent py-0 shadow-none ring-0">
         <CardContent className="w-full p-0">
-          <form onSubmit={handleSubmit} className="box-content flex flex-col gap-3.5">
+          <form onSubmit={handleSubmit} className="box-content flex flex-col gap-3.5 px-0.5">
             <div className="grid gap-2">
               <Label htmlFor="login-email" className="font-inter text-sm">
                 Email

@@ -13,7 +13,7 @@ interface HostChatJumpPillsProps {
 }
 
 const chipClass =
-  "h-7 shrink-0 cursor-pointer border-v3-stroke-weak bg-white px-2.5 text-[11px] font-medium text-v3-text-strong hover:bg-v3-fill-weaker";
+  "h-6 shrink-0 cursor-pointer border-v3-stroke-weak bg-white px-2 text-[10px] font-medium text-v3-text-strong hover:bg-v3-fill-weaker sm:h-7 sm:px-2.5 sm:text-[11px]";
 
 export function HostChatJumpPills({
   monthKeys,
@@ -25,7 +25,10 @@ export function HostChatJumpPills({
   if (monthKeys.length > 0) {
     return (
       <div
-        className={cn("flex shrink-0 flex-nowrap items-center gap-1.5", className)}
+        className={cn(
+          "flex min-w-0 shrink-0 flex-nowrap items-center gap-1 sm:gap-1.5",
+          className,
+        )}
         role="navigation"
         aria-label="Jump to month"
       >
@@ -44,7 +47,10 @@ export function HostChatJumpPills({
 
   return (
     <div
-      className={cn("flex shrink-0 flex-nowrap items-center gap-1.5", className)}
+      className={cn(
+        "flex min-w-0 shrink-0 flex-nowrap items-center gap-1 sm:gap-1.5",
+        className,
+      )}
       role="navigation"
       aria-label="Start a topic"
     >
@@ -53,7 +59,10 @@ export function HostChatJumpPills({
           key={pill.category_key}
           variant="outline"
           asChild
-          className={cn(chipClass, "max-w-[min(100%,220px)] truncate rounded-full")}
+          className={cn(
+            chipClass,
+            "max-w-[min(100%,min(220px,calc(100vw-3rem)))] truncate rounded-full",
+          )}
           title={pill.starter}
         >
           <button type="button" onClick={() => onCategoryPill(pill.starter)}>

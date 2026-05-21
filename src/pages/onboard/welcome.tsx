@@ -1,5 +1,11 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import {
+  TypographyH1,
+  TypographyH2,
+  TypographyLead,
+  TypographyMuted,
+} from "@/components/ui/typography";
 import quillInk from "@/assets/image/onboarding/quill-ink.png";
 import phoneCall from "@/assets/image/onboarding/phon-call.png";
 import accordion from "@/assets/image/onboarding/accordion.png";
@@ -31,19 +37,19 @@ export default function WelcomePage() {
       <div className="flex-1 min-h-0 overflow-y-auto">
         <div className="flex flex-col gap-6">
           <div className="flex flex-col gap-3 sm:gap-4">
-            <h3 className="font-garamond text-2xl sm:text-[28px] md:text-[28px] font-normal leading-[32px] sm:leading-[36px] md:leading-[32px] text-v3-text-strong">
+            <TypographyH1 className="font-garamond text-2xl font-normal leading-[32px] text-v3-text-strong sm:text-[28px] sm:leading-[36px] md:text-[28px] md:leading-[32px]">
               Hello, Welcome to Memento
-            </h3>
-            <span className="font-garamond text-base sm:text-xl md:text-xl font-normal leading-[24px] sm:leading-[26px] md:leading-[26px] text-v3-text-strong">
+            </TypographyH1>
+            <TypographyLead className="font-garamond text-base font-normal leading-[24px] text-v3-text-strong sm:text-xl sm:leading-[26px] md:text-xl md:leading-[26px]">
               I&apos;m your personal interactive companion for self-reflection, memory, and legacy. Together, we&apos;ll
               capture your stories and experience, one thought, one moment at a time.
-            </span>
+            </TypographyLead>
           </div>
 
           <div className="flex flex-col gap-4 sm:gap-5">
-            <span className="font-inter text-sm leading-[20px] sm:leading-[24px] text-[var(--rdp-day-selected-background)] font-normal">
+            <TypographyMuted className="font-inter text-sm font-normal leading-[20px] text-[var(--rdp-day-selected-background)] sm:leading-[24px]">
               What can you do on Memento?
-            </span>
+            </TypographyMuted>
             <ul className="flex flex-col gap-4">
               {features.map((item) => (
                 <li
@@ -58,12 +64,12 @@ export default function WelcomePage() {
                     />
                   </div>
                   <div className="flex-1 space-y-1">
-                    <h6 className="font-garamond text-lg font-medium leading-[22px] sm:leading-[24px] text-v3-text-strong">
+                    <TypographyH2 className="font-garamond text-lg font-medium leading-[22px] text-v3-text-strong sm:leading-[24px]">
                       {item.title}
-                    </h6>
-                    <p className="font-garamond text-sm sm:text-lg md:text-xl font-normal leading-[20px] sm:leading-[24px] md:leading-[28px] text-v3-text-weak">
+                    </TypographyH2>
+                    <TypographyMuted className="font-garamond text-sm font-normal leading-[20px] text-v3-text-weak sm:text-lg sm:leading-[24px] md:text-xl md:leading-[28px]">
                       {item.subtitle}
-                    </p>
+                    </TypographyMuted>
                   </div>
                 </li>
               ))}
@@ -73,13 +79,13 @@ export default function WelcomePage() {
           <div className="w-full border-t border-v3-stroke-weak" />
 
           <div className="flex flex-col gap-0">
-            <h6 className="mb-2 font-azeret text-xs font-normal leading-[14px] sm:leading-[16px] text-v3-text-weak">
+            <TypographyMuted className="mb-2 font-azeret text-xs font-normal leading-[14px] text-v3-text-weak sm:leading-[16px]">
               MEMENTO IS PRIVATE BY DESIGN
-            </h6>
-            <span className="font-azeret text-xs font-normal leading-[18px] sm:leading-[18px] text-v3-text-weaker">
+            </TypographyMuted>
+            <TypographyMuted className="font-azeret text-xs font-normal leading-[18px] text-v3-text-weaker sm:leading-[18px]">
               Your entries on Memento are encrypted and only visible to you. You decide what to share,
               when to share, and with whom.
-            </span>
+            </TypographyMuted>
           </div>
         </div>
       </div>

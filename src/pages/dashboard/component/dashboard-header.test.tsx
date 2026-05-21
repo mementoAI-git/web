@@ -51,7 +51,7 @@ describe("DashboardHeader", () => {
   it("resolves the dashboard title for /capsule like other sections", () => {
     renderDashboardHeader(<DashboardHeader />, { route: "/capsule" });
 
-    expect(screen.getByText(/time capsule/i)).toBeTruthy();
+    expect(screen.getByText(/time capsules/i)).toBeTruthy();
     expect(screen.getByAltText("Streak")).toBeTruthy();
   });
 

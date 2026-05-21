@@ -3,14 +3,17 @@ import { CopyIcon, WaveIcon } from "@/components/icons";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import dayjs from "dayjs";
-import { CornerDownRight } from "lucide-react";
+import { CornerDownRight, Play, Mic } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { snippetReplyText } from "@/utility/chat-reply-prompt";
+import { isImage } from "@/pages/dashboard/time-capsule-new/utility/helpers";
+import { useModal } from "@/hooks/use-modal";
+import type { IFile } from "@/utility/interface";
 
 interface IBubbleProps {
   role?: "user" | "ai" | string
-  attatchments?: { url: string, name: string }[]
+  attatchments?: { url: string; name: string; type?: string; _id?: string; size?: string | number }[]
   text?: string
   duration?: number
   is_voice?: boolean
@@ -61,6 +64,7 @@ export default function Bubble({
 }: IBubbleProps) {
 
   const isUser = role === "user"
+  const { push } = useModal();
   const metaVisible = showMessageMeta ?? !compact;
   const timeLabel = metaVisible ? formatMessageTime(createdAt) : null;
   const canCopy = metaVisible && Boolean(text?.trim());
@@ -95,37 +99,132 @@ export default function Bubble({
 
   return (
     <div
-      className={cn("flex flex-col space-y-1 px-2", isUser && "items-end")}
+      className={cn(
+        "flex min-w-0 max-w-full flex-col space-y-1 px-0 sm:px-1",
+        isUser && "items-end",
+      )}
       title={bubbleTimeTitle}
     >
       {
         !isEmpty(attatchments) &&
         <div
           className={cn(
-            "flex w-fit max-w-[85%] gap-2 rounded-xl px-2 py-2",
+            "flex w-fit max-w-[85%] flex-wrap gap-2 rounded-xl px-2 py-2",
             isUser && "bg-fill-neutral-weaker",
             !isUser && "bg-transparent",
           )}
         >
           {
-            attatchments.map(({ url, name }, i) => (
-              <img
-                src={url}
-                width={148}
-                height={99}
-                className="flex-1 h-auto max-h-[99px] max-w-[148px] shrink rounded-lg object-cover"
-                alt={name}
-                key={i}
-              />
-            ))
+            attatchments.map(({ url, name, type, _id, size }, i) => {
+              const ext = name?.split(".").pop()?.toLowerCase() || "";
+              const isVideoFile =
+                type?.startsWith("video/") ||
+                ["mp4", "mov", "webm", "ogg"].includes(ext);
+              const isAudioFile =
+                type?.startsWith("audio/") ||
+                ["mp3", "wav", "m4a", "webm", "ogg", "aac"].includes(ext);
+              const isImageFile = isImage(name);
+
+              const handleClick = () => {
+                // Map attachments to IFile shape for the FilePreview modal
+                const files: IFile[] = attatchments.map((a) => ({
+                  url: a.url,
+                  name: a.name,
+                  type: a.type ?? "",
+                  _id: a._id ?? "",
+                  size: a.size ?? 0,
+                }));
+                push?.("file-preview", { files, startIndex: i });
+              };
+
+              if (isVideoFile) {
+                return (
+                  <button
+                    type="button"
+                    key={i}
+                    onClick={handleClick}
+                    className="relative flex h-auto max-h-[99px] max-w-[148px] flex-1 shrink cursor-pointer items-center justify-center overflow-hidden rounded-lg bg-black/80"
+                  >
+                    <video
+                      src={url}
+                      className="h-full w-full object-cover"
+                      muted
+                      preload="metadata"
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                      <div className="flex size-8 items-center justify-center rounded-full bg-white/90">
+                        <Play className="size-4 text-black" fill="currentColor" />
+                      </div>
+                    </div>
+                  </button>
+                );
+              }
+
+              if (isAudioFile) {
+                return (
+                  <button
+                    type="button"
+                    key={i}
+                    onClick={handleClick}
+                    className="flex h-[56px] w-[148px] cursor-pointer items-center gap-2 rounded-lg bg-fill-neutral-weakest px-3 py-2 transition-colors hover:bg-fill-neutral-weaker"
+                  >
+                    <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-fill-brand-weak">
+                      <Mic className="size-4 text-text-brand-strong" />
+                    </div>
+                    <span className="min-w-0 flex-1 truncate font-inter text-xs text-text-neutral-strong">
+                      {name || "Audio"}
+                    </span>
+                  </button>
+                );
+              }
+
+              if (isImageFile) {
+                return (
+                  <button
+                    type="button"
+                    key={i}
+                    onClick={handleClick}
+                    className="cursor-pointer overflow-hidden rounded-lg"
+                  >
+                    <img
+                      src={url}
+                      width={148}
+                      height={99}
+                      className="h-auto max-h-[99px] max-w-[148px] flex-1 shrink rounded-lg object-cover transition-opacity hover:opacity-90"
+                      alt={name}
+                    />
+                  </button>
+                );
+              }
+
+              // Fallback for other file types (PDF, etc.)
+              return (
+                <button
+                  type="button"
+                  key={i}
+                  onClick={handleClick}
+                  className="flex h-[56px] w-[148px] cursor-pointer items-center gap-2 rounded-lg bg-fill-neutral-weakest px-3 py-2 transition-colors hover:bg-fill-neutral-weaker"
+                >
+                  <span className="min-w-0 flex-1 truncate font-inter text-xs text-text-neutral-strong">
+                    {name || "File"}
+                  </span>
+                </button>
+              );
+            })
           }
         </div>
       }
-      <div className={cn(isUser && "w-fit max-w-[85%]")}>
+      <div
+        className={cn(
+          "min-w-0 max-w-full",
+          isUser && "w-fit max-w-[min(470px,85%)]",
+          !isUser && "w-full",
+        )}
+      >
         <div
           className={cn(
-            "w-full rounded-[8px] p-2",
-            isUser && "max-w-[470px]",
+            "w-full max-w-full rounded-[8px] p-2 sm:p-2.5",
+            isUser && "max-w-[min(470px,85%)]",
             isUser && compact && "bg-fill-neutral-weaker",
             isUser && !compact && "bg-fill-neutral-weaker",
             !isUser && "bg-transparent",
@@ -154,7 +253,7 @@ export default function Bubble({
           ) : null}
           <span
             className={cn(
-              "text-text-neutral-strong font-georgia font-normal",
+              "block min-w-0 max-w-full text-text-neutral-strong font-georgia font-normal break-words [&_pre]:max-w-full [&_pre]:overflow-x-auto [&_table]:block [&_table]:max-w-full [&_table]:overflow-x-auto",
               compact
                 ? "text-[14px] leading-relaxed [&_p]:m-0 [&_p]:text-[14px] [&_p]:leading-relaxed"
                 : "text-base leading-relaxed md:text-xl md:leading-snug [&_p]:m-0 [&_p]:text-base [&_p]:leading-relaxed [&_p]:md:text-xl [&_p]:md:leading-snug",
@@ -198,9 +297,9 @@ export default function Bubble({
         </div>
         {metaVisible &&
           (timeLabel || canCopy || (onReply && hasReplyableContent)) && (
-          <div
+            <div
             className={cn(
-              "mt-1 flex max-w-[470px] flex-wrap items-center gap-1 px-0.5",
+              "mt-1 flex max-w-[min(470px,100%)] flex-wrap items-center gap-1 px-0.5",
               isUser && "ml-auto justify-end",
               !isUser && "justify-start",
             )}
@@ -242,7 +341,7 @@ export default function Bubble({
         {isUser && sendFailed && onRetry ? (
           <div
             className={cn(
-              "mt-2 flex max-w-[470px] flex-wrap items-center gap-2 px-0.5",
+              "mt-2 flex max-w-[min(470px,100%)] flex-wrap items-center gap-2 px-0.5",
               "ml-auto justify-end",
             )}
           >
@@ -344,12 +443,21 @@ export function Typing() {
   }, [loadingPhrases.length]);
 
   return (
-    <div className="flex items-center gap-2 px-5 py-3" aria-live="polite" aria-label="Assistant is typing">
+    <div
+      className="flex min-w-0 flex-wrap items-center gap-2 px-0 py-3 sm:flex-nowrap sm:px-1"
+      aria-live="polite"
+      aria-label="Assistant is typing"
+    >
       <div
-        className="h-3.5 w-3.5 animate-spin rounded-full border border-solid border-[#1ED348] border-t-transparent"
+        className="h-3.5 w-3.5 shrink-0 animate-spin rounded-full border border-solid border-[#1ED348] border-t-transparent"
         aria-hidden
       />
-      <span className="font-inter text-sm" style={{ color: "#1ED348" }}>{loadingPhrases[phraseIdx]}</span>
+      <span
+        className="min-w-0 max-w-full font-inter text-xs text-[#1ED348] sm:text-sm"
+        style={{ wordBreak: "break-word" }}
+      >
+        {loadingPhrases[phraseIdx]}
+      </span>
       <div className="w-1.5 h-1.5 bg-icon-neutral-weaker rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
       <div className="w-1.5 h-1.5 bg-icon-neutral-weaker rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
       <div className="w-1.5 h-1.5 bg-icon-neutral-weaker rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>

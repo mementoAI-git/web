@@ -11,6 +11,7 @@ import useForm from "@/hooks/use-form";
 import { toast } from "sonner";
 import * as yup from "yup";
 import AuthLayout from "../components/layout";
+import { TypographyMuted } from "@/components/ui/typography";
 
 const schema = yup.object().shape({
   first_name: yup.string().required("First name is required").trim(),
@@ -62,7 +63,7 @@ export default function RegisterPage() {
       title="Create account"
       include_auth_socials
       footer={
-        <span className="font-inter text-center text-xs text-v3-text-weak">
+        <TypographyMuted className="text-center font-inter text-xs text-v3-text-weak">
           Already have an account?
           <Link
             to="/login"
@@ -71,12 +72,12 @@ export default function RegisterPage() {
             {" "}
             Login
           </Link>
-        </span>
+        </TypographyMuted>
       }
     >
       <Card className="rounded-none border-0 bg-transparent py-0 shadow-none ring-0">
         <CardContent className="w-full p-0">
-          <form onSubmit={handleSubmit} className="box-content flex flex-col gap-3.5">
+          <form onSubmit={handleSubmit} className="box-content flex flex-col gap-3.5 px-0.5">
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="grid gap-2 box-content">
                 <Label htmlFor="register-first-name" className="font-inter text-sm">
@@ -157,11 +158,11 @@ export default function RegisterPage() {
               {errors.password ? <p className="font-inter text-xs text-destructive">{errors.password}</p> : null}
             </div>
 
-            <small className="px-1 text-center font-inter text-xs leading-5 text-v3-text-weak">
+            <TypographyMuted className="px-1 text-center font-inter text-xs leading-5 text-v3-text-weak">
               By clicking "Create account" you agree to the{" "}
               <span className="text-xs font-medium text-primary underline">Terms of Use</span> and{" "}
               <span className="text-xs font-medium text-primary underline">Privacy Policy</span>
-            </small>
+            </TypographyMuted>
 
             <Button type="submit" className="h-11 w-full rounded-[8px] bg-v3-brand-strong text-white hover:bg-v3-brand-strong/90" disabled={isMutating}>
               {isMutating ? (

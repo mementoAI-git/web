@@ -114,6 +114,9 @@ export interface IMemory {
   level: number;
   refrence: string;
   prompt?: string;
+  prompt_text?: string;
+  prompt_type?: "static" | "ai-generated";
+  reflection_day_key?: string;
   last_opened: string;
   created_at: string;
   updated_at: string;
@@ -125,6 +128,12 @@ export interface IMemory {
   groups?: IMemoryAccessItem[];
   /** Beneficiaries with access to this story (from Add memory modal) */
   beneficiaries?: IMemoryAccessItem[];
+  /** Quick Capture flow vs full Add memory */
+  capture_source?: "standard" | "quick";
+  /** AI title/tags enrichment for Quick Capture */
+  enrichment_status?: "pending" | "complete" | "failed";
+  /** Story visibility; omitted on older documents means private */
+  visibility?: "private" | "everyone";
 }
 
 export interface IPagination<T> {
@@ -151,6 +160,8 @@ export interface IBeneficiary {
   email: string;
   relationship: string;
   level: number;
+  /** Display color index 0–6 when set in API; otherwise UI may derive from id */
+  color?: number;
   user: IBeneficiaryUser;
   benefactor: IBeneficiaryUser;
   accepted_at?: string;
@@ -218,6 +229,23 @@ export interface IPrompt {
 export interface IPromptWithAnswer extends IPrompt {
   answered: boolean;
 }
+
+/** GET /prompts?date_key= — daily dashboard slots */
+export type DashboardPromptSlot =
+  | {
+      slot_kind: "ai";
+      display_label: string;
+      answered: boolean;
+      ai_prompt_text: string;
+      reflection_day_key: string;
+    }
+  | {
+      slot_kind: "static";
+      display_label?: string;
+      answered: boolean;
+      prompt: IPrompt;
+      reflection_day_key: string;
+    };
 
 export interface IMessage {
   _id?: string;

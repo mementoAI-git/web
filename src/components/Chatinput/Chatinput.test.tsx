@@ -68,7 +68,6 @@ describe("Chatinput", () => {
       "Type text here... Type / for formatting",
     );
     fireEvent.change(textarea, { target: { value: "/", selectionStart: 1 } });
-    expect(screen.getByText("Basic blocks")).toBeInTheDocument();
     expect(screen.getByText("Heading 1")).toBeInTheDocument();
     expect(screen.getByText("Bold")).toBeInTheDocument();
   });
@@ -79,11 +78,11 @@ describe("Chatinput", () => {
       "Type text here... Type / for formatting",
     );
     fireEvent.change(textarea, { target: { value: "/", selectionStart: 1 } });
-    expect(screen.getByText("Basic blocks")).toBeInTheDocument();
+    expect(screen.getByText("Heading 1")).toBeInTheDocument();
 
     fireEvent.change(textarea, { target: { value: "", selectionStart: 0 } });
     fireEvent.select(textarea);
-    expect(screen.queryByText("Basic blocks")).not.toBeInTheDocument();
+    expect(screen.queryByText("Heading 1")).not.toBeInTheDocument();
   });
 
   it("applies format when user selects a command from the menu", () => {
@@ -104,7 +103,7 @@ describe("Chatinput", () => {
       "Type text here... Type / for formatting",
     );
     fireEvent.change(textarea, { target: { value: "/", selectionStart: 1 } });
-    expect(screen.getByText("Basic blocks")).toBeInTheDocument();
+    expect(screen.getByText("Heading 1")).toBeInTheDocument();
 
     fireEvent.keyDown(document, { key: "Enter" });
     expect(textarea).toHaveValue("# ");
@@ -171,10 +170,10 @@ describe("Chatinput", () => {
     fireEvent.paste(textarea, { clipboardData: clipboardData as never });
 
     await waitFor(() => {
-      expect(screen.getByAltText("Preview")).toBeInTheDocument();
+      expect(screen.getByAltText("clip.png")).toBeInTheDocument();
     });
 
-    expect(textarea.compareDocumentPosition(screen.getByAltText("Preview"))).toBe(
+    expect(textarea.compareDocumentPosition(screen.getByAltText("clip.png"))).toBe(
       Node.DOCUMENT_POSITION_PRECEDING,
     );
   });
@@ -200,7 +199,7 @@ describe("Chatinput", () => {
       "Type text here... Type / for formatting",
     );
     fireEvent.change(textarea, { target: { value: "/", selectionStart: 1 } });
-    expect(screen.getByText("Basic blocks")).toBeInTheDocument();
+    expect(screen.getByText("Heading 1")).toBeInTheDocument();
     fireEvent.keyDown(document, { key: "Enter", ctrlKey: true });
     expect(textarea).toHaveValue("/");
   });

@@ -5,7 +5,6 @@ import cardFileBoxIcon from "@/assets/icon/folder/noto_card-file-box.png";
 import compassIcon from "@/assets/icon/folder/compass.png";
 import hourglassIcon from "@/assets/icon/folder/noto_hourglass-not-done.png";
 import gearIcon from "@/assets/icon/folder/noto_gear.png";
-import inviteIcon from "@/assets/icon/folder/noto_couple-with-heart-woman-man-light-skin-tone-medium-light-skin-tone.png";
 
 /** Sub-routes under /settings/:tab (full-page settings). */
 export const settingNavigations = [
@@ -20,10 +19,9 @@ export const topNavigations = [
   { icon: chatsIcon, title: "Chat", link: "/chat" },
   { icon: cardFileBoxIcon, title: "My stories", link: "/stories" },
   { icon: compassIcon, title: "Explore topics", link: "/explore" },
-  { icon: hourglassIcon, title: "Time capsule", link: "/capsule" },
+  { icon: hourglassIcon, title: "Time capsules", link: "/capsule" },
 ];
 
 export const bottomNavigations = [
   { icon: gearIcon, title: "Settings", link: "/settings" },
-  { icon: inviteIcon, title: "Invite friends", link: "/invite-friends" },
 ];

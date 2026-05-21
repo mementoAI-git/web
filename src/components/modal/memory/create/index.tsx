@@ -1,17 +1,15 @@
 "use client";
 
-import { useState, useRef, useCallback, useEffect } from "react";
-import { useEditor, EditorContent } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
-import Placeholder from "@tiptap/extension-placeholder";
-import Link from "@tiptap/extension-link";
-import Underline from "@tiptap/extension-underline";
+import { useState, useRef, useCallback, useEffect, useMemo } from "react";
+import { EditorContent } from "@tiptap/react";
 import { useModal } from "@/hooks/use-modal";
+import { useStore } from "@/hooks/use-store";
 import { useNavigate } from "react-router-dom";
 import useForm from "@/hooks/use-form";
 import useFileUpload from "@/hooks/use-file-upload";
+import useSWR from "swr";
 import useSWRMutation from "swr/mutation";
-import { postFetcher } from "@/api/fetcher";
+import { fetcher, postFetcher } from "@/api/fetcher";
 import endpoint from "@/api/endpoint";
 import { parseSubscriptionGateError } from "@/features/pricing/subscription-errors";
 import { cn, isEmpty } from "@/utility";
@@ -21,13 +19,31 @@ import { v4 as uuidv4 } from "uuid";
 import {
   SUPPORTED_FILE_TYPES,
   MEMORY_ATTACHMENT_ACCEPT,
+  MEMORY_ACCEPT_AUDIO,
+  MEMORY_ACCEPT_DOCUMENTS,
+  MEMORY_ACCEPT_IMAGES,
+  MEMORY_ACCEPT_VIDEOS,
   inferMimeType,
   isSupportedFileMime,
   uploadMimeBaseType,
 } from "@/utility/constant";
 import { HeadingIcon, TimesIcon, LinkIcon, UnorderedListIcon } from "@/components/icons";
-import { AccessField, buildCreateMemoryPayload } from "./access-field";
+import {
+  AccessField,
+  buildCreateMemoryPayload,
+  type MemoryShareAudience,
+  type SearchResultItem,
+} from "./access-field";
+import { beneficiaryToAccessItem } from "./beneficiary-to-access-item";
+import {
+  htmlFromQuickCaptureNote,
+  parseQuickCaptureDraftJson,
+  quickCaptureDraftKindLabel,
+  quickCaptureDraftPreviewLine,
+  scanQuickCaptureDraftKeys,
+} from "@/lib/quick-capture-drafts";
 import { TagsField } from "./tags-field";
+import { TitleField } from "./title-field";
 import Picker from "@emoji-mart/react";
 import emojiData from "@emoji-mart/data";
 import Spinner from "@/components/spinner";
@@ -37,13 +53,12 @@ import { Sheet } from "react-modal-sheet";
 import { LinkInput } from "@/components/memory/text-area/link-input";
 import { SlashCommandPopup } from "@/components/memory/text-area/slash-command-popup";
 import { SLASH_COMMANDS } from "@/components/memory/text-area/slash-commands";
+import { useMemoryEditor } from "@/components/memory/text-area/use-memory-editor";
 import { VideoRecorder } from "@/components/recorder/video";
 import type { ComponentRef, ReactNode } from "react";
 import { FileThumbnails } from "./file-thumbnails";
 import { UpgradePrompt } from "@/features/pricing/upgrade-prompt";
 import { useFeatureFlags } from "@/contexts/feature-flags";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Card,
   CardContent,
@@ -67,7 +82,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import type { IOnUploadPayload } from "@/utility/interface";
+import type { IBeneficiary, IOnUploadPayload } from "@/utility/interface";
 import {
   Image as ImageIcon,
   ListOrdered,
@@ -103,28 +118,26 @@ interface CreateMemoryProps {
 
 export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
   const { close, open, push, registerCloseGuard } = useModal();
+  const { user } = useStore();
   const { canUse } = useFeatureFlags();
   const navigate = useNavigate();
   const [showUploadGate, setShowUploadGate] = useState(false);
-  const fileInputMediaRef = useRef<HTMLInputElement>(null);
-  const fileInputAllRef = useRef<HTMLInputElement>(null);
+  const fileInputImageRef = useRef<HTMLInputElement>(null);
+  const fileInputVideoRef = useRef<HTMLInputElement>(null);
   const fileInputAudioRef = useRef<HTMLInputElement>(null);
+  const fileInputDocsRef = useRef<HTMLInputElement>(null);
+  const fileInputAllRef = useRef<HTMLInputElement>(null);
   const videoRecorderRef = useRef<ComponentRef<typeof VideoRecorder>>(null);
 
   const [showEmoji, setShowEmoji] = useState(false);
-  const [showLinkInput, setShowLinkInput] = useState(false);
-  const [linkPosition, setLinkPosition] = useState({ top: 0, left: 0 });
-  const [showSlashMenu, setShowSlashMenu] = useState(false);
-  const [slashPosition, setSlashPosition] = useState({ top: 0, left: 0 });
-  const [slashSelectedIndex, setSlashSelectedIndex] = useState(0);
   const [showCloseConfirmation, setShowCloseConfirmation] = useState(false);
   const [drafts, setDrafts] = useState<MemoryDraft[]>([]);
   const emojiPickerRef = useRef<HTMLDivElement>(null);
   const emojiPickerPortalRef = useRef<HTMLDivElement>(null);
-  const [selectedAccess, setSelectedAccess] = useState<
-    Array<{ id: string; name: string; source: "group" | "beneficiary" }>
-  >([]);
+  const [selectedAccess, setSelectedAccess] = useState<SearchResultItem[]>([]);
+  const [shareAudience, setShareAudience] = useState<MemoryShareAudience>("private");
   const [tags, setTags] = useState<string[]>([]);
+  const [quickCaptureDraftNonce, setQuickCaptureDraftNonce] = useState(0);
 
   const [showVideoRecorder, setShowVideoRecorder] = useState(false);
   const [videoRecordedFile, setVideoRecordedFile] = useState<File | null>(null);
@@ -133,6 +146,17 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
 
   const { trigger, isMutating } = useSWRMutation(endpoint.memories, postFetcher);
   const { files, handleUpload, handleDeleteFile, setFiles } = useFileUpload();
+  const { data: beneficiariesRes } = useSWR(`${endpoint.beneficiaries}?page=1&limit=100`, fetcher, {
+    revalidateOnFocus: false,
+  });
+  const beneficiaryDocs: IBeneficiary[] = useMemo(
+    () => beneficiariesRes?.data?.docs ?? [],
+    [beneficiariesRes?.data?.docs],
+  );
+  const quickCaptureKeys = useMemo(() => {
+    void quickCaptureDraftNonce;
+    return scanQuickCaptureDraftKeys(user?.email);
+  }, [user?.email, quickCaptureDraftNonce]);
 
   const { values, handleChange, handleSubmit, handleValue, setValues } = useForm({
     initial: { ...initial, ...data?.payload },
@@ -153,7 +177,8 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
         tags,
         "save",
         selectedAccess,
-        uploadedFiles.length > 0 ? { attachments: uploadedFiles } : {}
+        shareAudience,
+        uploadedFiles.length > 0 ? { attachments: uploadedFiles } : {},
       );
 
       try {
@@ -165,6 +190,7 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
           setFiles([]);
           setTags([]);
           setSelectedAccess([]);
+          setShareAudience("private");
         } else {
           toast.error(
             typeof result?.message === "string" ? result.message : "Could not save your story. Try again.",
@@ -222,76 +248,57 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
 
   const latestDirtyRef = useRef<() => boolean>(() => false);
 
-  const editor = useEditor({
-    immediatelyRender: false,
-    extensions: [
-      StarterKit.configure({
-        heading: { levels: [1, 2, 3, 4] },
-        link: false,
-      }),
-      Placeholder.configure({ placeholder: "What's on your mind today? Type / for formatting options" }),
-      Link.configure({
-        openOnClick: false,
-        HTMLAttributes: {
-          class: "text-text-brand-strong underline cursor-pointer",
-          target: "_blank",
-          rel: "noopener noreferrer",
-        },
-      }),
-      Underline,
-    ],
-    content: values.body || "",
-    editorProps: {
-      attributes: {
-        class: "prose prose-sm focus:outline-none min-h-[140px] px-4 py-4 text-sm text-text-neutral-strong",
-      },
-      handleDOMEvents: {
-        paste: (_view, event) => {
-          const e = event as ClipboardEvent;
-          const items = Array.from(e.clipboardData?.items || []);
-          const fileItems = items.filter((item) => item.kind === "file");
-          if (fileItems.length === 0) return false;
-          e.preventDefault();
-          fileItems.forEach((item) => {
-            const file = item.getAsFile();
-            if (!file) return;
-            queueFileUploadRef.current(file);
-          });
-          return true;
-        },
-      },
-    },
-    onUpdate: ({ editor }) => {
-      handleValue("body", editor.getHTML());
-
-      const { state } = editor;
-      const { selection } = state;
-      const { $anchor } = selection;
-      const textBefore = $anchor.parent.textContent.slice(0, $anchor.parentOffset);
-      const lastSlashIndex = textBefore.lastIndexOf("/");
-
-      if (lastSlashIndex === -1) {
-        setShowSlashMenu(false);
-      } else {
-        const query = textBefore.slice(lastSlashIndex + 1);
-        if (query.includes(" ") || query.includes("\n")) {
-          setShowSlashMenu(false);
-        } else {
-          const coords = editor.view.coordsAtPos(selection.from);
-          setSlashPosition({ top: coords.top + 20, left: coords.left });
-          setShowSlashMenu(true);
-          setSlashSelectedIndex(0);
-        }
-      }
-    },
+  const {
+    editor,
+    showLinkInput,
+    setShowLinkInput,
+    linkPosition,
+    showSlashMenu,
+    slashPosition,
+    slashSelectedIndex,
+    setSlashSelectedIndex,
+    openLinkInputAtSelection,
+    submitLink,
+    selectSlashCommand,
+  } = useMemoryEditor({
+    initialContent: values.body || "",
+    placeholder: "What's on your mind today? Type / for formatting options",
+    editorClassName: "prose prose-sm focus:outline-none min-h-[140px] px-4 py-4 text-sm text-text-neutral-strong",
+    linkClassName: "text-text-brand-strong underline cursor-pointer",
+    onHtmlChange: (html) => handleValue("body", html),
   });
+
+  useEffect(() => {
+    if (!editor) return;
+    editor.setOptions({
+      editorProps: {
+        ...(editor.options?.editorProps ?? {}),
+        handleDOMEvents: {
+          paste: (_view, event) => {
+            const e = event as ClipboardEvent;
+            const items = Array.from(e.clipboardData?.items || []);
+            const fileItems = items.filter((item) => item.kind === "file");
+            if (fileItems.length === 0) return false;
+            e.preventDefault();
+            fileItems.forEach((item) => {
+              const file = item.getAsFile();
+              if (!file) return;
+              queueFileUploadRef.current(file);
+            });
+            return true;
+          },
+        },
+      },
+    });
+  }, [editor]);
 
   latestDirtyRef.current = () =>
     files.length > 0 ||
     values.title.trim().length > 0 ||
     (editor?.getText()?.trim().length ?? 0) > 0 ||
     tags.length > 0 ||
-    selectedAccess.length > 0;
+    selectedAccess.length > 0 ||
+    shareAudience !== "private";
 
   useEffect(() => {
     if (!registerCloseGuard) return;
@@ -419,33 +426,11 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
   };
 
   const handleLinkClick = () => {
-    if (!editor) return;
-    const { from } = editor.state.selection;
-    const coords = editor.view.coordsAtPos(from);
-    setLinkPosition({ top: coords.top - 100, left: coords.left });
-    setShowLinkInput(true);
+    openLinkInputAtSelection();
   };
 
   const handleLinkSubmit = (text: string, url: string) => {
-    if (!editor) return;
-    if (!editor.state.selection.empty) {
-      editor
-        .chain()
-        .focus()
-        .deleteSelection()
-        .insertContent({ type: "text", marks: [{ type: "link", attrs: { href: url } }], text })
-        .insertContent(" ")
-        .focus()
-        .run();
-    } else {
-      editor
-        .chain()
-        .focus()
-        .insertContent({ type: "text", marks: [{ type: "link", attrs: { href: url } }], text })
-        .insertContent(" ")
-        .focus()
-        .run();
-    }
+    submitLink(text, url);
   };
 
   const handleLoadDraft = (draft: MemoryDraft) => {
@@ -461,6 +446,54 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
     editor?.commands.setContent(draft.body || "");
   };
 
+  const handleLoadQuickCaptureDraft = useCallback(
+    (storageKey: string) => {
+      const raw = localStorage.getItem(storageKey);
+      const d = raw ? parseQuickCaptureDraftJson(raw) : null;
+      if (!d) return;
+      const note = typeof d.note === "string" ? d.note : "";
+      const html = htmlFromQuickCaptureNote(note);
+      const pinned = d.daily_prompt?.pinned_text?.trim();
+      const title =
+        (pinned && pinned.slice(0, 120)) ||
+        note.trim().split(/\n/)[0]?.trim().slice(0, 120) ||
+        "Quick capture";
+      setValues((prev) => ({ ...prev, title, body: html }));
+      setTags([]);
+      const restored: IOnUploadPayload[] = (d.attachments || []).map((a) => ({
+        id: a.clientId,
+        file: null,
+        progress: 100,
+        duration: a.durationSec,
+        uploadedFile: {
+          _id: a._id,
+          url: typeof a.url === "string" ? a.url : "",
+          name: typeof a.name === "string" ? a.name : "",
+          size: 0,
+          type: typeof a.type === "string" ? a.type : "",
+        },
+      }));
+      setFiles(restored);
+      editor?.commands.setContent(html || "");
+      const ids = new Set(Array.isArray(d.selectedBeneficiaryIds) ? d.selectedBeneficiaryIds : []);
+      const access = beneficiaryDocs
+        .map((b) => beneficiaryToAccessItem(b))
+        .filter((x): x is SearchResultItem => x != null && ids.has(x.id));
+      setSelectedAccess(access);
+      setShareAudience("private");
+    },
+    [beneficiaryDocs, editor, setFiles, setValues, setTags, setSelectedAccess],
+  );
+
+  const handleDeleteQuickCaptureDraft = useCallback((storageKey: string) => {
+    try {
+      localStorage.removeItem(storageKey);
+    } catch {
+      /* ignore */
+    }
+    setQuickCaptureDraftNonce((n) => n + 1);
+  }, []);
+
   const handleDeleteDraft = (draftId: string) => {
     setDrafts((prev) => {
       const next = prev.filter((draft) => draft.id !== draftId);
@@ -475,30 +508,7 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
   };
 
   const handleSlashCommandSelect = (command: (typeof SLASH_COMMANDS)[0]) => {
-    if (!editor) return;
-    const { state } = editor;
-    const { selection } = state;
-    const { $anchor } = selection;
-    const textBefore = $anchor.parent.textContent.slice(0, $anchor.parentOffset);
-    const lastSlashIndex = textBefore.lastIndexOf("/");
-
-    if (lastSlashIndex !== -1) {
-      const from = selection.from - (textBefore.length - lastSlashIndex);
-      const to = selection.from;
-
-      editor
-        .chain()
-        .focus()
-        .deleteRange({ from, to })
-        .run();
-
-      command.command({
-        editor,
-        range: { from, to },
-      });
-    }
-
-    setShowSlashMenu(false);
+    selectSlashCommand(command);
   };
 
   const { from, to } = editor?.state.selection || { from: 0, to: 0 };
@@ -526,10 +536,34 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
   const formContent = (
     <>
       <input
-        ref={fileInputMediaRef}
+        ref={fileInputImageRef}
         type="file"
         multiple
-        accept="image/*,video/*"
+        accept={MEMORY_ACCEPT_IMAGES}
+        onChange={handleFileSelect}
+        className="hidden"
+      />
+      <input
+        ref={fileInputVideoRef}
+        type="file"
+        multiple
+        accept={MEMORY_ACCEPT_VIDEOS}
+        onChange={handleFileSelect}
+        className="hidden"
+      />
+      <input
+        ref={fileInputAudioRef}
+        type="file"
+        multiple
+        accept={MEMORY_ACCEPT_AUDIO}
+        onChange={handleFileSelect}
+        className="hidden"
+      />
+      <input
+        ref={fileInputDocsRef}
+        type="file"
+        multiple
+        accept={MEMORY_ACCEPT_DOCUMENTS}
         onChange={handleFileSelect}
         className="hidden"
       />
@@ -538,14 +572,6 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
         type="file"
         multiple
         accept={MEMORY_ATTACHMENT_ACCEPT}
-        onChange={handleFileSelect}
-        className="hidden"
-      />
-      <input
-        ref={fileInputAudioRef}
-        type="file"
-        multiple
-        accept="audio/*"
         onChange={handleFileSelect}
         className="hidden"
       />
@@ -562,24 +588,15 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
         </div>
       ) : null}
 
-      {/* Title */}
-      <div className="space-y-2">
-        <Label htmlFor="create-memory-title" className="text-text-neutral-weak">
-          Title
-        </Label>
-        <Input
-          id="create-memory-title"
-          placeholder="Enter title here"
-          value={values.title}
-          name="title"
-          onChange={handleChange}
-          className={cn(
-            "font-inter text-base md:text-base w-full rounded-xl border-stroke-neutral-weak px-4 py-3 h-auto text-text-neutral-strong bg-transparent",
-            "placeholder:text-neutral-weak transition-[color,box-shadow,border-color]",
-            "focus-visible:ring-inset",
-          )}
-        />
-      </div>
+      <TitleField
+        id="create-memory-title"
+        value={values.title}
+        name="title"
+        onChange={handleChange}
+        draftTitle={values.title ?? ""}
+        bodyPlain={editor?.getText() ?? ""}
+        onSuggestTitle={(t) => handleValue("title", t)}
+      />
 
       {/* Composer: bordered region (not nested Card) to avoid extra group/card padding */}
       <section
@@ -647,7 +664,12 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
           <Separator orientation="vertical" className="mx-1 h-5 bg-stroke-neutral-weak" />
 
           <div className="ml-auto">
-            <DropdownMenu>
+            <DropdownMenu
+              modal={false}
+              onOpenChange={(open) => {
+                if (open) setQuickCaptureDraftNonce((n) => n + 1);
+              }}
+            >
               <DropdownMenuTrigger asChild>
                 <Button
                   type="button"
@@ -661,62 +683,110 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
               <DropdownMenuContent
                 align="end"
                 side="bottom"
-                className="w-[280px] max-h-[280px] overflow-y-auto border border-stroke-neutral-weak bg-popover text-popover-foreground"
+                className="z-[220] w-[min(320px,calc(100vw-2rem))] max-h-[min(320px,50vh)] overflow-y-auto border border-stroke-neutral-weak bg-popover text-popover-foreground shadow-lg"
               >
-                {drafts.length > 0 ? (
-                  <div className="mb-1 flex items-center justify-end px-2 py-1">
-                    <Button
-                      type="button"
-                      onClick={handleClearAllDrafts}
-                      variant="ghost"
-                      size="sm"
-                      className="h-auto px-1 py-0 text-xs text-text-neutral-weak hover:text-text-neutral-strong"
-                    >
-                      Clear all
-                    </Button>
-                  </div>
+                {quickCaptureKeys.length > 0 ? (
+                  <>
+                    <DropdownMenuLabel className="font-inter text-xs font-semibold text-text-neutral-strong">
+                      Quick capture &amp; daily prompt
+                    </DropdownMenuLabel>
+                    {quickCaptureKeys.map((k) => {
+                      const raw = typeof window !== "undefined" ? localStorage.getItem(k) : null;
+                      const d = raw ? parseQuickCaptureDraftJson(raw) : null;
+                      const preview = d ? quickCaptureDraftPreviewLine(d) : "(empty note)";
+                      const kind = quickCaptureDraftKindLabel(k);
+                      return (
+                        <div
+                          key={k}
+                          className="flex items-start gap-2 rounded-lg px-2 py-1 hover:bg-fill-neutral-weaker transition-colors"
+                        >
+                          <Button
+                            type="button"
+                            onClick={() => handleLoadQuickCaptureDraft(k)}
+                            variant="ghost"
+                            size="sm"
+                            className="min-w-0 flex-1 h-auto justify-start rounded-lg px-1 py-1 text-left"
+                          >
+                            <div className="text-sm font-medium text-text-neutral-strong truncate">{preview}</div>
+                            <div className="mt-0.5 text-[11px] text-text-neutral-weaker">{kind}</div>
+                          </Button>
+                          <Button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteQuickCaptureDraft(k);
+                            }}
+                            variant="ghost"
+                            size="sm"
+                            className="mt-1 h-auto rounded-md px-2 py-1 text-[11px] text-text-neutral-weak hover:text-text-neutral-strong"
+                            title="Delete draft"
+                          >
+                            Delete
+                          </Button>
+                        </div>
+                      );
+                    })}
+                    {drafts.length > 0 ? <DropdownMenuSeparator /> : null}
+                  </>
                 ) : null}
-                {drafts.length === 0 ? (
-                  <div className="px-3 py-2 text-sm text-text-neutral-weak">No drafts yet</div>
-                ) : (
-                  drafts.map((draft) => (
-                    <div
-                      key={draft.id}
-                      className="flex items-start gap-2 rounded-lg px-2 py-1 hover:bg-fill-neutral-weaker transition-colors"
-                    >
+                {drafts.length > 0 ? (
+                  <>
+                    <DropdownMenuLabel className="font-inter text-xs font-semibold text-text-neutral-strong">
+                      Story composer
+                    </DropdownMenuLabel>
+                    <div className="mb-1 flex items-center justify-end px-2 py-1">
                       <Button
                         type="button"
-                        onClick={() => handleLoadDraft(draft)}
+                        onClick={handleClearAllDrafts}
                         variant="ghost"
                         size="sm"
-                        className="min-w-0 flex-1 h-auto justify-start rounded-lg px-1 py-1 text-left"
+                        className="h-auto px-1 py-0 text-xs text-text-neutral-weak hover:text-text-neutral-strong"
                       >
-                        <div className="text-sm font-medium text-text-neutral-strong truncate">
-                          {draft.title || "Untitled draft"}
-                        </div>
-                        <div className="mt-0.5 text-xs text-text-neutral-weak truncate">
-                          {(draft.body || "").replace(/<[^>]+>/g, "").trim() || "No content"}
-                        </div>
-                        <div className="mt-1 text-[11px] text-text-neutral-weaker">
-                          {new Date(draft.updatedAt).toLocaleString()}
-                        </div>
-                      </Button>
-                      <Button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteDraft(draft.id);
-                        }}
-                        variant="ghost"
-                        size="sm"
-                        className="mt-1 h-auto rounded-md px-2 py-1 text-[11px] text-text-neutral-weak hover:text-text-neutral-strong"
-                        title="Delete draft"
-                      >
-                        Delete
+                        Clear all
                       </Button>
                     </div>
-                  ))
-                )}
+                    {drafts.map((draft) => (
+                      <div
+                        key={draft.id}
+                        className="flex items-start gap-2 rounded-lg px-2 py-1 hover:bg-fill-neutral-weaker transition-colors"
+                      >
+                        <Button
+                          type="button"
+                          onClick={() => handleLoadDraft(draft)}
+                          variant="ghost"
+                          size="sm"
+                          className="min-w-0 flex-1 h-auto justify-start rounded-lg px-1 py-1 text-left"
+                        >
+                          <div className="text-sm font-medium text-text-neutral-strong truncate">
+                            {draft.title || "Untitled draft"}
+                          </div>
+                          <div className="mt-0.5 text-xs text-text-neutral-weak truncate">
+                            {(draft.body || "").replace(/<[^>]+>/g, "").trim() || "No content"}
+                          </div>
+                          <div className="mt-1 text-[11px] text-text-neutral-weaker">
+                            {new Date(draft.updatedAt).toLocaleString()}
+                          </div>
+                        </Button>
+                        <Button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteDraft(draft.id);
+                          }}
+                          variant="ghost"
+                          size="sm"
+                          className="mt-1 h-auto rounded-md px-2 py-1 text-[11px] text-text-neutral-weak hover:text-text-neutral-strong"
+                          title="Delete draft"
+                        >
+                          Delete
+                        </Button>
+                      </div>
+                    ))}
+                  </>
+                ) : null}
+                {quickCaptureKeys.length === 0 && drafts.length === 0 ? (
+                  <div className="px-3 py-2 text-sm text-text-neutral-weak">No drafts yet</div>
+                ) : null}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -754,6 +824,7 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
           <div className="flex min-h-[48px] items-center justify-start gap-1 rounded-2xl border border-stroke-neutral-weak bg-fill-neutral-weaker/60 px-2 py-1.5">
               {/* Attachments & media */}
               <DropdownMenu
+                modal={false}
                 onOpenChange={(open) => {
                   if (open) setShowEmoji(false);
                 }}
@@ -772,35 +843,49 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
                 <DropdownMenuContent
                   side="top"
                   align="start"
-                  className="w-56 border border-stroke-neutral-weak bg-popover text-popover-foreground"
+                  className="z-[220] min-w-[8.5rem] max-w-[9.5rem] border border-stroke-neutral-weak bg-popover p-0.5 text-popover-foreground shadow-md"
                 >
-                  <DropdownMenuLabel className="text-text-neutral-weaker">Add to story</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
                   <DropdownMenuItem
-                    className="gap-2 text-text-neutral-weak"
-                    onClick={() => fileInputMediaRef.current?.click()}
+                    className="gap-2 rounded-lg px-1.5 py-1 text-xs text-text-neutral-strong focus:bg-fill-neutral-weaker"
+                    onClick={() => fileInputImageRef.current?.click()}
+                    title="JPG, PNG, HEIC, WebP, GIF…"
                   >
-                    <ImageIcon className="size-4 shrink-0 text-icon-neutral-strong" />
-                    Photos & videos
+                    <ImageIcon className="size-3.5 shrink-0 text-text-brand-strong" />
+                    Photos
                   </DropdownMenuItem>
                   <DropdownMenuItem
-                    className="gap-2 text-text-neutral-weak"
+                    className="gap-2 rounded-lg px-1.5 py-1 text-xs text-text-neutral-strong focus:bg-fill-neutral-weaker"
+                    onClick={() => fileInputVideoRef.current?.click()}
+                    title="MP4, WebM, MOV, AVI…"
+                  >
+                    <Video className="size-3.5 shrink-0 text-text-brand-strong" />
+                    Videos
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="gap-2 rounded-lg px-1.5 py-1 text-xs text-text-neutral-strong focus:bg-fill-neutral-weaker"
                     onClick={() => fileInputAudioRef.current?.click()}
+                    title="MP3, M4A, WAV, FLAC, AAC, OGG…"
                   >
-                    <Music className="size-4 shrink-0 text-icon-neutral-strong" />
-                    Audio files
+                    <Music className="size-3.5 shrink-0 text-text-brand-strong" />
+                    Audio
                   </DropdownMenuItem>
                   <DropdownMenuItem
-                    className="gap-2 text-text-neutral-weak"
-                    onClick={() => fileInputAllRef.current?.click()}
+                    className="gap-2 rounded-lg px-1.5 py-1 text-xs text-text-neutral-strong focus:bg-fill-neutral-weaker"
+                    onClick={() => fileInputDocsRef.current?.click()}
+                    title="PDF, Word, plain text…"
                   >
-                    <Paperclip className="size-4 shrink-0 text-icon-neutral-strong" />
-                    Documents & files
+                    <Paperclip className="size-3.5 shrink-0 text-text-brand-strong" />
+                    Documents
                   </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <p className="px-2 pb-2 text-[11px] leading-snug text-text-neutral-weaker">
-                    PDF, Word (.doc, .docx), plain text, and other supported types.
-                  </p>
+                  <DropdownMenuSeparator className="my-0.5" />
+                  <DropdownMenuItem
+                    className="gap-2 rounded-lg px-1.5 py-1 text-xs text-text-neutral-strong focus:bg-fill-neutral-weaker"
+                    onClick={() => fileInputAllRef.current?.click()}
+                    title="Mixed selection in one picker"
+                  >
+                    <Plus className="size-3.5 shrink-0 text-icon-neutral-strong" />
+                    All types
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
 
@@ -853,7 +938,12 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
                 type="button"
                 variant="ghost"
                 size="icon-lg"
-                onClick={() => push("audio-recorder", { onFinish: handleAddAudioFile, recordingNumber: audioRecordingCount })}
+                onClick={() =>
+                  push("audio-recorder", {
+                    onFinish: handleAddAudioFile,
+                    recordingNumber: audioRecordingCount,
+                  })
+                }
                 className="rounded-xl text-icon-neutral-strong hover:bg-fill-neutral-weaker"
                 title="Record audio"
                 aria-label="Record audio"
@@ -881,7 +971,12 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
 
       <FileThumbnails files={files} onRemove={handleRemoveFile} />
 
-      <AccessField value={selectedAccess} onChange={setSelectedAccess} />
+      <AccessField
+        value={selectedAccess}
+        onChange={setSelectedAccess}
+        shareAudience={shareAudience}
+        onShareAudienceChange={setShareAudience}
+      />
 
       <TagsField
         tags={tags}
@@ -1007,10 +1102,10 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
   if (isMobile) {
     return (
       <>
-        <Sheet detent="content" isOpen onClose={handleClose} snapPoints={[0.5, 0.75, 1]} initialSnap={1}>
-          <Sheet.Container className="bg-v3-bg">
+        <Sheet detent="content" isOpen onClose={handleClose} snapPoints={[0, 0.8]} initialSnap={1}>
+          <Sheet.Container className="max-h-[80dvh] overflow-hidden bg-v3-bg">
             <Sheet.Header className="rounded-t-3xl bg-v3-bg" />
-            <Sheet.Content className="overflow-y-auto bg-v3-bg px-4 pb-6">
+            <Sheet.Content className="max-h-[80dvh] min-h-0 overflow-y-auto overscroll-contain bg-v3-bg px-4 pb-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="font-garamond text-xl font-medium text-text-neutral-strong">Add New Story</h2>
                 <Button
@@ -1047,7 +1142,7 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
             Add New Story
           </h2>
         </CardHeader>
-        <CardContent className="flex min-h-0 flex-1 flex-col overflow-y-auto px-6 pt-5 pb-16 hide-scrollbar space-y-5">
+        <CardContent className="flex h-[700px] min-h-0 flex-col overflow-y-auto px-6 pt-5 pb-16 hide-scrollbar space-y-5">
           {formContent}
         </CardContent>
         <CardFooter className="shrink-0 border-t border-stroke-neutral-weak px-6 py-4">{footer}</CardFooter>

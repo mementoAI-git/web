@@ -1,6 +1,6 @@
 import endpoint from "@/api/endpoint";
 import { useModal } from "@/hooks/use-modal";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import useSWR from "swr";
 import { StatCard } from "../component/stat-card";
 import { DoubleHeartIcon, PlusIcon } from "@/components/icons";
@@ -18,6 +18,12 @@ import StoriesGrid from "./components/grid";
 import { TableRowSekeleton } from "./components/skeleton";
 import StoriesTableRow from "./components/row";
 import type { IMemory } from "@/utility/interface";
+import {
+  TypographyH1,
+  TypographyH2,
+  TypographyLead,
+  TypographyMuted,
+} from "@/components/ui/typography";
 
 const columns = [
   { label: "topic" },
@@ -34,12 +40,12 @@ const TableEmptyState = () => (
           <div className="w-16 h-16 mx-auto mb-4 bg-v3-fill-weaker rounded-full flex items-center justify-center">
             <DoubleHeartIcon className="size-8 stroke-2 text-v3-text-weaker" />
           </div>
-          <h3 className="text-lg font-semibold text-v3-text-strong mb-2">
+          <TypographyH2 className="mb-2 text-lg text-v3-text-strong">
             No stories yet
-          </h3>
-          <p className="text-v3-text-weak text-sm">
+          </TypographyH2>
+          <TypographyMuted className="text-v3-text-weak">
             Start creating your first story to see it here.
-          </p>
+          </TypographyMuted>
         </div>
       </div>
     </td>
@@ -73,9 +79,15 @@ export default function StoriesPage() {
   if (filter === "bookmarked") filterQuery = "&bookmarked=true";
   if (filter === "deleted") filterQuery = "&deleted=true";
 
-  const { data, isLoading } = useSWR(
-    `${endpoint.stories}?page=${page}${filterQuery}`,
+  const { data: userStatsData } = useSWR(endpoint.userStats);
+  const hasQuickPending = useMemo(
+    () => Number(userStatsData?.data?.quick_capture_pending_count) > 0,
+    [userStatsData?.data?.quick_capture_pending_count],
   );
+
+  const { data, isLoading } = useSWR(`${endpoint.stories}?page=${page}${filterQuery}`, {
+    refreshInterval: hasQuickPending ? 4000 : 0,
+  });
   const { data: stats } = useSWR(endpoint.memoriesStats);
 
   return (
@@ -84,12 +96,12 @@ export default function StoriesPage() {
         <div className="space-y-6 sm:space-y-16 py-3 sm:py-4 lg:py-8">
           <div className="flex flex-col md:items-end md:flex-row md:justify-between gap-2">
             <div>
-              <p className="font-garamond font-normal text-[32px] md:text-4xl lg:text-[40px] leading-tight sm:leading-snug md:leading-[48px] text-v3-text-strong">
+              <TypographyH1 className="font-garamond font-normal text-[32px] leading-tight text-v3-text-strong sm:leading-snug md:text-4xl md:leading-[48px] lg:text-[40px]">
                 My stories
-              </p>
-              <p className="font-inter font-normal text-base text-v3-text-weak pt-2">
+              </TypographyH1>
+              <TypographyLead className="pt-2 font-inter font-normal text-v3-text-weak">
                 Add stories, images, audios - whatever, to your Memento
-              </p>
+              </TypographyLead>
             </div>
 
             <div className="flex items-center gap-2 sm:gap-3 shrink-0">
@@ -99,6 +111,13 @@ export default function StoriesPage() {
                 className="h-9 sm:h-12 px-3 sm:px-5 rounded-full font-inter font-semibold text-xs sm:text-sm text-v3-text-strong border-v3-stroke-weak bg-v3-fill-weaker hover:bg-v3-fill-weak"
               >
                 View insights
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => open("quick-capture")}
+                className="h-9 sm:h-12 px-3 sm:px-5 rounded-full font-inter font-semibold text-xs sm:text-sm text-v3-text-strong border-v3-stroke-weak bg-v3-fill-weaker hover:bg-v3-fill-weak"
+              >
+                Quick add
               </Button>
               <Button
                 onClick={() => open("create-memory")}
@@ -148,6 +167,8 @@ export default function StoriesPage() {
             filter={filter}
             onChangeFilter={setFilter}
             count={stats?.data?.stories_count || 0}
+            bookmarkedCount={stats?.data?.stories_bookmarked_count || 0}
+            deletedCount={stats?.data?.stories_deleted_count || 0}
           />
           {mode === "grid" ? (
             <StoriesGrid data={data?.data} />

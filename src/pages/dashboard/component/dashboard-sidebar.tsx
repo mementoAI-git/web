@@ -3,15 +3,12 @@ import { topNavigations, bottomNavigations } from "./navigation";
 import SideBarItem from "./sidebar-item";
 import { ProfileDropdown } from "./profile-dropdown";
 import { SidebarUpgradeCard } from "./sidebar-upgrade-card";
+import Logo from "@/components/logo";
 import { useModal } from "@/hooks/use-modal";
 import { useStore } from "@/hooks/use-store";
 import { isFeatureFlagAdminUser } from "@/contexts/feature-flags";
 
-interface DashboardSideBarProps {
-  onClose?: () => void;
-}
-
-export function DashboardSideBar({ onClose }: DashboardSideBarProps) {
+export function DashboardSideBar() {
   const location = useLocation();
   const { open } = useModal();
   const { user } = useStore();
@@ -21,8 +18,8 @@ export function DashboardSideBar({ onClose }: DashboardSideBarProps) {
 
   return (
     <div className="dynamic-height w-full min-h-screen overflow-x-hidden bg-white border-r border-black/5 flex flex-col">
-      <div className="p-4">
-        <ProfileDropdown />
+      <div className="flex items-center p-4">
+        <Logo className="text-[28px] leading-[34px]" />
       </div>
 
       <div className="flex-1 overflow-y-auto hide-scrollbar py-4 px-4 flex flex-col gap-1">
@@ -35,7 +32,6 @@ export function DashboardSideBar({ onClose }: DashboardSideBarProps) {
               (n.link === "/overview" && pathname === "/")
             }
             key={i}
-            onClick={onClose}
           />
         ))}
       </div>
@@ -47,7 +43,6 @@ export function DashboardSideBar({ onClose }: DashboardSideBarProps) {
             {...n}
             active={pathname.includes(n.link)}
             key={i}
-            onClick={onClose}
           />
         ))}
         {showAdminFlags ? (
@@ -56,19 +51,20 @@ export function DashboardSideBar({ onClose }: DashboardSideBarProps) {
             title="Feature flags"
             link="/admin/feature-flags"
             active={pathname.startsWith("/admin/feature-flags")}
-            onClick={onClose}
           />
         ) : null}
         <SideBarItem
           emoji="📝"
-          title="Drop a feedback"
+          title="Drop feedback"
           onClick={() => {
             open("create-feedback");
-            onClose?.();
           }}
         />
-        <div className="mt-4 flex shrink-0 flex-col">
-          <SidebarUpgradeCard onNavigate={onClose} />
+        <div className="mt-4 flex w-full min-w-0 shrink-0 flex-col">
+          <SidebarUpgradeCard />
+        </div>
+        <div className="mt-4 min-w-0">
+          <ProfileDropdown />
         </div>
       </div>
     </div>

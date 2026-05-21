@@ -111,6 +111,18 @@ export const handlers = [
     });
   }),
 
+  http.get(`${BASE_URL}/users/persona/memory-insights-summary`, () => {
+    return HttpResponse.json({
+      status: 200,
+      message: "Not enough context for a summary yet",
+      data: {
+        summary: null,
+        generated_at: null,
+        cached: false,
+      },
+    });
+  }),
+
   http.get(`${BASE_URL}/beneficiaries`, () => {
     return HttpResponse.json({
       success: true,
@@ -285,22 +297,42 @@ export const handlers = [
   }),
 
   http.get(`${BASE_URL}/prompts`, () => {
+    const dk = "2026-05-01";
     return HttpResponse.json({
       success: true,
       data: [
         {
+          slot_kind: "ai",
+          display_label: "Just for you",
+          answered: false,
+          ai_prompt_text: "What part of your week still feels unfinished when you think about it?",
+          reflection_day_key: dk,
+        },
+        {
+          slot_kind: "static",
+          answered: false,
+          reflection_day_key: dk,
           prompt: {
             _id: "prompt-1",
             title:
               "Think of a recent happy memory with your family. What happened and why is it meaningful?",
-            answered: false,
+            type: "general",
+            tags: [],
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
           },
         },
         {
+          slot_kind: "static",
+          answered: false,
+          reflection_day_key: dk,
           prompt: {
             _id: "prompt-2",
             title: "What's one thing you're grateful for today?",
-            answered: false,
+            type: "general",
+            tags: [],
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
           },
         },
       ],

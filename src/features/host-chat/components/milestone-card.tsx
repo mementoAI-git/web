@@ -20,7 +20,7 @@ export function MilestoneCard({
     <Badge
       variant="secondary"
       className={cn(
-        "h-auto max-w-[min(85vw,280px)] shrink-0 whitespace-normal rounded-full border-0 bg-v3-fill-weaker px-2.5 py-1.5 text-left text-[11px] font-medium leading-snug text-v3-text-strong",
+        "h-auto max-w-full shrink-0 whitespace-normal rounded-2xl border-0 bg-v3-fill-weaker px-2.5 py-1.5 text-left text-[11px] font-medium leading-snug text-v3-text-strong sm:max-w-[min(85vw,280px)] sm:rounded-full",
         className,
       )}
       role="status"

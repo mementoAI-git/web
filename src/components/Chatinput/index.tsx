@@ -1,5 +1,6 @@
 import { TimesIcon } from "@/components/icons";
 import { cn, toBase64 } from "@/utility";
+import { toast } from "sonner";
 import {
   type ChatReplyQuote,
   snippetReplyText,
@@ -197,7 +198,7 @@ function ChatinputImpl({
     async (file: File) => {
       const resolvedType = file.type || inferMimeType(file.name);
       if (!isSupportedFileMime(resolvedType, SUPPORTED_FILE_TYPES)) {
-        alert(
+        toast.error(
           "Please select a supported file type (images, PDF, video, or audio)",
         );
         return;
@@ -206,7 +207,7 @@ function ChatinputImpl({
       // Match API multer limit (api/src/middleware/file-upload.ts)
       const maxSize = 15 * 1024 * 1024;
       if (file.size > maxSize) {
-        alert("File size must be less than 15MB");
+        toast.error("File size must be less than 15MB");
         return;
       }
 
@@ -226,10 +227,11 @@ function ChatinputImpl({
 
   const handleFileUpload = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
+      const selected = Array.from(e.target.files || []);
       e.target.value = "";
-      if (!file) return;
-      await processFileForUpload(file);
+      for (const file of selected) {
+        await processFileForUpload(file);
+      }
     },
     [processFileForUpload],
   );
@@ -436,12 +438,12 @@ function ChatinputImpl({
 
   return (
     <div className={cn(wrapperClassName)} data-testid={shellTestId}>
-      <div className="w-full min-w-0 rounded-[30px] bg-fill-neutral-weaker/70 p-[6px]">
+      <div className="w-full min-w-0 rounded-[22px] bg-fill-neutral-weaker/70 p-1 sm:rounded-[26px] sm:p-[5px] md:rounded-[30px] md:p-[6px]">
         <div
           ref={inputWrapperRef}
           className={
             cn(
-              "flex min-h-[120px] w-full min-w-0 flex-col gap-3 rounded-3xl border border-stroke-neutral-weak px-4 py-3 shadow-[0px_4px_8px_0px_var(--brown-300-16)] focus-within:border-stroke-brand-strong bg-fill-neutral-weak md:gap-4 md:p-6",
+              "flex min-h-[92px] w-full min-w-0 flex-col gap-2 rounded-3xl border border-stroke-neutral-weak px-3 py-2.5 shadow-[0px_4px_8px_0px_var(--brown-300-16)] focus-within:border-stroke-brand-strong bg-fill-neutral-weak sm:min-h-[108px] sm:gap-3 sm:px-4 sm:py-3 md:min-h-[120px] md:gap-4 md:p-6",
               className
             )
           }
@@ -512,6 +514,7 @@ function ChatinputImpl({
                 <input
                   id="chat-file-trigger"
                   type="file"
+                  multiple
                   accept={SUPPORTED_FILE_TYPES.join(",")}
                   onChange={handleFileUpload}
                   className="hidden"
