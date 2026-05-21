@@ -164,7 +164,7 @@ export default function History({
             let lastMonthKey: string | null = null;
             return messages.map((m, i) => {
               const failed = Boolean((m as { sendFailed?: boolean }).sendFailed);
-              const attachments = (m as { attatchments?: { url: string; name: string }[] })
+              const attachments = (m as { attatchments?: { url: string; name: string; type?: string; _id?: string; size?: string | number }[] })
                 .attatchments;
               const storedReply = (m as { replyTo?: ChatReplyQuote }).replyTo;
               const replyBody = replyQuoteBodyFromMessage(m.text, attachments);

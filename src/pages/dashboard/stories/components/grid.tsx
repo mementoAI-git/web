@@ -24,7 +24,7 @@ const MEDIA_ASPECTS = [
 
 const TEXT_MIN_HEIGHTS = ["min-h-[200px]", "min-h-[260px]", "min-h-[228px]", "min-h-[244px]"] as const;
 
-export function getTopicColor(topic: string) {
+function getTopicColor(topic: string) {
   let hash = 0;
   for (let i = 0; i < topic.length; i++) {
     hash = topic.charCodeAt(i) + ((hash << 5) - hash);
