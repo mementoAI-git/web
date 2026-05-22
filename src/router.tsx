@@ -17,8 +17,6 @@ import {
   MiscPage,
   NicknamePage,
   OnboardLayout,
-  OnboardingGrootLayout,
-  OnboardingGrootPage,
   HostOnboardingChatPage,
   OnboardingSummaryPage,
   WelcomePage,
@@ -60,19 +58,6 @@ export const router = createBrowserRouter([
       { path: "post/:id", element: <PostPage /> },
       {
         path: "onboarding",
-        element: <OnboardingGrootLayout />,
-        children: [
-          { index: true, element: <OnboardingGrootPage /> },
-          { path: "chat", element: <HostOnboardingChatPage /> },
-          {
-            path: "onboard",
-            element: <OnboardLayout />,
-            children: [{ index: true, element: <OnboardPage /> }],
-          },
-        ],
-      },
-      {
-        path: "onboard",
         element: <OnboardLayout />,
         children: [
           { index: true, element: <OnboardPage /> },
@@ -81,6 +66,19 @@ export const router = createBrowserRouter([
           { path: "misc", element: <MiscPage /> },
           { path: "summary", element: <OnboardingSummaryPage /> },
           { path: "beneficiary", element: <BeneficiaryPage /> },
+          { path: "chat", element: <Navigate to="/onboard/chat" replace /> },
+        ],
+      },
+      {
+        path: "onboard",
+        children: [
+          { index: true, element: <Navigate to="/onboarding" replace /> },
+          { path: "welcome", element: <Navigate to="/onboarding/welcome" replace /> },
+          { path: "nickname", element: <Navigate to="/onboarding/nickname" replace /> },
+          { path: "misc", element: <Navigate to="/onboarding/misc" replace /> },
+          { path: "summary", element: <Navigate to="/onboarding/summary" replace /> },
+          { path: "beneficiary", element: <Navigate to="/onboarding/beneficiary" replace /> },
+          { path: "chat", element: <HostOnboardingChatPage /> },
         ],
       },
       {

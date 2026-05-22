@@ -11,7 +11,7 @@ import {
 } from "./scripted-exchanges";
 
 describe("scripted-exchanges", () => {
-  it("has six exchanges after nickname is collected on /onboard", () => {
+  it("has six exchanges after nickname is collected on /onboarding", () => {
     expect(TOTAL_EXCHANGES).toBe(6);
   });
 

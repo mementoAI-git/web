@@ -55,7 +55,7 @@ describe("Stats", () => {
 
     expect(screen.getByRole("link", { name: /update my story/i })).toHaveAttribute(
       "href",
-      "/onboard/misc?mode=revisit",
+      "/onboarding/misc?mode=revisit",
     );
   });
 });

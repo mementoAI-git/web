@@ -17,10 +17,10 @@ export function OnboardingNudgeBanner() {
   const skipped = user?.onboarding_status === "skipped";
   if (complete || !skipped) return null;
 
-  /** New flow: /onboard → welcome → nickname → /onboarding/chat; resume chat if we already have a name. */
+  /** New flow: /onboarding → welcome → nickname → /onboard/chat; resume chat if we already have a name. */
   const continueSetupPath = user?.nickname?.trim()
-    ? "/onboarding/chat"
-    : "/onboard";
+    ? "/onboard/chat"
+    : "/onboarding";
 
   return (
     <div

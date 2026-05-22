@@ -12,7 +12,7 @@ May 2026 onboarding push. This is the working Codex checklist for the current ph
 ## Where We Stopped
 
 - `DONE` `/onboard/misc` is already implemented around an internal `1..12` step machine, with 10 progress dots, branch at step `6`, and closing at step `12`.
-- `DONE` The current misc onboarding core already lives in `src/pages/onboard/misc/*`, `src/api/onboarding.ts`, `src/features/onboarding-groot/types.ts`, and `src/features/onboarding-groot/adaptive.ts`.
+- `DONE` The current misc onboarding core already lives in `src/pages/onboarding/misc/*`, `src/api/onboarding.ts`, `src/features/onboarding-groot/types.ts`, and `src/features/onboarding-groot/adaptive.ts`.
 - `DONE` Completion behavior already supports `skippedDeepPersonalization`, `stepReached`, and adaptive CTA behavior.
 - `DONE` The handoff state says tests were green at that point, so the main risk is not the misc flow shell itself. The remaining work is backend contract confidence, revisit/prefill parity, and the post-completion experience.
 
@@ -60,5 +60,5 @@ May 2026 onboarding push. This is the working Codex checklist for the current ph
 
 - Verify against `memento-web/docs/ONBOARDING_MISC_HANDOFF.md`.
 - Verify against `/Users/admin/.cursor/plans/updated_onboarding_may_13th_a006f257.plan.md`.
-- Verify against the current dirty workspace changes in `src/pages/onboard/misc`, `src/api/onboarding.ts`, `src/features/onboarding-groot/*`, and related tests.
+- Verify against the current dirty workspace changes in `src/pages/onboarding/misc`, `src/api/onboarding.ts`, `src/features/onboarding-groot/*`, and related tests.
 - Treat this file as a synthesis of those sources, not a copy of either one.

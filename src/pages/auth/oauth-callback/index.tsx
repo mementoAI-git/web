@@ -36,7 +36,7 @@ export default function OAuthCallbackPage() {
 
         setAuth?.({ access_token, refresh_token, expires_at, refresh_expires_at });
         await clearCache();
-        navigate(result.data?.onboarded ? "/overview" : "/onboard");
+        navigate(result.data?.onboarded ? "/overview" : "/onboarding");
       }
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps

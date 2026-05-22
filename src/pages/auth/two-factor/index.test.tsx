@@ -80,7 +80,7 @@ describe("TwoFactorPage", () => {
     });
   });
 
-  it("navigates to /onboard when server returns onboarded: false", async () => {
+  it("navigates to /onboarding when server returns onboarded: false", async () => {
     server.use(
       http.post("http://localhost:3000/api/auth/2fa/verify", () =>
         HttpResponse.json({
@@ -104,7 +104,7 @@ describe("TwoFactorPage", () => {
     await user.click(screen.getByRole("button", { name: /verify/i }));
 
     await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith("/onboard", { replace: true });
+      expect(mockNavigate).toHaveBeenCalledWith("/onboarding", { replace: true });
     });
   });
 

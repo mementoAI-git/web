@@ -14,7 +14,7 @@ import type {
   SharingIntentKey,
 } from "@/features/onboarding-groot/types";
 import { migrateLegacyPriorityList } from "@/features/enrichment/enrichment-categories";
-import type { OnboardQuestionsState } from "@/pages/onboard/misc/useOnboardQuestionsState";
+import type { OnboardQuestionsState } from "@/pages/onboarding/misc/useOnboardQuestionsState";
 
 // --- API types (users module) ---
 
@@ -291,10 +291,35 @@ export function mapOnboardingDetailsToMiscState(
   data: OnboardingDetailsResponse,
 ): Partial<OnboardQuestionsState> {
   const { user, persona } = data;
-  const motivation =
-    persona.motivation && MISC_MOTIVATION_KEYS.includes(persona.motivation as MiscMotivationChip)
-      ? (persona.motivation as MiscMotivationChip)
-      : null;
+  const motivationChips = Array.from(
+    new Set(
+      [
+        persona.motivation,
+        ...(persona.join_reasons ?? []),
+      ].filter(
+        (value): value is MiscMotivationChip =>
+          Boolean(value) &&
+          MISC_MOTIVATION_KEYS.includes(value as MiscMotivationChip),
+      ),
+    ),
+  );
+  if (motivationChips.length === 0 && persona.motivation_detail?.trim()) {
+    motivationChips.push("something_else");
+  }
+  const lifeSituations = Array.from(
+    new Set(
+      [
+        persona.life_situation,
+      ].filter(
+        (value): value is LifeSituationKey =>
+          Boolean(value) &&
+          LIFE_SITUATION_KEYS.includes(value as LifeSituationKey),
+      ),
+    ),
+  );
+  if (lifeSituations.length === 0 && persona.life_situation_detail?.trim()) {
+    lifeSituations.push("something_else");
+  }
   const lifeSituation =
     persona.life_situation &&
     LIFE_SITUATION_KEYS.includes(persona.life_situation as LifeSituationKey)
@@ -330,10 +355,10 @@ export function mapOnboardingDetailsToMiscState(
       user.onboarding_step_reached <= 12
         ? (user.onboarding_step_reached as OnboardQuestionsState["step"])
         : 12,
-    motivationChip: motivation,
+    motivationChips,
     motivationDetail: persona.motivation_detail ?? "",
     ageBand: (user.age_range as AgeBand) || null,
-    lifeSituation,
+    lifeSituations: lifeSituations.length > 0 ? lifeSituations : lifeSituation ? [lifeSituation] : [],
     lifeSituationDetail: persona.life_situation_detail ?? "",
     homePlace: user.location ?? "",
     personalityTraits,

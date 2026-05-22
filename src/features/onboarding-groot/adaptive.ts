@@ -76,7 +76,7 @@ export function getStep5Body(
 /**
  * Primary CTA after onboarding.
  * When `modes` is non-empty (Groot flow), legacy motivation × expression rules apply.
- * When `modes` is empty (`/onboard/misc`), CTA is derived from motivation only.
+ * When `modes` is empty (`/onboarding/misc`), CTA is derived from motivation only.
  */
 export function getPrimaryCTA(
   motivation: MotivationType | null,

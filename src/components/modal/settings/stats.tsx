@@ -60,7 +60,7 @@ export default function Stats({ embedded = false }: StatsProps) {
             variant="outline"
             className="flex-1 rounded-lg !border !border-v3-stroke-weak font-inter text-sm font-semibold text-v3-text-strong hover:!bg-v3-fill-strong hover:!text-white"
           >
-            <Link to="/onboard/misc?mode=revisit">Update my story</Link>
+            <Link to="/onboarding/misc?mode=revisit">Update my story</Link>
           </Button>
           <Button
             variant="outline"

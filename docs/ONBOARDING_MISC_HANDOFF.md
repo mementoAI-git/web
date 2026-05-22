@@ -34,14 +34,14 @@ If you extend the flow, update **`ONBOARD_QUESTIONS_STEP_LABELS`**, **`canAdvanc
 
 | Path | Role |
 |------|------|
-| `src/pages/onboard/misc/index.tsx` | Page UI, chip grids, `completeAndNavigate`, progress dots, shadcn `Button` / `Input` / `Textarea` / `Label` |
-| `src/pages/onboard/misc/useOnboardQuestionsState.ts` | State, caps, `canAdvance`, `goToDeepPhase`, `prevStep` / `nextStep` |
-| `src/pages/onboard/misc/useOnboardQuestionsState.test.ts` | Unit tests (subset of flow; expand if you add edge cases) |
-| `src/pages/onboard/summary.tsx` | Post-onboarding summary screen with live enrichment score, territory map, and host-chat handoff |
-| `src/pages/onboard/summary-helpers.ts` | Summary snapshot storage, touched-category derivation, post-onboarding destinations, personalized host starter builder |
-| `src/pages/onboard/misc/OnboardQuestionHeader.tsx` | Title + hint + “Why?” (`DropdownMenu`, `CircleHelp`) |
-| `src/pages/onboard/misc/onboard-misc-copy.ts` | `ONBOARD_MISC_WHY` hints + long copy per step (excludes 6 and 12) |
-| `src/pages/onboard/misc/OnboardSelectionCard.tsx` | Chip button; V3 semantic borders/backgrounds; `active:scale-[0.98]` |
+| `src/pages/onboarding/misc/index.tsx` | Page UI, chip grids, `completeAndNavigate`, progress dots, shadcn `Button` / `Input` / `Textarea` / `Label` |
+| `src/pages/onboarding/misc/useOnboardQuestionsState.ts` | State, caps, `canAdvance`, `goToDeepPhase`, `prevStep` / `nextStep` |
+| `src/pages/onboarding/misc/useOnboardQuestionsState.test.ts` | Unit tests (subset of flow; expand if you add edge cases) |
+| `src/pages/onboarding/summary.tsx` | Post-onboarding summary screen with live enrichment score, territory map, and host-chat handoff |
+| `src/pages/onboarding/summary-helpers.ts` | Summary snapshot storage, touched-category derivation, post-onboarding destinations, personalized host starter builder |
+| `src/pages/onboarding/misc/OnboardQuestionHeader.tsx` | Title + hint + “Why?” (`DropdownMenu`, `CircleHelp`) |
+| `src/pages/onboarding/misc/onboard-misc-copy.ts` | `ONBOARD_MISC_WHY` hints + long copy per step (excludes 6 and 12) |
+| `src/pages/onboarding/misc/OnboardSelectionCard.tsx` | Chip button; V3 semantic borders/backgrounds; `active:scale-[0.98]` |
 | `src/features/onboarding-groot/types.ts` | Chips keys, labels, caps constants, `ONBOARDING_FOCUS_FIRST_OPTIONS`, etc. |
 | `src/features/onboarding-groot/adaptive.ts` | `getPrimaryCTA(motivation, modes)` — **empty `modes`** = misc-only CTA; non-empty = legacy Groot matrix |
 | `src/api/onboarding.ts` | `SaveOnboardingApiBody` / onboarding-details mapping for misc payloads and revisit hydration |

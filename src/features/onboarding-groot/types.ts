@@ -228,7 +228,7 @@ export const PASSION_OPTIONS: PassionOption[] = [
   { value: "something_else", label: "Add something else", icon: "" },
 ];
 
-/** `/onboard/misc` Q7 — curated passions (subset of `PassionKey`). */
+/** `/onboarding/misc` Q7 — curated passions (subset of `PassionKey`). */
 export const MISC_PASSION_OPTIONS: PassionOption[] = [
   { value: "faith_spirituality", label: "Faith & spirituality", icon: "🕯️" },
   { value: "family_relationships", label: "Family & relationships", icon: "👨‍👩‍👧" },
@@ -324,14 +324,38 @@ export interface MiscMotivationOption {
   icon: string;
 }
 
-/** `/onboard/misc` Q1 — includes Something else (freetext). */
+/** `/onboarding/misc` Q1 — includes Something else (freetext). */
 export const MISC_MOTIVATION_OPTIONS: MiscMotivationOption[] = [
-  ...MOTIVATION_OPTIONS.map((o) => ({
-    value: o.value as MiscMotivationChip,
-    label: o.label,
-    sublabel: o.sublabel,
-    icon: o.icon,
-  })),
+  {
+    value: "self_understanding",
+    label: "To know myself better.",
+    sublabel: "A clearer sense of who I am over time",
+    icon: "🪞",
+  },
+  {
+    value: "personal_space",
+    label: "To curate a space that organizes my life",
+    sublabel: "Media, stories, and context in one place",
+    icon: "🏡",
+  },
+  {
+    value: "memory_preservation",
+    label: "I have memories worth preserving",
+    sublabel: "Before they fade or disappear",
+    icon: "🫙",
+  },
+  {
+    value: "emotional_depth",
+    label: "To help the people I love really know me",
+    sublabel: "The full picture, not just the highlights",
+    icon: "💛",
+  },
+  {
+    value: "explorer",
+    label: "Just checking it out.",
+    sublabel: "Exploring for now",
+    icon: "🔍",
+  },
   {
     value: "something_else",
     label: "Something else",
@@ -436,7 +460,7 @@ export const SHARING_INTENT_OPTIONS: SharingIntentOption[] = [
   },
 ];
 
-/** `/onboard/misc` Q10 — maps to `EnrichmentCategory` (non-deferred only). */
+/** `/onboarding/misc` Q10 — maps to `EnrichmentCategory` (non-deferred only). */
 export interface OnboardingFocusFirstOption {
   value: EnrichmentCategory;
   label: string;

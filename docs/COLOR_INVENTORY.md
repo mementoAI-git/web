@@ -829,7 +829,7 @@ These colors should be avoided in new code and gradually replaced.
 ### Remaining Actions
 
 1. **Review onboarding-specific colors:**
-  - Colors in `/src/pages/onboard/` (e.g., `#C8956C`, `#2C1F15`, `#E4D9CC`)
+  - Colors in `/src/pages/onboarding/` (e.g., `#C8956C`, `#2C1F15`, `#E4D9CC`)
   - Consider if these should align with V3 tokens or remain distinct
 2. **Standardize white backgrounds:**
   - Use `bg-neutral` or `bg-white` consistently
@@ -882,4 +882,3 @@ These colors should be avoided in new code and gradually replaced.
 
 States & Edge Cases
 ScenarioBehaviourUser saves with no contentDisabled save button — but no error message shownVoice transcript is unclearSaved as-is, AI flags it gently in chatUser closes sheet mid-captureDraft auto-saved, recoverable on next openNo internetSaves locally, syncs when connection returns
-

@@ -65,7 +65,7 @@ export default function LoginPage() {
           if (redirectPath && result?.data?.onboarded) {
             navigate(decodeURIComponent(redirectPath));
           } else {
-            navigate(result?.data?.onboarded ? "/overview" : "/onboard");
+            navigate(result?.data?.onboarded ? "/overview" : "/onboarding");
           }
         }
       } catch (err) {
@@ -112,7 +112,7 @@ export default function LoginPage() {
       toast.success(completeData?.message ?? "Logged in");
       setAuth?.(completeData.data);
       await clearCache();
-      navigate(completeData.data?.onboarded ? "/overview" : "/onboard", { replace: true });
+      navigate(completeData.data?.onboarded ? "/overview" : "/onboarding", { replace: true });
     } catch (err) {
       if (err instanceof Error && err.name === "NotAllowedError") {
         // User cancelled the biometric prompt — silent
