@@ -1,8 +1,8 @@
-# Host onboarding chat (`/onboarding/chat`) — data flow, memory seeding, backend work
+# Host onboarding chat (`/onboard/chat`) — data flow, memory seeding, backend work
 
 This document is for **product**, **backend**, and **LLM-assisted implementation** in the API repo. It states **exactly what the web app sends and receives**, **what can seed the host’s initial conversation memory**, and **what to implement, change, or remove** on the server.
 
-The **Groot multi-step flow** (`/onboarding`, forms, priorities) is separate; see `docs/ONBOARDING-BACKEND-IMPLEMENTATION.md` and `docs/MEMENTO_ENRICHMENT_SCORE.md`. This file is only about the **conversational** onboarding at **`/onboarding/chat`**.
+The **Groot multi-step flow** (`/onboarding`, forms, priorities) is separate; see `docs/ONBOARDING-BACKEND-IMPLEMENTATION.md` and `docs/MEMENTO_ENRICHMENT_SCORE.md`. This file is only about the **conversational** onboarding at **`/onboard/chat`**.
 
 ---
 
@@ -134,7 +134,7 @@ The **`messages` array on every request** is the full context; you can **diff** 
 | Stream client + trailer parsing | `src/api/host-onboarding-chat.ts` |
 | API path constant | `src/api/endpoint.ts` → `hostOnboardingChatPrompt` |
 | Hook + local persistence | `src/features/host-onboarding-chat/use-host-onboarding-chat.ts`, `host-onboarding-chat-persistence.ts` |
-| UI | `src/pages/onboarding-chat/host-onboarding-chat-screen.tsx` |
+| UI | `src/pages/onboard-chat/host-onboarding-chat-screen.tsx` |
 | MSW test stub (streaming) | `src/test/mocks/handlers.ts` |
 
 ---

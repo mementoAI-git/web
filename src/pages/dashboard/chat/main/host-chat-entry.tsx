@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import useSWR from "swr";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import endpoint from "@/api/endpoint";
 import Loader from "@/pages/dashboard/chat/conversation/loader";
 
@@ -11,18 +11,20 @@ import Loader from "@/pages/dashboard/chat/conversation/loader";
  */
 export default function HostChatEntryPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { data, isLoading, error } = useSWR(endpoint.profile);
 
   const primaryConversationId = data?.data?.primary_conversation_id;
 
   useEffect(() => {
     if (isLoading || data == null) return;
+    const suffix = searchParams.toString() ? `?${searchParams.toString()}` : "";
     if (primaryConversationId) {
-      navigate(`/chat/${primaryConversationId}`, { replace: true });
+      navigate(`/chat/${primaryConversationId}${suffix}`, { replace: true });
     } else {
-      navigate("/chat/new", { replace: true });
+      navigate(`/chat/new${suffix}`, { replace: true });
     }
-  }, [isLoading, data, primaryConversationId, navigate]);
+  }, [isLoading, data, primaryConversationId, navigate, searchParams]);
 
   if (error) {
     return (

@@ -79,7 +79,7 @@ export function buildExchange0Acknowledgment(introUserMessage: string): string {
   return "Ok.";
 }
 
-/** Centered headline on the pre-chat intro (nickname from /onboard/nickname). */
+/** Centered headline on the pre-chat intro (nickname from /onboarding/nickname). */
 export function buildIntroHeadline(nickname: string): string {
   const trimmed = nickname.trim();
   const who = trimmed.length > 0 ? trimmed : "there";

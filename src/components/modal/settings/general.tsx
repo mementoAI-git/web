@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
+import { NavLink, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/utility";
@@ -9,10 +10,18 @@ import { SettingsSectionCard } from "./settings-section-card";
 import { formatProfileDobDisplay } from "./inline-profile-date-field";
 import { GeneralProfileEditModal } from "./general-profile-edit-modal";
 import { SettingsProfileHeader } from "@/pages/dashboard/settings/settings-profile-header";
+import Stats from "./stats";
+
+const personalSubTabPill =
+  "inline-flex h-8 items-center rounded-full px-3 font-inter text-xs font-medium " +
+  "motion-safe:transition-[background-color,color] motion-safe:duration-150 motion-safe:ease-out " +
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-v3-stroke-strong focus-visible:ring-offset-2";
 
 export default function General() {
   const { user } = useStore();
+  const [searchParams] = useSearchParams();
   const [editOpen, setEditOpen] = useState(false);
+  const statsOpen = searchParams.get("view") === "stats";
 
   const copyEmail = useCallback(async () => {
     if (!user?.email) return;
@@ -32,93 +41,130 @@ export default function General() {
 
       <hr className="border-t border-v3-stroke-weak" />
 
-      <SettingsSectionCard
-        title={
-          <div className="flex items-center justify-between gap-3">
-            <span>Profile details</span>
-            <Button
-              type="button"
-              variant="outline"
-              className={cn(
-                "h-8 min-h-8 shrink-0 rounded-full !border !border-v3-stroke-weak bg-white px-3 font-inter text-sm font-semibold text-v3-text-strong",
-                "hover:bg-v3-fill-weaker",
-              )}
-              onClick={() => setEditOpen(true)}
-            >
-              Edit profile
-            </Button>
-          </div>
-        }
-      >
-        <div className="grid w-full grid-cols-1 gap-x-8 gap-y-6 sm:grid-cols-2">
-          <SettingsGeneralFieldCell
-            label="Display name"
-            placeholder="Add a display name"
-            displayValue={(user?.nickname ?? "").trim()}
-          />
-
-          <SettingsGeneralFieldCell
-            label="Email"
-            placeholder="No email on file"
-            displayValue={user?.email ?? ""}
-            valueEmphasis
-            valueAdornment={
-              user?.email ? (
-                <button
-                  type="button"
-                  onClick={() => void copyEmail()}
-                  className={cn(
-                    "inline-flex min-h-8 min-w-8 items-center justify-center rounded-md",
-                    "text-v3-fill-strong motion-safe:transition-opacity motion-safe:duration-200 motion-safe:ease-out",
-                    "hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-v3-stroke-strong focus-visible:ring-offset-2",
-                  )}
-                  aria-label="Copy email address"
-                >
-                  <CopyIcon className="size-[18px]" aria-hidden />
-                </button>
-              ) : null
-            }
-          />
-
-          <SettingsGeneralFieldCell
-            label="First name"
-            placeholder="Add a first name"
-            displayValue={(user?.first_name ?? "").trim()}
-          />
-
-          <SettingsGeneralFieldCell
-            label="Last name"
-            placeholder="Add a last name"
-            displayValue={(user?.last_name ?? "").trim()}
-          />
-
-          <SettingsGeneralFieldCell
-            label="Phone"
-            placeholder="Add a phone number"
-            displayValue={(user?.phone_number ?? "").trim()}
-          />
-
-          <SettingsGeneralFieldCell
-            label="Location"
-            placeholder="Add a location"
-            displayValue={(user?.location ?? "").trim()}
-          />
-
-          <SettingsGeneralFieldCell
-            label="Birthday"
-            placeholder="Add a birthday"
-            displayValue={dobDisplay}
-          />
-
-          <SettingsGeneralFieldCell
-            label="Country"
-            placeholder="Add a country"
-            displayValue={(user?.country ?? "").trim()}
-          />
+      <nav aria-label="Profile details and stats">
+        <div role="tablist" aria-orientation="horizontal" className="flex flex-wrap items-center gap-1.5">
+          <NavLink
+            to="/settings/general"
+            role="tab"
+            aria-selected={!statsOpen}
+            className={cn(
+              personalSubTabPill,
+              !statsOpen
+                ? "bg-v3-fill-strong text-white"
+                : "text-v3-text-weak hover:bg-v3-fill-weak hover:text-v3-text-strong",
+            )}
+          >
+            My profile
+          </NavLink>
+          <NavLink
+            to="/settings/general?view=stats"
+            role="tab"
+            aria-selected={statsOpen}
+            className={cn(
+              personalSubTabPill,
+              statsOpen
+                ? "bg-v3-fill-strong text-white"
+                : "text-v3-text-weak hover:bg-v3-fill-weak hover:text-v3-text-strong",
+            )}
+          >
+            My Stats
+          </NavLink>
         </div>
-      </SettingsSectionCard>
+      </nav>
 
-      <GeneralProfileEditModal open={editOpen} onOpenChange={setEditOpen} />
+      {statsOpen ? (
+        <Stats embedded />
+      ) : (
+        <>
+          <SettingsSectionCard
+            title={
+              <div className="flex items-center justify-between gap-3">
+                <span>Profile details</span>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className={cn(
+                    "h-8 min-h-8 shrink-0 rounded-full !border !border-v3-stroke-weak bg-white px-3 font-inter text-sm font-semibold text-v3-text-strong",
+                    "hover:bg-v3-fill-weaker",
+                  )}
+                  onClick={() => setEditOpen(true)}
+                >
+                  Edit profile
+                </Button>
+              </div>
+            }
+          >
+            <div className="grid w-full grid-cols-1 gap-x-8 gap-y-6 sm:grid-cols-2">
+              <SettingsGeneralFieldCell
+                label="Display name"
+                placeholder="Add a display name"
+                displayValue={(user?.nickname ?? "").trim()}
+              />
+
+              <SettingsGeneralFieldCell
+                label="Email"
+                placeholder="No email on file"
+                displayValue={user?.email ?? ""}
+                valueEmphasis
+                valueAdornment={
+                  user?.email ? (
+                    <button
+                      type="button"
+                      onClick={() => void copyEmail()}
+                      className={cn(
+                        "inline-flex min-h-8 min-w-8 items-center justify-center rounded-md",
+                        "text-v3-fill-strong motion-safe:transition-opacity motion-safe:duration-200 motion-safe:ease-out",
+                        "hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-v3-stroke-strong focus-visible:ring-offset-2",
+                      )}
+                      aria-label="Copy email address"
+                    >
+                      <CopyIcon className="size-[18px]" aria-hidden />
+                    </button>
+                  ) : null
+                }
+              />
+
+              <SettingsGeneralFieldCell
+                label="First name"
+                placeholder="Add a first name"
+                displayValue={(user?.first_name ?? "").trim()}
+              />
+
+              <SettingsGeneralFieldCell
+                label="Last name"
+                placeholder="Add a last name"
+                displayValue={(user?.last_name ?? "").trim()}
+              />
+
+              <SettingsGeneralFieldCell
+                label="Phone"
+                placeholder="Add a phone number"
+                displayValue={(user?.phone_number ?? "").trim()}
+              />
+
+              <SettingsGeneralFieldCell
+                label="Location"
+                placeholder="Add a location"
+                displayValue={(user?.location ?? "").trim()}
+              />
+
+              <SettingsGeneralFieldCell
+                label="Birthday"
+                placeholder="Add a birthday"
+                displayValue={dobDisplay}
+              />
+
+              <SettingsGeneralFieldCell
+                label="Country"
+                placeholder="Add a country"
+                displayValue={(user?.country ?? "").trim()}
+              />
+            </div>
+          </SettingsSectionCard>
+
+          <GeneralProfileEditModal open={editOpen} onOpenChange={setEditOpen} />
+        </>
+      )}
     </div>
   );
 }

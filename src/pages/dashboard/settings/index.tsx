@@ -5,8 +5,7 @@ import General from "@/components/modal/settings/general";
 import Security from "@/components/modal/settings/security";
 import Beneficiary from "@/components/modal/settings/beneficiary&group";
 import Privacy from "@/components/modal/settings/privacy";
-import Stats from "@/components/modal/settings/stats";
-import { Settings, Lock, Users, Shield, ChartColumn, Menu, X, CreditCard } from "lucide-react";
+import { Settings, Lock, Users, Shield, Menu, X, CreditCard } from "lucide-react";
 import Billing from "@/components/modal/settings/billing";
 import { useFeatureFlags } from "@/contexts/feature-flags";
 
@@ -28,13 +27,6 @@ const settings = {
     label: "Personal info",
     shortLabel: "Profile",
     icon: <Settings size={16} strokeWidth={1.5} />,
-    component: <General />,
-  },
-  stats: {
-    label: "Stats",
-    shortLabel: "Stats",
-    icon: <ChartColumn size={16} strokeWidth={1.5} />,
-    component: <Stats />,
   },
   security: {
     label: "Security",
@@ -66,7 +58,6 @@ type SettingKey = keyof typeof settings;
 
 const VALID_TABS: SettingKey[] = [
   "general",
-  "stats",
   "security",
   "beneficiary",
   "privacy",
@@ -115,7 +106,6 @@ export default function SettingsPage() {
     ),
   );
 
-  // Horizontal scrollable nav for tablet/mobile
   const mobileNavLinks = (Object.entries(availableSettings) as [SettingKey, (typeof settings)[SettingKey]][]).map(
     ([key, setting]) => (
       <NavLink
@@ -202,7 +192,7 @@ export default function SettingsPage() {
             role="region"
             aria-label={`${settings[tab].label} settings`}
           >
-            {settings[tab].component}
+            {tab === "general" ? <General /> : "component" in settings[tab] ? settings[tab].component : null}
           </div>
         </div>
       </div>

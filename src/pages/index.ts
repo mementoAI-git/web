@@ -1,6 +1,6 @@
 export { default as HomePage } from "./home";
 export * from "./auth";
-export * from "./onboard";
+export * from "./onboarding";
 export { default as AcceptInvitePage } from "./accept-invite";
 export * from "./post";
 export { default as DashboardLayout } from "./dashboard/component/layout";
@@ -20,7 +20,4 @@ export { default as AdminFeatureFlagsPage } from "./dashboard/admin/feature-flag
 export { default as PricingPage } from "./pricing";
 export { default as NotFoundPage } from "./404";
 export { default as ErrorPage } from "./error";
-export { default as OnboardingGrootPage } from "./onboarding-groot";
-export { default as OnboardingGrootLayout } from "./onboarding-groot/layout";
-export { default as HostOnboardingChatPage } from "./onboarding-chat";
-
+export { default as HostOnboardingChatPage } from "./onboard-chat";

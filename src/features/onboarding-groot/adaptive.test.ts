@@ -41,6 +41,19 @@ describe("getStep4Headline", () => {
 });
 
 describe("getStep5Body", () => {
+  it("returns partial personalization copy", () => {
+    expect(
+      getStep5Body("explorer", { partialPersonalization: true }),
+    ).toMatch(/solid start/i);
+  });
+
+  it("returns self_understanding body", () => {
+    expect(getStep5Body("self_understanding")).toMatch(/discover yourself/i);
+  });
+
+  it("returns personal_space body", () => {
+    expect(getStep5Body("personal_space")).toMatch(/Make yourself at home/i);
+  });
   it("returns emotional_depth body", () => {
     expect(getStep5Body("emotional_depth")).toBe(
       "Start with something that matters to you — even a small memory is the beginning of something lasting."
@@ -130,10 +143,22 @@ describe("getPrimaryCTA", () => {
     expect(result.label).toBe("Upload something precious");
   });
 
-  it("returns dashboard as fallback for empty modes", () => {
+  it("returns time_capsule for practical + empty modes (misc / no expression)", () => {
+    const result = getPrimaryCTA("practical", [] as ExpressionMode[]);
+    expect(result.action).toBe("time_capsule");
+    expect(result.label).toBe("Create your first time capsule");
+  });
+
+  it("returns voice_recorder for emotional_depth + empty modes (misc / no expression)", () => {
     const result = getPrimaryCTA("emotional_depth", [] as ExpressionMode[]);
+    expect(result.action).toBe("voice_recorder");
+    expect(result.label).toBe("Record your first memory");
+  });
+
+  it("returns Open your space for self_understanding + empty modes", () => {
+    const result = getPrimaryCTA("self_understanding", [] as ExpressionMode[]);
     expect(result.action).toBe("dashboard");
-    expect(result.label).toBe("Go to dashboard");
+    expect(result.label).toBe("Open your space");
   });
 
   it("returns dashboard for null motivation", () => {

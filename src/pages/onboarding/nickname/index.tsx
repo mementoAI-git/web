@@ -1,0 +1,77 @@
+"use client";
+
+import { useCallback, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import endpoint from "@/api/endpoint";
+import Spinner from "@/components/spinner";
+import useFetcher from "@/hooks/use-fetcher";
+import { useStore } from "@/hooks/use-store";
+import { isEmpty } from "@/utility";
+import { mutate } from "swr";
+import { Button } from "@/components/ui/button";
+
+export default function NicknamePage() {
+  const navigate = useNavigate();
+  const { user, setUser } = useStore();
+  const [name, setName] = useState(user?.nickname ?? "");
+  const { isMutating, trigger: updateProfile } = useFetcher(endpoint.profile, "put");
+
+  const handleSubmit = useCallback(async () => {
+    if (!name.trim() || isMutating) return;
+
+    try {
+      const trimmed = name.trim();
+      await updateProfile({ nickname: trimmed });
+      await mutate(endpoint.profile);
+      if (user && setUser) {
+        setUser({ ...user, nickname: trimmed });
+      }
+      navigate("/onboarding/misc");
+    } catch (error) {
+      console.error("Failed to update profile:", error);
+    }
+  }, [isMutating, name, updateProfile, navigate, user, setUser]);
+
+  useEffect(() => {
+    if (isEmpty(name) && !isEmpty(user?.nickname)) {
+      setName(user?.nickname as string);
+    }
+  }, [user?.nickname, name]);
+
+  return (
+    <div className="flex min-h-full items-start justify-center py-4 sm:py-6 lg:items-center lg:py-0">
+      <div className="w-full max-w-[700px] rounded-[24px] bg-white p-5 sm:p-8 lg:p-10">
+        <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-4">
+            <p className="font-inter text-[18px] font-normal leading-7 text-[rgba(23,11,0,0.9)] sm:text-[20px] sm:leading-7">
+              Before we proceed, what should we call you?
+            </p>
+          </div>
+
+          <div className="w-full space-y-1.5">
+            <label htmlFor="onboard-name" className="block text-sm font-medium text-[#344054]">
+              Name<span className="text-v3-brand-strong">*</span>
+            </label>
+            <input
+              id="onboard-name"
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Enter a preferred name or nickname"
+              className="w-full rounded-lg border border-[#D0D5DD] bg-white px-[14px] py-[10px] text-sm leading-6 text-v3-text-strong shadow-[0_1px_2px_rgba(16,24,40,0.05)] placeholder:text-v3-text-weaker focus:border-v3-brand-strong focus:outline-none"
+            />
+          </div>
+
+          <Button
+            onClick={handleSubmit}
+            disabled={!name.trim() || isMutating}
+            className="flex h-14 w-full items-center justify-center gap-2 self-start rounded-full border-0 bg-[rgba(23,11,0,0.9)] px-8 text-sm font-semibold leading-5 text-white shadow-none transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+          >
+            <span>Continue</span>
+            <Spinner className="!size-4" loading={isMutating} />
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
