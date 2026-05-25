@@ -306,25 +306,13 @@ export function mapOnboardingDetailsToMiscState(
   if (motivationChips.length === 0 && persona.motivation_detail?.trim()) {
     motivationChips.push("something_else");
   }
-  const lifeSituations = Array.from(
-    new Set(
-      [
-        persona.life_situation,
-      ].filter(
-        (value): value is LifeSituationKey =>
-          Boolean(value) &&
-          LIFE_SITUATION_KEYS.includes(value as LifeSituationKey),
-      ),
-    ),
-  );
-  if (lifeSituations.length === 0 && persona.life_situation_detail?.trim()) {
-    lifeSituations.push("something_else");
-  }
   const lifeSituation =
     persona.life_situation &&
     LIFE_SITUATION_KEYS.includes(persona.life_situation as LifeSituationKey)
       ? (persona.life_situation as LifeSituationKey)
-      : null;
+      : persona.life_situation_detail?.trim()
+        ? "something_else"
+        : null;
   const chronotype =
     user.chronotype && CHRONOTYPE_KEYS.includes(user.chronotype as ChronotypeKey)
       ? (user.chronotype as ChronotypeKey)
@@ -358,7 +346,7 @@ export function mapOnboardingDetailsToMiscState(
     motivationChips,
     motivationDetail: persona.motivation_detail ?? "",
     ageBand: (user.age_range as AgeBand) || null,
-    lifeSituations: lifeSituations.length > 0 ? lifeSituations : lifeSituation ? [lifeSituation] : [],
+    lifeSituation,
     lifeSituationDetail: persona.life_situation_detail ?? "",
     homePlace: user.location ?? "",
     personalityTraits,

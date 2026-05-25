@@ -33,7 +33,7 @@ export function OnboardSelectionCard({
         }
       }}
       className={cn(
-        "flex min-h-10 max-w-full items-center gap-1.5 rounded-lg border px-2.5 py-2 text-left transition-colors duration-150 ease-out active:scale-[0.98] sm:min-h-8 sm:w-fit sm:gap-1 sm:px-2 sm:py-1",
+        "flex min-h-10 max-w-full cursor-pointer items-center gap-1.5 rounded-lg border px-2.5 py-2 text-left transition-colors duration-150 ease-out active:scale-[0.98] sm:min-h-8 sm:w-fit sm:gap-1 sm:px-2 sm:py-1",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-v3-brand-strong focus-visible:ring-offset-2",
         isAddVariant
           ? "border-v3-stroke-weak bg-v3-fill-weaker text-v3-text-weak hover:border-v3-stroke-strong hover:bg-v3-fill-weak"

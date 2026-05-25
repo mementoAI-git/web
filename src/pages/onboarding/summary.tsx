@@ -1,72 +1,165 @@
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import useSWR from "swr";
+import { ArrowUpRight, CircleCheck, MessageSquarePlus, Plus } from "lucide-react";
 
 import endpoint from "@/api/endpoint";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import {
   ALL_ENRICHMENT_CATEGORY_KEYS,
   enrichmentCategoryLabel,
 } from "@/features/enrichment/enrichment-categories";
 import type { UserStatsData } from "@/features/enrichment/enrichment-api.types";
 import { cn } from "@/lib/utils";
+import bannerCardImage from "@/assets/image/onboarding/L0tgw.png";
+import bannerBoatImage from "@/assets/image/onboarding/RIDg6.png";
 
 import {
   buildPersonalizedHostStarter,
   clearOnboardingSummarySnapshot,
-  getPostOnboardingDestination,
   readOnboardingSummarySnapshot,
 } from "./summary-helpers";
 
-const revealClass =
-  "motion-safe:animate-fade-in-up motion-safe:[animation-fill-mode:both]";
+const cardGradient =
+  "bg-[linear-gradient(133deg,rgba(251,210,148,0.14)_0%,rgba(255,252,247,0.45)_56%,rgba(224,229,255,0.88)_100%)]";
 
-function EditorialCard({
-  className,
+function CoverageBadge({ label }: { label: string }) {
+  return (
+    <span className="inline-flex items-center gap-1 rounded-md border border-[rgba(23,11,0,0.1)] bg-[rgba(23,11,0,0.02)] px-2 py-0.5 font-inter text-[12px] leading-5 text-[rgba(23,11,0,0.72)]">
+      <CircleCheck className="size-3.5 text-[#6BAF92]" />
+      {label}
+    </span>
+  );
+}
+
+function SummaryCard({
   eyebrow,
-  title,
-  body,
+  footer,
   children,
-  delayMs,
+  className,
 }: {
-  className?: string;
   eyebrow: string;
-  title: string;
-  body: string;
-  children?: React.ReactNode;
-  delayMs: number;
+  footer: string;
+  children: React.ReactNode;
+  className?: string;
 }) {
   return (
     <article
       className={cn(
-        revealClass,
-        "group relative overflow-hidden rounded-[28px] border border-v3-stroke-weak bg-white/90 p-4 shadow-[0_18px_60px_rgba(44,31,21,0.05)] sm:p-5",
+        "flex h-[328px] flex-col justify-between rounded-2xl border border-[rgba(23,11,0,0.06)] p-6",
+        cardGradient,
         className,
       )}
-      style={{ animationDelay: `${delayMs}ms` }}
     >
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.95),transparent_45%),radial-gradient(circle_at_70%_85%,rgba(200,149,108,0.12),transparent_40%),linear-gradient(180deg,rgba(247,244,239,0.95),rgba(255,255,255,0.9))]"
+      <div className="space-y-3">
+        <p className="font-inter text-[11px] uppercase tracking-[0.08em] text-[rgba(23,11,0,0.45)]">
+          {eyebrow}
+        </p>
+        {children}
+      </div>
+      <p className="font-geist text-sm leading-6 text-[rgba(30,30,30,0.9)]">{footer}</p>
+    </article>
+  );
+}
+
+function SummaryBannerActions({
+  onChat,
+  onAddStory,
+  compact = false,
+}: {
+  onChat: () => void;
+  onAddStory: () => void;
+  compact?: boolean;
+}) {
+  return (
+    <div
+      className={cn(
+        "flex shrink-0 items-center gap-2 self-center",
+        compact && "w-full flex-col sm:flex-row lg:w-auto",
+      )}
+    >
+      <Button
+        type="button"
+        onClick={onChat}
+        variant="outline"
+        className={cn(
+          "h-12 rounded-[999px] border-[rgba(23,11,0,0.08)] bg-white font-inter text-[15px] font-medium text-[rgba(23,11,0,0.88)] shadow-none transition-[transform,background-color,border-color] duration-150 ease-out hover:border-[rgba(23,11,0,0.14)] hover:bg-[rgba(255,255,255,0.96)] active:scale-[0.98]",
+          compact ? "w-full sm:w-[92px] lg:w-[92px]" : "w-[92px]",
+        )}
+      >
+        <MessageSquarePlus className="mr-1 size-4" />
+        Chat
+      </Button>
+      <Button
+        type="button"
+        onClick={onAddStory}
+        className={cn(
+          "h-12 rounded-[999px] border-0 bg-[#FF6B0A] font-inter text-[15px] font-medium text-white shadow-none transition-[transform,opacity] duration-150 ease-out hover:opacity-95 active:scale-[0.98]",
+          compact ? "w-full sm:w-[127px] lg:w-[127px]" : "w-[127px]",
+        )}
+      >
+        <Plus className="mr-1 size-4" />
+        Add a story
+      </Button>
+    </div>
+  );
+}
+
+function SummaryBannerContent({ compact = false }: { compact?: boolean }) {
+  return (
+    <div
+      className={cn(
+        "flex min-w-0 items-center gap-4",
+        compact && "items-start",
+      )}
+    >
+      <img
+        src={bannerBoatImage}
+        alt=""
+        className={cn("shrink-0 object-contain", compact ? "size-16 md:size-[72px]" : "size-20")}
       />
-      <div className="relative flex min-h-[15rem] flex-col justify-between gap-5 rounded-[22px] bg-[linear-gradient(180deg,rgba(255,255,255,0.48),rgba(255,255,255,0.18))] p-4 backdrop-blur-[6px] sm:min-h-[18rem] lg:min-h-[21rem]">
-        <div className="space-y-3">
-          <p className="font-inter text-[11px] font-medium uppercase tracking-[0.16em] text-v3-text-weaker">
-            {eyebrow}
-          </p>
-          {children}
-        </div>
-        <div className="space-y-2">
-          <p className="font-inter text-sm font-semibold text-v3-text-strong">
-            {title}
-          </p>
-          <p className="font-inter text-sm leading-6 text-v3-text-weak">
-            {body}
-          </p>
+      <div className={cn("min-w-0 space-y-1", compact ? "max-w-none" : "max-w-[363px]")}>
+        <h3
+          className={cn(
+            "font-inter font-bold text-[rgba(23,11,0,0.9)]",
+            compact ? "text-lg leading-6 md:text-[19px] md:leading-7" : "text-xl leading-7",
+          )}
+        >
+          Continue building your profile.
+        </h3>
+        <p className="font-geist text-[13px] leading-5 text-[rgba(30,30,30,0.9)]">
+          Add memories and stories, and start a conversation to create a deeper, richer Memento profile.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function SummaryBanner({
+  onChat,
+  onAddStory,
+}: {
+  onChat: () => void;
+  onAddStory: () => void;
+}) {
+  return (
+    <section className="relative w-full max-w-[870px] self-start overflow-hidden rounded-2xl lg:h-[112px]">
+      <img
+        src={bannerCardImage}
+        alt=""
+        className="absolute inset-0 h-full w-full object-fill"
+      />
+      <div className="relative flex min-h-[168px] flex-col justify-between gap-4 p-4 sm:min-h-[176px] sm:p-5 md:min-h-[184px] md:p-6 lg:h-full lg:min-h-0 lg:flex-row lg:items-center lg:justify-between lg:gap-6 lg:px-6 lg:py-4">
+        <div className="flex min-h-0 flex-1 flex-col justify-between gap-4 lg:flex-row lg:items-center lg:justify-between lg:gap-6">
+          <SummaryBannerContent compact />
+          <SummaryBannerActions
+            compact
+            onChat={onChat}
+            onAddStory={onAddStory}
+          />
         </div>
       </div>
-    </article>
+    </section>
   );
 }
 
@@ -77,34 +170,29 @@ export default function OnboardingSummaryPage() {
 
   const stats = data?.data ?? null;
   const enrichmentScore = Math.round(Number(stats?.enrichment_score) || 0);
-  const nextDestination = getPostOnboardingDestination(
-    snapshot?.nextAction ?? "dashboard",
+  const touchedFromSnapshot = snapshot?.touchedCategories ?? [];
+  const touchedFromStats =
+    stats?.category_scores
+      ?.filter((category) => category.itemCount > 0 || category.score > 0)
+      .map((category) => category.key) ?? [];
+  const touchedSet = new Set(
+    touchedFromSnapshot.length > 0 ? touchedFromSnapshot : touchedFromStats,
   );
-  const touchedKeys = ALL_ENRICHMENT_CATEGORY_KEYS.filter((key) =>
-    new Set(snapshot?.touchedCategories ?? []).has(key),
-  );
-  const untouchedKeys = ALL_ENRICHMENT_CATEGORY_KEYS.filter(
-    (key) => !new Set(snapshot?.touchedCategories ?? []).has(key),
-  );
+  const touchedKeys = ALL_ENRICHMENT_CATEGORY_KEYS.filter((key) => touchedSet.has(key));
+  const untouchedKeys = ALL_ENRICHMENT_CATEGORY_KEYS.filter((key) => !touchedSet.has(key));
   const hostStarter = buildPersonalizedHostStarter(snapshot);
-  const alternateNextLabel =
-    nextDestination.path !== "/overview" || nextDestination.label !== "Go to dashboard"
-      ? nextDestination.label
-      : null;
 
-  const primaryTouched = touchedKeys.slice(0, 3);
+  const coveredLabels = touchedKeys.map(enrichmentCategoryLabel);
+  const quietLabels = untouchedKeys.map(enrichmentCategoryLabel);
 
   const handleContinueToDashboard = () => {
     clearOnboardingSummarySnapshot();
     navigate("/overview");
   };
 
-  const handleContinue = () => {
+  const handleAddStory = () => {
     clearOnboardingSummarySnapshot();
-    navigate(
-      nextDestination.path,
-      nextDestination.state ? { state: nextDestination.state } : undefined,
-    );
+    navigate("/overview", { state: { openModal: "create-memory" } });
   };
 
   const handleStartHostChat = () => {
@@ -114,16 +202,13 @@ export default function OnboardingSummaryPage() {
   };
 
   return (
-    <div className="flex flex-col gap-8 py-2 sm:gap-10 lg:grid lg:h-[calc(100dvh-11rem)] lg:grid-cols-[minmax(0,1fr)_minmax(760px,980px)] lg:gap-16 lg:overflow-hidden">
-      <aside className="flex flex-col gap-5 lg:min-w-0 lg:justify-between lg:pt-14 lg:pr-10">
-        <div className="space-y-3">
-          <p className="font-inter text-[11px] font-medium uppercase tracking-[0.16em] text-v3-text-weaker">
-            First reflection
-          </p>
-          <p className="max-w-[20ch] font-garamond text-[1.7rem] leading-[1.06] text-v3-text-strong">
-            A private place to begin.
-          </p>
-          <p className="max-w-[34ch] font-inter text-sm leading-6 text-v3-text-weak">
+    <div className="relative flex min-h-full flex-col bg-white lg:grid lg:h-full lg:min-h-0 lg:grid-cols-[clamp(260px,28vw,401px)_minmax(0,1fr)] lg:overflow-hidden">
+      <aside className="relative z-10 hidden flex-col justify-between gap-8 border-b border-[rgba(23,11,0,0.08)] bg-transparent px-5 py-5 md:px-8 md:py-6 lg:flex lg:h-full lg:gap-10 lg:border-r lg:border-b-0 lg:px-10 lg:py-10">
+        <div className="max-w-[170px] space-y-4">
+          <h2 className="font-garamond text-[20px] leading-6 text-[rgba(23,11,0,0.9)]">
+            Reflect, quietly
+          </h2>
+          <p className="font-inter text-sm leading-5 text-[rgba(30,30,30,0.9)]">
             Take your time. Nothing here needs to be finished all at once.
           </p>
         </div>
@@ -131,120 +216,127 @@ export default function OnboardingSummaryPage() {
         <Button
           type="button"
           variant="outline"
-          size="lg"
           onClick={handleContinueToDashboard}
-          className="w-full rounded-full border-v3-stroke-weak bg-white text-v3-text-strong transition-transform duration-150 ease-out active:scale-[0.97] sm:w-fit sm:min-w-[190px]"
+          className="h-11 w-full rounded-full border-[rgba(23,11,0,0.1)] bg-white px-5 font-inter text-sm font-semibold text-[#101828] shadow-none transition-[transform,background-color] duration-150 ease-out hover:bg-[rgba(23,11,0,0.03)] active:scale-[0.98] sm:w-fit"
         >
-          Go to dashboard
+          Go to Dashboard
+          <ArrowUpRight className="ml-1 size-4 text-[rgba(23,11,0,0.45)]" />
         </Button>
       </aside>
 
-      <div className="min-h-0 min-w-0 lg:overflow-y-auto lg:pr-2">
-        <div className="flex flex-col gap-8 pb-8 lg:gap-14 lg:pb-14">
-          <section
-            className={cn(revealClass, "space-y-6 pt-2 lg:pt-14")}
-            style={{ animationDelay: "40ms" }}
-          >
-            <Separator className="bg-v3-stroke-weak/70" />
-            <div className="space-y-4">
-              <h1 className="max-w-[15ch] font-garamond text-[2rem] leading-[1.05] text-v3-text-strong sm:text-[2.7rem] lg:text-[4rem]">
-                {snapshot?.nickname
-                  ? `${snapshot.nickname}, you have already started shaping the story only you can tell.`
-                  : "You have already started shaping the story only you can tell."}
-              </h1>
-              <p className="max-w-[55ch] font-inter text-[15px] leading-7 text-v3-text-weak sm:text-base">
-                {isLoading
-                  ? "We’re gathering the first outline of your Memento now."
-                  : `You have already filled in ${enrichmentScore}% of your Memento just by introducing yourself.`}
-              </p>
-            </div>
+      <main className="relative z-10 min-h-0 bg-transparent lg:overflow-y-auto">
+        <div className="mx-auto flex w-full max-w-[1041px] flex-col gap-6 px-5 py-6 md:px-8 md:py-8 lg:min-h-full lg:gap-8 lg:px-10 lg:py-10 xl:px-[84px]">
+          <section className="space-y-4">
+            <h1 className="font-garamond text-[28px] font-medium leading-[1.14] text-[rgba(23,11,0,0.9)] sm:text-[32px] sm:leading-[1.18]">
+              Your Memento profile is shaping up
+            </h1>
+            <p className="max-w-[710px] font-inter text-sm leading-5 text-[rgba(30,30,30,0.9)]">
+              {isLoading
+                ? "We’re gathering the first outline of your Memento now."
+                : "A first outline is already here. You can keep building it at your own pace."}
+            </p>
           </section>
 
-          <section className="grid gap-4 sm:gap-5 xl:grid-cols-3">
-            <EditorialCard
-              eyebrow="First measure"
-              title="A quiet first outline"
-              body="This is not the whole story. It is simply enough shape for Memento to begin with care."
-              delayMs={120}
+          <div className="h-px w-full bg-[rgba(23,11,0,0.1)]" />
+
+          <section className="grid gap-3 xl:grid-cols-2">
+            <SummaryCard
+              eyebrow="Your Enrichment Score"
+              footer="Not the whole story, but really strong for a start."
+              className="min-h-[240px] md:min-h-[260px] xl:h-[328px]"
             >
               <div className="space-y-2">
-                <p className="font-garamond text-[4rem] leading-none text-v3-text-strong sm:text-[4.8rem]">
-                  {enrichmentScore}
-                  <span className="ml-1 text-[1.8rem] text-v3-text-weaker">%</span>
-                </p>
-                <p className="max-w-[18ch] font-inter text-sm leading-6 text-v3-text-weak">
-                  Already filled in just by introducing yourself.
+                <p className="font-garamond text-[60px] leading-none tracking-[-0.5px] text-[#FAAE44] sm:text-[72px]">
+                  {enrichmentScore}%
                 </p>
               </div>
-            </EditorialCard>
+            </SummaryCard>
 
-            <EditorialCard
-              eyebrow="Themes already touched"
-              title="The first parts of your map"
-              body="These are the areas already beginning to take shape."
-              delayMs={170}
+            <SummaryCard
+              eyebrow="Enrichment fields covered"
+              className="min-h-[240px] md:min-h-[260px] xl:h-[328px]"
+              footer={
+                coveredLabels.length > 0
+                  ? "So far, your story is already opening around who you are, the memories you carry, the people around you, and where you come from."
+                  : "No enrichment fields have been touched yet. Your first stories and reflections will start shaping them."
+              }
             >
-              <div className="space-y-2.5">
-                {primaryTouched.map((key) => (
-                  <div
-                    key={key}
-                    className="flex items-center justify-between rounded-full bg-white/70 px-3 py-2 backdrop-blur-sm"
-                  >
-                    <span className="font-inter text-sm text-v3-text-strong">
-                      {enrichmentCategoryLabel(key)}
-                    </span>
-                    <span className="size-2 rounded-full bg-v3-brand-strong" aria-hidden />
-                  </div>
-                ))}
-              </div>
-            </EditorialCard>
-
-            <EditorialCard
-              eyebrow="What happens next"
-              title="Keep going softly from here"
-              body="Let Memento meet you with a gentle first question shaped by what you have already shared."
-              delayMs={220}
-            >
-              <div className="flex h-full items-start">
-                <Button
-                  type="button"
-                  size="lg"
-                  onClick={handleStartHostChat}
-                  className="w-full rounded-full px-6 text-sm font-semibold transition-transform duration-150 ease-out active:scale-[0.97] sm:w-auto"
-                >
-                  Talk with Memento
-                </Button>
-              </div>
-            </EditorialCard>
+              {coveredLabels.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {coveredLabels.map((label) => (
+                    <CoverageBadge key={label} label={label} />
+                  ))}
+                </div>
+              ) : (
+                <p className="max-w-[28ch] font-inter text-sm leading-6 text-[rgba(23,11,0,0.55)]">
+                  Nothing has been covered yet.
+                </p>
+              )}
+            </SummaryCard>
           </section>
 
-          <section
-            className={cn(
-              revealClass,
-              "flex flex-col gap-4 border-t border-v3-stroke-weak/70 pt-8 sm:flex-row sm:items-start sm:justify-between",
-            )}
-            style={{ animationDelay: "280ms" }}
-          >
-            <p className="max-w-[40ch] font-garamond text-[1.45rem] leading-tight text-v3-text-strong sm:text-[1.7rem]">
-              Other parts of your story can wait until you are ready.
+          <section>
+            <p className="max-w-[704px] font-inter text-sm leading-5 text-[rgba(30,30,30,0.9)]">
+              You’ve began filling up an important metric we like to call the “Enrichment Score”. Your Enrichment
+              score is decided across 10 different fields that cover different aspects of the human life, and continues
+              to increase as you reflect and add more information to your Memento.
             </p>
-            <div className="max-w-[42rem] space-y-3">
-              <p className="break-words font-inter text-sm leading-6 text-v3-text-weak">
-                Still quiet for now: {untouchedKeys.map(enrichmentCategoryLabel).join(", ").toLowerCase()}.
+          </section>
+
+          <div className="h-px w-full bg-[rgba(23,11,0,0.1)]" />
+
+          <section className="space-y-3">
+            <p className="font-inter text-sm leading-5 text-[rgba(23,11,0,0.65)]">Still quiet for now:</p>
+            <p className="max-w-[700px] font-inter text-sm leading-5 text-[rgba(30,30,30,0.9)]">
+              {quietLabels.join(", ")}.
+            </p>
+          </section>
+
+          <SummaryBanner
+            onChat={handleStartHostChat}
+            onAddStory={handleAddStory}
+          />
+
+          <section className="flex flex-col gap-3 rounded-xl bg-[rgba(23,11,0,0.04)] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-3">
+              <CircleCheck className="size-4 text-[rgba(6,122,87,0.8)]" />
+              <p className="font-inter text-sm leading-5 text-[rgba(30,30,30,0.9)]">
+                Your data is private, encrypted, and securely stored and certified on AWS and GCP S3 buckets.
               </p>
-              {alternateNextLabel ? (
-                <button
-                  type="button"
-                  onClick={handleContinue}
-                  className="rounded text-sm font-medium text-v3-brand-strong transition-colors hover:text-v3-fill-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-v3-brand-strong focus-visible:ring-offset-2"
-                >
-                  {alternateNextLabel}
-                </button>
-              ) : null}
             </div>
+            <a
+              href="https://mymemento.io/legal-pages/privacy"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex w-fit shrink-0 self-start whitespace-nowrap cursor-pointer items-center gap-1 font-geist text-xs font-medium text-[rgba(23,11,0,0.65)] transition-colors duration-150 ease-out hover:text-[rgba(23,11,0,0.9)] sm:self-auto"
+            >
+              Learn more
+              <ArrowUpRight className="size-3.5" />
+            </a>
+          </section>
+
+          <section className="space-y-4 border-t border-[rgba(23,11,0,0.08)] pt-6 lg:hidden">
+            <div className="space-y-3">
+              <h2 className="font-garamond text-[20px] leading-6 text-[rgba(23,11,0,0.9)]">
+                Reflect, quietly
+              </h2>
+              <p className="max-w-[26rem] font-inter text-sm leading-5 text-[rgba(30,30,30,0.9)]">
+                Take your time. Nothing here needs to be finished all at once.
+              </p>
+            </div>
+
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleContinueToDashboard}
+              className="h-11 w-full rounded-full border-[rgba(23,11,0,0.1)] bg-white px-5 font-inter text-sm font-semibold text-[#101828] shadow-none transition-[transform,background-color] duration-150 ease-out hover:bg-[rgba(23,11,0,0.03)] active:scale-[0.98] sm:w-fit"
+            >
+              Go to Dashboard
+              <ArrowUpRight className="ml-1 size-4 text-[rgba(23,11,0,0.45)]" />
+            </Button>
           </section>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

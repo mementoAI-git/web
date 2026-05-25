@@ -47,7 +47,7 @@ export default function AddBeneficiaries() {
         </div>
         <button
           type="submit"
-          className="flex min-h-10 w-full shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full border border-stroke-neutral-weak px-8 text-center sm:w-auto"
+          className="flex min-h-10 w-full shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full border border-stroke-neutral-weak px-8 text-center transition-[transform,background-color,border-color] duration-150 ease-out hover:border-black/10 hover:bg-black/[0.02] active:scale-[0.98] sm:w-auto"
         >
           <span className="whitespace-nowrap text-center font-inter text-sm font-semibold text-gray-900">
             Send invite

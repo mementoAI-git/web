@@ -30,7 +30,7 @@ describe("SidebarUpgradeCard", () => {
     ).toBeInTheDocument();
   });
 
-  it("navigates to settings and calls onNavigate when Upgrade is pressed", async () => {
+  it("opens the upgrade modal and calls onNavigate when Upgrade is pressed", async () => {
     const user = userEvent.setup();
     const onNavigate = vi.fn();
     mockNavigate.mockClear();
@@ -41,7 +41,10 @@ describe("SidebarUpgradeCard", () => {
     );
 
     await user.click(screen.getByRole("button", { name: /upgrade/i }));
-    expect(mockNavigate).toHaveBeenCalledWith("/pricing");
+    expect(
+      screen.getByRole("heading", { name: /unlock more with pro/i }),
+    ).toBeInTheDocument();
+    expect(mockNavigate).not.toHaveBeenCalled();
     expect(onNavigate).toHaveBeenCalledTimes(1);
   });
 });

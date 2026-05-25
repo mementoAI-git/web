@@ -24,7 +24,7 @@ export interface OnboardingSummarySnapshot {
   motivationType: MotivationType;
   nickname: string;
   motivationDetail?: string;
-  lifeSituation?: OnboardQuestionsState["lifeSituations"][number] | null;
+  lifeSituation?: OnboardQuestionsState["lifeSituation"];
   lifeSituationDetail?: string;
   homePlace?: string;
   personalityTraits?: OnboardQuestionsState["personalityTraits"];
@@ -40,7 +40,7 @@ export function deriveTouchedCategoriesFromMiscState(
   state: Pick<
     OnboardQuestionsState,
     | "ageBand"
-    | "lifeSituations"
+    | "lifeSituation"
     | "homePlace"
     | "personalityTraits"
     | "memoryTreasures"
@@ -48,13 +48,12 @@ export function deriveTouchedCategoriesFromMiscState(
     | "chronotype"
     | "sharingIntent"
     | "priorityDimensions"
-  > & { lifeSituation?: OnboardQuestionsState["lifeSituations"][number] | null },
+  >,
 ): EnrichmentCategory[] {
   const touched = new Set<EnrichmentCategory>();
-  const lifeSituations = state.lifeSituations ?? (state.lifeSituation ? [state.lifeSituation] : []);
 
   if (state.ageBand) touched.add("identity_self");
-  if (lifeSituations.length > 0) touched.add("work_purpose");
+  if (state.lifeSituation) touched.add("work_purpose");
   if (state.homePlace.trim()) touched.add("heritage_roots");
   if (state.personalityTraits.length > 0) touched.add("identity_self");
   if (state.memoryTreasures.length > 0) {

@@ -44,20 +44,20 @@ export default function BeneficiaryPage() {
       <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
         <button
           onClick={() => navigate(-1)}
-          className="w-full rounded-full bg-black/4 px-8 py-[18px] text-sm font-semibold leading-[20px] text-gray-900 sm:w-auto"
+          className="w-full cursor-pointer rounded-full bg-black/4 px-8 py-[18px] text-sm font-semibold leading-[20px] text-gray-900 transition-[transform,background-color] duration-150 ease-out hover:bg-black/8 active:scale-[0.98] sm:w-auto"
         >
           Prev
         </button>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-stretch">
           <Link
             to="/overview"
-            className="rounded-full bg-sand-2 px-8 py-[18px] text-center text-sm font-semibold leading-[20px] text-sand-10"
+            className="cursor-pointer rounded-full bg-sand-2 px-8 py-[18px] text-center text-sm font-semibold leading-[20px] text-sand-10 transition-[transform,opacity] duration-150 ease-out hover:opacity-90 active:scale-[0.98]"
           >
             Skip for now
           </Link>
           <Button
             asChild
-            className="rounded-full !bg-v3-brand-strong px-8 py-[18px] text-sm font-semibold leading-[20px] text-white hover:!opacity-90"
+            className="rounded-full !bg-v3-brand-strong px-8 py-[18px] text-sm font-semibold leading-[20px] text-white transition-[transform,opacity] duration-150 ease-out hover:!opacity-90 active:scale-[0.98]"
           >
             <Link to="/overview">Continue</Link>
           </Button>
@@ -66,4 +66,3 @@ export default function BeneficiaryPage() {
     </div>
   );
 }
-

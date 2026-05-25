@@ -48,7 +48,7 @@ describe("UpgradePrompt", () => {
       { route: "/overview", auth: true },
     );
 
-    await user.click(screen.getByRole("button", { name: /maybe later/i }));
+    await user.click(screen.getByRole("button", { name: /let me think about it/i }));
 
     expect(onOpenChange).toHaveBeenCalledWith(false);
     expect(isUpgradeGateDismissed("voice_mode")).toBe(false);

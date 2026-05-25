@@ -24,6 +24,7 @@ export interface SubscriptionUsage {
 
 /** Align `feature` strings with backend 402 payloads (PRD §3.3). */
 export type FeatureKey =
+  | "pro_plan"
   | "voice_mode"
   | "supermemory"
   | "upload_quality"

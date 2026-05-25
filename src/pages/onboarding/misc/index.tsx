@@ -24,7 +24,7 @@ import type {
   MemoryTreasureKey,
   PassionKey,
 } from "@/features/onboarding-groot/types";
-import { getPrimaryCTA, getStep5Body } from "@/features/onboarding-groot/adaptive";
+import { getPrimaryCTA } from "@/features/onboarding-groot/adaptive";
 import { OnboardSelectionCard } from "./OnboardSelectionCard";
 import { OnboardQuestionHeader } from "./OnboardQuestionHeader";
 import {
@@ -54,12 +54,6 @@ import {
   saveOnboardingSummarySnapshot,
   type PostOnboardingAction,
 } from "../summary-helpers";
-
-function primaryLifeSituationForApi(
-  values: LifeSituationKey[],
-): LifeSituationKey | null {
-  return values.find((value) => value !== "something_else") ?? values[0] ?? null;
-}
 
 function motivationForApi(
   chips: MiscMotivationChip[],
@@ -91,9 +85,9 @@ const TOTAL_QUESTION_DOTS = 10;
 const fieldClassName =
   "border border-[#D0D5DD] bg-white text-v3-text-strong shadow-[0_1px_2px_rgba(16,24,40,0.05)] placeholder:text-v3-text-weaker focus-visible:border-v3-brand-strong focus-visible:ring-v3-brand-strong/20";
 const primaryButtonClassName =
-  "flex h-14 w-full items-center justify-center gap-2 rounded-full border-0 bg-[rgba(23,11,0,0.9)] px-8 text-sm font-semibold leading-5 text-white shadow-none transition-[transform,opacity] duration-150 ease-out hover:opacity-90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto";
+  "flex h-14 w-full cursor-pointer items-center justify-center gap-2 rounded-full border-0 bg-[rgba(23,11,0,0.9)] px-8 text-sm font-semibold leading-5 text-white shadow-none transition-[transform,opacity] duration-150 ease-out hover:opacity-90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto";
 const secondaryButtonClassName =
-  "h-14 w-full rounded-full border border-[#D0D5DD] bg-white px-6 text-sm font-semibold leading-5 text-[rgba(23,11,0,0.9)] shadow-none transition-transform duration-150 ease-out active:scale-[0.98] disabled:pointer-events-none disabled:opacity-40 sm:w-auto sm:px-8";
+  "h-14 w-full cursor-pointer rounded-full border border-[#D0D5DD] bg-white px-6 text-sm font-semibold leading-5 text-[rgba(23,11,0,0.9)] shadow-none transition-[transform,background-color,border-color] duration-150 ease-out hover:border-[rgba(23,11,0,0.18)] hover:bg-[rgba(23,11,0,0.03)] active:scale-[0.98] disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto sm:px-8";
 
 function StepSection({ children }: { children: ReactNode }) {
   return <section className="space-y-4">{children}</section>;
@@ -146,7 +140,7 @@ export default function MiscPage() {
     setMotivationChips,
     setMotivationDetail,
     setAgeBand,
-    setLifeSituations,
+    setLifeSituation,
     setLifeSituationDetail,
     setHomePlace,
     setPersonalityTraits,
@@ -166,6 +160,10 @@ export default function MiscPage() {
   const step = state.step;
   const canProceed = canAdvance(step);
   const contentRef = useRef<HTMLDivElement>(null);
+  const loaderStartedRef = useRef(false);
+  const completeAndNavigateRef =
+    useRef<((action: PostOnboardingAction, opts?: { skippedDeep?: boolean }) => Promise<void>) | null>(null);
+  const autoSubmitActionRef = useRef<PostOnboardingAction>("dashboard");
   const dots = progressDots(step);
 
   useEffect(() => {
@@ -196,7 +194,6 @@ export default function MiscPage() {
     async (action: PostOnboardingAction, opts?: { skippedDeep?: boolean }) => {
       const skipped = opts?.skippedDeep ?? state.skippedDeepPersonalization;
       const motivationApi = motivationForApi(state.motivationChips);
-      const primaryLifeSituation = primaryLifeSituationForApi(state.lifeSituations);
       const joinExtras = [
         ...state.motivationChips.filter(
           (chip): chip is MotivationType => chip !== "something_else",
@@ -233,7 +230,7 @@ export default function MiscPage() {
           expressionMode: [],
           isComplete: true,
           stepReached: skipped ? 6 : 12,
-          lifeSituation: primaryLifeSituation ?? undefined,
+          lifeSituation: state.lifeSituation ?? undefined,
           lifeSituationDetail: state.lifeSituationDetail.trim() || undefined,
           personalityTraits: state.personalityTraits,
           memoryTreasures: state.memoryTreasures,
@@ -269,7 +266,7 @@ export default function MiscPage() {
         motivationType: motivationApi,
         nickname,
         motivationDetail: state.motivationDetail.trim() || undefined,
-        lifeSituation: primaryLifeSituation,
+        lifeSituation: state.lifeSituation,
         lifeSituationDetail: state.lifeSituationDetail.trim() || undefined,
         homePlace: state.homePlace.trim() || undefined,
         personalityTraits: state.personalityTraits,
@@ -282,6 +279,23 @@ export default function MiscPage() {
     },
     [nickname, state, completeOnboarding, navigate, user, setUser],
   );
+
+  useEffect(() => {
+    completeAndNavigateRef.current = completeAndNavigate;
+    const motivationApi = motivationForApi(state.motivationChips);
+    autoSubmitActionRef.current = getPrimaryCTA(motivationApi, []).action;
+  }, [completeAndNavigate, state.motivationChips]);
+
+  useEffect(() => {
+    if (step !== 12 || loaderStartedRef.current) return;
+    loaderStartedRef.current = true;
+
+    const timeout = window.setTimeout(() => {
+      void completeAndNavigateRef.current?.(autoSubmitActionRef.current);
+    }, 700);
+
+    return () => window.clearTimeout(timeout);
+  }, [step]);
 
   if (prefill === null) {
     return (
@@ -310,14 +324,20 @@ export default function MiscPage() {
     }
   };
 
-  const appendHomeSuggestion = (label: string) => {
-    setHomePlace(label);
+  const appendHomeSuggestion = (
+    promptText: string,
+  ) => {
+    setHomePlace(promptText);
   };
 
   const togglePersonality = (v: PersonalityTraitKey) => {
     if (state.personalityTraits.includes(v)) {
       setPersonalityTraits(state.personalityTraits.filter((p) => p !== v));
-    } else if (state.personalityTraits.length < MAX_PERSONALITY_TRAITS) {
+    } else if (
+      v === "something_else" ||
+      state.personalityTraits.filter((trait) => trait !== "something_else").length <
+        MAX_PERSONALITY_TRAITS
+    ) {
       setPersonalityTraits([...state.personalityTraits, v]);
     }
   };
@@ -469,7 +489,7 @@ export default function MiscPage() {
               />
               {validationAttempted && !canAdvance(3) && (
                 <ErrorText>
-                  Please choose one or more options, and add a note if you pick Something else.
+                  Please choose one option, and add context if you pick Something else.
                 </ErrorText>
               )}
               <div className="flex flex-wrap gap-2">
@@ -479,30 +499,27 @@ export default function MiscPage() {
                     value={opt.value}
                     label={opt.label}
                     icon={opt.icon}
-                    isSelected={state.lifeSituations.includes(opt.value)}
-                    onClick={() =>
-                      setLifeSituations(
-                        state.lifeSituations.includes(opt.value)
-                          ? state.lifeSituations.filter((value) => value !== opt.value)
-                          : [...state.lifeSituations, opt.value],
-                      )
-                    }
+                    isSelected={state.lifeSituation === opt.value}
+                    onClick={() => setLifeSituation(opt.value)}
                     variant={opt.value === "something_else" ? "add" : undefined}
                   />
                 ))}
               </div>
-              {state.lifeSituations.includes("something_else") && (
-                <OptionalField htmlFor="work-other" label="Something else">
+              <OptionalField
+                htmlFor="work-other"
+                label={
+                  state.lifeSituation === "something_else" ? "Something else" : "Add more context (optional)"
+                }
+              >
                   <Textarea
                     id="work-other"
                     value={state.lifeSituationDetail}
                     onChange={(e) => setLifeSituationDetail(e.target.value)}
                     maxLength={200}
                     className={cn("min-h-[96px]", fieldClassName)}
-                    placeholder="Briefly describe what you do"
+                    placeholder="For example: I run a business and also work for an organization"
                   />
-                </OptionalField>
-              )}
+              </OptionalField>
             </StepSection>
           )}
 
@@ -536,7 +553,7 @@ export default function MiscPage() {
                     label={opt.label}
                     icon={opt.icon}
                     isSelected={false}
-                    onClick={() => appendHomeSuggestion(opt.label)}
+                    onClick={() => appendHomeSuggestion(opt.promptText)}
                   />
                 ))}
               </div>
@@ -762,38 +779,40 @@ export default function MiscPage() {
                   </>
                 }
               >
-                <Input
+                <Textarea
                   id="focus-extra"
                   value={state.dimensionsDetail}
                   onChange={(e) => setDimensionsDetail(e.target.value)}
                   maxLength={200}
-                  className={fieldClassName}
+                  className={cn("min-h-[96px]", fieldClassName)}
                 />
               </OptionalField>
             </StepSection>
           )}
 
           {step === 12 && (
-            <div className="flex flex-col items-center gap-5 text-center">
-              <h1 className="font-garamond text-2xl font-normal leading-tight text-v3-text-strong sm:text-[28px]">
-                You&apos;re all set, <span className="capitalize">{nickname}</span>. Let&apos;s begin.
-              </h1>
-              <p className="max-w-md font-inter text-base leading-6 text-[rgba(23,11,0,0.72)]">
-                {getStep5Body(motivationApi, {
-                  partialPersonalization: state.skippedDeepPersonalization,
-                })}
-              </p>
-              <button
-                type="button"
-                onClick={() => void completeAndNavigate("dashboard")}
-                className="text-sm text-v3-text-weaker transition-colors duration-150 ease-out hover:text-v3-text-weak"
-              >
-                Or take me to the dashboard — I&apos;ll explore on my own →
-              </button>
+            <div className="flex flex-col items-center gap-6 py-6 text-center sm:py-10">
+              <div className="flex items-center gap-2" aria-hidden>
+                {[0, 1, 2].map((index) => (
+                  <span
+                    key={index}
+                    className="size-2.5 rounded-full bg-v3-brand-strong motion-safe:animate-pulse"
+                    style={{ animationDelay: `${index * 180}ms` }}
+                  />
+                ))}
+              </div>
+              <div className="space-y-4">
+                <h1 className="font-garamond text-2xl font-normal leading-tight text-v3-text-strong sm:text-[28px]">
+                  Creating your starting space
+                </h1>
+                <p className="max-w-md font-inter text-base leading-6 text-[rgba(23,11,0,0.72)]">
+                  We&apos;re organizing what you shared so Memento can begin in a way that feels personal.
+                </p>
+              </div>
             </div>
           )}
 
-          {step !== 6 && (
+          {step !== 6 && step !== 12 && (
             <>
               <FooterDivider />
               <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
@@ -812,7 +831,7 @@ export default function MiscPage() {
               disabled={(step < 12 && !canProceed) || isMutating}
               className={primaryButtonClassName}
             >
-              {step === 12 ? getPrimaryCTA(motivationApi, []).label : "Continue"}
+              {step === 11 ? "Submit" : "Continue"}
             </Button>
               </div>
             </>
