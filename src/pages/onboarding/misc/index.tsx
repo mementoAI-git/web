@@ -39,7 +39,6 @@ import type { OnboardQuestionsStep } from "./useOnboardQuestionsState";
 import { ONBOARD_MISC_WHY } from "./onboard-misc-copy";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import endpoint from "@/api/endpoint";
@@ -367,7 +366,6 @@ export default function MiscPage() {
   };
 
   const showIntro = step === 1;
-  const motivationApi = motivationForApi(state.motivationChips);
 
   const whyFor = (s: keyof typeof ONBOARD_MISC_WHY) => ONBOARD_MISC_WHY[s];
 
