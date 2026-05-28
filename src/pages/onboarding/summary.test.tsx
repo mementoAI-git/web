@@ -24,6 +24,11 @@ function ChatLocationEcho() {
   return <div>{starter}</div>;
 }
 
+function OverviewLocationEcho() {
+  const location = useLocation();
+  return <div>{String(location.state?.openModal ?? "none")}</div>;
+}
+
 describe("OnboardingSummaryPage", () => {
   afterEach(() => {
     sessionStorage.removeItem(ONBOARDING_SUMMARY_STORAGE_KEY);
@@ -46,18 +51,22 @@ describe("OnboardingSummaryPage", () => {
       { route: "/onboarding/summary", auth: true },
     );
 
-    expect(
-      await screen.findByText(/you have already filled in 24% of your memento/i),
-    ).toBeInTheDocument();
+    expect(await screen.findAllByText(/enrichment score/i)).toHaveLength(2);
     expect(
       screen.getByRole("heading", {
-        name: /jane, you have already started shaping the story only you can tell/i,
+        name: /your memento profile is shaping up/i,
       }),
     ).toBeInTheDocument();
-    expect(screen.getByText("Identity & Self")).toBeInTheDocument();
-    expect(screen.getByText("Heritage & Roots")).toBeInTheDocument();
     expect(
-      screen.getByText(/other parts of your story can wait until you are ready/i),
+      screen.getByText(/a first outline is already here\. you can keep building it at your own pace\./i),
+    ).toBeInTheDocument();
+    expect(screen.getAllByText("Identity & Self").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Heritage & Roots").length).toBeGreaterThan(0);
+    expect(
+      screen.getByText(/so far, your story is already opening around who you are/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/still quiet for now:/i),
     ).toBeInTheDocument();
   });
 
@@ -80,32 +89,11 @@ describe("OnboardingSummaryPage", () => {
       { route: "/onboarding/summary", auth: true },
     );
 
-    await user.click(await screen.findByRole("button", { name: /go to dashboard/i }));
-    expect(await screen.findByText("Overview route")).toBeInTheDocument();
-    expect(sessionStorage.getItem(ONBOARDING_SUMMARY_STORAGE_KEY)).toBeNull();
-  });
-
-  it("shows the alternate next-step button when the suggested destination is not the dashboard", async () => {
-    const user = userEvent.setup();
-    seedSummarySnapshot({
-      nextAction: "reflection_prompt",
-      skippedDeepPersonalization: false,
-      touchedCategories: ["identity_self"],
-      priorityDimensions: [],
-      motivationType: "explorer",
-      nickname: "Jane",
+    const dashboardButtons = await screen.findAllByRole("button", {
+      name: /go to dashboard/i,
     });
-
-    renderWithProviders(
-      <Routes>
-        <Route path="/onboarding/summary" element={<SummaryPage />} />
-        <Route path="/explore" element={<div>Explore route</div>} />
-      </Routes>,
-      { route: "/onboarding/summary", auth: true },
-    );
-
-    await user.click(await screen.findByRole("button", { name: /browse prompts/i }));
-    expect(await screen.findByText("Explore route")).toBeInTheDocument();
+    await user.click(dashboardButtons[0]);
+    expect(await screen.findByText("Overview route")).toBeInTheDocument();
     expect(sessionStorage.getItem(ONBOARDING_SUMMARY_STORAGE_KEY)).toBeNull();
   });
 
@@ -133,9 +121,35 @@ describe("OnboardingSummaryPage", () => {
       { route: "/onboarding/summary", auth: true },
     );
 
-    await user.click(await screen.findByRole("button", { name: /talk with memento/i }));
+    const chatButtons = await screen.findAllByRole("button", { name: /chat/i });
+    await user.click(chatButtons[0]);
     expect(await screen.findByText(/hi memento, it's jane\./i)).toBeInTheDocument();
     expect(screen.getByText(/family gatherings/i)).toBeInTheDocument();
+    expect(sessionStorage.getItem(ONBOARDING_SUMMARY_STORAGE_KEY)).toBeNull();
+  });
+
+  it("opens the add story modal from the banner card and clears the snapshot", async () => {
+    const user = userEvent.setup();
+    seedSummarySnapshot({
+      nextAction: "dashboard",
+      skippedDeepPersonalization: false,
+      touchedCategories: ["identity_self"],
+      priorityDimensions: [],
+      motivationType: "explorer",
+      nickname: "Jane",
+    });
+
+    renderWithProviders(
+      <Routes>
+        <Route path="/onboarding/summary" element={<SummaryPage />} />
+        <Route path="/overview" element={<OverviewLocationEcho />} />
+      </Routes>,
+      { route: "/onboarding/summary", auth: true },
+    );
+
+    const addStoryButtons = await screen.findAllByRole("button", { name: /add a story/i });
+    await user.click(addStoryButtons[0]);
+    expect(await screen.findByText("create-memory")).toBeInTheDocument();
     expect(sessionStorage.getItem(ONBOARDING_SUMMARY_STORAGE_KEY)).toBeNull();
   });
 });

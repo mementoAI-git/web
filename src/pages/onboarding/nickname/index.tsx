@@ -65,7 +65,7 @@ export default function NicknamePage() {
           <Button
             onClick={handleSubmit}
             disabled={!name.trim() || isMutating}
-            className="flex h-14 w-full items-center justify-center gap-2 self-start rounded-full border-0 bg-[rgba(23,11,0,0.9)] px-8 text-sm font-semibold leading-5 text-white shadow-none transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+            className="flex h-14 w-full cursor-pointer items-center justify-center gap-2 self-start rounded-full border-0 bg-[rgba(23,11,0,0.9)] px-8 text-sm font-semibold leading-5 text-white shadow-none transition-[transform,opacity] duration-150 ease-out hover:opacity-90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
           >
             <span>Continue</span>
             <Spinner className="!size-4" loading={isMutating} />

@@ -990,6 +990,8 @@ body {
 
   .tiptap-editor .ProseMirror {
     outline: none;
+    width: 100%;
+    max-width: none;
     height: 200px;
     overflow-y: auto;
   }

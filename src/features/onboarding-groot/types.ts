@@ -419,15 +419,46 @@ export interface HomePlaceSuggestionOption {
   value: HomePlaceSuggestionKey;
   label: string;
   icon: string;
+  promptText: string;
 }
 
 export const HOME_PLACE_SUGGESTION_OPTIONS: HomePlaceSuggestionOption[] = [
-  { value: "city_grew_up", label: "A city I grew up in", icon: "🏙️" },
-  { value: "where_live_now", label: "Where I live now", icon: "🏠" },
-  { value: "where_people_from", label: "Where my people are from", icon: "🌍" },
-  { value: "somewhere_changed_me", label: "Somewhere that changed me", icon: "✨" },
-  { value: "rooted_many_places", label: "I'm rooted in more than one place", icon: "🌐" },
-  { value: "prefer_own_words", label: "Prefer to describe in my own words", icon: "✍️" },
+  {
+    value: "city_grew_up",
+    label: "A city I grew up in",
+    icon: "🏙️",
+    promptText: "The place that feels most like home to me is the city I grew up in because ",
+  },
+  {
+    value: "where_live_now",
+    label: "Where I live now",
+    icon: "🏠",
+    promptText: "The place that feels most like home to me is where I live now because ",
+  },
+  {
+    value: "where_people_from",
+    label: "Where my people are from",
+    icon: "🌍",
+    promptText: "The place that feels most like home to me is where my people are from because ",
+  },
+  {
+    value: "somewhere_changed_me",
+    label: "Somewhere that changed me",
+    icon: "✨",
+    promptText: "The place that feels most like home to me is somewhere that changed me because ",
+  },
+  {
+    value: "rooted_many_places",
+    label: "I'm rooted in more than one place",
+    icon: "🌐",
+    promptText: "Home feels layered for me because I'm rooted in more than one place. ",
+  },
+  {
+    value: "prefer_own_words",
+    label: "Prefer to describe in my own words",
+    icon: "✍️",
+    promptText: "",
+  },
 ];
 
 export interface ChronotypeOption {

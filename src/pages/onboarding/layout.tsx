@@ -35,7 +35,7 @@ export default function OnboardLayout() {
 
   return (
     <div className="flex h-dvh w-screen flex-col bg-white">
-      {!(isWelcomeRoute || isNicknameRoute) ? (
+      {!(isWelcomeRoute || isNicknameRoute || isSummaryRoute) ? (
         <header className="sticky top-0 z-[100] flex shrink-0 items-center justify-between gap-3 bg-white px-4 py-[6px] sm:px-6 sm:py-[14px]">
           <Link
             to="/"
@@ -46,7 +46,7 @@ export default function OnboardLayout() {
           <button
             type="button"
             onClick={handleSkip}
-            className="rounded text-xs font-medium text-v3-text-weak transition-colors hover:text-v3-fill-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-v3-brand-strong focus-visible:ring-offset-2 sm:text-sm"
+            className="cursor-pointer rounded text-xs font-medium text-v3-text-weak transition-colors hover:text-v3-fill-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-v3-brand-strong focus-visible:ring-offset-2 sm:text-sm"
           >
             Skip for now →
           </button>
@@ -55,13 +55,19 @@ export default function OnboardLayout() {
       <AuthCheck>
         <main
           className={cn(
-            "mx-auto min-h-0 bg-white",
-            isMiscRoute ? "h-fit w-fit max-w-[620px]" : "w-full flex-1",
+            "min-h-0 bg-white",
+            isSummaryRoute
+              ? "w-full flex-1"
+              : isMiscRoute
+                ? "mx-auto h-fit w-fit max-w-[620px]"
+                : "mx-auto w-full flex-1",
             isWelcomeRoute || isNicknameRoute
               ? "overflow-y-auto lg:overflow-hidden"
-              : "overflow-y-auto",
+              : isSummaryRoute
+                ? "overflow-y-auto lg:overflow-hidden"
+                : "overflow-y-auto",
             isSummaryRoute
-              ? "max-w-none px-4 pt-4 pb-6 sm:px-6 sm:pt-5 lg:px-10 lg:pt-6 xl:px-14"
+              ? "max-w-none p-0"
               : isWelcomeRoute
                 ? "max-w-none px-5 py-8 sm:px-10 sm:py-12"
                 : isNicknameRoute

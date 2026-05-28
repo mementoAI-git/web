@@ -26,7 +26,7 @@ export const ONBOARD_QUESTIONS_STEP_LABELS: Record<OnboardQuestionsStep, string>
   9: "Your rhythm",
   10: "Privacy",
   11: "Where to start",
-  12: "You're all set",
+  12: "Creating your space",
 };
 
 export const MAX_PERSONALITY_TRAITS = 4;
@@ -40,7 +40,7 @@ export interface OnboardQuestionsState {
   motivationChips: MiscMotivationChip[];
   motivationDetail: string;
   ageBand: AgeBand | null;
-  lifeSituations: LifeSituationKey[];
+  lifeSituation: LifeSituationKey | null;
   lifeSituationDetail: string;
   homePlace: string;
   personalityTraits: PersonalityTraitKey[];
@@ -62,7 +62,7 @@ const INITIAL: OnboardQuestionsState = {
   motivationChips: [],
   motivationDetail: "",
   ageBand: null,
-  lifeSituations: [],
+  lifeSituation: null,
   lifeSituationDetail: "",
   homePlace: "",
   personalityTraits: [],
@@ -139,8 +139,8 @@ export function useOnboardQuestionsState(
       case 2:
         return state.ageBand !== null;
       case 3: {
-        if (state.lifeSituations.length < 1) return false;
-        if (state.lifeSituations.includes("something_else")) {
+        if (!state.lifeSituation) return false;
+        if (state.lifeSituation === "something_else") {
           return state.lifeSituationDetail.trim().length > 0;
         }
         return true;
@@ -176,7 +176,7 @@ export function useOnboardQuestionsState(
   const setMotivationChips = (v: MiscMotivationChip[]) => update("motivationChips", v);
   const setMotivationDetail = (v: string) => update("motivationDetail", v);
   const setAgeBand = (v: AgeBand | null) => update("ageBand", v);
-  const setLifeSituations = (v: LifeSituationKey[]) => update("lifeSituations", v);
+  const setLifeSituation = (v: LifeSituationKey | null) => update("lifeSituation", v);
   const setLifeSituationDetail = (v: string) => update("lifeSituationDetail", v);
   const setHomePlace = (v: string) => update("homePlace", v);
   const setPersonalityTraits = (v: PersonalityTraitKey[]) => update("personalityTraits", v);
@@ -201,7 +201,7 @@ export function useOnboardQuestionsState(
     setMotivationChips,
     setMotivationDetail,
     setAgeBand,
-    setLifeSituations,
+    setLifeSituation,
     setLifeSituationDetail,
     setHomePlace,
     setPersonalityTraits,

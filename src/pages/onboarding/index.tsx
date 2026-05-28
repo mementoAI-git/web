@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import onboardingImage from "@/assets/image/onboarding image 2.png";
 
 const primaryButtonClass =
-  "rounded-[64px] !bg-fill-brand-strong px-8 sm:px-12 py-6 font-inter text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90";
+  "cursor-pointer rounded-[64px] !bg-fill-brand-strong px-8 py-6 font-inter text-sm font-semibold text-white shadow-sm transition-[transform,opacity] duration-150 ease-out hover:opacity-90 active:scale-[0.98] sm:px-12";
 
 export function OnboardPage() {
   const navigate = useNavigate();
@@ -19,8 +19,8 @@ export function OnboardPage() {
         alt="Welcome - memories and moments to cherish"
         className="mx-auto h-auto w-full max-w-[700px] object-cover"
       />
-      <div className="flex w-full max-w-[600px] flex-col items-center justify-start gap-0 space-y-3 sm:space-y-4">
-        <h1 className="font-garamond max-w-[18ch] text-2xl font-normal leading-[32px] text-[var(--v3-text-strong)] sm:text-[26px] sm:leading-[36px] md:text-[26px] md:leading-[32px]">
+      <div className="flex w-full max-w-[540px] flex-col items-center justify-start gap-0 space-y-3 sm:space-y-4">
+        <h1 className="font-garamond w-full max-w-[350px] text-2xl font-normal leading-[32px] text-[var(--v3-text-strong)] sm:text-[26px] sm:leading-[36px] md:text-[26px] md:leading-[32px]">
           Your quiet space to reflect, to preserve, to remember
         </h1>
         <p className="mx-auto w-full px-2 font-inter text-[14px] font-normal leading-6 text-[var(--v3-text-strong)] sm:px-0">

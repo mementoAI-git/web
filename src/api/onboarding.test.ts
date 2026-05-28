@@ -42,7 +42,7 @@ describe("onboarding API mappers", () => {
       motivationChips: ["memory_preservation"],
       motivationDetail: "I want this in my own words",
       ageBand: "30s_40s",
-      lifeSituations: ["caregiver"],
+      lifeSituation: "caregiver",
       lifeSituationDetail: "Helping my dad every day",
       homePlace: "Lagos",
       personalityTraits: ["warm_caring", "strong_dependable"],
@@ -105,7 +105,7 @@ describe("onboarding API mappers", () => {
     };
 
     expect(mapOnboardingDetailsToMiscState(data)).toMatchObject({
-      lifeSituations: ["something_else"],
+      lifeSituation: "something_else",
       lifeSituationDetail: "I split time between my business and consulting",
     });
   });

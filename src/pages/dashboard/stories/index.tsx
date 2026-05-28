@@ -1,10 +1,9 @@
 import endpoint from "@/api/endpoint";
 import { useModal } from "@/hooks/use-modal";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import useSWR from "swr";
 import { StatCard } from "../component/stat-card";
-import { DoubleHeartIcon, PlusIcon } from "@/components/icons";
-import { Button } from "@/components/ui/button";
+import { DoubleHeartIcon } from "@/components/icons";
 
 import totalMemoriesBg from "@/assets/icon/total-memories.svg";
 import mediaFilesBg from "@/assets/icon/media-files.svg";
@@ -16,6 +15,7 @@ import { storageKeys } from "@/utility/constant";
 import StoriesHeader from "./components/header";
 import StoriesGrid from "./components/grid";
 import { TableRowSekeleton } from "./components/skeleton";
+import { StoriesMobileList } from "./components/list-mobile";
 import StoriesTableRow from "./components/row";
 import type { IMemory } from "@/utility/interface";
 import {
@@ -24,6 +24,8 @@ import {
   TypographyLead,
   TypographyMuted,
 } from "@/components/ui/typography";
+import { useDashboardHeaderActions } from "@/contexts/dashboard-header-actions";
+import { StoriesActionButtons } from "./components/stories-action-buttons";
 
 const columns = [
   { label: "topic" },
@@ -52,13 +54,32 @@ const TableEmptyState = () => (
   </tr>
 );
 
+const MobileListEmptyState = () => (
+  <div className="flex flex-col items-center justify-center rounded-[20px] border border-v3-stroke-weak bg-white px-6 py-12 text-center shadow-sm">
+    <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-v3-fill-weaker">
+      <DoubleHeartIcon className="size-8 stroke-2 text-v3-text-weaker" />
+    </div>
+    <TypographyH2 className="mb-2 text-lg text-v3-text-strong">
+      No stories yet
+    </TypographyH2>
+    <TypographyMuted className="text-v3-text-weak">
+      Start creating your first story to see it here.
+    </TypographyMuted>
+  </div>
+);
+
 export default function StoriesPage() {
   const [page, setPage] = useState(1);
   const [mode, setMode] = useState(
     localStorage.getItem(storageKeys.listmode) || "list",
   );
   const [filter, setFilter] = useState("all");
+  const [canPromoteActionsToNav, setCanPromoteActionsToNav] = useState(
+    () => typeof window !== "undefined" ? window.innerWidth >= 1280 : true,
+  );
   const { open } = useModal();
+  const { setShowStoriesActions } = useDashboardHeaderActions();
+  const actionButtonsRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -90,10 +111,55 @@ export default function StoriesPage() {
   });
   const { data: stats } = useSWR(endpoint.memoriesStats);
 
+  useEffect(() => {
+    if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
+      return;
+    }
+
+    const mediaQuery = window.matchMedia("(min-width: 1280px)");
+    const sync = () => setCanPromoteActionsToNav(mediaQuery.matches);
+    sync();
+    mediaQuery.addEventListener("change", sync);
+
+    return () => {
+      mediaQuery.removeEventListener("change", sync);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!canPromoteActionsToNav) {
+      setShowStoriesActions(false);
+      return;
+    }
+
+    const node = actionButtonsRef.current;
+    if (!node || typeof IntersectionObserver === "undefined") {
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setShowStoriesActions(!entry.isIntersecting);
+      },
+      {
+        threshold: 0.2,
+      },
+    );
+
+    observer.observe(node);
+
+    return () => {
+      observer.disconnect();
+      setShowStoriesActions(false);
+    };
+  }, [canPromoteActionsToNav, setShowStoriesActions]);
+
+  useEffect(() => () => setShowStoriesActions(false), [setShowStoriesActions]);
+
   return (
-    <div className="page-viewport hide-scrollbar">
-      <div className="size-full overflow-y-auto hide-scrollbar px-4 sm:px-6 lg:px-8">
-        <div className="space-y-6 sm:space-y-16 py-3 sm:py-4 lg:py-8">
+    <div className="page-viewport hide-scrollbar mx-0 w-full max-w-none">
+      <div className="size-full w-full overflow-y-auto hide-scrollbar px-4 sm:px-6 lg:px-8">
+        <div className="w-full max-w-none space-y-6 py-3 sm:space-y-16 sm:py-4 lg:py-8">
           <div className="flex flex-col md:items-end md:flex-row md:justify-between gap-2">
             <div>
               <TypographyH1 className="font-garamond font-normal text-[32px] leading-tight text-v3-text-strong sm:leading-snug md:text-4xl md:leading-[48px] lg:text-[40px]">
@@ -104,32 +170,16 @@ export default function StoriesPage() {
               </TypographyLead>
             </div>
 
-            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-              <Button
-                variant="outline"
-                onClick={() => open("memory-insights")}
-                className="h-9 sm:h-12 px-3 sm:px-5 rounded-full font-inter font-semibold text-xs sm:text-sm text-v3-text-strong border-v3-stroke-weak bg-v3-fill-weaker hover:bg-v3-fill-weak"
-              >
-                View insights
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => open("quick-capture")}
-                className="h-9 sm:h-12 px-3 sm:px-5 rounded-full font-inter font-semibold text-xs sm:text-sm text-v3-text-strong border-v3-stroke-weak bg-v3-fill-weaker hover:bg-v3-fill-weak"
-              >
-                Quick add
-              </Button>
-              <Button
-                onClick={() => open("create-memory")}
-                className="h-9 sm:h-12 px-3 sm:px-5 rounded-full bg-v3-brand-strong font-inter font-semibold text-xs sm:text-sm text-white hover:opacity-90 flex items-center gap-1.5 sm:gap-2"
-              >
-                <PlusIcon className="size-3 sm:size-4 shrink-0" />
-                <span className="whitespace-nowrap">Add memory</span>
-              </Button>
+            <div ref={actionButtonsRef}>
+              <StoriesActionButtons
+                onViewInsights={() => open("memory-insights")}
+                onCreateMemory={() => open("create-memory")}
+                onQuickCapture={() => open("quick-capture")}
+              />
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+          <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-4">
             <StatCard
               bgImage={totalMemoriesBg as unknown as string}
               subtitle="Total Memories"
@@ -160,7 +210,7 @@ export default function StoriesPage() {
             />
           </div>
         </div>
-        <div className="space-y-6 sm:space-y-8 lg:space-y-10 py-3 sm:py-4 lg:py-8">
+        <div className="w-full max-w-none space-y-6 py-3 sm:space-y-8 sm:py-4 lg:space-y-10 lg:py-8">
           <StoriesHeader
             mode={mode}
             onChangeMode={setMode}
@@ -173,19 +223,29 @@ export default function StoriesPage() {
           {mode === "grid" ? (
             <StoriesGrid data={data?.data} />
           ) : (
-            <div className="w-full overflow-x-auto">
-              <Table
-                data={data?.data}
-                columns={columns}
-                loading={isLoading}
-                loadingRow={<TableRowSekeleton />}
-                onChangePage={setPage}
-                renderRow={(r, i) => (
-                  <StoriesTableRow key={i} memory={r as IMemory} />
-                )}
-                emptyRow={<TableEmptyState />}
-              />
-            </div>
+            <>
+              <div className="sm:hidden">
+                <StoriesMobileList
+                  data={data?.data}
+                  loading={isLoading}
+                  onChangePage={setPage}
+                  emptyState={<MobileListEmptyState />}
+                />
+              </div>
+              <div className="hidden sm:block w-full overflow-x-auto">
+                <Table
+                  data={data?.data}
+                  columns={columns}
+                  loading={isLoading}
+                  loadingRow={<TableRowSekeleton />}
+                  onChangePage={setPage}
+                  renderRow={(r, i) => (
+                    <StoriesTableRow key={i} memory={r as IMemory} />
+                  )}
+                  emptyRow={<TableEmptyState />}
+                />
+              </div>
+            </>
           )}
         </div>
       </div>

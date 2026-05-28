@@ -22,4 +22,19 @@ describe("OnboardLayout", () => {
     const skip = screen.getByRole("button", { name: /skip for now/i });
     expect(skip).toHaveClass("hover:text-v3-fill-strong");
   });
+
+  it("does not render the skip control on the summary route", () => {
+    renderWithProviders(
+      <Routes>
+        <Route path="/onboarding" element={<OnboardLayout />}>
+          <Route path="summary" element={<div>Summary</div>} />
+        </Route>
+      </Routes>,
+      { route: "/onboarding/summary", auth: true },
+    );
+
+    expect(
+      screen.queryByRole("button", { name: /skip for now/i }),
+    ).not.toBeInTheDocument();
+  });
 });

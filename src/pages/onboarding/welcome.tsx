@@ -86,7 +86,7 @@ export default function WelcomePage() {
         <div className="pt-6">
           <Button
             asChild
-            className="h-14 w-full min-w-[140px] rounded-full border-0 bg-[rgba(23,11,0,0.9)] px-8 text-sm font-semibold leading-5 text-white shadow-none transition-opacity hover:opacity-90 sm:w-auto"
+            className="h-14 w-full min-w-[140px] rounded-full border-0 bg-[rgba(23,11,0,0.9)] px-8 text-sm font-semibold leading-5 text-white shadow-none transition-[transform,opacity] duration-150 ease-out hover:opacity-90 active:scale-[0.98] sm:w-auto"
           >
             <Link to="/onboarding/nickname">Continue</Link>
           </Button>

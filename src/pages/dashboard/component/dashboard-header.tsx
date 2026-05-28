@@ -17,6 +17,8 @@ import { GearIcon, MenuIcon, SearchIcon } from "@/components/icons";
 import { SearchIcon as IconSearch } from "@/components/icons";
 import { useConversationChrome } from "@/contexts/conversation-chrome";
 import { MemoryDropdown } from "@/pages/dashboard/chat/conversation/dropdown";
+import { useDashboardHeaderActions } from "@/contexts/dashboard-header-actions";
+import { StoriesActionButtons } from "@/pages/dashboard/stories/components/stories-action-buttons";
 
 
 const defaultHeaderTitle: Record<string, string> = {
@@ -89,6 +91,7 @@ export function DashboardHeader({
       : path;
   const { user, headerTitle } = useStore();
   const { open } = useModal();
+  const { actions } = useDashboardHeaderActions();
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -220,7 +223,7 @@ export function DashboardHeader({
 
   return (
     <div className="w-full h-[60px] fixed top-0 left-0 right-0 sm:relative flex items-center bg-white border-b border-black/5 px-4 sm:px-8">
-      <header className="grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)] lg:gap-x-4">
+      <header className="grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-3 lg:grid-cols-[minmax(220px,1fr)_minmax(280px,560px)_auto] lg:gap-x-4 xl:grid-cols-[minmax(240px,1fr)_minmax(320px,620px)_auto]">
         <div className="col-start-1 row-start-1 flex min-w-0 items-center gap-2 sm:gap-3">
           <button
             type="button"
@@ -236,7 +239,7 @@ export function DashboardHeader({
           </span>
         </div>
 
-        <div className="col-start-2 row-start-1 hidden h-10 w-full min-w-[min(100%,280px)] max-w-[700px] justify-self-center lg:col-start-2 lg:block">
+        <div className="col-start-2 row-start-1 hidden h-10 w-full min-w-0 justify-self-center lg:col-start-2 lg:block">
           <button
             type="button"
             onClick={() => open("search-memory")}
@@ -282,6 +285,16 @@ export function DashboardHeader({
               </span>
             </div>
           </StreakTracker>
+          {pathForTitle === "stories" && actions.showStoriesActions ? (
+            <div className="hidden h-10 items-stretch xl:flex">
+              <StoriesActionButtons
+                compactInNav
+                onViewInsights={() => open("memory-insights")}
+                onCreateMemory={() => open("create-memory")}
+                onQuickCapture={() => open("quick-capture")}
+              />
+            </div>
+          ) : null}
           <button
             type="button"
             onClick={onMenuClick}

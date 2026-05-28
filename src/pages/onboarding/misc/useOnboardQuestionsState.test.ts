@@ -81,7 +81,7 @@ describe("useOnboardQuestionsState", () => {
       useOnboardQuestionsState({
         step: 12,
         motivationChips: ["memory_preservation"],
-        lifeSituations: ["caregiver"],
+        lifeSituation: "caregiver",
         homePlace: "Lagos",
         chronotype: "night",
       }),
@@ -89,7 +89,7 @@ describe("useOnboardQuestionsState", () => {
 
     expect(result.current.state.step).toBe(12);
     expect(result.current.state.motivationChips).toEqual(["memory_preservation"]);
-    expect(result.current.state.lifeSituations).toEqual(["caregiver"]);
+    expect(result.current.state.lifeSituation).toBe("caregiver");
     expect(result.current.state.homePlace).toBe("Lagos");
     expect(result.current.state.chronotype).toBe("night");
   });
@@ -111,6 +111,36 @@ describe("useOnboardQuestionsState", () => {
     });
 
     expect(result.current.canAdvance(5)).toBe(true);
+  });
+
+  it("allows something_else in addition to four standard personality traits", () => {
+    const { result } = renderHook(() => useOnboardQuestionsState());
+
+    act(() => {
+      result.current.setPersonalityTraits([
+        "warm_caring",
+        "funny_lighthearted",
+        "driven_focused",
+        "creative_expressive",
+      ]);
+    });
+
+    const current = result.current.state.personalityTraits;
+    const next = current.includes("something_else")
+      ? current.filter((trait) => trait !== "something_else")
+      : [...current, "something_else"];
+
+    act(() => {
+      result.current.setPersonalityTraits(next);
+    });
+
+    expect(result.current.state.personalityTraits).toEqual([
+      "warm_caring",
+      "funny_lighthearted",
+      "driven_focused",
+      "creative_expressive",
+      "something_else",
+    ]);
   });
 
   it("hydrates when revisit state arrives after first render", () => {

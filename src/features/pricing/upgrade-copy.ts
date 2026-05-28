@@ -4,6 +4,11 @@ export const UPGRADE_COPY: Record<
   FeatureKey,
   { title: string; description: string }
 > = {
+  pro_plan: {
+    title: "Unlock more with Pro",
+    description:
+      "Upgrade for advanced features, more storage, voice chat, and better memory context.",
+  },
   voice_mode: {
     title: "Voice mode is a Pro feature",
     description:

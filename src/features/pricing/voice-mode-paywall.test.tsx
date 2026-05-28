@@ -29,7 +29,7 @@ describe("VoiceModePaywall", () => {
       screen.getByRole("heading", { name: /voice mode is a pro feature/i }),
     ).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: /maybe later/i }));
+    await user.click(screen.getByRole("button", { name: /let me think about it/i }));
     expect(mockNavigate).toHaveBeenCalledWith("/chat/conv-1", { replace: true });
 
     rerender(<VoiceModePaywall conversationId="conv-1" />);

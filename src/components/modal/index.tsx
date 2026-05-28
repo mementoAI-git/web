@@ -165,6 +165,7 @@ export default function Modal() {
             )}
             {isTop &&
               !isMobile &&
+              topModal.name !== "create-memory" &&
               topModal.name !== "quick-capture" &&
               topModal.name !== "share-post" && (
               <button
