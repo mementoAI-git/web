@@ -35,7 +35,7 @@ describe("TimeCapsulePage gating", () => {
 
     const createButton = await screen.findByRole("button", { name: /create new/i });
     await user.click(createButton);
-    await user.click(await screen.findByRole("button", { name: /maybe later/i }));
+    await user.click(await screen.findByRole("button", { name: /let me think about it/i }));
 
     await user.click(screen.getByRole("button", { name: /create new/i }));
     expect(await screen.findByRole("heading", { name: /more timed messages with pro/i })).toBeInTheDocument();

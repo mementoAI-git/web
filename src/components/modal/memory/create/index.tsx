@@ -1165,7 +1165,7 @@ function CreateMemoryBase({
                   <TimesIcon width={10} height={10} />
                 </Button>
               </div>
-              <div className="space-y-4">{formContent}</div>
+              <div className="space-y-4">{legacyFormContent}</div>
               <div className="mt-4 pt-4 border-t border-stroke-neutral-weak">{footer}</div>
             </Sheet.Content>
           </Sheet.Container>

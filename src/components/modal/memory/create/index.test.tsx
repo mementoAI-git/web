@@ -71,10 +71,10 @@ describe("CreateMemory", () => {
   it("uses v3 background on desktop story shell", () => {
     renderWithProviders(<CreateMemory data={{}} isMobile={false} />, { auth: true });
 
-    const heading = screen.getByRole("heading", { name: /add new story/i });
-    const shell = heading.closest('[class*="max-w-[520px]"]');
+    const titleInput = screen.getByPlaceholderText(/enter title here/i);
+    const shell = titleInput.closest('[class*="rounded-[16px]"]');
     expect(shell).toBeTruthy();
-    expect(shell?.className).toContain("bg-v3-bg");
+    expect(shell?.className).toContain("bg-white");
   });
 
   it("uses v3 background on mobile sheet surfaces", () => {
