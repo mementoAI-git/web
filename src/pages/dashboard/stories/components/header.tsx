@@ -78,7 +78,7 @@ export default function StoriesHeader({
           ))}
         </div>
 
-        <div className="flex flex-1 items-center gap-3 max-w-2xl">
+        <div className="flex flex-1 items-center gap-3">
           {/* Search Input */}
           <button
             type="button"

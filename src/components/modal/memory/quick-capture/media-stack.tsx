@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Pause, Play } from "lucide-react";
 import { TimesIcon } from "@/components/icons";
+import VideoPlayer from "@/components/player/video-player";
 import type { IOnUploadPayload } from "@/utility/interface";
 import { cn } from "@/utility";
 import { inferMimeType } from "@/utility/constant";
@@ -279,12 +280,7 @@ export function QuickCaptureMediaStack({
                 <TimesIcon width={8} height={8} />
               </button>
               <div className="relative overflow-hidden rounded-xl bg-black">
-                <video src={src} className="max-h-48 w-full object-cover" controls playsInline preload="metadata" />
-                {dur > 0 ? (
-                  <span className="pointer-events-none absolute bottom-10 right-2 rounded bg-black/60 px-1.5 py-0.5 font-inter text-[10px] text-white">
-                    {formatTimestamp(dur)}
-                  </span>
-                ) : null}
+                <VideoPlayer src={src} />
               </div>
             </div>
           );

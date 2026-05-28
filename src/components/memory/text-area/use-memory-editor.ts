@@ -14,6 +14,7 @@ interface UseMemoryEditorParams {
   editorClassName: string;
   linkClassName: string;
   onHtmlChange: (html: string) => void;
+  onTextChange?: (text: string) => void;
 }
 
 export function useMemoryEditor({
@@ -22,6 +23,7 @@ export function useMemoryEditor({
   editorClassName,
   linkClassName,
   onHtmlChange,
+  onTextChange,
 }: UseMemoryEditorParams) {
   const [showLinkInput, setShowLinkInput] = useState(false);
   const [linkPosition, setLinkPosition] = useState({ top: 0, left: 0 });
@@ -55,6 +57,7 @@ export function useMemoryEditor({
     },
     onUpdate: ({ editor }) => {
       onHtmlChange(editor.getHTML());
+      onTextChange?.(editor.getText());
 
       const { state } = editor;
       const { selection } = state;

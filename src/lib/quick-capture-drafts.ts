@@ -67,9 +67,32 @@ function escapeHtml(s: string) {
     .replace(/"/g, "&quot;");
 }
 
+function looksLikeHtml(note: string): boolean {
+  return /<\/?[a-z][\s\S]*>/i.test(note);
+}
+
+export function plainTextFromQuickCaptureNote(note: string): string {
+  if (!note) return "";
+  if (!looksLikeHtml(note)) return note;
+
+  return note
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/p>\s*<p>/gi, "\n\n")
+    .replace(/<\/(h1|h2|h3|h4|blockquote|li)>/gi, "\n")
+    .replace(/<li>/gi, "• ")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .trim();
+}
+
 /** Same as QuickCapture `buildBody`: plain note → TipTap-friendly HTML paragraphs. */
 export function htmlFromQuickCaptureNote(note: string): string {
   if (!note.trim()) return "";
+  if (looksLikeHtml(note)) return note;
   return note
     .trim()
     .split(/\n+/)
@@ -86,7 +109,7 @@ export function parseQuickCaptureDraftJson(raw: string): QuickCaptureDraft | nul
 }
 
 export function quickCaptureDraftPreviewLine(draft: QuickCaptureDraft): string {
-  const fromNote = (draft.note || "").trim().slice(0, 72);
+  const fromNote = plainTextFromQuickCaptureNote(draft.note || "").trim().slice(0, 72);
   if (fromNote) return fromNote;
   if (draft.daily_prompt?.pinned_text?.trim()) {
     return draft.daily_prompt.pinned_text.trim().slice(0, 72);
