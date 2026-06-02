@@ -18,8 +18,13 @@ type DashboardHeaderActionsContextValue = {
   setShowStoriesActions: (show: boolean) => void;
 };
 
+const defaultDashboardHeaderActionsContextValue: DashboardHeaderActionsContextValue = {
+  actions: { showStoriesActions: false },
+  setShowStoriesActions: () => {},
+};
+
 const DashboardHeaderActionsContext =
-  createContext<DashboardHeaderActionsContextValue | null>(null);
+  createContext<DashboardHeaderActionsContextValue>(defaultDashboardHeaderActionsContextValue);
 
 export function DashboardHeaderActionsProvider({ children }: { children: ReactNode }) {
   const [showStoriesActions, setShowStoriesActionsState] = useState(false);
@@ -45,9 +50,5 @@ export function DashboardHeaderActionsProvider({ children }: { children: ReactNo
 
 // eslint-disable-next-line react-refresh/only-export-components
 export function useDashboardHeaderActions() {
-  const ctx = useContext(DashboardHeaderActionsContext);
-  if (!ctx) {
-    throw new Error("useDashboardHeaderActions must be used within DashboardHeaderActionsProvider");
-  }
-  return ctx;
+  return useContext(DashboardHeaderActionsContext);
 }

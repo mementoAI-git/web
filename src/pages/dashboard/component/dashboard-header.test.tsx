@@ -44,8 +44,8 @@ describe("DashboardHeader", () => {
     expect(searchTrigger).not.toBeNull();
     expect(searchTrigger?.className).toMatch(/rounded-lg/);
     const searchColumn = searchTrigger?.parentElement;
-    expect(searchColumn?.className).toMatch(/max-w-\[700px\]/);
-    expect(searchColumn?.className).toMatch(/min-w-\[min\(100%,280px\)\]/);
+    expect(searchColumn?.className).toMatch(/min-w-0/);
+    expect(searchColumn?.className).toMatch(/justify-self-center/);
   });
 
   it("resolves the dashboard title for /capsule like other sections", () => {
