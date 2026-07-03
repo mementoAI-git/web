@@ -1,0 +1,19 @@
+---
+description: Use the global tufte-viz skill for chart and dashboard visualization work
+alwaysApply: true
+---
+
+# Chart Visualization Skill
+
+When a task involves designing, refining, critiquing, or choosing a chart, graph, analytical dashboard panel, report visualization, or other data-display surface, use the global `tufte-viz` skill at `/Users/admin/.codex/skills/tufte-viz/SKILL.md`.
+
+Reach for `tufte-viz` especially when the work includes:
+
+- picking the right chart form for a comparison or trend
+- simplifying an existing visualization
+- improving clarity, hierarchy, or graphical honesty
+- reducing chartjunk or redundant labels
+- planning small multiples, sparklines, or dense analytical displays
+- reviewing whether a dashboard/chart is misleading or visually noisy
+
+Keep using project-specific rules in `.cursor/rules/` for implementation details after the visualization direction is set.

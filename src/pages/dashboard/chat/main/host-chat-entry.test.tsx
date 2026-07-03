@@ -14,7 +14,7 @@ import HostChatEntryPage from "./host-chat-entry";
 
 const BASE = "http://localhost:3000/api";
 
-function renderHostEntry() {
+function renderHostEntry(initialEntry = "/chat") {
   seedAuth();
   const router = createMemoryRouter(
     [
@@ -28,7 +28,7 @@ function renderHostEntry() {
         element: <div data-testid="conversation-new">new</div>,
       },
     ],
-    { initialEntries: ["/chat"] },
+    { initialEntries: [initialEntry] },
   );
   const result = render(
     <StoreProvider>
@@ -84,6 +84,44 @@ describe("HostChatEntryPage", () => {
 
     await waitFor(() => {
       expect(router.state.location.pathname).toBe("/chat/new");
+    });
+  });
+
+  it("preserves query string when redirecting to primary conversation", async () => {
+    server.use(
+      http.get(`${BASE}/users/profile`, () =>
+        HttpResponse.json({
+          success: true,
+          data: { ...mockUser, primary_conversation_id: "thread-xyz" },
+          message: "Profile fetched successfully",
+        }),
+      ),
+    );
+
+    const { router } = renderHostEntry("/chat?starter=hello");
+
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe("/chat/thread-xyz");
+      expect(router.state.location.search).toBe("?starter=hello");
+    });
+  });
+
+  it("preserves query string when redirecting to new conversation", async () => {
+    server.use(
+      http.get(`${BASE}/users/profile`, () =>
+        HttpResponse.json({
+          success: true,
+          data: { ...mockUser, primary_conversation_id: null },
+          message: "Profile fetched successfully",
+        }),
+      ),
+    );
+
+    const { router } = renderHostEntry("/chat?starter=go");
+
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe("/chat/new");
+      expect(router.state.location.search).toBe("?starter=go");
     });
   });
 });

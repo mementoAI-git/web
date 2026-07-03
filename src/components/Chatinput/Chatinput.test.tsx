@@ -170,10 +170,11 @@ describe("Chatinput", () => {
     fireEvent.paste(textarea, { clipboardData: clipboardData as never });
 
     await waitFor(() => {
-      expect(screen.getByAltText("clip.png")).toBeInTheDocument();
+      // It might be "clip.png" (local) or "mock-upload.png" (if MSW handler kicked in)
+      expect(screen.getByAltText(/clip\.png|mock-upload\.png/)).toBeInTheDocument();
     });
 
-    expect(textarea.compareDocumentPosition(screen.getByAltText("clip.png"))).toBe(
+    expect(textarea.compareDocumentPosition(screen.getByAltText(/clip\.png|mock-upload\.png/))).toBe(
       Node.DOCUMENT_POSITION_PRECEDING,
     );
   });

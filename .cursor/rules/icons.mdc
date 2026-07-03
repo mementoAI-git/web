@@ -4,6 +4,8 @@ alwaysApply: true
 
 # Icons (`memento-web`)
 
+When building or composing a new UI surface, prefer the global `shadcn` skill for component selection and structure. Use this rule to decide icon choice within that work.
+
 ## Order of preference
 
 1. **HeroUI’s built-in icons** — When a HeroUI component already exposes or expects an icon from `@heroui/react` (e.g. `IconChevronRight`, `IconChevronDown`, `ExternalLinkIcon`, `CloseIcon`), use **those** so spacing, weight, and behavior stay aligned with the component.

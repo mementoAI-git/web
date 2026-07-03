@@ -109,6 +109,8 @@ function ChatinputImpl({
   const quickRecRef = useRef<MediaRecorder | null>(null)
   const quickChunksRef = useRef<Blob[]>([])
   const quickStreamRef = useRef<MediaStream | null>(null)
+  /** Prevents double-applying `?starter=` when layout re-runs before navigation replaces the URL. */
+  const starterAppliedPathKeyRef = useRef<string | null>(null)
 
   const [isQuickRecording, setIsQuickRecording] = useState(false)
 
@@ -161,9 +163,47 @@ function ChatinputImpl({
   }, [showSlashMenu, filteredSlashCommands.length])
 
   useLayoutEffect(() => {
-    if (!draftStorageKey) return;
+    if (!draftStorageKey) {
+      setText("");
+      starterAppliedPathKeyRef.current = null;
+      return;
+    }
+
+    const pathKey = `${location.pathname}:${draftStorageKey}`;
+    const params = new URLSearchParams(location.search);
+    const starter = params.get("starter");
+
+    if (starter && starterAppliedPathKeyRef.current !== pathKey) {
+      let decoded = starter;
+      try {
+        decoded = decodeURIComponent(starter);
+      } catch {
+        /* keep raw */
+      }
+      const trimmed = decoded.trim().slice(0, 4000);
+      if (trimmed) {
+        starterAppliedPathKeyRef.current = pathKey;
+        try {
+          localStorage.setItem(draftStorageKey, trimmed);
+        } catch {
+          /* ignore */
+        }
+        setText(trimmed);
+        params.delete("starter");
+        const nextSearch = params.toString();
+        navigate(
+          { pathname: location.pathname, search: nextSearch ? `?${nextSearch}` : "" },
+          { replace: true },
+        );
+        return;
+      }
+    }
+
+    if (!starter) {
+      starterAppliedPathKeyRef.current = null;
+    }
     setText(readDraft());
-  }, [readDraft, draftStorageKey]);
+  }, [draftStorageKey, readDraft, location.pathname, location.search, navigate]);
 
   useEffect(() => {
     if (!draftStorageKey) return;

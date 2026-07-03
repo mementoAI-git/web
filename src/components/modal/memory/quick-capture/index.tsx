@@ -48,6 +48,7 @@ import type { DailyPromptCapturePayload, QuickCaptureDraft } from "@/lib/quick-c
 import {
   htmlFromQuickCaptureNote,
   parseQuickCaptureDraftJson,
+  plainTextFromQuickCaptureNote,
   quickCaptureDraftPreviewLine,
   quickCaptureDraftStorageKey,
   scanQuickCaptureDraftKeys,
@@ -243,7 +244,8 @@ export function QuickCapture(props: { isMobile?: boolean; data?: unknown }) {
 
   const applyDraft = useCallback(
     (d: QuickCaptureDraft) => {
-      setNote(typeof d.note === "string" ? d.note : "");
+      const nextNote = typeof d.note === "string" ? d.note : "";
+      setNote(nextNote);
       setSelectedBeneficiaryIds(Array.isArray(d.selectedBeneficiaryIds) ? d.selectedBeneficiaryIds : []);
       const vm: Record<string, true> = {};
       const restored: IOnUploadPayload[] = (d.attachments || []).map((a) => {
@@ -303,7 +305,7 @@ export function QuickCapture(props: { isMobile?: boolean; data?: unknown }) {
   useEffect(() => {
     return () => {
       const { daily, key } = ctxRef.current;
-      const n = noteRef.current.trim();
+      const n = plainTextFromQuickCaptureNote(noteRef.current).trim();
       const f = filesRef.current;
       const hasContent = n.length > 0 || f.some((x) => x.uploadedFile || (x.progress ?? 100) < 100);
       try {
@@ -438,9 +440,8 @@ export function QuickCapture(props: { isMobile?: boolean; data?: unknown }) {
     });
   };
 
-  const bodyHtml = htmlFromQuickCaptureNote(note);
   const canSave =
-    (bodyHtml.length > 0 || attachmentIds.length > 0) &&
+    (note.trim().length > 0 || attachmentIds.length > 0) &&
     !uploadsPending &&
     !inlineRecorder.recording &&
     !inlineRecorder.busy;
@@ -591,7 +592,7 @@ export function QuickCapture(props: { isMobile?: boolean; data?: unknown }) {
   };
 
   const handleDismiss = () => {
-    const n = note.trim();
+    const n = plainTextFromQuickCaptureNote(note).trim();
     const hasContent = n.length > 0 || files.some((x) => x.uploadedFile || (x.progress ?? 100) < 100);
     if (hasContent) persistDraft();
     else {
@@ -882,7 +883,7 @@ export function QuickCapture(props: { isMobile?: boolean; data?: unknown }) {
           <textarea
             ref={textareaRef}
             id="qc-note"
-            value={note}
+            value={plainTextFromQuickCaptureNote(note)}
             onChange={(e) => {
               const v = e.target.value;
               setNote(v.length > NOTE_CHAR_MAX ? v.slice(0, NOTE_CHAR_MAX) : v);
@@ -979,4 +980,3 @@ export function QuickCapture(props: { isMobile?: boolean; data?: unknown }) {
 
   return shell;
 }
-

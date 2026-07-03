@@ -32,10 +32,10 @@ describe("onboarding-groot types", () => {
   it("MOTIVATION_OPTIONS has 5 entries", () => {
     expect(MOTIVATION_OPTIONS).toHaveLength(5);
     const expectedValues: MotivationType[] = [
-      "emotional_depth",
+      "self_understanding",
+      "personal_space",
       "memory_preservation",
-      "external",
-      "practical",
+      "emotional_depth",
       "explorer",
     ];
     MOTIVATION_OPTIONS.forEach((opt, i) => {

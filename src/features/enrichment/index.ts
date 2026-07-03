@@ -20,6 +20,7 @@ export type {
   MilestoneInfo,
   NudgeQuestion,
   JumpPill,
+  MemorySpotlight,
   UserStatsData,
   ConversationEnrichmentData,
 } from "./enrichment-api.types";
@@ -28,3 +29,14 @@ export {
   useEnrichmentStats,
   type UseEnrichmentStatsResult,
 } from "./use-enrichment-stats";
+export {
+  AtAGlanceCard,
+  useAtAGlanceCards,
+  type AtAGlanceCardData,
+} from "./at-a-glance-cards";
+export {
+  NarrativeInsightsBlock,
+  useNarrativeInsights,
+  type NarrativeInsight,
+  type NarrativeInsightSource,
+} from "./narrative-insights";

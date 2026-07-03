@@ -1,4 +1,5 @@
 export { CreateMemory } from "./create";
+export { AddMemory2 } from "./create";
 export { QuickCapture } from "./quick-capture";
 export { DeleteMemory } from "./delete";
 export { UpdateMemory } from "./update";

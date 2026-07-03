@@ -34,7 +34,7 @@ export interface UseHostOnboardingChatOptions {
   assistantPreDelayMs?: number;
   /** When false, skip reading/writing localStorage (e.g. tests). */
   persist?: boolean;
-  /** Display name from profile (after /onboard/nickname). Sent on every stream call. */
+  /** Display name from profile (after /onboarding/nickname). Sent on every stream call. */
   nickname?: string;
 }
 

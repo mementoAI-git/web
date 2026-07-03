@@ -1,6 +1,6 @@
 "use client";
 
-import Axios, { AxiosError } from "axios";
+import Axios, { AxiosError, type AxiosRequestConfig } from "axios";
 import type { IResponse, MutationFetcher } from "./interface";
 import { toast } from "sonner";
 import { isEmpty } from "@/utility";
@@ -111,13 +111,17 @@ export const fileUploadFetcher = async (url: string, { arg }: { arg: Record<stri
   }
 
   try {
-    const config: Record<string, any> = {
-      // Axios default transformRequest JSON-stringifies FormData when Content-Type is
-      // application/json (from the shared instance). Multer then sees no file parts.
+    const config: AxiosRequestConfig = {
+      // Prevent automatic JSON transformation of FormData
       transformRequest: [
-        (data: any, headers: any) => {
+        (data: unknown, headers: Record<string, unknown>) => {
           if (typeof FormData !== "undefined" && data instanceof FormData) {
-            headers.setContentType(undefined);
+            // Let browser handle multipart encoding
+            // @ts-expect-error - headers might be a custom type
+            if (typeof headers.setContentType === "function") {
+              // @ts-expect-error - headers might be a custom type
+              headers.setContentType(undefined);
+            }
           }
           return data;
         },
@@ -125,7 +129,7 @@ export const fileUploadFetcher = async (url: string, { arg }: { arg: Record<stri
     };
 
     if (onProgress) {
-      config.onUploadProgress = (event: any) => {
+      config.onUploadProgress = (event: AxiosProgressEvent) => {
         if (event.total) {
           const percent = Math.round((event.loaded * 80) / event.total);
           onProgress(percent);

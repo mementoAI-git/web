@@ -1,37 +1,57 @@
-## Agents in this project
+# AI Config Map
 
-This folder is the **single place to discover agents and skills** used in the `memento` web app.
-Executable behavior is still configured by the underlying tools, but this folder is your index.
+This folder is the human-readable map for AI tooling in `memento-web`.
 
-### Agent types and scope
+The goal is simple:
+- keep reusable skills global
+- keep project-specific rules local
+- avoid duplicate skill trees inside the repo
 
-- **Cross-project (generic) agents**
-  - Backed by reusable skills that do not depend on this repo’s specific stack or structure.
-  - Examples: general code review, refactoring a function, improving documentation, or adding tests around a specific function/component.
+## What Lives Where
 
-- **Project-specific agents**
-  - Rely on rules and project-scoped skills when a task depends on this repo’s React + TypeScript + Vite setup, routing, or UI patterns.
-  - Examples: adding a new dashboard page, updating routing in `src/router.tsx`, or extending Tailwind-based UI components in `src/components/`.
+### Global reusable skills
 
-### Logical layout (single Agent + Skills index)
+Reusable skills are installed globally in:
 
-- **Agents (this folder)**
-  - Use this folder as the **authoritative index** of agents/skills:
-    - `.cursor/AGENTS.md`: high-level list of generic vs project-specific workflows.
-    - `../skills/README.md`: human-friendly catalog of all skills available in this repo.
+- `/Users/admin/.codex/skills`
 
-- **Skills (unified view)**
-  - **Project-authored skills**
-    - `.cursor/skills/cross-project-code-review/`
-    - `.cursor/skills/component-design-system-builder/`
-  - **Third-party skills installed via `skills` CLI**
-    - `.agents/skills/frontend-design/`
-    - `.agents/skills/code-review-excellence/`
-    - `.agents/skills/accessibility-compliance/`
-    - `.agents/skills/webapp-testing/`
-    - `.agents/skills/typescript-advanced-types/`
+Use the project index here for the current installed list:
 
-The underlying directories (`.cursor/skills/` and `.agents/skills/`) are kept in place so tools continue to work,
-but you can treat **`agents/` and `skills/` as your single source of truth** for discovering and organizing agents.
+- [global skills index](/Users/admin/Codebase/projects/Memento%20AI/.agents/skills/README.md)
 
+These are the right place for things like:
+- git / PR workflow help
+- frontend design methods
+- reusable testing skills
+- cross-project code review skills
 
+### Project-local config that should stay in this repo
+
+These files are tied to `memento-web` and should remain local:
+
+- [.cursor/AGENTS.md](/Users/admin/Codebase/projects/Memento%20AI/memento-web/.cursor/AGENTS.md)
+- [.cursor/commands/check-variables.md](/Users/admin/Codebase/projects/Memento%20AI/memento-web/.cursor/commands/check-variables.md)
+- [.cursor/rules/](/Users/admin/Codebase/projects/Memento%20AI/memento-web/.cursor/rules)
+- `.claude/settings.local.json`
+
+These are not generic skills. They are project-specific tool configuration.
+
+## Cleanup Decision
+
+We removed duplicate or empty local skill folders from:
+
+- `memento-web/.agents/skills/`
+- `memento-web/.claude/skills/`
+- `memento-web/.cursor/skills/`
+- `memento-web/.windsurf/skills/`
+- `memento-web/.agent/skills/`
+- `memento-web/.kiro/skills/`
+- `memento-web/skills/`
+
+That keeps the repo from carrying multiple half-overlapping skill systems.
+
+## Rule of Thumb
+
+- If it is reusable across projects, install it globally.
+- If it depends on this repo’s stack, conventions, or tool wiring, keep it local.
+- If it is empty, duplicated, or only there because of older experiments, remove it.

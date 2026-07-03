@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import useSWR from "swr";
 import { useModal } from "@/hooks/use-modal";
@@ -20,7 +19,6 @@ type BeneficiaryTab = "beneficiary" | "groups";
 
 export default function BeneficiaryAndGroup() {
   const { push } = useModal();
-  const navigate = useNavigate();
   const { isProOrAbove } = useSubscription();
   const { canUse } = useFeatureFlags();
   const [beneficiaryGateOpen, setBeneficiaryGateOpen] = useState(false);
@@ -126,7 +124,6 @@ export default function BeneficiaryAndGroup() {
         variant="modal"
         open={beneficiaryGateOpen}
         onOpenChange={setBeneficiaryGateOpen}
-        onUpgrade={() => navigate("/pricing")}
       />
     </div>
   );

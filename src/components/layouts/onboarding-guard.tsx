@@ -26,7 +26,7 @@ export default function OnboardingGuard({ children }: PropsWithChildren) {
     if (isComplete) return;
     if (skipped) return;
 
-    navigate("/onboard", { replace: true });
+    navigate("/onboarding", { replace: true });
   }, [user?.onboarding_status, user?.onboarded, location.pathname, navigate]);
 
   return <>{children}</>;

@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
+import { UpgradePrompt } from "./upgrade-prompt";
 
 import type { SubscriptionUsage } from "./types";
 
@@ -33,6 +34,7 @@ type StorageUsageCardProps = {
 
 export function StorageUsageCard({ usage, isProOrAbove, className }: StorageUsageCardProps) {
   const navigate = useNavigate();
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
   const used = usage?.storage_used_bytes ?? 0;
   const limit =
     usage?.storage_limit_bytes ??
@@ -77,15 +79,24 @@ export function StorageUsageCard({ usage, isProOrAbove, className }: StorageUsag
       </CardContent>
       {!isProOrAbove ? (
         <CardFooter className="pt-0">
-          <Button
-            type="button"
-            size="sm"
-            variant="secondary"
-            className="rounded-full font-inter"
-            onClick={() => navigate("/pricing")}
-          >
-            Get more storage
-          </Button>
+          <>
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              className="rounded-full font-inter"
+              onClick={() => setUpgradeOpen(true)}
+            >
+              Get more storage
+            </Button>
+            <UpgradePrompt
+              feature="storage"
+              variant="modal"
+              open={upgradeOpen}
+              onOpenChange={setUpgradeOpen}
+              onUpgrade={() => navigate("/pricing")}
+            />
+          </>
         </CardFooter>
       ) : null}
     </Card>

@@ -71,7 +71,7 @@ export default function TwoFactorPage() {
       toast.success(result?.message ?? "Logged in");
       setAuth?.(result.data);
       await clearCache();
-      navigate(result.data?.onboarded ? "/overview" : "/onboard", { replace: true });
+      navigate(result.data?.onboarded ? "/overview" : "/onboarding", { replace: true });
     } catch {
       toast.error("Something went wrong. Please try again.");
     } finally {

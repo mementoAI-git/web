@@ -5,7 +5,7 @@ import { MemoryItemActions } from "./dropdown";
 import type { IMemory, IPagination } from "@/utility/interface";
 import dayjs from "dayjs";
 import { Link } from "react-router-dom";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { useModal } from "@/hooks/use-modal";
 import { cn } from "@/lib/utils";
 import { QuickCaptureProcessingBadge } from "@/components/memory/quick-capture-processing-badge";
@@ -13,18 +13,51 @@ import { QuickCaptureProcessingBadge } from "@/components/memory/quick-capture-p
 import { PlaySolidIcon, WaveIcon } from "@/components/icons";
 import recordBanner from "@/assets/icon/record-banner.png";
 
-/** Rotate aspect ratios so the masonry column layout feels like Pinterest. */
-const MEDIA_ASPECTS = [
-  "aspect-[3/4]",
-  "aspect-[4/5]",
-  "aspect-square",
-  "aspect-[5/6]",
-  "aspect-[2/3]",
-] as const;
+const DEFAULT_VIEWPORT_WIDTH = 1280;
+const MEDIA_CARD_ASPECTS = ["aspect-[4/5]", "aspect-[5/6]", "aspect-[3/4]", "aspect-square"] as const;
+const TEXT_BODY_CLAMPS = ["line-clamp-[5]", "line-clamp-[7]", "line-clamp-[9]"] as const;
+const TEXT_CARD_MIN_HEIGHTS = ["min-h-[206px]", "min-h-[232px]", "min-h-[264px]"] as const;
+const TEXT_ONLY_CARD_SURFACES: CSSProperties[] = [
+  {
+    backgroundColor: "color-mix(in srgb, var(--fill-neutral-weak) 88%, white)",
+    borderColor: "color-mix(in srgb, var(--stroke-neutral-weak) 84%, white)",
+  },
+  {
+    backgroundColor: "color-mix(in srgb, var(--fill-brand-weak) 42%, white)",
+    borderColor: "color-mix(in srgb, var(--stroke-neutral-weak) 78%, var(--fill-brand-weak) 22%)",
+  },
+  {
+    backgroundColor: "color-mix(in srgb, var(--fill-warning-weak) 54%, white)",
+    borderColor: "color-mix(in srgb, var(--stroke-neutral-weak) 78%, var(--fill-warning-weak) 22%)",
+  },
+  {
+    backgroundColor: "color-mix(in srgb, var(--fill-info-weak) 42%, white)",
+    borderColor: "color-mix(in srgb, var(--stroke-neutral-weak) 80%, var(--fill-info-weak) 20%)",
+  },
+  {
+    backgroundColor: "color-mix(in srgb, var(--fill-success-weak) 44%, white)",
+    borderColor: "color-mix(in srgb, var(--stroke-neutral-weak) 80%, var(--fill-success-weak) 20%)",
+  },
+];
 
-const TEXT_MIN_HEIGHTS = ["min-h-[200px]", "min-h-[260px]", "min-h-[228px]", "min-h-[244px]"] as const;
+function getStoryKey(memory: IMemory, index: number) {
+  return memory._id || `${memory.createdAt || "story"}-${index}`;
+}
 
-export function getTopicColor(topic: string) {
+function getMasonryConfig(width: number) {
+  if (width >= 1024) {
+    return { columns: 4, gutter: 24 };
+  }
+  if (width >= 768) {
+    return { columns: 3, gutter: 20 };
+  }
+  if (width >= 640) {
+    return { columns: 2, gutter: 20 };
+  }
+  return { columns: 1, gutter: 16 };
+}
+
+function getTopicColor(topic: string) {
   let hash = 0;
   for (let i = 0; i < topic.length; i++) {
     hash = topic.charCodeAt(i) + ((hash << 5) - hash);
@@ -37,6 +70,26 @@ export function getTopicColor(topic: string) {
   };
 }
 
+function getStableHash(source: string) {
+  let hash = 0;
+  for (let i = 0; i < source.length; i++) {
+    hash = source.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return Math.abs(hash);
+}
+
+function getCardSeed(memory: IMemory, title: string) {
+  return getStableHash(memory._id || memory.prompt_text || memory.title || title);
+}
+
+function pickBySeed<T>(items: readonly T[], seed: number): T {
+  return items[seed % items.length];
+}
+
+function getTextCardSurface(memory: IMemory, title: string): CSSProperties {
+  return pickBySeed(TEXT_ONLY_CARD_SURFACES, getCardSeed(memory, title));
+}
+
 function getStoryCardTitle(memory: IMemory): string {
   if (memory.prompt_type && memory.prompt_text?.trim()) {
     return memory.prompt_text.trim();
@@ -47,11 +100,11 @@ function getStoryCardTitle(memory: IMemory): string {
 function StoriesGridItem({
   memory,
   isMobile,
-  index,
+  onMeasure,
 }: {
   memory: IMemory;
   isMobile: boolean;
-  index: number;
+  onMeasure?: (node: HTMLElement | null) => void;
 }) {
   const { open } = useModal();
 
@@ -73,9 +126,12 @@ function StoriesGridItem({
     (a) => a.type.includes("image") || a.type.includes("video"),
   );
   const audioMedia = memory.attachments.find((a) => a.type.includes("audio"));
-  const aspectClass = MEDIA_ASPECTS[index % MEDIA_ASPECTS.length];
-  const textMinH = TEXT_MIN_HEIGHTS[index % TEXT_MIN_HEIGHTS.length];
   const storyTitle = getStoryCardTitle(memory);
+  const cardSeed = getCardSeed(memory, storyTitle);
+  const textCardSurface = getTextCardSurface(memory, storyTitle);
+  const mediaAspectClass = pickBySeed(MEDIA_CARD_ASPECTS, cardSeed);
+  const textBodyClampClass = pickBySeed(TEXT_BODY_CLAMPS, cardSeed);
+  const textCardMinHeightClass = pickBySeed(TEXT_CARD_MIN_HEIGHTS, cardSeed);
 
   const renderContent = () => {
     if (bannerMedia) {
@@ -83,14 +139,14 @@ function StoriesGridItem({
       return (
         <div
           className={cn(
-            "relative w-full overflow-hidden rounded-2xl border border-v3-stroke-weak bg-v3-fill-weaker shadow-sm",
-            aspectClass,
+            "relative w-full overflow-hidden rounded-[20px] border border-v3-stroke-weak bg-v3-fill-weaker shadow-sm transition-[filter] duration-300 group-hover/card:brightness-[0.97]",
+            mediaAspectClass,
           )}
         >
           <QuickCaptureProcessingBadge memory={memory} variant="overlay" />
           <img
             src={bannerMedia.url}
-            className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover/card:scale-[1.03]"
+            className="h-full w-full object-cover"
             alt={storyTitle}
             loading="lazy"
           />
@@ -109,18 +165,18 @@ function StoriesGridItem({
       return (
         <div
           className={cn(
-            "relative flex w-full items-center justify-center overflow-hidden rounded-2xl border border-v3-stroke-weak bg-v3-fill-strong shadow-sm",
-            aspectClass,
+            "relative flex w-full items-center justify-center overflow-hidden rounded-[20px] border border-v3-stroke-weak bg-v3-fill-strong shadow-sm transition-[filter] duration-300 group-hover/card:brightness-[0.97]",
+            mediaAspectClass,
           )}
         >
           <QuickCaptureProcessingBadge memory={memory} variant="overlay" />
           <img
             src={recordBanner}
-            className="absolute inset-0 h-full w-full object-cover opacity-90 transition-transform duration-500 ease-out group-hover/card:scale-[1.03]"
+            className="absolute inset-0 h-full w-full object-cover opacity-90"
             alt=""
             loading="lazy"
           />
-          <div className="relative z-10 flex flex-col items-center gap-3 rounded-2xl border border-white/20 bg-white/10 p-5 backdrop-blur-md">
+          <div className="relative z-10 flex flex-col items-center gap-3 rounded-[20px] border border-white/20 bg-white/10 p-5 backdrop-blur-md">
             <WaveIcon className="h-auto w-16 text-white opacity-80" />
             <span className="font-inter text-sm font-semibold tracking-widest text-white">
               {audioMedia.duration ?
@@ -137,10 +193,11 @@ function StoriesGridItem({
 
     return (
       <div
+        style={textCardSurface}
         className={cn(
-          "relative flex w-full flex-col gap-3 overflow-hidden rounded-2xl p-5 shadow-sm transition-all duration-300",
-          "backdrop-blur-md bg-white/40 border border-white/40 hover:border-white/60 hover:bg-white/50",
-          textMinH,
+          "relative flex w-full flex-col gap-3 overflow-hidden rounded-[20px] border p-5 shadow-sm transition-[filter] duration-300 group-hover/card:brightness-[0.97]",
+          "backdrop-blur-md",
+          textCardMinHeightClass,
         )}
       >
         <div className="flex flex-wrap items-center gap-2">
@@ -151,7 +208,7 @@ function StoriesGridItem({
         </div>
 
         {hasSummary ? (
-          <div className="rounded-xl border-l-[3px] border-v3-brand-strong bg-white/20 px-3 py-2 my-0.5">
+          <div className="my-0.5 rounded-[16px] border-l-[3px] border-v3-brand-strong bg-white/35 px-3 py-2">
             <p className="font-georgia italic text-xs leading-relaxed text-v3-text-strong">
               "{memory.summary?.trim()}"
             </p>
@@ -182,7 +239,7 @@ function StoriesGridItem({
         <div
           className={cn(
             "font-inter text-sm leading-relaxed text-v3-text-weak [&_a]:underline",
-            hasSummary ? "line-clamp-[4]" : "line-clamp-[8]"
+            hasSummary ? "line-clamp-[4]" : textBodyClampClass,
           )}
           dangerouslySetInnerHTML={{
             __html: ensureLinksOpenInNewTab(DOMPurify.sanitize(memory?.body || "")),
@@ -195,21 +252,22 @@ function StoriesGridItem({
 
   return (
     <article
+      ref={onMeasure}
       className={cn(
-        "group/card relative mb-4 w-full break-inside-avoid sm:mb-5 transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-xl hover:shadow-brand-strong/5",
+        "group/card relative w-full",
         "focus-within:ring-2 focus-within:ring-v3-brand-strong/40 focus-within:ring-offset-2",
       )}
     >
       <Link
         to={`/stories/${memory._id}`}
-        className="block rounded-2xl outline-none"
+        className="block rounded-[20px] outline-none"
         onClick={handleClick}
         aria-label={`Open story: ${storyTitle}`}
       >
-        <div className="relative overflow-hidden rounded-2xl">
+        <div className="relative overflow-hidden rounded-[20px]">
           {renderContent()}
           <div
-            className="pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-t from-black/55 via-black/15 to-transparent opacity-0 transition-opacity duration-300 group-hover/card:opacity-100"
+            className="pointer-events-none absolute inset-0 rounded-[20px] bg-gradient-to-t from-black/55 via-black/15 to-transparent opacity-0 transition-opacity duration-300 group-hover/card:opacity-100"
             aria-hidden
           />
           <div className="pointer-events-none absolute bottom-3 left-3 z-10 translate-y-2 opacity-0 transition-all duration-300 group-hover/card:translate-y-0 group-hover/card:opacity-100">
@@ -238,17 +296,104 @@ function StoriesGridItem({
 }
 
 export default function StoriesGrid({ data }: { data: IPagination<IMemory> }) {
-  const [isMobile, setIsMobile] = useState(
-    () => typeof window !== "undefined" && window.innerWidth < 640,
+  const [viewportWidth, setViewportWidth] = useState(
+    () => typeof window !== "undefined" ? window.innerWidth : DEFAULT_VIEWPORT_WIDTH,
   );
+  const [measuredHeights, setMeasuredHeights] = useState<Record<string, number>>({});
+  const resizeObserverRef = useRef<ResizeObserver | null>(null);
+  const observedNodesRef = useRef(new Map<string, HTMLElement>());
+  const stories = data?.docs ?? [];
+  const { columns: columnsCount, gutter } = getMasonryConfig(viewportWidth);
+  const isMobile = viewportWidth < 640;
 
   useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < 640);
+    const check = () => setViewportWidth(window.innerWidth);
     window.addEventListener("resize", check);
     return () => window.removeEventListener("resize", check);
   }, []);
 
-  if (!data?.docs || data.docs.length === 0) {
+  useEffect(() => {
+    if (typeof ResizeObserver === "undefined") {
+      return;
+    }
+
+    const observer = new ResizeObserver((entries) => {
+      setMeasuredHeights((prev) => {
+        let next = prev;
+
+        for (const entry of entries) {
+          const key = entry.target.getAttribute("data-story-key");
+          if (!key) continue;
+
+          const height = Math.ceil(entry.contentRect.height);
+          if (prev[key] === height) continue;
+
+          if (next === prev) {
+            next = { ...prev };
+          }
+          next[key] = height;
+        }
+
+        return next;
+      });
+    });
+
+    resizeObserverRef.current = observer;
+
+    for (const node of observedNodesRef.current.values()) {
+      observer.observe(node);
+    }
+
+    return () => {
+      observer.disconnect();
+      resizeObserverRef.current = null;
+    };
+  }, []);
+
+  const registerMeasuredNode = useCallback((key: string, node: HTMLElement | null) => {
+    const observer = resizeObserverRef.current;
+    const previousNode = observedNodesRef.current.get(key);
+
+    if (previousNode && observer) {
+      observer.unobserve(previousNode);
+    }
+
+    if (!node) {
+      observedNodesRef.current.delete(key);
+      return;
+    }
+
+    node.setAttribute("data-story-key", key);
+    observedNodesRef.current.set(key, node);
+    observer?.observe(node);
+
+    const height = Math.ceil(node.getBoundingClientRect().height);
+    setMeasuredHeights((prev) => prev[key] === height ? prev : { ...prev, [key]: height });
+  }, []);
+
+  const storiesByColumn = useMemo(() => {
+    const columns = Array.from({ length: columnsCount }, () => [] as Array<{
+      memory: IMemory;
+      key: string;
+    }>);
+    const columnHeights = Array(columnsCount).fill(0);
+
+    stories.forEach((memory, index) => {
+      const key = getStoryKey(memory, index);
+      const measuredHeight = measuredHeights[key];
+      const targetColumnIndex =
+        measuredHeight == null
+          ? index % columnsCount
+          : columnHeights.indexOf(Math.min(...columnHeights));
+
+      columns[targetColumnIndex].push({ memory, key });
+      columnHeights[targetColumnIndex] += measuredHeight ?? 0;
+    });
+
+    return columns;
+  }, [columnsCount, measuredHeights, stories]);
+
+  if (stories.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center px-4 py-12 text-center">
         <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-v3-fill-weaker">
@@ -263,9 +408,25 @@ export default function StoriesGrid({ data }: { data: IPagination<IMemory> }) {
   }
 
   return (
-    <div className="w-full columns-2 gap-3 sm:columns-2 sm:gap-4 md:columns-3 lg:columns-4 lg:gap-5 xl:gap-6 [column-fill:_balance]">
-      {data.docs.map((m, i) => (
-        <StoriesGridItem key={m._id ?? i} memory={m} isMobile={isMobile} index={i} />
+    <div
+      className="flex w-full items-start"
+      style={{ gap: `${gutter}px` }}
+    >
+      {storiesByColumn.map((column, columnIndex) => (
+        <div
+          key={`stories-column-${columnIndex}`}
+          className="flex min-w-0 flex-1 flex-col"
+          style={{ gap: `${gutter}px` }}
+        >
+          {column.map(({ memory, key }) => (
+            <StoriesGridItem
+              key={key}
+              memory={memory}
+              isMobile={isMobile}
+              onMeasure={(node) => registerMeasuredNode(key, node)}
+            />
+          ))}
+        </div>
       ))}
     </div>
   );

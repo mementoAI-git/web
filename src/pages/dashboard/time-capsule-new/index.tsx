@@ -15,7 +15,6 @@ import { ZapIcon } from "./components/icons/ZapIcon";
 import { UnpdfIcon } from "./components/icons/UnpdfIcon";
 import CapsuleList from "./components/list";
 import Button from "./components/Button";
-import { useNavigate } from "react-router-dom";
 import { useSubscription } from "@/contexts/subscription";
 import { UpgradePrompt } from "@/features/pricing/upgrade-prompt";
 import ScheduledBg from "./components/assets/scheduled.svg";
@@ -26,7 +25,6 @@ import { PauseIcon } from "./components/icons/PauseIcon";
 import { useFeatureFlags } from "@/contexts/feature-flags";
 
 export default function TimeCapsulePage() {
-  const navigate = useNavigate();
   const { isProOrAbove, usage } = useSubscription();
   const [timedGateOpen, setTimedGateOpen] = useState(false);
   const [mode, setMode] = useState(
@@ -225,7 +223,6 @@ export default function TimeCapsulePage() {
         variant="modal"
         open={timedGateOpen}
         onOpenChange={setTimedGateOpen}
-        onUpgrade={() => navigate("/pricing")}
       />
     </div>
   );

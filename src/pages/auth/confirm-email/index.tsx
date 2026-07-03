@@ -95,7 +95,7 @@ export default function ConfirmEmailPage() {
         <Card className="border border-v3-stroke-weak bg-v3-fill-weaker/30 py-0 shadow-none">
           <CardContent className="p-4 sm:p-5">
             <Button asChild className="h-11 w-full rounded-full">
-              <Link to="/onboard">Continue</Link>
+              <Link to="/onboarding">Continue</Link>
             </Button>
           </CardContent>
         </Card>

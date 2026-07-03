@@ -11,6 +11,8 @@ import { UserAvatar } from "@/components/user-avatar";
 import { buildSettingsAboutMeParagraphs } from "./build-settings-about-me";
 import { useProfileAvatarUpload } from "./use-profile-avatar-upload";
 import endpoint from "@/api/endpoint";
+import type { UserStatsData } from "@/features/enrichment/enrichment-api.types";
+import { deriveTopCategoryLabel } from "@/features/enrichment/derive-top-category";
 
 const AVATAR_INPUT_ID = "settings-profile-avatar-input";
 
@@ -43,12 +45,13 @@ export function SettingsProfileHeader() {
     return dayjs(user.created_at).format("MMM YYYY");
   }, [user?.created_at]);
 
-  const stats = statsData?.data ?? {};
-  const enrichmentScore = Number(stats.enrichment_score) || 0;
-  const streakCount = Number(user?.streak) || Number(stats.streak_count) || 0;
+  const statsTyped = statsData?.data as (UserStatsData & { top_dimension?: string | null }) | undefined;
+  const enrichmentScore = Number(statsTyped?.enrichment_score) || 0;
+  const streakCount = Number(user?.streak) || Number(statsTyped?.streak_count) || 0;
   const memoriesCount =
     memoriesStatsData?.data?.stories_count ?? memoriesStatsData?.stories_count ?? 0;
-  const topDimension: string | null = stats.top_dimension ?? null;
+  const topDimension =
+    statsTyped?.top_dimension ?? deriveTopCategoryLabel(statsTyped?.category_scores) ?? null;
 
   return (
     <header className="flex w-full flex-col gap-8 pb-1">

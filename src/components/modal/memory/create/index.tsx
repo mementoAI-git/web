@@ -38,6 +38,7 @@ import { beneficiaryToAccessItem } from "./beneficiary-to-access-item";
 import {
   htmlFromQuickCaptureNote,
   parseQuickCaptureDraftJson,
+  plainTextFromQuickCaptureNote,
   quickCaptureDraftKindLabel,
   quickCaptureDraftPreviewLine,
   scanQuickCaptureDraftKeys,
@@ -116,7 +117,23 @@ interface CreateMemoryProps {
   isMobile?: boolean;
 }
 
-export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
+interface CreateMemoryBaseProps extends CreateMemoryProps {
+  variant?: "next" | "legacy";
+}
+
+export function CreateMemory(props: CreateMemoryProps) {
+  return <CreateMemoryBase {...props} variant={props.isMobile ? "legacy" : "next"} />;
+}
+
+export function AddMemory2(props: CreateMemoryProps) {
+  return <CreateMemoryBase {...props} variant="legacy" />;
+}
+
+function CreateMemoryBase({
+  data,
+  isMobile = false,
+  variant = "next",
+}: CreateMemoryBaseProps) {
   const { close, open, push, registerCloseGuard } = useModal();
   const { user } = useStore();
   const { canUse } = useFeatureFlags();
@@ -263,7 +280,7 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
   } = useMemoryEditor({
     initialContent: values.body || "",
     placeholder: "What's on your mind today? Type / for formatting options",
-    editorClassName: "prose prose-sm focus:outline-none min-h-[140px] px-4 py-4 text-sm text-text-neutral-strong",
+    editorClassName: "prose prose-sm max-w-none focus:outline-none min-h-[140px] w-full px-4 py-4 text-sm text-text-neutral-strong",
     linkClassName: "text-text-brand-strong underline cursor-pointer",
     onHtmlChange: (html) => handleValue("body", html),
   });
@@ -453,10 +470,11 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
       if (!d) return;
       const note = typeof d.note === "string" ? d.note : "";
       const html = htmlFromQuickCaptureNote(note);
+      const noteText = plainTextFromQuickCaptureNote(note);
       const pinned = d.daily_prompt?.pinned_text?.trim();
       const title =
         (pinned && pinned.slice(0, 120)) ||
-        note.trim().split(/\n/)[0]?.trim().slice(0, 120) ||
+        noteText.split(/\n/)[0]?.trim().slice(0, 120) ||
         "Quick capture";
       setValues((prev) => ({ ...prev, title, body: html }));
       setTags([]);
@@ -533,7 +551,7 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
     </Button>
   );
 
-  const formContent = (
+  const fileInputs = (
     <>
       <input
         ref={fileInputImageRef}
@@ -575,39 +593,55 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
         onChange={handleFileSelect}
         className="hidden"
       />
+    </>
+  );
 
-      {showUploadGate ? (
-        <div className="mb-3">
-          <UpgradePrompt
-            feature="storage"
-            variant="inline"
-            upgradeLabel="View plans"
-            onUpgrade={() => navigate("/pricing")}
-            onDismiss={() => setShowUploadGate(false)}
-          />
-        </div>
-      ) : null}
+  const uploadGateBanner = showUploadGate ? (
+    <div className="mb-3">
+      <UpgradePrompt
+        feature="storage"
+        variant="inline"
+        upgradeLabel="View plans"
+        onUpgrade={() => navigate("/pricing")}
+        onDismiss={() => setShowUploadGate(false)}
+      />
+    </div>
+  ) : null;
 
-      <TitleField
-        id="create-memory-title"
+  const titleSection = (
+    <TitleField
+      id="create-memory-title"
+      value={values.title}
+      name="title"
+      onChange={handleChange}
+      draftTitle={values.title ?? ""}
+      bodyPlain={editor?.getText() ?? ""}
+      onSuggestTitle={(t) => handleValue("title", t)}
+    />
+  );
+
+  const nextTitleSection = (
+    <div className="border-b border-stroke-neutral-weak px-1 pb-4">
+      <input
+        id="create-memory-title-next"
+        placeholder="Enter title here"
         value={values.title}
         name="title"
         onChange={handleChange}
-        draftTitle={values.title ?? ""}
-        bodyPlain={editor?.getText() ?? ""}
-        onSuggestTitle={(t) => handleValue("title", t)}
+        className="w-full border-0 bg-transparent px-0 font-garamond text-[34px] leading-none text-text-neutral-strong placeholder:text-text-neutral-weak focus:outline-none sm:text-[38px]"
       />
+    </div>
+  );
 
-      {/* Composer: bordered region (not nested Card) to avoid extra group/card padding */}
-      <section
-        className={cn(
-          "flex flex-col overflow-hidden rounded-[24px] border border-stroke-neutral-weak bg-card text-card-foreground shadow-none",
-          "transition-[color,box-shadow,border-color]",
-          "focus-within:border-ring focus-within:ring-[3px] focus-within:ring-inset focus-within:ring-ring/50",
-        )}
-      >
-        {/* Formatting toolbar */}
-        <div className="flex items-center gap-0.5 pt-1 px-3 pb-1">
+  const composerSection = (
+    <section
+      className={cn(
+        "flex min-h-0 flex-1 flex-col overflow-hidden rounded-[16px] border border-stroke-neutral-weak bg-card text-card-foreground shadow-none",
+        "transition-[color,box-shadow,border-color]",
+        "focus-within:border-ring focus-within:ring-[3px] focus-within:ring-inset focus-within:ring-ring/50",
+      )}
+    >
+      <div className="flex items-center gap-0.5 pt-1 px-3 pb-1">
           {toolbarBtn(
             !!editor?.isActive("heading", { level: 2 }),
             () => editor?.chain().focus().toggleHeading({ level: 2 }).run(),
@@ -791,37 +825,33 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
             </DropdownMenu>
           </div>
         </div>
-
-        {/* Editor */}
-        <div className="flex h-[300px] flex-col overflow-hidden">
-          <div className="editor-fill-500 relative flex min-h-0 flex-1 flex-col overflow-hidden">
-            <EditorContent editor={editor} className="tiptap-editor size-full min-h-0" />
-            <SlashCommandPopup
-              show={showSlashMenu}
-              position={slashPosition}
-              commands={SLASH_COMMANDS}
-              selectedIndex={slashSelectedIndex}
-              onSelectedIndexChange={setSlashSelectedIndex}
-              onCommandSelect={handleSlashCommandSelect}
-              onClose={() => setShowSlashMenu(false)}
+      <div className="flex min-h-[280px] flex-1 flex-col overflow-hidden">
+        <div className="editor-fill-500 relative flex min-h-0 flex-1 flex-col overflow-hidden">
+          <EditorContent editor={editor} className="tiptap-editor size-full min-h-0" />
+          <SlashCommandPopup
+            show={showSlashMenu}
+            position={slashPosition}
+            commands={SLASH_COMMANDS}
+            selectedIndex={slashSelectedIndex}
+            onSelectedIndexChange={setSlashSelectedIndex}
+            onCommandSelect={handleSlashCommandSelect}
+            onClose={() => setShowSlashMenu(false)}
+          />
+          {showLinkInput && (
+            <LinkInput
+              show={showLinkInput}
+              position={linkPosition}
+              initialText={selectedText}
+              initialUrl={previousUrl}
+              onSubmit={handleLinkSubmit}
+              onRemove={() => editor?.chain().focus().extendMarkRange("link").unsetLink().run()}
+              onClose={() => setShowLinkInput(false)}
             />
-            {showLinkInput && (
-              <LinkInput
-                show={showLinkInput}
-                position={linkPosition}
-                initialText={selectedText}
-                initialUrl={previousUrl}
-                onSubmit={handleLinkSubmit}
-                onRemove={() => editor?.chain().focus().extendMarkRange("link").unsetLink().run()}
-                onClose={() => setShowLinkInput(false)}
-              />
-            )}
-          </div>
+          )}
         </div>
-
-        {/* Attachments & media toolbar */}
-        <div className="mt-3 mb-3 w-full min-w-0 px-3" onClick={(e) => e.stopPropagation()}>
-          <div className="flex min-h-[48px] items-center justify-start gap-1 rounded-2xl border border-stroke-neutral-weak bg-fill-neutral-weaker/60 px-2 py-1.5">
+      </div>
+      <div className="mt-3 mb-3 w-full min-w-0 px-3" onClick={(e) => e.stopPropagation()}>
+        <div className="flex min-h-[48px] items-center justify-start gap-1 rounded-2xl border border-stroke-neutral-weak bg-fill-neutral-weaker/60 px-2 py-1.5">
               {/* Attachments & media */}
               <DropdownMenu
                 modal={false}
@@ -965,25 +995,42 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
               >
                 <Video className="size-5" />
               </Button>
-          </div>
         </div>
-      </section>
+      </div>
+    </section>
+  );
 
-      <FileThumbnails files={files} onRemove={handleRemoveFile} />
+  const fileThumbnailsSection = (
+    <FileThumbnails files={files} onRemove={handleRemoveFile} />
+  );
 
-      <AccessField
-        value={selectedAccess}
-        onChange={setSelectedAccess}
-        shareAudience={shareAudience}
-        onShareAudienceChange={setShareAudience}
-      />
+  const accessSection = (
+    <AccessField
+      value={selectedAccess}
+      onChange={setSelectedAccess}
+      shareAudience={shareAudience}
+      onShareAudienceChange={setShareAudience}
+    />
+  );
 
-      <TagsField
-        tags={tags}
-        setTags={setTags}
-        title={values.title ?? ""}
-        body={editor?.getText() ?? ""}
-      />
+  const tagsSection = (
+    <TagsField
+      tags={tags}
+      setTags={setTags}
+      title={values.title ?? ""}
+      body={editor?.getText() ?? ""}
+    />
+  );
+
+  const legacyFormContent = (
+    <>
+      {fileInputs}
+      {uploadGateBanner}
+      {titleSection}
+      {composerSection}
+      {fileThumbnailsSection}
+      {accessSection}
+      {tagsSection}
     </>
   );
 
@@ -1099,7 +1146,7 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
   );
 
   // Mobile
-  if (isMobile) {
+  if (isMobile && variant === "legacy") {
     return (
       <>
         <Sheet detent="content" isOpen onClose={handleClose} snapPoints={[0, 0.8]} initialSnap={1}>
@@ -1118,7 +1165,7 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
                   <TimesIcon width={10} height={10} />
                 </Button>
               </div>
-              <div className="space-y-4">{formContent}</div>
+              <div className="space-y-4">{legacyFormContent}</div>
               <div className="mt-4 pt-4 border-t border-stroke-neutral-weak">{footer}</div>
             </Sheet.Content>
           </Sheet.Container>
@@ -1130,24 +1177,88 @@ export function CreateMemory({ data, isMobile = false }: CreateMemoryProps) {
     );
   }
 
-  // Desktop
+  if (variant === "legacy") {
+    return (
+      <>
+        <Card
+          className="absolute top-0 right-0 bottom-0 flex h-full w-full max-w-[520px] flex-col gap-0 overflow-hidden rounded-[24px] border-stroke-neutral-weak bg-v3-bg py-0 shadow-2xl"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <CardHeader className="shrink-0 border-b border-stroke-neutral-weak px-6 py-5">
+            <h2 className="font-garamond text-2xl font-medium text-text-neutral-strong">
+              Add New Story
+            </h2>
+          </CardHeader>
+          <CardContent className="flex h-[700px] min-h-0 flex-col overflow-y-auto px-6 pt-5 pb-16 hide-scrollbar space-y-5">
+            {legacyFormContent}
+          </CardContent>
+          <CardFooter className="shrink-0 border-t border-stroke-neutral-weak px-6 py-4">{footer}</CardFooter>
+        </Card>
+
+        {closeConfirmationPortal}
+        {videoRecorderDialog}
+      </>
+    );
+  }
+
   return (
     <>
-      <Card
-        className="absolute top-0 right-0 bottom-0 flex h-full w-full max-w-[520px] flex-col gap-0 overflow-hidden rounded-[24px] border-stroke-neutral-weak bg-v3-bg py-0 shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <CardHeader className="shrink-0 border-b border-stroke-neutral-weak px-6 py-5">
-          <h2 className="font-garamond text-2xl font-medium text-text-neutral-strong">
-            Add New Story
-          </h2>
-        </CardHeader>
-        <CardContent className="flex h-[700px] min-h-0 flex-col overflow-y-auto px-6 pt-5 pb-16 hide-scrollbar space-y-5">
-          {formContent}
-        </CardContent>
-        <CardFooter className="shrink-0 border-t border-stroke-neutral-weak px-6 py-4">{footer}</CardFooter>
-      </Card>
+      <div className="absolute inset-0 p-3" onClick={(e) => e.stopPropagation()}>
+        {fileInputs}
+        <div className="flex h-full w-full items-stretch">
+          <div className="flex h-full w-full flex-col gap-3 xl:flex-row">
+            <section className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[16px] border border-stroke-neutral-weak bg-white shadow-2xl">
+              <div className="hide-scrollbar flex min-h-0 flex-1 flex-col overflow-y-auto px-5 py-5 sm:px-6 sm:py-6">
+                {uploadGateBanner}
+                <div className="flex min-h-0 flex-1 flex-col">
+                  {nextTitleSection}
+                  <div className="mt-4 flex min-h-0 flex-1 flex-col">
+                    {composerSection}
+                  </div>
+                  <div className="mt-4">{fileThumbnailsSection}</div>
+                </div>
+              </div>
+            </section>
 
+            <aside className="flex w-full shrink-0 flex-col overflow-hidden rounded-[16px] border border-stroke-neutral-weak bg-[#fdf8f2] shadow-2xl xl:max-w-[420px]">
+              <div className="flex items-center justify-between gap-4 border-b border-stroke-neutral-weak px-5 py-5 sm:px-6">
+                <div>
+                  <p className="font-inter text-xs font-semibold uppercase tracking-[0.14em] text-text-neutral-weaker">
+                    Properties
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleClose}
+                  className="rounded-[16px] border border-black/5 bg-[#f9f9f9] px-4 font-inter text-xs font-semibold text-text-neutral-strong shadow-sm hover:bg-fill-neutral-weaker"
+                >
+                  Cancel
+                  <span className="ml-1 inline-flex items-center rounded bg-white px-1.5 py-0.5 font-mono text-[10px] leading-none text-text-neutral-weaker">
+                    ESC
+                  </span>
+                </Button>
+              </div>
+
+              <div className="hide-scrollbar flex min-h-0 flex-1 flex-col overflow-y-auto px-5 py-5 sm:px-6 sm:py-6">
+                <div className="space-y-5">
+                  <div className="rounded-[16px] border border-stroke-neutral-weak bg-white p-4 shadow-sm">
+                    {accessSection}
+                  </div>
+                  <div className="rounded-[16px] border border-stroke-neutral-weak bg-white p-4 shadow-sm">
+                    {tagsSection}
+                  </div>
+                </div>
+              </div>
+
+              <div className="border-t border-stroke-neutral-weak bg-white/80 px-5 py-4 backdrop-blur-sm sm:px-6">
+                {footer}
+              </div>
+            </aside>
+          </div>
+        </div>
+      </div>
       {closeConfirmationPortal}
       {videoRecorderDialog}
     </>
