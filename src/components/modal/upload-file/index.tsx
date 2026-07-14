@@ -12,6 +12,17 @@ import { ModalCloseBtn } from "../modalLayout";
 import { storageKeys } from "@/utility/constant";
 import { isEmpty, resolvePath } from "@/utility";
 import { mutate } from "swr";
+import { Badge } from "@/components/ui/badge";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 
 export interface FileState {
   file: File;
@@ -116,38 +127,65 @@ export default function UploadFiles({ data: id }: UploadFilesProps) {
   return (
     <div className="modal-container">
       <ModalCloseBtn onClick={() => close?.("file-upload")} />
-      <div className="space-y-4 sm:space-y-6">
-        <h4 className="modal-title text-lg sm:text-xl lg:text-2xl">Upload your images or videos</h4>
+      <Card className="gap-0 border border-border/70 bg-background/95 py-0 shadow-xl backdrop-blur-sm">
+        <CardHeader className="gap-3 px-5 py-5 sm:px-6">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex flex-col gap-1">
+              <CardTitle className="font-inter text-xl text-foreground sm:text-2xl">
+                Upload files
+              </CardTitle>
+              <CardDescription className="max-w-[36rem] font-inter text-sm leading-6">
+                Add photos, videos, voice notes, and documents. Uploaded files stay here until you attach them to the story.
+              </CardDescription>
+            </div>
+            <Badge variant="outline" className="shrink-0">
+              {files.length} {files.length === 1 ? "item" : "items"}
+            </Badge>
+          </div>
+        </CardHeader>
+        <Separator />
+        <CardContent className="flex max-h-[72vh] min-h-[420px] flex-col gap-5 px-5 py-5 sm:px-6">
+          <UploadInput onUpload={handleOnUpload} />
 
-        <div className="mt-4 flex flex-col sm:mt-6">
-          <div className="flex max-h-[500px] min-h-[300px] flex-col gap-4 sm:max-h-[660px] sm:min-h-[425px] sm:gap-6">
-            <UploadInput onUpload={handleOnUpload} />
+          <div className="flex min-h-0 flex-1 flex-col gap-3">
+            <div className="flex items-center justify-between gap-3">
+              <p className="font-inter text-sm font-medium text-foreground">Uploads</p>
+              <p className="font-inter text-xs text-muted-foreground">
+                {files.length === 0 ? "No files added yet" : "Review uploads before attaching them"}
+              </p>
+            </div>
 
-            {files.length > 0 && (
-              <div className="flex-1 max-h-[200px] space-y-3 overflow-y-auto sm:max-h-[300px] sm:space-y-4">
+            {files.length > 0 ? (
+              <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto pr-1">
                 {files.map((file) => (
                   <UploadItem onDelete={handleDeleteFile} file={file} key={file.id} />
                 ))}
               </div>
+            ) : (
+              <div className="flex flex-1 items-center justify-center rounded-2xl border border-dashed border-border bg-muted/30 px-6 py-10 text-center">
+                <div className="flex max-w-sm flex-col gap-2">
+                  <p className="font-inter text-sm font-medium text-foreground">
+                    Nothing uploaded yet
+                  </p>
+                  <p className="font-inter text-sm leading-6 text-muted-foreground">
+                    Drop a file into the upload area or browse from your device to start building the post.
+                  </p>
+                </div>
+              </div>
             )}
           </div>
-          <div className="mt-6 flex justify-end gap-3">
-            <button type="button" className="btn-outline">
-              Discard
-            </button>
-            <button
-              type="button"
-              onClick={handleAddToPost}
-              disabled={files.length === 0}
-              className="btn disabled:cursor-not-allowed disabled:opacity-70"
-            >
-              Add to post
-              <Spinner loading={adding} className="!size-3 sm:!size-4" />
-            </button>
-          </div>
-        </div>
-      </div>
+        </CardContent>
+        <Separator />
+        <CardFooter className="justify-end gap-3 px-5 py-4 sm:px-6">
+          <Button type="button" variant="outline" onClick={() => close?.("file-upload")}>
+            Cancel
+          </Button>
+          <Button type="button" onClick={handleAddToPost} disabled={files.length === 0 || adding}>
+            Add to post
+            <Spinner loading={adding} className="!size-3" />
+          </Button>
+        </CardFooter>
+      </Card>
     </div>
   );
 }
-

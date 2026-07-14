@@ -1,17 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { parseBlob, selectCover } from "music-metadata";
 import { getDocument, GlobalWorkerOptions, version as pdfjsVersion } from "pdfjs-dist";
 import { TimesIcon } from "@/components/icons";
 import type { IOnUploadPayload } from "@/utility/interface";
-import { inferMimeType } from "@/utility/constant";
-
-import imageUploadSvg from "@/assets/icon/Image Upload.svg";
-import recUploadSvg from "@/assets/icon/rec upload - short.svg";
-import videoUploadSvg from "@/assets/icon/Video Upload.svg";
-import docUploadSvg from "@/assets/icon/Document Upload.svg";
-import musicUploadSvg from "@/assets/icon/music upload - short.svg";
+import { cn } from "@/lib/utils";
+import { extractDocxPreview, extractPlainTextPreview } from "./document-preview";
+import { getUploadDisplayKind, resolveUploadMimeType } from "./upload-display";
 
 GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsVersion}/pdf.worker.min.mjs`;
 
@@ -20,14 +16,6 @@ function formatFileSize(bytes: number): string {
   if (bytes >= 1024 * 1024) return `${Math.round(bytes / (1024 * 1024))} MB`;
   if (bytes >= 1024) return `${Math.round(bytes / 1024)} KB`;
   return `${bytes} B`;
-}
-
-function getFileThumbSvg(mimeType: string): string | null {
-  if (mimeType.startsWith("image/")) return null;
-  if (mimeType === "audio/webm" || mimeType === "audio/ogg") return recUploadSvg;
-  if (mimeType.startsWith("audio/")) return musicUploadSvg;
-  if (mimeType.startsWith("video/")) return videoUploadSvg;
-  return docUploadSvg;
 }
 
 function useAudioThumbnail(audioSource: File | string | null | undefined): string | null {
@@ -47,24 +35,42 @@ function useAudioThumbnail(audioSource: File | string | null | undefined): strin
         }
         const metadata = await parseBlob(blob);
         const picture = selectCover(metadata.common?.picture);
-        if (picture?.data) {
-          const format = picture.format || "image/jpeg";
-          const bytes = picture.data;
-          let binary = "";
-          for (let i = 0; i < bytes.length; i++) {
-            binary += String.fromCharCode(bytes[i]);
-          }
-          setThumbnail(`data:${format};base64,${btoa(binary)}`);
+        if (!picture?.data) {
+          setThumbnail(null);
+          return;
         }
+
+        const format = picture.format || "image/jpeg";
+        let binary = "";
+        for (let i = 0; i < picture.data.length; i++) {
+          binary += String.fromCharCode(picture.data[i]);
+        }
+        setThumbnail(`data:${format};base64,${btoa(binary)}`);
       } catch {
         setThumbnail(null);
       }
     };
 
-    loadCover();
+    void loadCover();
   }, [audioSource]);
 
   return thumbnail;
+}
+
+function useImagePreview(file: IOnUploadPayload, mimeType: string): string | null {
+  return useMemo(() => {
+    if (!mimeType.startsWith("image/")) return null;
+    if (file.base64) return file.base64;
+    if (file.file) return URL.createObjectURL(file.file);
+    return file.uploadedFile?.url ?? null;
+  }, [file, mimeType]);
+}
+
+function useObjectUrlCleanup(source: string | null, file: File | null | undefined) {
+  useEffect(() => {
+    if (!source || !file || !source.startsWith("blob:")) return;
+    return () => URL.revokeObjectURL(source);
+  }, [file, source]);
 }
 
 function usePdfThumbnail(pdfSource: File | string | null | undefined): string | null {
@@ -89,23 +95,69 @@ function usePdfThumbnail(pdfSource: File | string | null | undefined): string | 
         canvas.width = viewport.width;
         canvas.height = viewport.height;
         const ctx = canvas.getContext("2d");
-        if (ctx) {
-          const renderTask = page.render({
-            canvasContext: ctx,
-            viewport,
-          });
-          await renderTask.promise;
-          setThumbnail(canvas.toDataURL("image/jpeg", 0.8));
+        if (!ctx) {
+          setThumbnail(null);
+          return;
         }
+        const renderTask = page.render({ canvasContext: ctx, viewport });
+        await renderTask.promise;
+        setThumbnail(canvas.toDataURL("image/jpeg", 0.8));
       } catch {
         setThumbnail(null);
       }
     };
 
-    loadPdf();
+    void loadPdf();
   }, [pdfSource]);
 
   return thumbnail;
+}
+
+function useDocumentPreview(
+  file: IOnUploadPayload,
+  mimeType: string,
+): { imageUrl: string | null; textPreview: string | null } {
+  const [preview, setPreview] = useState<{ imageUrl: string | null; textPreview: string | null }>(
+    { imageUrl: null, textPreview: null },
+  );
+
+  useEffect(() => {
+    const source = file.file ?? file.uploadedFile?.url ?? null;
+    if (!source) {
+      setPreview({ imageUrl: null, textPreview: null });
+      return;
+    }
+
+    const loadPreview = async () => {
+      try {
+        let blob: Blob;
+        if (typeof source === "string") {
+          const res = await fetch(source);
+          blob = await res.blob();
+        } else {
+          blob = source;
+        }
+
+        if (mimeType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
+          setPreview(extractDocxPreview(await blob.arrayBuffer()));
+          return;
+        }
+
+        if (mimeType === "text/plain") {
+          setPreview({ imageUrl: null, textPreview: extractPlainTextPreview(await blob.text()) });
+          return;
+        }
+      } catch {
+        /* ignore */
+      }
+
+      setPreview({ imageUrl: null, textPreview: null });
+    };
+
+    void loadPreview();
+  }, [file.file, file.uploadedFile?.url, mimeType]);
+
+  return preview;
 }
 
 function useVideoThumbnail(videoSource: File | string | null | undefined): string | null {
@@ -122,8 +174,7 @@ function useVideoThumbnail(videoSource: File | string | null | undefined): strin
 
     const handleLoadedMetadata = () => {
       const duration = video.duration;
-      const seekTime =
-        Number.isFinite(duration) && duration > 0 ? Math.min(1, duration * 0.1) : 0;
+      const seekTime = Number.isFinite(duration) && duration > 0 ? Math.min(1, duration * 0.1) : 0;
       video.currentTime = seekTime;
     };
 
@@ -133,10 +184,12 @@ function useVideoThumbnail(videoSource: File | string | null | undefined): strin
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
         const ctx = canvas.getContext("2d");
-        if (ctx) {
-          ctx.drawImage(video, 0, 0);
-          setThumbnail(canvas.toDataURL("image/jpeg", 0.8));
+        if (!ctx) {
+          setThumbnail(null);
+          return;
         }
+        ctx.drawImage(video, 0, 0);
+        setThumbnail(canvas.toDataURL("image/jpeg", 0.8));
       } catch {
         setThumbnail(null);
       }
@@ -161,129 +214,259 @@ function useVideoThumbnail(videoSource: File | string | null | undefined): strin
   return thumbnail;
 }
 
-function VideoThumbnail({
+function FileInfoTile({
   file,
-  fallbackSrc,
-  ...imgProps
+  mimeType,
+  compact,
+  textPreview,
 }: {
   file: IOnUploadPayload;
-  fallbackSrc: string;
-} & React.ImgHTMLAttributes<HTMLImageElement>) {
-  const videoSource = file.file ?? file.uploadedFile?.url ?? null;
-  const thumbnail = useVideoThumbnail(videoSource);
-  const src = thumbnail ?? fallbackSrc;
-  return <img {...imgProps} src={src} alt="" />;
+  mimeType: string;
+  compact: boolean;
+  textPreview?: string | null;
+}) {
+  const name = file.file?.name || file.uploadedFile?.name || "Attachment";
+  const extension = name.includes(".") ? name.split(".").pop()?.toUpperCase() : null;
+  const shortName = name.replace(/\.[^.]+$/, "");
+  const typeLabel = mimeType.split("/")[0] || "file";
+
+  return (
+    <div
+      className={cn(
+        "flex h-full w-full flex-col justify-between border border-black/5 bg-gradient-to-br from-[#fbf5eb] to-[#f2eee8]",
+        compact ? "rounded-[14px] p-2.5" : "rounded-[18px] p-3",
+      )}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <span className="rounded-full bg-white/80 px-2 py-0.5 font-inter text-[9px] font-semibold uppercase tracking-[0.08em] text-[#6b6258]">
+          {typeLabel}
+        </span>
+        {extension ? (
+          <span className="font-inter text-[10px] font-semibold text-[#846633]">{extension}</span>
+        ) : null}
+      </div>
+      <div className="mt-2 min-w-0">
+        {textPreview ? (
+          <p className="line-clamp-4 whitespace-pre-line break-words font-geist text-[10px] leading-[1.35] text-[#2f2417]">
+            {textPreview}
+          </p>
+        ) : (
+          <p className={cn("break-words font-geist text-[#1e1e1e]", compact ? "line-clamp-2 text-[11px] font-medium leading-4" : "line-clamp-3 text-[13px] font-medium leading-5")}>
+            {shortName}
+          </p>
+        )}
+      </div>
+    </div>
+  );
 }
 
 function AudioThumbnail({
   file,
-  fallbackSrc,
-  ...imgProps
+  mimeType,
+  compact,
+  className,
 }: {
   file: IOnUploadPayload;
-  fallbackSrc: string;
-} & React.ImgHTMLAttributes<HTMLImageElement>) {
+  mimeType: string;
+  compact: boolean;
+  className: string;
+}) {
   const audioSource = file.file ?? file.uploadedFile?.url ?? null;
   const thumbnail = useAudioThumbnail(audioSource);
-  const src = thumbnail ?? fallbackSrc;
-  return <img {...imgProps} src={src} alt="" />;
+  const imageSource = useImagePreview(file, mimeType);
+  useObjectUrlCleanup(imageSource, file.file);
+  const src = thumbnail ?? imageSource;
+  if (!src) return <FileInfoTile file={file} mimeType={mimeType} compact={compact} />;
+  return <img src={src} className={className} alt="" />;
+}
+
+function VideoThumbnail({
+  file,
+  mimeType,
+  compact,
+  className,
+}: {
+  file: IOnUploadPayload;
+  mimeType: string;
+  compact: boolean;
+  className: string;
+}) {
+  const videoSource = file.file ?? file.uploadedFile?.url ?? null;
+  const thumbnail = useVideoThumbnail(videoSource);
+  const imageSource = useImagePreview(file, mimeType);
+  useObjectUrlCleanup(imageSource, file.file);
+  const src = thumbnail ?? imageSource;
+  if (!src) return <FileInfoTile file={file} mimeType={mimeType} compact={compact} />;
+  return <img src={src} className={className} alt="" />;
 }
 
 function PdfThumbnail({
   file,
-  fallbackSrc,
-  ...imgProps
+  mimeType,
+  compact,
+  className,
 }: {
   file: IOnUploadPayload;
-  fallbackSrc: string;
-} & React.ImgHTMLAttributes<HTMLImageElement>) {
+  mimeType: string;
+  compact: boolean;
+  className: string;
+}) {
   const pdfSource = file.file ?? file.uploadedFile?.url ?? null;
   const thumbnail = usePdfThumbnail(pdfSource);
-  const src = thumbnail ?? fallbackSrc;
-  return <img {...imgProps} src={src} alt="" />;
+  const imageSource = useImagePreview(file, mimeType);
+  useObjectUrlCleanup(imageSource, file.file);
+  const src = thumbnail ?? imageSource;
+  if (!src) return <FileInfoTile file={file} mimeType={mimeType} compact={compact} />;
+  return <img src={src} className={className} alt="" />;
+}
+
+function DocumentThumbnail({
+  file,
+  mimeType,
+  compact,
+  className,
+}: {
+  file: IOnUploadPayload;
+  mimeType: string;
+  compact: boolean;
+  className: string;
+}) {
+  const { imageUrl, textPreview } = useDocumentPreview(file, mimeType);
+  if (imageUrl) return <img src={imageUrl} className={className} alt="" />;
+
+  return <FileInfoTile file={file} mimeType={mimeType} compact={compact} textPreview={textPreview} />;
 }
 
 export interface FileThumbnailsProps {
   files: IOnUploadPayload[];
   onRemove: (id: string) => void;
+  variant?: "default" | "composer-rail" | "media-inline";
 }
 
-export function FileThumbnails({ files, onRemove }: FileThumbnailsProps) {
+export function FileThumbnails({
+  files,
+  onRemove,
+  variant = "default",
+}: FileThumbnailsProps) {
   if (files.length === 0) return null;
 
+  const isComposerRail = variant === "composer-rail";
+  const isMediaInline = variant === "media-inline";
+  const compact = isMediaInline || isComposerRail;
+  const displayFiles = files;
+
   return (
-    <div className="flex w-full justify-start items-start overflow-x-auto hide-scrollbar">
-      <div className="flex w-full gap-3 pb-1">
-        {files.map((f) => {
-          const rawType = f.file?.type || f.uploadedFile?.type || "";
-          const mimeType = rawType || inferMimeType(f.file?.name ?? f.uploadedFile?.name ?? f.uploadedFile?.url);
-          const thumbSvg = getFileThumbSvg(mimeType);
+    <div className={cn("w-full", isMediaInline ? "overflow-visible" : "overflow-x-auto hide-scrollbar")}>
+      <div
+        data-testid={isMediaInline ? "media-inline-flow" : undefined}
+        className={cn(
+          isMediaInline ? "flex flex-wrap gap-2" : "flex w-full pb-1",
+          isComposerRail ? "gap-2" : "gap-3",
+        )}
+      >
+        {displayFiles.map((file) => {
+          const mimeType = resolveUploadMimeType(file);
           const isImage = mimeType.startsWith("image/");
           const isVideo = mimeType.startsWith("video/");
           const isAudio = mimeType.startsWith("audio/");
-          const isPdf = mimeType === "application/pdf";
-          const audioFallback = mimeType === "audio/webm" || mimeType === "audio/ogg" ? recUploadSvg : musicUploadSvg;
-          const imgSrc = isImage ? (f.base64 || f.uploadedFile?.url || "") : (thumbSvg ?? imageUploadSvg);
-          const sizeBytes =
-            f.file?.size ?? (typeof f.uploadedFile?.size === "number" ? f.uploadedFile.size : 0);
+          const isDocument = getUploadDisplayKind(mimeType) === "document";
+          const imgSrc = isImage ? (file.base64 || file.uploadedFile?.url || "") : "";
+          const sizeBytes = file.file?.size ?? (typeof file.uploadedFile?.size === "number" ? file.uploadedFile.size : 0);
           const sizeLabel = sizeBytes ? formatFileSize(sizeBytes) : "";
-          const isUpl = f.progress !== undefined && f.progress !== 100;
+          const isUploading = file.progress !== undefined && file.progress !== 100;
+          const frameClassName =
+            isMediaInline ?
+              "relative size-[72px] overflow-hidden rounded-[14px] bg-[#f3eee6] shadow-[inset_0_0_0_1px_rgba(15,7,0,0.06)]"
+            : isComposerRail ?
+              "relative h-[82px] w-[84px] overflow-hidden rounded-[14px] bg-[#f3eee6]"
+            : "relative h-[70px] w-[70px] overflow-hidden rounded-xl bg-fill-neutral-weaker";
+          const assetClassName =
+            isMediaInline ? "h-full w-full rounded-[14px] object-cover object-center"
+            : isComposerRail ? "h-full w-full rounded-[14px] object-cover"
+            : "h-full w-full rounded-xl object-cover";
 
           return (
-            <div key={f.id} className="relative shrink-0">
-              {/* X button */}
+            <div
+              key={file.id}
+              data-testid={isMediaInline ? `media-inline-file-tile-${file.id}` : undefined}
+              className={cn("relative shrink-0", isMediaInline && "size-[72px]")}
+            >
               <button
                 type="button"
-                onClick={() => onRemove(f.id)}
-                className="absolute -top-2 -right-2 z-50 flex size-6 items-center justify-center rounded-full border-2 border-background bg-fill-neutral-weaker text-icon-neutral-strong shadow-sm transition-colors hover:bg-fill-neutral-weak hover:text-text-neutral-strong"
+                onClick={() => onRemove(file.id)}
+                className={
+                  isMediaInline ?
+                    "absolute right-1 top-1 z-50 flex size-5 items-center justify-center rounded-full bg-black/55 text-white shadow-sm backdrop-blur-sm transition-colors hover:bg-black/70"
+                  : isComposerRail ?
+                    "absolute right-1.5 top-1.5 z-50 flex size-5 items-center justify-center rounded-full bg-black/55 text-white shadow-sm backdrop-blur-sm transition-colors hover:bg-black/70"
+                  : "absolute right-1 top-1 z-50 flex size-6 items-center justify-center rounded-full bg-black/55 text-white shadow-sm backdrop-blur-sm transition-colors hover:bg-black/70"
+                }
                 aria-label="Remove attachment"
               >
-                <TimesIcon width={8} height={8} />
+                <TimesIcon
+                  width={isMediaInline ? 7 : isComposerRail ? 7 : 8}
+                  height={isMediaInline ? 7 : isComposerRail ? 7 : 8}
+                />
               </button>
 
-              <div className="relative h-[70px] w-[70px] overflow-visible rounded-xl bg-fill-neutral-weaker">
+              <div className={frameClassName}>
                 {isVideo ? (
-                  <VideoThumbnail
-                    file={f}
-                    fallbackSrc={videoUploadSvg}
-                    className="w-full h-full object-cover rounded-xl"
-                  />
+                  <VideoThumbnail file={file} mimeType={mimeType} compact={compact} className={assetClassName} />
                 ) : isAudio ? (
-                  <AudioThumbnail
-                    file={f}
-                    fallbackSrc={audioFallback}
-                    className="w-full h-full object-cover rounded-xl"
-                  />
-                ) : isPdf ? (
-                  <PdfThumbnail
-                    file={f}
-                    fallbackSrc={docUploadSvg}
-                    className="w-full h-full object-cover rounded-xl"
-                  />
+                  <AudioThumbnail file={file} mimeType={mimeType} compact={compact} className={assetClassName} />
+                ) : mimeType === "application/pdf" ? (
+                  <PdfThumbnail file={file} mimeType={mimeType} compact={compact} className={assetClassName} />
+                ) : isDocument ? (
+                  <DocumentThumbnail file={file} mimeType={mimeType} compact={compact} className={assetClassName} />
+                ) : isImage ? (
+                  <img src={imgSrc} className={assetClassName} alt="" />
                 ) : (
-                  <img
-                    src={imgSrc}
-                    className="w-full h-full object-cover rounded-xl"
-                    alt=""
-                  />
+                  <FileInfoTile file={file} mimeType={mimeType} compact={compact} />
                 )}
 
-                {/* Upload progress overlay */}
-                {isUpl && (
-                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                    <span className="font-inter text-white text-xs font-semibold">{f.progress}%</span>
+                {isUploading ? (
+                  <div className="absolute inset-0 flex flex-col justify-end bg-black/35">
+                    <div className={isMediaInline ? "px-2 pb-2 pt-6" : "px-2 pb-2 pt-8"}>
+                      <div className="mb-1 flex items-center justify-between">
+                        <span className="font-inter text-[10px] font-semibold text-white">
+                          {file.progress}%
+                        </span>
+                      </div>
+                      <div className="h-1.5 overflow-hidden rounded-full bg-white/30">
+                        <div
+                          className="h-full rounded-full bg-white transition-[width]"
+                          style={{ width: `${Math.max(0, Math.min(100, file.progress ?? 0))}%` }}
+                        />
+                      </div>
+                    </div>
                   </div>
-                )}
+                ) : null}
 
-                {/* Size pill */}
-                {sizeLabel && (
-                  <div className="absolute bottom-1 left-1 bg-black/55 rounded-full px-1.5 py-0 w-fit overflow-hidden">
-                    <span className="font-inter text-white text-[9px] font-semibold whitespace-nowrap">
+                {sizeLabel ? (
+                  <div
+                    className={
+                      isMediaInline ?
+                        "absolute bottom-1 left-1.5 w-fit overflow-hidden rounded-full bg-black/55 px-1.5 py-0.5"
+                      : isComposerRail ?
+                        "absolute bottom-1 left-1 w-fit overflow-hidden rounded-full bg-black/55 px-1.5 py-0.5"
+                      : "absolute bottom-1 left-1 w-fit overflow-hidden rounded-full bg-black/55 px-1.5 py-0"
+                    }
+                  >
+                    <span
+                      className={
+                        isMediaInline ?
+                          "font-inter text-[8px] font-semibold whitespace-nowrap text-white"
+                        : isComposerRail ?
+                          "font-inter text-[8px] font-semibold whitespace-nowrap text-white"
+                        : "font-inter text-[9px] font-semibold whitespace-nowrap text-white"
+                      }
+                    >
                       {sizeLabel}
                     </span>
                   </div>
-                )}
+                ) : null}
               </div>
+
             </div>
           );
         })}

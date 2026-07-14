@@ -49,7 +49,8 @@ import {
 import { UnpauseCapsule } from "./capsule";
 import { ExitConfirmation } from "./capsule/create/exit-confirmation";
 
-const RIGHT_PANEL_MODALS = ["create-memory", "view-memory"];
+const RIGHT_PANEL_MODALS = ["view-memory"];
+const FULL_SCREEN_MODALS = ["create-memory"];
 
 /** Centered horizontally, anchored to the top (tall content / readability). */
 const TOP_ALIGNED_MODALS = ["memory-insights"];
@@ -126,11 +127,15 @@ export default function Modal() {
   }
 
   const topModal = state[0];
+  const isTopFullscreenModal =
+    FULL_SCREEN_MODALS.includes(topModal.name) && !isMobile;
 
   return (
     <div
-      className={`modal-overlay relative z-100 w-full h-full flex flex-col justify-center items-center bg-overlay-backdrop ${state ? "flex" : "hidden"}`}
-      onClick={() => close(topModal.name)}
+      className={`modal-overlay relative z-100 h-full w-full flex-col justify-center items-center ${
+        isTopFullscreenModal ? "bg-transparent" : "bg-overlay-backdrop"
+      } ${state ? "flex" : "hidden"}`}
+      onClick={isTopFullscreenModal ? undefined : () => close(topModal.name)}
     >
       {[...state].reverse().map((modal, i) => {
         const ModalComponent = MODAL_COMPONENTS[modal.name];
@@ -138,24 +143,31 @@ export default function Modal() {
 
         const isRightPanel =
           RIGHT_PANEL_MODALS.includes(modal.name) && !isMobile;
+        const isFullscreen =
+          FULL_SCREEN_MODALS.includes(modal.name) && !isMobile;
         const isTopAligned =
-          TOP_ALIGNED_MODALS.includes(modal.name) && !isMobile && !isRightPanel;
+          TOP_ALIGNED_MODALS.includes(modal.name) &&
+          !isMobile &&
+          !isRightPanel &&
+          !isFullscreen;
         const isTop = modal.name === topModal.name;
         const stackIndex = state.length - 1 - i;
         const hasModalsBehind = i > 0;
-        const needsOverlay = !isRightPanel && hasModalsBehind;
+        const needsOverlay = !isRightPanel && !isFullscreen && hasModalsBehind;
 
         return (
           <div
             key={`${modal.name}-${i}`}
-            className={`absolute inset-1.5 flex ${isRightPanel
+            className={`absolute ${isFullscreen ? "inset-0" : "inset-1.5"} flex ${isRightPanel
                 ? "flex-row justify-start items-start"
+                : isFullscreen
+                  ? "flex-row justify-start items-start"
                 : isTopAligned
                   ? "flex-row justify-center items-start pt-6 sm:pt-8 lg:pt-10"
                   : "flex-row justify-center items-center"
               }`}
             style={{ zIndex: isTop ? 10 : stackIndex + 1 }}
-            onClick={!isRightPanel ? (e) => {
+            onClick={!isRightPanel && !isFullscreen ? (e) => {
               e.stopPropagation();
               if (e.target === e.currentTarget) close(modal.name);
             } : undefined}

@@ -521,6 +521,9 @@ export const handlers = [
         flow_complete: false,
         step_index: 1,
         total_steps: 6,
+        extracted_interests: ["Family stories"],
+        suggested_dimensions: ["relationships_people"],
+        handoff_summary: "You're here to preserve stories that matter and ease into the product gently.",
       };
     } else if (userCount >= 7) {
       text = "Beautiful — that gives me plenty to work with. Welcome aboard.";
@@ -531,6 +534,10 @@ export const handlers = [
         flow_complete: true,
         step_index: 6,
         total_steps: 6,
+        extracted_interests: ["Family stories", "Getting started"],
+        suggested_dimensions: ["relationships_people", "memories_experiences"],
+        handoff_summary:
+          "You care about family stories and want a simple way to begin capturing meaningful memories.",
       };
     } else {
       text = "Thanks — say a bit more when you're ready.";
@@ -541,6 +548,10 @@ export const handlers = [
         flow_complete: false,
         step_index: userCount,
         total_steps: 6,
+        extracted_interests: ["Getting started"],
+        suggested_dimensions: ["identity_self"],
+        handoff_summary:
+          "You're still finding the right words, so the next conversation should stay gentle and specific.",
       };
     }
 
@@ -554,6 +565,59 @@ export const handlers = [
     return new HttpResponse(stream, {
       status: 200,
       headers: { "Content-Type": "text/plain; charset=utf-8" },
+    });
+  }),
+
+  http.post(`${BASE_URL}/ai/tasks/run`, async ({ request }) => {
+    const body = (await request.json()) as {
+      task?: string;
+      context?: { text?: string; dimension?: string };
+    };
+
+    if (body.task === "chat.deep_dive_followup") {
+      const sourceText = body.context?.text?.trim() || "that";
+      const promptTarget =
+        sourceText.length > 60 ? `${sourceText.slice(0, 57)}...` : sourceText;
+
+      return HttpResponse.json({
+        success: true,
+        data: {
+          result: {
+            dimension: body.context?.dimension || "identity_self",
+            question: `What feels most important about ${promptTarget}?`,
+            summary: "Suggested a deeper follow-up prompt.",
+          },
+          summary: "Generated a deep-dive follow-up.",
+        },
+        message: "ok",
+      });
+    }
+
+    if (body.task === "assistant.compose_response") {
+      const prompt = body.context?.prompt?.trim() || "that memory";
+
+      return HttpResponse.json({
+        success: true,
+        data: {
+          result: {
+            text: `I can help with that. Based on what you've written so far, ${prompt.toLowerCase()} sounds like it may carry emotional weight that is worth naming more directly.`,
+          },
+          summary: "Composed an assistant reply.",
+          session_id: "assistant-session-1",
+          run_id: "assistant-run-1",
+          workflow_id: "conversation-agent",
+          tool_calls: ["load-current-assistant-context"],
+        },
+        message: "ok",
+      });
+    }
+
+    return HttpResponse.json({
+      success: true,
+      data: {
+        result: {},
+      },
+      message: "ok",
     });
   }),
 

@@ -83,6 +83,7 @@ export default {
   ephemeralToken: "/ai/ephemeral-token",
   generateTags: "/ai/generate-tags",
   generateStoryTitle: "/ai/generate-story-title",
+  aiTasksRun: "/ai/tasks/run",
   aiMetricsOverview: "/ai/metrics/overview",
   aiMetricsTimeseries: "/ai/metrics/timeseries",
   aiPromptGovernanceStatus: "/ai/prompt-governance/status",
