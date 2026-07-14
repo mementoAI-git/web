@@ -19,6 +19,9 @@ export interface OnboardingStreamMeta {
   step_index?: number;
   total_steps?: number | null;
   intent_id?: string;
+  extracted_interests?: string[];
+  suggested_dimensions?: string[];
+  handoff_summary?: string;
 }
 
 export function splitOnboardingStreamBody(full: string): {

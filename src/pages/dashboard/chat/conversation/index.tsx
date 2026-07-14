@@ -43,6 +43,8 @@ import {
 import { useEnrichmentStats } from "@/features/enrichment";
 import { useSubscription } from "@/contexts/subscription";
 import { VoiceModePaywall } from "@/features/pricing/voice-mode-paywall";
+import { useAiTask } from "@/features/ai/use-ai-task";
+import { deepDiveFollowupTask } from "@/features/ai/tasks";
 
 type StreamlinePayload = {
   text: string;
@@ -55,6 +57,32 @@ type StreamlinePayload = {
   deepDiveDimension?: LifeDimension | null;
   dismissedNudgeDimensions?: string[];
 };
+
+function pickDeepDiveSeedText(
+  messages: Partial<IMessage>[],
+  memory: { title?: string; body?: string } | null | undefined,
+  fallbackDimension: LifeDimension,
+) {
+  const latestText = [...messages]
+    .reverse()
+    .find((message) => typeof message.text === "string" && message.text.trim().length > 0)
+    ?.text;
+
+  if (typeof latestText === "string" && latestText.trim().length > 0) {
+    return latestText.trim();
+  }
+
+  const memoryText = [memory?.title, memory?.body]
+    .filter((value): value is string => typeof value === "string" && value.trim().length > 0)
+    .join("\n\n")
+    .trim();
+
+  if (memoryText.length > 0) {
+    return memoryText;
+  }
+
+  return `Let's explore ${dimensionLabel(fallbackDimension)} in more detail.`;
+}
 
 export default function Conversation({ id, type = "memory" }) {
   const [aiMessage, setAiMessage] = useState("")
@@ -81,6 +109,11 @@ export default function Conversation({ id, type = "memory" }) {
   const [sessionEnrichmentDelta, setSessionEnrichmentDelta] = useState<number | null>(null);
   const [streamDone, setStreamDone] = useState(false);
   const sessionStartScoreRef = useRef<number | null>(null);
+  const lastDeepDivePromptSignatureRef = useRef<string | null>(null);
+  const deepDiveFollowupAi = useAiTask(deepDiveFollowupTask, {
+    mode: "assist",
+    skipErrorToast: true,
+  });
 
   const {
     stats: enrichmentStats,
@@ -328,14 +361,24 @@ export default function Conversation({ id, type = "memory" }) {
   const handleExitDeepDive = useCallback(() => {
     setChatMode("open");
     setDeepDiveDimension(null);
+    deepDiveFollowupAi.reset();
     toast.success("Returned to open conversation");
-  }, []);
+  }, [deepDiveFollowupAi]);
 
   const handleStartDeepDiveFromNudge = useCallback(() => {
+    const seedText = pickDeepDiveSeedText(messages, memory, activeDimension);
+    const signature = `${activeDimension}:${seedText}`;
+    if (lastDeepDivePromptSignatureRef.current !== signature) {
+      lastDeepDivePromptSignatureRef.current = signature;
+      void deepDiveFollowupAi.run({
+        text: seedText,
+        dimension: activeDimension,
+      });
+    }
     setDeepDiveDimension(activeDimension);
     setChatMode("deep_dive");
     setNudgeHidden(true);
-  }, [activeDimension]);
+  }, [activeDimension, deepDiveFollowupAi, memory, messages]);
 
   const handleDismissNudge = useCallback(() => {
     dismissHostChatNudge(activeDimension);
@@ -546,6 +589,19 @@ export default function Conversation({ id, type = "memory" }) {
                     dimensionLabel={dimensionLabel(deepDiveDimension)}
                     onExit={handleExitDeepDive}
                   />
+                ) : null}
+                {chatMode === "deep_dive" && deepDiveDimension ? (
+                  <div className="flex min-w-0 flex-1 items-center rounded-2xl border border-v3-stroke-weak bg-v3-fill-weaker px-3 py-2">
+                    <p className="min-w-0 text-xs leading-relaxed text-v3-text-weak sm:text-[13px]">
+                      {deepDiveFollowupAi.isRunning ? (
+                        "Preparing a follow-up question..."
+                      ) : deepDiveFollowupAi.result?.question ? (
+                        <span>{deepDiveFollowupAi.result.question}</span>
+                      ) : (
+                        <span>Ask one honest follow-up and keep the thread specific.</span>
+                      )}
+                    </p>
+                  </div>
                 ) : null}
                 <MilestoneCard
                   enrichmentDelta={sessionEnrichmentDelta}

@@ -14,6 +14,12 @@ const defaultHints = {
   composerLabel: "Your reply",
 };
 
+const defaultOutcome = {
+  extractedInterests: [] as string[],
+  suggestedDimensions: [] as string[],
+  handoffSummary: "",
+};
+
 describe("host-onboarding-chat-persistence", () => {
   beforeEach(() => {
     localStorage.removeItem(storageKeys.hostOnboardingChat);
@@ -29,6 +35,11 @@ describe("host-onboarding-chat-persistence", () => {
       composerHints: { ...defaultHints, suggestionChips: ["A"] },
       progressStep: 2,
       progressTotal: 6,
+      structuredOutcome: {
+        extractedInterests: ["Family stories"],
+        suggestedDimensions: ["relationships_people"],
+        handoffSummary: "Carry family stories into host chat.",
+      },
     });
     expect(loadHostOnboardingChatState()).toEqual({
       v: HOST_ONBOARDING_CHAT_PERSIST_VERSION,
@@ -40,6 +51,11 @@ describe("host-onboarding-chat-persistence", () => {
       composerHints: { ...defaultHints, suggestionChips: ["A"] },
       progressStep: 2,
       progressTotal: 6,
+      structuredOutcome: {
+        extractedInterests: ["Family stories"],
+        suggestedDimensions: ["relationships_people"],
+        handoffSummary: "Carry family stories into host chat.",
+      },
     });
   });
 
@@ -77,6 +93,7 @@ describe("host-onboarding-chat-persistence", () => {
         composerHints: defaultHints,
         progressStep: 1,
         progressTotal: null,
+        structuredOutcome: defaultOutcome,
       }),
     );
     expect(loadHostOnboardingChatState()).toBeNull();
@@ -95,6 +112,7 @@ describe("host-onboarding-chat-persistence", () => {
         composerHints: {},
         progressStep: 1,
         progressTotal: null,
+        structuredOutcome: defaultOutcome,
       }),
     );
     expect(loadHostOnboardingChatState()).toBeNull();
@@ -117,6 +135,7 @@ describe("host-onboarding-chat-persistence", () => {
         composerHints: defaultHints,
         progressStep: 1,
         progressTotal: 6,
+        structuredOutcome: defaultOutcome,
       }),
     );
     const loaded = loadHostOnboardingChatState();
@@ -148,6 +167,7 @@ describe("host-onboarding-chat-persistence", () => {
       composerHints: defaultHints,
       progressStep: 3,
       progressTotal: 6,
+      structuredOutcome: defaultOutcome,
     });
     clearHostOnboardingChatState();
     expect(localStorage.getItem(storageKeys.hostOnboardingChat)).toBeNull();

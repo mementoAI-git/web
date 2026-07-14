@@ -148,6 +148,9 @@ export default function HostOnboardingChatScreen({
     exchangeNumberDisplay,
     totalExchanges,
     showProgressDots,
+    assistantFollowupQuestion,
+    isPreparingFollowupQuestion,
+    structuredOutcome,
   } = useHostOnboardingChat({
     assistantPreDelayMs,
     persist,
@@ -379,6 +382,28 @@ export default function HostOnboardingChatScreen({
                       You&apos;re all set for this preview. Next we&apos;ll save
                       your intro for real once the backend is wired.
                     </p>
+                    {structuredOutcome.handoffSummary ? (
+                      <div className="rounded-[20px] border border-v3-stroke-weak bg-v3-fill-weaker p-3">
+                        <p className="font-inter text-[11px] font-medium uppercase tracking-wide text-v3-text-weaker">
+                          We&apos;ll carry this forward
+                        </p>
+                        <p className="mt-1 font-inter text-sm leading-relaxed text-v3-text-strong">
+                          {structuredOutcome.handoffSummary}
+                        </p>
+                        {structuredOutcome.extractedInterests.length > 0 ? (
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            {structuredOutcome.extractedInterests.map((interest) => (
+                              <span
+                                key={interest}
+                                className="rounded-full border border-v3-stroke-weak bg-v3-bg px-2.5 py-1 font-inter text-xs text-v3-text-strong"
+                              >
+                                {interest}
+                              </span>
+                            ))}
+                          </div>
+                        ) : null}
+                      </div>
+                    ) : null}
                     <Button
                       type="button"
                       className="font-inter rounded-full !bg-v3-brand-strong !text-white hover:!opacity-90"
@@ -396,6 +421,15 @@ export default function HostOnboardingChatScreen({
                   >
                     {showMainComposer && (
                       <>
+                        {isPreparingFollowupQuestion || assistantFollowupQuestion ? (
+                          <div className="rounded-2xl border border-v3-stroke-weak bg-v3-fill-weaker px-3 py-2">
+                            <p className="font-inter text-xs leading-relaxed text-v3-text-weak">
+                              {isPreparingFollowupQuestion
+                                ? "Preparing a better follow-up..."
+                                : assistantFollowupQuestion}
+                            </p>
+                          </div>
+                        ) : null}
                         <div
                           className="hide-scrollbar flex gap-2 overflow-x-auto overflow-y-hidden pb-0.5 [-webkit-overflow-scrolling:touch]"
                           role="group"

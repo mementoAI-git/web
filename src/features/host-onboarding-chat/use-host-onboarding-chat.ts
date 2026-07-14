@@ -4,12 +4,18 @@ import {
   streamHostOnboardingChat,
   type OnboardingStreamMeta,
 } from "@/api/host-onboarding-chat";
+import { useAiTask } from "@/features/ai/use-ai-task";
+import { deepDiveFollowupTask } from "@/features/ai/tasks";
 import {
   clearHostOnboardingChatState,
   loadHostOnboardingChatState,
   saveHostOnboardingChatState,
 } from "./host-onboarding-chat-persistence";
-import type { HostOnboardingMessage, OnboardingComposerHints } from "./types";
+import type {
+  HostOnboardingMessage,
+  OnboardingComposerHints,
+  OnboardingStructuredOutcome,
+} from "./types";
 
 function nextId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
@@ -19,6 +25,12 @@ const DEFAULT_COMPOSER_HINTS: OnboardingComposerHints = {
   suggestionChips: [],
   composerPlaceholder: "Your reply",
   composerLabel: "Your reply",
+};
+
+const DEFAULT_STRUCTURED_OUTCOME: OnboardingStructuredOutcome = {
+  extractedInterests: [],
+  suggestedDimensions: [],
+  handoffSummary: "",
 };
 
 /** Composer props for the chat screen (intentId reserved for analytics). */
@@ -53,6 +65,7 @@ function readInitial(persist: boolean) {
       composerHints: { ...DEFAULT_COMPOSER_HINTS },
       progressStep: 1,
       progressTotal: null as number | null,
+      structuredOutcome: { ...DEFAULT_STRUCTURED_OUTCOME },
     };
   }
   const p = loadHostOnboardingChatState();
@@ -68,6 +81,7 @@ function readInitial(persist: boolean) {
     composerHints: p?.composerHints ?? { ...DEFAULT_COMPOSER_HINTS },
     progressStep: p?.progressStep ?? 1,
     progressTotal: p?.progressTotal ?? null,
+    structuredOutcome: p?.structuredOutcome ?? { ...DEFAULT_STRUCTURED_OUTCOME },
   };
 }
 
@@ -102,6 +116,10 @@ export function useHostOnboardingChat(
     initial.progressTotal,
   );
   const [turnError, setTurnError] = useState<string | null>(null);
+  const [assistantFollowupQuestion, setAssistantFollowupQuestion] = useState<string | null>(null);
+  const [structuredOutcome, setStructuredOutcome] = useState<OnboardingStructuredOutcome>(
+    initial.structuredOutcome,
+  );
 
   const messagesRef = useRef(initial.messages);
   messagesRef.current = messages;
@@ -109,6 +127,10 @@ export function useHostOnboardingChat(
   const turnAbortRef = useRef<AbortController | null>(null);
   const bootstrapStartedRef = useRef(false);
   const restoredRef = useRef(initial.restored);
+  const onboardingFollowupAi = useAiTask(deepDiveFollowupTask, {
+    mode: "assist",
+    skipErrorToast: true,
+  });
 
   const newTurnSignal = useCallback(() => {
     turnAbortRef.current?.abort();
@@ -143,6 +165,24 @@ export function useHostOnboardingChat(
     if (meta.total_steps === null || typeof meta.total_steps === "number") {
       setProgressTotal(meta.total_steps ?? null);
     }
+    setStructuredOutcome((previous) => ({
+      extractedInterests: Array.isArray(meta.extracted_interests)
+        ? meta.extracted_interests.filter(
+            (item): item is string =>
+              typeof item === "string" && item.trim().length > 0,
+          )
+        : previous.extractedInterests,
+      suggestedDimensions: Array.isArray(meta.suggested_dimensions)
+        ? meta.suggested_dimensions.filter(
+            (item): item is string =>
+              typeof item === "string" && item.trim().length > 0,
+          )
+        : previous.suggestedDimensions,
+      handoffSummary:
+        typeof meta.handoff_summary === "string"
+          ? meta.handoff_summary
+          : previous.handoffSummary,
+    }));
   }, []);
 
   const runStream = useCallback(
@@ -196,6 +236,23 @@ export function useHostOnboardingChat(
           ]);
         }
         applyMeta(meta);
+        if (!opts.bootstrap) {
+          const latestUserMessage = [...opts.messagesSnapshot]
+            .reverse()
+            .find(
+              (message) =>
+                message.role === "user" && message.content.trim().length > 0,
+            );
+          if (latestUserMessage?.content.trim()) {
+            setAssistantFollowupQuestion(null);
+            const followup = await onboardingFollowupAi.run({
+              text: latestUserMessage.content.trim(),
+            });
+            if (!signal.aborted) {
+              setAssistantFollowupQuestion(followup?.result?.question?.trim() || null);
+            }
+          }
+        }
       } catch (e) {
         if ((e as Error).name === "AbortError" || signal.aborted) return;
         setTurnError(
@@ -232,6 +289,7 @@ export function useHostOnboardingChat(
       composerHints,
       progressStep,
       progressTotal,
+      structuredOutcome,
     });
   }, [
     persist,
@@ -244,6 +302,7 @@ export function useHostOnboardingChat(
     composerHints,
     progressStep,
     progressTotal,
+    structuredOutcome,
   ]);
 
   const submitIntro = useCallback(
@@ -311,6 +370,8 @@ export function useHostOnboardingChat(
     setProgressStep(1);
     setProgressTotal(null);
     setTurnError(null);
+    setAssistantFollowupQuestion(null);
+    setStructuredOutcome({ ...DEFAULT_STRUCTURED_OUTCOME });
     setMessages([]);
     setIsComplete(false);
     setDraft("");
@@ -339,6 +400,9 @@ export function useHostOnboardingChat(
     totalExchanges: progressTotal ?? progressStep,
     progressTotal,
     turnError,
+    assistantFollowupQuestion,
+    isPreparingFollowupQuestion: onboardingFollowupAi.isRunning,
+    structuredOutcome,
     showProgressDots: progressTotal != null,
   };
 }

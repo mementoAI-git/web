@@ -1,34 +1,13 @@
 "use client";
 
 import { useCallback, type MouseEvent } from "react";
-import endpoint from "@/api/endpoint";
 import { toast } from "sonner";
 import Spinner from "@/components/spinner";
-import { useMutation } from "@/hooks/use-api";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Heading } from "lucide-react";
-
-type GenerateTitleResponse = { title: string };
-type GenerateTitleRequest = { title?: string; body?: string };
-
-function extractGeneratedTitle(result: unknown): string | null {
-  if (!result || typeof result !== "object") return null;
-  const r = result as Record<string, unknown>;
-  const inner = r.data;
-  if (inner && typeof inner === "object" && !Array.isArray(inner)) {
-    const nested = inner as Record<string, unknown>;
-    const t = nested.title;
-    if (typeof t === "string" && t.trim().length > 0) return t.trim();
-    const double = nested.data;
-    if (double && typeof double === "object" && !Array.isArray(double)) {
-      const deep = (double as Record<string, unknown>).title;
-      if (typeof deep === "string" && deep.trim().length > 0) return deep.trim();
-    }
-  }
-  if (typeof r.title === "string" && r.title.trim().length > 0) return r.title.trim();
-  return null;
-}
+import { suggestStoryTitleTask } from "@/features/ai/tasks";
+import { useAiTask } from "@/features/ai/use-ai-task";
 
 interface AutogenerateTitleButtonProps {
   /** Current title field (optional hint for the model). */
@@ -39,20 +18,7 @@ interface AutogenerateTitleButtonProps {
 }
 
 export function AutogenerateTitleButton({ draftTitle, bodyPlain, onTitle }: AutogenerateTitleButtonProps) {
-  const { trigger, isLoading } = useMutation<GenerateTitleResponse, GenerateTitleRequest>(
-    endpoint.generateStoryTitle,
-    {
-      method: "POST",
-      skipErrorHandling: true,
-      onError: (err) => {
-        if (err?.status === 400) {
-          toast.error(err?.message || "Add some story text or a title to suggest from");
-        } else {
-          toast.error(err?.message || "Could not suggest a title. Try again.");
-        }
-      },
-    },
-  );
+  const titleTask = useAiTask(suggestStoryTitleTask, { mode: "suggest" });
 
   const handleClick = useCallback(
     async (e: MouseEvent<HTMLButtonElement>) => {
@@ -64,19 +30,18 @@ export function AutogenerateTitleButton({ draftTitle, bodyPlain, onTitle }: Auto
         toast.error("Add some story text or a title to suggest from");
         return;
       }
-      const payload: GenerateTitleRequest = {};
-      if (title) payload.title = title;
-      if (body) payload.body = body;
-      const result = await trigger(payload);
-      if (!result) return;
-      const suggested = extractGeneratedTitle(result);
-      if (suggested) {
-        onTitle(suggested);
-      } else {
+      const completed = await titleTask.run({
+        ...(title ? { title } : {}),
+        ...(body ? { body } : {}),
+      });
+      const suggested = completed?.result?.title?.trim() || "";
+      if (!suggested) {
         toast.error("No title returned. Try again.");
+        return;
       }
+      onTitle(suggested);
     },
-    [draftTitle, bodyPlain, trigger, onTitle],
+    [bodyPlain, draftTitle, onTitle, titleTask],
   );
 
   return (
@@ -85,7 +50,7 @@ export function AutogenerateTitleButton({ draftTitle, bodyPlain, onTitle }: Auto
       variant="secondary"
       size="sm"
       onClick={handleClick}
-      disabled={isLoading}
+      disabled={titleTask.isRunning}
       title="Suggest a title from your story"
       className={cn(
         "shrink-0 rounded-xl border border-stroke-neutral-weak bg-fill-neutral-weaker",
@@ -94,7 +59,7 @@ export function AutogenerateTitleButton({ draftTitle, bodyPlain, onTitle }: Auto
         "gap-1.5 disabled:opacity-60",
       )}
     >
-      {isLoading ? (
+      {titleTask.isRunning ? (
         <Spinner loading className="size-3.5!" />
       ) : (
         <>
