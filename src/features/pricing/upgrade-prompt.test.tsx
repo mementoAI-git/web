@@ -53,4 +53,23 @@ describe("UpgradePrompt", () => {
     expect(onOpenChange).toHaveBeenCalledWith(false);
     expect(isUpgradeGateDismissed("voice_mode")).toBe(false);
   });
+
+  it("keeps the desktop modal layout constrained so the content column does not collapse", () => {
+    renderWithProviders(
+      <UpgradePrompt
+        feature="pro_plan"
+        variant="modal"
+        open
+      />,
+      { route: "/overview", auth: true },
+    );
+
+    const dialog = document.querySelector('[data-slot="dialog-content"]');
+    expect(dialog?.className).toContain("md:w-[min(92vw,1040px)]");
+    expect(dialog?.className).toContain("md:h-[min(720px,calc(100dvh-2rem))]");
+
+    const contentColumn = screen.getByRole("button", { name: /close upgrade modal/i }).parentElement;
+    expect(contentColumn?.className).toContain("md:min-w-[420px]");
+    expect(contentColumn?.className).toContain("md:overflow-y-auto");
+  });
 });

@@ -201,15 +201,15 @@ export function UpgradePrompt({
     >
       <DialogContent
         className={cn(
-          "w-[calc(100vw-1.5rem)] max-w-none max-h-[calc(100dvh-1.5rem)] overflow-y-auto rounded-[32px] border border-v3-stroke-weak bg-white p-0 shadow-2xl sm:w-[min(96vw,1080px)] md:overflow-hidden",
+          "w-[calc(100vw-1.5rem)] max-w-none max-h-[calc(100dvh-1.5rem)] overflow-y-auto rounded-[32px] border border-v3-stroke-weak bg-white p-0 shadow-2xl sm:w-[min(96vw,1080px)] md:h-[min(720px,calc(100dvh-2rem))] md:w-[min(92vw,1040px)] md:max-w-[1040px] md:overflow-hidden",
           className,
         )}
         showCloseButton={false}
       >
         <DialogTitle className="sr-only">{copy.title}</DialogTitle>
         <DialogDescription className="sr-only">{copy.description}</DialogDescription>
-        <div className="grid min-h-0 md:max-h-[calc(100dvh-1.5rem)] md:grid-cols-[1.02fr_1fr]">
-          <div className="relative min-h-[220px] overflow-hidden bg-v3-fill-weaker sm:min-h-[260px] md:min-h-[620px]">
+        <div className="grid min-h-0 md:h-full md:grid-cols-[minmax(0,1.05fr)_minmax(420px,0.95fr)]">
+          <div className="relative min-h-[220px] overflow-hidden bg-v3-fill-weaker sm:min-h-[260px] md:h-full md:min-h-0">
             <img
               src={upgradeHeroImage}
               alt=""
@@ -218,7 +218,7 @@ export function UpgradePrompt({
             <div className="absolute inset-0 bg-gradient-to-b from-white/5 via-transparent to-black/20" />
           </div>
 
-          <div className="relative flex min-h-0 flex-col bg-white px-5 py-5 sm:px-7 sm:py-6 md:max-h-[calc(100dvh-1.5rem)] md:overflow-y-auto md:px-8 md:py-8">
+          <div className="relative flex min-h-0 min-w-0 flex-col bg-white px-5 py-5 sm:px-7 sm:py-6 md:h-full md:min-w-[420px] md:overflow-y-auto md:px-8 md:py-8">
             <button
               type="button"
               aria-label="Close upgrade modal"
@@ -229,10 +229,10 @@ export function UpgradePrompt({
             </button>
 
             <div className="pr-12 md:pr-14">
-              <p className="font-garamond text-[30px] leading-[1.12] text-v3-text-strong md:text-[46px] md:leading-[1.02]">
+              <p className="max-w-[9ch] font-garamond text-[30px] leading-[1.12] text-v3-text-strong md:text-[46px] md:leading-[1.02]">
                 {copy.title}
               </p>
-              <p className="mt-3 font-inter text-sm leading-6 text-v3-text-weak md:text-[15px]">
+              <p className="mt-3 max-w-[32ch] font-inter text-sm leading-6 text-v3-text-weak md:text-[15px]">
                 {copy.description}
               </p>
             </div>
