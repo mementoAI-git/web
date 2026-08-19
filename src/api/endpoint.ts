@@ -21,6 +21,8 @@ export default {
   deletePasskey: "/users/passkeys/:credential_id",
   userContext: "/users/context",
   persona: "/users/persona",
+  personaObservations: "/persona/observations",
+  personaObservation: "/persona/observations/:observationId",
   /** AI-written Memory Insights summary (persona + memories + session + pending insights) */
   personaMemoryInsightsSummary: "/users/persona/memory-insights-summary",
   completeOnboarding: "/users/complete-onboarding",
