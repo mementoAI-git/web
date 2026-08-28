@@ -1,6 +1,7 @@
 import type { IFile } from "@/utility/interface";
 import { QIcon, PlayIcon, MicIcon } from "@/components/icons";
 import { isImage } from "@/pages/dashboard/time-capsule-new/utility/helpers";
+import { useSignedMediaAccess } from "@/features/media/signed-media-access";
 
 interface IImageThumbnail {
   size?: number;
@@ -14,12 +15,9 @@ const imageRotation: Record<number, string> = {
   2: "-rotate-[14.14deg] origin-top-right z-10",
 };
 
-function ImageThumbnailItem({
-  type,
-  url,
-  name,
-  size = 68.78,
-}: IFile & { size: number }) {
+function ImageThumbnailItem({ size = 68.78, ...file }: IFile & { size: number }) {
+  const { src, onError } = useSignedMediaAccess(file);
+  const { type, name } = file;
   // if (type?.includes("image")) {
   if (isImage(name)) {
     return (
@@ -27,7 +25,8 @@ function ImageThumbnailItem({
         width={size}
         height={size}
         className="size-full rounded-[5.83px] object-cover"
-        src={url}
+        src={src}
+        onError={onError}
         alt={name || "memento-image"}
       />
     );

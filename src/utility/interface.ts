@@ -1,10 +1,16 @@
 export interface IFile {
   url: string;
+  thumbnail?: string | null;
   name: string;
   size: string | number;
   duration?: number;
   type?: string;
   _id: string;
+  status?: "processing" | "ready" | "failed";
+  access?: {
+    expires_at: string;
+    refresh_endpoint: string;
+  };
 }
 
 export interface IAuth {
