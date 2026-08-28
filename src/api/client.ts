@@ -1,6 +1,8 @@
 import axios, { AxiosError, type AxiosInstance, type AxiosRequestConfig, type InternalAxiosRequestConfig } from 'axios';
 import { storageKeys } from '@/utility/constant';
 import type { ApiError, RequestOptions } from './interface';
+import { getMementoClientHeaders } from './client-metadata';
+import { normalizeApiError } from './contract-adapter';
 
 const getAuthToken = (): string | null => {
   const auth = localStorage.getItem(storageKeys.auth);
@@ -8,7 +10,12 @@ const getAuthToken = (): string | null => {
 };
 
 export const updateAuthToken = (token: string | null) => {
-  localStorage.setItem(storageKeys.auth, JSON.stringify({ access_token: token }));
+  const raw = localStorage.getItem(storageKeys.auth);
+  const current = raw ? JSON.parse(raw) : {};
+  localStorage.setItem(
+    storageKeys.auth,
+    JSON.stringify({ ...current, access_token: token }),
+  );
 };
 
 const baseURL = import.meta.env.VITE_API_BASE_URL;
@@ -19,6 +26,7 @@ const client: AxiosInstance = axios.create({
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
+    ...getMementoClientHeaders(),
   },
 });
 
@@ -55,11 +63,11 @@ client.interceptors.response.use(
     }
 
     // Handle errors
-    const apiError: ApiError = {
-      message: error.response?.data?.message || error.message || 'An error occurred',
-      status: error.response?.status,
-      errors: error.response?.data?.errors,
-    };
+    const apiError: ApiError = normalizeApiError(
+      error.response?.data,
+      error.response?.status,
+      error.message || 'An error occurred',
+    );
 
     return Promise.reject(apiError);
   }
@@ -82,4 +90,3 @@ export const apiRequest = async <T = unknown>(
 };
 
 export default client;
-

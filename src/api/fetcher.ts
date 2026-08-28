@@ -11,12 +11,21 @@ import {
   parseSubscriptionGateFromBody,
 } from "@/features/pricing/subscription-errors";
 import endpoint from "./endpoint";
+import { getMementoClientHeaders } from "./client-metadata";
+import {
+  extractSession,
+  normalizeApiError,
+  normalizeApiResponse,
+} from "./contract-adapter";
 
 const baseURL = import.meta.env.VITE_API_BASE_URL;
 
 const axios = Axios.create({
   baseURL,
-  headers: { "Content-Type": "application/json" },
+  headers: {
+    "Content-Type": "application/json",
+    ...getMementoClientHeaders(),
+  },
 });
 
 function readAuthFromStorage(): { access_token?: string } | null {
@@ -79,8 +88,9 @@ export const getFetcher: MutationFetcher = async (url, body) => {
 export const postFetcher: MutationFetcher = async (url, body) => {
   const result = await handleRequest("post", url, body);
 
-  if (result?.data?.access_token) {
-    authService.setAuthData(result?.data);
+  const session = extractSession(result);
+  if (session) {
+    authService.setAuthData(session);
   }
   return result;
 };
@@ -269,8 +279,7 @@ const handleRequest = async (method: string, url: string, body?: { arg?: unknown
       headers: { "Content-Type": "application/json" },
     });
 
-    res.data.success = true;
-    return res.data;
+    return normalizeApiResponse(res.data);
   } catch (error) {
     let message = "Something went wrong";
 
@@ -282,17 +291,16 @@ const handleRequest = async (method: string, url: string, body?: { arg?: unknown
         toast.error(message);
       }
 
-      const data = axiosError.response?.data || { success: false };
-      data.success = false;
-      throw Object.assign(data, {
-        httpStatus: axiosError.response?.status,
-      });
+      throw normalizeApiError(
+        axiosError.response?.data,
+        axiosError.response?.status,
+        message,
+      );
     }
 
     if (method !== "get") {
       toast.error(message);
     }
-    throw { message, success: false };
+    throw normalizeApiError(null, undefined, message);
   }
 };
-

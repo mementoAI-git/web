@@ -10,8 +10,12 @@ export interface IFile {
 export interface IAuth {
   access_token: string;
   refresh_token: string;
+  access_expires_at?: string;
   expires_at: string;
   refresh_expires_at: string;
+  onboarding_status?: string;
+  onboarded?: boolean;
+  user?: Record<string, unknown>;
 }
 
 interface IUserPreferences {
