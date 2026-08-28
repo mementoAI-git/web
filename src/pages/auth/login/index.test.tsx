@@ -108,4 +108,38 @@ describe("LoginPage", () => {
       expect(mockNavigate).toHaveBeenCalledWith("/overview");
     });
   });
+
+  it("prefers canonical session onboarding state over stale legacy fields", async () => {
+    server.use(
+      http.post(`${API}/auth/login`, () =>
+        HttpResponse.json({
+          success: true,
+          message: "Logged in",
+          data: {
+            onboarded: false,
+            session: {
+              access_token: "canonical-access",
+              refresh_token: "canonical-refresh",
+              access_expires_at: new Date(Date.now() + 3600000).toISOString(),
+              expires_at: new Date(Date.now() + 3600000).toISOString(),
+              refresh_expires_at: new Date(Date.now() + 86400000).toISOString(),
+              onboarding_status: "completed",
+              user: { id: "user-1" },
+            },
+          },
+        }),
+      ),
+    );
+
+    const user = userEvent.setup();
+    renderWithProviders(<LoginPage />, { route: "/login" });
+    await user.type(screen.getByLabelText(/email/i), "test@example.com");
+    await user.type(
+      screen.getByLabelText(/^password$/i, { selector: "input" }),
+      "password123",
+    );
+    await user.click(screen.getByRole("button", { name: /^login$/i }));
+
+    await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith("/overview"));
+  });
 });

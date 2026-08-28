@@ -205,6 +205,7 @@ export const streamlineFetcher = async (url: string, { arg }: { arg: Record<stri
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      ...getMementoClientHeaders(),
       Authorization: `Bearer ${auth?.access_token}`,
     },
     signal,
