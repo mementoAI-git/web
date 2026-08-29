@@ -4,9 +4,9 @@ import FileGallery from "@/components/file-gallery";
 import PropsItem from "@/components/props-item";
 import { Calendar1Icon, ClipIcon, TagIcon } from "@/components/icons";
 import { ensureLinksOpenInNewTab, isEmpty } from "@/utility";
-import type { IMemory } from "@/utility/interface";
+import type { IPublicMemory } from "@/utility/interface";
 
-export default function Post({ memory }: { memory: IMemory }) {
+export default function Post({ memory }: { memory: IPublicMemory }) {
   return (
     <div className="w-full space-y-10">
       <div className="space-y-3">
@@ -51,4 +51,3 @@ export default function Post({ memory }: { memory: IMemory }) {
     </div>
   );
 }
-

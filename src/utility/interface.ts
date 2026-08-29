@@ -148,6 +148,16 @@ export interface IMemory {
   visibility?: "private" | "everyone";
 }
 
+/** Allowlisted fields returned by GET /memories/public/:id. */
+export interface IPublicMemory {
+  _id: string;
+  title: string;
+  body: string;
+  attachments: IFile[];
+  tags: string[];
+  created_at: string;
+}
+
 export interface IPagination<T> {
   docs: T[];
   hasNextPage: boolean;
