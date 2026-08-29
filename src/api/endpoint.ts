@@ -93,6 +93,8 @@ export default {
   capsule: "/capsule",
   capsuleDelete: "/capsule/:id",
   capsuleStats: "/capsule/stats",
+  capsuleViewExchange: "/capsule/view/exchange",
+  capsuleView: "/capsule/view",
 
   // activities
   activities: "/activities",
