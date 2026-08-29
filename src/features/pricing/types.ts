@@ -2,7 +2,7 @@
  * Subscription / billing types aligned with docs/PRICING_BACKEND_HANDOFF.md and PRD §4.1.
  */
 
-export type BillingProvider = "polar" | "paystack";
+export type BillingProvider = "polar";
 
 export type SubscriptionStatus =
   | "trialing"
@@ -20,6 +20,8 @@ export interface SubscriptionUsage {
   storage_limit_bytes?: number;
   beneficiary_count?: number;
   timed_message_count?: number;
+  time_capsule_count?: number;
+  memory_integration_count?: number;
 }
 
 /** Align `feature` strings with backend 402 payloads (PRD §3.3). */
@@ -64,4 +66,14 @@ export interface CheckoutResponseBody {
 
 export interface PortalResponseBody {
   portal_url: string;
+}
+
+export interface BillingInvoice {
+  id?: string;
+  url?: string;
+  label?: string;
+  created_at?: string;
+  amount?: number;
+  currency?: "USD" | "NGN";
+  status?: string;
 }

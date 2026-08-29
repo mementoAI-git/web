@@ -57,7 +57,7 @@ Until **checkout** works, users may tap upgrade and see an error or nothing usef
 
 - **“I paid but still see Free”** → webhook or subscription sync issue on the server.
 - **“Upgrade button does nothing”** → checkout API or network error; check server logs and payment dashboard(s).
-- **“I can’t find my preferred payment method”** → payment method may not be enabled for that market/account in Paystack settings; backend/payment ops should verify dashboard configuration.
+- **“I can’t find my preferred payment method”** → payment method may not be enabled for that market/account in Polar; backend/payment ops should verify the Polar catalog and checkout configuration.
 - **“I’m Pro but still blocked”** → server `canAccess` / feature flags out of sync with what the app shows; usually fixed on the server.
 
 ---
@@ -79,7 +79,7 @@ If any of these feel wrong in a real environment, it usually means the **server 
 These are tracked in [PRICING_TODO.md](./PRICING_TODO.md) under **Open product decisions**. They are **not** coding tasks in the website app; they are choices that affect what the **server** and payment/storage vendors do:
 
 1. **Upload limits for Pro vs Legacy** — How much storage or how many uploads each paid tier gets, and how that ties to **Cloudinary** (or your file host). Until this is decided, engineers use reasonable placeholders.
-2. **Paystack trial behavior** — Exactly how free trials work with Paystack in your final setup. The app can show trial copy; **charging and trial length** must match what you sign off with Paystack and the backend.
+2. **Polar trial behavior** — Exactly how free trials work in the Polar catalog. The app can show trial copy; **charging and trial length** must match the Polar product configuration and backend state.
 3. **Background jobs infrastructure** — Which system processes webhooks, renewals, and reminder emails (a “job queue”). This is **backend-only**; it does not change what users see in the app directly.
 4. **Promo codes: admin tool now or later** — Whether staff get an internal screen to create promo codes in the first release, or promos are handled manually / later.
 

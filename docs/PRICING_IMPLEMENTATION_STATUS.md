@@ -1,7 +1,7 @@
 # Pricing & subscription — implementation status (frontend)
 
 **Primary spec:** [PRICING_PRD.md](./PRICING_PRD.md)  
-**Payment integration:** Frontend calls `POST /billing/checkout` and redirects to the payment URL returned by backend. Provider routing and available payment methods are backend-controlled (Paystack-first direction).
+**Payment integration:** Frontend calls `POST /billing/checkout` and redirects to the Polar checkout URL returned by the backend.
 
 **Last reviewed:** 2026-04-21 (memento-web repo)
 

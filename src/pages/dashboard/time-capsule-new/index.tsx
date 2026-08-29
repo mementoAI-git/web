@@ -7,7 +7,7 @@ import { StatCard } from "../component/stat-card";
 import { storageKeys } from "@/utility/constant";
 import useIntersectionObserver from "@/hooks/use-intersection-observer";
 import Spinner from "@/components/spinner";
-import { fetcher } from "@/api/fetcher";
+import { paginatedResponseFetcher } from "@/api/domain-fetchers";
 import CapsuleHeader from "./components/header";
 import CapsuleGrid from "./components/grid";
 import { TimerFillIcon } from "./components/icons/TimerFillIcon";
@@ -75,7 +75,7 @@ export default function TimeCapsulePage() {
     size,
     setSize,
     isLoading,
-  } = useSWRInfinite(getKey, fetcher, { revalidateOnFocus: false });
+  } = useSWRInfinite(getKey, paginatedResponseFetcher, { revalidateOnFocus: false });
 
   const capsules = data ? data.flatMap((page) => page.data.docs) : [];
   const isLoadingMore =

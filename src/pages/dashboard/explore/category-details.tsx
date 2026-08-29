@@ -6,7 +6,7 @@ import endpoint from "@/api/endpoint";
 import CategoryPromptCard from "./category-prompt-card";
 import Spinner from "@/components/spinner";
 import { cn, isEmpty } from "@/utility";
-import { fetcher } from "@/api/fetcher";
+import { paginatedResponseFetcher } from "@/api/domain-fetchers";
 import useIntersectionObserver from "@/hooks/use-intersection-observer";
 import { useStore } from "@/hooks/use-store";
 import { TypographyH2, TypographyMuted } from "@/components/ui/typography";
@@ -43,7 +43,7 @@ export default function CategoryDetails({ category }: CategoryDetailsProps) {
     [activeTab, category?.slug],
   );
 
-  const { data, size, setSize, isLoading } = useSWRInfinite(getKey, fetcher, {
+  const { data, size, setSize, isLoading } = useSWRInfinite(getKey, paginatedResponseFetcher, {
     revalidateOnFocus: false,
   });
 

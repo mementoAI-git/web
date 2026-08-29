@@ -13,9 +13,9 @@ Work happens in the **backend repo**; track there or paste tasks from the handof
 - [ ] **0.1** Subscription + usage models persisted; existing users default to Free as per PRD
 - [ ] **0.2** `checkFeatureAccess(userId, feature)` (or equivalent) is the single enforcement entry point
 - [ ] **0.3** Gated API routes return consistent **402** (or agreed code) + JSON payload: `feature`, `requiredTier`, `message`
-- [ ] **0.4** Paystack-first checkout: plans/prices, broad payment methods enabled per market/account, checkout session API, webhooks verified and **idempotent**
-- [ ] **0.5** If Polar is retained: products/prices + checkout API + webhooks verified and **idempotent**
-- [ ] **0.6** `POST /api/webhooks/payments?provider=polar|paystack` (or split URLs) + job queue for async processing
+- [ ] **0.4** Polar products/prices + checkout API + webhooks verified and **idempotent**
+- [ ] **0.5** Polar customer portal and subscription reconciliation verified in staging
+- [ ] **0.6** `POST /api/webhooks/payments?provider=polar` + job queue for async processing
 - [ ] **0.7** Scheduled jobs: trial expiry, promo expiry, past_due grace, optional storage reconcile
 - [ ] **0.8** Frontend-consumable APIs: e.g. `GET /billing/subscription`, `POST /billing/checkout`, `POST /billing/promo/redeem`, optional `GET /billing/invoices`
 
@@ -80,6 +80,6 @@ Use PRD §10 as the master list. Minimum before ship:
 Track separately; unblock engineering when decided. Plain-language summary for non-developers: [PRICING_ATTENTION.md](./PRICING_ATTENTION.md) → *Business decisions your team still needs to make*.
 
 - [ ] Cloudinary / upload caps for Pro-Legacy
-- [ ] Paystack trial implementation sign-off (native flow vs DB/job-managed)
+- [ ] Polar trial implementation sign-off (catalog flow vs DB/job-managed)
 - [ ] Job queue choice (backend)
 - [ ] Admin promo UI in-sprint vs later
