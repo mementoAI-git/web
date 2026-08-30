@@ -16,8 +16,13 @@ export type PlanTier = "free" | "pro" | "legacy";
 /** Usage snapshot when backend includes it on subscription or usage payload (PRD §4.2). */
 export interface SubscriptionUsage {
   storage_used_bytes?: number;
+  /** Bytes held by uploads that have started but are not committed yet. */
+  storage_reserved_bytes?: number;
   /** When omitted, UI may fall back to tier defaults from PRD */
   storage_limit_bytes?: number;
+  remaining_bytes?: number;
+  percent_used?: number;
+  over_limit?: boolean;
   beneficiary_count?: number;
   timed_message_count?: number;
   time_capsule_count?: number;
