@@ -12,7 +12,7 @@ import endpoint from "@/api/endpoint";
 import { toast } from "sonner";
 import Spinner from "@/components/spinner";
 import useSWR, { mutate } from "swr";
-import { fetcher } from "@/api/fetcher";
+import { deleteFetcher, fetcher } from "@/api/fetcher";
 import { cn } from "@/utility";
 import TwoFactorAuthenticator from "./two-fa";
 import { SettingsSectionCard } from "./settings-section-card";
@@ -135,7 +135,6 @@ interface PasskeyEntry {
 
 function PasskeyManager() {
   const { data, isLoading } = useSWR<{ data: PasskeyEntry[] }>(endpoint.listPasskeys, fetcher);
-  const { trigger: deletePasskey } = useFetcher("", "delete");
   const [adding, setAdding] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
@@ -194,7 +193,7 @@ function PasskeyManager() {
     setDeletingId(credentialId);
     try {
       const url = endpoint.deletePasskey.replace(":credential_id", encodeURIComponent(credentialId));
-      const result = await deletePasskey({}, url);
+      const result = await deleteFetcher(url, { arg: {} });
       if (result?.success) {
         toast.success(result?.message ?? "Passkey removed");
         mutate(endpoint.listPasskeys);

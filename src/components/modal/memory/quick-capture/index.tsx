@@ -28,7 +28,8 @@ import { useInlineAudioCapture } from "@/hooks/use-inline-audio-capture";
 import { useFeatureFlags } from "@/contexts/feature-flags";
 import useFileUpload from "@/hooks/use-file-upload";
 import endpoint from "@/api/endpoint";
-import { fetcher, fileUploadFetcher, postFetcher, postJsonQuiet, postTranscribeQuiet } from "@/api/fetcher";
+import { fileUploadFetcher, postFetcher, postJsonQuiet, postTranscribeQuiet } from "@/api/fetcher";
+import { paginatedResponseFetcher } from "@/api/domain-fetchers";
 import { cn } from "@/utility";
 import { parseSubscriptionGateError } from "@/features/pricing/subscription-errors";
 import {
@@ -146,7 +147,7 @@ export function QuickCapture(props: { isMobile?: boolean; data?: unknown }) {
 
   const { data: beneficiariesRes } = useSWR(
     whoOpen ? `${endpoint.beneficiaries}?page=1&limit=100` : null,
-    fetcher,
+    paginatedResponseFetcher<IBeneficiary>,
   );
   const beneficiaries: IBeneficiary[] = beneficiariesRes?.data?.docs ?? [];
 

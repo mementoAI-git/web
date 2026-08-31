@@ -77,8 +77,8 @@ axios.interceptors.response.use(
   },
 );
 
-export const fetcher = (url: string) => {
-  return handleRequest("get", url);
+export const fetcher = <T = unknown>(url: string): Promise<IResponse<T>> => {
+  return handleRequest<T>("get", url);
 };
 
 export const getFetcher: MutationFetcher = async (url, body) => {
@@ -270,7 +270,11 @@ export async function postTranscribeQuiet(file_id: string): Promise<{ full_text?
   }
 }
 
-const handleRequest = async (method: string, url: string, body?: { arg?: unknown }) => {
+const handleRequest = async <T = unknown>(
+  method: string,
+  url: string,
+  body?: { arg?: unknown },
+): Promise<IResponse<T>> => {
   try {
     const res = await axios({
       method,
@@ -280,7 +284,7 @@ const handleRequest = async (method: string, url: string, body?: { arg?: unknown
       headers: { "Content-Type": "application/json" },
     });
 
-    return normalizeApiResponse(res.data);
+    return normalizeApiResponse<T>(res.data);
   } catch (error) {
     let message = "Something went wrong";
 

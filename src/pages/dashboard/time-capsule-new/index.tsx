@@ -23,6 +23,7 @@ import DraftsBg from "./components/assets/drafts.svg";
 import FrozenBg from "./components/assets/frozen.svg";
 import { PauseIcon } from "./components/icons/PauseIcon";
 import { useFeatureFlags } from "@/contexts/feature-flags";
+import type { ICapsule } from "@/utility/interface";
 
 export default function TimeCapsulePage() {
   const { isProOrAbove, usage } = useSubscription();
@@ -75,7 +76,9 @@ export default function TimeCapsulePage() {
     size,
     setSize,
     isLoading,
-  } = useSWRInfinite(getKey, paginatedResponseFetcher, { revalidateOnFocus: false });
+  } = useSWRInfinite(getKey, paginatedResponseFetcher<ICapsule>, {
+    revalidateOnFocus: false,
+  });
 
   const capsules = data ? data.flatMap((page) => page.data.docs) : [];
   const isLoadingMore =

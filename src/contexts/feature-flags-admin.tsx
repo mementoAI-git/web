@@ -1,7 +1,14 @@
 "use client";
 
 import endpoint from "@/api/endpoint";
-import { deleteFetcher, fetcher, postFetcher, putFetcher } from "@/api/fetcher";
+import { deleteFetcher, postFetcher, putFetcher } from "@/api/fetcher";
+import {
+  collectionResponseFetcher,
+  entityResponseFetcher,
+  paginatedResponseFetcher,
+} from "@/api/domain-fetchers";
+import type { IResponse } from "@/api/interface";
+import type { IPagination } from "@/utility/interface";
 import { createContext, useCallback, useContext, useMemo } from "react";
 import type { PropsWithChildren } from "react";
 import useSWR from "swr";
@@ -12,6 +19,16 @@ type FeatureFlagListQuery = {
   limit?: number;
   search?: string;
   domain?: string;
+};
+
+type FeatureFlagListItem = {
+  key: string;
+  domain?: string;
+  description?: string;
+  defaultValue?: boolean;
+  effectiveValue?: boolean;
+  hasOverrides?: boolean;
+  updatedAt?: string;
 };
 
 const buildListKey = (query?: FeatureFlagListQuery) => {
@@ -26,19 +43,7 @@ const buildListKey = (query?: FeatureFlagListQuery) => {
 
 interface FeatureFlagsAdminContextValue {
   useFlagsList: (query?: FeatureFlagListQuery) => {
-    data: {
-      data?: {
-        docs?: Array<{
-          key: string;
-          domain?: string;
-          description?: string;
-          defaultValue?: boolean;
-          effectiveValue?: boolean;
-          hasOverrides?: boolean;
-          updatedAt?: string;
-        }>;
-      };
-    } | null;
+    data: IResponse<IPagination<FeatureFlagListItem>> | undefined;
     isLoading: boolean;
     error: unknown;
     key: string;
@@ -84,9 +89,13 @@ const featureFlagsAdminContext = createContext<FeatureFlagsAdminContextValue>({
 export function FeatureFlagsAdminProvider({ children }: PropsWithChildren) {
   const useFlagsList = (query?: FeatureFlagListQuery) => {
     const key = buildListKey(query);
-    const { data, isLoading, error } = useSWR(key, fetcher, {
+    const { data, isLoading, error } = useSWR(
+      key,
+      paginatedResponseFetcher<FeatureFlagListItem>,
+      {
       revalidateOnFocus: false,
-    });
+      },
+    );
     return { data, isLoading, error, key };
   };
 
@@ -96,14 +105,14 @@ export function FeatureFlagsAdminProvider({ children }: PropsWithChildren) {
 
   const getFlagDetail = useCallback(async (key: string) => {
     const url = endpoint.featureFlag.replace(":key", key);
-    const result = await fetcher(url);
+    const result = await entityResponseFetcher<Record<string, unknown>>(url);
     return result?.data;
   }, []);
 
   const getFlagAudit = useCallback(async (key: string) => {
     const url = `${endpoint.featureFlag.replace(":key", key)}/audit`;
-    const result = await fetcher(url);
-    return result?.data || [];
+    const result = await collectionResponseFetcher<Record<string, unknown>>(url);
+    return result.data;
   }, []);
 
   const updateDefault = useCallback(async (key: string, value: boolean, reason?: string) => {

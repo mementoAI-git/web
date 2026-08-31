@@ -1,7 +1,10 @@
 "use client";
 
 import endpoint from "@/api/endpoint";
-import { fetcher } from "@/api/fetcher";
+import {
+  entityResponseFetcher,
+  paginatedResponseFetcher,
+} from "@/api/domain-fetchers";
 import { useStore } from "@/hooks/use-store";
 import { createContext, useCallback, useContext, useMemo } from "react";
 import type { PropsWithChildren } from "react";
@@ -10,6 +13,12 @@ import useSWR from "swr";
 type FeatureState = {
   enabled: boolean;
   source?: string;
+};
+
+type FeatureFlagListItem = {
+  key: string;
+  effectiveValue?: boolean;
+  defaultValue?: boolean;
 };
 
 interface FeatureFlagsContextValue {
@@ -41,14 +50,14 @@ export function FeatureFlagsProvider({ children }: PropsWithChildren) {
   const enabled = Boolean(auth?.access_token);
   const { data, isLoading } = useSWR(
     enabled ? `${endpoint.featureFlags}?page=1&limit=200` : null,
-    fetcher,
+    paginatedResponseFetcher<FeatureFlagListItem>,
     { revalidateOnFocus: false },
   );
 
   const map = useMemo(() => {
     const source = new Map<string, boolean>();
     const docs = Array.isArray(data?.data?.docs) ? data.data.docs : [];
-    docs.forEach((item: { key: string; effectiveValue?: boolean; defaultValue?: boolean }) => {
+    docs.forEach((item) => {
       source.set(item.key, item.effectiveValue ?? item.defaultValue ?? true);
     });
     return source;
@@ -57,7 +66,7 @@ export function FeatureFlagsProvider({ children }: PropsWithChildren) {
   const evaluateFlag = useCallback(async (key: string) => {
     try {
       const url = endpoint.featureFlagEvaluate.replace(":key", key);
-      const result = await fetcher(url);
+      const result = await entityResponseFetcher<FeatureState>(url);
       return {
         enabled: Boolean(result?.data?.enabled ?? true),
         source: result?.data?.source,
