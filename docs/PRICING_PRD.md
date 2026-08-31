@@ -7,6 +7,8 @@
 
 **Implementation tracking:** [PRICING_IMPLEMENTATION_STATUS.md](./PRICING_IMPLEMENTATION_STATUS.md) · [PRICING_TODO.md](./PRICING_TODO.md)
 
+> **Runtime implementation note (2026-08-31):** the API currently defaults to 200 MiB total storage for Free and 10 GiB for Pro and Legacy. Server-provided subscription and usage metadata is authoritative, and an administrative per-user override may change an individual limit. These implemented quotas supersede earlier aspirational storage figures in this document.
+
 ---
 
 ## 1. Overview
@@ -62,8 +64,8 @@ These are the only features to gate in this sprint. Everything else is UI-only.
 |---------|-----------|-----|--------|
 | Voice mode in chat | ❌ | ✅ | ✅ |
 | Supermemory integration | ❌ | ✅ | ✅ |
-| Upload quality | Compressed (1080p img / 480p video), 200MB max | HD original, 200MB+ | HD original, 200MB+ |
-| Total storage | 5GB | 100GB | Unlimited |
+| Upload quality | Client may compress; server enforces quota | Client may retain higher quality; server enforces quota | Client may retain higher quality; server enforces quota |
+| Total storage | 200 MiB default | 10 GiB default | 10 GiB default |
 | Time capsule window | 6 months max from creation date | Unlimited | Unlimited |
 | Beneficiaries | 2 | Unlimited | Unlimited |
 | Timed messages | 5 | 50 | Unlimited |
@@ -242,7 +244,7 @@ All API routes that touch gated features must call this before proceeding.
 
 Before every upload:
 1. Fetch `usage.storage_used_bytes` for the user
-2. Compare against tier limit (Free: 5GB, Pro: 100GB, Legacy: unlimited)
+2. Compare against the effective API limit (defaults: Free 200 MiB, Pro/Legacy 10 GiB; configuration or an admin override may differ)
 3. If limit exceeded → reject upload with `402` status and upgrade prompt payload
 4. On successful upload → increment `storage_used_bytes`
 5. On file deletion → decrement `storage_used_bytes`
@@ -409,7 +411,7 @@ After implementation, verify each of the following before shipping:
 ### Feature Gates (Launch Scope Only)
 - [ ] Free user triggering voice mode sees upgrade prompt (modal), not an error
 - [ ] Free user triggering Supermemory-dependent feature sees upgrade prompt
-- [ ] Free user uploading beyond 5GB storage limit sees inline upgrade prompt
+- [ ] Free user uploading beyond the server-provided storage limit sees inline upgrade prompt
 - [ ] Free user setting time capsule delivery date beyond 6 months sees upgrade prompt on submit
 - [ ] Free user adding a 3rd beneficiary sees upgrade prompt
 - [ ] Free user creating a 6th timed message sees upgrade prompt

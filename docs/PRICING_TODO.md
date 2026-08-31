@@ -6,18 +6,18 @@ Follow in order where dependencies apply. Check boxes as you complete work.
 
 ---
 
-## Phase 0 — Backend readiness (blocker for real gates)
+## Phase 0 — Backend readiness
 
-Work happens in the **backend repo**; track there or paste tasks from the handoff doc.
+Code-level work happens in the **backend repo**. Checked items are implemented in code; deployment/configuration items remain open until staging evidence exists.
 
-- [ ] **0.1** Subscription + usage models persisted; existing users default to Free as per PRD
-- [ ] **0.2** `checkFeatureAccess(userId, feature)` (or equivalent) is the single enforcement entry point
-- [ ] **0.3** Gated API routes return consistent **402** (or agreed code) + JSON payload: `feature`, `requiredTier`, `message`
-- [ ] **0.4** Polar products/prices + checkout API + webhooks verified and **idempotent**
+- [x] **0.1** Subscription + usage models persisted; existing users default to Free as per PRD
+- [x] **0.2** `checkFeatureAccess(userId, feature)` (or equivalent) is the single enforcement entry point
+- [x] **0.3** Gated API routes return consistent **402** + JSON payload: `feature`, `requiredTier`, `message`
+- [x] **0.4** Polar checkout API + idempotent webhook handling implemented and covered by automated tests
 - [ ] **0.5** Polar customer portal and subscription reconciliation verified in staging
-- [ ] **0.6** `POST /api/webhooks/payments?provider=polar` + job queue for async processing
-- [ ] **0.7** Scheduled jobs: trial expiry, promo expiry, past_due grace, optional storage reconcile
-- [ ] **0.8** Frontend-consumable APIs: e.g. `GET /billing/subscription`, `POST /billing/checkout`, `POST /billing/promo/redeem`, optional `GET /billing/invoices`
+- [x] **0.6** Polar payment webhook endpoint + durable async processing implemented
+- [x] **0.7** Scheduled reconciliation/expiry and storage repair jobs implemented
+- [x] **0.8** Frontend-consumable subscription, checkout, promo, portal, and invoice APIs implemented
 
 ---
 
@@ -79,7 +79,7 @@ Use PRD §10 as the master list. Minimum before ship:
 
 Track separately; unblock engineering when decided. Plain-language summary for non-developers: [PRICING_ATTENTION.md](./PRICING_ATTENTION.md) → *Business decisions your team still needs to make*.
 
-- [ ] Cloudinary / upload caps for Pro-Legacy
+- [x] Storage quotas: Free 200 MiB; Pro and Legacy 10 GiB defaults, with server metadata authoritative
 - [ ] Polar trial implementation sign-off (catalog flow vs DB/job-managed)
-- [ ] Job queue choice (backend)
+- [x] Durable job queue implementation (backend)
 - [ ] Admin promo UI in-sprint vs later

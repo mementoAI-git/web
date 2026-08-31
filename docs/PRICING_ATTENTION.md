@@ -1,15 +1,15 @@
 # Pricing & subscriptions — what you should know
 
-This note is for **product and business readers**, not engineers. It explains what the app does today around pricing, what still depends on your **backend** (server) team, and what to watch so customers have a smooth experience.
+This note is for **product and business readers**, not engineers. It explains what the app and API do today around pricing and what still needs operational sign-off before launch.
 
 ---
 
 ## The big idea
 
 - Memento’s **website app** (this project) can show **plans**, **upgrade buttons**, and **gentle “please upgrade” prompts** when someone hits a limit.
-- **Only your server** can truly enforce who is allowed to do what (payments, trials, real limits). The app tries to match what the server says, but someone with technical skill could bypass the app. That is normal for web apps: **the server must be the source of truth**.
+- **Only the API** truly enforces who is allowed to do what (payments, trials, and real limits). The web app uses the same metadata for friendly prompts, but the API remains the source of truth.
 
-Until the backend work in **Phase 0** of [PRICING_TODO.md](./PRICING_TODO.md) is done and live, some screens may look right but **checkout, real limits, and billing state may not work end-to-end**.
+The code-level backend work in **Phase 0** of [PRICING_TODO.md](./PRICING_TODO.md) is implemented. This is not the same as a live launch: Polar products and secrets, production migrations, webhook delivery, checkout return URLs, portal/invoice behavior, and rollback must still be exercised in staging.
 
 ---
 
@@ -22,15 +22,15 @@ Until the backend work in **Phase 0** of [PRICING_TODO.md](./PRICING_TODO.md) is
 
 ---
 
-## What you need the backend team to deliver
+## What still needs launch sign-off
 
-These are **not** optional for a real launch:
+These are **not** optional for a real launch, even though the supporting code exists:
 
-1. **Saved subscription state** for every user (Free / Pro / Legacy, trial, payment provider, etc.).
-2. **Checkout** that returns a real payment link when someone taps “Start trial” or similar, with broad payment method support (card, transfer, wallet, etc.) where your provider supports it.
-3. **Webhooks** so when someone pays, the server updates their plan (and stays correct if the same event is sent twice).
-4. **Consistent “no permission” responses** (your team agreed on **402** + a short JSON message) when someone over their limit, so the app can show the right **upgrade** message instead of a generic error.
-5. `**GET /billing/subscription`** (or equivalent) with accurate **tier**, **status**, **trial end**, and ideally **usage** (storage used, counts for beneficiaries and timed messages, etc.).
+1. Configure the Polar products, prices, trial rules, webhook secret, and allowed return URLs for the target environment.
+2. Run production migrations and confirm `/ready` before switching traffic.
+3. Exercise a real staging checkout, duplicate webhook delivery, renewal/cancellation reconciliation, portal session, and invoice listing.
+4. Confirm Free, Pro, Legacy, and administrative storage overrides with actual accounts.
+5. Rehearse rollback while retaining the compatibility paths required by older web and mobile clients.
 
 Until **checkout** works, users may tap upgrade and see an error or nothing useful—**test with staging** before marketing pushes.
 
@@ -43,7 +43,7 @@ Until **checkout** works, users may tap upgrade and see an error or nothing usef
 2. **Prices on the page vs prices in the payment dashboard**
   The numbers on the Pricing page are **coded in the app** from your PRD. If you change prices in your payment dashboard, **someone must update the app** (or the app must load prices from the server) so customers are not confused.
 3. **Free limits**
-  The app **assumes** things like: **2 beneficiaries**, **5 timed messages**, **6 months** max schedule for free, **5 GB** storage on the Billing meter if the server does not send limits. If your real rules differ, **align the server and ask the devs to align the app**.
+  The current server defaults are **2 beneficiaries**, **5 timed messages**, **6 months** max schedule for Free, **200 MiB** storage for Free, and **10 GiB** storage for Pro and Legacy. The server response is authoritative because environment configuration or an administrative override may change a user's effective storage limit.
 4. **“Coming soon” rows on Pricing**
   Those are **not** buyable features; they are there so people see the roadmap. Tooltip text should match your spec: *“This feature is on our roadmap and coming soon.”*
 5. **Trials**
@@ -56,7 +56,7 @@ Until **checkout** works, users may tap upgrade and see an error or nothing usef
 ## After launch: what to watch in support
 
 - **“I paid but still see Free”** → webhook or subscription sync issue on the server.
-- **“Upgrade button does nothing”** → checkout API or network error; check server logs and payment dashboard(s).
+- **“Upgrade button does nothing”** → checkout API or network error; check server logs and the Polar dashboard.
 - **“I can’t find my preferred payment method”** → payment method may not be enabled for that market/account in Polar; backend/payment ops should verify the Polar catalog and checkout configuration.
 - **“I’m Pro but still blocked”** → server `canAccess` / feature flags out of sync with what the app shows; usually fixed on the server.
 
@@ -78,9 +78,9 @@ If any of these feel wrong in a real environment, it usually means the **server 
 
 These are tracked in [PRICING_TODO.md](./PRICING_TODO.md) under **Open product decisions**. They are **not** coding tasks in the website app; they are choices that affect what the **server** and payment/storage vendors do:
 
-1. **Upload limits for Pro vs Legacy** — How much storage or how many uploads each paid tier gets, and how that ties to **Cloudinary** (or your file host). Until this is decided, engineers use reasonable placeholders.
+1. **Future paid-tier differentiation** — The implemented default is 10 GiB for both Pro and Legacy. Decide later whether Legacy needs a separate quota; until then the API metadata remains authoritative.
 2. **Polar trial behavior** — Exactly how free trials work in the Polar catalog. The app can show trial copy; **charging and trial length** must match the Polar product configuration and backend state.
-3. **Background jobs infrastructure** — Which system processes webhooks, renewals, and reminder emails (a “job queue”). This is **backend-only**; it does not change what users see in the app directly.
+3. **Background jobs operations** — Durable queues and workers exist; operations must provision them, monitor worker heartbeats, and confirm retries in staging.
 4. **Promo codes: admin tool now or later** — Whether staff get an internal screen to create promo codes in the first release, or promos are handled manually / later.
 
 When you decide these, tell your backend lead so **Phase 0** in [PRICING_TODO.md](./PRICING_TODO.md) can match reality.
@@ -95,4 +95,4 @@ When you decide these, tell your backend lead so **Phase 0** in [PRICING_TODO.md
 
 ---
 
-*Last updated: 2026-04-21 (memento-web).*
+*Last updated: 2026-08-31 (cross-repository release audit).*

@@ -32,7 +32,7 @@ Align with PRD §4.1–4.3.
 
 ### 1.2 `usage` (per user)
 
-Per PRD §4.2: `storage_used_bytes`, `beneficiary_count`, `timed_message_count`, `time_capsule_count`, `memory_integration_count`, `last_updated`.
+Per PRD §4.2: `storage_used_bytes`, `storage_reserved_bytes`, `storage_limit_bytes`, `beneficiary_count`, `timed_message_count`, `time_capsule_count`, `memory_integration_count`, `last_updated`. Current defaults are 200 MiB for Free and 10 GiB for Pro and Legacy. The API response is authoritative because environment configuration or an administrative per-user override may change the effective limit.
 
 ### 1.3 `promo_code`
 

@@ -3,13 +3,13 @@
 **Primary spec:** [PRICING_PRD.md](./PRICING_PRD.md)  
 **Payment integration:** Frontend calls `POST /billing/checkout` and redirects to the Polar checkout URL returned by the backend.
 
-**Last reviewed:** 2026-04-21 (memento-web repo)
+**Last reviewed:** 2026-08-31 (cross-repository release audit)
 
 ---
 
 ## Summary
 
-The **frontend** pricing experience from the PRD is **implemented** through Phase 5 of [PRICING_TODO.md](./PRICING_TODO.md): subscription summary + context, `/pricing`, Billing tab, trial banner, soft gates, checkout client, upload **402** handling, and targeted tests. **Real enforcement, checkout sessions, webhooks, and billing truth** still require **Phase 0 (backend)** — see [PRICING_ATTENTION.md](./PRICING_ATTENTION.md) for a plain-language view.
+The pricing experience and its API support are implemented through the code-level items in [PRICING_TODO.md](./PRICING_TODO.md): subscription summary + context, `/pricing`, Billing tab, trial banner, soft gates, Polar checkout, webhook reconciliation, server-side enforcement, upload **402** handling, storage accounting, and targeted tests. Production readiness still depends on configuring the Polar catalog and secrets, running migrations, and completing staging payment/webhook/rollback sign-off. See [PRICING_ATTENTION.md](./PRICING_ATTENTION.md) for the operational view.
 
 ---
 
@@ -30,9 +30,9 @@ The **frontend** pricing experience from the PRD is **implemented** through Phas
 
 ---
 
-## Backend dependency
+## Backend contract and deployment dependency
 
-Authoritative tier, usage, webhooks, and checkout creation live in the **API**. The app consumes documented responses and shows soft gates; **402** + JSON on gated routes is required for consistent UX. See [PRICING_BACKEND_HANDOFF.md](./PRICING_BACKEND_HANDOFF.md) and **Phase 0** in [PRICING_TODO.md](./PRICING_TODO.md).
+Authoritative tier, usage, webhooks, checkout creation, and storage enforcement live in the **API**. The app consumes documented responses and shows soft gates; **402** + JSON on gated routes provides consistent UX. The API defaults are 200 MiB for Free and 10 GiB for Pro and Legacy, while response metadata remains authoritative for every user. See [PRICING_BACKEND_HANDOFF.md](./PRICING_BACKEND_HANDOFF.md) and **Phase 0** in [PRICING_TODO.md](./PRICING_TODO.md).
 
 ---
 
