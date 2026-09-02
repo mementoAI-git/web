@@ -6,8 +6,19 @@ interface CategoryCardProps {
   subtitle: string;
   slug?: string;
   image: string;
+  category?: string;
   className?: string;
   href?: string;
+}
+
+/** Format slug "life-transition" → "Life transition", with known overrides */
+function formatCategory(slug: string): string {
+  const formatted = slug
+    .replace(/-/g, " ")
+    .replace(/\b\w/, (c) => c.toUpperCase());
+
+  if (slug.toLowerCase() === "relationship") return "Relationships";
+  return formatted;
 }
 
 export default function CategoryCard({
@@ -15,6 +26,7 @@ export default function CategoryCard({
   slug,
   title = null,
   subtitle,
+  category,
   className,
   href = slug ? `/explore/categories/${slug}` : "/explore",
 }: CategoryCardProps) {
@@ -23,20 +35,29 @@ export default function CategoryCard({
       to={href}
       className={cn("group flex overflow-hidden flex-col gap-3 size-full cursor-pointer", { [className]: !isEmpty(className) })}
     >
-      <img
-        src={image}
-        alt={title || subtitle}
-        className="size-full h-[132px] object-cover object-center transition-transform duration-300 ease-in-out group-hover:scale-110 sm:h-[152px] md:h-[164px]"
-      />
+      {/* Image wrapper — flat (no radius), category tag positioned absolute top-left */}
+      <div className="relative h-[132px] w-full overflow-hidden sm:h-[152px] md:h-[164px]">
+        <img
+          src={image}
+          alt={title || subtitle}
+          className="size-full object-cover object-center transition-transform duration-300 ease-in-out group-hover:scale-110"
+        />
+        {category && (
+          <div className="absolute left-2.5 top-2.5 rounded-full bg-white/90 px-2.5 py-1 backdrop-blur-sm">
+            <span className="font-inter text-[11px] font-semibold leading-none text-gray-950/80">
+              {formatCategory(category)}
+            </span>
+          </div>
+        )}
+      </div>
       <div className="flex font-garamond text-gray-950/90 flex-col gap-2">
-        {
-          title && (
-            <h5 className="font-semibold  text-2xl">{title}</h5>
-          )
-        }
-        <span className="font-georgia text-[16px] font-normal text-gray-950/90 line-clamp-3 sm:text-[18px]">{subtitle}</span>
+        {title && (
+          <h5 className="font-semibold text-2xl">{title}</h5>
+        )}
+        <span className="font-georgia text-[16px] font-normal text-gray-950/90 line-clamp-3 sm:text-[18px]">
+          {subtitle}
+        </span>
       </div>
     </Link>
   );
 }
-
