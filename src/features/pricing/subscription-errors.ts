@@ -3,7 +3,7 @@ import { toast } from "sonner";
 import type { FeatureKey } from "./types";
 import { UPGRADE_COPY } from "./upgrade-copy";
 
-/** Backend 402 JSON (PRICING_BACKEND_HANDOFF.md). */
+/** Backend subscription and storage quota gate JSON. */
 export type SubscriptionGatePayload = {
   feature: FeatureKey | string;
   requiredTier?: string;
@@ -28,7 +28,12 @@ export function parseSubscriptionGateFromBody(body: unknown): SubscriptionGatePa
   if (!body || typeof body !== "object") return null;
   const o = body as Record<string, unknown>;
   const nested = o.data && typeof o.data === "object" ? (o.data as Record<string, unknown>) : null;
-  const feature = typeof o.feature === "string" ? o.feature : nested?.feature;
+  const code = typeof o.code === "string" ? o.code : nested?.code;
+  const feature =
+    typeof o.feature === "string" ? o.feature
+    : typeof nested?.feature === "string" ? nested.feature
+    : code === "storage_quota_exceeded" ? "storage"
+    : undefined;
   if (typeof feature !== "string") return null;
   return {
     feature: normalizeGateFeature(feature),
@@ -52,7 +57,13 @@ export function parseSubscriptionGateError(err: unknown): SubscriptionGatePayloa
   if (!err || typeof err !== "object") return null;
   const o = err as Record<string, unknown>;
   const status = o.httpStatus ?? o.status;
-  if (status !== 402) return null;
+  const code = o.code;
+  if (
+    status !== 402 &&
+    !(status === 403 && code === "storage_quota_exceeded")
+  ) {
+    return null;
+  }
   if (typeof o.feature === "string") {
     return {
       feature: normalizeGateFeature(o.feature),
@@ -77,7 +88,7 @@ export function notifySubscriptionGate(payload: SubscriptionGatePayload) {
   });
 }
 
-/** @returns true if handled (402 subscription gate). */
+/** @returns true if a subscription or storage quota gate was handled. */
 export function handleSubscriptionGateError(err: unknown): boolean {
   const gate = parseSubscriptionGateError(err);
   if (!gate) return false;

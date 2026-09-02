@@ -35,6 +35,7 @@ import {
   ErrorPage,
   OAuthCallbackPage,
   PricingPage,
+  CapsuleViewPage,
 } from "@/pages";
 import TimeCapsulePage from "./pages/dashboard/time-capsule-new";
 
@@ -56,6 +57,7 @@ export const router = createBrowserRouter([
       { path: "oauth/callback/:provider", element: <OAuthCallbackPage /> },
       { path: "accept-invite/:id", element: <AcceptInvitePage /> },
       { path: "post/:id", element: <PostPage /> },
+      { path: "capsule/view", element: <CapsuleViewPage /> },
       {
         path: "onboarding",
         element: <OnboardLayout />,

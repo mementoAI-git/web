@@ -60,6 +60,7 @@ export default {
 
   // memories
   memories: "/memories",
+  publicMemory: "/memories/public",
   memoriesQuickCapture: "/memories/quick-capture",
   memory: "/memories/:id",
   bookmarkMemory: "/memories/:id/bookmark",
@@ -92,6 +93,8 @@ export default {
   capsule: "/capsule",
   capsuleDelete: "/capsule/:id",
   capsuleStats: "/capsule/stats",
+  capsuleViewExchange: "/capsule/view/exchange",
+  capsuleView: "/capsule/view",
 
   // activities
   activities: "/activities",
@@ -106,7 +109,7 @@ export default {
   /** Host onboarding chat — streams like `/ai/prompt`; trailer JSON for chips / completion */
   hostOnboardingChatPrompt: "/users/onboarding/chat/prompt",
 
-  // billing (Polar + Paystack; see docs/PRICING_BACKEND_HANDOFF.md)
+  // billing (Polar)
   billingSubscription: "/billing/subscription",
   billingCheckout: "/billing/checkout",
   billingPortal: "/billing/portal",

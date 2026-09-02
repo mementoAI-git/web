@@ -8,8 +8,8 @@ import endpoint from "@/api/endpoint";
 import useFetcher from "@/hooks/use-fetcher";
 import { useStore } from "@/hooks/use-store";
 import { clearCache } from "@/utility";
-import type { IAuth } from "@/utility/interface";
 import AuthLayout from "../components/layout";
+import { extractSession } from "@/api/contract-adapter";
 
 export default function OAuthCallbackPage() {
   const { provider } = useParams<{ provider: string }>();
@@ -31,12 +31,11 @@ export default function OAuthCallbackPage() {
 
     trigger({ code }).then(async (result) => {
       if (result?.data) {
-        const { access_token, refresh_token, expires_at, refresh_expires_at } =
-          result.data as IAuth & { onboarded: boolean; onboarding_status: string };
-
-        setAuth?.({ access_token, refresh_token, expires_at, refresh_expires_at });
+        const session = extractSession(result);
+        if (!session) throw new Error("Authentication session is missing");
+        setAuth?.(session);
         await clearCache();
-        navigate(result.data?.onboarded ? "/overview" : "/onboarding");
+        navigate(session.onboarded ? "/overview" : "/onboarding");
       }
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps

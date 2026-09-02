@@ -17,6 +17,8 @@ import * as yup from "yup";
 import AuthLayout from "../components/layout";
 import AuthSocials from "../components/auth-social";
 import { TypographyMuted } from "@/components/ui/typography";
+import { extractSession } from "@/api/contract-adapter";
+import { getMementoClientHeaders } from "@/api/client-metadata";
 
 const schema = yup.object().shape({
   email: yup
@@ -57,15 +59,17 @@ export default function LoginPage() {
             return;
           }
 
+          const session = extractSession(result);
+          if (!session) throw new Error("Authentication session is missing");
           toast.success(result?.message);
-          setAuth?.(result.data);
+          setAuth?.(session);
           await clearCache();
 
           const redirectPath = searchParams.get("redirect");
-          if (redirectPath && result?.data?.onboarded) {
+          if (redirectPath && session.onboarded) {
             navigate(decodeURIComponent(redirectPath));
           } else {
-            navigate(result?.data?.onboarded ? "/overview" : "/onboarding");
+            navigate(session.onboarded ? "/overview" : "/onboarding");
           }
         }
       } catch (err) {
@@ -83,7 +87,10 @@ export default function LoginPage() {
       // 1. Get authentication options from server
       const beginRes = await fetch(`${API_BASE}${endpoint.passkeyLoginBegin}`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...getMementoClientHeaders(),
+        },
         body: JSON.stringify({ email: values.email || undefined }),
       });
       const beginData = await beginRes.json();
@@ -100,7 +107,10 @@ export default function LoginPage() {
       // 3. Complete verification on server
       const completeRes = await fetch(`${API_BASE}${endpoint.passkeyLoginComplete}`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...getMementoClientHeaders(),
+        },
         body: JSON.stringify({ challenge_id, response: authResponse }),
       });
       const completeData = await completeRes.json();
@@ -109,10 +119,12 @@ export default function LoginPage() {
         return;
       }
 
+      const session = extractSession(completeData);
+      if (!session) throw new Error("Authentication session is missing");
       toast.success(completeData?.message ?? "Logged in");
-      setAuth?.(completeData.data);
+      setAuth?.(session);
       await clearCache();
-      navigate(completeData.data?.onboarded ? "/overview" : "/onboarding", { replace: true });
+      navigate(session.onboarded ? "/overview" : "/onboarding", { replace: true });
     } catch (err) {
       if (err instanceof Error && err.name === "NotAllowedError") {
         // User cancelled the biometric prompt — silent

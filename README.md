@@ -1,73 +1,28 @@
-# React + TypeScript + Vite
+# Memento Web
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+The React and TypeScript web client for Memento. It consumes the shared API contract used by the mobile app and treats server-provided authentication, attachment, subscription, and storage metadata as authoritative.
 
-Currently, two official plugins are available:
+## Development
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Use the scripts in `package.json` for linting, tests, type checks, and production builds. Do not replace authenticated attachment metadata with durable public object URLs; request or refresh access through the API contract.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Billing contract
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+Polar is the only active payment provider. The client starts checkout through the API and follows the returned URL; it does not integrate directly with Polar and contains no Paystack flow.
+
+Default storage quotas are 200 MiB for Free and 10 GiB for Pro and Legacy, but API response metadata is authoritative because configuration or a per-user override may change the effective limit. See:
+
+- [Pricing implementation status](docs/PRICING_IMPLEMENTATION_STATUS.md)
+- [Backend handoff](docs/PRICING_BACKEND_HANDOFF.md)
+- [Launch and operations notes](docs/PRICING_ATTENTION.md)
+
+## Release boundaries
+
+- Keep compatibility shims until production telemetry and the supported-client window authorize retirement.
+- Preserve soft client gates while relying on API enforcement and standard 402 responses.
+- Treat staging checkout, webhook, portal, invoice, and rollback exercises as release sign-offs; automated tests do not replace them.

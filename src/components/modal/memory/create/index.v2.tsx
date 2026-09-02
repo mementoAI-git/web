@@ -9,7 +9,8 @@ import useForm from "@/hooks/use-form";
 import useFileUpload from "@/hooks/use-file-upload";
 import useSWR from "swr";
 import useSWRMutation from "swr/mutation";
-import { fetcher, postFetcher } from "@/api/fetcher";
+import { postFetcher } from "@/api/fetcher";
+import { paginatedResponseFetcher } from "@/api/domain-fetchers";
 import endpoint from "@/api/endpoint";
 import { parseSubscriptionGateError } from "@/features/pricing/subscription-errors";
 import { cn, isEmpty } from "@/utility";
@@ -165,9 +166,11 @@ function CreateMemoryBase({
 
   const { trigger, isMutating } = useSWRMutation(endpoint.memories, postFetcher);
   const { files, handleUpload, handleDeleteFile, setFiles } = useFileUpload();
-  const { data: beneficiariesRes } = useSWR(`${endpoint.beneficiaries}?page=1&limit=100`, fetcher, {
-    revalidateOnFocus: false,
-  });
+  const { data: beneficiariesRes } = useSWR(
+    `${endpoint.beneficiaries}?page=1&limit=100`,
+    paginatedResponseFetcher<IBeneficiary>,
+    { revalidateOnFocus: false },
+  );
   const beneficiaryDocs: IBeneficiary[] = useMemo(
     () => beneficiariesRes?.data?.docs ?? [],
     [beneficiariesRes?.data?.docs],
@@ -273,6 +276,7 @@ function CreateMemoryBase({
     setShowLinkInput,
     linkPosition,
     showSlashMenu,
+    setShowSlashMenu,
     slashPosition,
     slashSelectedIndex,
     setSlashSelectedIndex,

@@ -5,6 +5,7 @@ import Slider from "@/components/slider";
 import CategoryCard from "@/components/category-card";
 import categoryData from "@/utility/data/categories";
 import endpoint from "@/api/endpoint";
+import { collectionResponseFetcher } from "@/api/domain-fetchers";
 import type { DashboardPromptSlot } from "@/utility/interface";
 import PromptCard from "./prompt-card";
 import { TypographyH2 } from "@/components/ui/typography";
@@ -14,7 +15,7 @@ const categories = categoryData as Record<string, { title: string; subtitle: str
 export default function ExplorePage() {
   const dateKey = dayjs().format("YYYY-MM-DD");
   const promptsUrl = `${endpoint.prompts}?date_key=${encodeURIComponent(dateKey)}`;
-  const { data } = useSWR(promptsUrl);
+  const { data } = useSWR(promptsUrl, collectionResponseFetcher<DashboardPromptSlot>);
 
   const staticPrompts = ((data?.data ?? []) as DashboardPromptSlot[])
     .filter((row): row is Extract<DashboardPromptSlot, { slot_kind: "static" }> => row.slot_kind === "static")
@@ -68,4 +69,3 @@ export default function ExplorePage() {
     </div>
   );
 }
-

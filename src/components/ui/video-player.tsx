@@ -56,6 +56,7 @@ export interface VideoPlayerProps {
   muted?: boolean;
   loop?: boolean;
   preload?: "none" | "metadata" | "auto";
+  onError?: React.ReactEventHandler<HTMLVideoElement>;
 }
 
 export default function VideoPlayer({
@@ -68,6 +69,7 @@ export default function VideoPlayer({
   muted = false,
   loop = false,
   preload = "metadata",
+  onError,
 }: VideoPlayerProps) {
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(autoPlay);
@@ -187,6 +189,7 @@ export default function VideoPlayer({
           setCurrentTime(0);
         }}
         src={src}
+        onError={onError}
         onClick={togglePlay}
         autoPlay={autoPlay}
         muted={muted}

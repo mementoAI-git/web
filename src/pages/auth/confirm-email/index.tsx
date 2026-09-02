@@ -11,6 +11,7 @@ import endpoint from "@/api/endpoint";
 import useFetcher from "@/hooks/use-fetcher";
 import { useStore } from "@/hooks/use-store";
 import AuthLayout from "../components/layout";
+import { extractSession } from "@/api/contract-adapter";
 
 export default function ConfirmEmailPage() {
   const [searchParams] = useSearchParams();
@@ -46,9 +47,11 @@ export default function ConfirmEmailPage() {
   useEffect(() => {
     if (token) {
       trigger({ token })
-        .then((res) => {
-          unsetAuth?.();
-          setAuth?.(res.data);
+        .then(async (res) => {
+          const session = extractSession(res);
+          if (!session) return;
+          await unsetAuth?.();
+          setAuth?.(session);
         })
         .catch((err) => {
           console.error(err);

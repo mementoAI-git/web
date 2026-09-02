@@ -5,6 +5,8 @@ import type { IAuth } from "@/utility/interface";
 import { storageKeys } from "@/utility/constant";
 import endpoint from "@/api/endpoint";
 import dayjs from "dayjs";
+import { extractSession } from "@/api/contract-adapter";
+import { getMementoClientHeaders } from "@/api/client-metadata";
 
 const baseURL = import.meta.env.VITE_API_BASE_URL;
 
@@ -36,8 +38,9 @@ class AuthService {
   }
 
   isAccessTokenExpired(auth: IAuth): boolean {
-    if (!auth?.expires_at) return true;
-    return dayjs().add(5, "minutes").isAfter(dayjs(auth.expires_at));
+    const expiresAt = auth?.access_expires_at || auth?.expires_at;
+    if (!expiresAt) return true;
+    return dayjs().add(5, "minutes").isAfter(dayjs(expiresAt));
   }
 
   isRefreshTokenExpired(auth: IAuth): boolean {
@@ -97,10 +100,12 @@ class AuthService {
     try {
       const response = await Axios.post(`${baseURL}${endpoint.refreshToken}`, {
         refresh_token: authData.refresh_token,
+      }, {
+        headers: getMementoClientHeaders(),
       });
 
-      if (response.data?.success && response.data?.data) {
-        const newAuthData: IAuth = response.data.data;
+      const newAuthData = extractSession(response.data);
+      if (response.data?.success !== false && newAuthData) {
 
         this.writeAuthRaw(JSON.stringify(newAuthData));
 
@@ -128,6 +133,7 @@ class AuthService {
         await Axios.delete(`${baseURL}${endpoint.logout}`, {
           headers: {
             Authorization: `Bearer ${authData.access_token}`,
+            ...getMementoClientHeaders(),
           },
         });
       }
@@ -140,7 +146,13 @@ class AuthService {
 
   getAuthData(): IAuth | null {
     const auth = this.readAuthRaw();
-    return auth ? JSON.parse(auth) : null;
+    if (!auth) return null;
+    try {
+      return JSON.parse(auth) as IAuth;
+    } catch {
+      this.removeAuthRaw();
+      return null;
+    }
   }
 
   setAuthData(authData: IAuth): void {
@@ -149,4 +161,3 @@ class AuthService {
 }
 
 export const authService = new AuthService();
-

@@ -1,6 +1,7 @@
 import endpoint from "./endpoint";
-import { storageKeys } from "@/utility/constant";
 import type { HostOnboardingMessage } from "@/features/host-onboarding-chat/types";
+import { getMementoClientHeaders } from "./client-metadata";
+import { authService } from "@/utility/auth-service";
 
 const baseURL = import.meta.env.VITE_API_BASE_URL;
 
@@ -87,8 +88,7 @@ export async function streamHostOnboardingChat(
   args: StreamHostOnboardingChatArgs,
 ): Promise<{ text: string; meta: OnboardingStreamMeta | null }> {
   const { onVisibleUpdate, signal, messages, nickname, bootstrap } = args;
-  const storedAuth = localStorage.getItem(storageKeys.auth);
-  const auth = storedAuth ? JSON.parse(storedAuth) : null;
+  const auth = authService.getAuthData();
 
   const payload: HostOnboardingStreamRequestBody = {
     messages,
@@ -102,6 +102,7 @@ export async function streamHostOnboardingChat(
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        ...getMementoClientHeaders(),
         ...(auth?.access_token ?
           { Authorization: `Bearer ${auth.access_token}` }
         : {}),

@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import useSWR from "swr";
+import { entityResponseFetcher } from "@/api/domain-fetchers";
 import { ChevronDown, Heart, ListChecks, Sparkles, Target, UserRound } from "lucide-react";
 import { useModal } from "@/hooks/use-modal";
 import { useStore } from "@/hooks/use-store";
@@ -158,7 +159,7 @@ export default function MemoryInsightsModal() {
     error: summaryError,
   } = useApi<MemoryInsightsSummaryDto>(endpoint.personaMemoryInsightsSummary);
   const { data: beneficiariesData } = useSWR(`${endpoint.beneficiaries}?page=1`);
-  const { data: contextData } = useSWR(endpoint.userContext);
+  const { data: contextData } = useSWR(endpoint.userContext, entityResponseFetcher);
   const { data: profileData } = useSWR(endpoint.profile);
 
   const primaryConversationId =

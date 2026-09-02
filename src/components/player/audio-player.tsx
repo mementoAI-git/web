@@ -1,4 +1,9 @@
-import { useRef, type Ref, type RefObject } from "react";
+import {
+  useRef,
+  type ReactEventHandler,
+  type Ref,
+  type RefObject,
+} from "react";
 import {
   Backward15Icon,
   Forward15Icon,
@@ -18,6 +23,7 @@ export interface MediaPlayerProps {
   className?: string;
   duration?: number;
   audioRef?: RefObject<HTMLAudioElement>;
+  onError?: ReactEventHandler<HTMLAudioElement>;
 }
 
 export default function AudioPlayer({
@@ -27,6 +33,7 @@ export default function AudioPlayer({
   id = null,
   duration = 0,
   audioRef,
+  onError,
 }: MediaPlayerProps) {
   const {
     ref,
@@ -75,6 +82,7 @@ export default function AudioPlayer({
           preload="auto"
           crossOrigin="anonymous"
           src={src}
+          onError={onError}
           key={id}
         />
         <div className="space-y-2">

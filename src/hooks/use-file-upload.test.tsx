@@ -8,9 +8,17 @@ const { mockFileUploadFetcher, mockDeleteFetcher } = vi.hoisted(() => ({
   mockDeleteFetcher: vi.fn(),
 }));
 
+const { mockToastError } = vi.hoisted(() => ({
+  mockToastError: vi.fn(),
+}));
+
 vi.mock("@/api/fetcher", () => ({
   fileUploadFetcher: mockFileUploadFetcher,
   deleteFetcher: mockDeleteFetcher,
+}));
+
+vi.mock("sonner", () => ({
+  toast: { error: mockToastError },
 }));
 
 function deferred<T>() {
@@ -36,6 +44,24 @@ function makeUploadedFile(name: string, id: string): IFile {
 describe("useFileUpload", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  it("does not show a second error toast when the upload gate was already handled", async () => {
+    mockFileUploadFetcher.mockResolvedValue({
+      success: false,
+      data: null,
+      message: "Storage limit reached",
+      subscriptionGate: true,
+    });
+    const { result } = renderHook(() => useFileUpload());
+    const file = new File(["photo"], "photo.png", { type: "image/png" });
+
+    await act(async () => {
+      await result.current.handleUpload({ id: "one", file, progress: 0 });
+    });
+
+    expect(mockToastError).not.toHaveBeenCalled();
+    expect(result.current.files).toHaveLength(0);
   });
 
   it("keeps earlier uploads when another upload starts before it finishes", async () => {

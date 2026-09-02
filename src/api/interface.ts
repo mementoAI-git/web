@@ -1,10 +1,15 @@
 import type { AxiosRequestConfig } from "axios";
 
-export interface IResponse {
+export interface IResponse<T = unknown> {
   message: string;
   success?: boolean;
-  data?: unknown;
+  data?: T;
   status?: number;
+  meta?: {
+    contract_version?: string;
+    request_id?: string;
+    deprecations?: string[];
+  };
 }
 export type Fetcher = (
   input: RequestInfo | URL,
@@ -19,7 +24,13 @@ export type MutationFetcher = (
 export interface ApiError {
   message: string;
   status?: number;
-  errors?: Record<string, string[]>;
+  httpStatus?: number;
+  success?: false;
+  code?: string;
+  details?: Record<string, unknown>;
+  request_id?: string;
+  data?: unknown;
+  errors?: unknown;
 }
 
 export interface RequestOptions extends AxiosRequestConfig {

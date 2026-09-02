@@ -33,7 +33,7 @@ export default function AuthCheck({ children }: PropsWithChildren) {
   const userRef = useRef(user);
   userRef.current = user;
 
-  useSWR(endpoint.profile, fetcher, {
+  useSWR(endpoint.profile, fetcher<IUser>, {
     onSuccess(data) {
       if (data?.data && setUser) {
         setUser(mergeProfileServerUpdate(userRef.current, data.data));
@@ -79,4 +79,3 @@ export default function AuthCheck({ children }: PropsWithChildren) {
 
   return <>{children}</>;
 }
-

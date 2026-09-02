@@ -5,7 +5,7 @@ import useSWRInfinite from "swr/infinite";
 import dayjs from "dayjs";
 import calendar from "dayjs/plugin/calendar";
 import endpoint from "@/api/endpoint";
-import { fetcher } from "@/api/fetcher";
+import { paginatedResponseFetcher } from "@/api/domain-fetchers";
 import { SearchIcon } from "@/components/icons";
 import ConversationBar from "@/components/conversation-bar";
 import SectionSkeleton from "./section-skeletion";
@@ -96,7 +96,7 @@ export default function RecentConversation() {
     size,
     setSize,
     mutate
-  } = useSWRInfinite(getKey, fetcher, {
+  } = useSWRInfinite(getKey, paginatedResponseFetcher<IMemory>, {
     revalidateOnFocus: false,
     revalidateFirstPage: false
   });

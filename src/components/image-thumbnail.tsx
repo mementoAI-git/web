@@ -1,6 +1,7 @@
 import type { IFile } from "@/utility/interface";
 import { QIcon, PlayIcon, MicIcon } from "@/components/icons";
 import { isImage } from "@/pages/dashboard/time-capsule-new/utility/helpers";
+import { useSignedMediaAccess } from "@/features/media/signed-media-access";
 
 interface IImageThumbnail {
   size?: number;
@@ -15,19 +16,23 @@ const imageRotation: Record<number, string> = {
 };
 
 function ImageThumbnailItem({
-  type,
-  url,
-  name,
-  size = 68.78,
-}: IFile & { size: number }) {
+  file,
+  displaySize = 68.78,
+}: {
+  file: IFile;
+  displaySize: number;
+}) {
+  const { src, onError } = useSignedMediaAccess(file);
+  const { type, name } = file;
   // if (type?.includes("image")) {
   if (isImage(name)) {
     return (
       <img
-        width={size}
-        height={size}
+        width={displaySize}
+        height={displaySize}
         className="size-full rounded-[5.83px] object-cover"
-        src={url}
+        src={src}
+        onError={onError}
         alt={name || "memento-image"}
       />
     );
@@ -35,11 +40,11 @@ function ImageThumbnailItem({
   return (
     <div className="size-full justify-center items-center flex bg-grey-500">
       {type?.includes("video") ? (
-        <PlayIcon width={size * 0.6} height={size * 0.6} />
+        <PlayIcon width={displaySize * 0.6} height={displaySize * 0.6} />
       ) : type?.includes("audio") ? (
-        <MicIcon width={size * 0.6} height={size * 0.6} />
+        <MicIcon width={displaySize * 0.6} height={displaySize * 0.6} />
       ) : (
-        <QIcon width={size * 0.6} height={size * 0.6} />
+        <QIcon width={displaySize * 0.6} height={displaySize * 0.6} />
       )}
     </div>
   );
@@ -57,7 +62,7 @@ export default function ImageThumbnail({
     >
       {images.length === 1 ? (
         <div className="flex items-center justify-center size-full overflow-hidden rounded-[5.83px]">
-          <ImageThumbnailItem {...{ ...images[0], size }} />
+          <ImageThumbnailItem file={images[0]} displaySize={size} />
         </div>
       ) : (
         <div className="relative size-full">
@@ -67,7 +72,7 @@ export default function ImageThumbnail({
               style={{ width: size }}
               className={`absolute top-0 aspect-square overflow-hidden rounded-[5.83px] border-[1.5px] border-v3-stroke-weak ${imageRotation[i]} ${boxClassName}`}
             >
-              <ImageThumbnailItem {...{ ...img, size }} />
+              <ImageThumbnailItem file={img} displaySize={size} />
             </div>
           ))}
         </div>

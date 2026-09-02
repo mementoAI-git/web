@@ -9,6 +9,8 @@ import { useStore } from "@/hooks/use-store";
 import { clearCache } from "@/utility";
 import { toast } from "sonner";
 import AuthLayout from "../components/layout";
+import { extractSession } from "@/api/contract-adapter";
+import { getMementoClientHeaders } from "@/api/client-metadata";
 
 export default function TwoFactorPage() {
   const navigate = useNavigate();
@@ -58,7 +60,10 @@ export default function TwoFactorPage() {
     try {
       const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}${endpoint.verify2FALogin}`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...getMementoClientHeaders(),
+        },
         body: JSON.stringify({ two_fa_token: twoFaToken, code: fullCode }),
       });
       const result = await res.json();
@@ -68,10 +73,12 @@ export default function TwoFactorPage() {
         inputRefs.current[0]?.focus();
         return;
       }
+      const session = extractSession(result);
+      if (!session) throw new Error("Authentication session is missing");
       toast.success(result?.message ?? "Logged in");
-      setAuth?.(result.data);
+      setAuth?.(session);
       await clearCache();
-      navigate(result.data?.onboarded ? "/overview" : "/onboarding", { replace: true });
+      navigate(session.onboarded ? "/overview" : "/onboarding", { replace: true });
     } catch {
       toast.error("Something went wrong. Please try again.");
     } finally {

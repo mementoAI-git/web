@@ -7,7 +7,7 @@ import { StatCard } from "../component/stat-card";
 import { storageKeys } from "@/utility/constant";
 import useIntersectionObserver from "@/hooks/use-intersection-observer";
 import Spinner from "@/components/spinner";
-import { fetcher } from "@/api/fetcher";
+import { paginatedResponseFetcher } from "@/api/domain-fetchers";
 import CapsuleHeader from "./components/header";
 import CapsuleGrid from "./components/grid";
 import { TimerFillIcon } from "./components/icons/TimerFillIcon";
@@ -23,6 +23,7 @@ import DraftsBg from "./components/assets/drafts.svg";
 import FrozenBg from "./components/assets/frozen.svg";
 import { PauseIcon } from "./components/icons/PauseIcon";
 import { useFeatureFlags } from "@/contexts/feature-flags";
+import type { ICapsule } from "@/utility/interface";
 
 export default function TimeCapsulePage() {
   const { isProOrAbove, usage } = useSubscription();
@@ -75,7 +76,9 @@ export default function TimeCapsulePage() {
     size,
     setSize,
     isLoading,
-  } = useSWRInfinite(getKey, fetcher, { revalidateOnFocus: false });
+  } = useSWRInfinite(getKey, paginatedResponseFetcher<ICapsule>, {
+    revalidateOnFocus: false,
+  });
 
   const capsules = data ? data.flatMap((page) => page.data.docs) : [];
   const isLoadingMore =

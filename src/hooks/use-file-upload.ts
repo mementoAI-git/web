@@ -34,7 +34,9 @@ export default function useFileUpload() {
         : result?.data;
 
       if (!uploadedFile || result?.success === false) {
-        toast.error(typeof result?.message === "string" ? result.message : "Upload unsuccessful");
+        if (!("subscriptionGate" in result && result.subscriptionGate)) {
+          toast.error(typeof result?.message === "string" ? result.message : "Upload unsuccessful");
+        }
         setFiles((prev) => prev.filter((f) => f.id !== file.id));
       } else {
         setFiles((prev) =>
