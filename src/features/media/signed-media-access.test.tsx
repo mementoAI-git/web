@@ -75,4 +75,38 @@ describe("signed media access", () => {
     expect(requester).not.toHaveBeenCalled();
     expect(result.current.src).toBe(legacy.url);
   });
+
+  it("refuses absolute and unrelated refresh endpoints", async () => {
+    const requester = vi.fn();
+    const unsafeAttachments = [
+      {
+        ...attachment,
+        access: {
+          ...attachment.access!,
+          refresh_endpoint: "https://evil.test/collect",
+        },
+      },
+      {
+        ...attachment,
+        access: {
+          ...attachment.access!,
+          refresh_endpoint: "/users/profile",
+        },
+      },
+    ];
+
+    for (const unsafeAttachment of unsafeAttachments) {
+      const { result, unmount } = renderHook(() =>
+        useSignedMediaAccess(unsafeAttachment, requester, {
+          refreshExpired: false,
+        }),
+      );
+
+      await act(async () => result.current.onError());
+      expect(result.current.src).toBe(unsafeAttachment.url);
+      unmount();
+    }
+
+    expect(requester).not.toHaveBeenCalled();
+  });
 });

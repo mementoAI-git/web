@@ -11,6 +11,8 @@ export type MediaAccessRequester = (
 const defaultRequester: MediaAccessRequester = async (url, body) =>
   (await postFetcher(url, body)) as IResponse<IFile>;
 
+const SAFE_REFRESH_ENDPOINT = /^\/files\/[^/?#]+\/access$/;
+
 export function shouldRefreshSignedMedia(
   attachment: IFile,
   now = Date.now(),
@@ -50,7 +52,13 @@ export function useSignedMediaAccess(
 
   const refreshOnce = useCallback(async () => {
     const refreshEndpoint = current.access?.refresh_endpoint;
-    if (!refreshEndpoint || attemptedRef.current) return current;
+    if (
+      !refreshEndpoint ||
+      !SAFE_REFRESH_ENDPOINT.test(refreshEndpoint) ||
+      attemptedRef.current
+    ) {
+      return current;
+    }
     attemptedRef.current = true;
 
     const response = await requester(refreshEndpoint, {

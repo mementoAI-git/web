@@ -166,19 +166,21 @@ export const fileUploadFetcher = async (url: string, { arg }: { arg: Record<stri
       const status = axiosError.response?.status;
       const data = axiosError.response?.data;
 
-      if (status === 402 && data && typeof data === "object") {
+      if ((status === 402 || status === 403) && data && typeof data === "object") {
         const gate = parseSubscriptionGateFromBody(data);
-        if (gate) notifySubscriptionGate(gate);
-        message =
-          typeof (data as IResponse).message === "string" ?
-            (data as IResponse).message!
-          : "Upgrade to continue uploading.";
-        return {
-          success: false,
-          data: null,
-          message,
-          subscriptionGate: true as const,
-        };
+        if (gate) {
+          notifySubscriptionGate(gate);
+          message =
+            typeof (data as IResponse).message === "string" ?
+              (data as IResponse).message!
+            : "Upgrade to continue uploading.";
+          return {
+            success: false,
+            data: null,
+            message,
+            subscriptionGate: true as const,
+          };
+        }
       }
 
       message = axiosError.response?.data?.message || axiosError.message;

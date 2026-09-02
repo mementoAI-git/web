@@ -6,6 +6,7 @@ import { useState } from "react";
 import useSWR from "swr";
 import { Searchinput } from "@/components/Form";
 import { PlayIcon, QIcon } from "@/components/icons";
+import { useSignedMediaAccess } from "@/features/media/signed-media-access";
 
 interface SelectFromMediaProps {
   selectedIds?: string[];
@@ -15,7 +16,7 @@ interface SelectFromMediaProps {
   hideHeader?: boolean;
 }
 
-function MediaItem({
+export function MediaItem({
   file,
   isSelected,
   onToggle,
@@ -24,6 +25,7 @@ function MediaItem({
   isSelected: boolean;
   onToggle: () => void;
 }) {
+  const { src, onError } = useSignedMediaAccess(file);
   const isImage = file.type.includes("image");
   const isVideo = file.type.includes("video");
 
@@ -39,7 +41,8 @@ function MediaItem({
     >
       {isImage ? (
         <img
-          src={file.url}
+          src={src}
+          onError={onError}
           alt={file.name}
           className="w-full h-full object-cover"
         />

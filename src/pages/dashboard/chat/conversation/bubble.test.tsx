@@ -1,7 +1,11 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
+import { http, HttpResponse } from "msw";
+import { server } from "@/test/mocks/server";
 import Bubble from "./bubble";
+
+const API = "http://localhost:3000/api";
 
 vi.mock("sonner", () => ({
   toast: {
@@ -127,5 +131,56 @@ describe("Bubble", () => {
       />,
     );
     expect(screen.getByRole("button", { name: /reply to message/i })).toBeInTheDocument();
+  });
+
+  it("refreshes a failed signed chat image", async () => {
+    server.use(
+      http.post(`${API}/files/file-1/access`, () =>
+        HttpResponse.json({
+          status: 200,
+          success: true,
+          message: "File access refreshed successfully",
+          data: {
+            _id: "file-1",
+            url: "/files/photo.jpg?cap=new",
+            name: "photo.jpg",
+            type: "image/jpeg",
+            size: 100,
+            access: {
+              expires_at: "2099-01-01T00:00:00.000Z",
+              refresh_endpoint: "/files/file-1/access",
+            },
+          },
+          meta: { contract_version: "2026-08", request_id: "request-1" },
+        }),
+      ),
+    );
+
+    render(
+      <Bubble
+        role="user"
+        text=""
+        attatchments={[
+          {
+            _id: "file-1",
+            url: "/files/photo.jpg?cap=old",
+            name: "photo.jpg",
+            type: "image/jpeg",
+            size: 100,
+            access: {
+              expires_at: "2099-01-01T00:00:00.000Z",
+              refresh_endpoint: "/files/file-1/access",
+            },
+          },
+        ]}
+      />,
+    );
+
+    const image = screen.getByRole("img", { name: "photo.jpg" });
+    fireEvent.error(image);
+
+    await waitFor(() =>
+      expect(image).toHaveAttribute("src", "/files/photo.jpg?cap=new"),
+    );
   });
 });

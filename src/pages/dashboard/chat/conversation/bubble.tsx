@@ -10,10 +10,14 @@ import { snippetReplyText } from "@/utility/chat-reply-prompt";
 import { isImage } from "@/pages/dashboard/time-capsule-new/utility/helpers";
 import { useModal } from "@/hooks/use-modal";
 import type { IFile } from "@/utility/interface";
+import { useSignedMediaAccess } from "@/features/media/signed-media-access";
+
+type ChatAttachment = Pick<IFile, "url" | "name"> &
+  Partial<Omit<IFile, "url" | "name">>;
 
 interface IBubbleProps {
   role?: "user" | "ai" | string
-  attatchments?: { url: string; name: string; type?: string; _id?: string; size?: string | number }[]
+  attatchments?: ChatAttachment[]
   text?: string
   duration?: number
   is_voice?: boolean
@@ -46,6 +50,116 @@ function formatMessageTime(iso?: string) {
   return d.format("MMM D, h:mm A");
 }
 
+function normalizeChatAttachment(attachment: ChatAttachment): IFile {
+  return {
+    ...attachment,
+    _id: attachment._id ?? "",
+    size: attachment.size ?? 0,
+    type: attachment.type ?? "",
+  };
+}
+
+function ChatAttachmentPreview({
+  attachment,
+  attachments,
+  index,
+}: {
+  attachment: ChatAttachment;
+  attachments: ChatAttachment[];
+  index: number;
+}) {
+  const { push } = useModal();
+  const file = normalizeChatAttachment(attachment);
+  const { src, onError } = useSignedMediaAccess(file);
+  const { name, type } = file;
+  const ext = name?.split(".").pop()?.toLowerCase() || "";
+  const isVideoFile =
+    type?.startsWith("video/") ||
+    ["mp4", "mov", "webm", "ogg"].includes(ext);
+  const isAudioFile =
+    type?.startsWith("audio/") ||
+    ["mp3", "wav", "m4a", "webm", "ogg", "aac"].includes(ext);
+  const isImageFile = isImage(name);
+
+  const handleClick = () => {
+    push?.("file-preview", {
+      files: attachments.map(normalizeChatAttachment),
+      startIndex: index,
+    });
+  };
+
+  if (isVideoFile) {
+    return (
+      <button
+        type="button"
+        onClick={handleClick}
+        className="relative flex h-auto max-h-[99px] max-w-[148px] flex-1 shrink cursor-pointer items-center justify-center overflow-hidden rounded-lg bg-black/80"
+      >
+        <video
+          src={src}
+          onError={onError}
+          className="h-full w-full object-cover"
+          muted
+          preload="metadata"
+        />
+        <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+          <div className="flex size-8 items-center justify-center rounded-full bg-white/90">
+            <Play className="size-4 text-black" fill="currentColor" />
+          </div>
+        </div>
+      </button>
+    );
+  }
+
+  if (isAudioFile) {
+    return (
+      <button
+        type="button"
+        onClick={handleClick}
+        className="flex h-[56px] w-[148px] cursor-pointer items-center gap-2 rounded-lg bg-fill-neutral-weakest px-3 py-2 transition-colors hover:bg-fill-neutral-weaker"
+      >
+        <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-fill-brand-weak">
+          <Mic className="size-4 text-text-brand-strong" />
+        </div>
+        <span className="min-w-0 flex-1 truncate font-inter text-xs text-text-neutral-strong">
+          {name || "Audio"}
+        </span>
+      </button>
+    );
+  }
+
+  if (isImageFile) {
+    return (
+      <button
+        type="button"
+        onClick={handleClick}
+        className="cursor-pointer overflow-hidden rounded-lg"
+      >
+        <img
+          src={src}
+          onError={onError}
+          width={148}
+          height={99}
+          className="h-auto max-h-[99px] max-w-[148px] flex-1 shrink rounded-lg object-cover transition-opacity hover:opacity-90"
+          alt={name}
+        />
+      </button>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={handleClick}
+      className="flex h-[56px] w-[148px] cursor-pointer items-center gap-2 rounded-lg bg-fill-neutral-weakest px-3 py-2 transition-colors hover:bg-fill-neutral-weaker"
+    >
+      <span className="min-w-0 flex-1 truncate font-inter text-xs text-text-neutral-strong">
+        {name || "File"}
+      </span>
+    </button>
+  );
+}
+
 export default function Bubble({
   role = "user",
   attatchments = [],
@@ -64,7 +178,6 @@ export default function Bubble({
 }: IBubbleProps) {
 
   const isUser = role === "user"
-  const { push } = useModal();
   const metaVisible = showMessageMeta ?? !compact;
   const timeLabel = metaVisible ? formatMessageTime(createdAt) : null;
   const canCopy = metaVisible && Boolean(text?.trim());
@@ -114,104 +227,14 @@ export default function Bubble({
             !isUser && "bg-transparent",
           )}
         >
-          {
-            attatchments.map(({ url, name, type, _id, size: _size }, i) => {
-              const ext = name?.split(".").pop()?.toLowerCase() || "";
-              const isVideoFile =
-                type?.startsWith("video/") ||
-                ["mp4", "mov", "webm", "ogg"].includes(ext);
-              const isAudioFile =
-                type?.startsWith("audio/") ||
-                ["mp3", "wav", "m4a", "webm", "ogg", "aac"].includes(ext);
-              const isImageFile = isImage(name);
-
-              const handleClick = () => {
-                // Map attachments to IFile shape for the FilePreview modal
-                const files: IFile[] = attatchments.map((a) => ({
-                  url: a.url,
-                  name: a.name,
-                  type: a.type ?? "",
-                  _id: a._id ?? "",
-                  size: a.size ?? 0,
-                }));
-                push?.("file-preview", { files, startIndex: i });
-              };
-
-              if (isVideoFile) {
-                return (
-                  <button
-                    type="button"
-                    key={i}
-                    onClick={handleClick}
-                    className="relative flex h-auto max-h-[99px] max-w-[148px] flex-1 shrink cursor-pointer items-center justify-center overflow-hidden rounded-lg bg-black/80"
-                  >
-                    <video
-                      src={url}
-                      className="h-full w-full object-cover"
-                      muted
-                      preload="metadata"
-                    />
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-                      <div className="flex size-8 items-center justify-center rounded-full bg-white/90">
-                        <Play className="size-4 text-black" fill="currentColor" />
-                      </div>
-                    </div>
-                  </button>
-                );
-              }
-
-              if (isAudioFile) {
-                return (
-                  <button
-                    type="button"
-                    key={i}
-                    onClick={handleClick}
-                    className="flex h-[56px] w-[148px] cursor-pointer items-center gap-2 rounded-lg bg-fill-neutral-weakest px-3 py-2 transition-colors hover:bg-fill-neutral-weaker"
-                  >
-                    <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-fill-brand-weak">
-                      <Mic className="size-4 text-text-brand-strong" />
-                    </div>
-                    <span className="min-w-0 flex-1 truncate font-inter text-xs text-text-neutral-strong">
-                      {name || "Audio"}
-                    </span>
-                  </button>
-                );
-              }
-
-              if (isImageFile) {
-                return (
-                  <button
-                    type="button"
-                    key={i}
-                    onClick={handleClick}
-                    className="cursor-pointer overflow-hidden rounded-lg"
-                  >
-                    <img
-                      src={url}
-                      width={148}
-                      height={99}
-                      className="h-auto max-h-[99px] max-w-[148px] flex-1 shrink rounded-lg object-cover transition-opacity hover:opacity-90"
-                      alt={name}
-                    />
-                  </button>
-                );
-              }
-
-              // Fallback for other file types (PDF, etc.)
-              return (
-                <button
-                  type="button"
-                  key={i}
-                  onClick={handleClick}
-                  className="flex h-[56px] w-[148px] cursor-pointer items-center gap-2 rounded-lg bg-fill-neutral-weakest px-3 py-2 transition-colors hover:bg-fill-neutral-weaker"
-                >
-                  <span className="min-w-0 flex-1 truncate font-inter text-xs text-text-neutral-strong">
-                    {name || "File"}
-                  </span>
-                </button>
-              );
-            })
-          }
+          {attatchments.map((attachment, i) => (
+            <ChatAttachmentPreview
+              key={attachment._id || `${attachment.name}-${i}`}
+              attachment={attachment}
+              attachments={attatchments}
+              index={i}
+            />
+          ))}
         </div>
       }
       <div
