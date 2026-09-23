@@ -129,7 +129,7 @@ interface MemoryDraft {
 }
 
 function getDraftSignature({ title, body, tags, attachments }: Pick<MemoryDraft, "title" | "body" | "tags" | "attachments">) {
-  return JSON.stringify({ title, body, tags, attachments });
+  return JSON.stringify({ title: title.trim(), body, tags, attachments });
 }
 
 // ─── CreateMemory ─────────────────────────────────────────────────────────────
@@ -401,6 +401,7 @@ function CreateMemoryBase({
         const deduped = prev.filter((draft) => draft.title !== nextDraft.title || draft.body !== nextDraft.body);
         const next = [nextDraft, ...deduped].slice(0, MAX_DRAFTS);
         localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(next));
+        setSavedDraftSignature(getDraftSignature(nextDraft));
         return next;
       });
     }, 900);
@@ -412,8 +413,13 @@ function CreateMemoryBase({
     if (variant !== "next" || isMobile) return;
     const el = titleTextareaRef.current;
     if (!el) return;
-    el.style.height = "0px";
-    el.style.height = `${Math.max(el.scrollHeight, 48)}px`;
+    const resizeTitle = () => {
+      el.style.height = "0px";
+      el.style.height = `${Math.max(el.scrollHeight, 48)}px`;
+    };
+    resizeTitle();
+    window.addEventListener("resize", resizeTitle);
+    return () => window.removeEventListener("resize", resizeTitle);
   }, [isMobile, values.title, variant]);
 
   useEffect(() => {
@@ -520,6 +526,7 @@ function CreateMemoryBase({
     }));
     setFiles(draftFiles);
     editor?.commands.setContent(draft.body || "");
+    setSavedDraftSignature(getDraftSignature(draft));
   };
 
   const handleLoadQuickCaptureDraft = useCallback(
@@ -777,6 +784,7 @@ function CreateMemoryBase({
     <DropdownMenuContent
       align="end"
       side="bottom"
+      onEscapeKeyDown={variant === "next" && !isMobile ? (event) => event.stopPropagation() : undefined}
       className="z-[220] w-[min(320px,calc(100vw-2rem))] max-h-[min(320px,50vh)] overflow-y-auto border border-stroke-neutral-weak bg-popover text-popover-foreground shadow-lg"
     >
       {quickCaptureKeys.length > 0 ? (
@@ -1471,6 +1479,17 @@ function CreateMemoryBase({
         <main
           data-testid="desktop-journal-shell"
           className="add-story-journal relative mx-auto h-[calc(100dvh-32px)] min-h-[720px] w-full max-w-[1440px] overflow-hidden rounded-[30px] shadow-[0_28px_80px_rgba(20,12,7,0.28)] xl:h-[calc(100dvh-72px)]"
+          onKeyDown={(event) => {
+            if (event.key !== "Escape" || (!showLinkInput && !showEmoji)) return;
+            event.stopPropagation();
+            if (showLinkInput) {
+              setShowLinkInput(false);
+              editor?.commands.focus();
+            } else {
+              setShowEmoji(false);
+              emojiPickerRef.current?.querySelector("button")?.focus();
+            }
+          }}
         >
           <img
             data-testid="desktop-album-artwork"
@@ -1616,6 +1635,7 @@ function CreateMemoryBase({
                             side="top"
                             align="start"
                             sideOffset={10}
+                            onEscapeKeyDown={(event) => event.stopPropagation()}
                             className="z-[220] min-w-[11rem] rounded-[16px] border border-[rgba(15,7,0,0.12)] bg-[#fffdf9] p-1 text-popover-foreground shadow-[0_12px_24px_rgba(15,7,0,0.12)]"
                           >
                             <DropdownMenuLabel className="px-3 pb-1 pt-2 font-geist text-[10px] font-semibold uppercase tracking-[0.12em] text-[rgba(15,7,0,0.45)]">
@@ -1809,6 +1829,7 @@ function CreateMemoryBase({
                           shareAudience={shareAudience}
                           onShareAudienceChange={setShareAudience}
                           variant="panel"
+                          dismissOnEscape
                         />
 
                         <TagsField

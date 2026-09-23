@@ -33,6 +33,7 @@ interface AccessFieldProps {
   shareAudience: MemoryShareAudience;
   onShareAudienceChange: (audience: MemoryShareAudience) => void;
   variant?: "default" | "panel";
+  dismissOnEscape?: boolean;
 }
 
 function toSearchItem(g: IGroup): SearchResultItem {
@@ -51,12 +52,14 @@ export function AccessField({
   shareAudience,
   onShareAudienceChange,
   variant = "default",
+  dismissOnEscape = false,
 }: AccessFieldProps) {
   const { push } = useModal();
   const accessInputId = useId();
   const [accessInput, setAccessInput] = useState("");
   const [showAccessDropdown, setShowAccessDropdown] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
   const groupsKey = showAccessDropdown ? `${endpoint.groups}?page=1&limit=${LIST_LIMIT}` : null;
   const beneficiariesKey = showAccessDropdown
@@ -182,7 +185,16 @@ export function AccessField({
           )}
         </p>
       </div>
-      <div ref={containerRef} className="relative">
+      <div
+        ref={containerRef}
+        className="relative"
+        onKeyDown={(event) => {
+          if (!dismissOnEscape || !showAccessDropdown || event.key !== "Escape") return;
+          event.stopPropagation();
+          setShowAccessDropdown(false);
+          triggerRef.current?.focus();
+        }}
+      >
         <div
           className={cn(
             variant === "panel"
@@ -192,6 +204,7 @@ export function AccessField({
           )}
         >
           <button
+            ref={triggerRef}
             type="button"
             id={accessInputId}
             aria-expanded={showAccessDropdown}
