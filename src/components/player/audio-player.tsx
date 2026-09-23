@@ -73,7 +73,7 @@ export default function AudioPlayer({
       <div />
       <div className="w-62.5 space-y-6">
         {alt && (
-          <span className="block font-inter font-semibold text-secondary">
+          <span className="block font-inter font-semibold text-foreground">
             {alt}
           </span>
         )}
@@ -99,7 +99,7 @@ export default function AudioPlayer({
             </div>
           </div>
           <div className="flex items-center justify-between">
-            <span className="font-inter text-xs font-medium text-secondary">
+            <span className="font-inter text-xs font-medium text-foreground">
               {current.mins}:{current.secs}/
               <span className="font-normal text-grey-800">
                 {end.mins}:{end.secs}

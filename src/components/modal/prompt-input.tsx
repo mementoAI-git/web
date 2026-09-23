@@ -116,7 +116,7 @@ export default function PromptInput({ data, isMobile = false }: PromptInputProps
   return (
     <ModalWrapper
       isMobile={isMobile}
-      header={<h2 className="text-xl font-geist font-semibold text-secondary">Reply Prompt</h2>}
+      header={<h2 className="text-xl font-geist font-semibold text-foreground">Reply Prompt</h2>}
       footer={footer}
       onClose={handleClose}
     >
@@ -138,4 +138,3 @@ export default function PromptInput({ data, isMobile = false }: PromptInputProps
     </ModalWrapper >
   );
 }
-

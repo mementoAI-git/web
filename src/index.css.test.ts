@@ -1,5 +1,5 @@
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { readFileSync, readdirSync } from "node:fs";
+import { relative, resolve } from "node:path";
 import postcss from "postcss";
 import { describe, expect, it } from "vitest";
 
@@ -15,6 +15,16 @@ function declaration(selector: string, property: string) {
     (node) => node.type === "decl" && node.prop === property,
   );
   return declarations?.at(-1)?.value;
+}
+
+function sourceFiles(directory: string): string[] {
+  return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+    const path = resolve(directory, entry.name);
+    if (entry.isDirectory()) return sourceFiles(path);
+    return entry.name.endsWith(".ts") || entry.name.endsWith(".tsx")
+      ? [path]
+      : [];
+  });
 }
 
 describe("dark color token compatibility", () => {
@@ -33,5 +43,16 @@ describe("dark color token compatibility", () => {
     expect(declaration(":root", "--v3-fill-strong")).toBe(
       "var(--fill-neutral-strong)",
     );
+  });
+
+  it("does not use the secondary surface token as a text utility", () => {
+    const legacyTextUtility = new RegExp(
+      `(?<![A-Za-z0-9-])${"text"}-secondary(?![A-Za-z0-9-])`,
+    );
+    const legacyUses = sourceFiles(resolve(process.cwd(), "src"))
+      .filter((path) => legacyTextUtility.test(readFileSync(path, "utf8")))
+      .map((path) => relative(process.cwd(), path));
+
+    expect(legacyUses).toEqual([]);
   });
 });
