@@ -3,7 +3,7 @@
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import albumArtwork from "@/assets/image/HD Album story bg memento.png";
 import scenicBackground from "@/assets/image/bg/1.png";
-import { EditorContent } from "@tiptap/react";
+import { EditorContent, useEditorState } from "@tiptap/react";
 import { useModal } from "@/hooks/use-modal";
 import { useStore } from "@/hooks/use-store";
 import { useNavigate } from "react-router-dom";
@@ -74,18 +74,22 @@ import {
   CardHeader,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Toggle } from "@/components/ui/toggle";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -100,10 +104,12 @@ import {
   Cloud,
   FileText,
   Image as ImageIcon,
+  ListFilter,
   ListOrdered,
   Mic,
   Music,
   Paperclip,
+  PanelRightClose,
   Play,
   Plus,
   Quote,
@@ -156,6 +162,7 @@ function CreateMemoryBase({
   isMobile = false,
   variant = "next",
 }: CreateMemoryBaseProps) {
+  const isDesktopComposer = variant === "next" && !isMobile;
   const { close, open, push, registerCloseGuard } = useModal();
   const { user } = useStore();
   const { canUse } = useFeatureFlags();
@@ -168,11 +175,15 @@ function CreateMemoryBase({
   const fileInputAllRef = useRef<HTMLInputElement>(null);
   const videoRecorderRef = useRef<ComponentRef<typeof VideoRecorder>>(null);
   const titleTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const detailsTriggerRef = useRef<HTMLButtonElement>(null);
+  const detailsTabRef = useRef<HTMLButtonElement>(null);
+  const hasToggledDetailsRef = useRef(false);
 
   const [showEmoji, setShowEmoji] = useState(false);
   const [showCloseConfirmation, setShowCloseConfirmation] = useState(false);
   const [drafts, setDrafts] = useState<MemoryDraft[]>([]);
   const [savedDraftSignature, setSavedDraftSignature] = useState<string | null>(null);
+  const activeDraftIdRef = useRef<string | null>(null);
   const emojiPickerRef = useRef<HTMLDivElement>(null);
   const emojiPickerPortalRef = useRef<HTMLDivElement>(null);
   const [selectedAccess, setSelectedAccess] = useState<SearchResultItem[]>([]);
@@ -185,6 +196,16 @@ function CreateMemoryBase({
   const [isUsingVideo, setIsUsingVideo] = useState(false);
   const [audioRecordingCount, setAudioRecordingCount] = useState(1);
   const [activeSidebarTab, setActiveSidebarTab] = useState<"properties" | "assistant">("properties");
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+
+  useEffect(() => {
+    if (!hasToggledDetailsRef.current) return;
+    if (isDetailsOpen) {
+      detailsTabRef.current?.focus();
+    } else {
+      detailsTriggerRef.current?.focus();
+    }
+  }, [isDetailsOpen]);
 
   const { trigger, isMutating } = useSWRMutation(endpoint.memories, postFetcher);
   const { files, handleUpload, handleDeleteFile, setFiles } = useFileUpload();
@@ -290,7 +311,7 @@ function CreateMemoryBase({
   const queueFileUploadRef = useRef(queueFileUpload);
   queueFileUploadRef.current = queueFileUpload;
 
-  const latestDirtyRef = useRef<() => boolean>(() => false);
+  const latestCloseStateRef = useRef({ dirty: false, saved: false });
 
   const {
     editor,
@@ -319,6 +340,25 @@ function CreateMemoryBase({
     onHtmlChange: (html) => handleValue("body", html),
   });
 
+  const formattingState = useEditorState({
+    editor,
+    selector: ({ editor: currentEditor }) => ({
+      bold: currentEditor?.isActive("bold") ?? false,
+      italic: currentEditor?.isActive("italic") ?? false,
+      strike: currentEditor?.isActive("strike") ?? false,
+      underline: currentEditor?.isActive("underline") ?? false,
+      link: currentEditor?.isActive("link") ?? false,
+      bulletList: currentEditor?.isActive("bulletList") ?? false,
+    }),
+  }) ?? {
+    bold: false,
+    italic: false,
+    strike: false,
+    underline: false,
+    link: false,
+    bulletList: false,
+  };
+
   useEffect(() => {
     if (!editor) return;
     editor.setOptions({
@@ -343,22 +383,15 @@ function CreateMemoryBase({
     });
   }, [editor]);
 
-  latestDirtyRef.current = () =>
-    files.length > 0 ||
-    values.title.trim().length > 0 ||
-    (editor?.getText()?.trim().length ?? 0) > 0 ||
-    tags.length > 0 ||
-    selectedAccess.length > 0 ||
-    shareAudience !== "private";
-
   useEffect(() => {
     if (!registerCloseGuard) return;
     return registerCloseGuard("create-memory", () => {
-      if (!latestDirtyRef.current()) return true;
+      const { dirty, saved } = latestCloseStateRef.current;
+      if (!dirty || (variant === "next" && !isMobile && saved)) return true;
       setShowCloseConfirmation(true);
       return false;
     });
-  }, [registerCloseGuard]);
+  }, [isMobile, registerCloseGuard, variant]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -388,8 +421,10 @@ function CreateMemoryBase({
       .filter((file): file is NonNullable<IOnUploadPayload["uploadedFile"]> => Boolean(file));
 
     const timeout = window.setTimeout(() => {
+      const draftId = isDesktopComposer ? (activeDraftIdRef.current ?? uuidv4()) : uuidv4();
+      if (isDesktopComposer) activeDraftIdRef.current = draftId;
       const nextDraft: MemoryDraft = {
-        id: uuidv4(),
+        id: draftId,
         title: values.title,
         body: editor?.getHTML() || "",
         tags,
@@ -398,8 +433,10 @@ function CreateMemoryBase({
       };
 
       setDrafts((prev) => {
-        const deduped = prev.filter((draft) => draft.title !== nextDraft.title || draft.body !== nextDraft.body);
-        const next = [nextDraft, ...deduped].slice(0, MAX_DRAFTS);
+        const remaining = isDesktopComposer
+          ? prev.filter((draft) => draft.id !== draftId)
+          : prev.filter((draft) => draft.title !== nextDraft.title || draft.body !== nextDraft.body);
+        const next = [nextDraft, ...remaining].slice(0, MAX_DRAFTS);
         localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(next));
         setSavedDraftSignature(getDraftSignature(nextDraft));
         return next;
@@ -407,7 +444,7 @@ function CreateMemoryBase({
     }, 900);
 
     return () => window.clearTimeout(timeout);
-  }, [values.title, values.body, tags, editor, files]);
+  }, [values.title, values.body, tags, editor, files, isDesktopComposer]);
 
   useEffect(() => {
     if (variant !== "next" || isMobile) return;
@@ -516,6 +553,7 @@ function CreateMemoryBase({
   };
 
   const handleLoadDraft = (draft: MemoryDraft) => {
+    if (isDesktopComposer) activeDraftIdRef.current = draft.id;
     setValues((prev) => ({ ...prev, title: draft.title, body: draft.body }));
     setTags(draft.tags || []);
     const draftFiles: IOnUploadPayload[] = (draft.attachments || []).map((attachment) => ({
@@ -534,6 +572,10 @@ function CreateMemoryBase({
       const raw = localStorage.getItem(storageKey);
       const d = raw ? parseQuickCaptureDraftJson(raw) : null;
       if (!d) return;
+      if (isDesktopComposer) {
+        activeDraftIdRef.current = null;
+        setSavedDraftSignature(null);
+      }
       const note = typeof d.note === "string" ? d.note : "";
       const html = htmlFromQuickCaptureNote(note);
       const noteText = plainTextFromQuickCaptureNote(note);
@@ -566,7 +608,7 @@ function CreateMemoryBase({
       setSelectedAccess(access);
       setShareAudience("private");
     },
-    [beneficiaryDocs, editor, setFiles, setValues, setTags, setSelectedAccess],
+    [beneficiaryDocs, editor, isDesktopComposer, setFiles, setValues, setTags, setSelectedAccess],
   );
 
   const handleDeleteQuickCaptureDraft = useCallback((storageKey: string) => {
@@ -588,20 +630,26 @@ function CreateMemoryBase({
     if (deletedDraft && getDraftSignature(deletedDraft) === savedDraftSignature) {
       setSavedDraftSignature(null);
     }
+    if (activeDraftIdRef.current === draftId) {
+      activeDraftIdRef.current = null;
+    }
   };
 
   const handleClearAllDrafts = () => {
     setDrafts([]);
     localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify([]));
     setSavedDraftSignature(null);
+    activeDraftIdRef.current = null;
   };
 
   const handleSaveDraft = useCallback(() => {
     const uploadedAttachments = files
       .map((file) => file.uploadedFile)
       .filter((file): file is NonNullable<IOnUploadPayload["uploadedFile"]> => Boolean(file));
+    const draftId = isDesktopComposer ? (activeDraftIdRef.current ?? uuidv4()) : uuidv4();
+    if (isDesktopComposer) activeDraftIdRef.current = draftId;
     const nextDraft: MemoryDraft = {
-      id: uuidv4(),
+      id: draftId,
       title: values.title.trim(),
       body: editor?.getHTML() || "",
       tags,
@@ -609,15 +657,23 @@ function CreateMemoryBase({
       updatedAt: new Date().toISOString(),
     };
 
-    const deduped = drafts.filter(
-      (draft) => draft.title !== nextDraft.title || draft.body !== nextDraft.body,
-    );
-    const next = [nextDraft, ...deduped].slice(0, MAX_DRAFTS);
-    localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(next));
-    setDrafts(next);
+    setDrafts((prev) => {
+      const remaining = isDesktopComposer
+        ? prev.filter((draft) => draft.id !== draftId)
+        : prev.filter((draft) => draft.title !== nextDraft.title || draft.body !== nextDraft.body);
+      const next = [nextDraft, ...remaining].slice(0, MAX_DRAFTS);
+      localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(next));
+      return next;
+    });
     setSavedDraftSignature(getDraftSignature(nextDraft));
     toast.success("Draft saved");
-  }, [drafts, editor, files, tags, values.title]);
+  }, [editor, files, isDesktopComposer, tags, values.title]);
+
+  const handleSaveDraftAndClose = useCallback(() => {
+    handleSaveDraft();
+    setShowCloseConfirmation(false);
+    close("create-memory", { force: true });
+  }, [close, handleSaveDraft]);
 
   const handleSlashCommandSelect = (command: (typeof SLASH_COMMANDS)[0]) => {
     selectSlashCommand(command);
@@ -638,6 +694,16 @@ function CreateMemoryBase({
     !isUploading &&
     savedDraftSignature === currentDraftSignature &&
     drafts.some((draft) => getDraftSignature(draft) === savedDraftSignature);
+  latestCloseStateRef.current = {
+    dirty:
+      files.length > 0 ||
+      values.title.trim().length > 0 ||
+      bodyPlainText.trim().length > 0 ||
+      tags.length > 0 ||
+      selectedAccess.length > 0 ||
+      shareAudience !== "private",
+    saved: isCurrentDraftSaved,
+  };
   const inlineAttachmentFiles = useMemo(() => files, [files]);
   const mediaFiles = useMemo(
     () => files.filter((file) => getUploadDisplayKind(resolveUploadMimeType(file)) === "media"),
@@ -833,20 +899,37 @@ function CreateMemoryBase({
       ) : null}
       {drafts.length > 0 ? (
         <>
-          <DropdownMenuLabel className="font-inter text-xs font-semibold text-text-neutral-strong">
-            Story composer
+          <DropdownMenuLabel
+            className={cn(
+              "font-inter text-xs font-semibold text-text-neutral-strong",
+              isDesktopComposer && "flex items-center justify-between gap-2",
+            )}
+          >
+            <span>Story composer</span>
+            {isDesktopComposer ? (
+              <Button
+                type="button"
+                onClick={handleClearAllDrafts}
+                variant="ghost"
+                size="xs"
+              >
+                Clear all
+              </Button>
+            ) : null}
           </DropdownMenuLabel>
-          <div className="mb-1 flex items-center justify-end px-2 py-1">
-            <Button
-              type="button"
-              onClick={handleClearAllDrafts}
-              variant="ghost"
-              size="sm"
-              className="h-auto px-1 py-0 text-xs text-text-neutral-weak hover:text-text-neutral-strong"
-            >
-              Clear all
-            </Button>
-          </div>
+          {!isDesktopComposer ? (
+            <div className="mb-1 flex items-center justify-end px-2 py-1">
+              <Button
+                type="button"
+                onClick={handleClearAllDrafts}
+                variant="ghost"
+                size="sm"
+                className="h-auto px-1 py-0 text-xs text-text-neutral-weak hover:text-text-neutral-strong"
+              >
+                Clear all
+              </Button>
+            </div>
+          ) : null}
           {drafts.map((draft) => (
             <div
               key={draft.id}
@@ -1299,8 +1382,49 @@ function CreateMemoryBase({
     </div>
   );
 
-  const closeConfirmationPortal = showCloseConfirmation
-    ? createPortal(
+  const closeConfirmationPortal = variant === "next" && !isMobile ? (
+    <Dialog
+      open={showCloseConfirmation}
+      onOpenChange={(open) => setShowCloseConfirmation(open)}
+    >
+      <DialogContent
+        showCloseButton={false}
+        overlayClassName="z-[300]"
+        className="z-[310] gap-5 rounded-[24px] border border-stroke-neutral-weak bg-[#fffdf9] sm:max-w-[460px]"
+        onClick={(event) => event.stopPropagation()}
+        onEscapeKeyDown={(event) => event.stopPropagation()}
+      >
+        <DialogHeader>
+          <DialogTitle className="font-geist text-xl font-semibold text-text-neutral-strong">
+            Save this story?
+          </DialogTitle>
+          <DialogDescription className="font-geist leading-6 text-text-neutral-weak">
+            You have unsaved changes. Save them as a draft before leaving, or discard them.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter className="gap-2 sm:justify-end">
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => setShowCloseConfirmation(false)}
+          >
+            Keep editing
+          </Button>
+          <Button type="button" variant="destructive" onClick={handleConfirmClose}>
+            Discard
+          </Button>
+          <Button
+            type="button"
+            onClick={handleSaveDraftAndClose}
+            disabled={isUploading}
+          >
+            Save draft and exit
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  ) : showCloseConfirmation ? (
+    createPortal(
       <CloseWithFilesConfirmation
         open={showCloseConfirmation}
         close={() => setShowCloseConfirmation(false)}
@@ -1308,7 +1432,7 @@ function CreateMemoryBase({
       />,
       document.body,
     )
-    : null;
+  ) : null;
 
   const resetVideoRecorder = () => {
     videoRecorderRef.current?.reset?.();
@@ -1443,33 +1567,30 @@ function CreateMemoryBase({
   }
 
   const nextToolbarButton = (
-    isActive: boolean,
+    pressed: boolean,
     onClick: () => void,
     children: ReactNode,
     title?: string,
   ) => (
-    <Button
+    <Toggle
       type="button"
       onMouseDown={(e) => e.preventDefault()}
-      onClick={onClick}
+      pressed={pressed}
+      onPressedChange={onClick}
       title={title}
       aria-label={title}
-      variant="ghost"
-      size="icon"
-      className={cn(
-        "size-8 rounded-[8px] text-icon-neutral-strong transition-colors hover:bg-fill-neutral-weak [&_svg]:pointer-events-none",
-        isActive && "bg-fill-neutral-weak text-text-neutral-strong",
-      )}
+      size="sm"
+      className="size-8 min-w-8 rounded-[8px] px-0 text-icon-neutral-strong transition-colors hover:bg-fill-neutral-weak data-[state=on]:bg-fill-neutral-weak data-[state=on]:text-text-neutral-strong [&_svg]:pointer-events-none"
     >
       {children}
-    </Button>
+    </Toggle>
   );
 
   return (
     <>
       <div
         data-testid="desktop-story-environment"
-        className="absolute inset-0 overflow-auto bg-cover bg-center p-4 xl:p-9"
+        className="absolute inset-0 overflow-auto bg-cover bg-center py-4 pl-0 pr-4 xl:py-9 xl:pl-0 xl:pr-9 min-[1900px]:px-9"
         style={{
           backgroundImage: `linear-gradient(rgba(18, 12, 8, 0.22), rgba(18, 12, 8, 0.22)), url(${scenicBackground})`,
         }}
@@ -1478,7 +1599,7 @@ function CreateMemoryBase({
         {fileInputs}
         <main
           data-testid="desktop-journal-shell"
-          className="add-story-journal relative mx-auto h-[calc(100dvh-32px)] min-h-[720px] w-full max-w-[1440px] overflow-hidden rounded-[30px] shadow-[0_28px_80px_rgba(20,12,7,0.28)] xl:h-[calc(100dvh-72px)]"
+          className="add-story-journal relative mx-0 h-[calc(100dvh-32px)] min-h-[720px] w-full max-w-[1440px] overflow-hidden rounded-l-none rounded-r-[30px] shadow-[0_28px_80px_rgba(20,12,7,0.28)] xl:h-[calc(100dvh-72px)] min-[1900px]:mx-auto"
           onKeyDown={(event) => {
             if (event.key !== "Escape" || (!showLinkInput && !showEmoji)) return;
             event.stopPropagation();
@@ -1496,7 +1617,7 @@ function CreateMemoryBase({
             src={albumArtwork}
             alt=""
             aria-hidden="true"
-            className="pointer-events-none absolute inset-0 size-full object-cover object-left-top"
+            className="pointer-events-none absolute inset-0 size-full rounded-l-none rounded-r-[30px] object-cover object-left-top"
           />
           <div className="relative grid h-full min-h-[720px] grid-rows-[auto_minmax(0,1fr)] gap-5 py-6 pl-[max(225px,22%,calc((100dvh-32px)*0.31))] pr-6 xl:gap-8 xl:py-10 xl:pl-[max(250px,22%,calc((100dvh-72px)*0.31))] xl:pr-10">
             <div>
@@ -1548,13 +1669,16 @@ function CreateMemoryBase({
               </header>
               {showUploadGate ? <div className="mt-4">{uploadGateBanner}</div> : null}
             </div>
-            <div className="grid min-h-0 grid-cols-[minmax(0,1fr)_clamp(250px,21vw,292px)] gap-5 xl:gap-7">
+            <div
+              className="story-composer-layout grid min-h-0 gap-5 xl:gap-7"
+              data-details-open={isDetailsOpen}
+            >
               <section className="flex min-h-0 min-w-0 flex-col pr-1">
                 <div className="flex min-h-0 flex-1 flex-col">
                   <div className="hide-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain px-1 pb-2 pt-8 xl:px-3 xl:pt-10">
                     <div
                       data-testid="desktop-composer-scroll-surface"
-                      className="flex min-h-full min-w-0 flex-col"
+                      className="flex min-h-full min-w-0 max-w-[760px] flex-col"
                     >
                       <textarea
                         ref={titleTextareaRef}
@@ -1634,86 +1758,65 @@ function CreateMemoryBase({
                           <DropdownMenuContent
                             side="top"
                             align="start"
-                            sideOffset={10}
                             onEscapeKeyDown={(event) => event.stopPropagation()}
-                            className="z-[220] min-w-[11rem] rounded-[16px] border border-[rgba(15,7,0,0.12)] bg-[#fffdf9] p-1 text-popover-foreground shadow-[0_12px_24px_rgba(15,7,0,0.12)]"
+                            className="z-[220]"
                           >
-                            <DropdownMenuLabel className="px-3 pb-1 pt-2 font-geist text-[10px] font-semibold uppercase tracking-[0.12em] text-[rgba(15,7,0,0.45)]">
-                              Choose upload type
-                            </DropdownMenuLabel>
-                            <DropdownMenuSeparator className="mx-2 my-1 bg-[rgba(15,7,0,0.08)]" />
-                            <DropdownMenuItem
-                              className="gap-2 rounded-[12px] px-3 py-2 font-geist text-[15px] font-medium text-[rgba(15,7,0,0.9)] focus:bg-[rgba(15,7,0,0.04)]"
-                              onClick={() => fileInputImageRef.current?.click()}
-                            >
-                              <ImageIcon className="size-4 text-[#ff5e00]" />
-                              Photos
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              className="gap-2 rounded-[12px] px-3 py-2 font-geist text-[15px] font-medium text-[rgba(15,7,0,0.9)] focus:bg-[rgba(15,7,0,0.04)]"
-                              onClick={() => fileInputVideoRef.current?.click()}
-                            >
-                              <Video className="size-4 text-[#ff5e00]" />
-                              Videos
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              className="gap-2 rounded-[12px] px-3 py-2 font-geist text-[15px] font-medium text-[rgba(15,7,0,0.9)] focus:bg-[rgba(15,7,0,0.04)]"
-                              onClick={() => fileInputAudioRef.current?.click()}
-                            >
-                              <Music className="size-4 text-[#ff5e00]" />
-                              Audio
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              className="gap-2 rounded-[12px] px-3 py-2 font-geist text-[15px] font-medium text-[rgba(15,7,0,0.9)] focus:bg-[rgba(15,7,0,0.04)]"
-                              onClick={() => fileInputDocsRef.current?.click()}
-                            >
-                              <Paperclip className="size-4 text-[#ff5e00]" />
-                              Documents
-                            </DropdownMenuItem>
+                            <DropdownMenuGroup>
+                              <DropdownMenuLabel>Choose upload type</DropdownMenuLabel>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onSelect={() => fileInputImageRef.current?.click()}>
+                                <ImageIcon />
+                                Photos
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onSelect={() => fileInputVideoRef.current?.click()}>
+                                <Video />
+                                Videos
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onSelect={() => fileInputAudioRef.current?.click()}>
+                                <Music />
+                                Audio
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onSelect={() => fileInputDocsRef.current?.click()}>
+                                <Paperclip />
+                                Documents
+                              </DropdownMenuItem>
+                            </DropdownMenuGroup>
                           </DropdownMenuContent>
                         </DropdownMenu>
 
                         <div ref={emojiPickerRef} className="relative">
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => setShowEmoji((p) => !p)}
-                            className="size-9 rounded-[10px] text-icon-neutral-strong hover:bg-fill-neutral-weak"
-                            aria-label="Insert emoji"
-                            title="Insert emoji"
-                          >
-                            <Smile className="size-5" />
-                          </Button>
-                          {showEmoji &&
-                            createPortal(
-                              <div
-                                ref={emojiPickerPortalRef}
-                                className="fixed z-[9999]"
-                                style={(() => {
-                                  const rect = emojiPickerRef.current?.getBoundingClientRect();
-                                  return rect
-                                    ? {
-                                        left: rect.left,
-                                        bottom: window.innerHeight - rect.top + 12,
-                                      }
-                                    : { left: 0, bottom: 0 };
-                                })()}
+                          <Popover open={showEmoji} onOpenChange={setShowEmoji}>
+                            <PopoverTrigger asChild>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="size-9 rounded-[10px] text-icon-neutral-strong hover:bg-fill-neutral-weak"
+                                aria-label="Insert emoji"
+                                title="Insert emoji"
                               >
-                                <Card className="overflow-hidden border-stroke-neutral-weak p-0 shadow-lg">
-                                  <Picker
-                                    data={emojiData}
-                                    onEmojiSelect={(e: { native: string }) => {
-                                      editor?.chain().focus().insertContent(e.native).run();
-                                      setShowEmoji(false);
-                                    }}
-                                    theme="light"
-                                    previewPosition="none"
-                                  />
-                                </Card>
-                              </div>,
-                              document.body,
-                            )}
+                                <span aria-hidden className="text-lg leading-none">🙂</span>
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent
+                              ref={emojiPickerPortalRef}
+                              side="top"
+                              align="start"
+                              sideOffset={12}
+                              onEscapeKeyDown={(event) => event.stopPropagation()}
+                              className="z-[220] w-auto overflow-hidden border-stroke-neutral-weak p-0 shadow-lg"
+                            >
+                              <Picker
+                                data={emojiData}
+                                onEmojiSelect={(e: { native: string }) => {
+                                  editor?.chain().focus().insertContent(e.native).run();
+                                  setShowEmoji(false);
+                                }}
+                                theme="light"
+                                previewPosition="none"
+                              />
+                            </PopoverContent>
+                          </Popover>
                         </div>
 
                         <Separator orientation="vertical" className="h-5 bg-stroke-neutral-weak" />
@@ -1753,38 +1856,38 @@ function CreateMemoryBase({
 
                       <div className="flex min-w-0 flex-wrap items-center gap-1">
                         {nextToolbarButton(
-                          !!editor?.isActive("bold"),
+                          formattingState.bold,
                           () => editor?.chain().focus().toggleBold().run(),
                           <span className="font-geist text-sm font-bold leading-none text-text-neutral-strong">B</span>,
                           "Bold",
                         )}
                         {nextToolbarButton(
-                          !!editor?.isActive("italic"),
+                          formattingState.italic,
                           () => editor?.chain().focus().toggleItalic().run(),
                           <span className="font-geist text-sm italic leading-none text-text-neutral-strong">I</span>,
                           "Italic",
                         )}
                         {nextToolbarButton(
-                          !!editor?.isActive("strike"),
+                          formattingState.strike,
                           () => editor?.chain().focus().toggleStrike().run(),
                           <span className="font-geist text-sm leading-none line-through text-text-neutral-strong">S</span>,
                           "Strikethrough",
                         )}
                         {nextToolbarButton(
-                          !!editor?.isActive("underline"),
+                          formattingState.underline,
                           () => editor?.chain().focus().toggleUnderline().run(),
                           <span className="font-geist text-sm leading-none underline text-text-neutral-strong">U</span>,
                           "Underline",
                         )}
                         {nextToolbarButton(
-                          !!editor?.isActive("link"),
+                          formattingState.link || showLinkInput,
                           handleLinkClick,
                           <LinkIcon width={15} height={10} />,
                           "Link",
                         )}
                         <Separator orientation="vertical" className="h-5 bg-stroke-neutral-weak" />
                         {nextToolbarButton(
-                          !!editor?.isActive("bulletList"),
+                          formattingState.bulletList,
                           () => editor?.chain().focus().toggleBulletList().run(),
                           <UnorderedListIcon width={16} height={14} />,
                           "Bullet list",
@@ -1793,10 +1896,40 @@ function CreateMemoryBase({
                     </div>
                   </div>
                 </div>
-
               </section>
-              <aside className="flex min-h-0 min-w-0 flex-col overflow-hidden rounded-[18px] border border-stroke-neutral-weak bg-fill-neutral-weaker">
-                <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+              <div className="relative min-h-0 min-w-0">
+                <div
+                  className="story-details-trigger-rail absolute inset-0 flex items-start justify-start pt-8 xl:pt-10"
+                  data-visible={!isDetailsOpen}
+                  aria-hidden={isDetailsOpen}
+                  inert={isDetailsOpen}
+                >
+                  <Button
+                    ref={detailsTriggerRef}
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    aria-expanded={isDetailsOpen}
+                    aria-controls="story-details-panel"
+                    onClick={() => {
+                      hasToggledDetailsRef.current = true;
+                      setIsDetailsOpen(true);
+                    }}
+                    className="gap-2 px-2 font-geist font-semibold text-text-neutral-strong hover:bg-fill-neutral-weak"
+                  >
+                    <ListFilter aria-hidden className="size-4 text-icon-neutral-strong" />
+                    Story Details
+                  </Button>
+                </div>
+
+                <aside
+                  id="story-details-panel"
+                  className="story-details-panel absolute inset-0 flex min-h-0 min-w-0 flex-col overflow-hidden rounded-[18px] border border-stroke-neutral-weak bg-fill-neutral-weaker"
+                  data-visible={isDetailsOpen}
+                  aria-hidden={!isDetailsOpen}
+                  inert={!isDetailsOpen}
+                >
+                  <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
                   <Tabs
                     value={activeSidebarTab}
                     onValueChange={(value) => {
@@ -1806,20 +1939,36 @@ function CreateMemoryBase({
                     }}
                     className="min-h-0 flex-1 flex-col gap-0"
                   >
-                    <TabsList className="mx-3 mb-5 mt-4 h-9 shrink-0 rounded-[10px] bg-fill-neutral-weaker p-0">
-                      <TabsTrigger
-                        value="properties"
-                        className="rounded-[8px] px-3 font-geist text-sm text-text-neutral-weak data-[state=active]:bg-fill-neutral-weak data-[state=active]:text-text-neutral-strong"
+                    <div className="mb-5 flex shrink-0 items-center gap-1 px-3 pt-4">
+                      <TabsList className="h-9 min-w-0 flex-1 rounded-[10px] bg-fill-neutral-weaker p-0">
+                        <TabsTrigger
+                          ref={detailsTabRef}
+                          value="properties"
+                          className="rounded-[8px] px-3 font-geist text-sm text-text-neutral-weak data-[state=active]:bg-fill-neutral-weak data-[state=active]:text-text-neutral-strong"
+                        >
+                          Story Details
+                        </TabsTrigger>
+                        <TabsTrigger
+                          value="assistant"
+                          className="rounded-[8px] px-3 font-geist text-sm text-text-neutral-weak data-[state=active]:bg-fill-neutral-weak data-[state=active]:text-text-neutral-strong"
+                        >
+                          Assistant
+                        </TabsTrigger>
+                      </TabsList>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-sm"
+                        aria-label="Collapse story details"
+                        onClick={() => {
+                          hasToggledDetailsRef.current = true;
+                          setIsDetailsOpen(false);
+                        }}
+                        className="rounded-[8px] text-icon-neutral-weak hover:bg-fill-neutral-weak hover:text-icon-neutral-strong"
                       >
-                        Story Details
-                      </TabsTrigger>
-                      <TabsTrigger
-                        value="assistant"
-                        className="rounded-[8px] px-3 font-geist text-sm text-text-neutral-weak data-[state=active]:bg-fill-neutral-weak data-[state=active]:text-text-neutral-strong"
-                      >
-                        Assistant
-                      </TabsTrigger>
-                    </TabsList>
+                        <PanelRightClose aria-hidden className="size-4" />
+                      </Button>
+                    </div>
 
                     <TabsContent value="properties" className="hide-scrollbar min-h-0 overflow-y-auto px-4 pb-5">
                       <div className="flex flex-col gap-6">
@@ -1905,14 +2054,9 @@ function CreateMemoryBase({
                     </TabsContent>
                   </Tabs>
 
-                  <Separator />
-                  <div className="flex shrink-0 justify-end px-4 py-4">
-                    <Button type="button" onClick={handleSaveDraft} variant="outline">
-                      Save Draft
-                    </Button>
                   </div>
-                </div>
-              </aside>
+                </aside>
+              </div>
             </div>
           </div>
         </main>

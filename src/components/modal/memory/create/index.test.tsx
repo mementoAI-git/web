@@ -19,6 +19,17 @@ const { editorGetHTMLMock, editorGetTextMock, uploadState } = vi.hoisted(() => (
   editorGetTextMock: vi.fn(() => ""),
   uploadState: { files: null as IOnUploadPayload[] | null },
 }));
+const { editorIsActiveMock, editorCommandMocks } = vi.hoisted(() => ({
+  editorIsActiveMock: vi.fn(() => false),
+  editorCommandMocks: {
+    focus: vi.fn(),
+    toggleBold: vi.fn(),
+    toggleItalic: vi.fn(),
+    toggleStrike: vi.fn(),
+    toggleUnderline: vi.fn(),
+    toggleBulletList: vi.fn(),
+  },
+}));
 
 vi.mock("@/hooks/use-file-upload", async (importOriginal) => {
   const original = await importOriginal<typeof import("@/hooks/use-file-upload")>();
@@ -346,7 +357,12 @@ vi.mock("@tiptap/react", () => {
     return new Proxy(api, {
       get(t, p) {
         if (p === "run") return t.run;
-        return () => chainable();
+        return (...args: unknown[]) => {
+          if (typeof p === "string" && p in editorCommandMocks) {
+            editorCommandMocks[p as keyof typeof editorCommandMocks](...args);
+          }
+          return chainable();
+        };
       },
     });
   }
@@ -354,7 +370,7 @@ vi.mock("@tiptap/react", () => {
     getHTML: editorGetHTMLMock,
     getText: editorGetTextMock,
     getAttributes: () => ({}),
-    isActive: () => false,
+    isActive: editorIsActiveMock,
     commands: { focus: editorFocusMock, setContent: editorSetContentMock },
     chain: () => chainable(),
     options: {editorProps: {}},
@@ -371,6 +387,10 @@ vi.mock("@tiptap/react", () => {
   };
   return {
     useEditor: () => editorMock,
+    useEditorState: ({ selector }: { selector: (snapshot: { editor: typeof editorMock | null }) => unknown }) => {
+      selector({ editor: null });
+      return selector({ editor: editorMock });
+    },
     EditorContent: () => <div data-testid="mock-editor" tabIndex={-1} />,
   };
 });
@@ -424,6 +444,8 @@ describe("CreateMemory", () => {
     editorSetContentMock.mockReset();
     editorGetHTMLMock.mockReset().mockReturnValue("");
     editorGetTextMock.mockReset().mockReturnValue("");
+    editorIsActiveMock.mockReset().mockReturnValue(false);
+    Object.values(editorCommandMocks).forEach((command) => command.mockReset());
     uploadState.files = null;
   });
 
@@ -490,6 +512,7 @@ describe("CreateMemory", () => {
     expect(attachmentButton).toHaveClass("text-text-inverse-strong");
     await user.click(attachmentButton);
 
+    expect(attachmentButton).toHaveAttribute("data-slot", "dropdown-menu-trigger");
     expect(screen.getByText("Choose upload type")).toBeInTheDocument();
     expect(screen.getAllByText("Photos").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Videos").length).toBeGreaterThan(0);
@@ -497,25 +520,83 @@ describe("CreateMemory", () => {
     expect(screen.getAllByText("Documents").length).toBeGreaterThan(0);
   });
 
-  it.each(["Drafts", "Add attachment"])(
-    "dismisses the desktop %s menu with Escape without closing the composer",
-    async (menuName) => {
-      const user = userEvent.setup();
-      renderWithProviders(<ComposerModal />, { auth: true });
+  it("uses the default shadcn presentation for the desktop attachment menu", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<CreateMemory data={{}} isMobile={false} />, { auth: true });
 
-      await user.click(screen.getByRole("button", { name: "Open composer" }));
-      await user.click(screen.getByRole("button", { name: menuName }));
-      expect(screen.getByRole("menu")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Add attachment" }));
 
-      await user.keyboard("{Escape}");
+    const label = screen.getByText("Choose upload type").closest('[data-slot="dropdown-menu-label"]');
+    const photoItem = screen.getByRole("menuitem", { name: "Photos" });
+    const photoIcon = photoItem?.querySelector("svg");
 
-      expect(screen.queryByRole("menu")).not.toBeInTheDocument();
-      expect(screen.getByTestId("desktop-journal-shell")).toBeInTheDocument();
+    expect(label).not.toHaveClass("font-geist", "uppercase");
+    expect(photoItem).not.toHaveClass("font-geist", "text-[15px]");
+    expect(photoIcon).not.toHaveClass("text-[#ff5e00]");
+    expect(photoItem?.closest('[data-slot="dropdown-menu-group"]')).not.toBeNull();
+  });
 
-      await user.keyboard("{Escape}");
-      expect(screen.queryByTestId("desktop-journal-shell")).not.toBeInTheDocument();
-    },
-  );
+  it.each(["Drafts"])("dismisses the desktop %s menu with Escape without closing the composer", async (menuName) => {
+    const user = userEvent.setup();
+    renderWithProviders(<ComposerModal />, { auth: true });
+
+    await user.click(screen.getByRole("button", { name: "Open composer" }));
+    await user.click(screen.getByRole("button", { name: menuName }));
+    expect(screen.getByRole("menu")).toBeInTheDocument();
+
+    await user.keyboard("{Escape}");
+
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+    expect(screen.getByTestId("desktop-journal-shell")).toBeInTheDocument();
+
+    await user.keyboard("{Escape}");
+    expect(screen.queryByTestId("desktop-journal-shell")).not.toBeInTheDocument();
+  });
+
+  it("dismisses the desktop attachment dropdown with Escape without closing the composer", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<ComposerModal />, { auth: true });
+    await user.click(screen.getByRole("button", { name: "Open composer" }));
+
+    await user.click(screen.getByRole("button", { name: "Add attachment" }));
+    expect(screen.getByRole("menu")).toBeInTheDocument();
+
+    await user.keyboard("{Escape}");
+
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+    expect(screen.getByTestId("desktop-journal-shell")).toBeInTheDocument();
+  });
+
+  it("uses shadcn toggles that reflect the current editor formatting state", () => {
+    editorIsActiveMock.mockImplementation((format: string) =>
+      ["bold", "link", "bulletList"].includes(format),
+    );
+    renderWithProviders(<CreateMemory data={{}} isMobile={false} />, { auth: true });
+
+    for (const label of ["Bold", "Italic", "Strikethrough", "Underline", "Link", "Bullet list"]) {
+      expect(screen.getByRole("button", { name: label })).toHaveAttribute("data-slot", "toggle");
+    }
+    expect(screen.getByRole("button", { name: "Bold" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: "Italic" })).toHaveAttribute("aria-pressed", "false");
+    expect(screen.getByRole("button", { name: "Link" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: "Bullet list" })).toHaveAttribute("aria-pressed", "true");
+  });
+
+  it.each([
+    ["Bold", "toggleBold"],
+    ["Italic", "toggleItalic"],
+    ["Strikethrough", "toggleStrike"],
+    ["Underline", "toggleUnderline"],
+    ["Bullet list", "toggleBulletList"],
+  ] as const)("runs the Tiptap %s command without dropping editor focus", async (label, command) => {
+    const user = userEvent.setup();
+    renderWithProviders(<CreateMemory data={{}} isMobile={false} />, { auth: true });
+
+    await user.click(screen.getByRole("button", { name: label }));
+
+    expect(editorCommandMocks.focus).toHaveBeenCalled();
+    expect(editorCommandMocks[command]).toHaveBeenCalled();
+  });
 
   it("dismisses desktop sharing options with Escape without closing the composer", async () => {
     const user = userEvent.setup();
@@ -540,11 +621,15 @@ describe("CreateMemory", () => {
       const user = userEvent.setup();
       renderWithProviders(<ComposerModal />, { auth: true });
       await user.click(screen.getByRole("button", { name: "Open composer" }));
+      if (triggerName === "Insert emoji") {
+        expect(screen.getByRole("button", { name: triggerName })).toHaveTextContent("🙂");
+      }
       await user.click(screen.getByRole("button", { name: triggerName }));
       expect(triggerName === "Link"
         ? screen.getByPlaceholderText("Enter text to display...")
         : screen.getByTestId("emoji-mart-mock")).toBeInTheDocument();
       if (triggerName === "Insert emoji") {
+        expect(screen.getByTestId("emoji-mart-mock").closest('[data-slot="popover-content"]')).not.toBeNull();
         const emojiSearch = screen.getByRole("textbox", { name: "Search emojis" });
         await user.click(emojiSearch);
         expect(emojiSearch).toHaveFocus();
@@ -563,9 +648,85 @@ describe("CreateMemory", () => {
     },
   );
 
+  it("starts with Story Details collapsed and restores focus after closing it", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<CreateMemory data={{}} isMobile={false} />, { auth: true });
+
+    const openDetails = screen.getByRole("button", { name: "Story Details" });
+    expect(openDetails).toHaveAttribute("aria-expanded", "false");
+    expect(openDetails).toHaveAttribute("aria-controls", "story-details-panel");
+    expect(screen.queryByRole("tab", { name: "Story Details" })).not.toBeInTheDocument();
+
+    await user.click(openDetails);
+
+    const detailsTab = screen.getByRole("tab", { name: "Story Details" });
+    expect(screen.getByRole("complementary")).toHaveAttribute("id", "story-details-panel");
+    expect(detailsTab).toHaveFocus();
+
+    await user.click(screen.getByRole("button", { name: "Collapse story details" }));
+
+    const restoredTrigger = screen.getByRole("button", { name: "Story Details" });
+    expect(restoredTrigger).toHaveAttribute("aria-expanded", "false");
+    expect(restoredTrigger).toHaveFocus();
+  });
+
+  it("removes manual draft saving from Story Details", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<CreateMemory data={{}} isMobile={false} />, { auth: true });
+
+    await user.click(screen.getByRole("button", { name: "Story Details" }));
+
+    expect(screen.queryByRole("button", { name: "Save Draft" })).not.toBeInTheDocument();
+  });
+
+  it("offers shadcn draft actions when closing an unsaved desktop story", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<ComposerModal />, { auth: true });
+    await user.click(screen.getByRole("button", { name: "Open composer" }));
+    await user.type(screen.getByPlaceholderText(/give this story a title/i), "A story to keep");
+
+    await user.click(screen.getByRole("button", { name: "Close" }));
+
+    const dialog = screen.getByRole("dialog", { name: "Save this story?" });
+    expect(dialog).toHaveAttribute("data-slot", "dialog-content");
+    expect(dialog).toHaveClass("z-[310]");
+    expect(document.querySelector('[data-slot="dialog-overlay"]')).toHaveClass("z-[300]");
+    expect(screen.getByRole("button", { name: "Save draft and exit" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Discard" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Keep editing" })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Keep editing" }));
+    expect(screen.getByTestId("desktop-journal-shell")).toBeInTheDocument();
+  });
+
+  it("saves an unsaved desktop story before exiting", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<ComposerModal />, { auth: true });
+    await user.click(screen.getByRole("button", { name: "Open composer" }));
+    await user.type(screen.getByPlaceholderText(/give this story a title/i), "A saved exit");
+    await user.click(screen.getByRole("button", { name: "Close" }));
+
+    await user.click(screen.getByRole("button", { name: "Save draft and exit" }));
+
+    expect(JSON.parse(localStorage.getItem("create-memory-drafts") ?? "[]")[0].title).toBe("A saved exit");
+    expect(screen.queryByTestId("desktop-journal-shell")).not.toBeInTheDocument();
+  });
+
+  it("closes an empty desktop story without prompting", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<ComposerModal />, { auth: true });
+    await user.click(screen.getByRole("button", { name: "Open composer" }));
+
+    await user.click(screen.getByRole("button", { name: "Close" }));
+
+    expect(screen.queryByRole("dialog", { name: "Save this story?" })).not.toBeInTheDocument();
+    expect(screen.queryByTestId("desktop-journal-shell")).not.toBeInTheDocument();
+  });
+
   it("shows assistant content when the Assistant tab is selected", async () => {
     const user = userEvent.setup();
     renderWithProviders(<CreateMemory data={{}} isMobile={false} />, { auth: true });
+    await user.click(screen.getByRole("button", { name: "Story Details" }));
 
     const detailsTab = screen.getByRole("tab", { name: "Story Details" });
     const assistantTab = screen.getByRole("tab", { name: "Assistant" });
@@ -587,8 +748,10 @@ describe("CreateMemory", () => {
     expect(screen.getByRole("tabpanel", { name: "Story Details" })).toBeVisible();
   });
 
-  it("stacks the Story Details tabs above their scrollable panel", () => {
+  it("stacks the Story Details tabs above their scrollable panel", async () => {
+    const user = userEvent.setup();
     renderWithProviders(<CreateMemory data={{}} isMobile={false} />, { auth: true });
+    await user.click(screen.getByRole("button", { name: "Story Details" }));
 
     expect(screen.getByRole("tablist").closest('[data-slot="tabs"]')).toHaveClass("flex-col");
   });
@@ -597,28 +760,75 @@ describe("CreateMemory", () => {
     const user = userEvent.setup();
     renderWithProviders(<CreateMemory data={{}} isMobile={false} />, { auth: true });
 
+    await user.click(screen.getByRole("button", { name: "Story Details" }));
     await user.click(screen.getByRole("tab", { name: "Assistant" }));
     const assistantPanel = screen.getByRole("tabpanel", { name: "Assistant" });
     expect(assistantPanel).toHaveClass("data-[state=active]:flex", "data-[state=active]:flex-col");
     expect(screen.queryByRole("tabpanel", { name: "Story Details" })).not.toBeInTheDocument();
   });
 
-  it("reports a saved local draft only while the saved content matches the composer", async () => {
-    const user = userEvent.setup();
+  it("reports an autosaved local draft only while the saved content matches the composer", async () => {
+    vi.useFakeTimers();
+    try {
+      renderWithProviders(<CreateMemory data={{}} isMobile={false} />, { auth: true });
+
+      const titleInput = screen.getByPlaceholderText(/give this story a title/i);
+      expect(screen.getByRole("status")).toHaveTextContent("Not saved");
+
+      fireEvent.change(titleInput, { target: { value: "A day to remember" } });
+      await act(async () => { await vi.advanceTimersByTimeAsync(900); });
+
+      expect(screen.getByRole("status")).toHaveTextContent("Draft saved");
+      expect(JSON.parse(localStorage.getItem("create-memory-drafts") ?? "[]")[0].title).toBe("A day to remember");
+
+      fireEvent.change(titleInput, { target: { value: "A day to remember together" } });
+
+      expect(screen.getByRole("status")).toHaveTextContent("Not saved");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("updates one autosaved draft instead of creating a new draft for every edit", async () => {
+    vi.useFakeTimers();
+    try {
+      renderWithProviders(<CreateMemory data={{}} isMobile={false} />, { auth: true });
+      const titleInput = screen.getByPlaceholderText(/give this story a title/i);
+
+      fireEvent.change(titleInput, { target: { value: "First title" } });
+      await act(async () => { await vi.advanceTimersByTimeAsync(900); });
+
+      const firstSave = JSON.parse(localStorage.getItem("create-memory-drafts") ?? "[]");
+      expect(firstSave).toHaveLength(1);
+      const draftId = firstSave[0].id;
+
+      fireEvent.change(titleInput, { target: { value: "Updated title" } });
+      await act(async () => { await vi.advanceTimersByTimeAsync(900); });
+
+      const secondSave = JSON.parse(localStorage.getItem("create-memory-drafts") ?? "[]");
+      expect(secondSave).toHaveLength(1);
+      expect(secondSave[0]).toMatchObject({ id: draftId, title: "Updated title" });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("keeps Clear all in the Story composer dropdown header", async () => {
+    vi.useFakeTimers();
     renderWithProviders(<CreateMemory data={{}} isMobile={false} />, { auth: true });
+    fireEvent.change(screen.getByPlaceholderText(/give this story a title/i), {
+      target: { value: "Menu draft" },
+    });
+    await act(async () => { await vi.advanceTimersByTimeAsync(900); });
+    vi.useRealTimers();
 
-    const titleInput = screen.getByPlaceholderText(/give this story a title/i);
-    expect(screen.getByRole("status")).toHaveTextContent("Not saved");
+    const user = userEvent.setup();
+    await user.click(screen.getByRole("button", { name: "Drafts" }));
 
-    await user.type(titleInput, "A day to remember");
-    await user.click(screen.getByRole("button", { name: "Save Draft" }));
-
-    expect(screen.getByRole("status")).toHaveTextContent("Draft saved");
-    expect(JSON.parse(localStorage.getItem("create-memory-drafts") ?? "[]")[0].title).toBe("A day to remember");
-
-    await user.type(titleInput, " together");
-
-    expect(screen.getByRole("status")).toHaveTextContent("Not saved");
+    const clearAll = screen.getByRole("button", { name: "Clear all" });
+    const header = clearAll.closest('[data-slot="dropdown-menu-label"]');
+    expect(header).toHaveTextContent("Story composer");
+    expect(header).toHaveClass("flex", "justify-between");
   });
 
   it.each(["A local story", "  A local story  "])("marks edits saved only after local autosave persists the raw title %j and body", async (title) => {
@@ -685,14 +895,13 @@ describe("CreateMemory", () => {
     expect(JSON.parse(localStorage.getItem("create-memory-drafts") ?? "[]")[0].title).toBe(title);
   });
 
-  it("keeps a manually saved whitespace-title draft saved when its pending autosave completes", async () => {
+  it("keeps whitespace in a title when its pending autosave completes", async () => {
     vi.useFakeTimers();
     try {
       renderWithProviders(<CreateMemory data={{}} isMobile={false} />, { auth: true });
       const title = "  A day to remember  ";
       fireEvent.change(screen.getByPlaceholderText(/give this story a title/i), { target: { value: title } });
-      fireEvent.click(screen.getByRole("button", { name: "Save Draft" }));
-      expect(screen.getByRole("status")).toHaveTextContent("Draft saved");
+      expect(screen.getByRole("status")).toHaveTextContent("Not saved");
 
       await act(async () => { await vi.advanceTimersByTimeAsync(900); });
 
@@ -704,50 +913,62 @@ describe("CreateMemory", () => {
   });
 
   it("marks a saved draft unsaved when only the body formatting changes", async () => {
-    const user = userEvent.setup();
-    editorGetTextMock.mockReturnValue("A warm afternoon");
-    editorGetHTMLMock.mockReturnValue("<p>A warm afternoon</p>");
-    const container = document.createElement("div");
-    document.body.appendChild(container);
-    const { rerender } = renderWithProviders(<CreateMemory data={{}} isMobile={false} />, { auth: true, container });
+    vi.useFakeTimers();
+    try {
+      editorGetTextMock.mockReturnValue("A warm afternoon");
+      editorGetHTMLMock.mockReturnValue("<p>A warm afternoon</p>");
+      const container = document.createElement("div");
+      document.body.appendChild(container);
+      const { rerender } = renderWithProviders(<CreateMemory data={{}} isMobile={false} />, { auth: true, container });
 
-    await user.click(screen.getByRole("button", { name: "Save Draft" }));
-    expect(screen.getByRole("status")).toHaveTextContent("Draft saved");
-    expect(JSON.parse(localStorage.getItem("create-memory-drafts") ?? "[]")[0].body).toBe("<p>A warm afternoon</p>");
+      await act(async () => { await vi.advanceTimersByTimeAsync(900); });
+      expect(screen.getByRole("status")).toHaveTextContent("Draft saved");
+      expect(JSON.parse(localStorage.getItem("create-memory-drafts") ?? "[]")[0].body).toBe("<p>A warm afternoon</p>");
 
-    editorGetHTMLMock.mockReturnValue("<p>A <strong>warm</strong> afternoon</p>");
-    rerender(<CreateMemory data={{}} isMobile={false} />);
+      editorGetHTMLMock.mockReturnValue("<p>A <strong>warm</strong> afternoon</p>");
+      rerender(<CreateMemory data={{}} isMobile={false} />);
 
-    expect(screen.getByRole("status")).toHaveTextContent("Not saved");
+      expect(screen.getByRole("status")).toHaveTextContent("Not saved");
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("never reports saved while an upload is pending and compares only persisted attachments", async () => {
-    const user = userEvent.setup();
-    const uploadedFile = { _id: "photo-1", url: "/photo.jpg", name: "photo.jpg", size: 1024, type: "image/jpeg" };
-    uploadState.files = [
-      { id: "uploaded-client-id", file: null, progress: 100, uploadedFile },
-      { id: "pending-upload", file: new File(["photo"], "pending.jpg", { type: "image/jpeg" }), progress: 25 },
-    ];
-    const container = document.createElement("div");
-    document.body.appendChild(container);
-    const { rerender } = renderWithProviders(<CreateMemory data={{}} isMobile={false} />, { auth: true, container });
+    vi.useFakeTimers();
+    try {
+      const uploadedFile = { _id: "photo-1", url: "/photo.jpg", name: "photo.jpg", size: 1024, type: "image/jpeg" };
+      uploadState.files = [
+        { id: "uploaded-client-id", file: null, progress: 100, uploadedFile },
+        { id: "pending-upload", file: new File(["photo"], "pending.jpg", { type: "image/jpeg" }), progress: 25 },
+      ];
+      const container = document.createElement("div");
+      document.body.appendChild(container);
+      const { rerender } = renderWithProviders(<CreateMemory data={{}} isMobile={false} />, { auth: true, container });
+      fireEvent.change(screen.getByPlaceholderText(/give this story a title/i), { target: { value: "Uploading story" } });
 
-    await user.click(screen.getByRole("button", { name: "Save Draft" }));
+      await act(async () => { await vi.advanceTimersByTimeAsync(900); });
 
-    expect(screen.getByRole("status")).toHaveTextContent("Not saved");
-    expect(JSON.parse(localStorage.getItem("create-memory-drafts") ?? "[]")[0].attachments).toEqual([uploadedFile]);
+      expect(screen.getByRole("status")).toHaveTextContent("Not saved");
+      expect(JSON.parse(localStorage.getItem("create-memory-drafts") ?? "[]")[0].attachments).toEqual([uploadedFile]);
 
-    uploadState.files = [uploadState.files[0]];
-    rerender(<CreateMemory data={{}} isMobile={false} />);
+      uploadState.files = [uploadState.files[0]];
+      rerender(<CreateMemory data={{}} isMobile={false} />);
 
-    expect(screen.getByRole("status")).toHaveTextContent("Draft saved");
+      expect(screen.getByRole("status")).toHaveTextContent("Draft saved");
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("invalidates saved status when all local drafts are cleared", async () => {
-    const user = userEvent.setup();
+    vi.useFakeTimers();
     renderWithProviders(<CreateMemory data={{}} isMobile={false} />, { auth: true });
+    fireEvent.change(screen.getByPlaceholderText(/give this story a title/i), { target: { value: "Saved story" } });
+    await act(async () => { await vi.advanceTimersByTimeAsync(900); });
+    vi.useRealTimers();
 
-    await user.click(screen.getByRole("button", { name: "Save Draft" }));
+    const user = userEvent.setup();
     expect(screen.getByRole("status")).toHaveTextContent("Draft saved");
     await user.click(screen.getByRole("button", { name: "Drafts" }));
     await user.click(screen.getByRole("button", { name: "Clear all" }));
@@ -756,11 +977,14 @@ describe("CreateMemory", () => {
     expect(JSON.parse(localStorage.getItem("create-memory-drafts") ?? "[]")).toEqual([]);
   });
 
-  it("invalidates saved status when the manually saved draft is deleted", async () => {
-    const user = userEvent.setup();
+  it("invalidates saved status when the saved draft is deleted", async () => {
+    vi.useFakeTimers();
     renderWithProviders(<CreateMemory data={{}} isMobile={false} />, { auth: true });
+    fireEvent.change(screen.getByPlaceholderText(/give this story a title/i), { target: { value: "Saved story" } });
+    await act(async () => { await vi.advanceTimersByTimeAsync(900); });
+    vi.useRealTimers();
 
-    await user.click(screen.getByRole("button", { name: "Save Draft" }));
+    const user = userEvent.setup();
     expect(screen.getByRole("status")).toHaveTextContent("Draft saved");
     await user.click(screen.getByRole("button", { name: "Drafts" }));
     await user.click(screen.getByRole("button", { name: "Delete" }));

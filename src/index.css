@@ -1160,8 +1160,45 @@ body {
     color: var(--text-neutral-strong);
   }
 
+  .add-story-journal .tiptap-editor--memory-next .ProseMirror p {
+    margin: 0;
+  }
+
   .add-story-journal {
     animation: add-story-journal-enter 420ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  }
+
+  .story-composer-layout {
+    grid-template-columns: minmax(0, 1fr) 148px;
+    transition: grid-template-columns 240ms cubic-bezier(0.23, 1, 0.32, 1);
+  }
+
+  .story-composer-layout[data-details-open="true"] {
+    grid-template-columns: minmax(0, 1fr) clamp(250px, 21vw, 292px);
+  }
+
+  .story-details-trigger-rail,
+  .story-details-panel {
+    transition:
+      opacity 180ms cubic-bezier(0.23, 1, 0.32, 1),
+      transform 240ms cubic-bezier(0.23, 1, 0.32, 1),
+      visibility 0s linear 240ms;
+  }
+
+  .story-details-trigger-rail[data-visible="false"],
+  .story-details-panel[data-visible="false"] {
+    visibility: hidden;
+    pointer-events: none;
+    opacity: 0;
+    transform: translateX(12px);
+  }
+
+  .story-details-trigger-rail[data-visible="true"],
+  .story-details-panel[data-visible="true"] {
+    visibility: visible;
+    opacity: 1;
+    transform: translateX(0);
+    transition-delay: 60ms, 0ms, 0ms;
   }
 
   @keyframes add-story-journal-enter {
@@ -1207,6 +1244,12 @@ body {
 
     .add-story-journal button:not(:disabled):active:not(:focus-visible):not([role="tab"]) {
       transform: none;
+    }
+
+    .story-composer-layout,
+    .story-details-trigger-rail,
+    .story-details-panel {
+      transition: none;
     }
   }
 

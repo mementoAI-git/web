@@ -93,3 +93,14 @@ describe("dark color token compatibility", () => {
     expect(sliderMarkup).not.toContain("var(--color-secondary)");
   });
 });
+
+describe("desktop Add Story typography", () => {
+  it("uses single-spaced paragraph breaks in the journal editor", () => {
+    expect(
+      declaration(
+        ".add-story-journal .tiptap-editor--memory-next .ProseMirror p",
+        "margin",
+      ),
+    ).toBe("0");
+  });
+});
