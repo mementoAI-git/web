@@ -102,6 +102,50 @@ describe("ProfileDropdown", () => {
     ).toHaveAttribute("aria-checked", "true");
   });
 
+  it("lets keyboard users open Theme and select Dark", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<ProfileDropdown />, { auth: true });
+
+    const trigger = screen.getByRole("button", { name: /user/i });
+    await user.keyboard("{Tab}");
+    expect(trigger).toHaveFocus();
+    await user.keyboard("{Enter}");
+    expect(screen.getByRole("menu")).toBeInTheDocument();
+
+    await user.keyboard("{ArrowDown}");
+    expect(screen.getByRole("menuitem", { name: "Theme" })).toHaveFocus();
+    await user.keyboard("{ArrowRight}");
+
+    const options = await screen.findByRole("menu", { name: "Theme" });
+    expect(
+      within(options).getByRole("menuitemradio", { name: "Light" }),
+    ).toHaveFocus();
+    await user.keyboard("{ArrowDown}");
+    expect(
+      within(options).getByRole("menuitemradio", { name: "Dark" }),
+    ).toHaveFocus();
+    await user.keyboard("{Enter}");
+
+    expect(document.documentElement).toHaveClass("dark");
+    expect(localStorage.getItem("memento:theme")).toBe("dark");
+    expect(trigger).toHaveFocus();
+  });
+
+  it("restores trigger focus when escaping the Theme submenu", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<ProfileDropdown />, { auth: true });
+
+    const trigger = screen.getByRole("button", { name: /user/i });
+    await user.keyboard("{Tab}{Enter}{ArrowDown}{ArrowRight}");
+    expect(
+      await screen.findByRole("menu", { name: "Theme" }),
+    ).toBeInTheDocument();
+
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+    expect(trigger).toHaveFocus();
+  });
+
   it("uses compact account menu spacing and label typography", async () => {
     const user = userEvent.setup();
     renderWithProviders(<ProfileDropdown />, { auth: true });
