@@ -29,7 +29,8 @@ export default function DashboardLayout() {
   );
 
   useEffect(() => {
-    const modalName = (location.state as { openModal?: string } | null)?.openModal;
+    const modalName = (location.state as { openModal?: string } | null)
+      ?.openModal;
     if (modalName) {
       open(modalName);
       navigate(location.pathname, { replace: true, state: {} });
@@ -53,68 +54,71 @@ export default function DashboardLayout() {
   return (
     <AuthCheck>
       <OnboardingGuard>
-      <div className="bg-white w-full h-full min-h-screen flex flex-col md:flex-row overflow-hidden hide-scrollbar dynamic-height">
-        <Modal />
-        {sidebarOpen && (
-          <div
-            className="fixed inset-0 modal-overlay bg-overlay-backdrop z-40 lg:hidden"
-            onClick={() => setSidebarOpen(false)}
-          />
-        )}
-        <div
-          className={cn(
-            sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0",
-            "fixed md:relative inset-y-0 left-0 z-50 md:z-auto",
-            "transition-all duration-300 ease-in-out md:transition-all",
-            "w-full md:w-[250px] shrink-0",
-            mainSidebarCollapsed && "md:!w-0 md:!min-w-0 md:overflow-hidden md:opacity-0",
+        <div className="bg-background w-full h-full min-h-screen flex flex-col md:flex-row overflow-hidden hide-scrollbar dynamic-height">
+          <Modal />
+          {sidebarOpen && (
+            <div
+              className="fixed inset-0 modal-overlay bg-overlay-backdrop z-40 lg:hidden"
+              onClick={() => setSidebarOpen(false)}
+            />
           )}
-        >
-          <DashboardSideBar />
-        </div>
-        <main className="flex min-w-0 flex-1 flex-col overflow-hidden dynamic-height-content">
-          <DashboardHeaderActionsProvider>
-            <ConversationChromeProvider>
-              {!isVoiceChatRoute ? (
-                <DashboardHeader
-                  onMenuClick={() => setSidebarOpen(true)}
-                  mobileSidebarOpen={sidebarOpen}
-                  mainSidebarCollapsed={mainSidebarCollapsed}
-                  onMainSidebarToggle={handleMainSidebarToggle}
-                />
-              ) : null}
-              <div
-                className={cn(
-                  "flex flex-1 flex-col overflow-hidden md:flex-row",
-                  !isVoiceChatRoute && "pt-[60px] sm:pt-0",
-                )}
-              >
-                <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-                  <OnboardingNudgeBanner />
-                  <TrialBanner />
-                  <SecurityNudgeBanner />
-                  <div
-                    className={cn(
-                      "hide-scrollbar h-full min-h-0 w-full flex-1",
-                      isChatRoute ? "overflow-hidden" : "overflow-y-auto",
-                    )}
-                  >
-                    <Outlet />
-                  </div>
-                </div>
-                <aside
+          <div
+            className={cn(
+              sidebarOpen
+                ? "translate-x-0"
+                : "-translate-x-full md:translate-x-0",
+              "fixed md:relative inset-y-0 left-0 z-50 md:z-auto",
+              "transition-all duration-300 ease-in-out md:transition-all",
+              "w-full md:w-[250px] shrink-0",
+              mainSidebarCollapsed &&
+                "md:!w-0 md:!min-w-0 md:overflow-hidden md:opacity-0",
+            )}
+          >
+            <DashboardSideBar />
+          </div>
+          <main className="flex min-w-0 flex-1 flex-col overflow-hidden dynamic-height-content">
+            <DashboardHeaderActionsProvider>
+              <ConversationChromeProvider>
+                {!isVoiceChatRoute ? (
+                  <DashboardHeader
+                    onMenuClick={() => setSidebarOpen(true)}
+                    mobileSidebarOpen={sidebarOpen}
+                    mainSidebarCollapsed={mainSidebarCollapsed}
+                    onMainSidebarToggle={handleMainSidebarToggle}
+                  />
+                ) : null}
+                <div
                   className={cn(
-                    "flex w-full flex-shrink-0 flex-col overflow-hidden rounded-[16px] md:mx-2 md:my-2 md:w-[300px] md:max-w-[315px] lg:w-[315px] bg-v3-fill-weak",
-                    !chatOpen && "hidden",
+                    "flex flex-1 flex-col overflow-hidden md:flex-row",
+                    !isVoiceChatRoute && "pt-[60px] sm:pt-0",
                   )}
                 >
-                  <DashboardChatSidebar onClose={() => setChatOpen(false)} />
-                </aside>
-              </div>
-            </ConversationChromeProvider>
-          </DashboardHeaderActionsProvider>
-        </main>
-      </div>
+                  <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+                    <OnboardingNudgeBanner />
+                    <TrialBanner />
+                    <SecurityNudgeBanner />
+                    <div
+                      className={cn(
+                        "hide-scrollbar h-full min-h-0 w-full flex-1",
+                        isChatRoute ? "overflow-hidden" : "overflow-y-auto",
+                      )}
+                    >
+                      <Outlet />
+                    </div>
+                  </div>
+                  <aside
+                    className={cn(
+                      "flex w-full flex-shrink-0 flex-col overflow-hidden rounded-[16px] md:mx-2 md:my-2 md:w-[300px] md:max-w-[315px] lg:w-[315px] bg-v3-fill-weak",
+                      !chatOpen && "hidden",
+                    )}
+                  >
+                    <DashboardChatSidebar onClose={() => setChatOpen(false)} />
+                  </aside>
+                </div>
+              </ConversationChromeProvider>
+            </DashboardHeaderActionsProvider>
+          </main>
+        </div>
       </OnboardingGuard>
     </AuthCheck>
   );

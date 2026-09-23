@@ -2,7 +2,7 @@ export default function BeneficiaryItem({ email }: { email: string }) {
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex min-w-0 items-center gap-3">
-        <span className="flex aspect-square w-10 items-center justify-center rounded-full border border-black/5 bg-[#E3FB9F] text-secondary uppercase">
+        <span className="flex aspect-square w-10 items-center justify-center rounded-full border border-black/5 bg-[#E3FB9F] text-v3-base uppercase">
           {email[0]}
         </span>
         <span className="min-w-0 break-all font-inter text-gray-950/90">{email}</span>
@@ -13,4 +13,3 @@ export default function BeneficiaryItem({ email }: { email: string }) {
     </div>
   );
 }
-

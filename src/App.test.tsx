@@ -57,6 +57,6 @@ describe("App", () => {
     renderAppWithOutlet();
 
     const shell = screen.getByTestId("outlet-child").parentElement;
-    expect(shell).toHaveClass("min-h-screen", "bg-background", "text-secondary");
+    expect(shell).toHaveClass("min-h-screen", "bg-background", "text-foreground");
   });
 });

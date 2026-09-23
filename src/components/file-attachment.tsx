@@ -20,7 +20,7 @@ export default function FileAttachment({ file, onDelete, progressType = "bar", c
       <div className="flex-1">
         <div>
           <div className="flex items-center justify-between">
-            <span className="font-inter text-sm font-medium text-secondary">{truncateFileName(name)}</span>
+            <span className="font-inter text-sm font-medium text-foreground">{truncateFileName(name)}</span>
             {file.uploadedFile && (
               <button
                 type="button"
@@ -53,4 +53,3 @@ export default function FileAttachment({ file, onDelete, progressType = "bar", c
     </div>
   );
 }
-

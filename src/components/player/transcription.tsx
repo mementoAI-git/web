@@ -161,7 +161,7 @@ export default function Transcription({
       <button
         type="button"
         onClick={handleToggle}
-        className="mx-auto block cursor-pointer text-center font-inter text-xs text-secondary underline-offset-2 hover:underline"
+        className="mx-auto block cursor-pointer text-center font-inter text-xs text-foreground underline-offset-2 hover:underline"
       >
         {buttonLabel}
       </button>

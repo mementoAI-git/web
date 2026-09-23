@@ -28,7 +28,7 @@ export default function BrowseFileBtn({ onUpload }: AttachFileBtnProps) {
   );
 
   return (
-    <label className="flex cursor-pointer items-center justify-center rounded-full border border-v3-stroke-weak text-secondary">
+    <label className="flex cursor-pointer items-center justify-center rounded-full border border-v3-stroke-weak text-foreground">
       <input
         accept={CAPSULE_SUPPORTED_FILE_TYPES.join(",")}
         id="attachment"
