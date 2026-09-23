@@ -455,7 +455,9 @@ describe("CreateMemory", () => {
     const user = userEvent.setup();
     renderWithProviders(<CreateMemory data={{}} isMobile={false} />, { auth: true });
 
-    await user.click(screen.getByLabelText(/add attachment/i));
+    const attachmentButton = screen.getByRole("button", { name: "Add attachment" });
+    expect(attachmentButton).toHaveClass("text-text-inverse-strong");
+    await user.click(attachmentButton);
 
     expect(screen.getByText("Choose upload type")).toBeInTheDocument();
     expect(screen.getAllByText("Photos").length).toBeGreaterThan(0);

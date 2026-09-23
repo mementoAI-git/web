@@ -309,11 +309,11 @@ function CreateMemoryBase({
     initialContent: values.body || "",
     placeholder:
       variant === "next" && !isMobile
-        ? "Start typing here"
+        ? "Write story here..."
         : "What's on your mind today? Type / for formatting options",
     editorClassName:
       variant === "next" && !isMobile
-        ? "prose prose-sm max-w-none focus:outline-none min-h-[320px] w-full px-0 py-0 font-geist text-base leading-6 text-[rgba(15,7,0,0.9)] placeholder:text-[rgba(15,7,0,0.45)]"
+        ? "prose prose-sm max-w-none focus:outline-none min-h-[240px] w-full px-0 py-0 font-geist text-lg leading-[1.7] text-text-neutral-strong"
         : "prose prose-sm max-w-none focus:outline-none min-h-[140px] w-full px-4 py-4 text-sm text-text-neutral-strong",
     linkClassName: "text-text-brand-strong underline cursor-pointer",
     onHtmlChange: (html) => handleValue("body", html),
@@ -1445,11 +1445,12 @@ function CreateMemoryBase({
       onMouseDown={(e) => e.preventDefault()}
       onClick={onClick}
       title={title}
+      aria-label={title}
       variant="ghost"
       size="icon"
       className={cn(
-        "size-8 rounded-[8px] text-icon-neutral-strong transition-colors hover:bg-black/5 [&_svg]:pointer-events-none",
-        isActive && "bg-black/10 text-text-neutral-strong",
+        "size-8 rounded-[8px] text-icon-neutral-strong transition-colors hover:bg-fill-neutral-weak [&_svg]:pointer-events-none",
+        isActive && "bg-fill-neutral-weak text-text-neutral-strong",
       )}
     >
       {children}
@@ -1529,12 +1530,12 @@ function CreateMemoryBase({
               {showUploadGate ? <div className="mt-4">{uploadGateBanner}</div> : null}
             </div>
             <div className="grid min-h-0 grid-cols-[minmax(0,1fr)_clamp(250px,21vw,292px)] gap-5 xl:gap-7">
-              <section className="flex min-h-0 min-w-0 flex-col">
+              <section className="flex min-h-0 min-w-0 flex-col pr-1">
                 <div className="flex min-h-0 flex-1 flex-col">
-                  <div className="flex min-h-0 flex-1 flex-col rounded-[16px] border border-[rgba(15,7,0,0.1)] bg-[#fcfbfa] p-6">
+                  <div className="hide-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain px-1 pb-2 pt-8 xl:px-3 xl:pt-10">
                     <div
                       data-testid="desktop-composer-scroll-surface"
-                      className="hide-scrollbar flex min-h-full flex-1 flex-col overflow-y-auto pr-1"
+                      className="flex min-h-full min-w-0 flex-col"
                     >
                       <textarea
                         ref={titleTextareaRef}
@@ -1545,13 +1546,13 @@ function CreateMemoryBase({
                         onChange={handleTitleChange}
                         onKeyDown={handleTitleKeyDown}
                         rows={1}
-                        className="w-full resize-none overflow-hidden border-0 bg-transparent p-0 font-garamond text-[30px] italic leading-[34px] text-[rgba(15,7,0,0.9)] placeholder:text-[rgba(15,7,0,0.12)] focus:outline-none"
+                        className="w-full shrink-0 resize-none overflow-hidden border-0 bg-transparent p-0 font-garamond text-[clamp(2rem,3vw,2.5rem)] italic leading-[1.15] text-text-neutral-strong placeholder:text-text-neutral-weaker focus:outline-none"
                       />
 
-                      <div className="relative mt-6 flex min-h-0 flex-col">
+                      <div className="relative mt-6 flex min-h-[240px] flex-1 flex-col">
                         <EditorContent
                           editor={editor}
-                          className="tiptap-editor tiptap-editor--memory-next min-h-[320px] w-full flex-1"
+                          className="tiptap-editor tiptap-editor--memory-next min-h-[240px] w-full flex-1"
                         />
                         <SlashCommandPopup
                           show={showSlashMenu}
@@ -1590,9 +1591,9 @@ function CreateMemoryBase({
                     </div>
                   </div>
 
-                  <div className="mt-4 shrink-0 rounded-[12px] bg-fill-neutral-weak px-2 py-2">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <div className="flex flex-wrap items-center gap-1">
+                  <div className="mt-4 w-full max-w-[760px] shrink-0 rounded-[14px] border border-stroke-neutral-weak bg-[rgba(232,226,216,0.64)] px-3 py-2 shadow-[0_8px_24px_rgba(61,45,32,0.06)] backdrop-blur-[6px]">
+                    <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+                      <div className="flex min-w-0 flex-wrap items-center gap-1.5">
                         <DropdownMenu
                           modal={false}
                           onOpenChange={(open) => {
@@ -1602,10 +1603,11 @@ function CreateMemoryBase({
                           <DropdownMenuTrigger asChild>
                             <Button
                               type="button"
-                              variant="ghost"
+                              variant="default"
                               size="icon"
-                              className="size-10 rounded-[10px] bg-[rgba(15,7,0,0.9)] text-white hover:bg-[rgba(15,7,0,0.82)]"
+                              className="size-9 rounded-[10px] bg-fill-neutral-strong text-text-inverse-strong hover:bg-fill-neutral-strong/90"
                               aria-label="Add attachment"
+                              title="Add attachment"
                             >
                               <Plus className="size-5" />
                             </Button>
@@ -1657,8 +1659,9 @@ function CreateMemoryBase({
                             variant="ghost"
                             size="icon"
                             onClick={() => setShowEmoji((p) => !p)}
-                            className="size-10 rounded-[10px] text-[rgba(15,7,0,0.8)] hover:bg-white/80"
+                            className="size-9 rounded-[10px] text-icon-neutral-strong hover:bg-fill-neutral-weak"
                             aria-label="Insert emoji"
+                            title="Insert emoji"
                           >
                             <Smile className="size-5" />
                           </Button>
@@ -1693,7 +1696,7 @@ function CreateMemoryBase({
                             )}
                         </div>
 
-                        <Separator orientation="vertical" className="h-6 bg-[rgba(15,7,0,0.08)]" />
+                        <Separator orientation="vertical" className="h-5 bg-stroke-neutral-weak" />
 
                         <Button
                           type="button"
@@ -1705,8 +1708,9 @@ function CreateMemoryBase({
                               recordingNumber: audioRecordingCount,
                             })
                           }
-                          className="size-10 rounded-[10px] text-[rgba(15,7,0,0.8)] hover:bg-white/80"
+                          className="size-9 rounded-[10px] text-icon-neutral-strong hover:bg-fill-neutral-weak"
                           aria-label="Record audio"
+                          title="Record audio"
                         >
                           <Mic className="size-5" />
                         </Button>
@@ -1719,36 +1723,37 @@ function CreateMemoryBase({
                             setVideoRecordedFile(null);
                             setShowVideoRecorder(true);
                           }}
-                          className="size-10 rounded-[10px] text-[rgba(15,7,0,0.8)] hover:bg-white/80"
+                          className="size-9 rounded-[10px] text-icon-neutral-strong hover:bg-fill-neutral-weak"
                           aria-label="Record video"
+                          title="Record video"
                         >
                           <Video className="size-5" />
                         </Button>
                       </div>
 
-                      <div className="flex flex-wrap items-center gap-1">
+                      <div className="flex min-w-0 flex-wrap items-center gap-1">
                         {nextToolbarButton(
                           !!editor?.isActive("bold"),
                           () => editor?.chain().focus().toggleBold().run(),
-                          <span className="font-geist text-sm font-bold leading-none text-[rgba(15,7,0,0.9)]">B</span>,
+                          <span className="font-geist text-sm font-bold leading-none text-text-neutral-strong">B</span>,
                           "Bold",
                         )}
                         {nextToolbarButton(
                           !!editor?.isActive("italic"),
                           () => editor?.chain().focus().toggleItalic().run(),
-                          <span className="font-geist text-sm italic leading-none text-[rgba(15,7,0,0.9)]">I</span>,
+                          <span className="font-geist text-sm italic leading-none text-text-neutral-strong">I</span>,
                           "Italic",
                         )}
                         {nextToolbarButton(
                           !!editor?.isActive("strike"),
                           () => editor?.chain().focus().toggleStrike().run(),
-                          <span className="font-geist text-sm leading-none line-through text-[rgba(15,7,0,0.9)]">S</span>,
+                          <span className="font-geist text-sm leading-none line-through text-text-neutral-strong">S</span>,
                           "Strikethrough",
                         )}
                         {nextToolbarButton(
                           !!editor?.isActive("underline"),
                           () => editor?.chain().focus().toggleUnderline().run(),
-                          <span className="font-geist text-sm leading-none underline text-[rgba(15,7,0,0.9)]">U</span>,
+                          <span className="font-geist text-sm leading-none underline text-text-neutral-strong">U</span>,
                           "Underline",
                         )}
                         {nextToolbarButton(
@@ -1757,7 +1762,7 @@ function CreateMemoryBase({
                           <LinkIcon width={15} height={10} />,
                           "Link",
                         )}
-                        <Separator orientation="vertical" className="h-6 bg-[rgba(15,7,0,0.08)]" />
+                        <Separator orientation="vertical" className="h-5 bg-stroke-neutral-weak" />
                         {nextToolbarButton(
                           !!editor?.isActive("bulletList"),
                           () => editor?.chain().focus().toggleBulletList().run(),
