@@ -648,7 +648,7 @@ body {
   }
 
   .page-title {
-    @apply shrink-0 text-xl sm:text-2xl md:text-3xl lg:text-4xl font-inter text-secondary font-medium leading-11 capitalize truncate max-w-full;
+    @apply shrink-0 text-xl sm:text-2xl md:text-3xl lg:text-4xl font-inter text-foreground font-medium leading-11 capitalize truncate max-w-full;
   }
 
   .page-viewport {
@@ -660,7 +660,7 @@ body {
   }
 
   .input-label {
-    @apply font-inter text-sm leading-5 font-medium text-secondary capitalize;
+    @apply font-inter text-sm leading-5 font-medium text-foreground capitalize;
   }
 
   .input-base {
@@ -1023,7 +1023,7 @@ body {
     width: 6px;
     height: 6px;
     border-radius: 50%;
-    background: var(--color-secondary);
+    background: var(--icon-neutral-strong);
     cursor: pointer;
     border: none;
   }
@@ -1032,7 +1032,7 @@ body {
     width: 6px;
     height: 6px;
     border-radius: 50%;
-    background: var(--color-secondary);
+    background: var(--icon-neutral-strong);
     cursor: pointer;
     border: none;
   }

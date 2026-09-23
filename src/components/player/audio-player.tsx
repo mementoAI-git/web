@@ -127,7 +127,7 @@ export default function AudioPlayer({
                 }
                 className="volume__slider h-[2px] w-8 cursor-pointer appearance-none rounded-lg bg-grey-300"
                 style={{
-                  background: `linear-gradient(to right, var(--color-secondary) 0%, var(--color-secondary) ${(isMuted ? 0 : volume) * 100}%, #d1d5db ${(isMuted ? 0 : volume) * 100}%, #d1d5db 100%)`,
+                  background: `linear-gradient(to right, var(--icon-neutral-strong) 0%, var(--icon-neutral-strong) ${(isMuted ? 0 : volume) * 100}%, #d1d5db ${(isMuted ? 0 : volume) * 100}%, #d1d5db 100%)`,
                 }}
               />
             </div>

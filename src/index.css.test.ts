@@ -8,20 +8,23 @@ const stylesheet = postcss.parse(
 );
 
 function declaration(selector: string, property: string) {
-  const rule = stylesheet.nodes.find(
-    (node) => node.type === "rule" && node.selector === selector,
-  );
-  const declarations = rule?.nodes.filter(
-    (node) => node.type === "decl" && node.prop === property,
-  );
-  return declarations?.at(-1)?.value;
+  let value: string | undefined;
+  stylesheet.walkRules((rule) => {
+    if (rule.selector !== selector) return;
+    rule.walkDecls(property, (entry) => {
+      value = entry.value;
+    });
+  });
+  return value;
 }
 
 function sourceFiles(directory: string): string[] {
   return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
     const path = resolve(directory, entry.name);
     if (entry.isDirectory()) return sourceFiles(path);
-    return entry.name.endsWith(".ts") || entry.name.endsWith(".tsx")
+    return [".ts", ".tsx", ".css"].some((extension) =>
+      entry.name.endsWith(extension),
+    )
       ? [path]
       : [];
   });
@@ -54,5 +57,43 @@ describe("dark color token compatibility", () => {
       .map((path) => relative(process.cwd(), path));
 
     expect(legacyUses).toEqual([]);
+  });
+
+  it("uses a semantic indicator token for volume slider thumbs", () => {
+    expect(
+      declaration(".volume__slider::-webkit-slider-thumb", "background"),
+    ).toBe("var(--icon-neutral-strong)");
+    expect(declaration(".volume__slider::-moz-range-thumb", "background")).toBe(
+      "var(--icon-neutral-strong)",
+    );
+  });
+
+  it("does not consume the secondary surface token as an indicator", () => {
+    const secondaryReference = `var(--color-${"secondary"})`;
+    const legacyConsumers = sourceFiles(resolve(process.cwd(), "src")).flatMap(
+      (path) => {
+        const source = readFileSync(path, "utf8");
+        if (!path.endsWith(".css")) {
+          return source.includes(secondaryReference)
+            ? [relative(process.cwd(), path)]
+            : [];
+        }
+
+        const consumers: string[] = [];
+        postcss.parse(source).walkDecls((entry) => {
+          if (
+            entry.prop !== "--color-secondary" &&
+            entry.value.includes(secondaryReference)
+          ) {
+            consumers.push(
+              `${relative(process.cwd(), path)}:${entry.source?.start?.line}`,
+            );
+          }
+        });
+        return consumers;
+      },
+    );
+
+    expect(legacyConsumers).toEqual([]);
   });
 });
