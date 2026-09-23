@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
+import albumArtwork from "@/assets/image/HD Album story bg memento.png";
+import scenicBackground from "@/assets/image/bg/1.png";
 import { EditorContent } from "@tiptap/react";
 import { useModal } from "@/hooks/use-modal";
 import { useStore } from "@/hooks/use-store";
@@ -73,6 +75,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
   DialogContent,
@@ -90,21 +93,23 @@ import {
 } from "@/components/ui/dropdown-menu";
 import type { IBeneficiary, IOnUploadPayload } from "@/utility/interface";
 import {
+  CalendarDays,
   Check,
   Circle,
   Clock3,
-  Eye,
+  Cloud,
   FileText,
   Image as ImageIcon,
   ListOrdered,
   Mic,
   Music,
   Paperclip,
+  Play,
   Plus,
   Quote,
   Smile,
-  SunMedium,
   Video,
+  X,
 } from "lucide-react";
 
 const ACTIVE_BG = "bg-fill-neutral-strong text-inverse-strong hover:bg-fill-neutral-strong hover:text-inverse-strong";
@@ -121,6 +126,10 @@ interface MemoryDraft {
   tags: string[];
   attachments: NonNullable<IOnUploadPayload["uploadedFile"]>[];
   updatedAt: string;
+}
+
+function getDraftSignature({ title, body, tags, attachments }: Pick<MemoryDraft, "title" | "body" | "tags" | "attachments">) {
+  return JSON.stringify({ title: title.trim(), body, tags, attachments });
 }
 
 // ─── CreateMemory ─────────────────────────────────────────────────────────────
@@ -163,6 +172,7 @@ function CreateMemoryBase({
   const [showEmoji, setShowEmoji] = useState(false);
   const [showCloseConfirmation, setShowCloseConfirmation] = useState(false);
   const [drafts, setDrafts] = useState<MemoryDraft[]>([]);
+  const [savedDraftSignature, setSavedDraftSignature] = useState<string | null>(null);
   const emojiPickerRef = useRef<HTMLDivElement>(null);
   const emojiPickerPortalRef = useRef<HTMLDivElement>(null);
   const [selectedAccess, setSelectedAccess] = useState<SearchResultItem[]>([]);
@@ -299,11 +309,11 @@ function CreateMemoryBase({
     initialContent: values.body || "",
     placeholder:
       variant === "next" && !isMobile
-        ? "Start typing here"
+        ? "Write story here..."
         : "What's on your mind today? Type / for formatting options",
     editorClassName:
       variant === "next" && !isMobile
-        ? "prose prose-sm max-w-none focus:outline-none min-h-[320px] w-full px-0 py-0 font-geist text-base leading-6 text-[rgba(15,7,0,0.9)] placeholder:text-[rgba(15,7,0,0.45)]"
+        ? "prose prose-sm max-w-none focus:outline-none min-h-[240px] w-full px-0 py-0 font-geist text-lg leading-[1.7] text-text-neutral-strong"
         : "prose prose-sm max-w-none focus:outline-none min-h-[140px] w-full px-4 py-4 text-sm text-text-neutral-strong",
     linkClassName: "text-text-brand-strong underline cursor-pointer",
     onHtmlChange: (html) => handleValue("body", html),
@@ -391,6 +401,7 @@ function CreateMemoryBase({
         const deduped = prev.filter((draft) => draft.title !== nextDraft.title || draft.body !== nextDraft.body);
         const next = [nextDraft, ...deduped].slice(0, MAX_DRAFTS);
         localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(next));
+        setSavedDraftSignature(getDraftSignature(nextDraft));
         return next;
       });
     }, 900);
@@ -402,8 +413,13 @@ function CreateMemoryBase({
     if (variant !== "next" || isMobile) return;
     const el = titleTextareaRef.current;
     if (!el) return;
-    el.style.height = "0px";
-    el.style.height = `${Math.max(el.scrollHeight, 48)}px`;
+    const resizeTitle = () => {
+      el.style.height = "0px";
+      el.style.height = `${Math.max(el.scrollHeight, 48)}px`;
+    };
+    resizeTitle();
+    window.addEventListener("resize", resizeTitle);
+    return () => window.removeEventListener("resize", resizeTitle);
   }, [isMobile, values.title, variant]);
 
   useEffect(() => {
@@ -510,6 +526,7 @@ function CreateMemoryBase({
     }));
     setFiles(draftFiles);
     editor?.commands.setContent(draft.body || "");
+    setSavedDraftSignature(getDraftSignature(draft));
   };
 
   const handleLoadQuickCaptureDraft = useCallback(
@@ -567,11 +584,16 @@ function CreateMemoryBase({
       localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(next));
       return next;
     });
+    const deletedDraft = drafts.find((draft) => draft.id === draftId);
+    if (deletedDraft && getDraftSignature(deletedDraft) === savedDraftSignature) {
+      setSavedDraftSignature(null);
+    }
   };
 
   const handleClearAllDrafts = () => {
     setDrafts([]);
     localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify([]));
+    setSavedDraftSignature(null);
   };
 
   const handleSaveDraft = useCallback(() => {
@@ -587,16 +609,15 @@ function CreateMemoryBase({
       updatedAt: new Date().toISOString(),
     };
 
-    setDrafts((prev) => {
-      const deduped = prev.filter(
-        (draft) => draft.title !== nextDraft.title || draft.body !== nextDraft.body,
-      );
-      const next = [nextDraft, ...deduped].slice(0, MAX_DRAFTS);
-      localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(next));
-      return next;
-    });
+    const deduped = drafts.filter(
+      (draft) => draft.title !== nextDraft.title || draft.body !== nextDraft.body,
+    );
+    const next = [nextDraft, ...deduped].slice(0, MAX_DRAFTS);
+    localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(next));
+    setDrafts(next);
+    setSavedDraftSignature(getDraftSignature(nextDraft));
     toast.success("Draft saved");
-  }, [editor, files, tags, values.title]);
+  }, [drafts, editor, files, tags, values.title]);
 
   const handleSlashCommandSelect = (command: (typeof SLASH_COMMANDS)[0]) => {
     selectSlashCommand(command);
@@ -607,6 +628,16 @@ function CreateMemoryBase({
   const previousUrl = editor?.getAttributes("link").href || "";
   const isUploading = files.some((f) => !f.uploadedFile);
   const bodyPlainText = editor?.getText() ?? "";
+  const currentDraftSignature = getDraftSignature({
+    title: values.title.trim(),
+    body: editor?.getHTML() || "",
+    tags,
+    attachments: files.flatMap((file) => file.uploadedFile ? [file.uploadedFile] : []),
+  });
+  const isCurrentDraftSaved =
+    !isUploading &&
+    savedDraftSignature === currentDraftSignature &&
+    drafts.some((draft) => getDraftSignature(draft) === savedDraftSignature);
   const inlineAttachmentFiles = useMemo(() => files, [files]);
   const mediaFiles = useMemo(
     () => files.filter((file) => getUploadDisplayKind(resolveUploadMimeType(file)) === "media"),
@@ -732,14 +763,6 @@ function CreateMemoryBase({
       { label: "Sensory details", complete: hasSensoryDetails },
     ];
   }, [normalizedStoryText]);
-  const completedQualityChecks = qualityChecks.filter((item) => item.complete).length;
-  const storyQuality = useMemo(() => {
-    if (qualityChecks.length === 0) return 0;
-    return Math.round((completedQualityChecks / qualityChecks.length) * 100);
-  }, [completedQualityChecks, qualityChecks.length]);
-  const storyQualityLabel =
-    storyQuality >= 80 ? "Strong story" : storyQuality >= 50 ? "Good start" : "Keep going";
-
   const toolbarBtn = (isActive: boolean, onClick: () => void, children: ReactNode, title?: string) => (
     <Button
       type="button"
@@ -761,6 +784,7 @@ function CreateMemoryBase({
     <DropdownMenuContent
       align="end"
       side="bottom"
+      onEscapeKeyDown={variant === "next" && !isMobile ? (event) => event.stopPropagation() : undefined}
       className="z-[220] w-[min(320px,calc(100vw-2rem))] max-h-[min(320px,50vh)] overflow-y-auto border border-stroke-neutral-weak bg-popover text-popover-foreground shadow-lg"
     >
       {quickCaptureKeys.length > 0 ? (
@@ -1429,11 +1453,12 @@ function CreateMemoryBase({
       onMouseDown={(e) => e.preventDefault()}
       onClick={onClick}
       title={title}
+      aria-label={title}
       variant="ghost"
       size="icon"
       className={cn(
-        "size-8 rounded-[8px] text-icon-neutral-strong transition-colors hover:bg-black/5 [&_svg]:pointer-events-none",
-        isActive && "bg-black/10 text-text-neutral-strong",
+        "size-8 rounded-[8px] text-icon-neutral-strong transition-colors hover:bg-fill-neutral-weak [&_svg]:pointer-events-none",
+        isActive && "bg-fill-neutral-weak text-text-neutral-strong",
       )}
     >
       {children}
@@ -1442,458 +1467,455 @@ function CreateMemoryBase({
 
   return (
     <>
-      <div className="absolute inset-0 bg-white" onClick={(e) => e.stopPropagation()}>
+      <div
+        data-testid="desktop-story-environment"
+        className="absolute inset-0 overflow-auto bg-cover bg-center p-4 xl:p-9"
+        style={{
+          backgroundImage: `linear-gradient(rgba(18, 12, 8, 0.22), rgba(18, 12, 8, 0.22)), url(${scenicBackground})`,
+        }}
+        onClick={(event) => event.stopPropagation()}
+      >
         {fileInputs}
-        <div className="flex h-full w-full min-w-0">
-          <aside className="flex h-full w-[374px] shrink-0 flex-col border-r border-[rgba(15,7,0,0.1)] bg-white">
-            <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-              <div className="flex items-center gap-2 px-4 pb-6 pt-4">
-                <button
-                  type="button"
-                  onClick={() => setActiveSidebarTab("properties")}
-                  className={cn(
-                    "rounded-[8px] px-2.5 py-1.5 font-geist text-base font-medium leading-6 text-[rgba(15,7,0,0.9)] transition-colors",
-                    activeSidebarTab === "properties" ? "bg-[rgba(15,7,0,0.1)]" : "hover:bg-[rgba(15,7,0,0.04)]",
-                  )}
-                >
-                  Properties
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveSidebarTab("assistant")}
-                  className={cn(
-                    "rounded-[8px] px-2.5 py-1.5 font-geist text-base font-medium leading-6 text-[rgba(15,7,0,0.9)] transition-colors",
-                    activeSidebarTab === "assistant" ? "bg-[rgba(15,7,0,0.1)]" : "hover:bg-[rgba(15,7,0,0.04)]",
-                  )}
-                >
-                  Assistant
-                </button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={handleClose}
-                  className="ml-auto size-9 rounded-full bg-[rgba(15,7,0,0.04)] text-[rgba(15,7,0,0.7)] hover:bg-[rgba(15,7,0,0.08)]"
-                  aria-label="Close"
-                >
-                  <TimesIcon width={12} height={12} />
-                </Button>
-              </div>
-
-              <div className="hide-scrollbar flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto px-6 pb-6">
-                {activeSidebarTab === "properties" ? (
-                  <>
-                    <AccessField
-                      value={selectedAccess}
-                      onChange={setSelectedAccess}
-                      shareAudience={shareAudience}
-                      onShareAudienceChange={setShareAudience}
-                      variant="panel"
-                    />
-
-                    <TagsField
-                      tags={tags}
-                      setTags={setTags}
-                      title={values.title ?? ""}
-                      body={bodyPlainText}
-                      variant="panel"
-                    />
-
-                    <section className="space-y-4">
-                      <h3 className="font-geist text-base font-semibold leading-6 text-[rgba(15,7,0,0.9)]">
-                        Story quality
-                      </h3>
-                      <div className="rounded-[12px] border border-[rgba(15,7,0,0.04)] bg-[rgba(15,7,0,0.02)] p-4">
-                        <div className="flex items-start gap-4">
-                          <div
-                            className="relative flex size-[100px] shrink-0 items-center justify-center rounded-full bg-white"
-                            style={{
-                              background: `conic-gradient(#22c55e ${storyQuality * 3.6}deg, rgba(15,7,0,0.08) 0deg)`,
-                            }}
-                          >
-                            <div className="flex size-[84px] flex-col items-center justify-center rounded-full bg-white">
-                              <span className="font-geist text-[20px] leading-7 text-[rgba(15,7,0,0.9)]">
-                                {storyQuality}%
-                              </span>
-                              <span className="font-geist text-xs leading-4 text-[rgba(15,7,0,0.45)]">
-                                {storyQualityLabel}
-                              </span>
-                            </div>
-                          </div>
-                          <div className="flex min-w-0 flex-1 flex-col gap-1">
-                            {qualityChecks.map((item) => (
-                              <div key={item.label} className="flex items-center gap-3">
-                                <span className="flex-1 font-geist text-sm leading-5 text-[rgba(15,7,0,0.9)]">
-                                  {item.label}
-                                </span>
-                                {item.complete ? (
-                                  <Check className="size-4 text-[#22c55e]" aria-hidden />
-                                ) : (
-                                  <Circle className="size-4 text-[rgba(15,7,0,0.2)]" aria-hidden />
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    </section>
-
-                    <section className="space-y-3">
-                      <h3 className="font-geist text-base font-semibold leading-6 text-[rgba(15,7,0,0.9)]">
-                        Story Overview
-                      </h3>
-                      <div className="space-y-2">
-                        {[
-                          { label: "Photos", value: photoCount, icon: ImageIcon },
-                          { label: "Videos", value: videoCount, icon: Video },
-                          { label: "Voice notes", value: voiceNoteCount, icon: Mic },
-                          { label: "Documents", value: documentCount, icon: FileText },
-                          { label: "Mins read", value: readingMinutes, icon: Clock3 },
-                        ].map(({ label, value, icon: Icon }) => (
-                          <div key={label} className="flex items-center gap-2.5">
-                            <Icon className="size-4 text-[rgba(15,7,0,0.45)]" aria-hidden />
-                            <div className="flex min-w-0 flex-1 items-center gap-1.5 font-geist text-xs leading-4 text-[rgba(15,7,0,0.9)]">
-                              <span>{value}</span>
-                              <span>{label}</span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </section>
-                  </>
-                ) : STORY_COMPOSER_ASSISTANT_VARIANT === "coming-soon" ? (
-                  <CreateMemoryAssistantComingSoonPanel />
-                ) : (
-                  <CreateMemoryAssistantPanel
-                    input={assistantInput}
-                    isWorking={isAssistantWorking}
-                    messages={assistantMessages}
-                    onApplyAction={(action) => {
-                      applyAssistantAction(action);
-                      setActiveSidebarTab("properties");
+        <main
+          data-testid="desktop-journal-shell"
+          className="add-story-journal relative mx-auto h-[calc(100dvh-32px)] min-h-[720px] w-full max-w-[1440px] overflow-hidden rounded-[30px] shadow-[0_28px_80px_rgba(20,12,7,0.28)] xl:h-[calc(100dvh-72px)]"
+          onKeyDown={(event) => {
+            if (event.key !== "Escape" || (!showLinkInput && !showEmoji)) return;
+            event.stopPropagation();
+            if (showLinkInput) {
+              setShowLinkInput(false);
+              editor?.commands.focus();
+            } else {
+              setShowEmoji(false);
+              emojiPickerRef.current?.querySelector("button")?.focus();
+            }
+          }}
+        >
+          <img
+            data-testid="desktop-album-artwork"
+            src={albumArtwork}
+            alt=""
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 size-full object-cover object-left-top"
+          />
+          <div className="relative grid h-full min-h-[720px] grid-rows-[auto_minmax(0,1fr)] gap-5 py-6 pl-[max(225px,22%,calc((100dvh-32px)*0.31))] pr-6 xl:gap-8 xl:py-10 xl:pl-[max(250px,22%,calc((100dvh-72px)*0.31))] xl:pr-10">
+            <div>
+              <header className="flex min-w-0 items-center justify-between gap-3">
+                <div className="flex shrink-0 items-center gap-2 font-geist text-sm text-text-neutral-weak">
+                  <CalendarDays aria-hidden className="size-4 text-icon-info-strong" />
+                  <span>{formattedToday}</span>
+                </div>
+                <div className="flex min-w-0 items-center justify-end gap-2 xl:gap-3">
+                  <DropdownMenu
+                    modal={false}
+                    onOpenChange={(open) => {
+                      if (open) setQuickCaptureDraftNonce((n) => n + 1);
                     }}
-                    onInputChange={setAssistantInput}
-                    onSubmit={submitAssistantMessage}
-                    suggestions={assistantSuggestions}
-                    tone={assistantTone}
-                    onToneChange={setAssistantTone}
-                  />
-                )}
-              </div>
-
-              <div className="border-t border-[rgba(15,7,0,0.08)] px-6 py-4">
-                <div className="flex items-center justify-end gap-3">
+                  >
+                    <DropdownMenuTrigger asChild>
+                      <Button type="button" variant="ghost" size="sm">
+                        Drafts
+                      </Button>
+                    </DropdownMenuTrigger>
+                    {draftsDropdownContent}
+                  </DropdownMenu>
+                  <div className="flex shrink-0 items-center gap-2 whitespace-nowrap font-geist text-sm text-text-neutral-weaker" role="status">
+                    <Cloud aria-hidden className="size-4" />
+                    <span>{isCurrentDraftSaved ? "Draft saved" : "Not saved"}</span>
+                  </div>
                   <Button
                     type="button"
-                    onClick={handleSaveDraft}
                     variant="outline"
-                    className="h-10 rounded-full border-[rgba(15,7,0,0.15)] px-5 font-geist text-sm font-semibold text-[rgba(15,7,0,0.9)] shadow-none hover:bg-[rgba(15,7,0,0.04)]"
+                    size="lg"
+                    onClick={() => toast.message("Preview is not available yet.")}
                   >
-                    Save Draft
+                    <Play data-icon="inline-start" />
+                    Preview
                   </Button>
                   <Button
                     type="button"
+                    size="lg"
                     onClick={handleSubmit}
                     disabled={isMutating || isUploading}
-                    className="h-10 rounded-full bg-[#ff5e00] px-5 font-geist text-sm font-semibold text-white hover:bg-[#ea5600] disabled:opacity-50"
                   >
-                    Continue
+                    Publish Story
                     <Spinner loading={isMutating} className="size-4!" />
                   </Button>
+                  <Button type="button" variant="ghost" size="icon-lg" onClick={handleClose} aria-label="Close">
+                    <X />
+                  </Button>
                 </div>
-              </div>
+              </header>
+              {showUploadGate ? <div className="mt-4">{uploadGateBanner}</div> : null}
             </div>
-          </aside>
-
-          <section className="flex min-w-0 flex-1 flex-col bg-white px-6 pb-6 pt-6">
-            {uploadGateBanner}
-            <div className="flex items-center justify-between gap-6 pb-4">
-              <div className="flex items-center gap-2 font-geist text-sm text-[rgba(15,7,0,0.45)]">
-                <SunMedium className="size-4 text-[#ff5e00]" aria-hidden />
-                <span>{formattedToday}</span>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  className="h-10 rounded-[8px] bg-[rgba(15,7,0,0.9)] px-4 font-geist text-sm font-semibold text-white hover:bg-[rgba(15,7,0,0.82)]"
-                  onClick={() => toast.message("Preview is not available yet.")}
-                >
-                  <Eye className="mr-2 size-4" />
-                  Preview
-                </Button>
-
-                <DropdownMenu
-                  modal={false}
-                  onOpenChange={(open) => {
-                    if (open) setQuickCaptureDraftNonce((n) => n + 1);
-                  }}
-                >
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="h-10 rounded-[8px] border-[rgba(15,7,0,0.1)] bg-white px-4 font-geist text-sm font-semibold text-[rgba(15,7,0,0.9)] shadow-none hover:bg-[rgba(15,7,0,0.03)]"
+            <div className="grid min-h-0 grid-cols-[minmax(0,1fr)_clamp(250px,21vw,292px)] gap-5 xl:gap-7">
+              <section className="flex min-h-0 min-w-0 flex-col pr-1">
+                <div className="flex min-h-0 flex-1 flex-col">
+                  <div className="hide-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain px-1 pb-2 pt-8 xl:px-3 xl:pt-10">
+                    <div
+                      data-testid="desktop-composer-scroll-surface"
+                      className="flex min-h-full min-w-0 flex-col"
                     >
-                      See Drafts
-                    </Button>
-                  </DropdownMenuTrigger>
-                  {draftsDropdownContent}
-                </DropdownMenu>
-
-                <Button
-                  type="button"
-                  onClick={handleSubmit}
-                  disabled={isMutating || isUploading}
-                  className="h-10 rounded-[8px] bg-[#ff5e00] px-4 font-geist text-sm font-semibold text-white hover:bg-[#ea5600] disabled:opacity-50"
-                >
-                  Publish Story
-                  <Spinner loading={isMutating} className="size-4!" />
-                </Button>
-              </div>
-            </div>
-
-            <div className="flex min-h-0 flex-1 flex-col">
-              <div className="flex min-h-0 flex-1 flex-col rounded-[16px] border border-[rgba(15,7,0,0.1)] bg-[#fcfbfa] p-6">
-                <div
-                  data-testid="desktop-composer-scroll-surface"
-                  className="hide-scrollbar flex min-h-full flex-1 flex-col overflow-y-auto pr-1"
-                >
-                  <textarea
-                    ref={titleTextareaRef}
-                    id="create-memory-title-next"
-                    placeholder="Enter title here"
-                    value={values.title}
-                    name="title"
-                    onChange={handleTitleChange}
-                    onKeyDown={handleTitleKeyDown}
-                    rows={1}
-                    className="w-full resize-none overflow-hidden border-0 bg-transparent p-0 font-garamond text-[30px] italic leading-[34px] text-[rgba(15,7,0,0.9)] placeholder:text-[rgba(15,7,0,0.12)] focus:outline-none"
-                  />
-
-                  <div className="relative mt-6 flex min-h-0 flex-col">
-                    <EditorContent
-                      editor={editor}
-                      className="tiptap-editor tiptap-editor--memory-next min-h-[320px] w-full flex-1"
-                    />
-                    <SlashCommandPopup
-                      show={showSlashMenu}
-                      position={slashPosition}
-                      commands={SLASH_COMMANDS}
-                      selectedIndex={slashSelectedIndex}
-                      onSelectedIndexChange={setSlashSelectedIndex}
-                      onCommandSelect={handleSlashCommandSelect}
-                      onClose={() => setShowSlashMenu(false)}
-                    />
-                    {showLinkInput ? (
-                      <LinkInput
-                        show={showLinkInput}
-                        position={linkPosition}
-                        initialText={selectedText}
-                        initialUrl={previousUrl}
-                        onSubmit={handleLinkSubmit}
-                        onRemove={() => editor?.chain().focus().extendMarkRange("link").unsetLink().run()}
-                        onClose={() => setShowLinkInput(false)}
+                      <textarea
+                        ref={titleTextareaRef}
+                        id="create-memory-title-next"
+                        placeholder="Give this story a title..."
+                        value={values.title}
+                        name="title"
+                        onChange={handleTitleChange}
+                        onKeyDown={handleTitleKeyDown}
+                        rows={1}
+                        className="w-full shrink-0 resize-none overflow-hidden border-0 bg-transparent p-0 font-garamond text-[clamp(2rem,3vw,2.5rem)] italic leading-[1.15] text-text-neutral-strong placeholder:text-text-neutral-weaker focus:outline-none"
                       />
-                    ) : null}
+
+                      <div className="relative mt-6 flex min-h-[240px] flex-1 flex-col">
+                        <EditorContent
+                          editor={editor}
+                          className="tiptap-editor tiptap-editor--memory-next min-h-[240px] w-full flex-1"
+                        />
+                        <SlashCommandPopup
+                          show={showSlashMenu}
+                          position={slashPosition}
+                          commands={SLASH_COMMANDS}
+                          selectedIndex={slashSelectedIndex}
+                          onSelectedIndexChange={setSlashSelectedIndex}
+                          onCommandSelect={handleSlashCommandSelect}
+                          onClose={() => setShowSlashMenu(false)}
+                        />
+                        {showLinkInput ? (
+                          <LinkInput
+                            show={showLinkInput}
+                            position={linkPosition}
+                            initialText={selectedText}
+                            initialUrl={previousUrl}
+                            onSubmit={handleLinkSubmit}
+                            onRemove={() => editor?.chain().focus().extendMarkRange("link").unsetLink().run()}
+                            onClose={() => setShowLinkInput(false)}
+                          />
+                        ) : null}
+                      </div>
+
+                      <div
+                        data-testid="desktop-composer-media-section"
+                        className={cn("mt-auto", inlineAttachmentFiles.length > 0 ? "pt-6" : "pt-0")}
+                      >
+                        {inlineAttachmentFiles.length > 0 ? (
+                          <FileThumbnails
+                            files={inlineAttachmentFiles}
+                            onRemove={handleRemoveFile}
+                            variant="media-inline"
+                          />
+                        ) : null}
+                      </div>
+                    </div>
                   </div>
 
-                  <div
-                    data-testid="desktop-composer-media-section"
-                    className={cn("mt-auto", inlineAttachmentFiles.length > 0 ? "pt-6" : "pt-0")}
-                  >
-                    {inlineAttachmentFiles.length > 0 ? (
-                      <FileThumbnails
-                        files={inlineAttachmentFiles}
-                        onRemove={handleRemoveFile}
-                        variant="media-inline"
-                      />
-                    ) : null}
-                  </div>
-                </div>
-              </div>
+                  <div className="mt-4 w-full max-w-[760px] shrink-0 rounded-[14px] border border-stroke-neutral-weak bg-[rgba(232,226,216,0.64)] px-3 py-2 shadow-[0_8px_24px_rgba(61,45,32,0.06)] backdrop-blur-[6px]">
+                    <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+                      <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+                        <DropdownMenu
+                          modal={false}
+                          onOpenChange={(open) => {
+                            if (open) setShowEmoji(false);
+                          }}
+                        >
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              type="button"
+                              variant="default"
+                              size="icon"
+                              className="size-9 rounded-[10px] bg-fill-neutral-strong text-text-inverse-strong hover:bg-fill-neutral-strong/90"
+                              aria-label="Add attachment"
+                              title="Add attachment"
+                            >
+                              <Plus className="size-5" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent
+                            side="top"
+                            align="start"
+                            sideOffset={10}
+                            onEscapeKeyDown={(event) => event.stopPropagation()}
+                            className="z-[220] min-w-[11rem] rounded-[16px] border border-[rgba(15,7,0,0.12)] bg-[#fffdf9] p-1 text-popover-foreground shadow-[0_12px_24px_rgba(15,7,0,0.12)]"
+                          >
+                            <DropdownMenuLabel className="px-3 pb-1 pt-2 font-geist text-[10px] font-semibold uppercase tracking-[0.12em] text-[rgba(15,7,0,0.45)]">
+                              Choose upload type
+                            </DropdownMenuLabel>
+                            <DropdownMenuSeparator className="mx-2 my-1 bg-[rgba(15,7,0,0.08)]" />
+                            <DropdownMenuItem
+                              className="gap-2 rounded-[12px] px-3 py-2 font-geist text-[15px] font-medium text-[rgba(15,7,0,0.9)] focus:bg-[rgba(15,7,0,0.04)]"
+                              onClick={() => fileInputImageRef.current?.click()}
+                            >
+                              <ImageIcon className="size-4 text-[#ff5e00]" />
+                              Photos
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="gap-2 rounded-[12px] px-3 py-2 font-geist text-[15px] font-medium text-[rgba(15,7,0,0.9)] focus:bg-[rgba(15,7,0,0.04)]"
+                              onClick={() => fileInputVideoRef.current?.click()}
+                            >
+                              <Video className="size-4 text-[#ff5e00]" />
+                              Videos
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="gap-2 rounded-[12px] px-3 py-2 font-geist text-[15px] font-medium text-[rgba(15,7,0,0.9)] focus:bg-[rgba(15,7,0,0.04)]"
+                              onClick={() => fileInputAudioRef.current?.click()}
+                            >
+                              <Music className="size-4 text-[#ff5e00]" />
+                              Audio
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="gap-2 rounded-[12px] px-3 py-2 font-geist text-[15px] font-medium text-[rgba(15,7,0,0.9)] focus:bg-[rgba(15,7,0,0.04)]"
+                              onClick={() => fileInputDocsRef.current?.click()}
+                            >
+                              <Paperclip className="size-4 text-[#ff5e00]" />
+                              Documents
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
 
-              <div className="mt-4 rounded-[12px] bg-[rgba(15,7,0,0.04)] px-3 py-2">
-                <div className="flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-3">
-                    <DropdownMenu
-                      modal={false}
-                      onOpenChange={(open) => {
-                        if (open) setShowEmoji(false);
-                      }}
-                    >
-                      <DropdownMenuTrigger asChild>
+                        <div ref={emojiPickerRef} className="relative">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setShowEmoji((p) => !p)}
+                            className="size-9 rounded-[10px] text-icon-neutral-strong hover:bg-fill-neutral-weak"
+                            aria-label="Insert emoji"
+                            title="Insert emoji"
+                          >
+                            <Smile className="size-5" />
+                          </Button>
+                          {showEmoji &&
+                            createPortal(
+                              <div
+                                ref={emojiPickerPortalRef}
+                                className="fixed z-[9999]"
+                                style={(() => {
+                                  const rect = emojiPickerRef.current?.getBoundingClientRect();
+                                  return rect
+                                    ? {
+                                        left: rect.left,
+                                        bottom: window.innerHeight - rect.top + 12,
+                                      }
+                                    : { left: 0, bottom: 0 };
+                                })()}
+                              >
+                                <Card className="overflow-hidden border-stroke-neutral-weak p-0 shadow-lg">
+                                  <Picker
+                                    data={emojiData}
+                                    onEmojiSelect={(e: { native: string }) => {
+                                      editor?.chain().focus().insertContent(e.native).run();
+                                      setShowEmoji(false);
+                                    }}
+                                    theme="light"
+                                    previewPosition="none"
+                                  />
+                                </Card>
+                              </div>,
+                              document.body,
+                            )}
+                        </div>
+
+                        <Separator orientation="vertical" className="h-5 bg-stroke-neutral-weak" />
+
                         <Button
                           type="button"
                           variant="ghost"
                           size="icon"
-                          className="size-10 rounded-[10px] bg-[rgba(15,7,0,0.9)] text-white hover:bg-[rgba(15,7,0,0.82)]"
-                          aria-label="Add attachment"
+                          onClick={() =>
+                            push("audio-recorder", {
+                              onFinish: handleAddAudioFile,
+                              recordingNumber: audioRecordingCount,
+                            })
+                          }
+                          className="size-9 rounded-[10px] text-icon-neutral-strong hover:bg-fill-neutral-weak"
+                          aria-label="Record audio"
+                          title="Record audio"
                         >
-                          <Plus className="size-5" />
+                          <Mic className="size-5" />
                         </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent
-                        side="top"
-                        align="start"
-                        sideOffset={10}
-                        className="z-[220] min-w-[11rem] rounded-[16px] border border-[rgba(15,7,0,0.12)] bg-[#fffdf9] p-1 text-popover-foreground shadow-[0_12px_24px_rgba(15,7,0,0.12)]"
-                      >
-                        <DropdownMenuLabel className="px-3 pb-1 pt-2 font-geist text-[10px] font-semibold uppercase tracking-[0.12em] text-[rgba(15,7,0,0.45)]">
-                          Choose upload type
-                        </DropdownMenuLabel>
-                        <DropdownMenuSeparator className="mx-2 my-1 bg-[rgba(15,7,0,0.08)]" />
-                        <DropdownMenuItem
-                          className="gap-2 rounded-[12px] px-3 py-2 font-geist text-[15px] font-medium text-[rgba(15,7,0,0.9)] focus:bg-[rgba(15,7,0,0.04)]"
-                          onClick={() => fileInputImageRef.current?.click()}
-                        >
-                          <ImageIcon className="size-4 text-[#ff5e00]" />
-                          Photos
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          className="gap-2 rounded-[12px] px-3 py-2 font-geist text-[15px] font-medium text-[rgba(15,7,0,0.9)] focus:bg-[rgba(15,7,0,0.04)]"
-                          onClick={() => fileInputVideoRef.current?.click()}
-                        >
-                          <Video className="size-4 text-[#ff5e00]" />
-                          Videos
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          className="gap-2 rounded-[12px] px-3 py-2 font-geist text-[15px] font-medium text-[rgba(15,7,0,0.9)] focus:bg-[rgba(15,7,0,0.04)]"
-                          onClick={() => fileInputAudioRef.current?.click()}
-                        >
-                          <Music className="size-4 text-[#ff5e00]" />
-                          Audio
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          className="gap-2 rounded-[12px] px-3 py-2 font-geist text-[15px] font-medium text-[rgba(15,7,0,0.9)] focus:bg-[rgba(15,7,0,0.04)]"
-                          onClick={() => fileInputDocsRef.current?.click()}
-                        >
-                          <Paperclip className="size-4 text-[#ff5e00]" />
-                          Documents
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
 
-                    <div ref={emojiPickerRef} className="relative">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setShowEmoji((p) => !p)}
-                        className="size-10 rounded-[10px] text-[rgba(15,7,0,0.8)] hover:bg-white/80"
-                        aria-label="Insert emoji"
-                      >
-                        <Smile className="size-5" />
-                      </Button>
-                      {showEmoji &&
-                        createPortal(
-                          <div
-                            ref={emojiPickerPortalRef}
-                            className="fixed z-[9999]"
-                            style={(() => {
-                              const rect = emojiPickerRef.current?.getBoundingClientRect();
-                              return rect
-                                ? {
-                                    left: rect.left,
-                                    bottom: window.innerHeight - rect.top + 12,
-                                  }
-                                : { left: 0, bottom: 0 };
-                            })()}
-                          >
-                            <Card className="overflow-hidden border-stroke-neutral-weak p-0 shadow-lg">
-                              <Picker
-                                data={emojiData}
-                                onEmojiSelect={(e: { native: string }) => {
-                                  editor?.chain().focus().insertContent(e.native).run();
-                                  setShowEmoji(false);
-                                }}
-                                theme="light"
-                                previewPosition="none"
-                              />
-                            </Card>
-                          </div>,
-                          document.body,
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => {
+                            setVideoRecordedFile(null);
+                            setShowVideoRecorder(true);
+                          }}
+                          className="size-9 rounded-[10px] text-icon-neutral-strong hover:bg-fill-neutral-weak"
+                          aria-label="Record video"
+                          title="Record video"
+                        >
+                          <Video className="size-5" />
+                        </Button>
+                      </div>
+
+                      <div className="flex min-w-0 flex-wrap items-center gap-1">
+                        {nextToolbarButton(
+                          !!editor?.isActive("bold"),
+                          () => editor?.chain().focus().toggleBold().run(),
+                          <span className="font-geist text-sm font-bold leading-none text-text-neutral-strong">B</span>,
+                          "Bold",
                         )}
+                        {nextToolbarButton(
+                          !!editor?.isActive("italic"),
+                          () => editor?.chain().focus().toggleItalic().run(),
+                          <span className="font-geist text-sm italic leading-none text-text-neutral-strong">I</span>,
+                          "Italic",
+                        )}
+                        {nextToolbarButton(
+                          !!editor?.isActive("strike"),
+                          () => editor?.chain().focus().toggleStrike().run(),
+                          <span className="font-geist text-sm leading-none line-through text-text-neutral-strong">S</span>,
+                          "Strikethrough",
+                        )}
+                        {nextToolbarButton(
+                          !!editor?.isActive("underline"),
+                          () => editor?.chain().focus().toggleUnderline().run(),
+                          <span className="font-geist text-sm leading-none underline text-text-neutral-strong">U</span>,
+                          "Underline",
+                        )}
+                        {nextToolbarButton(
+                          !!editor?.isActive("link"),
+                          handleLinkClick,
+                          <LinkIcon width={15} height={10} />,
+                          "Link",
+                        )}
+                        <Separator orientation="vertical" className="h-5 bg-stroke-neutral-weak" />
+                        {nextToolbarButton(
+                          !!editor?.isActive("bulletList"),
+                          () => editor?.chain().focus().toggleBulletList().run(),
+                          <UnorderedListIcon width={16} height={14} />,
+                          "Bullet list",
+                        )}
+                      </div>
                     </div>
-
-                    <Separator orientation="vertical" className="h-6 bg-[rgba(15,7,0,0.08)]" />
-
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() =>
-                        push("audio-recorder", {
-                          onFinish: handleAddAudioFile,
-                          recordingNumber: audioRecordingCount,
-                        })
-                      }
-                      className="size-10 rounded-[10px] text-[rgba(15,7,0,0.8)] hover:bg-white/80"
-                      aria-label="Record audio"
-                    >
-                      <Mic className="size-5" />
-                    </Button>
-
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => {
-                        setVideoRecordedFile(null);
-                        setShowVideoRecorder(true);
-                      }}
-                      className="size-10 rounded-[10px] text-[rgba(15,7,0,0.8)] hover:bg-white/80"
-                      aria-label="Record video"
-                    >
-                      <Video className="size-5" />
-                    </Button>
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    {nextToolbarButton(
-                      !!editor?.isActive("bold"),
-                      () => editor?.chain().focus().toggleBold().run(),
-                      <span className="font-geist text-sm font-bold leading-none text-[rgba(15,7,0,0.9)]">B</span>,
-                      "Bold",
-                    )}
-                    {nextToolbarButton(
-                      !!editor?.isActive("italic"),
-                      () => editor?.chain().focus().toggleItalic().run(),
-                      <span className="font-geist text-sm italic leading-none text-[rgba(15,7,0,0.9)]">I</span>,
-                      "Italic",
-                    )}
-                    {nextToolbarButton(
-                      !!editor?.isActive("strike"),
-                      () => editor?.chain().focus().toggleStrike().run(),
-                      <span className="font-geist text-sm leading-none line-through text-[rgba(15,7,0,0.9)]">S</span>,
-                      "Strikethrough",
-                    )}
-                    {nextToolbarButton(
-                      !!editor?.isActive("underline"),
-                      () => editor?.chain().focus().toggleUnderline().run(),
-                      <span className="font-geist text-sm leading-none underline text-[rgba(15,7,0,0.9)]">U</span>,
-                      "Underline",
-                    )}
-                    {nextToolbarButton(
-                      !!editor?.isActive("link"),
-                      handleLinkClick,
-                      <LinkIcon width={15} height={10} />,
-                      "Link",
-                    )}
-                    <Separator orientation="vertical" className="h-6 bg-[rgba(15,7,0,0.08)]" />
-                    {nextToolbarButton(
-                      !!editor?.isActive("bulletList"),
-                      () => editor?.chain().focus().toggleBulletList().run(),
-                      <UnorderedListIcon width={16} height={14} />,
-                      "Bullet list",
-                    )}
                   </div>
                 </div>
-              </div>
+
+              </section>
+              <aside className="flex min-h-0 min-w-0 flex-col overflow-hidden rounded-[18px] border border-stroke-neutral-weak bg-fill-neutral-weaker">
+                <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+                  <Tabs
+                    value={activeSidebarTab}
+                    onValueChange={(value) => {
+                      if (value === "properties" || value === "assistant") {
+                        setActiveSidebarTab(value);
+                      }
+                    }}
+                    className="min-h-0 flex-1 flex-col gap-0"
+                  >
+                    <TabsList className="mx-3 mb-5 mt-4 h-9 shrink-0 rounded-[10px] bg-fill-neutral-weaker p-0">
+                      <TabsTrigger
+                        value="properties"
+                        className="rounded-[8px] px-3 font-geist text-sm text-text-neutral-weak data-[state=active]:bg-fill-neutral-weak data-[state=active]:text-text-neutral-strong"
+                      >
+                        Story Details
+                      </TabsTrigger>
+                      <TabsTrigger
+                        value="assistant"
+                        className="rounded-[8px] px-3 font-geist text-sm text-text-neutral-weak data-[state=active]:bg-fill-neutral-weak data-[state=active]:text-text-neutral-strong"
+                      >
+                        Assistant
+                      </TabsTrigger>
+                    </TabsList>
+
+                    <TabsContent value="properties" className="hide-scrollbar min-h-0 overflow-y-auto px-4 pb-5">
+                      <div className="flex flex-col gap-6">
+                        <AccessField
+                          value={selectedAccess}
+                          onChange={setSelectedAccess}
+                          shareAudience={shareAudience}
+                          onShareAudienceChange={setShareAudience}
+                          variant="panel"
+                          dismissOnEscape
+                        />
+
+                        <TagsField
+                          tags={tags}
+                          setTags={setTags}
+                          title={values.title ?? ""}
+                          body={bodyPlainText}
+                          variant="panel"
+                        />
+
+                        <section className="flex flex-col gap-3">
+                          <h3 className="font-geist text-base font-semibold leading-6 text-text-neutral-strong">
+                            Story quality
+                          </h3>
+                          <div className="rounded-[12px] border border-stroke-neutral-weak bg-fill-neutral-weaker px-3 py-2">
+                            {qualityChecks.map((item) => (
+                              <div key={item.label} className="flex items-center justify-between gap-3 py-1">
+                                <span className="font-geist text-sm leading-5 text-text-neutral-strong">{item.label}</span>
+                                {item.complete ? (
+                                  <Check aria-label={`${item.label} complete`} className="size-4 shrink-0 text-icon-success-strong" />
+                                ) : (
+                                  <Circle aria-label={`${item.label} incomplete`} className="size-4 shrink-0 text-icon-neutral-weaker" />
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </section>
+
+                        <section className="space-y-3">
+                          <h3 className="font-geist text-base font-semibold leading-6 text-[rgba(15,7,0,0.9)]">
+                            Story Overview
+                          </h3>
+                          <div className="space-y-2">
+                            {[
+                              { label: "Photos", value: photoCount, icon: ImageIcon },
+                              { label: "Videos", value: videoCount, icon: Video },
+                              { label: "Voice notes", value: voiceNoteCount, icon: Mic },
+                              { label: "Documents", value: documentCount, icon: FileText },
+                              { label: "Mins read", value: readingMinutes, icon: Clock3 },
+                            ].map(({ label, value, icon: Icon }) => (
+                              <div key={label} className="flex items-center gap-2.5">
+                                <Icon className="size-4 text-[rgba(15,7,0,0.45)]" aria-hidden />
+                                <div className="flex min-w-0 flex-1 items-center gap-1.5 font-geist text-xs leading-4 text-[rgba(15,7,0,0.9)]">
+                                  <span>{value}</span>
+                                  <span>{label}</span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </section>
+                      </div>
+                    </TabsContent>
+
+                    <TabsContent value="assistant" className="hide-scrollbar min-h-0 overflow-y-auto px-4 pb-5 data-[state=active]:flex data-[state=active]:flex-col">
+                      {STORY_COMPOSER_ASSISTANT_VARIANT === "coming-soon" ? (
+                        <CreateMemoryAssistantComingSoonPanel />
+                      ) : (
+                        <CreateMemoryAssistantPanel
+                          input={assistantInput}
+                          isWorking={isAssistantWorking}
+                          messages={assistantMessages}
+                          onApplyAction={(action) => {
+                            applyAssistantAction(action);
+                            setActiveSidebarTab("properties");
+                          }}
+                          onInputChange={setAssistantInput}
+                          onSubmit={submitAssistantMessage}
+                          suggestions={assistantSuggestions}
+                          tone={assistantTone}
+                          onToneChange={setAssistantTone}
+                        />
+                      )}
+                    </TabsContent>
+                  </Tabs>
+
+                  <Separator />
+                  <div className="flex shrink-0 justify-end px-4 py-4">
+                    <Button type="button" onClick={handleSaveDraft} variant="outline">
+                      Save Draft
+                    </Button>
+                  </div>
+                </div>
+              </aside>
             </div>
-          </section>
-        </div>
+          </div>
+        </main>
       </div>
       {closeConfirmationPortal}
       {videoRecorderDialog}

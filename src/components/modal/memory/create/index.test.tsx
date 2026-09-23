@@ -1,9 +1,12 @@
-import { screen } from "@testing-library/react";
+import { act, fireEvent, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { CreateMemory } from "./index";
+import Modal from "@/components/modal";
+import { useModal } from "@/hooks/use-modal";
 import { renderWithProviders } from "@/test";
+import type { IOnUploadPayload } from "@/utility/interface";
 
 const { editorFocusMock } = vi.hoisted(() => ({
   editorFocusMock: vi.fn(),
@@ -11,6 +14,21 @@ const { editorFocusMock } = vi.hoisted(() => ({
 const { editorSetContentMock } = vi.hoisted(() => ({
   editorSetContentMock: vi.fn(),
 }));
+const { editorGetHTMLMock, editorGetTextMock, uploadState } = vi.hoisted(() => ({
+  editorGetHTMLMock: vi.fn(() => ""),
+  editorGetTextMock: vi.fn(() => ""),
+  uploadState: { files: null as IOnUploadPayload[] | null },
+}));
+
+vi.mock("@/hooks/use-file-upload", async (importOriginal) => {
+  const original = await importOriginal<typeof import("@/hooks/use-file-upload")>();
+  return {
+    default: () => {
+      const upload = original.default();
+      return { ...upload, files: uploadState.files ?? upload.files };
+    },
+  };
+});
 
 const aiTaskRunMock = vi.fn();
 
@@ -333,8 +351,8 @@ vi.mock("@tiptap/react", () => {
     });
   }
   const editorMock = {
-    getHTML: () => "",
-    getText: () => "",
+    getHTML: editorGetHTMLMock,
+    getText: editorGetTextMock,
     getAttributes: () => ({}),
     isActive: () => false,
     commands: { focus: editorFocusMock, setContent: editorSetContentMock },
@@ -358,7 +376,11 @@ vi.mock("@tiptap/react", () => {
 });
 
 vi.mock("@emoji-mart/react", () => ({
-  default: () => <div data-testid="emoji-mart-mock" />,
+  default: () => (
+    <div data-testid="emoji-mart-mock">
+      <input aria-label="Search emojis" />
+    </div>
+  ),
 }));
 
 vi.mock("./file-thumbnails", () => ({
@@ -386,21 +408,43 @@ vi.mock("react-modal-sheet", () => {
   return { Sheet: MockSheet };
 });
 
+function ComposerModal() {
+  const { open } = useModal();
+  return (
+    <>
+      <button onClick={() => open?.("create-memory")}>Open composer</button>
+      <Modal />
+    </>
+  );
+}
+
 describe("CreateMemory", () => {
   beforeEach(() => {
     aiTaskRunMock.mockReset();
     editorSetContentMock.mockReset();
+    editorGetHTMLMock.mockReset().mockReturnValue("");
+    editorGetTextMock.mockReset().mockReturnValue("");
+    uploadState.files = null;
   });
 
-  it("uses v3 background on desktop story shell", () => {
-    renderWithProviders(<CreateMemory data={{}} isMobile={false} />, { auth: true });
+  it("renders the desktop composer as a journal without changing the mobile sheet", () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const { rerender } = renderWithProviders(<CreateMemory data={{}} isMobile={false} />, {
+      auth: true,
+      container,
+    });
 
-    const titleInput = screen.getByPlaceholderText(/enter title here/i);
-    expect(titleInput).toBeInTheDocument();
-    expect(screen.getByText("Properties")).toBeInTheDocument();
-    const shell = titleInput.closest(".absolute");
-    expect(shell).toBeTruthy();
-    expect(shell?.className).toContain("bg-white");
+    expect(screen.getByTestId("desktop-story-environment")).toBeInTheDocument();
+    expect(screen.getByTestId("desktop-journal-shell")).toBeInTheDocument();
+    expect(screen.getByTestId("desktop-album-artwork")).toHaveAttribute("alt", "");
+    expect(screen.getByPlaceholderText(/give this story a title/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Publish Story" })).toBeInTheDocument();
+
+    rerender(<CreateMemory data={{}} isMobile />);
+
+    expect(screen.getByTestId("sheet-container")).toBeInTheDocument();
+    expect(screen.queryByTestId("desktop-journal-shell")).not.toBeInTheDocument();
   });
 
   it("uses v3 background on mobile sheet surfaces", () => {
@@ -415,7 +459,7 @@ describe("CreateMemory", () => {
     const user = userEvent.setup();
     renderWithProviders(<CreateMemory data={{}} isMobile={false} />, { auth: true });
 
-    const titleInput = screen.getByPlaceholderText(/enter title here/i);
+    const titleInput = screen.getByPlaceholderText(/give this story a title/i);
     await user.type(titleInput, "A title");
     await user.keyboard("{Enter}");
 
@@ -423,11 +467,28 @@ describe("CreateMemory", () => {
     expect(editorFocusMock).toHaveBeenCalled();
   });
 
+  it("keeps the whole desktop title visible when resizing makes it wrap onto more lines", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<CreateMemory data={{}} isMobile={false} />, { auth: true });
+    const titleInput = screen.getByPlaceholderText(/give this story a title/i);
+    let textHeight = 96;
+    Object.defineProperty(titleInput, "scrollHeight", { configurable: true, get: () => textHeight });
+    await user.type(titleInput, "A long story title");
+    expect(titleInput).toHaveStyle({ height: "96px" });
+
+    textHeight = 180;
+    fireEvent(window, new Event("resize"));
+
+    expect(titleInput).toHaveStyle({ height: "180px" });
+  });
+
   it("shows the upload picker options from the composer toolbar", async () => {
     const user = userEvent.setup();
     renderWithProviders(<CreateMemory data={{}} isMobile={false} />, { auth: true });
 
-    await user.click(screen.getByLabelText(/add attachment/i));
+    const attachmentButton = screen.getByRole("button", { name: "Add attachment" });
+    expect(attachmentButton).toHaveClass("text-text-inverse-strong");
+    await user.click(attachmentButton);
 
     expect(screen.getByText("Choose upload type")).toBeInTheDocument();
     expect(screen.getAllByText("Photos").length).toBeGreaterThan(0);
@@ -436,15 +497,276 @@ describe("CreateMemory", () => {
     expect(screen.getAllByText("Documents").length).toBeGreaterThan(0);
   });
 
-  it("switches the left panel to assistant mode", async () => {
+  it.each(["Drafts", "Add attachment"])(
+    "dismisses the desktop %s menu with Escape without closing the composer",
+    async (menuName) => {
+      const user = userEvent.setup();
+      renderWithProviders(<ComposerModal />, { auth: true });
+
+      await user.click(screen.getByRole("button", { name: "Open composer" }));
+      await user.click(screen.getByRole("button", { name: menuName }));
+      expect(screen.getByRole("menu")).toBeInTheDocument();
+
+      await user.keyboard("{Escape}");
+
+      expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+      expect(screen.getByTestId("desktop-journal-shell")).toBeInTheDocument();
+
+      await user.keyboard("{Escape}");
+      expect(screen.queryByTestId("desktop-journal-shell")).not.toBeInTheDocument();
+    },
+  );
+
+  it("dismisses desktop sharing options with Escape without closing the composer", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<ComposerModal />, { auth: true });
+    await user.click(screen.getByRole("button", { name: "Open composer" }));
+    const sharingTrigger = screen.getByLabelText("Who can see this story?");
+    await user.click(sharingTrigger);
+    await user.click(screen.getByPlaceholderText("Search…"));
+
+    await user.keyboard("{Escape}");
+
+    expect(screen.queryByRole("listbox", { name: "Sharing options" })).not.toBeInTheDocument();
+    expect(screen.getByTestId("desktop-journal-shell")).toBeInTheDocument();
+    expect(sharingTrigger).toHaveFocus();
+    await user.keyboard("{Escape}");
+    expect(screen.queryByTestId("desktop-journal-shell")).not.toBeInTheDocument();
+  });
+
+  it.each(["Link", "Insert emoji"])(
+    "dismisses the desktop %s popover with Escape without closing the composer",
+    async (triggerName) => {
+      const user = userEvent.setup();
+      renderWithProviders(<ComposerModal />, { auth: true });
+      await user.click(screen.getByRole("button", { name: "Open composer" }));
+      await user.click(screen.getByRole("button", { name: triggerName }));
+      expect(triggerName === "Link"
+        ? screen.getByPlaceholderText("Enter text to display...")
+        : screen.getByTestId("emoji-mart-mock")).toBeInTheDocument();
+      if (triggerName === "Insert emoji") {
+        const emojiSearch = screen.getByRole("textbox", { name: "Search emojis" });
+        await user.click(emojiSearch);
+        expect(emojiSearch).toHaveFocus();
+      }
+
+      await user.keyboard("{Escape}");
+
+      expect(screen.queryByPlaceholderText("Enter text to display...")).not.toBeInTheDocument();
+      expect(screen.queryByTestId("emoji-mart-mock")).not.toBeInTheDocument();
+      expect(screen.getByTestId("desktop-journal-shell")).toBeInTheDocument();
+      if (triggerName === "Insert emoji") {
+        expect(screen.getByRole("button", { name: "Insert emoji" })).toHaveFocus();
+      }
+      await user.keyboard("{Escape}");
+      expect(screen.queryByTestId("desktop-journal-shell")).not.toBeInTheDocument();
+    },
+  );
+
+  it("shows assistant content when the Assistant tab is selected", async () => {
     const user = userEvent.setup();
     renderWithProviders(<CreateMemory data={{}} isMobile={false} />, { auth: true });
 
-    await user.click(screen.getByRole("button", { name: "Assistant" }));
+    const detailsTab = screen.getByRole("tab", { name: "Story Details" });
+    const assistantTab = screen.getByRole("tab", { name: "Assistant" });
+    expect(detailsTab).toHaveAttribute("aria-selected", "true");
+    await user.click(assistantTab);
 
+    expect(assistantTab).toHaveAttribute("data-state", "active");
+    expect(assistantTab).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("tabpanel", { name: "Assistant" })).toHaveAttribute(
+      "aria-labelledby",
+      assistantTab.id,
+    );
     expect(screen.getByText(/assistant coming soon!/i)).toBeInTheDocument();
     expect(screen.getByText(/writing your journals and recalling important contexts/i)).toBeInTheDocument();
     expect(screen.queryByPlaceholderText(/ask anything here\. use @ for context\./i)).not.toBeInTheDocument();
+
+    await user.click(detailsTab);
+    expect(detailsTab).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("tabpanel", { name: "Story Details" })).toBeVisible();
+  });
+
+  it("stacks the Story Details tabs above their scrollable panel", () => {
+    renderWithProviders(<CreateMemory data={{}} isMobile={false} />, { auth: true });
+
+    expect(screen.getByRole("tablist").closest('[data-slot="tabs"]')).toHaveClass("flex-col");
+  });
+
+  it("lets the active Assistant panel fill the available vertical space", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<CreateMemory data={{}} isMobile={false} />, { auth: true });
+
+    await user.click(screen.getByRole("tab", { name: "Assistant" }));
+    const assistantPanel = screen.getByRole("tabpanel", { name: "Assistant" });
+    expect(assistantPanel).toHaveClass("data-[state=active]:flex", "data-[state=active]:flex-col");
+    expect(screen.queryByRole("tabpanel", { name: "Story Details" })).not.toBeInTheDocument();
+  });
+
+  it("reports a saved local draft only while the saved content matches the composer", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<CreateMemory data={{}} isMobile={false} />, { auth: true });
+
+    const titleInput = screen.getByPlaceholderText(/give this story a title/i);
+    expect(screen.getByRole("status")).toHaveTextContent("Not saved");
+
+    await user.type(titleInput, "A day to remember");
+    await user.click(screen.getByRole("button", { name: "Save Draft" }));
+
+    expect(screen.getByRole("status")).toHaveTextContent("Draft saved");
+    expect(JSON.parse(localStorage.getItem("create-memory-drafts") ?? "[]")[0].title).toBe("A day to remember");
+
+    await user.type(titleInput, " together");
+
+    expect(screen.getByRole("status")).toHaveTextContent("Not saved");
+  });
+
+  it.each(["A local story", "  A local story  "])("marks edits saved only after local autosave persists the raw title %j and body", async (title) => {
+    vi.useFakeTimers();
+    try {
+      renderWithProviders(<CreateMemory data={{}} isMobile={false} />, { auth: true });
+      const titleInput = screen.getByPlaceholderText(/give this story a title/i);
+      editorGetTextMock.mockReturnValue("An afternoon together");
+      editorGetHTMLMock.mockReturnValue("<p>An afternoon together</p>");
+      fireEvent.change(titleInput, { target: { value: title } });
+
+      expect(screen.getByRole("status")).toHaveTextContent("Not saved");
+      await act(async () => { await vi.advanceTimersByTimeAsync(899); });
+      expect(localStorage.getItem("create-memory-drafts")).toBeNull();
+      expect(screen.getByRole("status")).toHaveTextContent("Not saved");
+
+      await act(async () => { await vi.advanceTimersByTimeAsync(1); });
+      expect(JSON.parse(localStorage.getItem("create-memory-drafts") ?? "[]")[0]).toMatchObject({
+        title,
+        body: "<p>An afternoon together</p>",
+      });
+      expect(screen.getByRole("status")).toHaveTextContent("Draft saved");
+
+      editorGetTextMock.mockReturnValue("A bright afternoon together");
+      editorGetHTMLMock.mockReturnValue("<p>A bright afternoon together</p>");
+      fireEvent.change(titleInput, { target: { value: "An updated local story" } });
+      expect(screen.getByRole("status")).toHaveTextContent("Not saved");
+
+      await act(async () => { await vi.advanceTimersByTimeAsync(900); });
+      expect(JSON.parse(localStorage.getItem("create-memory-drafts") ?? "[]")[0]).toMatchObject({
+        title: "An updated local story",
+        body: "<p>A bright afternoon together</p>",
+      });
+      expect(screen.getByRole("status")).toHaveTextContent("Draft saved");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it.each(["Stored story", "  Stored story  "])("recognizes loaded local draft %j as saved without changing its raw title", async (title) => {
+    const user = userEvent.setup();
+    const draft = {
+      id: "stored-draft",
+      title,
+      body: "<p>A saved afternoon</p>",
+      tags: ["Family"],
+      attachments: [],
+      updatedAt: "2026-09-23T00:00:00.000Z",
+    };
+    localStorage.setItem("create-memory-drafts", JSON.stringify([draft]));
+    editorSetContentMock.mockImplementation((html: string) => {
+      editorGetHTMLMock.mockReturnValue(html);
+      editorGetTextMock.mockReturnValue("A saved afternoon");
+    });
+    renderWithProviders(<CreateMemory data={{}} isMobile={false} />, { auth: true });
+    expect(screen.getByRole("status")).toHaveTextContent("Not saved");
+
+    await user.click(screen.getByRole("button", { name: "Drafts" }));
+    await user.click(screen.getByRole("button", { name: /^Stored story/ }));
+
+    expect(screen.getByPlaceholderText(/give this story a title/i)).toHaveValue(draft.title);
+    expect(editorSetContentMock).toHaveBeenCalledWith(draft.body);
+    expect(screen.getByRole("status")).toHaveTextContent("Draft saved");
+    expect(JSON.parse(localStorage.getItem("create-memory-drafts") ?? "[]")[0].title).toBe(title);
+  });
+
+  it("keeps a manually saved whitespace-title draft saved when its pending autosave completes", async () => {
+    vi.useFakeTimers();
+    try {
+      renderWithProviders(<CreateMemory data={{}} isMobile={false} />, { auth: true });
+      const title = "  A day to remember  ";
+      fireEvent.change(screen.getByPlaceholderText(/give this story a title/i), { target: { value: title } });
+      fireEvent.click(screen.getByRole("button", { name: "Save Draft" }));
+      expect(screen.getByRole("status")).toHaveTextContent("Draft saved");
+
+      await act(async () => { await vi.advanceTimersByTimeAsync(900); });
+
+      expect(JSON.parse(localStorage.getItem("create-memory-drafts") ?? "[]")[0].title).toBe(title);
+      expect(screen.getByRole("status")).toHaveTextContent("Draft saved");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("marks a saved draft unsaved when only the body formatting changes", async () => {
+    const user = userEvent.setup();
+    editorGetTextMock.mockReturnValue("A warm afternoon");
+    editorGetHTMLMock.mockReturnValue("<p>A warm afternoon</p>");
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const { rerender } = renderWithProviders(<CreateMemory data={{}} isMobile={false} />, { auth: true, container });
+
+    await user.click(screen.getByRole("button", { name: "Save Draft" }));
+    expect(screen.getByRole("status")).toHaveTextContent("Draft saved");
+    expect(JSON.parse(localStorage.getItem("create-memory-drafts") ?? "[]")[0].body).toBe("<p>A warm afternoon</p>");
+
+    editorGetHTMLMock.mockReturnValue("<p>A <strong>warm</strong> afternoon</p>");
+    rerender(<CreateMemory data={{}} isMobile={false} />);
+
+    expect(screen.getByRole("status")).toHaveTextContent("Not saved");
+  });
+
+  it("never reports saved while an upload is pending and compares only persisted attachments", async () => {
+    const user = userEvent.setup();
+    const uploadedFile = { _id: "photo-1", url: "/photo.jpg", name: "photo.jpg", size: 1024, type: "image/jpeg" };
+    uploadState.files = [
+      { id: "uploaded-client-id", file: null, progress: 100, uploadedFile },
+      { id: "pending-upload", file: new File(["photo"], "pending.jpg", { type: "image/jpeg" }), progress: 25 },
+    ];
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const { rerender } = renderWithProviders(<CreateMemory data={{}} isMobile={false} />, { auth: true, container });
+
+    await user.click(screen.getByRole("button", { name: "Save Draft" }));
+
+    expect(screen.getByRole("status")).toHaveTextContent("Not saved");
+    expect(JSON.parse(localStorage.getItem("create-memory-drafts") ?? "[]")[0].attachments).toEqual([uploadedFile]);
+
+    uploadState.files = [uploadState.files[0]];
+    rerender(<CreateMemory data={{}} isMobile={false} />);
+
+    expect(screen.getByRole("status")).toHaveTextContent("Draft saved");
+  });
+
+  it("invalidates saved status when all local drafts are cleared", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<CreateMemory data={{}} isMobile={false} />, { auth: true });
+
+    await user.click(screen.getByRole("button", { name: "Save Draft" }));
+    expect(screen.getByRole("status")).toHaveTextContent("Draft saved");
+    await user.click(screen.getByRole("button", { name: "Drafts" }));
+    await user.click(screen.getByRole("button", { name: "Clear all" }));
+
+    expect(screen.getByRole("status")).toHaveTextContent("Not saved");
+    expect(JSON.parse(localStorage.getItem("create-memory-drafts") ?? "[]")).toEqual([]);
+  });
+
+  it("invalidates saved status when the manually saved draft is deleted", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<CreateMemory data={{}} isMobile={false} />, { auth: true });
+
+    await user.click(screen.getByRole("button", { name: "Save Draft" }));
+    expect(screen.getByRole("status")).toHaveTextContent("Draft saved");
+    await user.click(screen.getByRole("button", { name: "Drafts" }));
+    await user.click(screen.getByRole("button", { name: "Delete" }));
+
+    expect(screen.getByRole("status")).toHaveTextContent("Not saved");
+    expect(JSON.parse(localStorage.getItem("create-memory-drafts") ?? "[]")).toEqual([]);
   });
 
   it.skip("can rewrite the draft from a chat request and update the journal draft", async () => {
@@ -491,6 +813,16 @@ describe("CreateMemory", () => {
 
     expect(scrollSurface.className).toContain("min-h-full");
     expect(mediaSection.className).toContain("mt-auto");
+  });
+
+  it("shows story quality as a quiet checklist instead of a percentage chart", () => {
+    renderWithProviders(<CreateMemory data={{}} isMobile={false} />, { auth: true });
+
+    expect(screen.getByText("Story quality")).toBeInTheDocument();
+    expect(screen.getByText("Characters")).toBeInTheDocument();
+    expect(screen.getByText("Sensory details")).toBeInTheDocument();
+    expect(screen.queryByText(/^(?:strong story|good start|keep going)$/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/\d+%/)).not.toBeInTheDocument();
   });
 
   it.skip("returns sensory guidance from a freeform assistant request", async () => {
