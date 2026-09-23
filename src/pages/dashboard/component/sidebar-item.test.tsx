@@ -14,4 +14,16 @@ describe("SideBarItem", () => {
     expect(screen.getByText("Drop a feedback")).toBeInTheDocument();
     expect(screen.getByText("📝")).toBeInTheDocument();
   });
+
+  it("uses semantic colors for active navigation", () => {
+    render(
+      <MemoryRouter>
+        <SideBarItem title="Overview" active />
+      </MemoryRouter>,
+    );
+
+    const label = screen.getByText("Overview");
+    expect(label).toHaveClass("text-foreground");
+    expect(label.parentElement).toHaveClass("bg-accent", "border-border");
+  });
 });

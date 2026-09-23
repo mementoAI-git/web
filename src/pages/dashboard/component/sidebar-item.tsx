@@ -33,27 +33,15 @@ export default function SideBarItem({
     onClick?.();
   };
 
-  const activeBg = "var(--v3-fill-weak)";
-  const activeBorder = "#FCFCFC";
-  const activeTextColor = "#1E1E1E";
-
   return (
     <div
       onClick={handleClick}
       className={cn(
-        "flex h-10 w-full cursor-pointer items-center gap-3 rounded-[8px] bg-transparent px-3 py-2 transition-colors group/item",
-        active && "active",
+        "flex h-10 w-full cursor-pointer items-center gap-3 rounded-[8px] border px-3 py-2 transition-colors group/item",
+        active
+          ? "active border-border bg-accent"
+          : "border-transparent bg-transparent hover:bg-accent",
       )}
-      style={{
-        backgroundColor: active ? activeBg : undefined,
-        border: active ? `1px solid ${activeBorder}` : "1px solid transparent",
-      }}
-      onMouseEnter={(e) => {
-        if (!active) e.currentTarget.style.backgroundColor = activeBg;
-      }}
-      onMouseLeave={(e) => {
-        if (!active) e.currentTarget.style.backgroundColor = "transparent";
-      }}
     >
       <div className="size-5 flex items-center justify-center transition-colors">
         {emoji ? (
@@ -63,12 +51,19 @@ export default function SideBarItem({
         ) : icon ? (
           <img src={icon} alt={title} className="size-5 object-contain" />
         ) : Icon ? (
-          <Icon className="size-5 text-v3-text-weak" style={{ color: active ? activeTextColor : undefined }} />
+          <Icon
+            className={cn(
+              "size-5",
+              active ? "text-foreground" : "text-muted-foreground",
+            )}
+          />
         ) : null}
       </div>
       <span
-        className={`text-sm font-inter font-medium transition-colors ${active ? "font-semibold" : "text-text-neutral-weak"}`}
-        style={{ color: active ? activeTextColor : undefined }}
+        className={cn(
+          "text-sm font-inter font-medium transition-colors",
+          active ? "font-semibold text-foreground" : "text-muted-foreground",
+        )}
       >
         {title}
       </span>
