@@ -5,6 +5,7 @@ import { StoreProvider } from "@/hooks/use-store";
 import { ModalProvider } from "@/hooks/use-modal";
 import { ChatProvider } from "@/hooks/use-chat";
 import { SubscriptionProvider } from "@/contexts/subscription";
+import { ThemeProvider } from "@/contexts/theme";
 import { fetcher } from "@/api/fetcher";
 import type { ReactElement } from "react";
 import { seedAuth, clearAuth } from "./auth-helpers";
@@ -27,28 +28,27 @@ function createWrapper(options: ProviderOptions = {}) {
 
   return function TestWrapper({ children }: { children: React.ReactNode }) {
     return (
-      <StoreProvider>
-        <ModalProvider>
-          <ChatProvider>
-            <SWRConfig
-              value={{
-                fetcher,
-                dedupingInterval: 0,
-                provider: () => new Map(),
-              }}
-            >
-              <SubscriptionProvider>
-                <MemoryRouter
-                  initialEntries={[route]}
-                  {...routerProps}
-                >
-                  {children}
-                </MemoryRouter>
-              </SubscriptionProvider>
-            </SWRConfig>
-          </ChatProvider>
-        </ModalProvider>
-      </StoreProvider>
+      <ThemeProvider>
+        <StoreProvider>
+          <ModalProvider>
+            <ChatProvider>
+              <SWRConfig
+                value={{
+                  fetcher,
+                  dedupingInterval: 0,
+                  provider: () => new Map(),
+                }}
+              >
+                <SubscriptionProvider>
+                  <MemoryRouter initialEntries={[route]} {...routerProps}>
+                    {children}
+                  </MemoryRouter>
+                </SubscriptionProvider>
+              </SWRConfig>
+            </ChatProvider>
+          </ModalProvider>
+        </StoreProvider>
+      </ThemeProvider>
     );
   };
 }

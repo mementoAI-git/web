@@ -13,7 +13,7 @@ export default function TimeCapsuleRow({ capsule }: { capsule: ICapsule }) {
         {capsule.recipients.length > 1 ? (
           <UserItem
             image={
-              <span className="text-secondary">
+              <span className="text-foreground">
                 <GroupUsersIcon width={16} />
               </span>
             }

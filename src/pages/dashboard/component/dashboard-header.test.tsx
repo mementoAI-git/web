@@ -3,7 +3,10 @@ import { useEffect } from "react";
 import { screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { renderWithProviders } from "@/test";
-import { ConversationChromeProvider, useConversationChrome } from "@/contexts/conversation-chrome";
+import {
+  ConversationChromeProvider,
+  useConversationChrome,
+} from "@/contexts/conversation-chrome";
 import { ChatSidebarProvider } from "@/contexts/chat-sidebar";
 import { DashboardHeader } from "./dashboard-header";
 import type { IMemory } from "@/utility/interface";
@@ -48,6 +51,27 @@ describe("DashboardHeader", () => {
     expect(searchColumn?.className).toMatch(/justify-self-center/);
   });
 
+  it("uses semantic surfaces and foregrounds in the default header", () => {
+    const { container } = renderDashboardHeader(<DashboardHeader />);
+    const shell = container.firstElementChild;
+    expect(shell).toHaveClass("bg-card", "border-border");
+    expect(shell).not.toHaveClass("bg-white");
+    expect(screen.getByText("overview")).toHaveClass("text-foreground");
+    expect(screen.getByRole("button", { name: "Open search" })).toHaveClass(
+      "bg-background",
+      "border-border",
+    );
+  });
+
+  it("keeps the mobile menu control readable", () => {
+    renderDashboardHeader(<DashboardHeader />);
+
+    expect(screen.getByRole("button", { name: "Open sidebar" })).toHaveClass(
+      "text-muted-foreground",
+      "hover:bg-muted",
+    );
+  });
+
   it("resolves the dashboard title for /capsule like other sections", () => {
     renderDashboardHeader(<DashboardHeader />, { route: "/capsule" });
 
@@ -70,5 +94,24 @@ describe("DashboardHeader", () => {
     expect(
       screen.getByRole("button", { name: /chat settings/i }),
     ).toBeInTheDocument();
+  });
+
+  it("uses semantic surfaces and foregrounds in the conversation header", () => {
+    const { container } = renderDashboardHeader(
+      <DashboardHeaderWithConversationChrome
+        memory={{ _id: "m1", title: "Test thread", bookmarked: false }}
+      />,
+      { route: "/chat/m1" },
+    );
+
+    const shell = container.firstElementChild;
+    expect(shell).toHaveClass("bg-card", "border-border");
+    expect(shell).not.toHaveClass("bg-white");
+    expect(screen.getByRole("heading", { name: "Chat" })).toHaveClass(
+      "text-foreground",
+    );
+    expect(screen.getByRole("button", { name: "Expand sidebar" })).toHaveClass(
+      "text-muted-foreground",
+    );
   });
 });

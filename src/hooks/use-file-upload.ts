@@ -1,5 +1,4 @@
 import { useMemo, useState } from "react";
-import useSWRMutation from "swr/mutation";
 import { toast } from "sonner";
 import endpoint from "@/api/endpoint";
 import { deleteFetcher, fileUploadFetcher } from "@/api/fetcher";
@@ -8,10 +7,6 @@ import type { IOnUploadPayload } from "@/utility/interface";
 
 export default function useFileUpload() {
   const [files, setFiles] = useState<IOnUploadPayload[]>([]);
-  const { trigger: uploadFile } = useSWRMutation(
-    endpoint.upload,
-    fileUploadFetcher,
-  );
 
   const handleUpload = async (file: IOnUploadPayload) => {
     if (!file.file) {
@@ -32,14 +27,16 @@ export default function useFileUpload() {
     };
 
     try {
-      const result = await uploadFile(payload as Parameters<typeof uploadFile>[0]);
+      const result = await fileUploadFetcher(endpoint.upload, { arg: payload });
 
       const uploadedFile = Array.isArray(result?.data)
         ? result?.data[0]
         : result?.data;
 
       if (!uploadedFile || result?.success === false) {
-        toast.error(typeof result?.message === "string" ? result.message : "Upload unsuccessful");
+        if (!("subscriptionGate" in result && result.subscriptionGate)) {
+          toast.error(typeof result?.message === "string" ? result.message : "Upload unsuccessful");
+        }
         setFiles((prev) => prev.filter((f) => f.id !== file.id));
       } else {
         setFiles((prev) =>

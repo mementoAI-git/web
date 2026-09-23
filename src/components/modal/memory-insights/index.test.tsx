@@ -41,12 +41,43 @@ const minimalUserStats = {
 };
 
 describe("MemoryInsightsModal", () => {
+  it("uses the Insights sidebar to switch the visible modal section", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<MemoryInsightsModal />, {
+      route: "/overview",
+      auth: true,
+    });
+
+    expect(await screen.findByRole("tab", { name: "General" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+
+    await user.click(screen.getByRole("tab", { name: "People" }));
+
+    expect(screen.getByRole("tab", { name: "People" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    expect(screen.getByRole("heading", { name: "People" })).toBeInTheDocument();
+    expect(
+      screen.queryByText(/Your summary is being built/i),
+    ).not.toBeInTheDocument();
+  });
+
   it("shows reflection hero first and tucks category tabs behind All observations", async () => {
     const user = userEvent.setup();
-    renderWithProviders(<MemoryInsightsModal />, { route: "/overview", auth: true });
-    expect(screen.queryByRole("tab", { name: /^preferences$/i })).not.toBeInTheDocument();
+    renderWithProviders(<MemoryInsightsModal />, {
+      route: "/overview",
+      auth: true,
+    });
+    expect(
+      screen.queryByRole("tab", { name: /^preferences$/i }),
+    ).not.toBeInTheDocument();
     await user.click(screen.getByTestId("memory-insights-observations-toggle"));
-    expect(await screen.findByRole("tab", { name: /^all$/i })).toBeInTheDocument();
+    expect(
+      await screen.findByRole("tab", { name: /^all$/i }),
+    ).toBeInTheDocument();
   });
 
   it("shows empty summary when no context", async () => {
@@ -72,8 +103,13 @@ describe("MemoryInsightsModal", () => {
         HttpResponse.json({ success: true, data: minimalUserStats }),
       ),
     );
-    renderWithProviders(<MemoryInsightsModal />, { route: "/overview", auth: true });
-    expect(await screen.findByText(/your summary is being built/i)).toBeInTheDocument();
+    renderWithProviders(<MemoryInsightsModal />, {
+      route: "/overview",
+      auth: true,
+    });
+    expect(
+      await screen.findByText(/your summary is being built/i),
+    ).toBeInTheDocument();
   });
 
   it("shows AI summary from endpoint when returned", async () => {
@@ -111,10 +147,17 @@ describe("MemoryInsightsModal", () => {
         HttpResponse.json({ success: true, data: minimalUserStats }),
       ),
     );
-    renderWithProviders(<MemoryInsightsModal />, { route: "/overview", auth: true });
-    expect(await screen.findByText(/A creative person who loves storytelling/i)).toBeInTheDocument();
+    renderWithProviders(<MemoryInsightsModal />, {
+      route: "/overview",
+      auth: true,
+    });
     expect(
-      screen.getByText(/Right now I'm most focused on preserving family memories/i),
+      await screen.findByText(/A creative person who loves storytelling/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /Right now I'm most focused on preserving family memories/i,
+      ),
     ).toBeInTheDocument();
   });
 
@@ -126,7 +169,8 @@ describe("MemoryInsightsModal", () => {
           message: "Persona retrieved successfully",
           data: {
             user: "user-1",
-            conversation_history_summary: "The user enjoys reading and quiet weekends.",
+            conversation_history_summary:
+              "The user enjoys reading and quiet weekends.",
             updated_at: "2026-05-01T12:00:00.000Z",
           },
         }),
@@ -149,8 +193,13 @@ describe("MemoryInsightsModal", () => {
         HttpResponse.json({ success: true, data: minimalUserStats }),
       ),
     );
-    renderWithProviders(<MemoryInsightsModal />, { route: "/overview", auth: true });
-    const summary = await screen.findByText(/I enjoy reading and quiet weekends/i);
+    renderWithProviders(<MemoryInsightsModal />, {
+      route: "/overview",
+      auth: true,
+    });
+    const summary = await screen.findByText(
+      /I enjoy reading and quiet weekends/i,
+    );
     expect(summary.textContent ?? "").not.toMatch(/The user/i);
     expect(screen.getByText(/Updated/i)).toBeInTheDocument();
   });
@@ -189,11 +238,18 @@ describe("MemoryInsightsModal", () => {
         HttpResponse.json({ success: true, data: minimalUserStats }),
       ),
     );
-    renderWithProviders(<MemoryInsightsModal />, { route: "/overview", auth: true });
+    renderWithProviders(<MemoryInsightsModal />, {
+      route: "/overview",
+      auth: true,
+    });
     await user.click(screen.getByTestId("memory-insights-observations-toggle"));
     await user.click(await screen.findByRole("tab", { name: /^all$/i }));
-    expect(await screen.findByText("Persona-only preference")).toBeInTheDocument();
-    expect(screen.queryByText("Should not appear — from context only.")).not.toBeInTheDocument();
+    expect(
+      await screen.findByText("Persona-only preference"),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText("Should not appear — from context only."),
+    ).not.toBeInTheDocument();
   });
 
   it("shows insights under All when available", async () => {
@@ -228,7 +284,10 @@ describe("MemoryInsightsModal", () => {
       ),
     );
     const u = userEvent.setup();
-    renderWithProviders(<MemoryInsightsModal />, { route: "/overview", auth: true });
+    renderWithProviders(<MemoryInsightsModal />, {
+      route: "/overview",
+      auth: true,
+    });
     await u.click(screen.getByTestId("memory-insights-observations-toggle"));
     await u.click(await screen.findByRole("tab", { name: /^all$/i }));
     expect(await screen.findByText("Pref one")).toBeInTheDocument();
@@ -253,13 +312,17 @@ describe("MemoryInsightsModal", () => {
         }),
       ),
     );
-    renderWithProviders(<MemoryInsightsModal />, { route: "/overview", auth: true });
-    expect(await screen.findByText(/A thread from your Memento/i)).toBeInTheDocument();
+    renderWithProviders(<MemoryInsightsModal />, {
+      route: "/overview",
+      auth: true,
+    });
+    expect(
+      await screen.findByText(/A thread from your Memento/i),
+    ).toBeInTheDocument();
     expect(screen.getByText("Sunday letters")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /open this memory/i })).toHaveAttribute(
-      "href",
-      "/stories/mem-spot-1",
-    );
+    expect(
+      screen.getByRole("link", { name: /open this memory/i }),
+    ).toHaveAttribute("href", "/stories/mem-spot-1");
   });
 
   it("links spotlight conversation to host chat", async () => {
@@ -281,7 +344,10 @@ describe("MemoryInsightsModal", () => {
         }),
       ),
     );
-    renderWithProviders(<MemoryInsightsModal />, { route: "/overview", auth: true });
+    renderWithProviders(<MemoryInsightsModal />, {
+      route: "/overview",
+      auth: true,
+    });
     const link = await screen.findByRole("link", { name: /open this memory/i });
     expect(link).toHaveAttribute("href", "/chat/conv-9");
     expect(screen.getByText("From conversation")).toBeInTheDocument();
@@ -295,9 +361,16 @@ describe("MemoryInsightsModal", () => {
         HttpResponse.json({ success: true, data: minimalUserStats }),
       ),
     );
-    renderWithProviders(<MemoryInsightsModal />, { route: "/overview", auth: true });
-    expect(await screen.findByText(/Snapshot hidden until/i)).toBeInTheDocument();
-    expect(screen.queryByText(/Crafting your summary/i)).not.toBeInTheDocument();
+    renderWithProviders(<MemoryInsightsModal />, {
+      route: "/overview",
+      auth: true,
+    });
+    expect(
+      await screen.findByText(/Snapshot hidden until/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(/Crafting your summary/i),
+    ).not.toBeInTheDocument();
   });
 
   it("links jump pills to host chat with starter query when primary conversation exists", async () => {
@@ -305,7 +378,10 @@ describe("MemoryInsightsModal", () => {
       http.get(`${API_BASE}/users/profile`, () =>
         HttpResponse.json({
           success: true,
-          data: { ...createMockUser(), primary_conversation_id: "thread-primary" },
+          data: {
+            ...createMockUser(),
+            primary_conversation_id: "thread-primary",
+          },
           message: "Profile fetched successfully",
         }),
       ),
@@ -324,8 +400,13 @@ describe("MemoryInsightsModal", () => {
         }),
       ),
     );
-    renderWithProviders(<MemoryInsightsModal />, { route: "/overview", auth: true });
-    const link = await screen.findByRole("link", { name: /Tell me about a formative place/i });
+    renderWithProviders(<MemoryInsightsModal />, {
+      route: "/overview",
+      auth: true,
+    });
+    const link = await screen.findByRole("link", {
+      name: /Tell me about a formative place/i,
+    });
     const href = link.getAttribute("href") ?? "";
     expect(href).toContain("/chat/thread-primary");
     expect(href).toContain("starter=");

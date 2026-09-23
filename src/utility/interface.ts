@@ -1,17 +1,27 @@
 export interface IFile {
   url: string;
+  thumbnail?: string | null;
   name: string;
   size: string | number;
   duration?: number;
   type?: string;
   _id: string;
+  status?: "processing" | "ready" | "failed";
+  access?: {
+    expires_at: string;
+    refresh_endpoint: string;
+  };
 }
 
 export interface IAuth {
   access_token: string;
   refresh_token: string;
+  access_expires_at?: string;
   expires_at: string;
   refresh_expires_at: string;
+  onboarding_status?: string;
+  onboarded?: boolean;
+  user?: Record<string, unknown>;
 }
 
 interface IUserPreferences {
@@ -138,6 +148,16 @@ export interface IMemory {
   visibility?: "private" | "everyone";
 }
 
+/** Allowlisted fields returned by GET /memories/public/:id. */
+export interface IPublicMemory {
+  _id: string;
+  title: string;
+  body: string;
+  attachments: IFile[];
+  tags: string[];
+  created_at: string;
+}
+
 export interface IPagination<T> {
   docs: T[];
   hasNextPage: boolean;
@@ -199,6 +219,17 @@ export interface ICapsule {
   _id?: string;
   user: string;
   recipients: IUser[];
+  recipient_snapshots?: Array<{
+    recipient_id: string;
+    beneficiary_id?: string;
+    linked_user_id?: string;
+    email: string;
+    display_name?: string;
+    delivery_status: "pending" | "queued" | "sent" | "delivered" | "failed";
+    failure_code?: string;
+    delivered_at?: string;
+  }>;
+  recipients_snapshot_version?: number;
   // delivery_date: string;
   schedule_date?: string;
   title: string;

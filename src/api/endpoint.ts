@@ -21,6 +21,8 @@ export default {
   deletePasskey: "/users/passkeys/:credential_id",
   userContext: "/users/context",
   persona: "/users/persona",
+  personaObservations: "/persona/observations",
+  personaObservation: "/persona/observations/:observationId",
   /** AI-written Memory Insights summary (persona + memories + session + pending insights) */
   personaMemoryInsightsSummary: "/users/persona/memory-insights-summary",
   completeOnboarding: "/users/complete-onboarding",
@@ -60,6 +62,7 @@ export default {
 
   // memories
   memories: "/memories",
+  publicMemory: "/memories/public",
   memoriesQuickCapture: "/memories/quick-capture",
   memory: "/memories/:id",
   bookmarkMemory: "/memories/:id/bookmark",
@@ -83,6 +86,7 @@ export default {
   ephemeralToken: "/ai/ephemeral-token",
   generateTags: "/ai/generate-tags",
   generateStoryTitle: "/ai/generate-story-title",
+  aiTasksRun: "/ai/tasks/run",
   aiMetricsOverview: "/ai/metrics/overview",
   aiMetricsTimeseries: "/ai/metrics/timeseries",
   aiPromptGovernanceStatus: "/ai/prompt-governance/status",
@@ -91,6 +95,8 @@ export default {
   capsule: "/capsule",
   capsuleDelete: "/capsule/:id",
   capsuleStats: "/capsule/stats",
+  capsuleViewExchange: "/capsule/view/exchange",
+  capsuleView: "/capsule/view",
 
   // activities
   activities: "/activities",
@@ -105,7 +111,7 @@ export default {
   /** Host onboarding chat — streams like `/ai/prompt`; trailer JSON for chips / completion */
   hostOnboardingChatPrompt: "/users/onboarding/chat/prompt",
 
-  // billing (Polar + Paystack; see docs/PRICING_BACKEND_HANDOFF.md)
+  // billing (Polar)
   billingSubscription: "/billing/subscription",
   billingCheckout: "/billing/checkout",
   billingPortal: "/billing/portal",

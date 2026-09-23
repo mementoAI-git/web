@@ -1,4 +1,9 @@
-import { useRef, type Ref, type RefObject } from "react";
+import {
+  useRef,
+  type ReactEventHandler,
+  type Ref,
+  type RefObject,
+} from "react";
 import {
   Backward15Icon,
   Forward15Icon,
@@ -18,6 +23,7 @@ export interface MediaPlayerProps {
   className?: string;
   duration?: number;
   audioRef?: RefObject<HTMLAudioElement>;
+  onError?: ReactEventHandler<HTMLAudioElement>;
 }
 
 export default function AudioPlayer({
@@ -27,6 +33,7 @@ export default function AudioPlayer({
   id = null,
   duration = 0,
   audioRef,
+  onError,
 }: MediaPlayerProps) {
   const {
     ref,
@@ -66,7 +73,7 @@ export default function AudioPlayer({
       <div />
       <div className="w-62.5 space-y-6">
         {alt && (
-          <span className="block font-inter font-semibold text-secondary">
+          <span className="block font-inter font-semibold text-foreground">
             {alt}
           </span>
         )}
@@ -75,6 +82,7 @@ export default function AudioPlayer({
           preload="auto"
           crossOrigin="anonymous"
           src={src}
+          onError={onError}
           key={id}
         />
         <div className="space-y-2">
@@ -91,7 +99,7 @@ export default function AudioPlayer({
             </div>
           </div>
           <div className="flex items-center justify-between">
-            <span className="font-inter text-xs font-medium text-secondary">
+            <span className="font-inter text-xs font-medium text-foreground">
               {current.mins}:{current.secs}/
               <span className="font-normal text-grey-800">
                 {end.mins}:{end.secs}
@@ -119,7 +127,7 @@ export default function AudioPlayer({
                 }
                 className="volume__slider h-[2px] w-8 cursor-pointer appearance-none rounded-lg bg-grey-300"
                 style={{
-                  background: `linear-gradient(to right, var(--color-secondary) 0%, var(--color-secondary) ${(isMuted ? 0 : volume) * 100}%, #d1d5db ${(isMuted ? 0 : volume) * 100}%, #d1d5db 100%)`,
+                  background: `linear-gradient(to right, var(--icon-neutral-strong) 0%, var(--icon-neutral-strong) ${(isMuted ? 0 : volume) * 100}%, #d1d5db ${(isMuted ? 0 : volume) * 100}%, #d1d5db 100%)`,
                 }}
               />
             </div>

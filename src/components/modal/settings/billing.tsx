@@ -13,6 +13,8 @@ import { openCustomerPortal } from "@/features/pricing/open-customer-portal";
 import { cn } from "@/utility";
 import { SettingsSectionCard } from "./settings-section-card";
 import { StorageUsageCard } from "@/features/pricing/storage-usage-card";
+import { normalizeInvoices } from "@/features/pricing/billing-adapters";
+import type { BillingInvoice } from "@/features/pricing/types";
 
 export default function Billing() {
   const navigate = useNavigate();
@@ -28,7 +30,7 @@ export default function Billing() {
 
   const { data: invoicesEnvelope } = useSWR(
     isProOrAbove ? endpoint.billingInvoices : null,
-    fetcher,
+    async (url: string) => normalizeInvoices(await fetcher(url)),
   );
 
   const renewLabel = useCallback(() => {
@@ -80,7 +82,7 @@ export default function Billing() {
     }
   };
 
-  const invoices = invoicesEnvelope?.data as { url?: string; label?: string }[] | undefined;
+  const invoices: BillingInvoice[] | undefined = invoicesEnvelope;
 
   return (
     <div className="flex w-full flex-col gap-6">

@@ -119,6 +119,12 @@ describe("HostOnboardingChatScreen", () => {
         screen.getByText(/say a bit more when you're ready/i),
       ).toBeInTheDocument();
     });
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/what feels most important about alright, i'm ready\?/i),
+      ).toBeInTheDocument();
+    });
   });
 
   it("with persist true, intro then streamed assistant after ready reply", async () => {
@@ -192,6 +198,35 @@ describe("HostOnboardingChatScreen", () => {
     await user.click(screen.getByRole("button", { name: /Skip for now/i }));
     await waitFor(() => {
       expect(mockNavigate).toHaveBeenCalledWith("/overview");
+    });
+  });
+
+  it("shows structured handoff summary when onboarding completes", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(
+      <HostOnboardingChatScreen assistantPreDelayMs={0} persist={false} nickname="Alex" />,
+      {
+        route: "/onboard/chat",
+        auth: true,
+      },
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText(/glad you're here/i)).toBeInTheDocument();
+    });
+
+    for (let i = 0; i < 7; i++) {
+      const field = await screen.findByLabelText(/Your reply/i);
+      await user.clear(field);
+      await user.type(field, `reply ${i + 1}`);
+      await user.click(screen.getByRole("button", { name: /^Send$/i }));
+    }
+
+    await waitFor(() => {
+      expect(screen.getByText(/we'll carry this forward/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/you care about family stories and want a simple way to begin/i),
+      ).toBeInTheDocument();
     });
   });
 });

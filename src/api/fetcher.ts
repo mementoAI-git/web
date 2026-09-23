@@ -11,12 +11,21 @@ import {
   parseSubscriptionGateFromBody,
 } from "@/features/pricing/subscription-errors";
 import endpoint from "./endpoint";
+import { getMementoClientHeaders } from "./client-metadata";
+import {
+  extractSession,
+  normalizeApiError,
+  normalizeApiResponse,
+} from "./contract-adapter";
 
 const baseURL = import.meta.env.VITE_API_BASE_URL;
 
 const axios = Axios.create({
   baseURL,
-  headers: { "Content-Type": "application/json" },
+  headers: {
+    "Content-Type": "application/json",
+    ...getMementoClientHeaders(),
+  },
 });
 
 function readAuthFromStorage(): { access_token?: string } | null {
@@ -68,8 +77,8 @@ axios.interceptors.response.use(
   },
 );
 
-export const fetcher = (url: string) => {
-  return handleRequest("get", url);
+export const fetcher = <T = unknown>(url: string): Promise<IResponse<T>> => {
+  return handleRequest<T>("get", url);
 };
 
 export const getFetcher: MutationFetcher = async (url, body) => {
@@ -79,8 +88,9 @@ export const getFetcher: MutationFetcher = async (url, body) => {
 export const postFetcher: MutationFetcher = async (url, body) => {
   const result = await handleRequest("post", url, body);
 
-  if (result?.data?.access_token) {
-    authService.setAuthData(result?.data);
+  const session = extractSession(result);
+  if (session) {
+    authService.setAuthData(session);
   }
   return result;
 };
@@ -156,19 +166,21 @@ export const fileUploadFetcher = async (url: string, { arg }: { arg: Record<stri
       const status = axiosError.response?.status;
       const data = axiosError.response?.data;
 
-      if (status === 402 && data && typeof data === "object") {
+      if ((status === 402 || status === 403) && data && typeof data === "object") {
         const gate = parseSubscriptionGateFromBody(data);
-        if (gate) notifySubscriptionGate(gate);
-        message =
-          typeof (data as IResponse).message === "string" ?
-            (data as IResponse).message!
-          : "Upgrade to continue uploading.";
-        return {
-          success: false,
-          data: null,
-          message,
-          subscriptionGate: true as const,
-        };
+        if (gate) {
+          notifySubscriptionGate(gate);
+          message =
+            typeof (data as IResponse).message === "string" ?
+              (data as IResponse).message!
+            : "Upgrade to continue uploading.";
+          return {
+            success: false,
+            data: null,
+            message,
+            subscriptionGate: true as const,
+          };
+        }
       }
 
       message = axiosError.response?.data?.message || axiosError.message;
@@ -195,6 +207,7 @@ export const streamlineFetcher = async (url: string, { arg }: { arg: Record<stri
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      ...getMementoClientHeaders(),
       Authorization: `Bearer ${auth?.access_token}`,
     },
     signal,
@@ -259,7 +272,11 @@ export async function postTranscribeQuiet(file_id: string): Promise<{ full_text?
   }
 }
 
-const handleRequest = async (method: string, url: string, body?: { arg?: unknown }) => {
+const handleRequest = async <T = unknown>(
+  method: string,
+  url: string,
+  body?: { arg?: unknown },
+): Promise<IResponse<T>> => {
   try {
     const res = await axios({
       method,
@@ -269,8 +286,7 @@ const handleRequest = async (method: string, url: string, body?: { arg?: unknown
       headers: { "Content-Type": "application/json" },
     });
 
-    res.data.success = true;
-    return res.data;
+    return normalizeApiResponse<T>(res.data);
   } catch (error) {
     let message = "Something went wrong";
 
@@ -282,17 +298,16 @@ const handleRequest = async (method: string, url: string, body?: { arg?: unknown
         toast.error(message);
       }
 
-      const data = axiosError.response?.data || { success: false };
-      data.success = false;
-      throw Object.assign(data, {
-        httpStatus: axiosError.response?.status,
-      });
+      throw normalizeApiError(
+        axiosError.response?.data,
+        axiosError.response?.status,
+        message,
+      );
     }
 
     if (method !== "get") {
       toast.error(message);
     }
-    throw { message, success: false };
+    throw normalizeApiError(null, undefined, message);
   }
 };
-

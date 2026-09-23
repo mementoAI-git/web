@@ -43,3 +43,6 @@ yarn.lock
 
 # Local planning / audit notes (not committed)
 /new-todo/
+
+# Project-local Git worktrees
+/.worktrees/

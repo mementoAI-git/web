@@ -38,7 +38,9 @@ describe("ProfileDropdown", () => {
     const trigger = await screen.findByRole("button", { name: /user/i });
     expect(trigger).toHaveClass("w-full");
 
-    const accountRow = trigger.querySelector(".flex.min-w-0.flex-1.items-center.gap-2");
+    const accountRow = trigger.querySelector(
+      ".flex.min-w-0.flex-1.items-center.gap-2",
+    );
     expect(accountRow).toHaveClass("w-full");
 
     expect(within(trigger).getByText("User")).toHaveClass("w-full");
@@ -67,6 +69,84 @@ describe("ProfileDropdown", () => {
 
     await user.click(screen.getByRole("menuitem", { name: /^settings$/i }));
     expect(mockNavigate).toHaveBeenCalledWith("/settings");
+  });
+
+  it("lets the user select and persist Dark from the Theme submenu", async () => {
+    // Avoid an automatic hover transition across Radix's portalled submenu.
+    const user = userEvent.setup({ skipHover: true });
+    renderWithProviders(<ProfileDropdown />, { auth: true });
+
+    await user.click(screen.getByRole("button", { name: /user/i }));
+    await user.hover(screen.getByRole("menuitem", { name: "Theme" }));
+
+    const options = await screen.findByRole("menu", { name: "Theme" });
+    expect(options).toHaveAttribute("aria-label", "Theme options");
+    expect(
+      within(options).getByRole("menuitemradio", { name: "Light" }),
+    ).toBeInTheDocument();
+    expect(
+      within(options).getByRole("menuitemradio", { name: "Dark" }),
+    ).toBeInTheDocument();
+    expect(
+      within(options).getByRole("menuitemradio", { name: "System" }),
+    ).toBeInTheDocument();
+
+    await user.click(
+      within(options).getByRole("menuitemradio", { name: "Dark" }),
+    );
+    expect(document.documentElement).toHaveClass("dark");
+    expect(localStorage.getItem("memento:theme")).toBe("dark");
+
+    await user.click(screen.getByRole("button", { name: /user/i }));
+    await user.hover(screen.getByRole("menuitem", { name: "Theme" }));
+    const reopenedOptions = await screen.findByRole("menu", { name: "Theme" });
+    expect(
+      within(reopenedOptions).getByRole("menuitemradio", { name: "Dark" }),
+    ).toHaveAttribute("aria-checked", "true");
+  });
+
+  it("lets keyboard users open Theme and select Dark", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<ProfileDropdown />, { auth: true });
+
+    const trigger = screen.getByRole("button", { name: /user/i });
+    await user.keyboard("{Tab}");
+    expect(trigger).toHaveFocus();
+    await user.keyboard("{Enter}");
+    expect(screen.getByRole("menu")).toBeInTheDocument();
+
+    await user.keyboard("{ArrowDown}");
+    expect(screen.getByRole("menuitem", { name: "Theme" })).toHaveFocus();
+    await user.keyboard("{ArrowRight}");
+
+    const options = await screen.findByRole("menu", { name: "Theme" });
+    expect(
+      within(options).getByRole("menuitemradio", { name: "Light" }),
+    ).toHaveFocus();
+    await user.keyboard("{ArrowDown}");
+    expect(
+      within(options).getByRole("menuitemradio", { name: "Dark" }),
+    ).toHaveFocus();
+    await user.keyboard("{Enter}");
+
+    expect(document.documentElement).toHaveClass("dark");
+    expect(localStorage.getItem("memento:theme")).toBe("dark");
+    expect(trigger).toHaveFocus();
+  });
+
+  it("restores trigger focus when escaping the Theme submenu", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<ProfileDropdown />, { auth: true });
+
+    const trigger = screen.getByRole("button", { name: /user/i });
+    await user.keyboard("{Tab}{Enter}{ArrowDown}{ArrowRight}");
+    expect(
+      await screen.findByRole("menu", { name: "Theme" }),
+    ).toBeInTheDocument();
+
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+    expect(trigger).toHaveFocus();
   });
 
   it("uses compact account menu spacing and label typography", async () => {

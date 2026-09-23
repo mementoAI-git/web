@@ -20,7 +20,6 @@ import { MemoryDropdown } from "@/pages/dashboard/chat/conversation/dropdown";
 import { useDashboardHeaderActions } from "@/contexts/dashboard-header-actions";
 import { StoriesActionButtons } from "@/pages/dashboard/stories/components/stories-action-buttons";
 
-
 const defaultHeaderTitle: Record<string, string> = {
   memories: "my memories",
   stories: "my stories",
@@ -42,7 +41,10 @@ const truncateText = (text: string, maxLength = 32): string => {
 function useMdViewport() {
   const [mdUp, setMdUp] = useState(false);
   useEffect(() => {
-    if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
+    if (
+      typeof window === "undefined" ||
+      typeof window.matchMedia !== "function"
+    ) {
       return;
     }
     const mq = window.matchMedia("(min-width: 768px)");
@@ -65,11 +67,11 @@ interface DashboardHeaderProps {
 }
 
 const convIconBtn =
-  "flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-xl bg-v3-fill-weaker text-v3-icon-neutral transition-colors hover:bg-v3-fill-weak hover:text-v3-text-strong";
+  "flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-xl bg-muted text-muted-foreground transition-colors hover:bg-accent hover:text-foreground";
 
-/** Conversation header actions: transparent chip, v3 fill + stronger icon on hover */
+/** Conversation header actions use a subtle surface and stronger icon on hover. */
 const convHeaderActionGhost =
-  "flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-xl bg-transparent text-v3-icon-neutral transition-colors hover:bg-v3-fill-weak hover:text-v3-text-strong";
+  "flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-xl bg-transparent text-muted-foreground transition-colors hover:bg-accent hover:text-foreground";
 
 export function DashboardHeader({
   onMenuClick,
@@ -117,10 +119,7 @@ export function DashboardHeader({
   if (showConversationNav && chrome) {
     const host = chrome.hostChat;
     const title =
-      host?.title ??
-      headerTitle ??
-      chrome.memory?.title ??
-      "New conversation";
+      host?.title ?? headerTitle ?? chrome.memory?.title ?? "New conversation";
     const createdLine =
       chrome.memory?.created_at &&
       dayjs(chrome.memory.created_at).format("MMM DD, YYYY");
@@ -130,7 +129,7 @@ export function DashboardHeader({
     const toggleMainSidebar = onMainSidebarToggle ?? onMenuClick;
 
     return (
-      <div className="w-full h-[60px] fixed top-0 left-0 right-0 sm:relative z-[45] flex items-center border-b border-v3-stroke-weak bg-white px-3 sm:px-5">
+      <div className="w-full h-[60px] fixed top-0 left-0 right-0 sm:relative z-[45] flex items-center border-b border-border bg-card px-3 sm:px-5">
         <header className="flex w-full min-w-0 items-center justify-between gap-3">
           <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
             {chatVoiceMatch?.params?.id ? (
@@ -140,7 +139,11 @@ export function DashboardHeader({
                 className={cn(convIconBtn, "no-underline")}
                 aria-label="Back to chat"
               >
-                <ChevronLeft className="size-5" strokeWidth={1.75} aria-hidden />
+                <ChevronLeft
+                  className="size-5"
+                  strokeWidth={1.75}
+                  aria-hidden
+                />
               </Link>
             ) : (
               <button
@@ -148,24 +151,34 @@ export function DashboardHeader({
                 onClick={toggleMainSidebar}
                 className={convIconBtn}
                 aria-expanded={railExpanded}
-                aria-label={railExpanded ? "Collapse sidebar" : "Expand sidebar"}
+                aria-label={
+                  railExpanded ? "Collapse sidebar" : "Expand sidebar"
+                }
               >
                 {railExpanded ? (
-                  <PanelLeftClose className="size-5" strokeWidth={1.75} aria-hidden />
+                  <PanelLeftClose
+                    className="size-5"
+                    strokeWidth={1.75}
+                    aria-hidden
+                  />
                 ) : (
-                  <PanelLeftOpen className="size-5" strokeWidth={1.75} aria-hidden />
+                  <PanelLeftOpen
+                    className="size-5"
+                    strokeWidth={1.75}
+                    aria-hidden
+                  />
                 )}
               </button>
             )}
             <h1
-              className="min-w-0 truncate font-inter text-sm font-semibold text-v3-text-strong sm:text-base"
+              className="min-w-0 truncate font-inter text-sm font-semibold text-foreground sm:text-base"
               title={title}
             >
               Chat
             </h1>
             {metaLine ? (
               <span
-                className="hidden min-w-0 truncate font-inter text-xs text-v3-text-weaker lg:inline"
+                className="hidden min-w-0 truncate font-inter text-xs text-muted-foreground lg:inline"
                 aria-label={host?.subtitle ? metaLine : `Created ${metaLine}`}
               >
                 {metaLine}
@@ -173,7 +186,7 @@ export function DashboardHeader({
             ) : null}
           </div>
 
-          <div className="flex shrink-0 items-center gap-1 sm:gap-2 text-v3-icon-neutral">
+          <div className="flex shrink-0 items-center gap-1 sm:gap-2 text-muted-foreground">
             {chrome.memory?._id ? (
               <button
                 type="button"
@@ -181,7 +194,11 @@ export function DashboardHeader({
                 className={convHeaderActionGhost}
                 aria-label="Share conversation"
               >
-                <Share2 className="size-4 shrink-0" strokeWidth={1.75} aria-hidden />
+                <Share2
+                  className="size-4 shrink-0"
+                  strokeWidth={1.75}
+                  aria-hidden
+                />
               </button>
             ) : null}
             {chrome.hostChat?.onSearch ? (
@@ -191,7 +208,10 @@ export function DashboardHeader({
                 className={convHeaderActionGhost}
                 aria-label="Search memories"
               >
-                <SearchIcon className="size-4 shrink-0 text-current" aria-hidden />
+                <SearchIcon
+                  className="size-4 shrink-0 text-current"
+                  aria-hidden
+                />
               </button>
             ) : null}
             {chrome.memory?._id ? (
@@ -199,7 +219,7 @@ export function DashboardHeader({
                 memory={chrome.memory}
                 onViewDetails={chrome.onViewDetails}
                 onExportConversation={chrome.onExportConversation}
-                triggerClassName="!aspect-square !size-9 !p-2 flex items-center justify-center rounded-xl bg-transparent text-v3-icon-neutral transition-colors hover:bg-v3-fill-weak hover:text-v3-text-strong"
+                triggerClassName="!aspect-square !size-9 !p-2 flex items-center justify-center rounded-xl bg-transparent text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
               />
             ) : null}
             {chrome.memory?._id && chrome.onOpenChatPreferences ? (
@@ -222,7 +242,7 @@ export function DashboardHeader({
   const toggleMainSidebar = onMainSidebarToggle ?? onMenuClick;
 
   return (
-    <div className="w-full h-[60px] fixed top-0 left-0 right-0 sm:relative flex items-center bg-white border-b border-black/5 px-4 sm:px-8">
+    <div className="w-full h-[60px] fixed top-0 left-0 right-0 sm:relative flex items-center bg-card border-b border-border px-4 sm:px-8">
       <header className="grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-3 lg:grid-cols-[minmax(220px,1fr)_minmax(280px,560px)_auto] lg:gap-x-4 xl:grid-cols-[minmax(240px,1fr)_minmax(320px,620px)_auto]">
         <div className="col-start-1 row-start-1 flex min-w-0 items-center gap-2 sm:gap-3">
           <button
@@ -234,7 +254,7 @@ export function DashboardHeader({
           >
             <PanelLeft className="size-5" strokeWidth={1.75} aria-hidden />
           </button>
-          <span className="min-w-0 truncate font-inter font-semibold text-base text-gray-900 capitalize">
+          <span className="min-w-0 truncate font-inter font-semibold text-base text-foreground capitalize">
             {truncateText(defaultHeaderTitle[pathForTitle] || headerTitle, 32)}
           </span>
         </div>
@@ -244,7 +264,7 @@ export function DashboardHeader({
             type="button"
             onClick={() => open("search-memory")}
             className={cn(
-              "flex h-10 w-full cursor-pointer items-center rounded-lg border border-v3-stroke-weak bg-white",
+              "flex h-10 w-full cursor-pointer items-center rounded-lg border border-border bg-background",
               "focus-visible:ring-2 focus-visible:ring-v3-brand-strong focus-visible:ring-offset-2",
             )}
             aria-label="Open search"
@@ -254,18 +274,18 @@ export function DashboardHeader({
               <IconSearch
                 width={16}
                 height={16}
-                className="text-v3-text-weak"
+                className="text-muted-foreground"
                 aria-hidden
               />
             </span>
-            <span className="flex-1 px-2 text-left font-inter text-sm text-v3-text-weaker">
+            <span className="flex-1 px-2 text-left font-inter text-sm text-muted-foreground">
               Search
             </span>
             <span className="inline-flex items-center gap-1 pr-2.5" aria-hidden>
-              <kbd className="rounded-md border border-v3-stroke-weak bg-v3-fill-weaker px-1.5 py-0.5 font-inter text-[10px] font-medium text-v3-text-strong">
+              <kbd className="rounded-md border border-border bg-muted px-1.5 py-0.5 font-inter text-[10px] font-medium text-foreground">
                 &#8984;
               </kbd>
-              <kbd className="rounded-md border border-v3-stroke-weak bg-v3-fill-weaker px-1.5 py-0.5 font-inter text-[10px] font-medium text-v3-text-strong">
+              <kbd className="rounded-md border border-border bg-muted px-1.5 py-0.5 font-inter text-[10px] font-medium text-foreground">
                 K
               </kbd>
             </span>
@@ -274,13 +294,13 @@ export function DashboardHeader({
 
         <div className="col-start-2 flex items-center justify-end gap-2 lg:col-start-3">
           <StreakTracker>
-            <div className="flex shrink-0 cursor-pointer items-center gap-1.5 rounded-lg bg-transparent px-2.5 py-1.5 transition-colors hover:bg-fill-neutral-weak">
+            <div className="flex shrink-0 cursor-pointer items-center gap-1.5 rounded-lg bg-transparent px-2.5 py-1.5 transition-colors hover:bg-muted">
               <img
                 src={zapIcon}
                 alt="Streak"
                 className="size-4 object-contain opacity-80"
               />
-              <span className="text-[13px] font-semibold text-text-neutral-strong">
+              <span className="text-[13px] font-semibold text-foreground">
                 {user?.streak || 0}
               </span>
             </div>
@@ -298,7 +318,8 @@ export function DashboardHeader({
           <button
             type="button"
             onClick={onMenuClick}
-            className="md:hidden p-1.5 rounded-lg transition-colors hover:bg-gray-100"
+            aria-label="Open sidebar"
+            className="md:hidden p-1.5 rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
           >
             <MenuIcon width={20} height={20} />
           </button>

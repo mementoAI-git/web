@@ -26,3 +26,9 @@ export interface OnboardingComposerHints {
   composerPlaceholder: string;
   composerLabel: string;
 }
+
+export interface OnboardingStructuredOutcome {
+  extractedInterests: string[];
+  suggestedDimensions: string[];
+  handoffSummary: string;
+}

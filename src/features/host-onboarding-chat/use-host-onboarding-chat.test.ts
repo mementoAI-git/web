@@ -1,10 +1,50 @@
+import { createElement, type ReactNode } from "react";
 import { describe, it, expect, beforeEach } from "vitest";
 import { renderHook, waitFor, act } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
+import { SWRConfig } from "swr";
 import { storageKeys } from "@/utility/constant";
+import { StoreProvider } from "@/hooks/use-store";
+import { ModalProvider } from "@/hooks/use-modal";
+import { ChatProvider } from "@/hooks/use-chat";
+import { SubscriptionProvider } from "@/contexts/subscription";
+import { fetcher } from "@/api/fetcher";
+import { seedAuth } from "@/test/auth-helpers";
 import { useHostOnboardingChat } from "./use-host-onboarding-chat";
+
+function wrapper({ children }: { children: ReactNode }) {
+  return createElement(
+    StoreProvider,
+    null,
+    createElement(
+      ModalProvider,
+      null,
+      createElement(
+        ChatProvider,
+        null,
+        createElement(
+          SWRConfig,
+          {
+            value: {
+              fetcher,
+              dedupingInterval: 0,
+              provider: () => new Map(),
+            },
+          },
+          createElement(
+            SubscriptionProvider,
+            null,
+            createElement(MemoryRouter, null, children),
+          ),
+        ),
+      ),
+    ),
+  );
+}
 
 describe("useHostOnboardingChat", () => {
   beforeEach(() => {
+    seedAuth();
     localStorage.removeItem(storageKeys.hostOnboardingChat);
   });
 
@@ -15,6 +55,7 @@ describe("useHostOnboardingChat", () => {
         persist: false,
         nickname: "Jamie",
       }),
+      { wrapper },
     );
 
     await waitFor(() => {
@@ -25,6 +66,7 @@ describe("useHostOnboardingChat", () => {
     });
     expect(result.current.script.suggestionChips.length).toBeGreaterThan(0);
     expect(result.current.showProgressDots).toBe(true);
+    expect(result.current.structuredOutcome.extractedInterests).toContain("Family stories");
   });
 
   it("with persist, intro submit then streams assistant from API", async () => {
@@ -34,6 +76,7 @@ describe("useHostOnboardingChat", () => {
         persist: true,
         nickname: "Riley",
       }),
+      { wrapper },
     );
 
     expect(result.current.introAcknowledged).toBe(false);
@@ -54,6 +97,10 @@ describe("useHostOnboardingChat", () => {
         true,
       );
     });
+    await waitFor(() => {
+      expect(result.current.assistantFollowupQuestion).toMatch(/what feels most important about/i);
+    });
+    expect(result.current.structuredOutcome.handoffSummary.length).toBeGreaterThan(0);
   });
 
   it("resetFlow clears progress and shows intro again when persist", async () => {
@@ -63,6 +110,7 @@ describe("useHostOnboardingChat", () => {
         persist: true,
         nickname: "Pat",
       }),
+      { wrapper },
     );
 
     act(() => {
@@ -98,6 +146,7 @@ describe("useHostOnboardingChat", () => {
         persist: false,
         nickname: "Jamie",
       }),
+      { wrapper },
     );
 
     await waitFor(() => {
@@ -124,6 +173,7 @@ describe("useHostOnboardingChat", () => {
         persist: false,
         nickname: "Jamie",
       }),
+      { wrapper },
     );
 
     await waitFor(() => {
@@ -147,6 +197,7 @@ describe("useHostOnboardingChat", () => {
         persist: false,
         nickname: "Jamie",
       }),
+      { wrapper },
     );
 
     await waitFor(() => {

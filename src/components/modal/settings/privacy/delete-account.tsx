@@ -33,8 +33,8 @@ export default function DeleteAccount({ close, open }: DeleteAccountProps) {
       <div className="flex h-full w-full items-center justify-center p-4">
         <DeletePromptModal
           onClose={close}
-          title="Delete account?"
-          description="Are you sure you want to delete your account? Deleting your account is permanent and there is no way of recovering your data once deleted."
+          title="Delete your account permanently?"
+          description="Your access ends immediately and deletion cannot be undone. Secure cleanup may finish in the background. Capsules already delivered can remain with their recipients, without a link to your profile."
           confirmLabel="I understand, delete"
           onConfirm={handleDeleteAccount}
           loading={busy}

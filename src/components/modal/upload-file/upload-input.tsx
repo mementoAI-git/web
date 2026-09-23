@@ -2,6 +2,9 @@ import { useCallback, useEffect, useRef, useState, type ChangeEvent } from "reac
 import { v4 as uuidv4 } from "uuid";
 import { AddImageIcon } from "@/components/icons";
 import type { FileState } from "./index";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 interface UploadInputProps {
   onUpload: (file: FileState) => void;
@@ -37,27 +40,38 @@ export default function UploadInput({ onUpload }: UploadInputProps) {
     <label
       htmlFor="file-upload-input"
       ref={labelRef}
-      className="flex h-full min-h-[40px] max-h-[300px] flex-1 flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-grey-500 bg-white p-2 text-center sm:min-h-[154px] sm:max-h-[425px] sm:rounded-2xl sm:p-3 sm:text-left lg:p-4"
+      className={cn(
+        "relative flex min-h-[220px] w-full cursor-pointer flex-col items-center justify-center gap-4 overflow-hidden rounded-2xl border border-dashed border-border bg-muted/25 px-6 py-8 text-center transition-colors hover:border-border/80 hover:bg-muted/40",
+        height > 260 && "min-h-[280px]",
+      )}
     >
-      <AddImageIcon className="h-4 w-4 text-grey-600 sm:h-5 sm:w-5 lg:h-6 lg:w-6" />
+      <div className="flex size-12 items-center justify-center rounded-full bg-background shadow-sm ring-1 ring-border/70">
+        <AddImageIcon className="size-5 text-muted-foreground" />
+      </div>
 
       <input id="file-upload-input" type="file" accept="audio/*,video/*,image/*,application/*" hidden onChange={handleUpload} />
 
-      <div className="flex flex-col items-center justify-center gap-1 font-inter text-center sm:gap-2">
-        <span className="text-xs leading-tight text-grey-600 sm:text-sm lg:text-base">
-          <span className="hidden sm:inline">Drag and drop your file here or </span>
-          <span className="sm:hidden">Tap to upload</span>
-          <span className="hidden sm:inline">click to upload</span>
-        </span>
-        <span className="text-xs leading-tight text-grey-800">Max file size: 120mb</span>
+      <div className="flex max-w-md flex-col items-center justify-center gap-2 font-inter text-center">
+        <p className="text-sm font-medium text-foreground sm:text-base">
+          Drag and drop your file here, or browse from your device
+        </p>
+        <p className="text-sm leading-6 text-muted-foreground">
+          Supports photos, video, audio, and documents up to 120 MB.
+        </p>
       </div>
 
-      {height > 154 && (
-        <span className="btn px-3 py-2 text-xs !font-medium sm:px-4 sm:py-2.5 sm:text-sm">
+      <div className="flex flex-wrap items-center justify-center gap-2">
+        <Badge variant="outline">Images</Badge>
+        <Badge variant="outline">Video</Badge>
+        <Badge variant="outline">Audio</Badge>
+        <Badge variant="outline">Docs</Badge>
+      </div>
+
+      {height > 154 ? (
+        <Button type="button" variant="outline" className="pointer-events-none">
           Browse files
-        </span>
-      )}
+        </Button>
+      ) : null}
     </label>
   );
 }
-

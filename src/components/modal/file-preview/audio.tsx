@@ -9,12 +9,14 @@ import {
 } from "@floating-ui/react";
 import ActionBtn from "./action-btns";
 import type { FilePreviewItem } from "./index";
+import { useSignedMediaAccess } from "@/features/media/signed-media-access";
 
 export interface AudioPreviewProps extends FilePreviewItem {
   isActive: boolean;
 }
 
 export default function AudioPreview({ isActive, ...props }: AudioPreviewProps) {
+  const { src, onError } = useSignedMediaAccess(props);
   const audioRef = useRef<HTMLAudioElement>(null);
 
   useEffect(() => {
@@ -36,7 +38,8 @@ export default function AudioPreview({ isActive, ...props }: AudioPreviewProps) 
         className="modalcontainer flex w-full min-h-80! sm:min-h-100! lg:min-h-126!"
       >
         <AudioPlayer
-          src={props.url}
+          src={src}
+          onError={onError}
           alt={props.name}
           id={props._id}
           duration={props.duration}

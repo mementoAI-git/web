@@ -9,6 +9,8 @@ import endpoints from '@/api/endpoint';
 import { replacePathParams } from '@/utility';
 import { useNavigate } from 'react-router-dom';
 
+export type MutationMethod = 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'GET';
+
 export function useApi<T = unknown>(
   endpoint: string | null,
   options?: {
@@ -64,7 +66,7 @@ export function useMutation<TResponse = unknown, TRequest = unknown>(
     skipErrorHandling?: boolean;
     onSuccess?: (data: ApiResponse<TResponse>) => void;
     onError?: (error: ApiError) => void;
-    method?: 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'GET';
+    method?: MutationMethod;
     invalidate?: string[]; // SWR keys to invalidate after successful mutation
   }
 ) {

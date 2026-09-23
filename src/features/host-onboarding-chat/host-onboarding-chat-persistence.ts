@@ -1,7 +1,11 @@
 import { storageKeys } from "@/utility/constant";
-import type { HostOnboardingMessage, OnboardingComposerHints } from "./types";
+import type {
+  HostOnboardingMessage,
+  OnboardingComposerHints,
+  OnboardingStructuredOutcome,
+} from "./types";
 
-export const HOST_ONBOARDING_CHAT_PERSIST_VERSION = 5 as const;
+export const HOST_ONBOARDING_CHAT_PERSIST_VERSION = 6 as const;
 
 export interface PersistedHostOnboardingChat {
   v: typeof HOST_ONBOARDING_CHAT_PERSIST_VERSION;
@@ -15,6 +19,7 @@ export interface PersistedHostOnboardingChat {
   progressStep: number;
   /** From API `total_steps`; null = indeterminate progress UI. */
   progressTotal: number | null;
+  structuredOutcome: OnboardingStructuredOutcome;
 }
 
 /**
@@ -75,6 +80,17 @@ export function loadHostOnboardingChatState(): PersistedHostOnboardingChat | nul
     ) {
       return null;
     }
+    const structuredOutcome = p.structuredOutcome as
+      | OnboardingStructuredOutcome
+      | undefined;
+    if (
+      !structuredOutcome ||
+      !Array.isArray(structuredOutcome.extractedInterests) ||
+      !Array.isArray(structuredOutcome.suggestedDimensions) ||
+      typeof structuredOutcome.handoffSummary !== "string"
+    ) {
+      return null;
+    }
     for (const m of p.messages) {
       if (!isValidMessage(m)) return null;
     }
@@ -91,6 +107,7 @@ export function loadHostOnboardingChatState(): PersistedHostOnboardingChat | nul
       composerHints: hints,
       progressStep: p.progressStep,
       progressTotal: p.progressTotal,
+      structuredOutcome,
     };
   } catch {
     return null;

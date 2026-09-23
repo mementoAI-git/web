@@ -6,7 +6,7 @@ import { ChevronDown, ChevronUp, Globe, Lock, Users } from "lucide-react";
 import { useModal } from "@/hooks/use-modal";
 import { cn } from "@/utility";
 import endpoint from "@/api/endpoint";
-import { fetcher } from "@/api/fetcher";
+import { paginatedResponseFetcher } from "@/api/domain-fetchers";
 import { PlusIcon } from "@/components/icons";
 import type { IGroup, IBeneficiary } from "@/utility/interface";
 import { GROUP_COLORS } from "@/utility/constant";
@@ -32,6 +32,8 @@ interface AccessFieldProps {
   onChange: (selected: SearchResultItem[]) => void;
   shareAudience: MemoryShareAudience;
   onShareAudienceChange: (audience: MemoryShareAudience) => void;
+  variant?: "default" | "panel";
+  dismissOnEscape?: boolean;
 }
 
 function toSearchItem(g: IGroup): SearchResultItem {
@@ -49,22 +51,33 @@ export function AccessField({
   onChange,
   shareAudience,
   onShareAudienceChange,
+  variant = "default",
+  dismissOnEscape = false,
 }: AccessFieldProps) {
   const { push } = useModal();
   const accessInputId = useId();
   const [accessInput, setAccessInput] = useState("");
   const [showAccessDropdown, setShowAccessDropdown] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
   const groupsKey = showAccessDropdown ? `${endpoint.groups}?page=1&limit=${LIST_LIMIT}` : null;
   const beneficiariesKey = showAccessDropdown
     ? `${endpoint.beneficiaries}?page=1&limit=${LIST_LIMIT}`
     : null;
 
-  const { data: groupsResponse } = useSWR(groupsKey, fetcher, { revalidateOnFocus: false });
-  const { data: beneficiariesResponse } = useSWR(beneficiariesKey, fetcher, {
+  const { data: groupsResponse } = useSWR(
+    groupsKey,
+    paginatedResponseFetcher<IGroup>,
+    { revalidateOnFocus: false },
+  );
+  const { data: beneficiariesResponse } = useSWR(
+    beneficiariesKey,
+    paginatedResponseFetcher<IBeneficiary>,
+    {
     revalidateOnFocus: false,
-  });
+    },
+  );
 
   const allOptions: SearchResultItem[] = useMemo(() => {
     const groups: SearchResultItem[] = Array.isArray(groupsResponse?.data?.docs)
@@ -98,7 +111,13 @@ export function AccessField({
     ) : shareAudience === "everyone" ? (
       <Globe className="size-4 shrink-0 text-text-neutral-weaker" aria-hidden />
     ) : (
-      <Lock className="size-4 shrink-0 text-text-neutral-weaker" aria-hidden />
+      <Lock
+        className={cn(
+          "size-4 shrink-0",
+          variant === "panel" ? "text-[#ff7a70]" : "text-text-neutral-weaker",
+        )}
+        aria-hidden
+      />
     );
 
   useEffect(() => {
@@ -141,25 +160,51 @@ export function AccessField({
       <div>
         <Label
           htmlFor={accessInputId}
-          className="font-inter font-medium text-text-neutral-strong"
+          className={cn(
+            variant === "panel"
+              ? "font-geist text-sm font-normal text-[rgba(15,7,0,0.9)]"
+              : "font-inter font-medium text-text-neutral-strong",
+          )}
         >
-          Who can see this story?
+          {variant === "panel" ? "Who can see this story?" : "Who can see this story?"}
         </Label>
         <p className="mt-1.5 font-inter text-xs leading-relaxed text-text-neutral-weaker">
-          Stories are <span className="text-text-neutral-strong">private by default</span>
-          —only you can see them. Choose{" "}
-          <span className="text-text-neutral-strong">Everyone</span> to share openly, or search below for{" "}
-          <span className="text-text-neutral-strong">specific people and groups</span>.
+          {variant === "panel" ? (
+            <>
+              Stories are visible to all beneficiaries by default. Choose{" "}
+              <span className="font-semibold text-[#c73a3a]">Private</span> to keep them hidden from all
+              your beneficiaries, or search below to specify people and groups you want to share with.
+            </>
+          ) : (
+            <>
+              Stories are <span className="text-text-neutral-strong">private by default</span>
+              —only you can see them. Choose{" "}
+              <span className="text-text-neutral-strong">Everyone</span> to share openly, or search below for{" "}
+              <span className="text-text-neutral-strong">specific people and groups</span>.
+            </>
+          )}
         </p>
       </div>
-      <div ref={containerRef} className="relative">
+      <div
+        ref={containerRef}
+        className="relative"
+        onKeyDown={(event) => {
+          if (!dismissOnEscape || !showAccessDropdown || event.key !== "Escape") return;
+          event.stopPropagation();
+          setShowAccessDropdown(false);
+          triggerRef.current?.focus();
+        }}
+      >
         <div
           className={cn(
-            "rounded-xl border border-stroke-neutral-weak bg-fill-neutral-weaker/40 transition-[color,box-shadow,border-color]",
+            variant === "panel"
+              ? "rounded-[8px] border border-stroke-neutral-weak bg-white transition-[color,box-shadow,border-color]"
+              : "rounded-xl border border-stroke-neutral-weak bg-fill-neutral-weaker/40 transition-[color,box-shadow,border-color]",
             "focus-within:border-ring focus-within:ring-[3px] focus-within:ring-inset focus-within:ring-ring/50",
           )}
         >
           <button
+            ref={triggerRef}
             type="button"
             id={accessInputId}
             aria-expanded={showAccessDropdown}
@@ -168,7 +213,12 @@ export function AccessField({
               e.stopPropagation();
               setShowAccessDropdown((o) => !o);
             }}
-            className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left font-inter text-sm text-text-neutral-strong hover:bg-fill-neutral-weaker/60"
+            className={cn(
+              "flex w-full items-center gap-2.5 text-left text-sm text-text-neutral-strong",
+              variant === "panel"
+                ? "px-3 py-2 font-geist hover:bg-[#faf8f5]"
+                : "px-3 py-2.5 font-inter hover:bg-fill-neutral-weaker/60",
+            )}
           >
             {summaryIcon}
             <span className="min-w-0 flex-1 truncate">{visibilityLabel}</span>
