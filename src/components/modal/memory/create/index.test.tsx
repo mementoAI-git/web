@@ -392,15 +392,25 @@ describe("CreateMemory", () => {
     editorSetContentMock.mockReset();
   });
 
-  it("uses v3 background on desktop story shell", () => {
-    renderWithProviders(<CreateMemory data={{}} isMobile={false} />, { auth: true });
+  it("renders the desktop composer as a journal without changing the mobile sheet", () => {
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const { rerender } = renderWithProviders(<CreateMemory data={{}} isMobile={false} />, {
+      auth: true,
+      container,
+    });
 
-    const titleInput = screen.getByPlaceholderText(/enter title here/i);
-    expect(titleInput).toBeInTheDocument();
-    expect(screen.getByText("Properties")).toBeInTheDocument();
-    const shell = titleInput.closest(".absolute");
-    expect(shell).toBeTruthy();
-    expect(shell?.className).toContain("bg-white");
+    expect(screen.getByTestId("desktop-story-environment")).toBeInTheDocument();
+    expect(screen.getByTestId("desktop-journal-shell")).toBeInTheDocument();
+    expect(screen.getByTestId("desktop-album-artwork")).toHaveAttribute("alt", "");
+    expect(screen.getByPlaceholderText(/give this story a title/i)).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Story Details" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Publish Story" })).toBeInTheDocument();
+
+    rerender(<CreateMemory data={{}} isMobile />);
+
+    expect(screen.getByTestId("sheet-container")).toBeInTheDocument();
+    expect(screen.queryByTestId("desktop-journal-shell")).not.toBeInTheDocument();
   });
 
   it("uses v3 background on mobile sheet surfaces", () => {
@@ -415,7 +425,7 @@ describe("CreateMemory", () => {
     const user = userEvent.setup();
     renderWithProviders(<CreateMemory data={{}} isMobile={false} />, { auth: true });
 
-    const titleInput = screen.getByPlaceholderText(/enter title here/i);
+    const titleInput = screen.getByPlaceholderText(/give this story a title/i);
     await user.type(titleInput, "A title");
     await user.keyboard("{Enter}");
 
@@ -436,11 +446,11 @@ describe("CreateMemory", () => {
     expect(screen.getAllByText("Documents").length).toBeGreaterThan(0);
   });
 
-  it("switches the left panel to assistant mode", async () => {
+  it("shows assistant content when the Assistant tab is selected", async () => {
     const user = userEvent.setup();
     renderWithProviders(<CreateMemory data={{}} isMobile={false} />, { auth: true });
 
-    await user.click(screen.getByRole("button", { name: "Assistant" }));
+    await user.click(screen.getByRole("tab", { name: "Assistant" }));
 
     expect(screen.getByText(/assistant coming soon!/i)).toBeInTheDocument();
     expect(screen.getByText(/writing your journals and recalling important contexts/i)).toBeInTheDocument();
@@ -491,6 +501,16 @@ describe("CreateMemory", () => {
 
     expect(scrollSurface.className).toContain("min-h-full");
     expect(mediaSection.className).toContain("mt-auto");
+  });
+
+  it("shows story quality as a quiet checklist instead of a percentage chart", () => {
+    renderWithProviders(<CreateMemory data={{}} isMobile={false} />, { auth: true });
+
+    expect(screen.getByText("Story quality")).toBeInTheDocument();
+    expect(screen.getByText("Characters")).toBeInTheDocument();
+    expect(screen.getByText("Sensory details")).toBeInTheDocument();
+    expect(screen.queryByText(/^(?:strong story|good start|keep going)$/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/\d+%/)).not.toBeInTheDocument();
   });
 
   it.skip("returns sensory guidance from a freeform assistant request", async () => {
