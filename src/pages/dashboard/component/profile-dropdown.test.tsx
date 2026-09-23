@@ -72,7 +72,8 @@ describe("ProfileDropdown", () => {
   });
 
   it("lets the user select and persist Dark from the Theme submenu", async () => {
-    const user = userEvent.setup();
+    // Avoid an automatic hover transition across Radix's portalled submenu.
+    const user = userEvent.setup({ skipHover: true });
     renderWithProviders(<ProfileDropdown />, { auth: true });
 
     await user.click(screen.getByRole("button", { name: /user/i }));
@@ -90,7 +91,9 @@ describe("ProfileDropdown", () => {
       within(options).getByRole("menuitemradio", { name: "System" }),
     ).toBeInTheDocument();
 
-    await user.keyboard("{ArrowRight}{ArrowDown}{Enter}");
+    await user.click(
+      within(options).getByRole("menuitemradio", { name: "Dark" }),
+    );
     expect(document.documentElement).toHaveClass("dark");
     expect(localStorage.getItem("memento:theme")).toBe("dark");
 
