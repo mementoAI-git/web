@@ -8,6 +8,13 @@ name: "Frontend: Deploy Prod"
 on:
   push:
     branches: ["main"]
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: "Reason for manual deploy"
+        required: false
+        type: string
+        default: "Manual trigger"
 
 concurrency:
   group: frontend-deploy-prod
