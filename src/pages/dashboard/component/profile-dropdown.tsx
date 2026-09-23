@@ -1,6 +1,8 @@
 import { UserAvatar } from "@/components/user-avatar";
 import { useSubscription } from "@/contexts/subscription";
+import { useTheme } from "@/contexts/theme";
 import { useStore } from "@/hooks/use-store";
+import { isThemePreference, type ThemePreference } from "@/lib/theme";
 import { isEmpty } from "@/utility";
 import { cn } from "@/utility";
 import { useNavigate } from "react-router-dom";
@@ -9,7 +11,12 @@ import {
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -17,7 +24,11 @@ import {
   ChevronRight,
   CircleHelp,
   LogOut,
+  Monitor,
+  Moon,
   Settings,
+  Sun,
+  SunMoon,
   Twitter,
   UsersRound,
 } from "lucide-react";
@@ -26,7 +37,7 @@ const CONTACT_URL = "https://tally.so/r/kdb0Jj";
 const X_URL = "https://x.com/MementoAI";
 const DISCORD_URL = "https://discord.gg/RzR7xJSwYg";
 
-const lucideItemIcon = "size-4 shrink-0 text-v3-text-strong";
+const lucideItemIcon = "shrink-0 text-v3-text-strong";
 
 const itemRowClass =
   "flex min-h-8 w-full cursor-pointer items-center gap-3 rounded-lg px-2.5 py-0.5 font-inter text-v3-text-strong outline-none data-[focused]:bg-v3-fill-weaker";
@@ -36,20 +47,27 @@ const itemLabelClass = "flex-1 text-left text-[13px]";
 export function ProfileDropdown({ hideName = false }: { hideName?: boolean }) {
   const { user, unsetAuth } = useStore();
   const { tier, isLoading: subscriptionLoading } = useSubscription();
+  const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
-  const rawName = [user?.first_name, user?.last_name].filter(Boolean).join(" ").trim();
+  const rawName = [user?.first_name, user?.last_name]
+    .filter(Boolean)
+    .join(" ")
+    .trim();
   const photo = user?.picture_url || user?.picture;
 
-  const planLabel =
-    !subscriptionLoading ?
-      tier === "pro" || tier === "legacy" ?
-        "Pro"
+  const planLabel = !subscriptionLoading
+    ? tier === "pro" || tier === "legacy"
+      ? "Pro"
       : "Free"
     : null;
 
   const handleLogout = () => {
     unsetAuth?.();
     navigate("/login");
+  };
+
+  const handleThemeChange = (value: string) => {
+    if (isThemePreference(value)) setTheme(value satisfies ThemePreference);
   };
 
   return (
@@ -75,17 +93,19 @@ export function ProfileDropdown({ hideName = false }: { hideName?: boolean }) {
           <div className="flex w-full min-w-0 flex-1 items-center gap-2">
             <div className="flex min-w-0 flex-1 flex-col items-start gap-0 text-left">
               <span className="flex w-full min-w-0 items-center gap-1">
-                <span className="w-full truncate font-inter text-sm font-semibold text-gray-800">
+                <span className="w-full truncate font-inter text-sm font-semibold text-foreground">
                   {user?.first_name ?? "User"}
                 </span>
                 <ChevronDown
-                  className="size-3.5 shrink-0 text-gray-400"
+                  className="size-3.5 shrink-0 text-muted-foreground"
                   strokeWidth={2}
                   aria-hidden
                 />
               </span>
               {planLabel != null ? (
-                <span className="font-inter text-xs font-normal text-gray-500">{planLabel}</span>
+                <span className="font-inter text-xs font-normal text-muted-foreground">
+                  {planLabel}
+                </span>
               ) : null}
             </div>
           </div>
@@ -96,8 +116,8 @@ export function ProfileDropdown({ hideName = false }: { hideName?: boolean }) {
         sideOffset={8}
         aria-label="Account menu"
         className={cn(
-          "min-w-[260px] gap-0 rounded-xl border border-v3-stroke-weak bg-white p-1",
-          "shadow-[0px_4px_24px_var(--brown-50)]",
+          "min-w-[260px] gap-0 rounded-xl border border-border bg-popover p-1",
+          "shadow-xl",
         )}
       >
         <DropdownMenuGroup>
@@ -108,10 +128,32 @@ export function ProfileDropdown({ hideName = false }: { hideName?: boolean }) {
             <Settings className={lucideItemIcon} strokeWidth={2} />
             <span className={itemLabelClass}>Settings</span>
           </DropdownMenuItem>
-          <DropdownMenuItem
-            onClick={handleLogout}
-            className={itemRowClass}
-          >
+          <DropdownMenuSub>
+            <DropdownMenuSubTrigger className={itemRowClass}>
+              <SunMoon className={lucideItemIcon} strokeWidth={2} />
+              <span className={itemLabelClass}>Theme</span>
+            </DropdownMenuSubTrigger>
+            <DropdownMenuSubContent aria-label="Theme options">
+              <DropdownMenuRadioGroup
+                value={theme}
+                onValueChange={handleThemeChange}
+              >
+                <DropdownMenuRadioItem value="light" className={itemRowClass}>
+                  <Sun className={lucideItemIcon} strokeWidth={2} />
+                  <span className={itemLabelClass}>Light</span>
+                </DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="dark" className={itemRowClass}>
+                  <Moon className={lucideItemIcon} strokeWidth={2} />
+                  <span className={itemLabelClass}>Dark</span>
+                </DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="system" className={itemRowClass}>
+                  <Monitor className={lucideItemIcon} strokeWidth={2} />
+                  <span className={itemLabelClass}>System</span>
+                </DropdownMenuRadioItem>
+              </DropdownMenuRadioGroup>
+            </DropdownMenuSubContent>
+          </DropdownMenuSub>
+          <DropdownMenuItem onClick={handleLogout} className={itemRowClass}>
             <LogOut className={lucideItemIcon} strokeWidth={2} />
             <span className={itemLabelClass}>Log out</span>
           </DropdownMenuItem>
@@ -123,7 +165,7 @@ export function ProfileDropdown({ hideName = false }: { hideName?: boolean }) {
               <CircleHelp className={lucideItemIcon} strokeWidth={2} />
               <span className={itemLabelClass}>Contact us</span>
               <ChevronRight
-                className="size-4 shrink-0 text-v3-text-weak"
+                className="shrink-0 text-v3-text-weak"
                 strokeWidth={2}
                 aria-hidden
               />
