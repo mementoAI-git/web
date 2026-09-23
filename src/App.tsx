@@ -5,7 +5,7 @@ import { ChatSidebarProvider } from "./contexts/chat-sidebar";
 
 function App() {
   return (
-    <div className="min-h-screen bg-background text-secondary">
+    <div className="min-h-screen bg-background text-foreground">
       <ChatSidebarProvider>
         <Outlet />
       </ChatSidebarProvider>
