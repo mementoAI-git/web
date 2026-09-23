@@ -308,7 +308,7 @@
 }
 
 .dark {
-  --color-secondary: rgba(255, 255, 255, 0.9);
+  --color-secondary: var(--secondary);
   --color-background: #170b00;
 
   --text-neutral-strong: var(--brown-dark-1000);
@@ -326,7 +326,7 @@
   --stroke-neutral-weaker: var(--brown-dark-50);
   --stroke-neutral-disabled: var(--brown-dark-25);
 
-  --fill-neutral-strong: var(--brown-dark-1000);
+  --fill-neutral-strong: var(--brown-1000);
   --fill-neutral-weak: var(--brown-dark-50);
   --fill-neutral-weaker: var(--brown-dark-25);
   --fill-neutral-disabled: var(--brown-dark-25);
@@ -564,7 +564,7 @@
 }
 
 body {
-  color: var(--color-secondary);
+  color: var(--foreground);
   font-optical-sizing: auto;
   font-weight: 400;
   font-size: 16px;
