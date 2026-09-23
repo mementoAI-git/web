@@ -1,4 +1,5 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
+import { StrictMode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { initializeTheme, THEME_STORAGE_KEY } from "@/lib/theme";
 import { ThemeProvider, useTheme } from "./theme";
@@ -30,6 +31,9 @@ function installMatchMedia(initialDark: boolean) {
   );
 
   return {
+    get listenerCount() {
+      return listeners.size;
+    },
     setDark(nextDark: boolean) {
       dark = nextDark;
       const event = {
@@ -153,7 +157,10 @@ describe("application theme", () => {
   it("stops following OS changes after a manual selection", () => {
     const media = installMatchMedia(false);
     renderTheme();
+    expect(media.listenerCount).toBe(1);
+
     fireEvent.click(screen.getByRole("button", { name: "Use dark" }));
+    expect(media.listenerCount).toBe(0);
 
     act(() => media.setDark(true));
     act(() => media.setDark(false));
@@ -161,6 +168,29 @@ describe("application theme", () => {
     expect(screen.getByTestId("theme")).toHaveTextContent("dark");
     expect(screen.getByTestId("resolved-theme")).toHaveTextContent("dark");
     expect(document.documentElement).toHaveClass("dark");
+  });
+
+  it("removes the system listener on unmount under StrictMode", () => {
+    const media = installMatchMedia(false);
+    const { unmount } = render(
+      <StrictMode>
+        <ThemeProvider>
+          <ThemeProbe />
+        </ThemeProvider>
+      </StrictMode>,
+    );
+
+    expect(screen.getByTestId("resolved-theme")).toHaveTextContent("light");
+    expect(media.listenerCount).toBe(1);
+    expect(document.documentElement).not.toHaveClass("dark");
+    expect(document.documentElement.style.colorScheme).toBe("light");
+
+    unmount();
+    expect(media.listenerCount).toBe(0);
+    act(() => media.setDark(true));
+
+    expect(document.documentElement).not.toHaveClass("dark");
+    expect(document.documentElement.style.colorScheme).toBe("light");
   });
 
   it("requires a ThemeProvider", () => {
