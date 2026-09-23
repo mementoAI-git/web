@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import useSWR from "swr";
+import { entityResponseFetcher } from "@/api/domain-fetchers";
 import {
   ChevronDown,
   Heart,
@@ -185,7 +186,7 @@ export default function MemoryInsightsModal() {
   const { data: beneficiariesData } = useSWR(
     `${endpoint.beneficiaries}?page=1`,
   );
-  const { data: contextData } = useSWR(endpoint.userContext);
+  const { data: contextData } = useSWR(endpoint.userContext, entityResponseFetcher);
   const { data: profileData } = useSWR(endpoint.profile);
 
   const primaryConversationId =

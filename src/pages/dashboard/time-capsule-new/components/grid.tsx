@@ -8,8 +8,10 @@ import { CapsuleEmptyState } from "./CapsuleEmptyState";
 import StatusBadge from "./StatusBadge";
 import { CapsuleItemActions } from "./dropdown";
 import { getDisplayName } from "../utility/helpers";
+import { getCapsuleDisplayRecipients } from "@/features/capsules/recipient-display";
 
 function CapsuleGridItem({ capsule }: { capsule: ICapsule }) {
+  const recipients = getCapsuleDisplayRecipients(capsule);
   return (
     <div className="flex min-h-[308px] w-full flex-col gap-3 sm:gap-4 rounded-xl sm:rounded-2xl bg-gray-200 p-0.5 sm:p4 border-gray-200 border hover:border-sand-8">
       <div className="h-[262px] bg-white rounded-xl p-2 flex flex-col">
@@ -65,37 +67,37 @@ function CapsuleGridItem({ capsule }: { capsule: ICapsule }) {
           <div className="flex justify-between items-center text-xs">
             <span className="text-gray-600">To:</span>
             <div className="flex items-center gap-1.5">
-              {capsule.recipients.length > 0 ? (
+              {recipients.length > 0 ? (
                 <>
                   {/* First recipient with avatar */}
                   <div className="flex items-center gap-1.5">
-                    {capsule.recipients[0].picture_url ? (
+                    {recipients[0].picture_url ? (
                       <img
-                        src={capsule.recipients[0].picture_url}
-                        alt={getDisplayName(capsule.recipients[0])}
+                        src={recipients[0].picture_url}
+                        alt={getDisplayName(recipients[0])}
                         className="w-5 h-5 rounded-full object-cover"
                       />
                     ) : (
                       <div className="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center text-xs font-medium text-gray-600">
                         {(
-                          capsule.recipients[0].first_name ||
-                          capsule.recipients[0].email
+                          recipients[0].first_name ||
+                          recipients[0].email
                         )
                           .charAt(0)
                           .toUpperCase()}
                       </div>
                     )}
                     <span className="text-sm font-medium text-gray-900">
-                      {capsule.recipients[0].first_name ||
-                        capsule.recipients[0].email.split("@")[0]}
+                      {recipients[0].first_name ||
+                        recipients[0].email.split("@")[0]}
                     </span>
                   </div>
 
                   {/* Additional recipients count */}
-                  {capsule.recipients.length > 1 && (
+                  {recipients.length > 1 && (
                     <span className="text-sm text-gray-500">
-                      +{capsule.recipients.length - 1} other
-                      {capsule.recipients.length > 2 ? "s" : ""}
+                      +{recipients.length - 1} other
+                      {recipients.length > 2 ? "s" : ""}
                     </span>
                   )}
                 </>

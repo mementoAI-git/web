@@ -1,4 +1,5 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import Axios from "axios";
 import dayjs from "dayjs";
 import { authService } from "@/utility/auth-service";
 import { storageKeys } from "@/utility/constant";
@@ -13,6 +14,7 @@ const mockAuth: IAuth = {
 
 describe("AuthService", () => {
   beforeEach(() => {
+    vi.restoreAllMocks();
     localStorage.clear();
   });
 
@@ -121,6 +123,49 @@ describe("AuthService", () => {
       const auth = { ...mockAuth };
       localStorage.setItem(storageKeys.auth, JSON.stringify(auth));
       expect(authService.getAuthData()).toEqual(auth);
+    });
+
+    it("returns null instead of crashing on corrupt persisted data", () => {
+      localStorage.setItem(storageKeys.auth, "not-json");
+      expect(authService.getAuthData()).toBe(null);
+    });
+  });
+
+  describe("refreshAccessToken", () => {
+    it("atomically stores the canonical nested session", async () => {
+      const existing = {
+        ...mockAuth,
+        expires_at: dayjs().subtract(1, "minute").toISOString(),
+        refresh_expires_at: dayjs().add(1, "hour").toISOString(),
+      };
+      localStorage.setItem(storageKeys.auth, JSON.stringify(existing));
+      vi.spyOn(Axios, "post").mockResolvedValueOnce({
+        data: {
+          success: true,
+          data: {
+            access_token: "stale-legacy-access",
+            session: {
+              access_token: "new-access",
+              refresh_token: "new-refresh",
+              access_expires_at: dayjs().add(1, "hour").toISOString(),
+              expires_at: dayjs().add(1, "hour").toISOString(),
+              refresh_expires_at: dayjs().add(30, "days").toISOString(),
+              onboarding_status: "completed",
+              user: { id: "user-1" },
+            },
+          },
+        },
+      });
+
+      const refreshed = await authService.refreshAccessToken();
+
+      expect(refreshed).toMatchObject({
+        access_token: "new-access",
+        refresh_token: "new-refresh",
+        onboarded: true,
+        user: { id: "user-1" },
+      });
+      expect(authService.getAuthData()).toEqual(refreshed);
     });
   });
 

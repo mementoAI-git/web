@@ -108,6 +108,40 @@ describe("TwoFactorPage", () => {
     });
   });
 
+  it("uses canonical session state and sends web client identity", async () => {
+    let clientHeader: string | null = null;
+    server.use(
+      http.post("http://localhost:3000/api/auth/2fa/verify", ({ request }) => {
+        clientHeader = request.headers.get("X-Memento-Client");
+        return HttpResponse.json({
+          success: true,
+          message: "Login successful",
+          data: {
+            onboarded: false,
+            session: {
+              access_token: "canonical-token",
+              refresh_token: "canonical-refresh",
+              access_expires_at: new Date(Date.now() + 3600000).toISOString(),
+              expires_at: new Date(Date.now() + 3600000).toISOString(),
+              refresh_expires_at: new Date(Date.now() + 86400000).toISOString(),
+              onboarding_status: "completed",
+            },
+          },
+        });
+      }),
+    );
+
+    const user = userEvent.setup();
+    renderWithProviders(<TwoFactorPage />);
+    await fillCode(user, "123456");
+    await user.click(screen.getByRole("button", { name: /verify/i }));
+
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith("/overview", { replace: true });
+    });
+    expect(clientHeader).toBe("web");
+  });
+
   it("clears digits on API error (code 000000 triggers MSW error response)", async () => {
     const user = userEvent.setup();
     renderWithProviders(<TwoFactorPage />);

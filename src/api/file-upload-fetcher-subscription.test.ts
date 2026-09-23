@@ -52,4 +52,38 @@ describe("fileUploadFetcher — subscription gate (402)", () => {
     expect(result.message).toContain("Storage limit reached");
     expect(result.data).toBeNull();
   });
+
+  it("treats the deployed storage quota response as an upgrade gate", async () => {
+    mockAxiosPost.mockRejectedValue({
+      isAxiosError: true,
+      response: {
+        status: 403,
+        data: {
+          status: 403,
+          success: false,
+          code: "storage_quota_exceeded",
+          message: "Storage limit reached. Delete some media or upgrade to continue.",
+          details: {
+            used_bytes: 209715200,
+            reserved_bytes: 0,
+            limit_bytes: 209715200,
+            remaining_bytes: 0,
+            requested_bytes: 1024,
+            over_limit: false,
+          },
+          request_id: "request-1",
+        },
+      },
+    });
+
+    const file = new File(["x"], "photo.png", { type: "image/png" });
+    const result = await fileUploadFetcher(endpoint.upload, { arg: { file } });
+
+    expect(result).toMatchObject({
+      success: false,
+      subscriptionGate: true,
+      data: null,
+    });
+    expect(result.message).toContain("Storage limit reached");
+  });
 });

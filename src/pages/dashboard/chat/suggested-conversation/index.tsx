@@ -6,9 +6,16 @@ import endpoint from "@/api/endpoint";
 import useSWRInfinite from "swr/infinite";
 import useIntersectionObserver from "@/hooks/use-intersection-observer";
 import { getCategory } from "@/utility";
-import { fetcher } from "@/api/fetcher";
+import { paginatedResponseFetcher } from "@/api/domain-fetchers";
 import GoBack from "@/components/go-back";
 import { TypographyH1, TypographyH2, TypographyMuted } from "@/components/ui/typography";
+
+type ConversationSuggestion = {
+  _id: string;
+  title: string;
+  category?: string;
+  tag?: string[];
+};
 
 export default function SuggestedConversation() {
   // Get the key function for useSWRInfinite
@@ -25,7 +32,7 @@ export default function SuggestedConversation() {
     isLoading,
     size,
     setSize
-  } = useSWRInfinite(getKey, fetcher, {
+  } = useSWRInfinite(getKey, paginatedResponseFetcher<ConversationSuggestion>, {
     revalidateOnFocus: false,
     revalidateFirstPage: false
   });

@@ -3,9 +3,11 @@
 **Version:** 1.0
 **Status:** Ready for implementation
 **Stack:** React + TypeScript (frontend), Node.js (backend), Gemini (AI), Supermemory, Cloudinary, DigitalOcean Spaces
-**Payment providers:** **Paystack-first checkout** with broad payment-method support (cards, bank transfer, wallets, USSD, etc., where available), plus optional Polar support if retained by backend. See [PRICING_BACKEND_HANDOFF.md](./PRICING_BACKEND_HANDOFF.md) for implementation notes.
+**Payment provider:** **Polar**. Checkout creation, customer portal sessions, subscription state, and webhooks are backend-owned. See [PRICING_BACKEND_HANDOFF.md](./PRICING_BACKEND_HANDOFF.md) for implementation notes.
 
 **Implementation tracking:** [PRICING_IMPLEMENTATION_STATUS.md](./PRICING_IMPLEMENTATION_STATUS.md) · [PRICING_TODO.md](./PRICING_TODO.md)
+
+> **Runtime implementation note (2026-08-31):** the API currently defaults to 200 MiB total storage for Free and 10 GiB for Pro and Legacy. Server-provided subscription and usage metadata is authoritative, and an administrative per-user override may change an individual limit. These implemented quotas supersede earlier aspirational storage figures in this document.
 
 ---
 
@@ -62,8 +64,8 @@ These are the only features to gate in this sprint. Everything else is UI-only.
 |---------|-----------|-----|--------|
 | Voice mode in chat | ❌ | ✅ | ✅ |
 | Supermemory integration | ❌ | ✅ | ✅ |
-| Upload quality | Compressed (1080p img / 480p video), 200MB max | HD original, 200MB+ | HD original, 200MB+ |
-| Total storage | 5GB | 100GB | Unlimited |
+| Upload quality | Client may compress; server enforces quota | Client may retain higher quality; server enforces quota | Client may retain higher quality; server enforces quota |
+| Total storage | 200 MiB default | 10 GiB default | 10 GiB default |
 | Time capsule window | 6 months max from creation date | Unlimited | Unlimited |
 | Beneficiaries | 2 | Unlimited | Unlimited |
 | Timed messages | 5 | 50 | Unlimited |
@@ -119,7 +121,7 @@ subscription {
   trial_ends_at           // timestamp | null
   has_used_trial          // boolean
   cancelled_at            // timestamp | null
-  payment_provider        // "polar" | "paystack"
+  payment_provider        // "polar"
   provider_customer_id    // external ID from payment provider
   provider_subscription_id
   promo_code_used         // string | null
@@ -166,65 +168,15 @@ promo_code {
 
 ### 5.1 Checkout strategy
 
-Use a backend-controlled checkout strategy that prioritizes broad payment-method support via Paystack where possible.
+Use a backend-controlled Polar checkout strategy.
 
 - The frontend should call one checkout endpoint (`POST /billing/checkout`) and redirect to the returned URL.
-- The backend decides provider routing and enabled methods.
+- The backend selects the Polar product and interval.
 - Do not hardcode provider logic in frontend.
 
 Store `payment_provider` on the subscription record at checkout initiation when applicable.
 
-### 5.2 Paystack (Primary)
-
-Paystack is the primary checkout path. Configure as many supported payment methods as possible per market and account capability (for example card, bank transfer, wallet, USSD, and other options Paystack enables).
-
-**Setup:**
-- Paystack dashboard: create plans for Pro Monthly, Pro Annual, Legacy Monthly, Legacy Annual (and any supported lifetime equivalent flow).
-- Store plan codes in environment variables.
-- Enable webhook endpoint.
-- Enable and verify all payment methods you want customers to see in checkout.
-
-**Key environment variables:**
-```
-PAYSTACK_SECRET_KEY
-PAYSTACK_PUBLIC_KEY
-PAYSTACK_WEBHOOK_SECRET
-PAYSTACK_PLAN_PRO_MONTHLY
-PAYSTACK_PLAN_PRO_ANNUAL
-PAYSTACK_PLAN_LEGACY_MONTHLY
-PAYSTACK_PLAN_LEGACY_ANNUAL
-```
-
-**Subscription initialisation:**
-```ts
-POST https://api.paystack.co/transaction/initialize
-{
-  email: user.email,
-  amount: 800000, // kobo — example for ₦8,000
-  plan: PAYSTACK_PLAN_PRO_MONTHLY,
-  metadata: { user_id: user.id },
-  callback_url: "https://app.mymemento.co/payment/callback"
-}
-```
-
-**Trial handling:** If Paystack plan flow does not provide native trial behavior for your setup, implement trial lifecycle in your DB/jobs:
-- Set `trial_ends_at = now + 14 days`.
-- Enforce `has_used_trial`.
-- On `trial_ends_at`, if no successful charge, cancel/disable recurring billing and downgrade to Free.
-
-**Webhooks to handle:**
-| Event | Action |
-|-------|--------|
-| `charge.success` | Activate subscription, sync period dates |
-| `subscription.create` | Store subscription code, set status |
-| `subscription.disable` | Set status to `cancelled`, keep access until period end |
-| `invoice.payment_failed` | Set `past_due`, alert user |
-
-**Verify all webhooks** by hashing payload with `PAYSTACK_WEBHOOK_SECRET` (HMAC SHA-512).
-
----
-
-### 5.3 Polar.sh (Optional / secondary)
+### 5.2 Polar (Current provider)
 
 **Billing platform** for non–Nigeria checkouts: products, checkout sessions, subscriptions, and webhooks. Confirm current tax and compliance posture for your regions in [Polar’s documentation](https://docs.polar.sh); do not assume MoR parity with legacy Lemon Squeezy without verification.
 
@@ -292,7 +244,7 @@ All API routes that touch gated features must call this before proceeding.
 
 Before every upload:
 1. Fetch `usage.storage_used_bytes` for the user
-2. Compare against tier limit (Free: 5GB, Pro: 100GB, Legacy: unlimited)
+2. Compare against the effective API limit (defaults: Free 200 MiB, Pro/Legacy 10 GiB; configuration or an admin override may differ)
 3. If limit exceeded → reject upload with `402` status and upgrade prompt payload
 4. On successful upload → increment `storage_used_bytes`
 5. On file deletion → decrement `storage_used_bytes`
@@ -422,7 +374,6 @@ Single endpoint: `POST /api/webhooks/payments`
 Route to provider-specific handler based on a `provider` query param or header:
 ```
 POST /api/webhooks/payments?provider=polar
-POST /api/webhooks/payments?provider=paystack
 ```
 
 Always verify signature before processing. Return `200` immediately even if processing is async — use a job queue for actual subscription updates to avoid timeout issues.
@@ -448,7 +399,7 @@ After implementation, verify each of the following before shipping:
 - [ ] Legacy trial initiates correctly
 - [ ] Trial auto-downgrades to Free on day 14 with no payment (test with mocked date)
 - [ ] Checkout opens correctly for users in supported markets
-- [ ] Paystack checkout shows expected payment methods for target markets/accounts
+- [ ] Polar checkout opens the expected product and interval
 - [ ] Successful payment activates subscription: `status = active`, `tier` updated
 - [ ] Failed payment sets `status = past_due`, user sees in-app alert
 - [ ] Cancellation keeps access until `current_period_end`, then downgrades
@@ -460,7 +411,7 @@ After implementation, verify each of the following before shipping:
 ### Feature Gates (Launch Scope Only)
 - [ ] Free user triggering voice mode sees upgrade prompt (modal), not an error
 - [ ] Free user triggering Supermemory-dependent feature sees upgrade prompt
-- [ ] Free user uploading beyond 5GB storage limit sees inline upgrade prompt
+- [ ] Free user uploading beyond the server-provided storage limit sees inline upgrade prompt
 - [ ] Free user setting time capsule delivery date beyond 6 months sees upgrade prompt on submit
 - [ ] Free user adding a 3rd beneficiary sees upgrade prompt
 - [ ] Free user creating a 6th timed message sees upgrade prompt
@@ -521,7 +472,7 @@ After implementation, verify each of the following before shipping:
 - [ ] Confirm Cloudinary plan and transformation credit budget for HD uploads
 - [ ] Confirm DigitalOcean Spaces pricing tier and storage ceiling
 - [ ] Define exact upload size cap for Pro/Legacy (200MB or higher?)
-- [ ] Finalize Paystack trial implementation (native behavior vs DB/job-managed flow)
+- [ ] Finalize Polar trial implementation (catalog behavior vs DB/job-managed flow)
 - [ ] Decide job queue solution for async webhook processing (e.g. BullMQ, Inngest)
 - [ ] Confirm admin dashboard scope — is promo code UI part of this sprint or separate?
 

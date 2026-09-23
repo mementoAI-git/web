@@ -1,7 +1,6 @@
 "use client";
 
 import { clearCache } from "@/utility";
-import { storageKeys } from "@/utility/constant";
 import type { IAuth, IUser } from "@/utility/interface";
 import { authService } from "@/utility/auth-service";
 import {
@@ -41,7 +40,7 @@ export function StoreProvider({ children }: PropsWithChildren) {
   const [state, setState] = useState(initialStates);
 
   const setAuth = useCallback((auth: IAuth) => {
-    localStorage.setItem(storageKeys.auth, JSON.stringify(auth));
+    authService.setAuthData(auth);
     setState((p) => ({ ...p, auth }));
   }, []);
 
@@ -63,9 +62,9 @@ export function StoreProvider({ children }: PropsWithChildren) {
   }, []);
 
   useEffect(() => {
-    const auth = localStorage.getItem(storageKeys.auth);
+    const auth = authService.getAuthData();
     if (auth) {
-      setState((p) => ({ ...p, auth: JSON.parse(auth), hydrated: true }));
+      setState((p) => ({ ...p, auth, hydrated: true }));
     } else {
       setState((p) => ({ ...p, hydrated: true }));
     }
@@ -81,4 +80,3 @@ export function StoreProvider({ children }: PropsWithChildren) {
 
 // eslint-disable-next-line react-refresh/only-export-components
 export const useStore = () => useContext(store);
-

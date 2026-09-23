@@ -2,6 +2,7 @@ import wave from "@/assets/image/wave.png";
 import { useModal } from "@/hooks/use-modal";
 import { getDuration } from "@/utility";
 import type { IFile } from "@/utility/interface";
+import { useSignedMediaAccess } from "@/features/media/signed-media-access";
 
 function AudioFile({ file }: { file: IFile }) {
   const { mins, secs, hrs } = getDuration(file.duration || 0);
@@ -40,6 +41,7 @@ function VideoFile({ file }: { file: IFile }) {
 }
 
 function FileGalleryItem({ file }: { file: IFile }) {
+  const { src, onError } = useSignedMediaAccess(file);
   const type = file.type ?? "";
   if (type.includes("video")) {
     return <VideoFile file={file} />;
@@ -49,7 +51,8 @@ function FileGalleryItem({ file }: { file: IFile }) {
   }
   return (
     <img
-      src={file.url}
+      src={src}
+      onError={onError}
       className="w-full h-full rounded-sm object-cover"
       alt={file.name}
       loading="lazy"

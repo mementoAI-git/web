@@ -1,5 +1,6 @@
 import endpoint from "@/api/endpoint";
-import { storageKeys } from "@/utility/constant";
+import { getMementoClientHeaders } from "@/api/client-metadata";
+import { authService } from "@/utility/auth-service";
 
 export type PreviewElevenLabsVoiceParams = {
   voiceId: string;
@@ -12,8 +13,7 @@ const PREVIEW_TIMEOUT_MS = 20_000;
 const PREVIEW_PLAYBACK_CAP_MS = 6_000;
 
 export async function previewElevenLabsVoice(params: PreviewElevenLabsVoiceParams): Promise<void> {
-  const authRaw = localStorage.getItem(storageKeys.auth);
-  const auth = authRaw ? (JSON.parse(authRaw) as { access_token?: string }) : null;
+  const auth = authService.getAuthData();
   if (!auth?.access_token) {
     throw new Error("Missing auth token for ElevenLabs preview");
   }
@@ -23,6 +23,7 @@ export async function previewElevenLabsVoice(params: PreviewElevenLabsVoiceParam
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      ...getMementoClientHeaders(),
       Authorization: `Bearer ${auth.access_token}`,
     },
     body: JSON.stringify({

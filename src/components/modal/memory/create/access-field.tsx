@@ -6,7 +6,7 @@ import { ChevronDown, ChevronUp, Globe, Lock, Users } from "lucide-react";
 import { useModal } from "@/hooks/use-modal";
 import { cn } from "@/utility";
 import endpoint from "@/api/endpoint";
-import { fetcher } from "@/api/fetcher";
+import { paginatedResponseFetcher } from "@/api/domain-fetchers";
 import { PlusIcon } from "@/components/icons";
 import type { IGroup, IBeneficiary } from "@/utility/interface";
 import { GROUP_COLORS } from "@/utility/constant";
@@ -63,10 +63,18 @@ export function AccessField({
     ? `${endpoint.beneficiaries}?page=1&limit=${LIST_LIMIT}`
     : null;
 
-  const { data: groupsResponse } = useSWR(groupsKey, fetcher, { revalidateOnFocus: false });
-  const { data: beneficiariesResponse } = useSWR(beneficiariesKey, fetcher, {
+  const { data: groupsResponse } = useSWR(
+    groupsKey,
+    paginatedResponseFetcher<IGroup>,
+    { revalidateOnFocus: false },
+  );
+  const { data: beneficiariesResponse } = useSWR(
+    beneficiariesKey,
+    paginatedResponseFetcher<IBeneficiary>,
+    {
     revalidateOnFocus: false,
-  });
+    },
+  );
 
   const allOptions: SearchResultItem[] = useMemo(() => {
     const groups: SearchResultItem[] = Array.isArray(groupsResponse?.data?.docs)

@@ -3,6 +3,8 @@ import { createPortal } from "react-dom";
 import * as yup from "yup";
 import { X, Fingerprint, Trash2 } from "lucide-react";
 import { startRegistration } from "@simplewebauthn/browser";
+import { getMementoClientHeaders } from "@/api/client-metadata";
+import { authService } from "@/utility/auth-service";
 import { Passwordinput } from "@/components/Form";
 import useFetcher from "@/hooks/use-fetcher";
 import useForm from "@/hooks/use-form";
@@ -10,7 +12,7 @@ import endpoint from "@/api/endpoint";
 import { toast } from "sonner";
 import Spinner from "@/components/spinner";
 import useSWR, { mutate } from "swr";
-import { fetcher } from "@/api/fetcher";
+import { deleteFetcher, fetcher } from "@/api/fetcher";
 import { cn } from "@/utility";
 import TwoFactorAuthenticator from "./two-fa";
 import { SettingsSectionCard } from "./settings-section-card";
@@ -133,7 +135,6 @@ interface PasskeyEntry {
 
 function PasskeyManager() {
   const { data, isLoading } = useSWR<{ data: PasskeyEntry[] }>(endpoint.listPasskeys, fetcher);
-  const { trigger: deletePasskey } = useFetcher("", "delete");
   const [adding, setAdding] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
@@ -143,12 +144,14 @@ function PasskeyManager() {
     setAdding(true);
     try {
       // 1. Get registration options
-      const auth = JSON.parse(localStorage.getItem("memento:auth") ?? "{}");
-      const token = auth?.access_token;
+      const token = authService.getAuthData()?.access_token;
 
       const beginRes = await fetch(`${API_BASE}${endpoint.passkeyRegisterBegin}`, {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          ...getMementoClientHeaders(),
+          Authorization: `Bearer ${token}`,
+        },
       });
       const beginData = await beginRes.json();
       if (!beginRes.ok) {
@@ -163,7 +166,11 @@ function PasskeyManager() {
       const deviceName = navigator.userAgentData?.platform || navigator.platform || "Unknown device";
       const completeRes = await fetch(`${API_BASE}${endpoint.passkeyRegisterComplete}`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        headers: {
+          "Content-Type": "application/json",
+          ...getMementoClientHeaders(),
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({ response: regResponse, device_name: deviceName }),
       });
       const completeData = await completeRes.json();
@@ -186,7 +193,7 @@ function PasskeyManager() {
     setDeletingId(credentialId);
     try {
       const url = endpoint.deletePasskey.replace(":credential_id", encodeURIComponent(credentialId));
-      const result = await deletePasskey({}, url);
+      const result = await deleteFetcher(url, { arg: {} });
       if (result?.success) {
         toast.success(result?.message ?? "Passkey removed");
         mutate(endpoint.listPasskeys);

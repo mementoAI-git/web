@@ -2,7 +2,7 @@
  * Subscription / billing types aligned with docs/PRICING_BACKEND_HANDOFF.md and PRD §4.1.
  */
 
-export type BillingProvider = "polar" | "paystack";
+export type BillingProvider = "polar";
 
 export type SubscriptionStatus =
   | "trialing"
@@ -16,10 +16,17 @@ export type PlanTier = "free" | "pro" | "legacy";
 /** Usage snapshot when backend includes it on subscription or usage payload (PRD §4.2). */
 export interface SubscriptionUsage {
   storage_used_bytes?: number;
+  /** Bytes held by uploads that have started but are not committed yet. */
+  storage_reserved_bytes?: number;
   /** When omitted, UI may fall back to tier defaults from PRD */
   storage_limit_bytes?: number;
+  remaining_bytes?: number;
+  percent_used?: number;
+  over_limit?: boolean;
   beneficiary_count?: number;
   timed_message_count?: number;
+  time_capsule_count?: number;
+  memory_integration_count?: number;
 }
 
 /** Align `feature` strings with backend 402 payloads (PRD §3.3). */
@@ -64,4 +71,14 @@ export interface CheckoutResponseBody {
 
 export interface PortalResponseBody {
   portal_url: string;
+}
+
+export interface BillingInvoice {
+  id?: string;
+  url?: string;
+  label?: string;
+  created_at?: string;
+  amount?: number;
+  currency?: "USD" | "NGN";
+  status?: string;
 }
