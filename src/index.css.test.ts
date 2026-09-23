@@ -31,6 +31,16 @@ function sourceFiles(directory: string): string[] {
 }
 
 describe("dark color token compatibility", () => {
+  it("scopes dark utilities to the selected class", () => {
+    const darkVariant = stylesheet.nodes.find(
+      (node) =>
+        node.type === "atrule" &&
+        node.name === "custom-variant" &&
+        node.params === "dark (&:where(.dark, .dark *))",
+    );
+    expect(darkVariant).toBeDefined();
+  });
+
   it("keeps secondary surfaces separate from the body foreground", () => {
     expect(declaration(".dark", "--color-secondary")).toBe("var(--secondary)");
     expect(declaration(".dark", "--secondary")).toBe(
