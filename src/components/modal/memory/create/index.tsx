@@ -75,6 +75,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
   DialogContent,
@@ -755,14 +756,6 @@ function CreateMemoryBase({
       { label: "Sensory details", complete: hasSensoryDetails },
     ];
   }, [normalizedStoryText]);
-  const completedQualityChecks = qualityChecks.filter((item) => item.complete).length;
-  const storyQuality = useMemo(() => {
-    if (qualityChecks.length === 0) return 0;
-    return Math.round((completedQualityChecks / qualityChecks.length) * 100);
-  }, [completedQualityChecks, qualityChecks.length]);
-  const storyQualityLabel =
-    storyQuality >= 80 ? "Strong story" : storyQuality >= 50 ? "Good start" : "Keep going";
-
   const toolbarBtn = (isActive: boolean, onClick: () => void, children: ReactNode, title?: string) => (
     <Button
       type="button"
@@ -1779,32 +1772,32 @@ function CreateMemoryBase({
               </section>
               <aside className="flex min-h-0 min-w-0 flex-col overflow-hidden rounded-[18px] border border-stroke-neutral-weak bg-fill-neutral-weaker">
                 <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-                  <div className="flex items-center gap-2 px-3 pb-5 pt-4">
-                    <button
-                      type="button"
-                      onClick={() => setActiveSidebarTab("properties")}
-                      className={cn(
-                        "rounded-[8px] px-2.5 py-1.5 font-geist text-base font-medium leading-6 text-[rgba(15,7,0,0.9)] transition-colors",
-                        activeSidebarTab === "properties" ? "bg-[rgba(15,7,0,0.1)]" : "hover:bg-[rgba(15,7,0,0.04)]",
-                      )}
-                    >
-                      Properties
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setActiveSidebarTab("assistant")}
-                      className={cn(
-                        "rounded-[8px] px-2.5 py-1.5 font-geist text-base font-medium leading-6 text-[rgba(15,7,0,0.9)] transition-colors",
-                        activeSidebarTab === "assistant" ? "bg-[rgba(15,7,0,0.1)]" : "hover:bg-[rgba(15,7,0,0.04)]",
-                      )}
-                    >
-                      Assistant
-                    </button>
-                  </div>
+                  <Tabs
+                    value={activeSidebarTab}
+                    onValueChange={(value) => {
+                      if (value === "properties" || value === "assistant") {
+                        setActiveSidebarTab(value);
+                      }
+                    }}
+                    className="min-h-0 flex-1 flex-col gap-0"
+                  >
+                    <TabsList className="mx-3 mb-5 mt-4 h-9 shrink-0 rounded-[10px] bg-fill-neutral-weaker p-0">
+                      <TabsTrigger
+                        value="properties"
+                        className="rounded-[8px] px-3 font-geist text-sm text-text-neutral-weak data-[state=active]:bg-fill-neutral-weak data-[state=active]:text-text-neutral-strong"
+                      >
+                        Story Details
+                      </TabsTrigger>
+                      <TabsTrigger
+                        value="assistant"
+                        className="rounded-[8px] px-3 font-geist text-sm text-text-neutral-weak data-[state=active]:bg-fill-neutral-weak data-[state=active]:text-text-neutral-strong"
+                      >
+                        Assistant
+                      </TabsTrigger>
+                    </TabsList>
 
-                  <div className="hide-scrollbar flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto px-4 pb-5">
-                    {activeSidebarTab === "properties" ? (
-                      <>
+                    <TabsContent value="properties" className="hide-scrollbar min-h-0 overflow-y-auto px-4 pb-5">
+                      <div className="flex flex-col gap-6">
                         <AccessField
                           value={selectedAccess}
                           onChange={setSelectedAccess}
@@ -1821,42 +1814,21 @@ function CreateMemoryBase({
                           variant="panel"
                         />
 
-                        <section className="space-y-4">
-                          <h3 className="font-geist text-base font-semibold leading-6 text-[rgba(15,7,0,0.9)]">
+                        <section className="flex flex-col gap-3">
+                          <h3 className="font-geist text-base font-semibold leading-6 text-text-neutral-strong">
                             Story quality
                           </h3>
-                          <div className="rounded-[12px] border border-[rgba(15,7,0,0.04)] bg-[rgba(15,7,0,0.02)] p-4">
-                            <div className="flex items-start gap-4">
-                              <div
-                                className="relative flex size-[100px] shrink-0 items-center justify-center rounded-full bg-white"
-                                style={{
-                                  background: `conic-gradient(#22c55e ${storyQuality * 3.6}deg, rgba(15,7,0,0.08) 0deg)`,
-                                }}
-                              >
-                                <div className="flex size-[84px] flex-col items-center justify-center rounded-full bg-white">
-                                  <span className="font-geist text-[20px] leading-7 text-[rgba(15,7,0,0.9)]">
-                                    {storyQuality}%
-                                  </span>
-                                  <span className="font-geist text-xs leading-4 text-[rgba(15,7,0,0.45)]">
-                                    {storyQualityLabel}
-                                  </span>
-                                </div>
+                          <div className="rounded-[12px] border border-stroke-neutral-weak bg-fill-neutral-weaker px-3 py-2">
+                            {qualityChecks.map((item) => (
+                              <div key={item.label} className="flex items-center justify-between gap-3 py-1">
+                                <span className="font-geist text-sm leading-5 text-text-neutral-strong">{item.label}</span>
+                                {item.complete ? (
+                                  <Check aria-label={`${item.label} complete`} className="size-4 shrink-0 text-icon-success-strong" />
+                                ) : (
+                                  <Circle aria-label={`${item.label} incomplete`} className="size-4 shrink-0 text-icon-neutral-weaker" />
+                                )}
                               </div>
-                              <div className="flex min-w-0 flex-1 flex-col gap-1">
-                                {qualityChecks.map((item) => (
-                                  <div key={item.label} className="flex items-center gap-3">
-                                    <span className="flex-1 font-geist text-sm leading-5 text-[rgba(15,7,0,0.9)]">
-                                      {item.label}
-                                    </span>
-                                    {item.complete ? (
-                                      <Check className="size-4 text-[#22c55e]" aria-hidden />
-                                    ) : (
-                                      <Circle className="size-4 text-[rgba(15,7,0,0.2)]" aria-hidden />
-                                    )}
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
+                            ))}
                           </div>
                         </section>
 
@@ -1882,26 +1854,30 @@ function CreateMemoryBase({
                             ))}
                           </div>
                         </section>
-                      </>
-                    ) : STORY_COMPOSER_ASSISTANT_VARIANT === "coming-soon" ? (
-                      <CreateMemoryAssistantComingSoonPanel />
-                    ) : (
-                      <CreateMemoryAssistantPanel
-                        input={assistantInput}
-                        isWorking={isAssistantWorking}
-                        messages={assistantMessages}
-                        onApplyAction={(action) => {
-                          applyAssistantAction(action);
-                          setActiveSidebarTab("properties");
-                        }}
-                        onInputChange={setAssistantInput}
-                        onSubmit={submitAssistantMessage}
-                        suggestions={assistantSuggestions}
-                        tone={assistantTone}
-                        onToneChange={setAssistantTone}
-                      />
-                    )}
-                  </div>
+                      </div>
+                    </TabsContent>
+
+                    <TabsContent value="assistant" className="hide-scrollbar min-h-0 overflow-y-auto px-4 pb-5 data-[state=active]:flex data-[state=active]:flex-col">
+                      {STORY_COMPOSER_ASSISTANT_VARIANT === "coming-soon" ? (
+                        <CreateMemoryAssistantComingSoonPanel />
+                      ) : (
+                        <CreateMemoryAssistantPanel
+                          input={assistantInput}
+                          isWorking={isAssistantWorking}
+                          messages={assistantMessages}
+                          onApplyAction={(action) => {
+                            applyAssistantAction(action);
+                            setActiveSidebarTab("properties");
+                          }}
+                          onInputChange={setAssistantInput}
+                          onSubmit={submitAssistantMessage}
+                          suggestions={assistantSuggestions}
+                          tone={assistantTone}
+                          onToneChange={setAssistantTone}
+                        />
+                      )}
+                    </TabsContent>
+                  </Tabs>
 
                   <Separator />
                   <div className="flex shrink-0 justify-end px-4 py-4">

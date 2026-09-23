@@ -468,12 +468,40 @@ describe("CreateMemory", () => {
     const user = userEvent.setup();
     renderWithProviders(<CreateMemory data={{}} isMobile={false} />, { auth: true });
 
-    expect(screen.getByRole("tab", { name: "Story Details" })).toBeInTheDocument();
-    await user.click(screen.getByRole("tab", { name: "Assistant" }));
+    const detailsTab = screen.getByRole("tab", { name: "Story Details" });
+    const assistantTab = screen.getByRole("tab", { name: "Assistant" });
+    expect(detailsTab).toHaveAttribute("aria-selected", "true");
+    await user.click(assistantTab);
 
+    expect(assistantTab).toHaveAttribute("data-state", "active");
+    expect(assistantTab).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("tabpanel", { name: "Assistant" })).toHaveAttribute(
+      "aria-labelledby",
+      assistantTab.id,
+    );
     expect(screen.getByText(/assistant coming soon!/i)).toBeInTheDocument();
     expect(screen.getByText(/writing your journals and recalling important contexts/i)).toBeInTheDocument();
     expect(screen.queryByPlaceholderText(/ask anything here\. use @ for context\./i)).not.toBeInTheDocument();
+
+    await user.click(detailsTab);
+    expect(detailsTab).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByRole("tabpanel", { name: "Story Details" })).toBeVisible();
+  });
+
+  it("stacks the Story Details tabs above their scrollable panel", () => {
+    renderWithProviders(<CreateMemory data={{}} isMobile={false} />, { auth: true });
+
+    expect(screen.getByRole("tablist").closest('[data-slot="tabs"]')).toHaveClass("flex-col");
+  });
+
+  it("lets the active Assistant panel fill the available vertical space", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<CreateMemory data={{}} isMobile={false} />, { auth: true });
+
+    await user.click(screen.getByRole("tab", { name: "Assistant" }));
+    const assistantPanel = screen.getByRole("tabpanel", { name: "Assistant" });
+    expect(assistantPanel).toHaveClass("data-[state=active]:flex", "data-[state=active]:flex-col");
+    expect(screen.queryByRole("tabpanel", { name: "Story Details" })).not.toBeInTheDocument();
   });
 
   it("reports a saved local draft only while the saved content matches the composer", async () => {
