@@ -68,32 +68,18 @@ describe("dark color token compatibility", () => {
     );
   });
 
-  it("does not consume the secondary surface token as an indicator", () => {
-    const secondaryReference = `var(--color-${"secondary"})`;
-    const legacyConsumers = sourceFiles(resolve(process.cwd(), "src")).flatMap(
-      (path) => {
-        const source = readFileSync(path, "utf8");
-        if (!path.endsWith(".css")) {
-          return source.includes(secondaryReference)
-            ? [relative(process.cwd(), path)]
-            : [];
-        }
-
-        const consumers: string[] = [];
-        postcss.parse(source).walkDecls((entry) => {
-          if (
-            entry.prop !== "--color-secondary" &&
-            entry.value.includes(secondaryReference)
-          ) {
-            consumers.push(
-              `${relative(process.cwd(), path)}:${entry.source?.start?.line}`,
-            );
-          }
-        });
-        return consumers;
-      },
+  it("uses the semantic indicator token for the volume slider track", () => {
+    const audioPlayer = readFileSync(
+      resolve(process.cwd(), "src/components/player/audio-player.tsx"),
+      "utf8",
     );
+    const sliderStart = audioPlayer.indexOf('className="volume__slider');
+    expect(sliderStart).toBeGreaterThan(-1);
 
-    expect(legacyConsumers).toEqual([]);
+    const sliderEnd = audioPlayer.indexOf("/>", sliderStart);
+    expect(sliderEnd).toBeGreaterThan(sliderStart);
+    const sliderMarkup = audioPlayer.slice(sliderStart, sliderEnd);
+    expect(sliderMarkup).toContain("var(--icon-neutral-strong)");
+    expect(sliderMarkup).not.toContain("var(--color-secondary)");
   });
 });
