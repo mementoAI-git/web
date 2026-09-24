@@ -8,6 +8,7 @@ interface IStatCard {
   variant?: "blue" | "pink" | "orange" | "green" | "purple" | "yellow";
   action?: React.ReactNode;
   bgImage?: string;
+  compact?: boolean;
 }
 
 const valueColors = {
@@ -19,57 +20,84 @@ const valueColors = {
   yellow: "text-[#FF8C00]",
 };
 
-export function StatCard({ title, icon, subtitle, unit = "messages", variant = "blue", action, bgImage }: IStatCard) {
+export function StatCard({
+  title,
+  icon,
+  subtitle,
+  unit = "messages",
+  variant = "blue",
+  action,
+  bgImage,
+  compact = false,
+}: IStatCard) {
   return (
     <div
       className={cn(
-        "flex flex-1 rounded-2xl h-[98px] relative overflow-hidden transition-all hover:scale-[1.02] cursor-default border border-v3-stroke-weak bg-white",
-        !bgImage && "p-5 sm:p-6 shadow-sm"
+        "relative flex flex-1 cursor-default overflow-hidden border border-stroke-neutral-weak bg-card",
+        compact ? "h-20 rounded-xl" : "h-[98px] rounded-2xl",
+        !bgImage && "p-5 sm:p-6 shadow-sm",
       )}
     >
       {bgImage && (
-        <img src={bgImage} alt="" className="absolute inset-0 size-full object-cover" />
+        <img
+          src={bgImage}
+          alt=""
+          className="absolute inset-0 size-full object-cover"
+        />
       )}
 
-      <div className={cn(
-        "flex flex-col justify-center h-full z-10",
-        bgImage ? "pl-4" : "gap-1"
-      )}>
-        <span className={cn(
-          "font-inter uppercase font-medium tracking-tight",
-          bgImage ? "text-[10px] text-v3-text-weaker" : "text-xs text-v3-text-weak"
-        )}>
+      <div
+        className={cn(
+          "flex flex-col justify-center h-full z-10",
+          bgImage ? "pl-4" : "gap-1",
+        )}
+      >
+        <span
+          className={cn(
+            "font-inter uppercase font-medium tracking-tight",
+            bgImage
+              ? "text-[10px] text-neutral-weaker"
+              : "text-xs text-neutral-weak",
+          )}
+        >
           {subtitle}
         </span>
         <div className="flex items-baseline gap-1.5">
-          <span className={cn(
-            "font-inter font-bold",
-            bgImage ? cn("text-base", valueColors[variant as keyof typeof valueColors]) : "text-sm text-v3-text-strong"
-          )}>
+          <span
+            className={cn(
+              "font-inter font-bold",
+              bgImage
+                ? cn(
+                    "text-base",
+                    valueColors[variant as keyof typeof valueColors],
+                  )
+                : "text-sm text-neutral-strong",
+            )}
+          >
             {title}
           </span>
-          <span className={cn(
-            "font-inter",
-            bgImage ? "text-[13px] font-semibold text-v3-text-strong" : "text-xs font-normal text-v3-text-weak"
-          )}>
+          <span
+            className={cn(
+              "font-inter",
+              bgImage
+                ? "text-[13px] font-semibold text-neutral-strong"
+                : "text-xs font-normal text-neutral-weak",
+            )}
+          >
             {unit}
           </span>
         </div>
-        {action && (
-          <div className="mt-1">
-            {action}
-          </div>
-        )}
+        {action && <div className="mt-1">{action}</div>}
       </div>
 
       {!bgImage && icon && (
-        <div className="size-10 sm:size-12 flex items-center justify-center rounded-full bg-white shadow-sm z-10 ml-auto border border-v3-stroke-weak">
-          <span className="text-v3-brand-strong scale-110">{icon}</span>
+        <div className="z-10 ml-auto flex size-10 items-center justify-center rounded-full border border-neutral-weak bg-neutral shadow-sm sm:size-12">
+          <span className="scale-110 text-brand-strong">{icon}</span>
         </div>
       )}
 
       {!bgImage && (
-        <div className="absolute right-0 top-0 size-24 bg-white/50 blur-3xl -mr-10 -mt-10 rounded-full pointer-events-none" />
+        <div className="pointer-events-none absolute right-0 top-0 -mr-10 -mt-10 size-24 rounded-full bg-neutral/50 blur-3xl" />
       )}
     </div>
   );

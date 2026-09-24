@@ -6,7 +6,14 @@ import { CreateMemory } from "./index";
 import Modal from "@/components/modal";
 import { useModal } from "@/hooks/use-modal";
 import { renderWithProviders } from "@/test";
+import { server } from "@/test/mocks/server";
+import { http, HttpResponse } from "msw";
 import type { IOnUploadPayload } from "@/utility/interface";
+import albumArtwork from "@/assets/image/HD Album story bg memento.png";
+import darkAlbumArtwork from "@/assets/image/HD Album story bg memento dark.png";
+import privateIcon from "@/assets/icon/mingcute_lock-fill.svg";
+import everyoneIcon from "@/assets/icon/heroicons_users-16-solid.svg";
+import calendarIcon from "@/assets/icon/uim_calendar.svg";
 
 const { editorFocusMock } = vi.hoisted(() => ({
   editorFocusMock: vi.fn(),
@@ -460,13 +467,26 @@ describe("CreateMemory", () => {
     expect(screen.getByTestId("desktop-story-environment")).toBeInTheDocument();
     expect(screen.getByTestId("desktop-journal-shell")).toBeInTheDocument();
     expect(screen.getByTestId("desktop-album-artwork")).toHaveAttribute("alt", "");
+    expect(screen.getByTestId("desktop-album-artwork")).toHaveAttribute("src", albumArtwork);
     expect(screen.getByPlaceholderText(/give this story a title/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Publish Story" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Preview" })).not.toBeInTheDocument();
 
     rerender(<CreateMemory data={{}} isMobile />);
 
     expect(screen.getByTestId("sheet-container")).toBeInTheDocument();
     expect(screen.queryByTestId("desktop-journal-shell")).not.toBeInTheDocument();
+  });
+
+  it("uses the dark album artwork for the desktop composer in dark mode", () => {
+    localStorage.setItem("memento:theme", "dark");
+
+    renderWithProviders(<CreateMemory data={{}} isMobile={false} />, { auth: true });
+
+    expect(screen.getByTestId("desktop-album-artwork")).toHaveAttribute(
+      "src",
+      darkAlbumArtwork,
+    );
   });
 
   it("uses v3 background on mobile sheet surfaces", () => {
@@ -604,15 +624,54 @@ describe("CreateMemory", () => {
     await user.click(screen.getByRole("button", { name: "Open composer" }));
     const sharingTrigger = screen.getByLabelText("Who can see this story?");
     await user.click(sharingTrigger);
-    await user.click(screen.getByPlaceholderText("Search…"));
+    await user.click(screen.getByPlaceholderText("Search user or group"));
 
     await user.keyboard("{Escape}");
 
-    expect(screen.queryByRole("listbox", { name: "Sharing options" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("dialog", { name: "Sharing options" })).not.toBeInTheDocument();
     expect(screen.getByTestId("desktop-journal-shell")).toBeInTheDocument();
     expect(sharingTrigger).toHaveFocus();
     await user.keyboard("{Escape}");
     expect(screen.queryByTestId("desktop-journal-shell")).not.toBeInTheDocument();
+  });
+
+  it("uses the shadcn visibility picker and preserves stored group colours", async () => {
+    server.use(
+      http.get("http://localhost:3000/api/groups", () =>
+        HttpResponse.json({
+          success: true,
+          data: { docs: [{ _id: "group-friends", name: "Friends", color: 1 }] },
+        }),
+      ),
+      http.get("http://localhost:3000/api/beneficiaries", () =>
+        HttpResponse.json({
+          success: true,
+          data: { docs: [{ _id: "person-alex", name: "Alexander Wang" }] },
+        }),
+      ),
+    );
+    const user = userEvent.setup();
+    renderWithProviders(<CreateMemory data={{}} isMobile={false} />, { auth: true });
+
+    await user.click(screen.getByRole("button", { name: "Story Details" }));
+    await user.click(screen.getByLabelText("Who can see this story?"));
+
+    const picker = screen.getByRole("dialog", { name: "Sharing options" });
+    expect(picker).toHaveAttribute("data-slot", "popover-content");
+    expect(picker).toHaveClass("z-[220]");
+    expect(screen.getByRole("group", { name: "Story visibility" })).toHaveAttribute(
+      "data-slot",
+      "toggle-group",
+    );
+    expect(await screen.findByRole("button", { name: "@Friends" })).toHaveClass(
+      "bg-green-50",
+      "text-green-600",
+      "border-green-100",
+    );
+    expect(await screen.findByRole("checkbox", { name: "Alexander Wang" })).toHaveAttribute(
+      "data-slot",
+      "checkbox",
+    );
   });
 
   it.each(["Link", "Insert emoji"])(
@@ -668,6 +727,35 @@ describe("CreateMemory", () => {
     const restoredTrigger = screen.getByRole("button", { name: "Story Details" });
     expect(restoredTrigger).toHaveAttribute("aria-expanded", "false");
     expect(restoredTrigger).toHaveFocus();
+  });
+
+  it("uses theme tokens for the desktop property panel and formatting strip", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<CreateMemory data={{}} isMobile={false} />, { auth: true });
+
+    expect(screen.getByTestId("desktop-formatting-strip")).toHaveClass("bg-fill-neutral-weak");
+    expect(screen.getByTestId("desktop-story-date-icon")).toHaveAttribute("src", calendarIcon);
+
+    await user.click(screen.getByRole("button", { name: "Story Details" }));
+
+    expect(screen.getByText("Who can see this story?")).toHaveClass("text-text-neutral-strong");
+    expect(
+      screen.getByText("Stories are visible to all beneficiaries by default. Choose", { exact: false }),
+    ).toHaveTextContent("Stories are visible to all beneficiaries by default. Choose Private to hide them.");
+    expect(screen.getByText("Private", { selector: "span" })).toHaveClass("text-text-error-strong");
+    expect(screen.getByTestId("story-visibility-icon")).toHaveAttribute("src", privateIcon);
+    expect(screen.getByLabelText("Who can see this story?")).toHaveClass("bg-fill-neutral-weak");
+    await user.click(screen.getByLabelText("Who can see this story?"));
+    await user.click(screen.getByRole("option", { name: /Everyone/i }));
+    expect(screen.getByTestId("story-visibility-icon")).toHaveAttribute("src", everyoneIcon);
+    expect(screen.getByText("Add Tags")).toHaveClass("text-text-neutral-strong");
+    expect(screen.getByRole("button", { name: "Auto tag" })).toHaveClass(
+      "bg-fill-info-weak",
+      "text-text-info-strong",
+    );
+    expect(screen.getByPlaceholderText("Manually add tags or click to autogenerate").parentElement)
+      .toHaveClass("bg-fill-neutral-weak");
+    expect(screen.getByText("Story Overview")).toHaveClass("text-text-neutral-strong");
   });
 
   it("removes manual draft saving from Story Details", async () => {
@@ -733,7 +821,7 @@ describe("CreateMemory", () => {
     expect(detailsTab).toHaveAttribute("aria-selected", "true");
     await user.click(assistantTab);
 
-    expect(assistantTab).toHaveAttribute("data-state", "active");
+    expect(assistantTab).toHaveAttribute("data-active");
     expect(assistantTab).toHaveAttribute("aria-selected", "true");
     expect(screen.getByRole("tabpanel", { name: "Assistant" })).toHaveAttribute(
       "aria-labelledby",
@@ -763,7 +851,7 @@ describe("CreateMemory", () => {
     await user.click(screen.getByRole("button", { name: "Story Details" }));
     await user.click(screen.getByRole("tab", { name: "Assistant" }));
     const assistantPanel = screen.getByRole("tabpanel", { name: "Assistant" });
-    expect(assistantPanel).toHaveClass("data-[state=active]:flex", "data-[state=active]:flex-col");
+    expect(assistantPanel).toHaveClass("data-active:flex", "data-active:flex-col");
     expect(screen.queryByRole("tabpanel", { name: "Story Details" })).not.toBeInTheDocument();
   });
 

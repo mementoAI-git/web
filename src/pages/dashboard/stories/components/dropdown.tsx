@@ -9,22 +9,24 @@ import { toast } from "sonner";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import {
-  AddBookmarkIcon,
-  VerticalEllipseIcon,
-  EditIcon,
-  LaunchIcon,
-  RemoveBookmarkIcon,
-  TrashIcon,
-  FilterIcon,
-  RestoreIcon,
-} from "@/components/icons";
+import { FilterIcon } from "@/components/icons";
 import { cn } from "@/lib/utils";
+import {
+  BookmarkIcon,
+  BookmarkMinusIcon,
+  EllipsisIcon,
+  EllipsisVerticalIcon,
+  PencilIcon,
+  RotateCcwIcon,
+  Share2Icon,
+  Trash2Icon,
+} from "lucide-react";
 
 const FILTER_LABELS = {
   all: "All",
@@ -32,7 +34,13 @@ const FILTER_LABELS = {
   deleted: "Deleted",
 };
 
-export function MemoryItemActions({ memory }: { memory: IMemory }) {
+export function MemoryItemActions({
+  memory,
+  trigger = "vertical",
+}: {
+  memory: IMemory;
+  trigger?: "horizontal" | "vertical";
+}) {
   const { open } = useModal();
   const { trigger: restoreMemory } = useFetcher(
     resolvePath(endpoint.restoreMemory, { id: memory._id }),
@@ -45,8 +53,7 @@ export function MemoryItemActions({ memory }: { memory: IMemory }) {
   const handleRestore = async () => {
     await restoreMemory();
     await mutate(
-      (key) =>
-        typeof key === "string" && key.startsWith(`${endpoint.stories}`),
+      (key) => typeof key === "string" && key.startsWith(`${endpoint.stories}`),
     );
     toast.success("Memory restored successfully");
   };
@@ -57,67 +64,55 @@ export function MemoryItemActions({ memory }: { memory: IMemory }) {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8 rounded-full hover:bg-v3-fill-weaker"
+          variant={trigger === "horizontal" ? "ghost" : "outline"}
+          size="icon-sm"
+          aria-label="Story actions"
         >
-          <VerticalEllipseIcon className="w-1 h-4 text-v3-text-weak" />
+          {trigger === "horizontal" ? (
+            <EllipsisIcon data-icon="inline-start" />
+          ) : (
+            <EllipsisVerticalIcon data-icon="inline-start" />
+          )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent
-        align="end"
-        className="w-32 rounded-lg border border-v3-stroke-weak bg-popover p-0.5 text-popover-foreground shadow-md"
-      >
-        {isDeleted ? (
+      <DropdownMenuContent align="end">
+        <DropdownMenuGroup>
+          {isDeleted ? (
+            <DropdownMenuItem onSelect={() => void handleRestore()}>
+              <RotateCcwIcon />
+              Restore
+            </DropdownMenuItem>
+          ) : (
+            <>
+              <DropdownMenuItem
+                onSelect={() => open("edit-memory", { memory })}
+              >
+                <PencilIcon />
+                Edit story
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onSelect={() => open("share-memory", { memory })}
+              >
+                <Share2Icon />
+                Share story
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={toggleBookmark}>
+                {memory.bookmarked ? <BookmarkMinusIcon /> : <BookmarkIcon />}
+                {memory.bookmarked ? "Remove bookmark" : "Add bookmark"}
+              </DropdownMenuItem>
+            </>
+          )}
+        </DropdownMenuGroup>
+        <DropdownMenuSeparator />
+        <DropdownMenuGroup>
           <DropdownMenuItem
-            onClick={handleRestore}
-            className="cursor-pointer rounded-md px-2 py-1.5 text-xs text-v3-text-strong focus:bg-v3-fill-weaker focus:text-v3-text-strong"
+            variant="destructive"
+            onSelect={() => open("delete-memory", { memory })}
           >
-            <RestoreIcon className="mr-1.5 size-3.5" strokeWidth={1.5} />
-            Restore
+            <Trash2Icon />
+            Delete
           </DropdownMenuItem>
-        ) : (
-          <>
-            <DropdownMenuItem
-              onClick={() => open("edit-memory", { memory })}
-              className="cursor-pointer rounded-md px-2 py-1.5 text-xs text-v3-text-strong focus:bg-v3-fill-weaker focus:text-v3-text-strong"
-            >
-              <EditIcon className="mr-1.5 size-3.5" />
-              Edit story
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => open("share-memory", { memory })}
-              className="cursor-pointer rounded-md px-2 py-1.5 text-xs text-v3-text-strong focus:bg-v3-fill-weaker focus:text-v3-text-strong"
-            >
-              <LaunchIcon className="mr-1.5 size-3.5" strokeWidth={1.5} />
-              Share story
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={toggleBookmark}
-              className="cursor-pointer rounded-md px-2 py-1.5 text-xs text-v3-text-strong focus:bg-v3-fill-weaker focus:text-v3-text-strong"
-            >
-              {memory.bookmarked ? (
-                <>
-                  <RemoveBookmarkIcon className="mr-1.5 size-3.5" />
-                  Remove bookmark
-                </>
-              ) : (
-                <>
-                  <AddBookmarkIcon className="mr-1.5 size-3.5" />
-                  Add bookmark
-                </>
-              )}
-            </DropdownMenuItem>
-          </>
-        )}
-        <DropdownMenuSeparator className="bg-v3-stroke-weak my-1" />
-        <DropdownMenuItem
-          onClick={() => open("delete-memory", { memory })}
-          className="cursor-pointer rounded-md px-2 py-1.5 text-xs text-red-600 focus:bg-red-50 focus:text-red-600"
-        >
-          <TrashIcon className="mr-1.5 size-3.5" />
-          Delete
-        </DropdownMenuItem>
+        </DropdownMenuGroup>
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -157,15 +152,20 @@ export function MemoryListFilter({
                 "cursor-pointer rounded-md px-2 py-1.5 text-xs",
                 value === key
                   ? "bg-v3-fill-weaker text-v3-text-strong"
-                  : "text-v3-text-weak focus:bg-v3-fill-weaker focus:text-v3-text-strong"
+                  : "text-v3-text-weak focus:bg-v3-fill-weaker focus:text-v3-text-strong",
               )}
             >
-              <span className={cn("mr-1.5 flex size-3.5 items-center justify-center", value === key && "text-v3-brand-strong")}>
+              <span
+                className={cn(
+                  "mr-1.5 flex size-3.5 items-center justify-center",
+                  value === key && "text-v3-brand-strong",
+                )}
+              >
                 {value === key && "✓"}
               </span>
               {FILTER_LABELS[key]}
             </DropdownMenuItem>
-          )
+          ),
         )}
       </DropdownMenuContent>
     </DropdownMenu>

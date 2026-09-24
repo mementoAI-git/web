@@ -5,7 +5,7 @@ import useFetcher from "@/hooks/use-fetcher";
 import { useModal } from "@/hooks/use-modal";
 import { mutate } from "swr";
 import Spinner from "@/components/spinner";
-import { DownloadIcon, TimesIcon } from "@/components/icons";
+import { Download, Trash2, X } from "lucide-react";
 import DeleteMemoryAttachment from "./delete-attachment";
 import type { FilePreviewItemBase } from "./index";
 
@@ -56,7 +56,7 @@ export default function ActionBtn(props: FilePreviewItemBase) {
   };
 
   return (
-    <div className="flex items-stretch justify-end gap-3">
+    <div className="flex items-center justify-end gap-1 sm:gap-3">
       {props._id && showDeleteConfirmation &&
         createPortal(
           <DeleteMemoryAttachment
@@ -70,30 +70,31 @@ export default function ActionBtn(props: FilePreviewItemBase) {
       {props._id && (
         <button
           type="button"
-          className="flex items-center gap-2 rounded-full bg-v3-fill-weaker px-4 py-[9px] font-geist text-sm font-medium text-danger"
+          className="flex size-10 items-center justify-center rounded-full text-text-error-strong transition-colors hover:bg-fill-neutral-weaker focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stroke-neutral-weak"
           onClick={() => setShowDeleteConfirmation(true)}
+          aria-label="Delete file"
         >
-          <TimesIcon width={10} height={10} />
-          <span>Delete</span>
+          <Trash2 className="size-5" aria-hidden />
         </button>
       )}
       <button
         type="button"
-        className="flex items-center gap-2 rounded-full bg-white px-4 py-[9px] font-geist text-sm font-medium text-v3-text-weaker"
+        className="flex size-10 items-center justify-center rounded-full text-text-neutral-strong transition-colors hover:bg-fill-neutral-weaker focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stroke-neutral-weak disabled:opacity-50"
         onClick={handleDownload}
         disabled={downloading}
+        aria-label="Download file"
       >
-        {downloading ? <Spinner loading className="!m-0 !text-text-neutral-weaker" /> : <DownloadIcon width={16} height={16} />}
-        <span className="text-black">Download</span>
+        {downloading ? <Spinner loading className="!m-0 !text-text-neutral-weaker" /> : <Download className="size-5" aria-hidden />}
       </button>
       <button
         type="button"
         onClick={() => close?.("file-preview")}
-        className="flex size-10 items-center justify-center rounded-full bg-white/15 text-white"
+        className="flex size-10 items-center justify-center rounded-full text-text-neutral-strong transition-colors hover:bg-fill-neutral-weaker focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stroke-neutral-weak"
+        aria-label="Close viewer"
+        data-viewer-close
       >
-        <TimesIcon width={10} height={10} />
+        <X className="size-5" aria-hidden />
       </button>
     </div>
   );
 }
-

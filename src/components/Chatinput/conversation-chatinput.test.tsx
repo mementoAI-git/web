@@ -20,16 +20,13 @@ describe("ConversationChatinput", () => {
     ).toBeInTheDocument();
   });
 
-  it("shows voice link, quick record, and hides Send until there is content", async () => {
+  it("shows the microphone and swaps it for Send when there is content", async () => {
     const user = userEvent.setup();
     renderWithProviders(
       <ConversationChatinput onSend={() => {}} memoryId="m1" />,
       { auth: true, route: "/chat/m1" },
     );
-    expect(screen.getByRole("link", { name: /voice call/i })).toHaveAttribute(
-      "href",
-      "/chat/m1/voice",
-    );
+    expect(screen.queryByRole("link", { name: /voice call/i })).not.toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /record voice clip/i }),
     ).toBeInTheDocument();
@@ -51,6 +48,16 @@ describe("ConversationChatinput", () => {
     expect(shell.className).toMatch(/min-w-0/);
     expect(shell.className).not.toMatch(/max-w-\[600px\]/);
     expect(shell.className).not.toMatch(/mx-auto/);
+  });
+
+  it("uses the compact bordered composer surface from the chat design", () => {
+    renderWithProviders(<ConversationChatinput onSend={() => {}} />, {
+      auth: true,
+    });
+    expect(screen.getByTestId("chat-composer-surface")).toHaveClass(
+      "rounded-xl",
+      "border-stroke-neutral-weak",
+    );
   });
 
   it("shows reply strip and clears via Cancel reply", async () => {

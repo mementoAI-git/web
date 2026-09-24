@@ -37,7 +37,7 @@ export function InsightsOverlayNavigation({
             <TabsTrigger
               key={section.value}
               value={section.value}
-              className="h-auto shrink-0 justify-start rounded-lg px-3 py-2 font-inter text-sm text-v3-text-weak data-[state=active]:bg-white data-[state=active]:text-v3-text-strong data-[state=active]:shadow-sm"
+              className="h-auto shrink-0 justify-start rounded-lg px-3 py-2 font-inter text-sm text-v3-text-weak data-active:bg-white data-active:text-v3-text-strong data-active:shadow-sm"
             >
               {section.label}
             </TabsTrigger>

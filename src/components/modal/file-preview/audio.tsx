@@ -1,58 +1,13 @@
 import { useEffect, useRef } from "react";
 import AudioPlayer from "@/components/player/audio-player";
-import {
-  useFloating,
-  offset,
-  flip,
-  shift,
-  autoUpdate,
-} from "@floating-ui/react";
-import ActionBtn from "./action-btns";
 import type { FilePreviewItem } from "./index";
 import { useSignedMediaAccess } from "@/features/media/signed-media-access";
 
-export interface AudioPreviewProps extends FilePreviewItem {
-  isActive: boolean;
-}
+export interface AudioPreviewProps extends FilePreviewItem { isActive: boolean }
 
 export default function AudioPreview({ isActive, ...props }: AudioPreviewProps) {
   const { src, onError } = useSignedMediaAccess(props);
   const audioRef = useRef<HTMLAudioElement>(null);
-
-  useEffect(() => {
-    if (!isActive && audioRef.current) {
-      audioRef.current.pause();
-    }
-  }, [isActive]);
-
-  const { refs, floatingStyles } = useFloating({
-    placement: "top-end",
-    middleware: [offset(16), flip(), shift()],
-    whileElementsMounted: autoUpdate,
-  });
-
-  return (
-    <div className="relative mx-auto w-full max-w-full sm:max-w-96 md:max-w-80 lg:max-w-[618px]">
-      <div
-        ref={refs.setReference}
-        className="modalcontainer flex w-full min-h-80! sm:min-h-100! lg:min-h-126!"
-      >
-        <AudioPlayer
-          src={src}
-          onError={onError}
-          alt={props.name}
-          id={props._id}
-          duration={props.duration}
-          audioRef={audioRef}
-        />
-      </div>
-      <div
-        ref={refs.setFloating}
-        style={floatingStyles}
-        className="absolute z-10"
-      >
-        <ActionBtn {...props} />
-      </div>
-    </div>
-  );
+  useEffect(() => { if (!isActive) audioRef.current?.pause(); }, [isActive]);
+  return <div className="flex w-full max-w-[618px] rounded-xl bg-background p-4 shadow-2xl"><AudioPlayer src={src} onError={onError} alt={props.name} id={props._id} duration={props.duration} audioRef={audioRef} /></div>;
 }

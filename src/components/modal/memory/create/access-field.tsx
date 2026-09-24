@@ -2,7 +2,9 @@
 
 import { useState, useEffect, useRef, useMemo, useId } from "react";
 import useSWR from "swr";
-import { ChevronDown, ChevronUp, Globe, Lock, Users } from "lucide-react";
+import { CheckCircle2, ChevronDown, ChevronUp, Search, Users } from "lucide-react";
+import privateIcon from "@/assets/icon/mingcute_lock-fill.svg";
+import everyoneIcon from "@/assets/icon/heroicons_users-16-solid.svg";
 import { useModal } from "@/hooks/use-modal";
 import { cn } from "@/utility";
 import endpoint from "@/api/endpoint";
@@ -13,14 +15,17 @@ import { GROUP_COLORS } from "@/utility/constant";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Separator } from "@/components/ui/separator";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import type { SearchResultItem } from "./access-field-types";
 import { stableColorIndexFromId, toBeneficiarySearchItem } from "./beneficiary-to-access-item";
 
 const LIST_LIMIT = 100;
-
-/** Neutral chip for groups in this control (settings may still use group color elsewhere). */
-const GROUP_ACCESS_CHIP_CLASS =
-  "bg-fill-neutral-weaker text-text-neutral-strong border-stroke-neutral-weak";
 
 export type { SearchResultItem } from "./access-field-types";
 
@@ -37,11 +42,10 @@ interface AccessFieldProps {
 }
 
 function toSearchItem(g: IGroup): SearchResultItem {
-  return { id: g._id, name: g.name, source: "group" };
+  return { id: g._id, name: g.name, source: "group", color: g.color };
 }
 
 function getColorClass(item: SearchResultItem): string {
-  if (item.source === "group") return GROUP_ACCESS_CHIP_CLASS;
   const idx = item.color ?? stableColorIndexFromId(item.id);
   return GROUP_COLORS[Math.min(idx, GROUP_COLORS.length - 1)];
 }
@@ -96,6 +100,8 @@ export function AccessField({
     if (!searchLower) return allOptions;
     return allOptions.filter((item) => item.name.toLowerCase().includes(searchLower));
   }, [allOptions, searchLower]);
+  const filteredGroups = filteredOptions.filter((item) => item.source === "group");
+  const filteredBeneficiaries = filteredOptions.filter((item) => item.source === "beneficiary");
 
   const visibilityLabel = useMemo(() => {
     if (selectedAccess.length === 1) return `Shared with ${selectedAccess[0].name}`;
@@ -109,14 +115,20 @@ export function AccessField({
     selectedAccess.length > 0 ? (
       <Users className="size-4 shrink-0 text-text-neutral-weaker" aria-hidden />
     ) : shareAudience === "everyone" ? (
-      <Globe className="size-4 shrink-0 text-text-neutral-weaker" aria-hidden />
+      <img
+        data-testid="story-visibility-icon"
+        src={everyoneIcon}
+        alt=""
+        aria-hidden="true"
+        className="size-4 shrink-0 object-contain"
+      />
     ) : (
-      <Lock
-        className={cn(
-          "size-4 shrink-0",
-          variant === "panel" ? "text-[#ff7a70]" : "text-text-neutral-weaker",
-        )}
-        aria-hidden
+      <img
+        data-testid="story-visibility-icon"
+        src={privateIcon}
+        alt=""
+        aria-hidden="true"
+        className="size-4 shrink-0 object-contain"
       />
     );
 
@@ -143,6 +155,14 @@ export function AccessField({
     if (next.length === 0) onShareAudienceChange("private");
   };
 
+  const toggleAccess = (item: SearchResultItem) => {
+    if (selectedAccess.some((selected) => selected.id === item.id)) {
+      removeAccess(item.id);
+      return;
+    }
+    addAccess(item);
+  };
+
   const setPrivate = () => {
     onChange([]);
     onShareAudienceChange("private");
@@ -155,6 +175,224 @@ export function AccessField({
     setAccessInput("");
   };
 
+  if (variant === "panel") {
+    const selectedAudience = selectedAccess.length === 0 ? shareAudience : "";
+
+    return (
+      <div className="flex flex-col gap-2">
+        <div>
+          <Label
+            htmlFor={accessInputId}
+            className="font-geist text-sm font-normal text-text-neutral-strong"
+          >
+            Who can see this story?
+          </Label>
+          <p className="mt-1.5 font-inter text-xs leading-relaxed text-text-neutral-weaker">
+            Stories are visible to all beneficiaries by default. Choose{" "}
+            <span className="font-semibold text-text-error-strong">Private</span> to hide them.
+          </p>
+        </div>
+
+        <Popover open={showAccessDropdown} onOpenChange={setShowAccessDropdown}>
+          <PopoverTrigger asChild>
+            <Button
+              ref={triggerRef}
+              type="button"
+              id={accessInputId}
+              variant="outline"
+              className="h-auto w-full justify-start gap-2.5 rounded-lg border-stroke-neutral-weak bg-fill-neutral-weak px-3 py-2 font-geist text-sm font-normal text-text-neutral-strong shadow-none hover:bg-fill-neutral-weak"
+            >
+              {summaryIcon}
+              <span className="min-w-0 flex-1 truncate text-left">{visibilityLabel}</span>
+              {showAccessDropdown ? (
+                <ChevronUp aria-hidden className="shrink-0 opacity-70" />
+              ) : (
+                <ChevronDown aria-hidden className="shrink-0 opacity-70" />
+              )}
+            </Button>
+          </PopoverTrigger>
+
+          <PopoverContent
+            role="dialog"
+            aria-label="Sharing options"
+            align="start"
+            sideOffset={6}
+            onEscapeKeyDown={(event) => event.stopPropagation()}
+            className="z-[220] max-h-[min(520px,var(--radix-popover-content-available-height))] w-[326px] max-w-[calc(100vw-2rem)] gap-4 overflow-y-auto rounded-lg border border-stroke-neutral-weak bg-popover p-3 shadow-lg"
+          >
+            <ToggleGroup
+              type="single"
+              value={selectedAudience}
+              onValueChange={(value) => {
+                if (value === "private") setPrivate();
+                if (value === "everyone") setEveryone();
+              }}
+              aria-label="Story visibility"
+              className="grid w-full grid-cols-2 gap-2"
+            >
+              <ToggleGroupItem
+                value="private"
+                role="option"
+                aria-selected={selectedAudience === "private"}
+                className="relative h-auto min-h-[68px] w-full items-start justify-start gap-2 whitespace-normal rounded-lg bg-fill-error-weak px-1.5 py-2 text-left text-text-neutral-strong hover:bg-fill-error-weak data-[state=on]:bg-fill-error-weak"
+              >
+                <img src={privateIcon} alt="" aria-hidden="true" className="size-5 shrink-0" />
+                <span className="flex min-w-0 flex-1 flex-col gap-0">
+                  <span className="font-geist text-sm font-medium leading-5">Private</span>
+                  <span className="font-geist text-xs font-normal leading-4 text-text-error-strong">
+                    Story is visible to only you
+                  </span>
+                </span>
+                {selectedAudience === "private" ? (
+                  <CheckCircle2
+                    aria-hidden
+                    className="absolute -right-1 -top-1 size-4 fill-fill-success-weak text-icon-success-strong"
+                  />
+                ) : null}
+              </ToggleGroupItem>
+
+              <ToggleGroupItem
+                value="everyone"
+                role="option"
+                aria-selected={selectedAudience === "everyone"}
+                className="relative h-auto min-h-[68px] w-full items-start justify-start gap-2 whitespace-normal rounded-lg bg-fill-info-weak px-1.5 py-2 text-left text-text-neutral-strong hover:bg-fill-info-weak data-[state=on]:bg-fill-info-weak"
+              >
+                <img src={everyoneIcon} alt="" aria-hidden="true" className="size-5 shrink-0" />
+                <span className="flex min-w-0 flex-1 flex-col gap-0">
+                  <span className="font-geist text-sm font-medium leading-5">Everyone</span>
+                  <span className="font-geist text-xs font-normal leading-4 text-text-info-strong">
+                    Story is visible to everyone.
+                  </span>
+                </span>
+                {selectedAudience === "everyone" ? (
+                  <CheckCircle2
+                    aria-hidden
+                    className="absolute -right-1 -top-1 size-4 fill-fill-success-weak text-icon-success-strong"
+                  />
+                ) : null}
+              </ToggleGroupItem>
+            </ToggleGroup>
+
+            <Separator />
+
+            <InputGroup className="rounded-lg border-stroke-neutral-weak bg-bg-neutral">
+              <InputGroupAddon>
+                <Search aria-hidden />
+              </InputGroupAddon>
+              <InputGroupInput
+                value={accessInput}
+                onChange={(event) => setAccessInput(event.target.value)}
+                placeholder="Search user or group"
+                aria-label="Search user or group"
+                className="font-geist text-sm text-text-neutral-strong placeholder:text-text-neutral-weaker"
+              />
+            </InputGroup>
+
+            <section className="flex flex-col gap-2" aria-labelledby={`${accessInputId}-groups`}>
+              <p
+                id={`${accessInputId}-groups`}
+                className="font-geist text-xs font-normal text-text-neutral-weaker"
+              >
+                Recently used:
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {filteredGroups.map((group) => {
+                  const isSelected = selectedAccess.some((selected) => selected.id === group.id);
+                  return (
+                    <Badge
+                      key={group.id}
+                      asChild
+                      variant="outline"
+                      className={cn(
+                        "h-[26px] px-2 py-1 font-geist text-xs font-medium",
+                        getColorClass(group),
+                        isSelected && "ring-1 ring-ring",
+                      )}
+                    >
+                      <button
+                        type="button"
+                        aria-pressed={isSelected}
+                        onClick={() => toggleAccess(group)}
+                      >
+                        @{group.name}
+                      </button>
+                    </Badge>
+                  );
+                })}
+                {filteredGroups.length === 0 ? (
+                  <p className="font-geist text-xs text-text-neutral-weaker">
+                    {searchLower ? "No matching groups" : "No groups yet"}
+                  </p>
+                ) : null}
+              </div>
+            </section>
+
+            <section className="flex flex-col gap-2" aria-labelledby={`${accessInputId}-beneficiaries`}>
+              <p
+                id={`${accessInputId}-beneficiaries`}
+                className="font-geist text-xs font-normal text-text-neutral-weaker"
+              >
+                Beneficiaries:
+              </p>
+              <div className="flex flex-col gap-2">
+                {filteredBeneficiaries.map((beneficiary) => {
+                  const isSelected = selectedAccess.some(
+                    (selected) => selected.id === beneficiary.id,
+                  );
+                  return (
+                    <label
+                      key={beneficiary.id}
+                      className="flex cursor-pointer items-center gap-2 font-geist text-sm text-text-neutral-weak"
+                    >
+                      <Checkbox
+                        checked={isSelected}
+                        onCheckedChange={() => toggleAccess(beneficiary)}
+                        aria-label={beneficiary.name}
+                      />
+                      <Avatar size="sm">
+                        <AvatarFallback className="font-geist font-bold text-text-neutral-strong">
+                          {beneficiary.name.trim().charAt(0).toUpperCase() || "?"}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="min-w-0 flex-1 truncate">{beneficiary.name}</span>
+                    </label>
+                  );
+                })}
+                {filteredBeneficiaries.length === 0 ? (
+                  <p className="font-geist text-xs text-text-neutral-weaker">
+                    {searchLower ? "No matching beneficiaries" : "No beneficiaries yet"}
+                  </p>
+                ) : null}
+              </div>
+            </section>
+          </PopoverContent>
+        </Popover>
+
+        {selectedAccess.length > 0 ? (
+          <div className="flex flex-wrap gap-1.5">
+            {selectedAccess.map((item) => (
+              <Badge
+                key={item.id}
+                variant="outline"
+                className={cn("gap-1 font-geist", getColorClass(item))}
+              >
+                @{item.name}
+                <button
+                  type="button"
+                  onClick={() => removeAccess(item.id)}
+                  aria-label={`Remove ${item.name}`}
+                  className="leading-none opacity-60 transition-opacity hover:opacity-100"
+                >
+                  ×
+                </button>
+              </Badge>
+            ))}
+          </div>
+        ) : null}
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-2">
       <div>
@@ -162,7 +400,7 @@ export function AccessField({
           htmlFor={accessInputId}
           className={cn(
             variant === "panel"
-              ? "font-geist text-sm font-normal text-[rgba(15,7,0,0.9)]"
+              ? "font-geist text-sm font-normal text-text-neutral-strong"
               : "font-inter font-medium text-text-neutral-strong",
           )}
         >
@@ -172,8 +410,7 @@ export function AccessField({
           {variant === "panel" ? (
             <>
               Stories are visible to all beneficiaries by default. Choose{" "}
-              <span className="font-semibold text-[#c73a3a]">Private</span> to keep them hidden from all
-              your beneficiaries, or search below to specify people and groups you want to share with.
+              <span className="font-semibold text-text-error-strong">Private</span> to hide them.
             </>
           ) : (
             <>
@@ -198,7 +435,7 @@ export function AccessField({
         <div
           className={cn(
             variant === "panel"
-              ? "rounded-[8px] border border-stroke-neutral-weak bg-white transition-[color,box-shadow,border-color]"
+              ? "rounded-[8px] border border-stroke-neutral-weak bg-fill-neutral-weak transition-[color,box-shadow,border-color]"
               : "rounded-xl border border-stroke-neutral-weak bg-fill-neutral-weaker/40 transition-[color,box-shadow,border-color]",
             "focus-within:border-ring focus-within:ring-[3px] focus-within:ring-inset focus-within:ring-ring/50",
           )}
@@ -216,7 +453,7 @@ export function AccessField({
             className={cn(
               "flex w-full items-center gap-2.5 text-left text-sm text-text-neutral-strong",
               variant === "panel"
-                ? "px-3 py-2 font-geist hover:bg-[#faf8f5]"
+                ? "px-3 py-2 font-geist hover:bg-fill-neutral-weak"
                 : "px-3 py-2.5 font-inter hover:bg-fill-neutral-weaker/60",
             )}
           >

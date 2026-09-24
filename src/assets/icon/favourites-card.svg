@@ -1,6 +1,6 @@
 <svg width="229" height="98" viewBox="0 0 229 98" fill="none" xmlns="http://www.w3.org/2000/svg">
 <g clip-path="url(#clip0_2499_30294)">
-<rect width="228.5" height="97.84" rx="16" fill="white"/>
+<rect width="228.5" height="97.84" rx="16" fill="transparent"/>
 <g opacity="0.1">
 <g filter="url(#filter0_f_2499_30294)">
 <path d="M112.15 77.271C112.15 91.9053 102.971 109.399 75.4825 109.399C47.9939 109.399 0 96.0313 0 81.3971C0 66.7628 22.284 54.8994 49.7726 54.8994C77.2613 54.8994 112.15 62.6368 112.15 77.271Z" fill="url(#paint0_linear_2499_30294)"/>
@@ -24,7 +24,6 @@
 <path d="M184.231 50.9444L187.43 52.4039L190.448 50.5964L190.046 54.0939L192.699 56.403L189.251 57.1034L187.873 60.3389L186.142 57.2751L182.635 56.9679L185.017 54.3741L184.231 50.9444Z" fill="#FCEBCD"/>
 <path d="M184.231 50.9444L187.43 52.4039L190.448 50.5964L190.046 54.0939L192.699 56.403L189.251 57.1034L187.873 60.3389L186.142 57.2751L182.635 56.9679L185.017 54.3741L184.231 50.9444Z" fill="#FCEBCD"/>
 </g>
-<rect x="0.5" y="0.5" width="227.5" height="96.84" rx="15.5" stroke="black" stroke-opacity="0.05"/>
 <defs>
 <filter id="filter0_f_2499_30294" x="-27.7867" y="27.1127" width="167.723" height="110.073" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
 <feFlood flood-opacity="0" result="BackgroundImageFix"/>

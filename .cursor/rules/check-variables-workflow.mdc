@@ -7,6 +7,12 @@ alwaysApply: true
 
 After creating or updating any page/component UI (especially colors, borders, backgrounds, icons, and text styles), run the `/check-variables` command guidance in `.cursor/commands/check-variables.md`.
 
+For changed TypeScript and TSX files, also run ESLint and resolve every
+`shadcn/no-raw-colors` warning in those files. This automatic check catches raw
+palette colors and undeclared color names. Keep the contextual review below:
+the linter cannot decide whether a valid token has the correct intent or
+strength for the design.
+
 Expected output format:
 - One line per issue
 - If no issues: `All variables applied correctly.`

@@ -2,7 +2,9 @@
 
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import albumArtwork from "@/assets/image/HD Album story bg memento.png";
+import darkAlbumArtwork from "@/assets/image/HD Album story bg memento dark.png";
 import scenicBackground from "@/assets/image/bg/1.png";
+import calendarIcon from "@/assets/icon/uim_calendar.svg";
 import { EditorContent, useEditorState } from "@tiptap/react";
 import { useModal } from "@/hooks/use-modal";
 import { useStore } from "@/hooks/use-store";
@@ -67,6 +69,7 @@ import { CreateMemoryAssistantComingSoonPanel } from "./create-memory-assistant-
 import { useCreateMemoryAssistant } from "./create-memory-ai";
 import { UpgradePrompt } from "@/features/pricing/upgrade-prompt";
 import { useFeatureFlags } from "@/contexts/feature-flags";
+import { useTheme } from "@/contexts/theme";
 import {
   Card,
   CardContent,
@@ -97,7 +100,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import type { IBeneficiary, IOnUploadPayload } from "@/utility/interface";
 import {
-  CalendarDays,
   Check,
   Circle,
   Clock3,
@@ -110,7 +112,6 @@ import {
   Music,
   Paperclip,
   PanelRightClose,
-  Play,
   Plus,
   Quote,
   Smile,
@@ -166,6 +167,7 @@ function CreateMemoryBase({
   const { close, open, push, registerCloseGuard } = useModal();
   const { user } = useStore();
   const { canUse } = useFeatureFlags();
+  const { resolvedTheme } = useTheme();
   const navigate = useNavigate();
   const [showUploadGate, setShowUploadGate] = useState(false);
   const fileInputImageRef = useRef<HTMLInputElement>(null);
@@ -1614,7 +1616,7 @@ function CreateMemoryBase({
         >
           <img
             data-testid="desktop-album-artwork"
-            src={albumArtwork}
+            src={resolvedTheme === "dark" ? darkAlbumArtwork : albumArtwork}
             alt=""
             aria-hidden="true"
             className="pointer-events-none absolute inset-0 size-full rounded-l-none rounded-r-[30px] object-cover object-left-top"
@@ -1623,7 +1625,13 @@ function CreateMemoryBase({
             <div>
               <header className="flex min-w-0 items-center justify-between gap-3">
                 <div className="flex shrink-0 items-center gap-2 font-geist text-sm text-text-neutral-weak">
-                  <CalendarDays aria-hidden className="size-4 text-icon-info-strong" />
+                  <img
+                    data-testid="desktop-story-date-icon"
+                    src={calendarIcon}
+                    alt=""
+                    aria-hidden="true"
+                    className="size-4 object-contain"
+                  />
                   <span>{formattedToday}</span>
                 </div>
                 <div className="flex min-w-0 items-center justify-end gap-2 xl:gap-3">
@@ -1644,15 +1652,6 @@ function CreateMemoryBase({
                     <Cloud aria-hidden className="size-4" />
                     <span>{isCurrentDraftSaved ? "Draft saved" : "Not saved"}</span>
                   </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="lg"
-                    onClick={() => toast.message("Preview is not available yet.")}
-                  >
-                    <Play data-icon="inline-start" />
-                    Preview
-                  </Button>
                   <Button
                     type="button"
                     size="lg"
@@ -1734,7 +1733,10 @@ function CreateMemoryBase({
                     </div>
                   </div>
 
-                  <div className="mt-4 w-full max-w-[760px] shrink-0 rounded-[14px] border border-stroke-neutral-weak bg-[rgba(232,226,216,0.64)] px-3 py-2 shadow-[0_8px_24px_rgba(61,45,32,0.06)] backdrop-blur-[6px]">
+                  <div
+                    data-testid="desktop-formatting-strip"
+                    className="mt-4 w-full max-w-[760px] shrink-0 rounded-[14px] border border-stroke-neutral-weak bg-fill-neutral-weak px-3 py-2 shadow-none backdrop-blur-[6px]"
+                  >
                     <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
                       <div className="flex min-w-0 flex-wrap items-center gap-1.5">
                         <DropdownMenu
@@ -1944,13 +1946,13 @@ function CreateMemoryBase({
                         <TabsTrigger
                           ref={detailsTabRef}
                           value="properties"
-                          className="rounded-[8px] px-3 font-geist text-sm text-text-neutral-weak data-[state=active]:bg-fill-neutral-weak data-[state=active]:text-text-neutral-strong"
+                          className="rounded-[8px] px-3 font-geist text-sm text-text-neutral-weak data-active:bg-fill-neutral-weak data-active:text-text-neutral-strong"
                         >
                           Story Details
                         </TabsTrigger>
                         <TabsTrigger
                           value="assistant"
-                          className="rounded-[8px] px-3 font-geist text-sm text-text-neutral-weak data-[state=active]:bg-fill-neutral-weak data-[state=active]:text-text-neutral-strong"
+                          className="rounded-[8px] px-3 font-geist text-sm text-text-neutral-weak data-active:bg-fill-neutral-weak data-active:text-text-neutral-strong"
                         >
                           Assistant
                         </TabsTrigger>
@@ -2008,7 +2010,7 @@ function CreateMemoryBase({
                         </section>
 
                         <section className="space-y-3">
-                          <h3 className="font-geist text-base font-semibold leading-6 text-[rgba(15,7,0,0.9)]">
+                          <h3 className="font-geist text-base font-semibold leading-6 text-text-neutral-strong">
                             Story Overview
                           </h3>
                           <div className="space-y-2">
@@ -2020,8 +2022,8 @@ function CreateMemoryBase({
                               { label: "Mins read", value: readingMinutes, icon: Clock3 },
                             ].map(({ label, value, icon: Icon }) => (
                               <div key={label} className="flex items-center gap-2.5">
-                                <Icon className="size-4 text-[rgba(15,7,0,0.45)]" aria-hidden />
-                                <div className="flex min-w-0 flex-1 items-center gap-1.5 font-geist text-xs leading-4 text-[rgba(15,7,0,0.9)]">
+                                <Icon className="size-4 text-icon-neutral-weak" aria-hidden />
+                                <div className="flex min-w-0 flex-1 items-center gap-1.5 font-geist text-xs leading-4 text-text-neutral-strong">
                                   <span>{value}</span>
                                   <span>{label}</span>
                                 </div>
@@ -2032,7 +2034,7 @@ function CreateMemoryBase({
                       </div>
                     </TabsContent>
 
-                    <TabsContent value="assistant" className="hide-scrollbar min-h-0 overflow-y-auto px-4 pb-5 data-[state=active]:flex data-[state=active]:flex-col">
+                    <TabsContent value="assistant" className="hide-scrollbar min-h-0 overflow-y-auto px-4 pb-5 data-active:flex data-active:flex-col">
                       {STORY_COMPOSER_ASSISTANT_VARIANT === "coming-soon" ? (
                         <CreateMemoryAssistantComingSoonPanel />
                       ) : (

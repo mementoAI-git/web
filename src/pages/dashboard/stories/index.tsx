@@ -1,7 +1,8 @@
 import endpoint from "@/api/endpoint";
 import { useModal } from "@/hooks/use-modal";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import useSWR from "swr";
+import useSWRInfinite from "swr/infinite";
 import { StatCard } from "../component/stat-card";
 import { DoubleHeartIcon } from "@/components/icons";
 
@@ -12,12 +13,12 @@ import storageCardBg from "@/assets/icon/storage-card.svg";
 
 import Table from "@/components/table";
 import { storageKeys } from "@/utility/constant";
-import StoriesHeader from "./components/header";
+import StoriesHeader, { StoriesFilters } from "./components/header";
 import StoriesGrid from "./components/grid";
 import { TableRowSekeleton } from "./components/skeleton";
 import { StoriesMobileList } from "./components/list-mobile";
 import StoriesTableRow from "./components/row";
-import type { IMemory } from "@/utility/interface";
+import type { IMemory, IPagination } from "@/utility/interface";
 import {
   TypographyH1,
   TypographyH2,
@@ -26,6 +27,7 @@ import {
 } from "@/components/ui/typography";
 import { useDashboardHeaderActions } from "@/contexts/dashboard-header-actions";
 import { StoriesActionButtons } from "./components/stories-action-buttons";
+import { paginatedResponseFetcher } from "@/api/domain-fetchers";
 
 const columns = [
   { label: "topic" },
@@ -74,12 +76,11 @@ export default function StoriesPage() {
     localStorage.getItem(storageKeys.listmode) || "list",
   );
   const [filter, setFilter] = useState("all");
-  const [canPromoteActionsToNav, setCanPromoteActionsToNav] = useState(
-    () => typeof window !== "undefined" ? window.innerWidth >= 1280 : true,
+  const [canPromoteActionsToNav, setCanPromoteActionsToNav] = useState(() =>
+    typeof window !== "undefined" ? window.innerWidth >= 1280 : true,
   );
   const { open } = useModal();
   const { setShowStoriesActions } = useDashboardHeaderActions();
-  const actionButtonsRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -106,13 +107,65 @@ export default function StoriesPage() {
     [userStatsData?.data?.quick_capture_pending_count],
   );
 
-  const { data, isLoading } = useSWR(`${endpoint.stories}?page=${page}${filterQuery}`, {
-    refreshInterval: hasQuickPending ? 4000 : 0,
-  });
+  const { data, isLoading } = useSWR(
+    mode === "list" ? `${endpoint.stories}?page=${page}${filterQuery}` : null,
+    {
+      refreshInterval: hasQuickPending ? 4000 : 0,
+    },
+  );
+
+  const getGridPageKey = useCallback(
+    (
+      pageIndex: number,
+      previousPageData: { data?: IPagination<IMemory> } | null,
+    ) => {
+      if (mode !== "grid") return null;
+      if (previousPageData && !previousPageData.data?.hasNextPage) return null;
+
+      return `${endpoint.stories}?page=${pageIndex + 1}${filterQuery}`;
+    },
+    [filterQuery, mode],
+  );
+
+  const {
+    data: gridPages,
+    isLoading: isGridLoading,
+    size: gridPageCount,
+    setSize: setGridPageCount,
+  } = useSWRInfinite(
+    getGridPageKey,
+    paginatedResponseFetcher<IMemory>,
+    {
+      refreshInterval: hasQuickPending ? 4000 : 0,
+      revalidateFirstPage: hasQuickPending,
+      revalidateOnFocus: false,
+    },
+  );
+
+  const gridData = useMemo(() => {
+    const lastPage = gridPages?.[gridPages.length - 1]?.data;
+    if (!lastPage) return undefined;
+
+    return {
+      ...lastPage,
+      docs: gridPages.flatMap((gridPage) => gridPage.data?.docs ?? []),
+    };
+  }, [gridPages]);
+  const isGridLoadingMore = Boolean(
+    isGridLoading ||
+      (gridPageCount > 0 && gridPages && !gridPages[gridPageCount - 1]),
+  );
+  const gridHasMore = Boolean(gridData?.hasNextPage);
+  const loadMoreGridStories = useCallback(() => {
+    void setGridPageCount((currentSize) => currentSize + 1);
+  }, [setGridPageCount]);
   const { data: stats } = useSWR(endpoint.memoriesStats);
 
   useEffect(() => {
-    if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
+    if (
+      typeof window === "undefined" ||
+      typeof window.matchMedia !== "function"
+    ) {
       return;
     }
 
@@ -127,29 +180,9 @@ export default function StoriesPage() {
   }, []);
 
   useEffect(() => {
-    if (!canPromoteActionsToNav) {
-      setShowStoriesActions(false);
-      return;
-    }
-
-    const node = actionButtonsRef.current;
-    if (!node || typeof IntersectionObserver === "undefined") {
-      return;
-    }
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        setShowStoriesActions(!entry.isIntersecting);
-      },
-      {
-        threshold: 0.2,
-      },
-    );
-
-    observer.observe(node);
+    setShowStoriesActions(canPromoteActionsToNav);
 
     return () => {
-      observer.disconnect();
       setShowStoriesActions(false);
     };
   }, [canPromoteActionsToNav, setShowStoriesActions]);
@@ -157,10 +190,13 @@ export default function StoriesPage() {
   useEffect(() => () => setShowStoriesActions(false), [setShowStoriesActions]);
 
   return (
-    <div className="page-viewport hide-scrollbar mx-0 w-full max-w-none">
-      <div className="size-full w-full overflow-y-auto hide-scrollbar px-4 sm:px-6 lg:px-8">
-        <div className="w-full max-w-none space-y-6 py-3 sm:space-y-16 sm:py-4 lg:py-8">
-          <div className="flex flex-col md:items-end md:flex-row md:justify-between gap-2">
+    <div className="page-viewport hide-scrollbar mx-0 w-full max-w-none overflow-hidden">
+      <div
+        data-slot="stories-workspace"
+        className="hide-scrollbar size-full min-h-0 w-full overflow-y-auto px-4"
+      >
+        <div className="flex w-full max-w-none flex-col gap-6 py-4 lg:gap-8">
+          <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between xl:hidden">
             <div>
               <TypographyH1 className="font-garamond font-normal text-[32px] leading-tight text-v3-text-strong sm:leading-snug md:text-4xl md:leading-[48px] lg:text-[40px]">
                 My stories
@@ -170,7 +206,7 @@ export default function StoriesPage() {
               </TypographyLead>
             </div>
 
-            <div ref={actionButtonsRef}>
+            <div>
               <StoriesActionButtons
                 onViewInsights={() => open("memory-insights")}
                 onCreateMemory={() => open("create-memory")}
@@ -179,74 +215,97 @@ export default function StoriesPage() {
             </div>
           </div>
 
-          <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-4">
-            <StatCard
-              bgImage={totalMemoriesBg as unknown as string}
-              subtitle="Total Memories"
-              title={stats?.data?.stories_count || 0}
-              unit="items"
-              variant="blue"
-            />
-            <StatCard
-              bgImage={mediaFilesBg as unknown as string}
-              subtitle="Media Files"
-              title={stats?.data?.media_count || 0}
-              unit="items"
-              variant="pink"
-            />
-            <StatCard
-              bgImage={favouritesCardBg as unknown as string}
-              subtitle="Favourites"
-              title={stats?.data?.bookmark_count || 0}
-              unit="items"
-              variant="orange"
-            />
-            <StatCard
-              bgImage={storageCardBg as unknown as string}
-              subtitle="Storage"
-              title={stats?.data?.storage || "0/0GB"}
-              unit="used"
-              variant="green"
-            />
-          </div>
-        </div>
-        <div className="w-full max-w-none space-y-6 py-3 sm:space-y-8 sm:py-4 lg:space-y-10 lg:py-8">
           <StoriesHeader
             mode={mode}
             onChangeMode={setMode}
-            filter={filter}
-            onChangeFilter={setFilter}
-            count={stats?.data?.stories_count || 0}
-            bookmarkedCount={stats?.data?.stories_bookmarked_count || 0}
-            deletedCount={stats?.data?.stories_deleted_count || 0}
           />
-          {mode === "grid" ? (
-            <StoriesGrid data={data?.data} />
-          ) : (
-            <>
-              <div className="sm:hidden">
-                <StoriesMobileList
-                  data={data?.data}
-                  loading={isLoading}
-                  onChangePage={setPage}
-                  emptyState={<MobileListEmptyState />}
+
+          <div data-slot="stories-catalog" className="flex flex-col">
+            <section
+              data-slot="memory-statistics"
+              aria-label="Memory statistics"
+            >
+              <div className="grid w-full grid-cols-[repeat(auto-fit,minmax(min(220px,100%),1fr))] gap-3">
+                <StatCard
+                  compact
+                  bgImage={totalMemoriesBg as unknown as string}
+                  subtitle="Total Memories"
+                  title={stats?.data?.stories_count || 0}
+                  unit="items"
+                  variant="blue"
+                />
+                <StatCard
+                  compact
+                  bgImage={mediaFilesBg as unknown as string}
+                  subtitle="Media Files"
+                  title={stats?.data?.media_count || 0}
+                  unit="items"
+                  variant="pink"
+                />
+                <StatCard
+                  compact
+                  bgImage={favouritesCardBg as unknown as string}
+                  subtitle="Favourites"
+                  title={stats?.data?.bookmark_count || 0}
+                  unit="items"
+                  variant="orange"
+                />
+                <StatCard
+                  compact
+                  bgImage={storageCardBg as unknown as string}
+                  subtitle="Storage"
+                  title={stats?.data?.storage || "0/0GB"}
+                  unit="used"
+                  variant="green"
                 />
               </div>
-              <div className="hidden sm:block w-full overflow-x-auto">
-                <Table
-                  data={data?.data}
-                  columns={columns}
-                  loading={isLoading}
-                  loadingRow={<TableRowSekeleton />}
-                  onChangePage={setPage}
-                  renderRow={(r, i) => (
-                    <StoriesTableRow key={i} memory={r as IMemory} />
-                  )}
-                  emptyRow={<TableEmptyState />}
+            </section>
+
+            <div data-slot="stories-filter-region" className="mt-6">
+              <StoriesFilters
+                filter={filter}
+                onChangeFilter={setFilter}
+                count={stats?.data?.stories_count || 0}
+                bookmarkedCount={stats?.data?.stories_bookmarked_count || 0}
+                deletedCount={stats?.data?.stories_deleted_count || 0}
+              />
+            </div>
+
+            <div data-slot="stories-results" className="mt-4">
+              {mode === "grid" ? (
+                <StoriesGrid
+                  data={gridData}
+                  hasMore={gridHasMore}
+                  isLoadingMore={isGridLoadingMore}
+                  onLoadMore={loadMoreGridStories}
                 />
-              </div>
-            </>
-          )}
+              ) : (
+                <>
+                  <div className="sm:hidden">
+                    <StoriesMobileList
+                      data={data?.data}
+                      loading={isLoading}
+                      onChangePage={setPage}
+                      emptyState={<MobileListEmptyState />}
+                    />
+                  </div>
+                  <div className="hidden sm:block w-full overflow-x-auto">
+                    <Table
+                      data={data?.data}
+                      columns={columns}
+                      loading={isLoading}
+                      loadingRow={<TableRowSekeleton />}
+                      onChangePage={setPage}
+                      renderRow={(r, i) => (
+                        <StoriesTableRow key={i} memory={r as IMemory} />
+                      )}
+                      emptyRow={<TableEmptyState />}
+                    />
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>

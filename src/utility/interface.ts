@@ -13,6 +13,14 @@ export interface IFile {
   };
 }
 
+export interface ILinkMetadata {
+  url: string;
+  title?: string;
+  domain?: string;
+  favicon?: string;
+  description?: string;
+}
+
 export interface IAuth {
   access_token: string;
   refresh_token: string;
@@ -287,4 +295,6 @@ export interface IMessage {
   role: string; // user, ai
   ai_model?: string;
   created_at: string;
+  attatchments?: IFile[];
+  link_metadata?: ILinkMetadata[];
 }

@@ -20,7 +20,7 @@ export default function Loader() {
             </div>
           </div>
         </div>
-        <div className="sticky bottom-0 bg-white px-0 pb-4 sm:px-3 md:px-5">
+        <div className="sticky bottom-0 bg-background px-0 pb-4 sm:px-3 md:px-5">
           <div className="w-full">
             <div className="animate-pulse">
               <div className="h-52 bg-fill-neutral-weaker rounded-lg"></div>

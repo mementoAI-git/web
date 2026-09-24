@@ -1,4 +1,4 @@
-import { fireEvent, screen, waitFor } from "@testing-library/react";
+import { screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { http, HttpResponse } from "msw";
 import { renderWithProviders } from "@/test";
@@ -32,10 +32,8 @@ vi.mock("@/features/enrichment", () => ({
   }),
 }));
 
-describe("Conversation deep dive", () => {
-  it("requests a follow-up prompt when deep dive starts", async () => {
-    let requestBody: Record<string, unknown> | null = null;
-
+describe("Conversation host chat tools", () => {
+  it("does not render the host chat tools section", async () => {
     server.use(
       http.get(`${API}/memories/:id`, () =>
         HttpResponse.json({
@@ -68,23 +66,6 @@ describe("Conversation deep dive", () => {
           message: "ok",
         }),
       ),
-      http.post(`${API}/ai/tasks/run`, async ({ request }) => {
-        requestBody = (await request.json()) as Record<string, unknown>;
-
-        return HttpResponse.json({
-          success: true,
-          data: {
-            result: {
-              dimension: "relationships_people",
-              question:
-                "Who in that relationship changed the way you see yourself?",
-              summary: "Follow up on the person behind the memory.",
-            },
-            summary: "Generated a deep-dive question.",
-          },
-          message: "ok",
-        });
-      }),
     );
 
     renderWithProviders(
@@ -97,27 +78,13 @@ describe("Conversation deep dive", () => {
       },
     );
 
-    expect(
-      await screen.findByText("Want to go deeper on an important relationship?"),
-    ).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole("button", { name: "Start" }));
-
-    await waitFor(() => {
-      expect(requestBody).toEqual({
-        task: "chat.deep_dive_followup",
-        mode: "assist",
-        context: {
-          text: "Your Memento\n\nI keep thinking about the people who shaped me.",
-          dimension: "relationships_people",
-        },
-      });
-    });
+    await screen.findByPlaceholderText(/type text here/i);
 
     expect(
-      await screen.findByText(
-        "Who in that relationship changed the way you see yourself?",
-      ),
-    ).toBeInTheDocument();
+      screen.queryByRole("toolbar", { name: /host chat tools/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Want to go deeper on an important relationship?"),
+    ).not.toBeInTheDocument();
   });
 });

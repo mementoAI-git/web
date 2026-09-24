@@ -31,11 +31,11 @@ describe("Bubble", () => {
     expect(bubble).toBeInTheDocument();
   });
 
-  it("uses larger responsive body type for full chat (24px from md), compact stays 14px", () => {
+  it("uses a calm readable 16px body size in the full chat", () => {
     const { rerender } = render(<Bubble role="ai" text="Full thread" />);
     const full = screen.getByText("Full thread").closest("span");
-    expect(full?.className).toMatch(/md:text-xl/);
     expect(full?.className).toMatch(/text-base/);
+    expect(full?.className).not.toMatch(/md:text-xl/);
 
     rerender(<Bubble role="ai" text="Sidebar" compact />);
     const compact = screen.getByText("Sidebar").closest("span");
@@ -43,10 +43,10 @@ describe("Bubble", () => {
     expect(compact?.className).not.toMatch(/md:text-xl/);
   });
 
-  it("caps user message body width at min(470px, 85%)", () => {
+  it("caps user message body width at min(380px, 85%)", () => {
     render(<Bubble role="user" text="User said this" />);
     const body = screen.getByText("User said this").closest("div.rounded-\\[8px\\]");
-    expect(body?.className).toContain("max-w-[min(470px,85%)]");
+    expect(body?.className).toContain("max-w-[min(380px,85%)]");
   });
 
   it("uses 8px padding and radius on message bodies", () => {
@@ -182,5 +182,22 @@ describe("Bubble", () => {
     await waitFor(() =>
       expect(image).toHaveAttribute("src", "/files/photo.jpg?cap=new"),
     );
+  });
+
+  it("renders a URL-only message as one metadata preview when metadata exists", () => {
+    render(
+      <Bubble
+        role="user"
+        text="https://mymemento.io"
+        linkMetadata={[{ url: "https://mymemento.io", title: "Mymemento.io", domain: "mymemento.io" }]}
+      />,
+    );
+    expect(screen.getByText("Mymemento.io")).toBeInTheDocument();
+    expect(screen.getAllByRole("link")).toHaveLength(1);
+  });
+
+  it("renders metadata-free URLs as normal links", () => {
+    render(<Bubble role="user" text="Visit https://example.com for details" />);
+    expect(screen.getByRole("link", { name: "https://example.com" })).toHaveClass("underline");
   });
 });

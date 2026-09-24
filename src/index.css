@@ -20,7 +20,7 @@
   --color-grey-800: rgba(148, 148, 148, 1);
   --color-grey-900: rgba(16, 24, 40, 1);
 
-  --color-background: #fefbf8;
+  --color-background: #ffffff;
 
   --color-blue-1: #f1f6fd;
   --color-blue-2: #e9f1fc;
@@ -120,6 +120,18 @@
   --blue-800: rgba(26, 128, 247, 0.8);
   --blue-200: rgba(26, 128, 247, 0.2);
   --blue-50: rgba(26, 128, 247, 0.06);
+
+  /* Life-area identity palette — ordered to match the enrichment distribution. */
+  --life-area-memories-experiences: #43a9f2;
+  --life-area-heritage-roots: #78c6fc;
+  --life-area-lessons-wisdom: #80dfa4;
+  --life-area-relationships-people: #a8df80;
+  --life-area-beliefs-worldview: #c3eb66;
+  --life-area-passions-interests: #ebe666;
+  --life-area-hopes-legacy: #ebc766;
+  --life-area-work-purpose: #eba266;
+  --life-area-everyday-life: #eb8966;
+  --life-area-identity-self: #eb6666;
 
   /* Neutral Scale */
   --neutral-1000: #000000;
@@ -287,7 +299,7 @@
 
   /* SHADCN — aligned to V3 semantic tokens (docs/COLOR_INVENTORY.md, .cursor/rules/v3-color-system-usage.mdc) */
   --radius: 0.5rem;
-  --background: #fefbf8;
+  --background: #ffffff;
   --foreground: var(--text-neutral-strong);
   --card: #ffffff;
   --card-foreground: var(--text-neutral-strong);
@@ -306,11 +318,19 @@
   --border: var(--stroke-neutral-weak);
   --input: var(--stroke-neutral-weak);
   --ring: var(--stroke-brand-strong);
+  --sidebar: var(--bg-neutral);
+  --sidebar-foreground: var(--text-neutral-strong);
+  --sidebar-primary: var(--fill-neutral-strong);
+  --sidebar-primary-foreground: var(--bg-neutral);
+  --sidebar-accent: var(--fill-neutral-weak);
+  --sidebar-accent-foreground: var(--text-neutral-strong);
+  --sidebar-border: var(--stroke-neutral-weak);
+  --sidebar-ring: var(--stroke-brand-strong);
 }
 
 .dark {
   --color-secondary: var(--secondary);
-  --color-background: #170b00;
+  --color-background: #12131a;
 
   --text-neutral-strong: var(--brown-dark-1000);
   --text-neutral-weak: var(--brown-dark-700);
@@ -332,19 +352,19 @@
   --fill-neutral-weaker: var(--brown-dark-25);
   --fill-neutral-disabled: var(--brown-dark-25);
 
-  --bg-neutral: #21160f;
+  --bg-neutral: #12131a;
   --bg-neutral-strong: var(--neutral-dark-100);
   --bg-neutral-weak: var(--neutral-dark-50);
   --bg-neutral-weaker: var(--neutral-dark-25);
   --bg-neutral-disabled: var(--neutral-dark-25);
 
-  --v3-bg: #170b00;
+  --v3-bg: #12131a;
 
-  --background: #170b00;
+  --background: #12131a;
   --foreground: var(--text-neutral-strong);
-  --card: #21160f;
+  --card: var(--background);
   --card-foreground: var(--text-neutral-strong);
-  --popover: #21160f;
+  --popover: var(--background);
   --popover-foreground: var(--text-neutral-strong);
   --secondary: var(--fill-neutral-weak);
   --secondary-foreground: var(--text-neutral-strong);
@@ -562,6 +582,14 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
 }
 
 body {
