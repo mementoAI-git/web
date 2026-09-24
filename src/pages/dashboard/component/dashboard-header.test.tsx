@@ -20,8 +20,12 @@ function DashboardHeaderWithConversationChrome({
   useEffect(() => {
     setChrome({
       memory: memory as IMemory,
-      onViewDetails: () => {},
       onOpenChatPreferences: () => {},
+      hostChat: {
+        title: "Chat",
+        subtitle: "Active since Mar 29, 2026",
+        onSearch: () => {},
+      },
     });
     return () => setChrome(null);
   }, [memory, setChrome]);
@@ -49,12 +53,24 @@ describe("DashboardHeader", () => {
     const searchColumn = searchTrigger?.parentElement;
     expect(searchColumn?.className).toMatch(/min-w-0/);
     expect(searchColumn?.className).toMatch(/justify-self-center/);
+    expect(
+      searchTrigger?.querySelector('[data-slot="search-command-shortcut"]'),
+    ).toBeInTheDocument();
+  });
+
+  it("removes the navigation search field on the stories page", () => {
+    renderDashboardHeader(<DashboardHeader />, { route: "/stories" });
+
+    expect(
+      screen.queryByRole("button", { name: "Open search" }),
+    ).not.toBeInTheDocument();
   });
 
   it("uses semantic surfaces and foregrounds in the default header", () => {
     const { container } = renderDashboardHeader(<DashboardHeader />);
     const shell = container.firstElementChild;
-    expect(shell).toHaveClass("bg-card", "border-border");
+    expect(shell).toHaveClass("bg-background", "border-border");
+    expect(shell).not.toHaveClass("bg-card");
     expect(shell).not.toHaveClass("bg-white");
     expect(screen.getByText("overview")).toHaveClass("text-foreground");
     expect(screen.getByRole("button", { name: "Open search" })).toHaveClass(
@@ -79,7 +95,7 @@ describe("DashboardHeader", () => {
     expect(screen.getByAltText("Streak")).toBeTruthy();
   });
 
-  it("shows Chat settings on the right in conversation top nav", () => {
+  it("shows the conversation actions for a normal chat route", () => {
     renderWithProviders(
       <ChatSidebarProvider>
         <ConversationChromeProvider>
@@ -91,9 +107,16 @@ describe("DashboardHeader", () => {
       { route: "/chat/m1", auth: true },
     );
 
-    expect(
-      screen.getByRole("button", { name: /chat settings/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /search memories/i })).toBeInTheDocument();
+    expect(screen.getByText(/active since mar 29, 2026/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /audio settings/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /voice mode/i })).toHaveAttribute(
+      "href",
+      "/chat/m1/voice",
+    );
+    expect(screen.getByRole("button", { name: /chat settings/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /share conversation/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /open memory sidebar/i })).not.toBeInTheDocument();
   });
 
   it("uses semantic surfaces and foregrounds in the conversation header", () => {
@@ -105,7 +128,8 @@ describe("DashboardHeader", () => {
     );
 
     const shell = container.firstElementChild;
-    expect(shell).toHaveClass("bg-card", "border-border");
+    expect(shell).toHaveClass("bg-background", "border-border");
+    expect(shell).not.toHaveClass("bg-card");
     expect(shell).not.toHaveClass("bg-white");
     expect(screen.getByRole("heading", { name: "Chat" })).toHaveClass(
       "text-foreground",

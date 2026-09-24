@@ -29,6 +29,8 @@ import { ChatPreferencesPanel } from "@/components/modal/chat-settings/chat-pref
 import { HostChatEnrichmentBar } from "@/features/host-chat/components/host-chat-enrichment-bar";
 import { resolveSidebarDesktopWidthPx } from "@/components/memory/sidebar-desktop-width";
 import type { CategoryScore } from "@/features/enrichment";
+import chatSettingsGradient from "@/assets/image/chat settings gradient.png";
+import type { ConversationFilesRequest } from "@/pages/dashboard/chat/conversation/conversation-assets";
 
 function useAnimatedSidebarWidthPx(
   isOpen: boolean,
@@ -66,8 +68,6 @@ export type MemorySidebarQuickActions = {
   onDelete: () => void;
 };
 
-export type SidebarPanelTab = "memory" | "chat";
-
 interface SidebarDetailsProps {
   memory: IMemory;
   onClose: () => void;
@@ -75,11 +75,9 @@ interface SidebarDetailsProps {
   source?: PostTypeSource;
   /** Conversation chat: memory menu actions (previously in header dropdown). */
   quickActions?: MemorySidebarQuickActions | null;
-  /** When true, show Memory | Chat tabs (chat = sound, voice, upgrade). */
-  enableChatPreferencesTab?: boolean;
-  activeTab?: SidebarPanelTab;
-  onTabChange?: (tab: SidebarPanelTab) => void;
-  /** Enrichment stats to show in the Memory tab (moved from conversation toolbar). */
+  /** When true, append chat preferences below the memory details. */
+  includeChatPreferences?: boolean;
+  /** Enrichment stats to show with the memory details (moved from conversation toolbar). */
   enrichmentScore?: number;
   deltaToday?: number;
   /** Per-category completion from GET /users/stats (optional breakdown in the enrichment bar). */
@@ -89,6 +87,7 @@ interface SidebarDetailsProps {
    * `inline` = third column in page flex row, no backdrop (chat conversation).
    */
   desktopLayout?: "overlay" | "inline";
+  onOpenConversationFiles?: (request: ConversationFilesRequest) => void;
 }
 
 interface ContentProps {
@@ -97,14 +96,13 @@ interface ContentProps {
   isMobile?: boolean;
   source?: PostTypeSource;
   quickActions?: MemorySidebarQuickActions | null;
-  enableChatPreferencesTab?: boolean;
-  activeTab?: SidebarPanelTab;
-  onTabChange?: (tab: SidebarPanelTab) => void;
-  /** Enrichment stats to show in the Memory tab. */
+  includeChatPreferences?: boolean;
+  /** Enrichment stats to show with the memory details. */
   enrichmentScore?: number;
   deltaToday?: number;
   categoryScores?: CategoryScore[] | null;
   desktopLayout?: "overlay" | "inline";
+  onOpenConversationFiles?: (request: ConversationFilesRequest) => void;
 }
 
 const sectionBadgeClass =
@@ -289,13 +287,12 @@ function Content({
   isMobile = false,
   source,
   quickActions,
-  enableChatPreferencesTab = false,
-  activeTab = "memory",
-  onTabChange: _onTabChange,
+  includeChatPreferences = false,
   enrichmentScore,
   deltaToday,
   categoryScores,
   desktopLayout = "overlay",
+  onOpenConversationFiles,
 }: ContentProps) {
   const { open } = useModal();
 
@@ -304,38 +301,58 @@ function Content({
     if (isMobile) _onClose();
   };
 
-  const showChat = enableChatPreferencesTab && activeTab === "chat";
   const isDesktopOverlayCard = !isMobile && desktopLayout === "overlay";
 
   return (
     <div
+      data-testid="sidebar-details-content"
       className={cn(
-        "flex h-full w-full min-w-0 max-w-full flex-col gap-0 bg-v3-bg",
-        showChat ? "p-2.5 sm:p-3 md:p-3 lg:p-6" : "p-3 sm:p-4 lg:p-6",
-        showChat ? "w-full min-w-0" : "min-w-[min(100%,287px)]",
-        showChat && "min-h-0 flex-1 overflow-hidden",
+        "relative isolate flex w-full min-w-0 max-w-full flex-col gap-0",
+        includeChatPreferences
+          ? "bg-background"
+          : "bg-v3-bg",
+        isMobile
+          ? "h-auto overflow-visible"
+          : "h-full min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain",
+        includeChatPreferences
+          ? "p-2.5 sm:p-3 md:p-3 lg:p-6"
+          : "min-w-[min(100%,287px)] p-3 sm:p-4 lg:p-6",
         isDesktopOverlayCard &&
-          cn(
-            "rounded-[24px] border border-v3-stroke-weak shadow-[0_8px_32px_rgba(15,23,42,0.08)]",
-            !showChat && "min-h-0 overflow-y-auto overflow-x-hidden",
-          ),
+          "rounded-[24px] border border-stroke-neutral-weak shadow-xl",
       )}
     >
-
-      {showChat ? (
-        <ChatPreferencesPanel density="compact" className="h-full w-full min-h-0 flex-1 pb-4" />
+      {includeChatPreferences ? (
+        <>
+          <img
+            data-testid="chat-settings-gradient"
+            src={chatSettingsGradient}
+            alt=""
+            className="pointer-events-none absolute inset-x-0 top-0 h-[466px] w-full rounded-t-[24px] object-fill"
+            aria-hidden
+          />
+          <div className="relative z-[1] flex flex-col">
+            <h2 className="mb-6 font-garamond text-3xl font-normal text-text-neutral-strong">Chat settings</h2>
+            <ChatPreferencesPanel
+              density="compact"
+              enrichmentScore={enrichmentScore}
+              categoryScores={categoryScores}
+              onOpenConversationFiles={onOpenConversationFiles}
+              className="h-auto w-full min-h-0 flex-none overflow-visible pb-4"
+            />
+          </div>
+        </>
       ) : (
-        <MemorySections
-          memory={memory}
-          isMobile={isMobile}
-          source={source}
-          quickActions={quickActions}
-          open={open}
-          runAndMaybeCloseMobile={runAndMaybeCloseMobile}
-          enrichmentScore={enrichmentScore}
-          deltaToday={deltaToday}
-          categoryScores={categoryScores}
-        />
+      <MemorySections
+        memory={memory}
+        isMobile={isMobile}
+        source={source}
+        quickActions={quickActions}
+        open={open}
+        runAndMaybeCloseMobile={runAndMaybeCloseMobile}
+        enrichmentScore={enrichmentScore}
+        deltaToday={deltaToday}
+        categoryScores={categoryScores}
+      />
       )}
     </div>
   );
@@ -347,16 +364,14 @@ export default function SidebarDetails({
   isOpen,
   source,
   quickActions,
-  enableChatPreferencesTab = false,
-  activeTab = "memory",
-  onTabChange,
+  includeChatPreferences = false,
   enrichmentScore,
   deltaToday,
   categoryScores,
   desktopLayout = "overlay",
+  onOpenConversationFiles,
 }: SidebarDetailsProps) {
-  const wideChatPanel =
-    Boolean(isOpen && enableChatPreferencesTab && activeTab === "chat");
+  const wideChatPanel = Boolean(isOpen && includeChatPreferences);
   const desktopWidthPx = useAnimatedSidebarWidthPx(isOpen, wideChatPanel);
   const isInlineDesktop = desktopLayout === "inline";
 
@@ -371,7 +386,7 @@ export default function SidebarDetails({
       >
         <Sheet.Container className="max-h-[80dvh] overflow-hidden bg-sand-1">
           <Sheet.Header className="rounded-3xl bg-sand-1" />
-          <Sheet.Content className="max-h-[80dvh] min-h-0 overflow-y-auto overscroll-contain bg-sand-1">
+          <Sheet.Content className="max-h-[80dvh] min-h-0 overflow-hidden bg-sand-1">
             <Content
               memory={memory}
               onClose={onClose}
@@ -379,12 +394,11 @@ export default function SidebarDetails({
               desktopLayout={desktopLayout}
               source={source}
               quickActions={quickActions}
-              enableChatPreferencesTab={enableChatPreferencesTab}
-              activeTab={activeTab}
-              onTabChange={onTabChange}
+              includeChatPreferences={includeChatPreferences}
               enrichmentScore={enrichmentScore}
               deltaToday={deltaToday}
               categoryScores={categoryScores}
+              onOpenConversationFiles={onOpenConversationFiles}
             />
           </Sheet.Content>
         </Sheet.Container>
@@ -395,7 +409,6 @@ export default function SidebarDetails({
         initial={false}
         animate={{
           width: isOpen ? desktopWidthPx : 0,
-          opacity: isOpen ? 1 : 0,
         }}
         transition={{
           type: "spring",
@@ -407,12 +420,18 @@ export default function SidebarDetails({
         className={cn(
           // Desktop overlay: docked to the right; inline: flow in page flex row
           "hidden min-w-0 overflow-x-hidden md:flex md:flex-col justify-start items-stretch",
+          includeChatPreferences && "rounded-[24px] bg-background",
           isInlineDesktop
             ? "relative z-auto h-full min-h-0 min-w-0 shrink-0 self-stretch border-l border-stroke-neutral-weak"
             : "fixed top-[6px] right-[6px] bottom-[6px] z-50 min-h-0 min-w-0",
         )}
       >
-        <div className="box-border h-full min-h-0 min-w-0 w-full max-w-full bg-transparent p-0">
+        <div
+          className={cn(
+            "box-border h-full min-h-0 min-w-0 w-full max-w-full p-0",
+            includeChatPreferences ? "bg-background" : "bg-transparent",
+          )}
+        >
           <Content
             memory={memory}
             onClose={onClose}
@@ -420,12 +439,11 @@ export default function SidebarDetails({
             desktopLayout={desktopLayout}
             source={source}
             quickActions={quickActions}
-            enableChatPreferencesTab={enableChatPreferencesTab}
-            activeTab={activeTab}
-            onTabChange={onTabChange}
+            includeChatPreferences={includeChatPreferences}
             enrichmentScore={enrichmentScore}
             deltaToday={deltaToday}
             categoryScores={categoryScores}
+            onOpenConversationFiles={onOpenConversationFiles}
           />
         </div>
       </motion.div>

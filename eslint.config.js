@@ -1,4 +1,5 @@
 import js from '@eslint/js'
+import { plugin as shadcn } from '@shadcn/lint'
 import globals from 'globals'
 import reactHooks from 'eslint-plugin-react-hooks'
 import reactRefresh from 'eslint-plugin-react-refresh'
@@ -19,6 +20,7 @@ export default defineConfig([
       ecmaVersion: 2020,
       globals: globals.browser,
     },
+    plugins: { shadcn },
     rules: {
       '@typescript-eslint/no-unused-vars': [
         'error',
@@ -33,6 +35,12 @@ export default defineConfig([
         'error',
         { allowConstantExport: true, allowExportNames: ['meta'] },
       ],
+    },
+  },
+  {
+    files: ['src/**/*.{ts,tsx}'],
+    rules: {
+      'shadcn/no-raw-colors': 'warn',
     },
   },
 ])

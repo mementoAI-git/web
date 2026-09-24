@@ -6,7 +6,7 @@ import Bubble, { Typing, TypingBubble } from "./bubble";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import useSWR, { mutate } from "swr";
 import endpoint from "@/api/endpoint";
-import { cn, isEmpty } from "@/utility";
+import { isEmpty } from "@/utility";
 import History from "./history";
 import { type IMessage } from "@/utility/interface";
 import Loader from "./loader";
@@ -29,22 +29,11 @@ import {
 } from "@/utility/export-conversation-markdown";
 import dayjs from "dayjs";
 import { useModal } from "@/hooks/use-modal";
-import type { ChatMode, LifeDimension } from "@/features/host-chat/chat.types";
-import { dimensionLabel } from "@/features/host-chat/chat.types";
-import {
-  DeepDiveBanner,
-  DeepDiveNudge,
-  HostChatJumpPills,
-  MilestoneCard,
-  dismissHostChatNudge,
-  getDismissedHostChatNudges,
-  monthKeysFromMessages,
-} from "@/features/host-chat";
 import { useEnrichmentStats } from "@/features/enrichment";
 import { useSubscription } from "@/contexts/subscription";
 import { VoiceModePaywall } from "@/features/pricing/voice-mode-paywall";
-import { useAiTask } from "@/features/ai/use-ai-task";
-import { deepDiveFollowupTask } from "@/features/ai/tasks";
+import { ChatEmptyState } from "./chat-empty-state";
+import type { ConversationFilesRequest } from "./conversation-assets";
 
 type StreamlinePayload = {
   text: string;
@@ -53,36 +42,7 @@ type StreamlinePayload = {
   signal: AbortSignal;
   onChunk: (chunk: string) => void;
   onMeta?: (meta: { model?: string }) => void;
-  chatMode?: ChatMode;
-  deepDiveDimension?: LifeDimension | null;
-  dismissedNudgeDimensions?: string[];
 };
-
-function pickDeepDiveSeedText(
-  messages: Partial<IMessage>[],
-  memory: { title?: string; body?: string } | null | undefined,
-  fallbackDimension: LifeDimension,
-) {
-  const latestText = [...messages]
-    .reverse()
-    .find((message) => typeof message.text === "string" && message.text.trim().length > 0)
-    ?.text;
-
-  if (typeof latestText === "string" && latestText.trim().length > 0) {
-    return latestText.trim();
-  }
-
-  const memoryText = [memory?.title, memory?.body]
-    .filter((value): value is string => typeof value === "string" && value.trim().length > 0)
-    .join("\n\n")
-    .trim();
-
-  if (memoryText.length > 0) {
-    return memoryText;
-  }
-
-  return `Let's explore ${dimensionLabel(fallbackDimension)} in more detail.`;
-}
 
 export default function Conversation({ id, type = "memory" }) {
   const [aiMessage, setAiMessage] = useState("")
@@ -101,26 +61,12 @@ export default function Conversation({ id, type = "memory" }) {
   const { canAccess, isLoading: subscriptionLoading } = useSubscription();
   const [messages, setMessages] = useState<Partial<IMessage>[]>([])
   const [isSidebarOpen, setIsSidebarOpen] = useState(false) // Sidebar closed by default
-  const [sidebarTab, setSidebarTab] = useState<"memory" | "chat">("memory")
   const [replyQuote, setReplyQuote] = useState<ChatReplyQuote | null>(null)
-  const [chatMode, setChatMode] = useState<ChatMode>("open");
-  const [deepDiveDimension, setDeepDiveDimension] = useState<LifeDimension | null>(null);
-  const [nudgeHidden, setNudgeHidden] = useState(false);
-  const [sessionEnrichmentDelta, setSessionEnrichmentDelta] = useState<number | null>(null);
   const [streamDone, setStreamDone] = useState(false);
-  const sessionStartScoreRef = useRef<number | null>(null);
-  const lastDeepDivePromptSignatureRef = useRef<string | null>(null);
-  const deepDiveFollowupAi = useAiTask(deepDiveFollowupTask, {
-    mode: "assist",
-    skipErrorToast: true,
-  });
 
   const {
     stats: enrichmentStats,
     deltaToday,
-    milestoneJustReached,
-    nudgeDimension,
-    nudgeQuestion,
   } = useEnrichmentStats();
 
   const { trigger: sendMessage, isMutating: isSending } = useSWRMutation<
@@ -143,41 +89,12 @@ export default function Conversation({ id, type = "memory" }) {
 
   const memory = useMemo(() => memoryData?.data || promptData?.data, [promptData, memoryData]);
 
-  const exchangeCount = useMemo(() => {
-    let n = messages.length;
-    if (aiMessage?.trim()) n += 1;
-    return n;
-  }, [messages.length, aiMessage]);
-
   const hostChatSubtitle = useMemo(() => {
     if (!isHostChat || !memory?.created_at) return undefined;
     const since = dayjs(memory.created_at);
     const sinceLabel = since.isValid() ? since.format("MMM D, YYYY") : "";
-    return sinceLabel ?
-        `${exchangeCount} exchange${exchangeCount === 1 ? "" : "s"} · since ${sinceLabel}` :
-        `${exchangeCount} exchange${exchangeCount === 1 ? "" : "s"}`;
-  }, [isHostChat, memory?.created_at, exchangeCount]);
-
-  const jumpMonthKeys = useMemo(() => monthKeysFromMessages(messages), [messages]);
-
-  // Capture session start score once, then track delta as enrichment updates
-  useEffect(() => {
-    if (!enrichmentStats) return;
-    const currentScore = enrichmentStats.enrichment_score;
-    if (sessionStartScoreRef.current === null) {
-      sessionStartScoreRef.current = currentScore;
-    } else {
-      const delta = currentScore - sessionStartScoreRef.current;
-      if (delta > 0) setSessionEnrichmentDelta(delta);
-    }
-  }, [enrichmentStats?.enrichment_score]);
-
-  const activeDimension = nudgeDimension ?? "relationships_people";
-  const showDeepDiveNudge =
-    isHostChat &&
-    chatMode === "open" &&
-    !nudgeHidden &&
-    !getDismissedHostChatNudges().includes(activeDimension);
+    return sinceLabel ? `Active since ${sinceLabel}` : undefined;
+  }, [isHostChat, memory?.created_at]);
 
   // Function to scroll to bottom
   const scrollToBottom = useCallback(() => {
@@ -192,19 +109,24 @@ export default function Conversation({ id, type = "memory" }) {
   // Close sidebar handler
   const handleCloseSidebar = useCallback(() => {
     setIsSidebarOpen(false);
-    setSidebarTab("memory");
   }, []);
 
-  // Toggle sidebar handler
-  const handleOpenSidebar = useCallback(() => {
-    setSidebarTab("memory");
+  const handleToggleSettingsDrawer = useCallback(() => {
     setIsSidebarOpen((prev) => !prev);
   }, []);
 
-  const handleOpenChatPreferences = useCallback(() => {
-    setSidebarTab("chat");
-    setIsSidebarOpen((prev) => !prev);
-  }, []);
+  const handleOpenConversationFiles = useCallback(
+    ({ tab, mediaFilter }: ConversationFilesRequest) => {
+      if (!memory?._id) return;
+      push?.("conversation-files", {
+        conversationId: memory._id,
+        messages,
+        initialTab: tab,
+        initialMediaFilter: mediaFilter,
+      });
+    },
+    [memory?._id, messages, push],
+  );
 
   const handleChuckArrival = useCallback((chunk: string) => {
     if (chunk.trim().startsWith("ERROR: ")) {
@@ -296,9 +218,6 @@ export default function Conversation({ id, type = "memory" }) {
             signal: abortCtrl.current.signal,
             onChunk: handleChuckArrival,
             onMeta: ({ model }) => setStreamModelLabel(model),
-            chatMode,
-            deepDiveDimension: chatMode === "deep_dive" ? deepDiveDimension : null,
-            dismissedNudgeDimensions: getDismissedHostChatNudges(),
           })
           setStreamDone(true);
           return;
@@ -339,51 +258,14 @@ export default function Conversation({ id, type = "memory" }) {
     [
       aiMessage,
       memory?._id,
-      id,
-      isNew,
       scrollToBottom,
       sendMessage,
       handleChuckArrival,
       startConversation,
       handleOnFinishTyping,
       navigate,
-      mutate,
-      chatMode,
-      deepDiveDimension,
     ],
   );
-
-  const jumpToMonth = useCallback((yyyyMm: string) => {
-    const el = document.getElementById(`host-chat-anchor-${yyyyMm}`);
-    el?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }, []);
-
-  const handleExitDeepDive = useCallback(() => {
-    setChatMode("open");
-    setDeepDiveDimension(null);
-    deepDiveFollowupAi.reset();
-    toast.success("Returned to open conversation");
-  }, [deepDiveFollowupAi]);
-
-  const handleStartDeepDiveFromNudge = useCallback(() => {
-    const seedText = pickDeepDiveSeedText(messages, memory, activeDimension);
-    const signature = `${activeDimension}:${seedText}`;
-    if (lastDeepDivePromptSignatureRef.current !== signature) {
-      lastDeepDivePromptSignatureRef.current = signature;
-      void deepDiveFollowupAi.run({
-        text: seedText,
-        dimension: activeDimension,
-      });
-    }
-    setDeepDiveDimension(activeDimension);
-    setChatMode("deep_dive");
-    setNudgeHidden(true);
-  }, [activeDimension, deepDiveFollowupAi, memory, messages]);
-
-  const handleDismissNudge = useCallback(() => {
-    dismissHostChatNudge(activeDimension);
-    setNudgeHidden(true);
-  }, [activeDimension]);
 
   const handleSend = useCallback(
     (payload: IOnSendPayload) => {
@@ -488,9 +370,7 @@ export default function Conversation({ id, type = "memory" }) {
       if (isVoiceRoute && voiceRouteMatch?.params?.id) {
         setChrome({
           memory: null,
-          onViewDetails: handleOpenSidebar,
           onOpenChatPreferences: undefined,
-          onExportConversation: undefined,
           hostChat: {
             title: "Voicemode",
             subtitle: undefined,
@@ -504,13 +384,11 @@ export default function Conversation({ id, type = "memory" }) {
     }
     setChrome({
       memory: memory ?? null,
-      onViewDetails: handleOpenSidebar,
-      onOpenChatPreferences: memory?._id ? handleOpenChatPreferences : undefined,
-      onExportConversation: handleExportConversation,
+      onOpenChatPreferences: memory?._id ? handleToggleSettingsDrawer : undefined,
       ...((isHostChat || isVoiceRoute) ?
         {
           hostChat: {
-            title: isVoiceRoute ? "Voicemode" : "Your Memento",
+            title: isVoiceRoute ? "Voicemode" : "Chat",
             subtitle: isHostChat ? hostChatSubtitle : undefined,
             onSearch: () => open("search-memory"),
           },
@@ -521,9 +399,7 @@ export default function Conversation({ id, type = "memory" }) {
     loadingMemory,
     loadingPrompt,
     memory,
-    handleOpenSidebar,
-    handleOpenChatPreferences,
-    handleExportConversation,
+    handleToggleSettingsDrawer,
     setChrome,
     isHostChat,
     hostChatSubtitle,
@@ -551,83 +427,24 @@ export default function Conversation({ id, type = "memory" }) {
     <div className="flex h-full min-h-0 min-w-0 flex-1 items-stretch overflow-hidden">
       <div className="flex min-h-0 min-w-0 flex-1 justify-center overflow-hidden">
         <div
-          className="hide-scrollbar mx-auto flex h-full min-h-0 w-full min-w-0 max-w-[800px] flex-col overflow-y-auto overscroll-y-contain px-3 sm:px-4 md:px-5"
+          className="hide-scrollbar mx-auto flex h-full min-h-0 w-full min-w-0 max-w-[900px] flex-col overflow-y-auto overscroll-y-contain px-3 sm:px-4 md:px-5"
           ref={scrollContainerRef}
           onScroll={handleScroll}
         >
-          {isHostChat ? (
-            <div
-              className={cn(
-                "sticky top-0 z-[5] flex w-full min-w-0 flex-col gap-2 border-b border-v3-stroke-weak/50 bg-white/95 py-2 backdrop-blur-md",
-                "sm:flex-row sm:flex-nowrap sm:items-center sm:gap-2 sm:overflow-x-auto",
-                "[scrollbar-width:thin] [-webkit-overflow-scrolling:touch] [&::-webkit-scrollbar]:h-1.5",
-              )}
-              role="toolbar"
-              aria-label="Host chat tools"
-            >
-              <div
-                className={cn(
-                  "min-w-0 overflow-x-auto [-webkit-overflow-scrolling:touch] [scrollbar-width:thin]",
-                  "empty:hidden sm:w-auto sm:shrink-0 sm:overflow-visible",
-                )}
-              >
-                <HostChatJumpPills
-                  monthKeys={jumpMonthKeys}
-                  onJump={jumpToMonth}
-                  categoryPills={enrichmentStats?.jump_pills}
-                  onCategoryPill={(starter) => handleSend({ text: starter, attachments: [] })}
-                />
-              </div>
-              <div
-                className={cn(
-                  "flex min-w-0 flex-wrap content-start items-center gap-2",
-                  "sm:flex-nowrap sm:overflow-x-auto sm:pb-0",
-                )}
-              >
-                {chatMode === "deep_dive" && deepDiveDimension ? (
-                  <DeepDiveBanner
-                    dimensionLabel={dimensionLabel(deepDiveDimension)}
-                    onExit={handleExitDeepDive}
-                  />
-                ) : null}
-                {chatMode === "deep_dive" && deepDiveDimension ? (
-                  <div className="flex min-w-0 flex-1 items-center rounded-2xl border border-v3-stroke-weak bg-v3-fill-weaker px-3 py-2">
-                    <p className="min-w-0 text-xs leading-relaxed text-v3-text-weak sm:text-[13px]">
-                      {deepDiveFollowupAi.isRunning ? (
-                        "Preparing a follow-up question..."
-                      ) : deepDiveFollowupAi.result?.question ? (
-                        <span>{deepDiveFollowupAi.result.question}</span>
-                      ) : (
-                        <span>Ask one honest follow-up and keep the thread specific.</span>
-                      )}
-                    </p>
-                  </div>
-                ) : null}
-                <MilestoneCard
-                  enrichmentDelta={sessionEnrichmentDelta}
-                  milestoneLabel={milestoneJustReached ? enrichmentStats?.milestone?.reached_label : null}
-                />
-                {showDeepDiveNudge ? (
-                  <DeepDiveNudge
-                    dimension={activeDimension}
-                    question={nudgeQuestion}
-                    onDeepDive={handleStartDeepDiveFromNudge}
-                    onDismiss={handleDismissNudge}
-                  />
-                ) : null}
-              </div>
-            </div>
-          ) : null}
+          {isNew && messages.length === 0 && !isTyping ? (
+            <ChatEmptyState
+              onPrompt={(text) => handleSend({ text, attachments: [] })}
+            />
+          ) : (
           <History
             {...{
               memory,
               messages,
               setMessages,
               scrollContainerRef,
-              onViewDetails: handleOpenSidebar,
+              onViewDetails: handleToggleSettingsDrawer,
               onRetryFailedMessage: handleRetryFailedMessage,
               onReplyToMessage: handleReplyToMessage,
-              hostChatDeepDive: isHostChat && chatMode === "deep_dive",
             }}
           >
             {(isTyping && isEmpty(aiMessage)) ?
@@ -643,7 +460,6 @@ export default function Conversation({ id, type = "memory" }) {
                   role="ai"
                   text={aiMessage}
                   modelLabel={streamModelLabel}
-                  hostChatDeepDive={isHostChat && chatMode === "deep_dive"}
                   onReply={
                     aiMessage.trim() ?
                       () =>
@@ -656,7 +472,8 @@ export default function Conversation({ id, type = "memory" }) {
                 />
             }
           </History>
-          <div className="sticky bottom-0 z-[4] bg-white pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-1">
+          )}
+          <div className="sticky bottom-0 z-[4] bg-background pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-1">
             <div className="w-full">
               <ConversationChatinput
                 key={`chat-draft-${memory?._id ?? id}`}
@@ -664,7 +481,7 @@ export default function Conversation({ id, type = "memory" }) {
                 onStop={handleStop}
                 onSend={handleSend}
                 history={messages.slice(-20).map(({ role, text }) => ({ role, text }))}
-                inputClassName="!text-sm sm:!text-lg md:!text-xl"
+                inputClassName="!text-sm sm:!text-base"
                 memoryId={
                   memory?._id ??
                   (id && id !== "new" ? id : null)
@@ -684,7 +501,7 @@ export default function Conversation({ id, type = "memory" }) {
           memory={memory}
           onClose={handleCloseSidebar}
           isOpen={isSidebarOpen}
-          desktopLayout="inline"
+          desktopLayout="overlay"
           source={type === "prompt" ? "prompt" : "conversation"}
           quickActions={{
             onViewFullDetails: () => push("view-memory-details", { memory }),
@@ -692,12 +509,11 @@ export default function Conversation({ id, type = "memory" }) {
             onExportConversation: handleExportConversation,
             onDelete: () => push("delete-memory", { memory }),
           }}
-          enableChatPreferencesTab
-          activeTab={sidebarTab}
-          onTabChange={setSidebarTab}
+          includeChatPreferences
           enrichmentScore={enrichmentStats?.enrichment_score ?? 5}
           deltaToday={deltaToday}
           categoryScores={enrichmentStats?.category_scores}
+          onOpenConversationFiles={handleOpenConversationFiles}
         />
       }
     </div>

@@ -1,68 +1,112 @@
+import type { CSSProperties } from "react";
 import { useLocation } from "react-router-dom";
 import { topNavigations, bottomNavigations } from "./navigation";
 import SideBarItem from "./sidebar-item";
 import { ProfileDropdown } from "./profile-dropdown";
-import { SidebarUpgradeCard } from "./sidebar-upgrade-card";
 import Logo from "@/components/logo";
 import { useModal } from "@/hooks/use-modal";
-import { useStore } from "@/hooks/use-store";
-import { isFeatureFlagAdminUser } from "@/contexts/feature-flags";
+import { Button } from "@/components/ui/button";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarProvider,
+  SidebarSeparator,
+} from "@/components/ui/sidebar";
+import { PanelLeftClose } from "lucide-react";
+import inviteFriendsIcon from "@/assets/icon/noto_link.svg";
+import feedbackIcon from "@/assets/icon/noto_light-bulb.svg";
+import upgradePlanIcon from "@/assets/icon/emojione_up-arrow.svg";
 
-export function DashboardSideBar() {
+type DashboardSideBarProps = {
+  onCollapse?: () => void;
+};
+
+export function DashboardSideBar({ onCollapse }: DashboardSideBarProps) {
   const location = useLocation();
   const { open } = useModal();
-  const { user } = useStore();
-  const showAdminFlags = isFeatureFlagAdminUser(user?.email);
 
   const pathname = location.pathname;
+  const primaryNavigations = [...topNavigations, ...bottomNavigations];
 
   return (
-    <div className="dynamic-height w-full min-h-screen overflow-x-hidden bg-card border-r border-border flex flex-col">
-      <div className="flex items-center p-4">
-        <Logo className="text-[28px] leading-[34px] text-foreground" />
-      </div>
+    <SidebarProvider
+      className="h-full min-h-0"
+      style={{ "--sidebar-width": "100%" } as CSSProperties}
+    >
+      <Sidebar
+        collapsible="none"
+        className="dynamic-height min-h-screen border-r border-stroke-neutral-weak"
+      >
+        <SidebarHeader className="flex-row items-center justify-between pb-5 pl-8 pr-4 pt-6">
+          <Logo className="text-[24px] leading-8 text-foreground" />
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Collapse sidebar"
+            onClick={onCollapse}
+            className="rounded-lg active:scale-[0.97]"
+          >
+            <PanelLeftClose data-icon="inline-start" aria-hidden />
+          </Button>
+        </SidebarHeader>
 
-      <div className="flex-1 overflow-y-auto hide-scrollbar py-4 px-4 flex flex-col gap-1">
-        {topNavigations.map((n, i) => (
-          <SideBarItem
-            {...n}
-            active={
-              n.link === pathname ||
-              pathname.includes(n.link) ||
-              (n.link === "/overview" && pathname === "/")
-            }
-            key={i}
-          />
-        ))}
-      </div>
+        <SidebarContent>
+          <SidebarGroup className="px-5 py-0">
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {primaryNavigations.map((navigation) => (
+                  <SideBarItem
+                    {...navigation}
+                    active={
+                      navigation.link === pathname ||
+                      pathname.startsWith(`${navigation.link}/`) ||
+                      (navigation.link === "/overview" && pathname === "/")
+                    }
+                    key={navigation.link}
+                  />
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        </SidebarContent>
 
-      <div className="mt-auto px-4 pb-6 flex flex-col gap-1">
-        <div className="h-px w-full my-4" />
-        {bottomNavigations.map((n, i) => (
-          <SideBarItem {...n} active={pathname.includes(n.link)} key={i} />
-        ))}
-        {showAdminFlags ? (
-          <SideBarItem
-            emoji="⚙️"
-            title="Feature flags"
-            link="/admin/feature-flags"
-            active={pathname.startsWith("/admin/feature-flags")}
-          />
-        ) : null}
-        <SideBarItem
-          emoji="📝"
-          title="Drop feedback"
-          onClick={() => {
-            open("create-feedback");
-          }}
-        />
-        <div className="mt-4 flex w-full min-w-0 shrink-0 flex-col">
-          <SidebarUpgradeCard />
-        </div>
-        <div className="mt-4 min-w-0">
-          <ProfileDropdown />
-        </div>
-      </div>
-    </div>
+        <SidebarFooter className="gap-0 p-0">
+          <SidebarSeparator className="mx-0" />
+          <SidebarGroup className="px-5 py-4">
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SideBarItem
+                  icon={inviteFriendsIcon}
+                  title="Invite friends"
+                  link="/settings/beneficiary"
+                  active={pathname.startsWith("/settings/beneficiary")}
+                />
+                <SideBarItem
+                  icon={feedbackIcon}
+                  title="Feedback"
+                  onClick={() => {
+                    open("create-feedback");
+                  }}
+                />
+                <SideBarItem
+                  icon={upgradePlanIcon}
+                  title="Upgrade plan"
+                  link="/pricing"
+                />
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+          <div className="px-5 pb-8">
+            <ProfileDropdown subtitle="Host user" />
+          </div>
+        </SidebarFooter>
+      </Sidebar>
+    </SidebarProvider>
   );
 }

@@ -48,9 +48,10 @@ import {
 } from "./memory/recorder-modal";
 import { UnpauseCapsule } from "./capsule";
 import { ExitConfirmation } from "./capsule/create/exit-confirmation";
+import ConversationFiles from "./conversation-files";
 
 const RIGHT_PANEL_MODALS = ["view-memory"];
-const FULL_SCREEN_MODALS = ["create-memory"];
+const FULL_SCREEN_MODALS = ["create-memory", "file-preview"];
 
 /** Centered horizontally, anchored to the top (tall content / readability). */
 const TOP_ALIGNED_MODALS = ["memory-insights"];
@@ -97,6 +98,7 @@ const MODAL_COMPONENTS = {
   "exit-confirmation": ExitConfirmation,
   "view-memory": ViewMemory,
   "view-memory-details": ViewMemoryDetails,
+  "conversation-files": ConversationFiles,
 };
 
 export default function Modal() {
@@ -179,7 +181,9 @@ export default function Modal() {
               !isMobile &&
               topModal.name !== "create-memory" &&
               topModal.name !== "quick-capture" &&
-              topModal.name !== "share-post" && (
+              topModal.name !== "share-post" &&
+              topModal.name !== "file-preview" &&
+              topModal.name !== "conversation-files" && (
               <button
                 type="button"
                 onClick={(e) => {

@@ -1,6 +1,7 @@
 import { UserAvatar } from "@/components/user-avatar";
 import { useSubscription } from "@/contexts/subscription";
 import { useTheme } from "@/contexts/theme";
+import { isFeatureFlagAdminUser } from "@/contexts/feature-flags";
 import { useStore } from "@/hooks/use-store";
 import { isThemePreference, type ThemePreference } from "@/lib/theme";
 import { isEmpty } from "@/utility";
@@ -20,9 +21,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  ChevronDown,
+  ChevronsUpDown,
   ChevronRight,
   CircleHelp,
+  Flag,
   LogOut,
   Monitor,
   Moon,
@@ -44,7 +46,13 @@ const itemRowClass =
 
 const itemLabelClass = "flex-1 text-left text-[13px]";
 
-export function ProfileDropdown({ hideName = false }: { hideName?: boolean }) {
+export function ProfileDropdown({
+  hideName = false,
+  subtitle,
+}: {
+  hideName?: boolean;
+  subtitle?: string;
+}) {
   const { user, unsetAuth } = useStore();
   const { tier, isLoading: subscriptionLoading } = useSubscription();
   const { theme, setTheme } = useTheme();
@@ -54,6 +62,7 @@ export function ProfileDropdown({ hideName = false }: { hideName?: boolean }) {
     .join(" ")
     .trim();
   const photo = user?.picture_url || user?.picture;
+  const showAdminFlags = isFeatureFlagAdminUser(user?.email);
 
   const planLabel = !subscriptionLoading
     ? tier === "pro" || tier === "legacy"
@@ -74,8 +83,8 @@ export function ProfileDropdown({ hideName = false }: { hideName?: boolean }) {
     <DropdownMenu>
       <DropdownMenuTrigger
         className={cn(
-          "flex w-full items-center gap-2 rounded-lg bg-transparent px-2 py-1 outline-none transition-colors",
-          "hover:bg-v3-fill-weak",
+          "flex w-full items-center gap-2 rounded-xl bg-fill-neutral-weak px-2 py-2 outline-none",
+          "transition-[transform,background-color] duration-150 ease-[cubic-bezier(0.23,1,0.32,1)] hover:bg-fill-neutral-weak active:scale-[0.98]",
           "focus-visible:ring-2 focus-visible:ring-v3-brand-strong focus-visible:ring-offset-2",
         )}
       >
@@ -92,22 +101,20 @@ export function ProfileDropdown({ hideName = false }: { hideName?: boolean }) {
         {!hideName && (
           <div className="flex w-full min-w-0 flex-1 items-center gap-2">
             <div className="flex min-w-0 flex-1 flex-col items-start gap-0 text-left">
-              <span className="flex w-full min-w-0 items-center gap-1">
-                <span className="w-full truncate font-inter text-sm font-semibold text-foreground">
-                  {user?.first_name ?? "User"}
-                </span>
-                <ChevronDown
-                  className="size-3.5 shrink-0 text-muted-foreground"
-                  strokeWidth={2}
-                  aria-hidden
-                />
+              <span className="w-full truncate font-inter text-sm font-semibold text-foreground">
+                {user?.first_name ?? "User"}
               </span>
-              {planLabel != null ? (
+              {(subtitle ?? planLabel) != null ? (
                 <span className="font-inter text-xs font-normal text-muted-foreground">
-                  {planLabel}
+                  {subtitle ?? planLabel}
                 </span>
               ) : null}
             </div>
+            <ChevronsUpDown
+              className="shrink-0 text-muted-foreground"
+              strokeWidth={2}
+              aria-hidden
+            />
           </div>
         )}
       </DropdownMenuTrigger>
@@ -128,6 +135,15 @@ export function ProfileDropdown({ hideName = false }: { hideName?: boolean }) {
             <Settings className={lucideItemIcon} strokeWidth={2} />
             <span className={itemLabelClass}>Settings</span>
           </DropdownMenuItem>
+          {showAdminFlags ? (
+            <DropdownMenuItem
+              onClick={() => navigate("/admin/feature-flags")}
+              className={itemRowClass}
+            >
+              <Flag className={lucideItemIcon} strokeWidth={2} />
+              <span className={itemLabelClass}>Feature flags</span>
+            </DropdownMenuItem>
+          ) : null}
           <DropdownMenuSub>
             <DropdownMenuSubTrigger className={itemRowClass}>
               <SunMoon className={lucideItemIcon} strokeWidth={2} />

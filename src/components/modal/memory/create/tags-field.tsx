@@ -35,7 +35,7 @@ export function TagsField({
         <div className="flex items-center justify-between gap-3">
           <Label
             htmlFor="create-memory-tags-panel"
-            className="font-geist text-base font-semibold text-[rgba(15,7,0,0.9)]"
+            className="font-geist text-base font-semibold text-text-neutral-strong"
           >
             Add Tags
           </Label>
@@ -59,10 +59,10 @@ export function TagsField({
               })
             }
             label="Auto tag"
-            className="h-[25px] rounded-full border border-[rgba(26,128,247,0.2)] bg-[rgba(26,128,247,0.06)] px-2.5 font-geist text-xs font-bold text-[#1a80f7] hover:bg-[rgba(26,128,247,0.12)]"
+            className="h-[25px] rounded-full border border-stroke-info-strong/20 bg-fill-info-weak px-2.5 font-geist text-xs font-bold text-text-info-strong hover:bg-fill-info-weak/80"
           />
         </div>
-        <div className="rounded-[8px] border border-[rgba(15,7,0,0.1)] bg-[rgba(15,7,0,0.02)] px-3 py-2.5">
+        <div className="rounded-[8px] border border-stroke-neutral-weak bg-fill-neutral-weak px-3 py-2.5">
           <input
             id="create-memory-tags-panel"
             value={tagInput}
@@ -74,17 +74,17 @@ export function TagsField({
               }
             }}
             placeholder="Manually add tags or click to autogenerate"
-            className="h-5 w-full border-0 bg-transparent p-0 font-geist text-sm leading-5 text-[rgba(15,7,0,0.9)] outline-none placeholder:text-[rgba(15,7,0,0.45)]"
+            className="h-5 w-full border-0 bg-transparent p-0 font-geist text-sm leading-5 text-text-neutral-strong outline-none placeholder:text-text-neutral-weaker"
           />
         </div>
         {tags.length > 0 ? (
           <div className="flex flex-wrap gap-1.5">
             {tags.map((t, index) => {
               const chipStyles = [
-                "border-[#cfe0ff] bg-[rgba(26,128,247,0.06)] text-[#1a80f7]",
-                "border-[#fcceee] bg-[#fdf2fa] text-[#c11574]",
-                "border-[#d9d6fe] bg-[#f4f3ff] text-[#5925dc]",
-                "border-[#f9dbaf] bg-[#fef6ee] text-[#b93815]",
+                "border-stroke-info-strong/20 bg-fill-info-weak text-text-info-strong",
+                "border-stroke-brand-weak bg-fill-brand-weak text-text-brand-strong",
+                "border-stroke-success-strong/20 bg-fill-success-weak text-text-success-strong",
+                "border-stroke-error-strong/20 bg-fill-error-weak text-text-error-strong",
               ];
               return (
                 <span

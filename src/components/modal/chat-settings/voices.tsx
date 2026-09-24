@@ -3,8 +3,9 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 import { mutate } from "swr";
 import useSWR from "swr";
-import { Loader2 } from "lucide-react";
+import { CheckCircle2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useStore } from "@/hooks/use-store";
 import useFetcher from "@/hooks/use-fetcher";
 import endpoint from "@/api/endpoint";
@@ -28,6 +29,11 @@ type VoiceEntry = {
 type VoiceProvider = "gemini" | "elevenlabs";
 type ProviderVoiceEntry = VoiceEntry & { provider: VoiceProvider };
 
+function formatVoiceAttribute(value: string | undefined, fallback: string) {
+  const text = (value || fallback).trim();
+  return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
+}
+
 function isVoiceEntry(value: unknown): value is VoiceEntry {
   const v = value as Partial<VoiceEntry>;
   return !!v && typeof v.title === "string" && typeof v.voiceName === "string";
@@ -48,9 +54,6 @@ export default function Voices() {
   const { isMutating, trigger } = useFetcher(endpoint.profile, "put");
   const { trigger: fetchEphemeralToken } = useFetcher(endpoint.ephemeralToken, "get");
   const [previewingVoice, setPreviewingVoice] = useState<string | null>(null);
-  const [previewDebug, setPreviewDebug] = useState<
-    Record<string, { firstAudioMs?: number; status?: "ok" | "error" | "timeout" }>
-  >({});
   const previewAbortRef = useRef<AbortController | null>(null);
   const { data: geminiCatalog } = useSWR<{ data?: { voices?: VoiceEntry[]; configured?: boolean } }>(
     `${endpoint.aiVoices}?provider=gemini`,
@@ -138,13 +141,6 @@ export default function Voices() {
           await previewElevenLabsVoice({
             voiceId: voiceName,
             signal: ac.signal,
-            onFirstAudio: (latencyMs) => {
-              if (!import.meta.env.DEV) return;
-              setPreviewDebug((prev) => ({
-                ...prev,
-                [voiceName]: { ...(prev[voiceName] || {}), firstAudioMs: latencyMs }
-              }));
-            },
           });
           }
         } else {
@@ -155,36 +151,13 @@ export default function Voices() {
               return (res?.data as { token?: string } | undefined)?.token;
             },
             signal: ac.signal,
-            onFirstAudio: (latencyMs) => {
-              if (!import.meta.env.DEV) return;
-              setPreviewDebug((prev) => ({
-                ...prev,
-                [voiceName]: { ...(prev[voiceName] || {}), firstAudioMs: latencyMs }
-              }));
-            },
           });
-        }
-        if (import.meta.env.DEV) {
-          setPreviewDebug((prev) => ({
-            ...prev,
-            [voiceName]: { ...(prev[voiceName] || {}), status: "ok" }
-          }));
         }
       } catch (e: unknown) {
         if (e instanceof DOMException && e.name === "AbortError") {
           return;
         }
         console.error(e);
-        if (import.meta.env.DEV) {
-          const msg = (e as Error)?.message || "";
-          setPreviewDebug((prev) => ({
-            ...prev,
-            [voiceName]: {
-              ...(prev[voiceName] || {}),
-              status: /timed out/i.test(msg) ? "timeout" : "error"
-            }
-          }));
-        }
         toast.error("Could not play voice sample");
       } finally {
         if (previewAbortRef.current === ac) {
@@ -197,70 +170,53 @@ export default function Voices() {
   );
 
   return (
-    <div className="space-y-3">
-      <p className="font-garamond text-xl font-medium text-v3-text-strong">AI Voice</p>
-      <p className="font-inter text-xs leading-snug text-v3-text-weaker">
-        Choose a voice. We preview it instantly and save it as your default.
-      </p>
+    <div className="flex flex-col gap-3">
+      <h2 className="font-geist text-base font-semibold leading-6 text-text-neutral-strong">AI Voice (Voice Mode)</h2>
       {dynamicVoices.length === 0 ? (
-        <p className="rounded-lg border border-v3-stroke-weak bg-v3-fill-weak px-3 py-2 text-xs text-v3-text-weaker">
+        <p className="rounded-xl border border-stroke-neutral-weak bg-fill-neutral-weak px-3 py-2 text-xs text-text-neutral-weaker">
           Voice catalog is unavailable right now. Please try again in a few seconds.
         </p>
       ) : null}
       <div className="grid grid-cols-2 gap-2">
-        {dynamicVoices.map(({ title, subtitle, imageUrl, voiceName, gender, platform, client, style }) => (
+        {dynamicVoices.map(({ title, subtitle, imageUrl, voiceName, gender, style }) => (
           <Button
             key={voiceName}
             type="button"
             variant="outline"
             className={cn(
-              "h-auto min-h-[3.75rem] w-full justify-start gap-3 rounded-xl px-3 py-2.5 text-left",
+              "relative h-auto min-h-16 w-full justify-start gap-3 rounded-xl px-3 py-3.5 text-left transition-[transform,background-color,border-color] duration-150 active:scale-[0.98]",
               selectedVoice === voiceName
-                ? "border-2 border-v3-text-strong bg-v3-fill-weaker text-v3-text-strong shadow-sm"
-                : "border-v3-stroke-weak bg-v3-bg text-v3-text-strong hover:bg-v3-fill-weaker/90",
+                ? "border-stroke-brand-strong bg-background text-text-neutral-strong"
+                : "border-stroke-neutral-weak bg-background text-text-neutral-strong hover:bg-fill-neutral-weaker",
               isMutating && "opacity-85",
             )}
             aria-busy={previewingVoice === voiceName}
             aria-pressed={selectedVoice === voiceName}
             onClick={() => void handleVoiceClick(voiceName)}
           >
-            {imageUrl ? (
-              <img
-                src={imageUrl}
-                width={40}
-                height={40}
-                className="size-10 shrink-0 rounded-full object-cover ring-1 ring-v3-stroke-weak"
-                alt={`${title} voice avatar`}
-              />
-            ) : (
-              <span className="inline-flex size-10 shrink-0 items-center justify-center rounded-full bg-v3-fill-weak text-xs font-semibold text-v3-text-weaker ring-1 ring-v3-stroke-weak">
+            <Avatar>
+              {imageUrl ? (
+                <AvatarImage src={imageUrl} alt={`${title} voice avatar`} />
+              ) : null}
+              <AvatarFallback className="font-geist text-xs font-semibold">
                 {title.slice(0, 2).toUpperCase()}
-              </span>
-            )}
-            <span className="grid min-w-0 flex-1 gap-0.5 text-left">
+              </AvatarFallback>
+            </Avatar>
+            <span className="grid min-w-0 flex-1 text-left">
               <span className="flex min-w-0 items-center gap-2">
                 <span className="truncate font-inter text-sm font-semibold leading-tight">{title}</span>
                 {previewingVoice === voiceName ? (
-                  <Loader2 className="size-4 shrink-0 animate-spin stroke-[2] text-v3-text-weaker" aria-hidden />
+                  <Loader2 className="size-4 shrink-0 animate-spin stroke-[2] text-text-neutral-weaker" aria-hidden />
                 ) : null}
               </span>
-              <span className="truncate font-inter text-xs text-v3-text-weaker">
-                {(platform || "Unknown platform")}
-                {client ? ` · ${client}` : ""}
+              <span className="truncate font-geist text-xs leading-4 text-text-neutral-weak">
+                {formatVoiceAttribute(gender, "Unknown")} ·{" "}
+                {formatVoiceAttribute(style || subtitle, "Natural")}
               </span>
-              <span className="truncate font-inter text-xs text-v3-text-weaker/90">
-                {(gender || "unknown").toLowerCase()} · {(style || subtitle || "natural").toLowerCase()}
-              </span>
-              {import.meta.env.DEV ? (
-                <span className="truncate font-inter text-[10px] text-v3-text-weaker/80">
-                  {voiceName}
-                  {previewDebug[voiceName]?.firstAudioMs != null
-                    ? ` · ${previewDebug[voiceName]?.firstAudioMs}ms`
-                    : ""}
-                  {previewDebug[voiceName]?.status ? ` · ${previewDebug[voiceName]?.status}` : ""}
-                </span>
-              ) : null}
             </span>
+            {selectedVoice === voiceName ? (
+              <CheckCircle2 className="absolute right-1.5 top-1.5 fill-fill-brand-strong text-text-inverse-strong" aria-hidden />
+            ) : null}
           </Button>
         ))}
       </div>

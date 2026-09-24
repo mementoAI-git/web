@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
@@ -31,11 +31,17 @@ vi.mock("react-modal-sheet", () => {
   MockSheet.Content = ({
     children,
     className,
+    disableScroll,
   }: {
     children: ReactNode;
     className?: string;
+    disableScroll?: boolean;
   }) => (
-    <div data-testid="mock-sheet-content" className={className}>
+    <div
+      data-testid="mock-sheet-content"
+      data-disable-scroll={disableScroll}
+      className={className}
+    >
       {children}
     </div>
   );
@@ -90,8 +96,8 @@ vi.mock("@/hooks/use-modal", async (importOriginal) => {
 });
 
 describe("resolveSidebarDesktopWidthPx", () => {
-  it("caps chat panel at 400px on wide viewports", () => {
-    expect(resolveSidebarDesktopWidthPx(1440, { wideChatPanel: true })).toBe(400);
+  it("caps chat panel at the 485px design width on wide viewports", () => {
+    expect(resolveSidebarDesktopWidthPx(1440, { wideChatPanel: true })).toBe(485);
   });
 
   it("shrinks chat panel when the viewport leaves limited budget for the sidebar", () => {
@@ -121,25 +127,43 @@ describe("SidebarDetails", () => {
     expect(desktopPanel).toBeTruthy();
   });
 
-  it("animates desktop overlay to 400px when chat preferences tab is active", () => {
+  it("renders the dedicated chat settings composition in a wide scrolling drawer", () => {
     const { container } = renderSidebar({
       isOpen: true,
-      enableChatPreferencesTab: true,
-      activeTab: "chat",
+      includeChatPreferences: true,
     });
     const desktopPanel = container.querySelector(
       '[data-testid="memory-sidebar-desktop"]',
     ) as HTMLElement | null;
     expect(desktopPanel).toBeTruthy();
-    expect(desktopPanel).toHaveStyle({ width: "400px" });
+    expect(desktopPanel).toHaveStyle({ width: "485px" });
+    expect(desktopPanel?.className).toContain("bg-background");
+    expect(desktopPanel?.style.opacity).toBe("");
 
-    const content = desktopPanel?.querySelector('[class*="bg-v3-bg"]');
-    expect(content?.className).toContain("w-full");
-    expect(content?.className).toContain("min-w-0");
-    expect(content?.className).toContain("max-w-full");
-    expect(content?.className).toContain("p-2.5");
-    expect(content?.className).toContain("md:p-3");
-    expect(content?.className).not.toContain("min(100%,320px)");
+    const drawerSurface = desktopPanel?.querySelector(":scope > div");
+    expect(drawerSurface?.className).toContain("bg-background");
+    expect(drawerSurface?.className).not.toContain("bg-transparent");
+
+    const content = desktopPanel?.querySelector(
+      '[data-testid="sidebar-details-content"]',
+    ) as HTMLElement | null;
+    expect(content).toBeTruthy();
+    expect(content?.className).toContain("overflow-y-auto");
+    expect(content?.className).toContain("bg-background");
+    expect(content?.className).not.toContain("bg-gradient-to-b");
+    const gradientArtwork = within(content!).getByTestId("chat-settings-gradient");
+    expect(gradientArtwork).toBeInstanceOf(HTMLImageElement);
+    expect(decodeURIComponent(gradientArtwork.getAttribute("src") ?? "")).toContain(
+      "chat settings gradient.png",
+    );
+
+    const title = within(content!).getByRole("heading", { name: /chat settings/i });
+    const preferences = within(content!).getByTestId("mock-chat-preferences-panel");
+    expect(
+      title.compareDocumentPosition(preferences) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(within(content!).queryByText(/properties/i)).not.toBeInTheDocument();
   });
 
   it("narrows the chat sidebar when the window is too tight for the max width", () => {
@@ -150,8 +174,7 @@ describe("SidebarDetails", () => {
     });
     const { container } = renderSidebar({
       isOpen: true,
-      enableChatPreferencesTab: true,
-      activeTab: "chat",
+      includeChatPreferences: true,
     });
     const desktopPanel = container.querySelector(
       '[data-testid="memory-sidebar-desktop"]',
@@ -161,6 +184,20 @@ describe("SidebarDetails", () => {
       configurable: true,
       value: original,
     });
+  });
+
+  it("keeps the mobile sheet as the sole scroll owner for gesture tracking", () => {
+    renderSidebar({ includeChatPreferences: true });
+
+    const sheetContent = screen.getByTestId("mock-sheet-content");
+    expect(sheetContent).not.toHaveAttribute("data-disable-scroll");
+
+    const mobileContent = sheetContent.querySelector(
+      '[data-testid="sidebar-details-content"]',
+    );
+    expect(mobileContent?.className).toContain("h-auto");
+    expect(mobileContent?.className).toContain("overflow-visible");
+    expect(mobileContent?.className).not.toContain("overflow-y-auto");
   });
 
   it("docks desktop overlay to the right and paints a card-style content shell", () => {
@@ -182,7 +219,7 @@ describe("SidebarDetails", () => {
     const content = desktopPanel?.querySelector('[class*="bg-v3-bg"]');
     expect(content).toBeTruthy();
     expect(content?.className).toContain("rounded-[24px]");
-    expect(content?.className).toContain("border-v3-stroke-weak");
+    expect(content?.className).toContain("border-stroke-neutral-weak");
 
     expect(screen.getAllByText(/properties/i).length).toBeGreaterThan(0);
   });

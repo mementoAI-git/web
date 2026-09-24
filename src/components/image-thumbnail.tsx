@@ -58,7 +58,7 @@ export default function ImageThumbnail({
   return (
     <div
       style={{ width: size, height: size }}
-      className={`${images.length <= 1 && "flex items-center justify-center"} cursor-pointer`}
+      className={`${images.length <= 1 && "flex items-center justify-center"} isolate cursor-pointer`}
     >
       {images.length === 1 ? (
         <div className="flex items-center justify-center size-full overflow-hidden rounded-[5.83px]">

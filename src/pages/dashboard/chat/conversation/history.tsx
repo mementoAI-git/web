@@ -119,7 +119,7 @@ export default function History({
       isLoadingMoreRef.current = false;
       setIsLoadingMore(false);
     }
-  }, [getMessages, setMessages, containerRef]);
+  }, [getMessages, setMessages, containerRef, memory?._id]);
 
   // This effect now handles both the initial and subsequent infinite scroll fetches
   useEffect(() => {
@@ -164,8 +164,7 @@ export default function History({
             let lastMonthKey: string | null = null;
             return messages.map((m, i) => {
               const failed = Boolean((m as { sendFailed?: boolean }).sendFailed);
-              const attachments = (m as { attatchments?: { url: string; name: string; type?: string; _id?: string; size?: string | number }[] })
-                .attatchments;
+              const attachments = m.attatchments;
               const storedReply = (m as { replyTo?: ChatReplyQuote }).replyTo;
               const replyBody = replyQuoteBodyFromMessage(m.text, attachments);
               const iso = m.created_at;
@@ -186,7 +185,7 @@ export default function History({
                       role="separator"
                       aria-label={dayDividerLabel(iso)}
                     >
-                      <span className="rounded-full bg-fill-neutral-weakest px-3 py-1 font-inter text-xs font-medium text-text-neutral-weaker">
+                      <span className="px-3 py-1 font-inter text-xs font-normal text-text-neutral-weaker">
                         {dayDividerLabel(iso)}
                       </span>
                     </div>
@@ -198,6 +197,7 @@ export default function History({
                       createdAt={m.created_at}
                       modelLabel={(m as { ai_model?: string }).ai_model}
                       attatchments={attachments}
+                      linkMetadata={m.link_metadata}
                       sendFailed={failed}
                       onRetry={failed ? onRetryFailedMessage : undefined}
                       replyQuote={storedReply}

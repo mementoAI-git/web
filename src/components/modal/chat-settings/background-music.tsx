@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { MouseEvent as ReactMouseEvent } from "react";
+import type { KeyboardEvent as ReactKeyboardEvent, MouseEvent as ReactMouseEvent } from "react";
 import { mutate } from "swr";
 import { toast } from "sonner";
-import { Switch } from "@/components/ui/switch";
+import { CheckCircle2, VolumeX } from "lucide-react";
 import musicImage from "@/assets/image/music.png";
 import endpoint from "@/api/endpoint";
 import useFetcher from "@/hooks/use-fetcher";
@@ -62,6 +62,26 @@ function Slider({
     [disabled, updateVolume],
   );
 
+  const handleKeyDown = useCallback(
+    (event: ReactKeyboardEvent<HTMLDivElement>) => {
+      if (disabled) return;
+      if (event.key === "ArrowRight" || event.key === "ArrowUp") {
+        event.preventDefault();
+        onVolumeChange(Math.min(100, volume + 1));
+      } else if (event.key === "ArrowLeft" || event.key === "ArrowDown") {
+        event.preventDefault();
+        onVolumeChange(Math.max(0, volume - 1));
+      } else if (event.key === "Home") {
+        event.preventDefault();
+        onVolumeChange(0);
+      } else if (event.key === "End") {
+        event.preventDefault();
+        onVolumeChange(100);
+      }
+    },
+    [disabled, onVolumeChange, volume],
+  );
+
   useEffect(() => {
     if (disabled) setIsDragging(false);
   }, [disabled]);
@@ -79,23 +99,30 @@ function Slider({
   return (
     <div
       ref={sliderRef}
+      role="slider"
+      tabIndex={disabled ? -1 : 0}
+      aria-label="Background ambience volume"
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-valuenow={volume}
       className={cn(
-        "relative h-1.5 w-full rounded-full bg-fill-neutral-weaker",
+        "relative flex h-5 w-full items-center overflow-hidden rounded bg-fill-neutral-weaker focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stroke-brand-strong",
         disabled
           ? "cursor-not-allowed opacity-50"
           : "cursor-pointer",
       )}
       onClick={handleSliderClick}
+      onMouseDown={handleMouseDown}
+      onKeyDown={handleKeyDown}
       aria-disabled={disabled}
     >
       <div
-        className="relative h-full rounded-full bg-fill-brand-strong transition-all duration-150"
+        className="relative h-full rounded-sm bg-fill-brand-strong"
         style={{ width: `${volume}%` }}
       >
         <div
-          className="absolute right-0 top-1/2 size-4 -translate-y-1/2 rounded-full border-2 border-stroke-neutral-weak bg-white transition-transform duration-150 hover:scale-110"
-          onMouseDown={disabled ? undefined : handleMouseDown}
-          style={{ right: "-8px" }}
+          data-testid="ambience-volume-marker"
+          className="absolute right-1 top-1/2 h-2.5 w-px -translate-y-1/2 rounded-sm bg-background"
         />
       </div>
     </div>
@@ -186,44 +213,46 @@ export default function BackgroundMusic() {
   );
 
   return (
-    <div className="space-y-4">
-      <div className="flex min-w-0 items-center gap-3">
-        <span className="min-w-0 flex-1 font-garamond text-xl font-medium leading-snug text-text-neutral-strong">
-          Background Music
-        </span>
-        <Switch
-          checked={isEnabled}
-          onCheckedChange={(next) => void handleToggle(next)}
-          disabled={isMutating}
-          aria-label="Turn background music on or off"
+    <div className="flex flex-col gap-3">
+      <h2 className="font-geist text-base font-semibold leading-6 text-text-neutral-strong">
+        Background Ambience
+      </h2>
+      <Slider volume={volume} onVolumeChange={setVolume} />
+      <div className="grid grid-cols-2 gap-3">
+        <button
+          type="button"
           className={cn(
-            "shrink-0 border shadow-sm transition-[background-color,border-color] duration-200",
-            /* On: brand track (aria + data-state — Radix may use either) */
-            "aria-checked:border-fill-brand-strong aria-checked:bg-fill-brand-strong",
-            "data-[state=checked]:border-fill-brand-strong data-[state=checked]:bg-fill-brand-strong",
-            /* Off: clearly different neutral track vs orange “on” */
-            "aria-[checked=false]:border-stroke-neutral-weak aria-[checked=false]:bg-stone-200/95 dark:aria-[checked=false]:bg-stone-600",
-            "data-[state=unchecked]:border-stroke-neutral-weak data-[state=unchecked]:bg-stone-200/95 dark:data-[state=unchecked]:bg-stone-600",
-            /* Thumb: light circle on both tracks */
-            "[&_[data-slot=switch-thumb]]:bg-white [&_[data-slot=switch-thumb]]:shadow-sm",
+            "relative flex min-h-[66px] items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition-[transform,background-color,border-color] duration-150 active:scale-[0.98]",
+            !isEnabled ? "border-stroke-brand-strong bg-background" : "border-stroke-neutral-weak bg-background",
           )}
-        />
-      </div>
-      <Slider volume={volume} onVolumeChange={setVolume} disabled={!isEnabled} />
-      <div className="flex flex-wrap gap-3">
+          onClick={() => void handleToggle(false)}
+          disabled={isMutating}
+          aria-label="Off No tune"
+        >
+          <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-fill-neutral-weaker">
+            <VolumeX className="size-4" aria-hidden />
+          </span>
+          <span className="flex min-w-0 flex-col">
+            <span className="font-geist text-sm font-semibold text-text-neutral-strong">Off</span>
+            <span className="font-inter text-xs text-text-neutral-weak">No tune</span>
+          </span>
+          {!isEnabled ? (
+            <CheckCircle2 className="absolute right-1.5 top-1.5 fill-fill-brand-strong text-text-inverse-strong" aria-hidden />
+          ) : null}
+        </button>
         {audioFiles.map((audio, index) => (
           <button
             type="button"
             key={audio.key}
             className={cn(
-              "flex max-w-full min-w-[9rem] flex-[1_1_calc(50%-0.375rem)] items-center gap-3 rounded-xl border py-2.5 px-3 text-left transition-colors",
-              currentTrackIndex === index
-                ? "border-2 border-stroke-brand-strong bg-fill-neutral-weakest"
-                : "border-stroke-neutral-weaker hover:border-stroke-neutral-weak",
+              "relative flex min-h-[66px] max-w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition-[transform,background-color,border-color] duration-150 active:scale-[0.98]",
+              currentTrackIndex === index && isEnabled
+                ? "border-stroke-brand-strong bg-background"
+                : "border-stroke-neutral-weak bg-background text-text-neutral-strong hover:bg-fill-neutral-weaker",
               isMutating ? "cursor-not-allowed opacity-50" : "cursor-pointer",
-              !isEnabled && "opacity-70",
             )}
             onClick={() => !isMutating && handleTrackSelect(index)}
+            disabled={isMutating}
           >
             <img src={musicImage} width={32} height={32} alt="" className="size-8 shrink-0" />
             <div className="flex min-w-0 flex-1 flex-col">
@@ -236,6 +265,9 @@ export default function BackgroundMusic() {
                 <span className="relative inline-flex size-2 rounded-full bg-fill-brand-strong" />
               </span>
             )}
+            {currentTrackIndex === index && isEnabled ? (
+              <CheckCircle2 className="absolute right-1.5 top-1.5 fill-fill-brand-strong text-text-inverse-strong" aria-hidden />
+            ) : null}
           </button>
         ))}
       </div>

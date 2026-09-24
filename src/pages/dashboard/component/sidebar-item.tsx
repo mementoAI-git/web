@@ -1,6 +1,7 @@
 import type { ComponentType, SVGProps } from "react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/utility";
+import { SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
 
 interface SideBarItemProps {
   Icon?: ComponentType<SVGProps<SVGSVGElement>>;
@@ -11,7 +12,6 @@ interface SideBarItemProps {
   link?: string;
   active?: boolean;
   onClick?: () => void;
-  color?: string;
 }
 
 export default function SideBarItem({
@@ -22,7 +22,6 @@ export default function SideBarItem({
   icon,
   emoji,
   title,
-  color: _color = "#F06037",
 }: SideBarItemProps) {
   const navigate = useNavigate();
 
@@ -34,39 +33,39 @@ export default function SideBarItem({
   };
 
   return (
-    <div
-      onClick={handleClick}
-      className={cn(
-        "flex h-10 w-full cursor-pointer items-center gap-3 rounded-[8px] border px-3 py-2 transition-colors group/item",
-        active
-          ? "active border-border bg-accent"
-          : "border-transparent bg-transparent hover:bg-accent",
-      )}
-    >
-      <div className="size-5 flex items-center justify-center transition-colors">
-        {emoji ? (
-          <span className="text-lg leading-none select-none" aria-hidden>
-            {emoji}
-          </span>
-        ) : icon ? (
-          <img src={icon} alt={title} className="size-5 object-contain" />
-        ) : Icon ? (
-          <Icon
-            className={cn(
-              "size-5",
-              active ? "text-foreground" : "text-muted-foreground",
-            )}
-          />
-        ) : null}
-      </div>
-      <span
+    <SidebarMenuItem>
+      <SidebarMenuButton
+        type="button"
+        isActive={active}
+        onClick={handleClick}
         className={cn(
-          "text-sm font-inter font-medium transition-colors",
-          active ? "font-semibold text-foreground" : "text-muted-foreground",
+          "h-10 gap-3 px-3 py-2 font-inter text-sm font-normal",
+          "transition-[transform,background-color,color] duration-150 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-[0.98]",
+          active && "font-semibold",
         )}
       >
-        {title}
-      </span>
-    </div>
+        <span className="flex size-5 shrink-0 items-center justify-center">
+          {emoji ? (
+            <span className="text-lg leading-none select-none" aria-hidden>
+              {emoji}
+            </span>
+          ) : icon ? (
+            <img
+              src={icon}
+              alt=""
+              aria-hidden
+              className="size-5 object-contain"
+            />
+          ) : Icon ? (
+            <Icon aria-hidden />
+          ) : null}
+        </span>
+        <span
+          className={cn("truncate", active ? "font-semibold" : "font-normal")}
+        >
+          {title}
+        </span>
+      </SidebarMenuButton>
+    </SidebarMenuItem>
   );
 }

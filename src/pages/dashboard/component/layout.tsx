@@ -69,12 +69,12 @@ export default function DashboardLayout() {
                 : "-translate-x-full md:translate-x-0",
               "fixed md:relative inset-y-0 left-0 z-50 md:z-auto",
               "transition-all duration-300 ease-in-out md:transition-all",
-              "w-full md:w-[250px] shrink-0",
+              "w-full md:w-[260px] shrink-0",
               mainSidebarCollapsed &&
                 "md:!w-0 md:!min-w-0 md:overflow-hidden md:opacity-0",
             )}
           >
-            <DashboardSideBar />
+            <DashboardSideBar onCollapse={handleMainSidebarToggle} />
           </div>
           <main className="flex min-w-0 flex-1 flex-col overflow-hidden dynamic-height-content">
             <DashboardHeaderActionsProvider>

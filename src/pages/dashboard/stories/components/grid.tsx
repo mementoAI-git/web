@@ -5,40 +5,34 @@ import { MemoryItemActions } from "./dropdown";
 import type { IMemory, IPagination } from "@/utility/interface";
 import dayjs from "dayjs";
 import { Link } from "react-router-dom";
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useModal } from "@/hooks/use-modal";
 import { cn } from "@/lib/utils";
 import { QuickCaptureProcessingBadge } from "@/components/memory/quick-capture-processing-badge";
+import useIntersectionObserver from "@/hooks/use-intersection-observer";
+import Spinner from "@/components/spinner";
+import { TypographyMuted } from "@/components/ui/typography";
 
 import { PlaySolidIcon, WaveIcon } from "@/components/icons";
 import recordBanner from "@/assets/icon/record-banner.png";
+import {
+  getCardSeed,
+  getTextCardSurfaceClass,
+  hasAtLeastRenderedBodyLines,
+  pickBySeed,
+} from "./grid-helpers";
 
 const DEFAULT_VIEWPORT_WIDTH = 1280;
 const MEDIA_CARD_ASPECTS = ["aspect-[4/5]", "aspect-[5/6]", "aspect-[3/4]", "aspect-square"] as const;
 const TEXT_BODY_CLAMPS = ["line-clamp-[5]", "line-clamp-[7]", "line-clamp-[9]"] as const;
 const TEXT_CARD_MIN_HEIGHTS = ["min-h-[206px]", "min-h-[232px]", "min-h-[264px]"] as const;
-const TEXT_ONLY_CARD_SURFACES: CSSProperties[] = [
-  {
-    backgroundColor: "color-mix(in srgb, var(--fill-neutral-weak) 88%, white)",
-    borderColor: "color-mix(in srgb, var(--stroke-neutral-weak) 84%, white)",
-  },
-  {
-    backgroundColor: "color-mix(in srgb, var(--fill-brand-weak) 42%, white)",
-    borderColor: "color-mix(in srgb, var(--stroke-neutral-weak) 78%, var(--fill-brand-weak) 22%)",
-  },
-  {
-    backgroundColor: "color-mix(in srgb, var(--fill-warning-weak) 54%, white)",
-    borderColor: "color-mix(in srgb, var(--stroke-neutral-weak) 78%, var(--fill-warning-weak) 22%)",
-  },
-  {
-    backgroundColor: "color-mix(in srgb, var(--fill-info-weak) 42%, white)",
-    borderColor: "color-mix(in srgb, var(--stroke-neutral-weak) 80%, var(--fill-info-weak) 20%)",
-  },
-  {
-    backgroundColor: "color-mix(in srgb, var(--fill-success-weak) 44%, white)",
-    borderColor: "color-mix(in srgb, var(--stroke-neutral-weak) 80%, var(--fill-success-weak) 20%)",
-  },
-];
 
 function getStoryKey(memory: IMemory, index: number) {
   return memory._id || `${memory.createdAt || "story"}-${index}`;
@@ -70,26 +64,6 @@ function getTopicColor(topic: string) {
   };
 }
 
-function getStableHash(source: string) {
-  let hash = 0;
-  for (let i = 0; i < source.length; i++) {
-    hash = source.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  return Math.abs(hash);
-}
-
-function getCardSeed(memory: IMemory, title: string) {
-  return getStableHash(memory._id || memory.prompt_text || memory.title || title);
-}
-
-function pickBySeed<T>(items: readonly T[], seed: number): T {
-  return items[seed % items.length];
-}
-
-function getTextCardSurface(memory: IMemory, title: string): CSSProperties {
-  return pickBySeed(TEXT_ONLY_CARD_SURFACES, getCardSeed(memory, title));
-}
-
 function getStoryCardTitle(memory: IMemory): string {
   if (memory.prompt_type && memory.prompt_text?.trim()) {
     return memory.prompt_text.trim();
@@ -107,6 +81,8 @@ function StoriesGridItem({
   onMeasure?: (node: HTMLElement | null) => void;
 }) {
   const { open } = useModal();
+  const textBodyRef = useRef<HTMLDivElement | null>(null);
+  const [isTallTextCard, setIsTallTextCard] = useState(false);
 
   const handleClick = useCallback(
     (e: React.MouseEvent) => {
@@ -118,20 +94,43 @@ function StoriesGridItem({
     [isMobile, open, memory._id],
   );
 
-  const stopMenuBubble = useCallback((e: React.MouseEvent | React.KeyboardEvent) => {
-    e.stopPropagation();
-  }, []);
-
-  const bannerMedia = memory.attachments.find(
+  const bannerMediaIndex = memory.attachments.findIndex(
     (a) => a.type.includes("image") || a.type.includes("video"),
   );
-  const audioMedia = memory.attachments.find((a) => a.type.includes("audio"));
+  const bannerMedia = memory.attachments[bannerMediaIndex];
+  const audioMediaIndex = memory.attachments.findIndex((a) =>
+    a.type.includes("audio"),
+  );
+  const audioMedia = memory.attachments[audioMediaIndex];
   const storyTitle = getStoryCardTitle(memory);
   const cardSeed = getCardSeed(memory, storyTitle);
-  const textCardSurface = getTextCardSurface(memory, storyTitle);
+  const textCardSurfaceClass = getTextCardSurfaceClass(memory, storyTitle);
   const mediaAspectClass = pickBySeed(MEDIA_CARD_ASPECTS, cardSeed);
   const textBodyClampClass = pickBySeed(TEXT_BODY_CLAMPS, cardSeed);
   const textCardMinHeightClass = pickBySeed(TEXT_CARD_MIN_HEIGHTS, cardSeed);
+
+  useLayoutEffect(() => {
+    const body = textBodyRef.current;
+    if (!body || bannerMedia || audioMedia) return;
+
+    const measure = () => {
+      setIsTallTextCard(hasAtLeastRenderedBodyLines(body));
+    };
+    measure();
+
+    if (typeof ResizeObserver === "undefined") return;
+
+    const observer = new ResizeObserver(measure);
+    observer.observe(body);
+    return () => observer.disconnect();
+  }, [audioMedia, bannerMedia, memory.body]);
+
+  const renderMediaCounter = (activeIndex: number) =>
+    memory.attachments.length > 1 ? (
+      <span className="pointer-events-none absolute left-3 top-3 z-10 rounded-full bg-black/70 px-3 py-1.5 font-inter text-sm font-medium text-white backdrop-blur-sm">
+        {activeIndex + 1}/{memory.attachments.length}
+      </span>
+    ) : null;
 
   const renderContent = () => {
     if (bannerMedia) {
@@ -143,7 +142,12 @@ function StoriesGridItem({
             mediaAspectClass,
           )}
         >
-          <QuickCaptureProcessingBadge memory={memory} variant="overlay" />
+          <QuickCaptureProcessingBadge
+            memory={memory}
+            variant="overlay"
+            className={memory.attachments.length > 1 ? "top-12" : undefined}
+          />
+          {renderMediaCounter(bannerMediaIndex)}
           <img
             src={bannerMedia.url}
             className="h-full w-full object-cover"
@@ -169,7 +173,12 @@ function StoriesGridItem({
             mediaAspectClass,
           )}
         >
-          <QuickCaptureProcessingBadge memory={memory} variant="overlay" />
+          <QuickCaptureProcessingBadge
+            memory={memory}
+            variant="overlay"
+            className={memory.attachments.length > 1 ? "top-12" : undefined}
+          />
+          {renderMediaCounter(audioMediaIndex)}
           <img
             src={recordBanner}
             className="absolute inset-0 h-full w-full object-cover opacity-90"
@@ -188,16 +197,16 @@ function StoriesGridItem({
       );
     }
 
-    const hasSummary = Boolean(memory.summary?.trim());
     const hasTopics = Array.isArray(memory.topics) && memory.topics.length > 0;
 
     return (
       <div
-        style={textCardSurface}
+        data-slot="story-text-card"
         className={cn(
-          "relative flex w-full flex-col gap-3 overflow-hidden rounded-[20px] border p-5 shadow-sm transition-[filter] duration-300 group-hover/card:brightness-[0.97]",
+          "relative flex w-full flex-col gap-3 overflow-hidden rounded-[20px] border border-stroke-neutral-weaker p-5 shadow-sm transition-[filter] duration-300 group-hover/card:brightness-[0.97]",
           "backdrop-blur-md",
-          textCardMinHeightClass,
+          textCardSurfaceClass,
+          isTallTextCard ? "aspect-[3/4]" : textCardMinHeightClass,
         )}
       >
         <div className="flex flex-wrap items-center gap-2">
@@ -207,16 +216,20 @@ function StoriesGridItem({
           <QuickCaptureProcessingBadge memory={memory} variant="inline" />
         </div>
 
-        {hasSummary ? (
-          <div className="my-0.5 rounded-[16px] border-l-[3px] border-v3-brand-strong bg-white/35 px-3 py-2">
-            <p className="font-georgia italic text-xs leading-relaxed text-v3-text-strong">
-              "{memory.summary?.trim()}"
-            </p>
-          </div>
-        ) : null}
+        <div
+          ref={textBodyRef}
+          data-slot="story-text-body"
+          className={cn(
+            "font-inter text-sm leading-relaxed text-v3-text-weak [&_a]:underline",
+            textBodyClampClass,
+          )}
+          dangerouslySetInnerHTML={{
+            __html: ensureLinksOpenInNewTab(DOMPurify.sanitize(memory?.body || "")),
+          }}
+        />
 
         {hasTopics ? (
-          <div className="flex flex-wrap gap-1 mt-0.5">
+          <div className="mt-0.5 flex flex-wrap gap-1">
             {memory.topics?.map((topic) => {
               const colors = getTopicColor(topic);
               return (
@@ -235,17 +248,6 @@ function StoriesGridItem({
             })}
           </div>
         ) : null}
-
-        <div
-          className={cn(
-            "font-inter text-sm leading-relaxed text-v3-text-weak [&_a]:underline",
-            hasSummary ? "line-clamp-[4]" : textBodyClampClass,
-          )}
-          dangerouslySetInnerHTML={{
-            __html: ensureLinksOpenInNewTab(DOMPurify.sanitize(memory?.body || "")),
-          }}
-        />
-        <div className="pointer-events-none absolute bottom-0 left-0 mt-auto h-16 w-full bg-gradient-to-t from-white/40 to-transparent" />
       </div>
     );
   };
@@ -267,44 +269,60 @@ function StoriesGridItem({
         <div className="relative overflow-hidden rounded-[20px]">
           {renderContent()}
           <div
-            className="pointer-events-none absolute inset-0 rounded-[20px] bg-gradient-to-t from-black/55 via-black/15 to-transparent opacity-0 transition-opacity duration-300 group-hover/card:opacity-100"
+            data-slot="story-hover-overlay"
+            className="pointer-events-none absolute inset-0 rounded-[20px] bg-black/20 opacity-0 transition-opacity duration-300 group-hover/card:opacity-100"
             aria-hidden
           />
-          <div className="pointer-events-none absolute bottom-3 left-3 z-10 translate-y-2 opacity-0 transition-all duration-300 group-hover/card:translate-y-0 group-hover/card:opacity-100">
-            <span className="inline-flex items-center rounded-full bg-white px-4 py-2 font-inter text-sm font-semibold text-neutral-900 shadow-lg ring-1 ring-black/5">
-              Open story
-            </span>
-          </div>
         </div>
       </Link>
 
       <div
-        className="absolute top-2 right-2 z-20 opacity-0 transition-opacity duration-300 group-hover/card:pointer-events-auto group-hover/card:opacity-100 pointer-events-none sm:top-3 sm:right-3"
-        onClick={stopMenuBubble}
-        onKeyDown={stopMenuBubble}
+        data-slot="story-card-caption"
+        className="mt-2 flex items-center gap-8 px-0.5"
       >
-        <div className="overflow-hidden rounded-xl border border-v3-stroke-weak bg-white/95 shadow-lg backdrop-blur-sm">
-          <MemoryItemActions memory={memory} />
+        <p className="min-w-0 flex-1 truncate text-left font-inter text-xs font-medium leading-snug text-v3-text-strong sm:text-[13px]">
+          {storyTitle}
+        </p>
+        <div data-slot="story-card-menu" className="shrink-0">
+          <MemoryItemActions memory={memory} trigger="horizontal" />
         </div>
       </div>
-
-      <p className="mt-2 line-clamp-2 px-0.5 text-center font-inter text-xs font-medium leading-snug text-v3-text-strong sm:text-[13px]">
-        {storyTitle}
-      </p>
     </article>
   );
 }
 
-export default function StoriesGrid({ data }: { data: IPagination<IMemory> }) {
+interface StoriesGridProps {
+  data?: IPagination<IMemory>;
+  hasMore?: boolean;
+  isLoadingMore?: boolean;
+  onLoadMore?: () => void;
+}
+
+export default function StoriesGrid({
+  data,
+  hasMore = false,
+  isLoadingMore = false,
+  onLoadMore,
+}: StoriesGridProps) {
   const [viewportWidth, setViewportWidth] = useState(
     () => typeof window !== "undefined" ? window.innerWidth : DEFAULT_VIEWPORT_WIDTH,
   );
   const [measuredHeights, setMeasuredHeights] = useState<Record<string, number>>({});
   const resizeObserverRef = useRef<ResizeObserver | null>(null);
   const observedNodesRef = useRef(new Map<string, HTMLElement>());
-  const stories = data?.docs ?? [];
+  const stories = useMemo(() => data?.docs ?? [], [data?.docs]);
   const { columns: columnsCount, gutter } = getMasonryConfig(viewportWidth);
   const isMobile = viewportWidth < 640;
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
+  const isLoadMoreVisible = useIntersectionObserver(loadMoreRef, {
+    rootMargin: "400px 0px",
+  });
+
+  useEffect(() => {
+    if (isLoadMoreVisible && hasMore && !isLoadingMore) {
+      onLoadMore?.();
+    }
+  }, [hasMore, isLoadMoreVisible, isLoadingMore, onLoadMore]);
 
   useEffect(() => {
     const check = () => setViewportWidth(window.innerWidth);
@@ -393,7 +411,7 @@ export default function StoriesGrid({ data }: { data: IPagination<IMemory> }) {
     return columns;
   }, [columnsCount, measuredHeights, stories]);
 
-  if (stories.length === 0) {
+  if (stories.length === 0 && !isLoadingMore) {
     return (
       <div className="flex flex-col items-center justify-center px-4 py-12 text-center">
         <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-v3-fill-weaker">
@@ -408,26 +426,51 @@ export default function StoriesGrid({ data }: { data: IPagination<IMemory> }) {
   }
 
   return (
-    <div
-      className="flex w-full items-start"
-      style={{ gap: `${gutter}px` }}
-    >
-      {storiesByColumn.map((column, columnIndex) => (
+    <div className="flex w-full flex-col gap-6">
+      {stories.length > 0 ? (
         <div
-          key={`stories-column-${columnIndex}`}
-          className="flex min-w-0 flex-1 flex-col"
+          className="flex w-full items-start"
           style={{ gap: `${gutter}px` }}
         >
-          {column.map(({ memory, key }) => (
-            <StoriesGridItem
-              key={key}
-              memory={memory}
-              isMobile={isMobile}
-              onMeasure={(node) => registerMeasuredNode(key, node)}
-            />
+          {storiesByColumn.map((column, columnIndex) => (
+            <div
+              key={`stories-column-${columnIndex}`}
+              className="flex min-w-0 flex-1 flex-col"
+              style={{ gap: `${gutter}px` }}
+            >
+              {column.map(({ memory, key }) => (
+                <StoriesGridItem
+                  key={key}
+                  memory={memory}
+                  isMobile={isMobile}
+                  onMeasure={(node) => registerMeasuredNode(key, node)}
+                />
+              ))}
+            </div>
           ))}
         </div>
-      ))}
+      ) : (
+        <div className="flex min-h-48 items-center justify-center">
+          <Spinner loading />
+        </div>
+      )}
+
+      <div
+        ref={loadMoreRef}
+        data-slot="stories-grid-load-more"
+        className="flex min-h-10 w-full items-center justify-center py-2"
+        aria-live="polite"
+      >
+        {isLoadingMore ? (
+          <Spinner loading />
+        ) : hasMore ? (
+          <span className="sr-only">Loading more items when visible</span>
+        ) : (
+          <TypographyMuted className="text-sm text-neutral-weaker">
+            End of items
+          </TypographyMuted>
+        )}
+      </div>
     </div>
   );
 }

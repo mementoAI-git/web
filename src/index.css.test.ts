@@ -31,6 +31,20 @@ function sourceFiles(directory: string): string[] {
 }
 
 describe("dark color token compatibility", () => {
+  it("uses a pure white page canvas in light mode", () => {
+    expect(declaration(":root", "--color-background")).toBe("#ffffff");
+    expect(declaration(":root", "--background")).toBe("#ffffff");
+  });
+
+  it("uses the approved app canvas throughout dark mode", () => {
+    expect(declaration(".dark", "--color-background")).toBe("#12131a");
+    expect(declaration(".dark", "--bg-neutral")).toBe("#12131a");
+    expect(declaration(".dark", "--v3-bg")).toBe("#12131a");
+    expect(declaration(".dark", "--background")).toBe("#12131a");
+    expect(declaration(".dark", "--card")).toBe("var(--background)");
+    expect(declaration(".dark", "--popover")).toBe("var(--background)");
+  });
+
   it("scopes dark utilities to the selected class", () => {
     const darkVariant = stylesheet.nodes.find(
       (node) =>

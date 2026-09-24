@@ -22,7 +22,7 @@ export function StoriesActionButtons({
         <Button
           variant="ghost"
           onClick={onQuickCapture}
-          className="h-full rounded-[8px] border border-v3-stroke-weak bg-white px-4 font-inter text-sm font-medium text-v3-text-strong hover:bg-v3-fill-weaker"
+          className="h-full rounded-[8px] border border-v3-stroke-weak bg-background px-4 font-inter text-sm font-medium text-v3-text-strong hover:bg-v3-fill-weaker"
         >
           <Zap className="size-4 shrink-0" strokeWidth={2} aria-hidden />
           <span className="whitespace-nowrap">Quick add</span>

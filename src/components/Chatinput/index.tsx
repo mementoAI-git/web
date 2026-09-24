@@ -29,7 +29,7 @@ import {
   CHAT_SLASH_COMMANDS,
   type ChatSlashCommandItem,
 } from "./chat-slash-commands";
-import { Mic, Paperclip, Phone } from "lucide-react";
+import { ArrowUp, Mic, Paperclip, Phone } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 
 export interface IOnSendPayload {
@@ -478,12 +478,13 @@ function ChatinputImpl({
 
   return (
     <div className={cn(wrapperClassName)} data-testid={shellTestId}>
-      <div className="w-full min-w-0 rounded-[22px] bg-fill-neutral-weaker/70 p-1 sm:rounded-[26px] sm:p-[5px] md:rounded-[30px] md:p-[6px]">
+      <div className="w-full min-w-0">
         <div
           ref={inputWrapperRef}
+          data-testid="chat-composer-surface"
           className={
             cn(
-              "flex min-h-[92px] w-full min-w-0 flex-col gap-2 rounded-3xl border border-stroke-neutral-weak px-3 py-2.5 shadow-[0px_4px_8px_0px_var(--brown-300-16)] focus-within:border-stroke-brand-strong bg-fill-neutral-weak sm:min-h-[108px] sm:gap-3 sm:px-4 sm:py-3 md:min-h-[120px] md:gap-4 md:p-6",
+              "flex min-h-24 w-full min-w-0 flex-col gap-2 rounded-xl border border-stroke-neutral-weak bg-background px-3 py-2.5 transition-[border-color,box-shadow] duration-150 focus-within:border-stroke-neutral-strong focus-within:shadow-sm sm:px-4 sm:py-3",
               className
             )
           }
@@ -492,7 +493,7 @@ function ChatinputImpl({
             <ImagePreview {...{ files, handleRemoveFile }} />
           )}
           {replyQuote?.text?.trim() ? (
-            <div className="flex w-full min-w-0 items-start gap-2 rounded-xl border-l-[3px] border-stroke-brand-strong bg-fill-neutral-weakest px-3 py-2">
+            <div className="flex w-full min-w-0 items-start gap-2 rounded-xl border-l-[3px] border-stroke-brand-strong bg-fill-neutral-weaker px-3 py-2">
               <div className="min-w-0 flex-1">
                 <p className="font-inter text-[11px] font-semibold uppercase tracking-wide text-text-neutral-weak">
                   Replying to{" "}
@@ -524,7 +525,7 @@ function ChatinputImpl({
             onSelect={() => setCursorPosition(textareaRef.current?.selectionStart ?? 0)}
             placeholder="Type text here... Type / for formatting"
             className={cn(
-              "min-h-10 md:min-h-12 w-full shrink-0 outline-none font-georgia resize-none text-lg md:text-xl text-text-neutral-strong overflow-hidden",
+              "min-h-10 w-full shrink-0 resize-none overflow-hidden bg-transparent font-geist text-sm leading-5 text-text-neutral-strong outline-none placeholder:text-text-neutral-weaker sm:text-base sm:leading-6",
               {
                 [inputClassName]: !isEmpty(inputClassName),
               },
@@ -542,15 +543,15 @@ function ChatinputImpl({
             onCommandSelect={handleSlashCommandSelect}
             onClose={() => setShowSlashMenu(false)}
           />
-          <div className="flex justify-between gap-3">
-            <div className="flex items-center gap-4">
+          <div className="mt-auto flex justify-between gap-3">
+            <div className="flex items-center gap-2">
               {/* File Upload Button */}
               <label
                 htmlFor="chat-file-trigger"
                 aria-label="Attach file"
-                className="flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-xl border border-stroke-neutral-weaker bg-fill-neutral-weakest text-icon-neutral transition-colors hover:bg-fill-neutral-weaker hover:text-text-neutral-strong md:size-11"
+                className="flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-full bg-fill-neutral-weaker text-icon-neutral-weak transition-[transform,background-color,color] duration-150 hover:bg-fill-neutral-weak hover:text-text-neutral-strong active:scale-[0.97]"
               >
-                <Paperclip className="size-3 md:size-5" strokeWidth={1.75} aria-hidden />
+                <Paperclip className="size-4" strokeWidth={1.75} aria-hidden />
                 <input
                   id="chat-file-trigger"
                   type="file"
@@ -561,11 +562,11 @@ function ChatinputImpl({
                 />
               </label>
 
-              {!typing ? (
+              {shellTestId !== "chat-input-conversation-shell" && !typing ? (
                 voiceCallTo ? (
                   <Link
                     to={voiceCallTo}
-                    className="inline-flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-xl border border-stroke-neutral-weaker bg-fill-neutral-weakest text-icon-neutral no-underline transition-colors hover:bg-fill-neutral-weaker hover:text-text-neutral-strong md:size-11"
+                    className="inline-flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-xl border border-stroke-neutral-weaker bg-fill-neutral-weaker text-icon-neutral-weak no-underline transition-colors hover:bg-fill-neutral-weak hover:text-text-neutral-strong md:size-11"
                     aria-label="Voice call"
                   >
                     <Phone
@@ -578,7 +579,7 @@ function ChatinputImpl({
                   <button
                     type="button"
                     onClick={() => setInlineVoiceOpen(true)}
-                    className="flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-xl border border-stroke-neutral-weaker bg-fill-neutral-weakest text-icon-neutral transition-colors hover:bg-fill-neutral-weaker hover:text-text-neutral-strong md:size-11"
+                    className="flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-xl border border-stroke-neutral-weaker bg-fill-neutral-weaker text-icon-neutral-weak transition-colors hover:bg-fill-neutral-weak hover:text-text-neutral-strong md:size-11"
                     aria-label="Voice call"
                   >
                     <Phone
@@ -591,20 +592,20 @@ function ChatinputImpl({
               ) : null}
             </div>
 
-            <div className="flex shrink-0 items-center gap-2 md:gap-3">
-              {!typing ? (
+            <div className="flex shrink-0 items-center gap-2">
+              {!typing && !showSendControl ? (
                 <button
                   type="button"
                   onClick={() => void toggleQuickRecording()}
                   className={cn(
-                    "flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-xl border border-stroke-neutral-weaker bg-fill-neutral-weakest text-icon-neutral transition-colors hover:bg-fill-neutral-weaker hover:text-text-neutral-strong md:size-11",
+                    "flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-full bg-fill-neutral-weaker text-icon-neutral-weak transition-[transform,background-color,color] duration-150 hover:bg-fill-neutral-weak hover:text-text-neutral-strong active:scale-[0.97]",
                     isQuickRecording &&
-                      "border-stroke-error-weak bg-fill-error-weak text-text-error-strong hover:bg-fill-error-weaker",
+                      "border-stroke-error-strong bg-fill-error-weak text-text-error-strong hover:bg-fill-error-weak",
                   )}
                   aria-label={isQuickRecording ? "Stop recording" : "Record voice clip"}
                 >
                   <Mic
-                    className="size-3.5 shrink-0 md:size-5"
+                    className="size-4 shrink-0"
                     strokeWidth={1.75}
                     aria-hidden
                   />
@@ -624,7 +625,8 @@ function ChatinputImpl({
                   type="button"
                   onClick={handleSend}
                   disabled={sendDisabled}
-                  className="btn space-x-2 text-white disabled:pointer-events-none disabled:opacity-50"
+                  aria-label="Send"
+                  className="flex size-9 shrink-0 items-center justify-center rounded-full bg-fill-neutral-strong text-primary-foreground transition-[transform,opacity] duration-150 active:scale-[0.97] disabled:pointer-events-none disabled:opacity-50"
                 >
                   {loading ? (
                     <>
@@ -632,7 +634,7 @@ function ChatinputImpl({
                       <Spinner loading className="!size-4" />
                     </>
                   ) : (
-                    "Send"
+                    <><ArrowUp className="size-4" strokeWidth={2} aria-hidden /><span className="sr-only">Send</span></>
                   )}
                 </button>
               ) : null}

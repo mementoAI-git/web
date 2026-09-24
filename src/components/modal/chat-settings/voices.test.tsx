@@ -13,7 +13,7 @@ vi.mock("swr", async (importOriginal) => {
         data: {
           data: {
             voices: [
-              { id: "kore", title: "Kore", subtitle: "warm", gender: "female", voiceName: "Kore" },
+              { id: "kore", title: "Kore", subtitle: "warm", gender: "female", voiceName: "Kore", platform: "Gemini", client: "Web", imageUrl: "/kore.png" },
               { id: "leda", title: "Leda", subtitle: "clear", gender: "female", voiceName: "Leda" },
             ],
           },
@@ -60,6 +60,18 @@ vi.mock("sonner", () => ({
 }));
 
 describe("Voices", () => {
+  it("shows only the name and one gender-and-type metadata line", () => {
+    renderWithProviders(<Voices />, {
+      auth: true,
+      route: "/overview",
+    });
+
+    expect(screen.getByText("Kore")).toBeInTheDocument();
+    expect(screen.getByText("Female · Warm")).toBeInTheDocument();
+    expect(screen.queryByText(/Gemini · Web/i)).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /kore/i }).querySelector('[data-slot="avatar"]')).toBeInTheDocument();
+  });
+
   it("saves the voice as default immediately then runs Gemini preview", async () => {
     previewGeminiChatVoice.mockClear();
     previewElevenLabsVoice.mockClear();

@@ -613,6 +613,7 @@
 **Status:** Largely complete. The remaining gap is deeper tool extraction and rollout flags, not the core contract shape.
 
 **Files:**
+
 - Create: `memento-web/src/features/ai/`
 - Create: `api/src/services/ai/workflows/`
 - Create: `api/src/services/ai/tools/`
@@ -634,7 +635,6 @@
   - `ai.story_assistant_v2`
   - `ai.story_media_organizer`
   - `ai.archive_enrichment_v1`
-
 - [x] Create Eve-facing backend seams now, even if only some are implemented immediately:
   - `api/src/services/ai/workflows/task-router.ts`
   - `api/src/services/ai/workflows/eve-adapter.ts`
@@ -648,6 +648,7 @@
 **Status:** Core implementation complete. Adoption across the app is still partial.
 
 **Files:**
+
 - Create: `memento-web/src/features/ai/tasks.ts`
 - Create: `memento-web/src/features/ai/use-ai-task.ts`
 - Create: `memento-web/src/features/ai/ai-task.types.ts`
@@ -706,6 +707,7 @@
 **Status:** Partially complete. The composer assistant is real for rewrite and memory-digging flows; metadata and broader routing are still incomplete.
 
 **Files:**
+
 - Modify: `memento-web/src/components/modal/memory/create/index.tsx`
 - Create: `memento-web/src/components/modal/memory/create/create-memory-assistant-panel.tsx`
 - Create: `memento-web/src/components/modal/memory/create/create-memory-ai.ts`
@@ -735,6 +737,7 @@
 **Goal:** Upgrade host chat from pure conversation into guided action where appropriate.
 
 **Files:**
+
 - Modify: `memento-web/src/pages/dashboard/chat/conversation/index.tsx`
 - Modify: `memento-web/src/features/enrichment/use-enrichment-stats.ts`
 - Create: `api/src/services/ai/workflows/chat-deep-dive.ts`
@@ -762,6 +765,7 @@
 **Goal:** Reuse the same workflow patterns in onboarding chat.
 
 **Files:**
+
 - Modify: `memento-web/src/api/host-onboarding-chat.ts`
 - Modify: `memento-web/src/pages/onboard-chat/host-onboarding-chat-screen.tsx`
 - Create: `api/src/services/ai/workflows/onboarding-personalization.ts`
@@ -784,6 +788,7 @@
 **Goal:** Add the first truly agentic actions that perform real product work.
 
 **Files:**
+
 - Create: `api/src/services/ai/workflows/archive-enrich-memory.ts`
 - Create: `api/src/services/ai/workflows/archive-enrich-batch.ts`
 - Create: `api/src/services/ai/tools/load-memory.ts`
@@ -804,6 +809,7 @@
 **Goal:** Use Eve only where the product benefits from a stronger runtime.
 
 **Files:**
+
 - Create: `api/agent/`
 - Create: `api/agent/tools/`
 - Create: `api/agent/workflows/`
@@ -859,13 +865,15 @@
 
 ### Subagent task matrix
 
-| Subagent | Primary job | First app surface | Initial tasks | Internal tools it should use first | Allowed actions at launch |
-|---|---|---|---|---|---|
-| Conversation agent | Understand the user request and route work | Assistant tab, host chat, onboarding chat | `assistant.route_request`, `chat.deep_dive_followup`, `chat.compose_response` | `loadMemoryDraft`, `appendConversationMessages`, `loadUserContext` | `suggest`, `assist` |
-| Writing agent | Rewrite and expand story drafts | Story composer Assistant tab | `story.rewrite_draft`, `story.draft_from_notes`, `story.expand_draft` | `loadMemoryDraft`, `saveStoryDraftPatch`, `loadUploadedFiles` | `suggest`, `assist` |
-| Memory digging agent | Ask better follow-ups and uncover missing meaning | Story composer Assistant tab, host chat | `story.identify_missing_details`, `story.connect_related_memory`, `chat.deep_dive_followup` | `loadMemoryDraft`, `loadMemoryTimeline`, `loadUserContext` | `suggest`, `assist` |
-| Metadata agent | Improve structure around the memory | Story composer properties + Assistant tab | `story.suggest_title`, `story.suggest_tags`, `story.classify_memory` | `loadMemoryDraft`, `updateStoryMetadata`, `loadTagHistory` | `suggest`, `assist`, narrow `act` later |
-| Media and archive agent | Organize files and enrich memory archives | Upload organization flow, admin enrichment surfaces | `story.organize_uploads`, `archive.enrich_memory`, `archive.enrich_batch` | `loadUploadedFiles`, `classifyUploadedFiles`, `updateStoryMetadata`, `enqueueArchiveEnrichment` | `assist`, `act` |
+
+| Subagent                | Primary job                                       | First app surface                                   | Initial tasks                                                                               | Internal tools it should use first                                                              | Allowed actions at launch               |
+| ----------------------- | ------------------------------------------------- | --------------------------------------------------- | ------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- | --------------------------------------- |
+| Conversation agent      | Understand the user request and route work        | Assistant tab, host chat, onboarding chat           | `assistant.route_request`, `chat.deep_dive_followup`, `chat.compose_response`               | `loadMemoryDraft`, `appendConversationMessages`, `loadUserContext`                              | `suggest`, `assist`                     |
+| Writing agent           | Rewrite and expand story drafts                   | Story composer Assistant tab                        | `story.rewrite_draft`, `story.draft_from_notes`, `story.expand_draft`                       | `loadMemoryDraft`, `saveStoryDraftPatch`, `loadUploadedFiles`                                   | `suggest`, `assist`                     |
+| Memory digging agent    | Ask better follow-ups and uncover missing meaning | Story composer Assistant tab, host chat             | `story.identify_missing_details`, `story.connect_related_memory`, `chat.deep_dive_followup` | `loadMemoryDraft`, `loadMemoryTimeline`, `loadUserContext`                                      | `suggest`, `assist`                     |
+| Metadata agent          | Improve structure around the memory               | Story composer properties + Assistant tab           | `story.suggest_title`, `story.suggest_tags`, `story.classify_memory`                        | `loadMemoryDraft`, `updateStoryMetadata`, `loadTagHistory`                                      | `suggest`, `assist`, narrow `act` later |
+| Media and archive agent | Organize files and enrich memory archives         | Upload organization flow, admin enrichment surfaces | `story.organize_uploads`, `archive.enrich_memory`, `archive.enrich_batch`                   | `loadUploadedFiles`, `classifyUploadedFiles`, `updateStoryMetadata`, `enqueueArchiveEnrichment` | `assist`, `act`                         |
+
 
 ### Subagent tool boundaries
 

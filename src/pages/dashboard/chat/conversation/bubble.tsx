@@ -3,14 +3,14 @@ import { CopyIcon, WaveIcon } from "@/components/icons";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import dayjs from "dayjs";
-import { CornerDownRight, Play, Mic } from "lucide-react";
+import { CornerDownRight } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { snippetReplyText } from "@/utility/chat-reply-prompt";
-import { isImage } from "@/pages/dashboard/time-capsule-new/utility/helpers";
-import { useModal } from "@/hooks/use-modal";
-import type { IFile } from "@/utility/interface";
-import { useSignedMediaAccess } from "@/features/media/signed-media-access";
+import type { IFile, ILinkMetadata } from "@/utility/interface";
+import { ChatMediaGroup } from "./chat-media-group";
+import { ChatLinkPreview } from "./chat-link-preview";
+import { buildConversationAssetIndex, extractSharedUrls } from "./conversation-assets";
 
 type ChatAttachment = Pick<IFile, "url" | "name"> &
   Partial<Omit<IFile, "url" | "name">>;
@@ -36,6 +36,7 @@ interface IBubbleProps {
   /** Host Chat: deep-dive accent on assistant bubbles */
   hostChatDeepDive?: boolean
   modelLabel?: string
+  linkMetadata?: ILinkMetadata[]
 }
 
 interface ITypingBubbleProps extends Pick<IBubbleProps, "text" | "modelLabel"> {
@@ -48,116 +49,6 @@ function formatMessageTime(iso?: string) {
   const d = dayjs(iso);
   if (!d.isValid()) return null;
   return d.format("MMM D, h:mm A");
-}
-
-function normalizeChatAttachment(attachment: ChatAttachment): IFile {
-  return {
-    ...attachment,
-    _id: attachment._id ?? "",
-    size: attachment.size ?? 0,
-    type: attachment.type ?? "",
-  };
-}
-
-function ChatAttachmentPreview({
-  attachment,
-  attachments,
-  index,
-}: {
-  attachment: ChatAttachment;
-  attachments: ChatAttachment[];
-  index: number;
-}) {
-  const { push } = useModal();
-  const file = normalizeChatAttachment(attachment);
-  const { src, onError } = useSignedMediaAccess(file);
-  const { name, type } = file;
-  const ext = name?.split(".").pop()?.toLowerCase() || "";
-  const isVideoFile =
-    type?.startsWith("video/") ||
-    ["mp4", "mov", "webm", "ogg"].includes(ext);
-  const isAudioFile =
-    type?.startsWith("audio/") ||
-    ["mp3", "wav", "m4a", "webm", "ogg", "aac"].includes(ext);
-  const isImageFile = isImage(name);
-
-  const handleClick = () => {
-    push?.("file-preview", {
-      files: attachments.map(normalizeChatAttachment),
-      startIndex: index,
-    });
-  };
-
-  if (isVideoFile) {
-    return (
-      <button
-        type="button"
-        onClick={handleClick}
-        className="relative flex h-auto max-h-[99px] max-w-[148px] flex-1 shrink cursor-pointer items-center justify-center overflow-hidden rounded-lg bg-black/80"
-      >
-        <video
-          src={src}
-          onError={onError}
-          className="h-full w-full object-cover"
-          muted
-          preload="metadata"
-        />
-        <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-          <div className="flex size-8 items-center justify-center rounded-full bg-white/90">
-            <Play className="size-4 text-black" fill="currentColor" />
-          </div>
-        </div>
-      </button>
-    );
-  }
-
-  if (isAudioFile) {
-    return (
-      <button
-        type="button"
-        onClick={handleClick}
-        className="flex h-[56px] w-[148px] cursor-pointer items-center gap-2 rounded-lg bg-fill-neutral-weakest px-3 py-2 transition-colors hover:bg-fill-neutral-weaker"
-      >
-        <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-fill-brand-weak">
-          <Mic className="size-4 text-text-brand-strong" />
-        </div>
-        <span className="min-w-0 flex-1 truncate font-inter text-xs text-text-neutral-strong">
-          {name || "Audio"}
-        </span>
-      </button>
-    );
-  }
-
-  if (isImageFile) {
-    return (
-      <button
-        type="button"
-        onClick={handleClick}
-        className="cursor-pointer overflow-hidden rounded-lg"
-      >
-        <img
-          src={src}
-          onError={onError}
-          width={148}
-          height={99}
-          className="h-auto max-h-[99px] max-w-[148px] flex-1 shrink rounded-lg object-cover transition-opacity hover:opacity-90"
-          alt={name}
-        />
-      </button>
-    );
-  }
-
-  return (
-    <button
-      type="button"
-      onClick={handleClick}
-      className="flex h-[56px] w-[148px] cursor-pointer items-center gap-2 rounded-lg bg-fill-neutral-weakest px-3 py-2 transition-colors hover:bg-fill-neutral-weaker"
-    >
-      <span className="min-w-0 flex-1 truncate font-inter text-xs text-text-neutral-strong">
-        {name || "File"}
-      </span>
-    </button>
-  );
 }
 
 export default function Bubble({
@@ -175,6 +66,7 @@ export default function Bubble({
   onReply,
   hostChatDeepDive = false,
   modelLabel,
+  linkMetadata = [],
 }: IBubbleProps) {
 
   const isUser = role === "user"
@@ -209,6 +101,19 @@ export default function Bubble({
         (typeof window !== "undefined" &&
           ["localhost", "127.0.0.1"].includes(window.location.hostname))),
   );
+  const messageLinks = useMemo(
+    () => buildConversationAssetIndex([{ text, link_metadata: linkMetadata }]).links,
+    [linkMetadata, text],
+  );
+  const extractedUrls = useMemo(() => extractSharedUrls(text), [text]);
+  const metadataLink = messageLinks.find((link) =>
+    Boolean(link.title || link.domain || link.favicon),
+  );
+  const useMetadataPreview = Boolean(
+    metadataLink &&
+      extractedUrls.length === 1 &&
+      text.trim() === extractedUrls[0],
+  );
 
   return (
     <div
@@ -218,42 +123,23 @@ export default function Bubble({
       )}
       title={bubbleTimeTitle}
     >
-      {
-        !isEmpty(attatchments) &&
-        <div
-          className={cn(
-            "flex w-fit max-w-[85%] flex-wrap gap-2 rounded-xl px-2 py-2",
-            isUser && "bg-fill-neutral-weaker",
-            !isUser && "bg-transparent",
-          )}
-        >
-          {attatchments.map((attachment, i) => (
-            <ChatAttachmentPreview
-              key={attachment._id || `${attachment.name}-${i}`}
-              attachment={attachment}
-              attachments={attatchments}
-              index={i}
-            />
-          ))}
-        </div>
-      }
       <div
         className={cn(
           "min-w-0 max-w-full",
-          isUser && "w-fit max-w-[min(470px,85%)]",
+          isUser && "w-fit max-w-[min(380px,85%)]",
           !isUser && "w-full",
         )}
       >
         <div
           className={cn(
             "w-full max-w-full rounded-[8px] p-2 sm:p-2.5",
-            isUser && "max-w-[min(470px,85%)]",
+            isUser && "max-w-[min(380px,85%)]",
             isUser && compact && "bg-fill-neutral-weaker",
             isUser && !compact && "bg-fill-neutral-weaker",
             !isUser && "bg-transparent",
             !isUser &&
               hostChatDeepDive &&
-              "border-l-[3px] border-stroke-brand-strong bg-fill-neutral-weakest pl-3",
+              "border-l-[3px] border-stroke-brand-strong bg-fill-neutral-weaker pl-3",
           )}
         >
           {showDevModelLabel ? (
@@ -274,12 +160,19 @@ export default function Bubble({
               </p>
             </div>
           ) : null}
-          <span
+          {!isEmpty(attatchments) ? (
+            <div className={cn(text.trim() && "mb-1.5")}>
+              <ChatMediaGroup attachments={attatchments} sharedAt={createdAt} />
+            </div>
+          ) : null}
+          {useMetadataPreview && metadataLink ? (
+            <ChatLinkPreview link={metadataLink} />
+          ) : text.trim() ? <span
             className={cn(
-              "block min-w-0 max-w-full text-text-neutral-strong font-georgia font-normal break-words [&_pre]:max-w-full [&_pre]:overflow-x-auto [&_table]:block [&_table]:max-w-full [&_table]:overflow-x-auto",
+              "block min-w-0 max-w-full break-words font-geist font-normal text-text-neutral-strong [&_pre]:max-w-full [&_pre]:overflow-x-auto [&_table]:block [&_table]:max-w-full [&_table]:overflow-x-auto",
               compact
                 ? "text-[14px] leading-relaxed [&_p]:m-0 [&_p]:text-[14px] [&_p]:leading-relaxed"
-                : "text-base leading-relaxed md:text-xl md:leading-snug [&_p]:m-0 [&_p]:text-base [&_p]:leading-relaxed [&_p]:md:text-xl [&_p]:md:leading-snug",
+                : "text-base leading-6 [&_p]:m-0 [&_p]:text-base [&_p]:leading-6",
             )}
           >
             <Markdown
@@ -290,7 +183,7 @@ export default function Bubble({
                     className={
                       compact
                         ? "text-[14px] leading-relaxed"
-                        : "text-base leading-relaxed md:text-xl md:leading-snug"
+                        : "text-base leading-6"
                     }
                     {...props}
                   >
@@ -303,20 +196,18 @@ export default function Bubble({
                     target="_blank"
                     rel="noopener noreferrer"
                     className={cn(
-                      "mem-tags text-sm! inline-flex items-center max-w-full normal-case! cursor-pointer!",
-                      "text-primary dark:text-primary/80 hover:opacity-80",
-                      "truncate break-all",
+                      "max-w-full break-all text-text-brand-strong underline underline-offset-2 hover:opacity-80",
                     )}
                     {...props}
                   >
-                    <span className="truncate">{children}</span>
+                    {children}
                   </a>
                 ),
               }}
             >
               {text || ""}
             </Markdown>
-          </span>
+          </span> : null}
         </div>
         {metaVisible &&
           (timeLabel || canCopy || (onReply && hasReplyableContent)) && (
@@ -335,6 +226,16 @@ export default function Bubble({
                 {timeLabel}
               </time>
             ) : null}
+            {canCopy ? (
+              <button
+                type="button"
+                onClick={() => void handleCopy()}
+                className="inline-flex size-7 shrink-0 items-center justify-center rounded-md text-text-neutral-weak transition-colors hover:bg-fill-neutral-weaker hover:text-text-neutral-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stroke-neutral-weak"
+                aria-label="Copy message"
+              >
+                <CopyIcon className="size-4" aria-hidden />
+              </button>
+            ) : null}
             {onReply && hasReplyableContent && !sendFailed ? (
               <button
                 type="button"
@@ -342,21 +243,11 @@ export default function Bubble({
                   e.stopPropagation();
                   onReply();
                 }}
-                className="inline-flex h-7 items-center gap-1 rounded-md px-1.5 font-inter text-xs font-medium text-text-neutral-weak transition-colors hover:bg-fill-neutral-weakest hover:text-text-neutral-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stroke-neutral-weak"
+                className="inline-flex h-7 items-center gap-1 rounded-md px-1.5 font-inter text-xs font-medium text-text-neutral-weak transition-colors hover:bg-fill-neutral-weaker hover:text-text-neutral-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stroke-neutral-weak"
                 aria-label="Reply to message"
               >
                 <CornerDownRight className="size-3.5 shrink-0" strokeWidth={2} aria-hidden />
                 Reply
-              </button>
-            ) : null}
-            {canCopy ? (
-              <button
-                type="button"
-                onClick={() => void handleCopy()}
-                className="inline-flex size-7 shrink-0 items-center justify-center rounded-md text-text-neutral-weak transition-colors hover:bg-fill-neutral-weakest hover:text-text-neutral-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stroke-neutral-weak"
-                aria-label="Copy message"
-              >
-                <CopyIcon className="size-4" aria-hidden />
               </button>
             ) : null}
           </div>

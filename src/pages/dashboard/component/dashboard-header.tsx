@@ -4,7 +4,9 @@ import {
   PanelLeft,
   PanelLeftClose,
   PanelLeftOpen,
-  Share2,
+  MoreHorizontal,
+  Phone,
+  Volume2,
 } from "lucide-react";
 import dayjs from "dayjs";
 import { useEffect, useState } from "react";
@@ -13,12 +15,12 @@ import { useStore } from "@/hooks/use-store";
 import StreakTracker from "@/components/streak-tracker";
 import { Link, useLocation, useMatch } from "react-router-dom";
 import { cn } from "@/utility";
-import { GearIcon, MenuIcon, SearchIcon } from "@/components/icons";
+import { MenuIcon, SearchIcon } from "@/components/icons";
 import { SearchIcon as IconSearch } from "@/components/icons";
 import { useConversationChrome } from "@/contexts/conversation-chrome";
-import { MemoryDropdown } from "@/pages/dashboard/chat/conversation/dropdown";
 import { useDashboardHeaderActions } from "@/contexts/dashboard-header-actions";
 import { StoriesActionButtons } from "@/pages/dashboard/stories/components/stories-action-buttons";
+import { SearchCommandShortcut } from "@/components/search-command-shortcut";
 
 const defaultHeaderTitle: Record<string, string> = {
   memories: "my memories",
@@ -129,7 +131,7 @@ export function DashboardHeader({
     const toggleMainSidebar = onMainSidebarToggle ?? onMenuClick;
 
     return (
-      <div className="w-full h-[60px] fixed top-0 left-0 right-0 sm:relative z-[45] flex items-center border-b border-border bg-card px-3 sm:px-5">
+      <div className="w-full h-[60px] fixed top-0 left-0 right-0 sm:relative z-[45] flex items-center border-b border-border bg-background px-3 sm:px-5">
         <header className="flex w-full min-w-0 items-center justify-between gap-3">
           <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
             {chatVoiceMatch?.params?.id ? (
@@ -187,40 +189,43 @@ export function DashboardHeader({
           </div>
 
           <div className="flex shrink-0 items-center gap-1 sm:gap-2 text-muted-foreground">
-            {chrome.memory?._id ? (
-              <button
-                type="button"
-                onClick={() => open("share-memory", { memory: chrome.memory! })}
-                className={convHeaderActionGhost}
-                aria-label="Share conversation"
-              >
-                <Share2
-                  className="size-4 shrink-0"
-                  strokeWidth={1.75}
-                  aria-hidden
-                />
-              </button>
-            ) : null}
             {chrome.hostChat?.onSearch ? (
               <button
                 type="button"
                 onClick={() => chrome.hostChat?.onSearch?.()}
-                className={convHeaderActionGhost}
+                className={cn(
+                  convHeaderActionGhost,
+                  "lg:h-9 lg:w-60 lg:justify-start lg:gap-2 lg:rounded-lg lg:border lg:border-border lg:bg-background lg:px-3 xl:w-80",
+                )}
                 aria-label="Search memories"
               >
                 <SearchIcon
                   className="size-4 shrink-0 text-current"
                   aria-hidden
                 />
+                <span className="hidden font-inter text-sm text-muted-foreground lg:inline">
+                  Search
+                </span>
               </button>
             ) : null}
-            {chrome.memory?._id ? (
-              <MemoryDropdown
-                memory={chrome.memory}
-                onViewDetails={chrome.onViewDetails}
-                onExportConversation={chrome.onExportConversation}
-                triggerClassName="!aspect-square !size-9 !p-2 flex items-center justify-center rounded-xl bg-transparent text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-              />
+            {chrome.memory?._id && chrome.onOpenChatPreferences ? (
+              <button
+                type="button"
+                className={convHeaderActionGhost}
+                aria-label="Audio settings"
+                onClick={() => chrome.onOpenChatPreferences?.()}
+              >
+                <Volume2 className="size-4 shrink-0" strokeWidth={1.75} aria-hidden />
+              </button>
+            ) : null}
+            {chatConversationMatch?.params?.id ? (
+              <Link
+                to={`/chat/${chatConversationMatch.params.id}/voice`}
+                className={cn(convHeaderActionGhost, "no-underline")}
+                aria-label="Voice mode"
+              >
+                <Phone className="size-4 shrink-0" strokeWidth={1.75} aria-hidden />
+              </Link>
             ) : null}
             {chrome.memory?._id && chrome.onOpenChatPreferences ? (
               <button
@@ -229,7 +234,7 @@ export function DashboardHeader({
                 aria-label="Chat settings"
                 onClick={() => chrome.onOpenChatPreferences?.()}
               >
-                <GearIcon className="size-4 shrink-0 stroke-2" aria-hidden />
+                <MoreHorizontal className="size-4 shrink-0" strokeWidth={1.75} aria-hidden />
               </button>
             ) : null}
           </div>
@@ -242,7 +247,7 @@ export function DashboardHeader({
   const toggleMainSidebar = onMainSidebarToggle ?? onMenuClick;
 
   return (
-    <div className="w-full h-[60px] fixed top-0 left-0 right-0 sm:relative flex items-center bg-card border-b border-border px-4 sm:px-8">
+    <div className="w-full h-[60px] fixed top-0 left-0 right-0 sm:relative flex items-center bg-background border-b border-border px-4 sm:px-8">
       <header className="grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-3 lg:grid-cols-[minmax(220px,1fr)_minmax(280px,560px)_auto] lg:gap-x-4 xl:grid-cols-[minmax(240px,1fr)_minmax(320px,620px)_auto]">
         <div className="col-start-1 row-start-1 flex min-w-0 items-center gap-2 sm:gap-3">
           <button
@@ -259,38 +264,33 @@ export function DashboardHeader({
           </span>
         </div>
 
-        <div className="col-start-2 row-start-1 hidden h-10 w-full min-w-0 justify-self-center lg:col-start-2 lg:block">
-          <button
-            type="button"
-            onClick={() => open("search-memory")}
-            className={cn(
-              "flex h-10 w-full cursor-pointer items-center rounded-lg border border-border bg-background",
-              "focus-visible:ring-2 focus-visible:ring-v3-brand-strong focus-visible:ring-offset-2",
-            )}
-            aria-label="Open search"
-            aria-haspopup="dialog"
-          >
-            <span className="pl-3.5">
-              <IconSearch
-                width={16}
-                height={16}
-                className="text-muted-foreground"
-                aria-hidden
-              />
-            </span>
-            <span className="flex-1 px-2 text-left font-inter text-sm text-muted-foreground">
-              Search
-            </span>
-            <span className="inline-flex items-center gap-1 pr-2.5" aria-hidden>
-              <kbd className="rounded-md border border-border bg-muted px-1.5 py-0.5 font-inter text-[10px] font-medium text-foreground">
-                &#8984;
-              </kbd>
-              <kbd className="rounded-md border border-border bg-muted px-1.5 py-0.5 font-inter text-[10px] font-medium text-foreground">
-                K
-              </kbd>
-            </span>
-          </button>
-        </div>
+        {pathForTitle !== "stories" ? (
+          <div className="col-start-2 row-start-1 hidden h-10 w-full min-w-0 justify-self-center lg:col-start-2 lg:block">
+            <button
+              type="button"
+              onClick={() => open("search-memory")}
+              className={cn(
+                "flex h-10 w-full cursor-pointer items-center rounded-lg border border-border bg-background",
+                "focus-visible:ring-2 focus-visible:ring-v3-brand-strong focus-visible:ring-offset-2",
+              )}
+              aria-label="Open search"
+              aria-haspopup="dialog"
+            >
+              <span className="pl-3.5">
+                <IconSearch
+                  width={16}
+                  height={16}
+                  className="text-muted-foreground"
+                  aria-hidden
+                />
+              </span>
+              <span className="flex-1 px-2 text-left font-inter text-sm text-muted-foreground">
+                Search
+              </span>
+              <SearchCommandShortcut className="pr-2.5" />
+            </button>
+          </div>
+        ) : null}
 
         <div className="col-start-2 flex items-center justify-end gap-2 lg:col-start-3">
           <StreakTracker>
