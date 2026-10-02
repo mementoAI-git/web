@@ -37,7 +37,6 @@ import {
   PricingPage,
   CapsuleViewPage,
 } from "@/pages";
-import TimeCapsulePage from "./pages/dashboard/time-capsule-new";
 
 export const router = createBrowserRouter([
   {
@@ -110,7 +109,7 @@ export const router = createBrowserRouter([
           { path: "chat/:id", element: <ChatPage /> },
           { path: "stories", element: <StoriesPage /> },
           { path: "stories/:id", element: <StoriesDetailsPage /> },
-          { path: "capsule", element: <TimeCapsulePage /> },
+          { path: "capsule", element: <Navigate to="/overview" replace /> },
           { path: "pricing", element: <PricingPage /> },
           { path: "settings", element: <Navigate to="/settings/general" replace /> },
           { path: "settings/stats", element: <Navigate to="/settings/general?view=stats" replace /> },

@@ -190,7 +190,7 @@ export default function StoriesPage() {
   useEffect(() => () => setShowStoriesActions(false), [setShowStoriesActions]);
 
   return (
-    <div className="page-viewport hide-scrollbar mx-0 w-full max-w-none overflow-hidden">
+    <div className="page-viewport hide-scrollbar mx-auto w-full max-w-[1900px]! overflow-hidden">
       <div
         data-slot="stories-workspace"
         className="hide-scrollbar size-full min-h-0 w-full overflow-y-auto px-4"

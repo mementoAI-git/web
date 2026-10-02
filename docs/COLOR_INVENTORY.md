@@ -34,10 +34,10 @@ The V3 design system uses CSS custom properties based on a base color of `#170B0
 | `--text-neutral-strong`   | `rgba(23, 11, 0, 0.9)`  | `#2A1500`        | Dark brown        | 183         | Primary text, headings, important labels   |
 | `--text-neutral-weak`     | `rgba(23, 11, 0, 0.65)` | `#6B5D53`        | Medium brown-gray | 126         | Secondary text, descriptions, placeholders |
 | `--stroke-neutral-weak`   | `rgba(23, 11, 0, 0.1)`  | `#E9E7E6`        | Very light gray   | 109         | Borders, dividers, card outlines           |
-| `--fill-neutral-weak`     | `rgba(23, 11, 0, 0.04)` | `#F9F9F8`        | Off-white         | 99          | Subtle backgrounds, hover states           |
+| `--fill-neutral-weak`     | `rgba(15, 7, 0, 0.06)`  | `#F1F0F0`        | Off-white         | 99          | Subtle backgrounds, hover states           |
 | `--text-neutral-weaker`   | `rgba(23, 11, 0, 0.45)` | `#9E8D7D`        | Warm gray-brown   | 46          | Tertiary text, hints, metadata             |
 | `--fill-neutral-weaker`   | `rgba(23, 11, 0, 0.02)` | `#FCFCFB`        | Near-white        | 46          | Very subtle backgrounds, zebra striping    |
-| `--text-brand-strong`     | `#ff5e00`               | `#ff5e00`        | Vibrant orange    | 35          | Primary CTA buttons, brand accent, links   |
+| `--text-brand-strong`     | `#e98246`               | `#e98246`        | Vibrant orange    | 35          | Primary CTA buttons, brand accent, links   |
 | `--icon-neutral-strong`   | `rgba(23, 11, 0, 0.45)` | `#9E8D7D`        | Warm gray-brown   | 20          | Icon default color                         |
 | `--stroke-neutral-strong` | `rgba(23, 11, 0, 0.45)` | `#9E8D7D`        | Warm gray-brown   | 16          | Focus rings, active borders                |
 | `--fill-neutral-strong`   | `rgba(23, 11, 0, 0.9)`  | `#2A1500`        | Dark brown        | 16          | Dark UI elements, overlays                 |
@@ -57,12 +57,12 @@ The V3 design system uses CSS custom properties based on a base color of `#170B0
 | `bg-neutral-weak`       | `#F9F9F8`      | Off-white         | 99          | Card backgrounds, hover states |
 | `text-neutral-weaker`   | `#9E8D7D`      | Warm gray-brown   | 46          | Meta text, timestamps          |
 | `bg-neutral-weaker`     | `#FCFCFB`      | Near-white        | 46          | Subtle backgrounds             |
-| `bg-brand-strong`       | `#ff5e00`      | Vibrant orange    | 25          | Primary buttons, badges        |
+| `bg-brand-strong`       | `#e98246`      | Vibrant orange    | 25          | Primary buttons, badges        |
 | `icon-neutral-strong`   | `#9E8D7D`      | Warm gray-brown   | 20          | Icons, icon buttons            |
 | `border-neutral-strong` | `#9E8D7D`      | Warm gray-brown   | 16          | Focus states, active borders   |
 | `bg-neutral-strong`     | `#2A1500`      | Dark brown        | 16          | Dark buttons, overlays         |
-| `text-brand-strong`     | `#ff5e00`      | Vibrant orange    | 10          | Links, brand highlights        |
-| `border-brand-strong`   | `#ff5e00`      | Vibrant orange    | 8           | Brand-accented borders         |
+| `text-brand-strong`     | `#e98246`      | Vibrant orange    | 10          | Links, brand highlights        |
+| `border-brand-strong`   | `#e98246`      | Vibrant orange    | 8           | Brand-accented borders         |
 | `bg-neutral-weaker`     | `#E9E7E6`      | Very light gray   | 8           | Progress bars, subtle fills    |
 | `text-neutral-strong`   | `#2A1500`      | Dark brown        | 6           | Text on light backgrounds      |
 | `bg-neutral`            | `#ffffff`      | Pure white        | 6           | Page backgrounds               |
@@ -137,10 +137,10 @@ The V3 design system base color scale. Used for the brown-based semantic tokens 
 
 | Token           | Hex Value | Opacity | Composited Hex | Usage                  |
 | --------------- | --------- | ------- | -------------- | ---------------------- |
-| `--orange-1000` | `#FF5E00` | 100%    | `#FF5E00`      | Primary buttons, links |
-| `--orange-800`  | `#FF5E00` | 80%     | `#FF7E33`      | Hover states           |
-| `--orange-200`  | `#FF5E00` | 20%     | `#FFD1B3`      | Light accents          |
-| `--orange-50`   | `#FF5E00` | 5%      | `#FFF0E6`      | Background tints       |
+| `--orange-1000` | `#e98246` | 100%    | `#e98246`      | Primary buttons, links |
+| `--orange-800`  | `#e98246` | 80%     | `#ED9B6B`      | Hover states           |
+| `--orange-200`  | `#e98246` | 20%     | `#FBE6DA`      | Light accents          |
+| `--orange-50`   | `#e98246` | 5%      | `#FEF9F6`      | Background tints       |
 
 
 **Dark Mode**
@@ -148,10 +148,10 @@ The V3 design system base color scale. Used for the brown-based semantic tokens 
 
 | Token           | Hex Value | Opacity | Composited Hex | Usage                  |
 | --------------- | --------- | ------- | -------------- | ---------------------- |
-| `--orange-1000` | `#FF5E00` | 100%    | `#FF5E00`      | Primary buttons, links |
-| `--orange-800`  | `#FF5E00` | 80%     | `#FF7E33`      | Hover states           |
-| `--orange-200`  | `#FF5E00` | 20%     | `#331200`      | Light accents          |
-| `--orange-50`   | `#FF5E00` | 6%      | `#1A0900`      | Background tints       |
+| `--orange-1000` | `#e98246` | 100%    | `#e98246`      | Primary buttons, links |
+| `--orange-800`  | `#e98246` | 80%     | `#BE6C3D`      | Hover states           |
+| `--orange-200`  | `#e98246` | 20%     | `#3D2923`      | Light accents          |
+| `--orange-50`   | `#e98246` | 5%      | `#1D191C`      | Background tints       |
 
 
 #### Red (Error/Danger)
@@ -366,10 +366,10 @@ Semantic tokens inherit from primitive tokens. Changing a primitive updates all 
 
 | Semantic Token          | Primitive Token | Primitive Hex |
 | ----------------------- | --------------- | ------------- |
-| `text-brand-strong`     | `orange-1000`   | `#FF5E00`     |
-| `text-brand-weak`       | `orange-800`    | `#FF7E33`     |
-| `text-brand-weaker`     | `orange-200`    | `#FFD1B3`     |
-| `text-brand-disabled`   | `orange-50`     | `#FFF0E6`     |
+| `text-brand-strong`     | `orange-1000`   | `#e98246`     |
+| `text-brand-weak`       | `orange-800`    | `#ED9B6B`     |
+| `text-brand-weaker`     | `orange-200`    | `#FBE6DA`     |
+| `text-brand-disabled`   | `orange-50`     | `#FEF9F6`     |
 | `text-info-strong`      | `blue-1000`     | `#1A80F7`     |
 | `text-info-weak`        | `blue-800`      | `#489FF9`     |
 | `text-info-weaker`      | `blue-200`      | `#D4E9FD`     |
@@ -424,7 +424,7 @@ Semantic tokens inherit from primitive tokens. Changing a primitive updates all 
 | Semantic Token          | Primitive Token   | Primitive Hex |
 | ----------------------- | ----------------- | ------------- |
 | `fill-neutral-strong`   | `brown-1000`      | `#2A1500`     |
-| `fill-neutral-weak`     | `brown-50`        | `#F9F9F8`     |
+| `fill-neutral-weak`     | `#0F0700` at 6%   | `#F1F0F0`     |
 | `fill-neutral-weaker`   | `brown-25`        | `#FCFCFB`     |
 | `fill-neutral-disabled` | `brown-25`        | `#FCFCFB`     |
 | `fill-inverse-strong`   | `brown-dark-1000` | `#FFFFFF`     |
@@ -453,7 +453,7 @@ Semantic tokens inherit from primitive tokens. Changing a primitive updates all 
 
 | Intent      | Strong                   | Weak                    | Weaker                  | Disabled                |
 | ----------- | ------------------------ | ----------------------- | ----------------------- | ----------------------- |
-| **Brand**   | `orange-200` / `#FFD1B3` | `orange-50` / `#FFF0E6` | `orange-50` / `#FFF0E6` | `orange-50` / `#FFF0E6` |
+| **Brand**   | `orange-200` / `#FBE6DA` | `orange-50` / `#FEF9F6` | `orange-50` / `#FEF9F6` | `orange-50` / `#FEF9F6` |
 | **Info**    | `blue-200` / `#D4E9FD`   | `blue-50` / `#EBF4FE`   | `blue-50` / `#EBF4FE`   | `blue-50` / `#EBF4FE`   |
 | **Success** | `green-200` / `#D1E8E0`  | `green-50` / `#E6FAF3`  | `green-50` / `#E6FAF3`  | `green-50` / `#E6FAF3`  |
 | **Warning** | `amber-200` / `#E9DEC5`  | `amber-50` / `#FFF9EB`  | `amber-50` / `#FFF9EB`  | `amber-50` / `#FFF9EB`  |
@@ -482,10 +482,10 @@ Semantic tokens inherit from primitive tokens. Changing a primitive updates all 
   --brown-dark-25: rgba(255, 255, 255, 0.03);
   
   /* Orange Scale */
-  --orange-1000: #FF5E00;
-  --orange-800: rgba(255, 94, 0, 0.8);
-  --orange-200: rgba(255, 94, 0, 0.2);
-  --orange-50: rgba(255, 94, 0, 0.05);
+  --orange-1000: #e98246;
+  --orange-800: rgba(233, 130, 70, 0.8);
+  --orange-200: rgba(233, 130, 70, 0.2);
+  --orange-50: rgba(233, 130, 70, 0.05);
 }
 
 /* Semantic Tokens - Inherit from primitives */
@@ -564,7 +564,7 @@ These colors are used in SVG icon and illustration files. They are **not recomme
 
 | Hex Code  | Color Name  | V3 Equivalent                     | Usage Count | Primary Usage                          | Status |
 | --------- | ----------- | --------------------------------- | ----------- | -------------------------------------- | ------ |
-| `#C8956C` | Amber/Brown | `text-brand-strong` ≈ `#ff5e00`   | 32          | Onboarding accent, decorative elements | Review |
+| `#C8956C` | Amber/Brown | `text-brand-strong` ≈ `#e98246`   | 32          | Onboarding accent, decorative elements | Review |
 | `#2C1F15` | Dark Brown  | `text-neutral-strong` ≈ `#2A1500` | 30          | Onboarding primary text                | Review |
 | `#E4D9CC` | Light Sand  | `border-neutral-weak` ≈ `#E9E7E6` | 16          | Onboarding borders, backgrounds        | Review |
 | `#7A6A5E` | Taupe       | `text-neutral-weak` ≈ `#6B5D53`   | 16          | Onboarding secondary text              | Review |
@@ -685,11 +685,11 @@ Defined in `src/index.css` and used across the application.
 | ------------------------- | -------------------------- | --------------------------------- |
 | `--color-success`         | `#067a57`                  | Success states                    |
 | `--color-danger`          | `#f97066`                  | Error states, destructive actions |
-| `--color-primary`         | `var(--text-brand-strong)` | Primary brand (maps to `#ff5e00`) |
+| `--color-primary`         | `var(--text-brand-strong)` | Primary brand (maps to `#e98246`) |
 | `--color-secondary`       | `rgba(0, 6, 38, 0.9)`      | Text color                        |
 | `--color-background`      | `#fefbf8`                  | Page background                   |
 | `--color-surface`         | `#f5f6fa`                  | Card/surface backgrounds          |
-| `--color-orange`          | `var(--text-brand-strong)` | Accent (maps to `#ff5e00`)        |
+| `--color-orange`          | `var(--text-brand-strong)` | Accent (maps to `#e98246`)        |
 | `--color-green-0`         | `#b1c6a9`                  | Success accents                   |
 | `--overlay-backdrop`      | `rgba(94, 94, 94, 0.5)`    | Modal/drawer backdrops            |
 | `--overlay-backdrop-dark` | `rgba(0, 0, 0, 0.6)`       | Dark mode modal backdrops         |
@@ -738,7 +738,7 @@ Specific to the host onboarding experience. **Migrate to V3 tokens** for consist
 | `--onboarding-warm-white`     | `#FFFCF8` | `bg-neutral-weaker` ≈ `#FCFCFB`   | Card backgrounds             |
 | `--onboarding-sand`           | `#F0E9DF` | `bg-neutral-weak` ≈ `#F9F9F8`     | Section backgrounds          |
 | `--onboarding-sand-dark`      | `#E4D9CC` | `border-neutral-weak` ≈ `#E9E7E6` | Borders, dividers            |
-| `--onboarding-amber`          | `#C8956C` | `text-brand-strong` ≈ `#ff5e00`   | Primary accent, focus states |
+| `--onboarding-amber`          | `#C8956C` | `text-brand-strong` ≈ `#e98246`   | Primary accent, focus states |
 | `--onboarding-amber-light`    | `#E8B99A` | —                                 | Hover states                 |
 | `--onboarding-amber-pale`     | `#F5E6DA` | —                                 | Light backgrounds            |
 | `--onboarding-brown`          | `#7A5C45` | `text-neutral-weak` ≈ `#6B5D53`   | Secondary text               |
@@ -786,7 +786,7 @@ These colors should be avoided in new code and gradually replaced.
 | 4    | `bg-neutral-weak`       | `#F9F9F8`      | Off-white         | 99          | V3 Token | ✅ Active |
 | 5    | `text-neutral-weaker`   | `#9E8D7D`      | Warm gray-brown   | 46          | V3 Token | ✅ Active |
 | 6    | `bg-neutral-weaker`     | `#FCFCFB`      | Near-white        | 46          | V3 Token | ✅ Active |
-| 7    | `bg-brand-strong`       | `#ff5e00`      | Vibrant orange    | 35          | V3 Token | ✅ Active |
+| 7    | `bg-brand-strong`       | `#e98246`      | Vibrant orange    | 35          | V3 Token | ✅ Active |
 | 8    | `icon-neutral-weak`     | `#9E8D7D`      | Warm gray-brown   | 20          | V3 Token | ✅ Active |
 | 9    | `border-neutral-strong` | `#9E8D7D`      | Warm gray-brown   | 16          | V3 Token | ✅ Active |
 | 10   | `bg-neutral-strong`     | `#2A1500`      | Dark brown        | 16          | V3 Token | ✅ Active |

@@ -70,7 +70,7 @@
   --v3-text-disabled: rgba(23, 11, 0, 0.1);
   --v3-icon-disabled: rgba(23, 11, 0, 0.1);
   /* v3 brand accent (CTAs, links, focus accents) — distinct from --v3-fill-strong (dark UI fill) */
-  --v3-brand-strong: #ff5e00;
+  --v3-brand-strong: #e98246;
   /* v3 full-page / sheet background (e.g. host onboarding chat) */
   --v3-bg: #ffffff;
 
@@ -92,10 +92,17 @@
   --brown-dark-25: rgba(255, 255, 255, 0.03);
 
   /* Orange Scale (Brand) */
-  --orange-1000: #ff5e00;
-  --orange-800: rgba(255, 94, 0, 0.8);
-  --orange-200: rgba(255, 94, 0, 0.2);
-  --orange-50: rgba(255, 94, 0, 0.05);
+  --orange-1000: #e98246;
+  --orange-800: rgba(233, 130, 70, 0.8);
+  --orange-200: rgba(233, 130, 70, 0.2);
+  --orange-50: rgba(233, 130, 70, 0.05);
+
+  /* Brand Button Surface */
+  --gradient-brand-button-surface: radial-gradient(
+    ellipse 100% 100% at 50% 0%,
+    rgba(255, 255, 255, 0.34) 0%,
+    rgba(255, 255, 255, 0) 100%
+  );
 
   /* Red Scale (Error) */
   --red-1000: #c73a3a;
@@ -217,7 +224,7 @@
 
   /* Fill/Background Colors */
   --fill-neutral-strong: var(--brown-1000);
-  --fill-neutral-weak: var(--brown-50);
+  --fill-neutral-weak: rgba(15, 7, 0, 0.06);
   --fill-neutral-weaker: var(--brown-25);
   --fill-neutral-disabled: var(--brown-25);
   --fill-inverse-strong: var(--brown-dark-1000);

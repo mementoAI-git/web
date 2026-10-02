@@ -17,6 +17,15 @@ describe("WelcomeSection", () => {
     const { container } = renderWithProviders(<WelcomeSection />, { route: "/overview", auth: true });
     expect(container.firstChild).toBeTruthy();
   });
+
+  it("does not render the telemetry cards", () => {
+    renderWithProviders(<WelcomeSection />, { route: "/overview", auth: true });
+
+    expect(screen.queryByText("All Memories")).not.toBeInTheDocument();
+    expect(screen.queryByText("Beneficiaries")).not.toBeInTheDocument();
+    expect(screen.queryByText("Time Capsules")).not.toBeInTheDocument();
+    expect(screen.queryByText("Streak Count")).not.toBeInTheDocument();
+  });
 });
 
 describe("shouldUseBrightWelcomeIcon", () => {

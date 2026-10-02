@@ -134,8 +134,8 @@ describe("DashboardHeader", () => {
     expect(screen.getByRole("heading", { name: "Chat" })).toHaveClass(
       "text-foreground",
     );
-    expect(screen.getByRole("button", { name: "Expand sidebar" })).toHaveClass(
-      "text-muted-foreground",
-    );
+    expect(
+      screen.queryByRole("button", { name: /(?:expand|collapse) sidebar/i }),
+    ).not.toBeInTheDocument();
   });
 });

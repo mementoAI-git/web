@@ -50,11 +50,11 @@ export default function CategoryCard({
           </div>
         )}
       </div>
-      <div className="flex font-garamond text-gray-950/90 flex-col gap-2">
+      <div className="flex flex-col gap-2 font-garamond text-text-neutral-strong">
         {title && (
           <h5 className="font-semibold text-2xl">{title}</h5>
         )}
-        <span className="font-georgia text-[16px] font-normal text-gray-950/90 line-clamp-3 sm:text-[18px]">
+        <span className="line-clamp-3 font-georgia text-[16px] font-normal text-text-neutral-strong sm:text-[18px]">
           {subtitle}
         </span>
       </div>

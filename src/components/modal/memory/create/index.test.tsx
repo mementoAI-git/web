@@ -552,7 +552,7 @@ describe("CreateMemory", () => {
 
     expect(label).not.toHaveClass("font-geist", "uppercase");
     expect(photoItem).not.toHaveClass("font-geist", "text-[15px]");
-    expect(photoIcon).not.toHaveClass("text-[#ff5e00]");
+    expect(photoIcon).not.toHaveClass("text-[#e98246]");
     expect(photoItem?.closest('[data-slot="dropdown-menu-group"]')).not.toBeNull();
   });
 
