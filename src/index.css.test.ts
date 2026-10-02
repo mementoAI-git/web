@@ -83,6 +83,42 @@ describe("dark color token compatibility", () => {
     expect(declaration(".dark", "--popover")).toBe("var(--background)");
   });
 
+  it("switches status intent primitives to their dark-mode palette", () => {
+    expect(declaration(".dark", "--red-1000")).toBe("#ff9c9c");
+    expect(declaration(".dark", "--amber-1000")).toBe("#e0be70");
+    expect(declaration(".dark", "--green-1000")).toBe("#77c7af");
+    expect(declaration(".dark", "--blue-1000")).toBe("#52a1dd");
+    expect(declaration(":root", "--destructive")).toBe(
+      "var(--text-error-strong)",
+    );
+  });
+
+  it("keeps auth and onboarding UI on semantic color tokens", () => {
+    const scopedPaths = [
+      "src/pages/auth",
+      "src/pages/onboarding",
+      "src/pages/onboard-chat",
+      "src/features/onboarding-groot",
+    ];
+    const scopedFiles = scopedPaths.flatMap((path) =>
+      sourceFiles(resolve(process.cwd(), path)),
+    );
+    scopedFiles.push(
+      resolve(process.cwd(), "src/components/auth-split-layout.tsx"),
+      resolve(process.cwd(), "src/components/auth-loader.tsx"),
+      resolve(process.cwd(), "src/components/Form/password-input.tsx"),
+    );
+
+    const rawColor =
+      /#[0-9a-f]{3,8}\b|\b(?:bg|text|border|ring|fill|stroke)-(?:white|black|slate|gray|zinc|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)(?:-[0-9]{1,3})?(?:\/[0-9]+)?\b/iu;
+    const violations = scopedFiles
+      .filter((path) => !path.includes(".test."))
+      .filter((path) => rawColor.test(readFileSync(path, "utf8")))
+      .map((path) => relative(process.cwd(), path));
+
+    expect(violations).toEqual([]);
+  });
+
   it("scopes dark utilities to the selected class", () => {
     const darkVariant = stylesheet.nodes.find(
       (node) =>

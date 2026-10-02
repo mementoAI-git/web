@@ -87,7 +87,7 @@ export default function ReasonsSelector({
         ))}
 
       {addingCustom ? (
-        <li className="flex w-fit items-center gap-2 rounded-lg border border-gray-200 py-2.5 px-3">
+        <li className="flex w-fit items-center gap-2 rounded-lg border border-stroke-neutral-weak py-2.5 px-3">
           <input
             value={customReason}
             onChange={(e) => setCustomReason(e.target.value)}
@@ -98,13 +98,13 @@ export default function ReasonsSelector({
               }
             }}
             placeholder="Type a reason"
-            className="bg-transparent text-base font-inter text-gray-900 placeholder:text-gray-500 outline-none"
+            className="bg-transparent text-base font-inter text-text-neutral-strong placeholder:text-text-neutral-weaker outline-none"
           />
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={handleAdd}
-              className="text-sm font-inter text-blue-7"
+              className="text-sm font-inter text-text-brand-strong"
             >
               Add
             </button>
@@ -114,7 +114,7 @@ export default function ReasonsSelector({
                 setAddingCustom(false);
                 setCustomReason("");
               }}
-              className="text-sm font-inter text-gray-500"
+              className="text-sm font-inter text-text-neutral-weaker"
             >
               Cancel
             </button>
@@ -124,11 +124,10 @@ export default function ReasonsSelector({
         <InterestChip
           title="Add more reasons"
           Icon={PlusIcon}
-          className="!border-dashed border-gray-500"
+          className="!border-dashed border-stroke-neutral-strong"
           onClick={() => setAddingCustom(true)}
         />
       )}
     </ul>
   );
 }
-

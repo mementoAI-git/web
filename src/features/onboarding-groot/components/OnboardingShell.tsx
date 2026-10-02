@@ -77,7 +77,7 @@ export function OnboardingShell({
   }, [currentStep]);
 
   return (
-    <div ref={containerRef} className="flex h-screen flex-col overflow-hidden bg-white" role="main" aria-label="Onboarding">
+    <div ref={containerRef} className="flex h-screen flex-col overflow-hidden bg-bg-neutral" role="main" aria-label="Onboarding">
       {/* Topbar */}
       <header className="flex shrink-0 items-center justify-between px-4 py-6 sm:px-6">
         <Link to="/" className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-v3-brand-strong focus-visible:ring-offset-2 rounded">
@@ -126,7 +126,7 @@ export function OnboardingShell({
 
       {/* Footer nav - always visible at bottom when shown */}
       {!hideFooter && (
-        <footer className="flex shrink-0 items-center justify-between gap-4 border-t border-v3-stroke-weak bg-white px-4 py-6 sm:px-6">
+        <footer className="flex shrink-0 items-center justify-between gap-4 border-t border-v3-stroke-weak bg-bg-neutral px-4 py-6 sm:px-6">
           <div className="w-20">
             {showBack && (
               <button
@@ -145,7 +145,7 @@ export function OnboardingShell({
             className={cn(
               "rounded-xl px-6 py-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-v3-brand-strong focus-visible:ring-offset-2",
               canAdvance && !isSaving
-                ? "bg-v3-brand-strong text-white hover:opacity-90"
+                ? "bg-v3-brand-strong text-text-inverse-strong hover:opacity-90"
                 : "cursor-not-allowed bg-v3-stroke-weak text-v3-text-weak",
             )}
           >

@@ -164,7 +164,7 @@ export default function RegisterPage() {
               <span className="text-xs font-medium text-primary underline">Privacy Policy</span>
             </TypographyMuted>
 
-            <Button type="submit" className="h-11 w-full rounded-[8px] bg-v3-brand-strong text-white hover:bg-v3-brand-strong/90" disabled={isMutating}>
+            <Button type="submit" className="h-11 w-full rounded-[8px] bg-fill-brand-strong text-text-inverse-strong hover:opacity-90" disabled={isMutating}>
               {isMutating ? (
                 <>
                   <Loader2 className="size-4 animate-spin" />

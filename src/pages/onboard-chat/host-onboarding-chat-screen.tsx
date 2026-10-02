@@ -300,7 +300,7 @@ export default function HostOnboardingChatScreen({
               <div className="flex w-full shrink-0 flex-col gap-0">
                 <Button
                   type="button"
-                  className="font-inter w-full rounded-full !bg-v3-brand-strong !text-white hover:!opacity-90"
+                  className="font-inter w-full rounded-full !bg-fill-brand-strong !text-text-inverse-strong hover:!opacity-90"
                   onClick={() => submitIntro(DEFAULT_INTRO_REPLY)}
                 >
                   Alright, let&apos;s go
@@ -406,7 +406,7 @@ export default function HostOnboardingChatScreen({
                     ) : null}
                     <Button
                       type="button"
-                      className="font-inter rounded-full !bg-v3-brand-strong !text-white hover:!opacity-90"
+                      className="font-inter rounded-full !bg-fill-brand-strong !text-text-inverse-strong hover:!opacity-90"
                       onClick={handleComplete}
                     >
                       Go to dashboard
@@ -511,7 +511,7 @@ export default function HostOnboardingChatScreen({
                                 type="submit"
                                 aria-label="Send"
                                 disabled={!draft.trim()}
-                                className="size-10 min-w-10 rounded-xl !bg-orange p-0 !text-white shadow-sm hover:!opacity-90 disabled:opacity-50"
+                                className="size-10 min-w-10 rounded-xl !bg-fill-brand-strong p-0 !text-text-inverse-strong shadow-sm hover:!opacity-90 disabled:opacity-50"
                               >
                                 <ArrowUp
                                   className="mx-auto size-5"

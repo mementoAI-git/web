@@ -47,12 +47,12 @@ export default function AddBeneficiaries() {
         </div>
         <button
           type="submit"
-          className="flex min-h-10 w-full shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full border border-stroke-neutral-weak px-8 text-center transition-[transform,background-color,border-color] duration-150 ease-out hover:border-black/10 hover:bg-black/[0.02] active:scale-[0.98] sm:w-auto"
+          className="flex min-h-10 w-full shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full border border-stroke-neutral-weak px-8 text-center transition-[transform,background-color,border-color] duration-150 ease-out hover:border-stroke-neutral-strong hover:bg-bg-neutral-weaker active:scale-[0.98] sm:w-auto"
         >
-          <span className="whitespace-nowrap text-center font-inter text-sm font-semibold text-gray-900">
+          <span className="whitespace-nowrap text-center font-inter text-sm font-semibold text-text-neutral-strong">
             Send invite
           </span>
-          <Spinner loading={isMutating} className="!size-4 !text-gray-950/90" />
+          <Spinner loading={isMutating} className="!size-4 !text-icon-neutral-strong" />
         </button>
       </div>
     </form>

@@ -20,7 +20,7 @@ describe("SignupChoicePage", () => {
     expect(screen.getByRole("img", { name: /person standing near a scenic coastline/i })).toBeInTheDocument();
     const signupWithGoogle = screen.getByRole("button", { name: /sign up with google/i });
     expect(signupWithGoogle).toBeInTheDocument();
-    expect(signupWithGoogle).toHaveClass("bg-v3-brand-strong", "text-white");
+    expect(signupWithGoogle).toHaveClass("bg-fill-brand-strong", "text-text-inverse-strong");
     expect(screen.getByRole("link", { name: /use email and password/i })).toHaveAttribute("href", "/register");
     expect(screen.getByRole("link", { name: /i have an account/i })).toHaveAttribute("href", "/login");
     const shell = container.querySelector("section.rounded-3xl");

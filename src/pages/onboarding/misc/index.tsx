@@ -82,11 +82,11 @@ function progressDots(step: OnboardQuestionsStep): {
 
 const TOTAL_QUESTION_DOTS = 10;
 const fieldClassName =
-  "border border-[#D0D5DD] bg-white text-v3-text-strong shadow-[0_1px_2px_rgba(16,24,40,0.05)] placeholder:text-v3-text-weaker focus-visible:border-v3-brand-strong focus-visible:ring-v3-brand-strong/20";
+  "border border-stroke-neutral-weak bg-bg-neutral text-text-neutral-strong shadow-sm placeholder:text-text-neutral-weaker focus-visible:border-stroke-brand-strong focus-visible:ring-stroke-brand-weak";
 const primaryButtonClassName =
-  "flex h-14 w-full cursor-pointer items-center justify-center gap-2 rounded-full border-0 bg-[rgba(23,11,0,0.9)] px-8 text-sm font-semibold leading-5 text-white shadow-none transition-[transform,opacity] duration-150 ease-out hover:opacity-90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto";
+  "flex h-14 w-full cursor-pointer items-center justify-center gap-2 rounded-full border-0 bg-fill-neutral-strong px-8 text-sm font-semibold leading-5 text-text-inverse-strong shadow-none transition-[transform,opacity] duration-150 ease-out hover:opacity-90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto";
 const secondaryButtonClassName =
-  "h-14 w-full cursor-pointer rounded-full border border-[#D0D5DD] bg-white px-6 text-sm font-semibold leading-5 text-[rgba(23,11,0,0.9)] shadow-none transition-[transform,background-color,border-color] duration-150 ease-out hover:border-[rgba(23,11,0,0.18)] hover:bg-[rgba(23,11,0,0.03)] active:scale-[0.98] disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto sm:px-8";
+  "h-14 w-full cursor-pointer rounded-full border border-stroke-neutral-weak bg-bg-neutral px-6 text-sm font-semibold leading-5 text-text-neutral-strong shadow-none transition-[transform,background-color,border-color] duration-150 ease-out hover:border-stroke-neutral-strong hover:bg-bg-neutral-weaker active:scale-[0.98] disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto sm:px-8";
 
 function StepSection({ children }: { children: ReactNode }) {
   return <section className="space-y-4">{children}</section>;
@@ -116,7 +116,7 @@ function ErrorText({ children }: { children: ReactNode }) {
 }
 
 function FooterDivider() {
-  return <div className="w-full border-t border-[rgba(23,11,0,0.1)]" />;
+  return <div className="w-full border-t border-stroke-neutral-weak" />;
 }
 
 export default function MiscPage() {
@@ -299,7 +299,7 @@ export default function MiscPage() {
   if (prefill === null) {
     return (
       <div className="flex min-h-full items-start justify-center pb-4 sm:pb-6 lg:pb-8">
-        <div className="w-fit max-w-[664px] rounded-[24px] bg-white p-10">
+        <div className="w-fit max-w-[664px] rounded-[24px] bg-bg-neutral p-10">
           <div className="flex min-h-[40vh] items-center justify-center font-inter text-sm text-v3-text-weak">
             Loading your story…
           </div>
@@ -371,7 +371,7 @@ export default function MiscPage() {
 
   return (
     <div className="flex min-h-full items-start justify-center pb-4 sm:pb-6 lg:pb-8">
-      <div className="w-fit max-w-[664px] rounded-[24px] bg-white p-10">
+      <div className="w-fit max-w-[664px] rounded-[24px] bg-bg-neutral p-10">
         <div ref={contentRef} className="flex flex-col gap-6">
           <div className="flex shrink-0 flex-col gap-3">
             <div className="flex flex-wrap items-center justify-center gap-2" aria-hidden>
@@ -391,17 +391,17 @@ export default function MiscPage() {
                 );
               })}
             </div>
-            <p className="text-center font-inter text-sm leading-6 text-[rgba(23,11,0,0.72)]">
+            <p className="text-center font-inter text-sm leading-6 text-text-neutral-weak">
               {ONBOARD_QUESTIONS_STEP_LABELS[step]}
             </p>
           </div>
 
           {showIntro && (
             <div className="flex flex-col gap-2">
-              <h3 className="font-garamond text-[22px] font-normal leading-[1.25] text-[rgba(23,11,0,0.9)] sm:text-[24px]">
+              <h3 className="font-garamond text-[22px] font-normal leading-[1.25] text-text-neutral-strong sm:text-[24px]">
                 Okay, <span className="capitalize">{nickname}</span>. I&apos;ve got some questions for you.
               </h3>
-              <p className="font-inter text-base font-normal leading-6 text-[rgba(23,11,0,0.9)]">
+              <p className="font-inter text-base font-normal leading-6 text-text-neutral-strong">
                 These questions will help Memento better personalize your experience on the product.
               </p>
             </div>
@@ -603,7 +603,7 @@ export default function MiscPage() {
               <h3 className="font-garamond text-xl font-normal text-v3-text-strong sm:text-2xl">
                 You&apos;re off to a great start
               </h3>
-              <p className="font-inter text-base leading-6 text-[rgba(23,11,0,0.72)]">
+              <p className="font-inter text-base leading-6 text-text-neutral-weak">
                 You can wrap up now and head into Memento, or spend another minute so we can personalize your space a
                 little more.
               </p>
@@ -803,7 +803,7 @@ export default function MiscPage() {
                 <h1 className="font-garamond text-2xl font-normal leading-tight text-v3-text-strong sm:text-[28px]">
                   Creating your starting space
                 </h1>
-                <p className="max-w-md font-inter text-base leading-6 text-[rgba(23,11,0,0.72)]">
+                <p className="max-w-md font-inter text-base leading-6 text-text-neutral-weak">
                   We&apos;re organizing what you shared so Memento can begin in a way that feels personal.
                 </p>
               </div>

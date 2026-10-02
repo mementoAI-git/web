@@ -34,9 +34,9 @@ export default function OnboardLayout() {
   };
 
   return (
-    <div className="flex h-dvh w-screen flex-col bg-white">
+    <div className="flex h-dvh w-screen flex-col bg-bg-neutral">
       {!(isWelcomeRoute || isNicknameRoute || isSummaryRoute) ? (
-        <header className="sticky top-0 z-[100] flex shrink-0 items-center justify-between gap-3 bg-white px-4 py-[6px] sm:px-6 sm:py-[14px]">
+        <header className="sticky top-0 z-[100] flex shrink-0 items-center justify-between gap-3 bg-bg-neutral px-4 py-[6px] sm:px-6 sm:py-[14px]">
           <Link
             to="/"
             className="rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-v3-brand-strong focus-visible:ring-offset-2"
@@ -55,7 +55,7 @@ export default function OnboardLayout() {
       <AuthCheck>
         <main
           className={cn(
-            "min-h-0 bg-white",
+            "min-h-0 bg-bg-neutral",
             isSummaryRoute
               ? "w-full flex-1"
               : isMiscRoute

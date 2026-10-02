@@ -158,7 +158,7 @@ export default function LoginPage() {
           type="button"
           onClick={handlePasskeyLogin}
           disabled={passkeyLoading || isMutating}
-          className="flex h-11 w-full items-center justify-center gap-2 rounded-full border border-v3-stroke-weak bg-white px-4 font-inter text-sm font-medium text-v3-text-strong transition-colors hover:bg-v3-fill-weaker disabled:cursor-not-allowed disabled:opacity-60"
+          className="flex h-11 w-full items-center justify-center gap-2 rounded-full border border-stroke-neutral-weak bg-bg-neutral px-4 font-inter text-sm font-medium text-text-neutral-strong transition-colors hover:bg-bg-neutral-weaker disabled:cursor-not-allowed disabled:opacity-60"
         >
           {passkeyLoading ? (
             <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
@@ -245,7 +245,7 @@ export default function LoginPage() {
 
             <Button
               type="submit"
-              className="h-11 w-full rounded-[8px] bg-v3-brand-strong text-white hover:bg-v3-brand-strong/90"
+              className="h-11 w-full rounded-[8px] bg-fill-brand-strong text-text-inverse-strong hover:opacity-90"
               disabled={isMutating || passkeyLoading}
             >
               {isMutating ? (

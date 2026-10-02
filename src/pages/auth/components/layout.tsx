@@ -45,8 +45,8 @@ export function AuthFormPanel({
         <div
           className={cn(
             "flex size-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary sm:size-14",
-            "group-[.error]/auth-root:bg-[var(--red-50)] group-[.error]/auth-root:text-[var(--red-1000)]",
-            "group-[.success]/auth-root:bg-[var(--green-50)] group-[.success]/auth-root:text-[var(--green-1000)]",
+            "group-[.error]/auth-root:bg-fill-error-weak group-[.error]/auth-root:text-icon-error-strong",
+            "group-[.success]/auth-root:bg-fill-success-weak group-[.success]/auth-root:text-icon-success-strong",
           )}
         >
           {icon}

@@ -33,7 +33,7 @@ export function OnboardQuestionHeader({
   return (
     <div className={cn("flex flex-col gap-4", className)}>
       <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
-        <p className="font-garamond text-[22px] font-normal leading-[1.25] text-[rgba(23,11,0,0.9)] sm:text-[24px]">
+        <p className="font-garamond text-[22px] font-normal leading-[1.25] text-text-neutral-strong sm:text-[24px]">
           {title}
           {required ? (
             <span className="text-v3-brand-strong" aria-hidden>
@@ -47,7 +47,7 @@ export function OnboardQuestionHeader({
               type="button"
               variant="ghost"
               size="icon"
-              className="mt-0.5 h-9 w-9 shrink-0 self-start rounded-full text-v3-text-weak transition-transform duration-150 ease-out active:scale-[0.97] hover:bg-[rgba(23,11,0,0.04)] hover:text-v3-text-strong"
+              className="mt-0.5 h-9 w-9 shrink-0 self-start rounded-full text-text-neutral-weak transition-transform duration-150 ease-out active:scale-[0.97] hover:bg-bg-neutral-weak hover:text-text-neutral-strong"
               aria-label="Why we ask this"
             >
               <CircleHelp className="h-5 w-5" strokeWidth={1.75} />
@@ -55,14 +55,14 @@ export function OnboardQuestionHeader({
           </DropdownMenuTrigger>
           <DropdownMenuContent
             align="end"
-            className="max-w-sm border border-[#D0D5DD] bg-white p-3 text-v3-text-strong shadow-lg"
+            className="max-w-sm border border-stroke-neutral-weak bg-bg-neutral p-3 text-text-neutral-strong shadow-lg"
           >
-            <p className="text-[14px] leading-relaxed text-[rgba(23,11,0,0.72)]">{whyDetail}</p>
+            <p className="text-[14px] leading-relaxed text-text-neutral-weak">{whyDetail}</p>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
       {hint ? (
-        <p className="font-inter text-sm leading-6 text-[rgba(23,11,0,0.72)]">{hint}</p>
+        <p className="font-inter text-sm leading-6 text-text-neutral-weak">{hint}</p>
       ) : null}
     </div>
   );

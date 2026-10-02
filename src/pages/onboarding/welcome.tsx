@@ -28,13 +28,13 @@ const features = [
 export default function WelcomePage() {
   return (
     <div className="flex min-h-full items-start justify-center py-4 sm:py-6 lg:items-center lg:py-0">
-      <div className="w-full max-w-[664px] rounded-[24px] bg-white p-5 sm:p-8 lg:p-10">
+      <div className="w-full max-w-[664px] rounded-[24px] bg-bg-neutral p-5 sm:p-8 lg:p-10">
         <div className="flex flex-col gap-6">
           <div className="flex flex-col gap-4">
-            <h1 className="font-garamond text-[28px] font-medium leading-[1.1875] text-[rgba(23,11,0,0.9)] sm:text-[32px]">
+            <h1 className="font-garamond text-[28px] font-medium leading-[1.1875] text-text-neutral-strong sm:text-[32px]">
               Hello, Welcome to Memento
             </h1>
-            <p className="font-inter text-base font-normal leading-6 text-[rgba(23,11,0,0.9)]">
+            <p className="font-inter text-base font-normal leading-6 text-text-neutral-strong">
               I&apos;m your personal interactive companion for self-reflection, memory, and legacy. Together, we&apos;ll
               capture your stories and experience, one thought, one moment at a time.
             </p>
@@ -50,7 +50,7 @@ export default function WelcomePage() {
                   key={item.title}
                   className="flex items-start gap-3 sm:gap-5"
                 >
-                  <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white/80 sm:h-[84px] sm:w-[84px]">
+                  <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-bg-neutral/80 sm:h-[84px] sm:w-[84px]">
                     <img
                       src={item.icon}
                       alt={item.title}
@@ -58,10 +58,10 @@ export default function WelcomePage() {
                     />
                   </div>
                   <div className="flex-1 space-y-1">
-                    <h2 className="font-inter text-[15px] font-bold leading-6 text-[rgba(23,11,0,0.9)] sm:text-base">
+                    <h2 className="font-inter text-[15px] font-bold leading-6 text-text-neutral-strong sm:text-base">
                       {item.title}
                     </h2>
-                    <p className="font-inter text-sm font-normal leading-6 text-[rgba(23,11,0,0.72)]">
+                    <p className="font-inter text-sm font-normal leading-6 text-text-neutral-weak">
                       {item.subtitle}
                     </p>
                   </div>
@@ -70,13 +70,13 @@ export default function WelcomePage() {
             </ul>
           </div>
 
-          <div className="w-full border-t border-[rgba(23,11,0,0.1)]" />
+          <div className="w-full border-t border-stroke-neutral-weak" />
 
           <div className="flex flex-col gap-2">
-            <p className="font-azeret text-[12px] font-medium leading-4 tracking-[0.08em] text-[rgba(23,11,0,0.9)]">
+            <p className="font-azeret text-[12px] font-medium leading-4 tracking-[0.08em] text-text-neutral-strong">
               MEMENTO IS PRIVATE BY DESIGN
             </p>
-            <p className="font-azeret text-[14px] font-normal leading-5 text-[rgba(23,11,0,0.45)]">
+            <p className="font-azeret text-[14px] font-normal leading-5 text-text-neutral-weaker">
               Your entries on Memento are encrypted and only visible to you. You decide what to share,
               when to share, and with whom.
             </p>
@@ -86,7 +86,7 @@ export default function WelcomePage() {
         <div className="pt-6">
           <Button
             asChild
-            className="h-14 w-full min-w-[140px] rounded-full border-0 bg-[rgba(23,11,0,0.9)] px-8 text-sm font-semibold leading-5 text-white shadow-none transition-[transform,opacity] duration-150 ease-out hover:opacity-90 active:scale-[0.98] sm:w-auto"
+            className="h-14 w-full min-w-[140px] rounded-full border-0 bg-fill-neutral-strong px-8 text-sm font-semibold leading-5 text-text-inverse-strong shadow-none transition-[transform,opacity] duration-150 ease-out hover:opacity-90 active:scale-[0.98] sm:w-auto"
           >
             <Link to="/onboarding/nickname">Continue</Link>
           </Button>
