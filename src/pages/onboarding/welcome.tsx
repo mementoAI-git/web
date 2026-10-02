@@ -41,7 +41,7 @@ export default function WelcomePage() {
           </div>
 
           <div className="flex flex-col gap-4">
-            <p className="font-inter text-sm font-normal leading-6 text-[#FF5E00]">
+            <p className="font-inter text-sm font-normal leading-6 text-text-brand-strong">
               What can you do on Memento?
             </p>
             <ul className="flex flex-col gap-3 sm:gap-4">

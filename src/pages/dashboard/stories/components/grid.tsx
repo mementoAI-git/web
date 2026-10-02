@@ -39,6 +39,12 @@ function getStoryKey(memory: IMemory, index: number) {
 }
 
 function getMasonryConfig(width: number) {
+  if (width >= 1800) {
+    return { columns: 6, gutter: 24 };
+  }
+  if (width >= 1536) {
+    return { columns: 5, gutter: 24 };
+  }
   if (width >= 1024) {
     return { columns: 4, gutter: 24 };
   }
@@ -466,7 +472,7 @@ export default function StoriesGrid({
         ) : hasMore ? (
           <span className="sr-only">Loading more items when visible</span>
         ) : (
-          <TypographyMuted className="text-sm text-neutral-weaker">
+          <TypographyMuted className="text-sm text-text-neutral-weaker">
             End of items
           </TypographyMuted>
         )}

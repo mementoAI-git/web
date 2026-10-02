@@ -31,9 +31,47 @@ function sourceFiles(directory: string): string[] {
 }
 
 describe("dark color token compatibility", () => {
+  it("uses the approved brand orange throughout the semantic scale", () => {
+    expect(declaration(":root", "--orange-1000")).toBe("#e98246");
+    expect(declaration(":root", "--orange-800")).toBe(
+      "rgba(233, 130, 70, 0.8)",
+    );
+    expect(declaration(":root", "--orange-200")).toBe(
+      "rgba(233, 130, 70, 0.2)",
+    );
+    expect(declaration(":root", "--orange-50")).toBe(
+      "rgba(233, 130, 70, 0.05)",
+    );
+  });
+
+  it("defines the primary button surface gradient from 34% to transparent", () => {
+    const gradient = declaration(":root", "--gradient-brand-button-surface");
+
+    expect(gradient).toContain("radial-gradient(");
+    expect(gradient).toContain("ellipse 100% 100% at 50% 0%");
+    expect(gradient).toContain("rgba(255, 255, 255, 0.34) 0%");
+    expect(gradient).toContain("rgba(255, 255, 255, 0) 100%");
+  });
+
+  it("does not hard-code the retired brand orange in the interface", () => {
+    const retiredBrandOrange = /#ff5e00|rgba\(255,\s*94,\s*0/iu;
+    const legacyUses = sourceFiles(resolve(process.cwd(), "src"))
+      .filter((path) => !path.includes(".test."))
+      .filter((path) => retiredBrandOrange.test(readFileSync(path, "utf8")))
+      .map((path) => relative(process.cwd(), path));
+
+    expect(legacyUses).toEqual([]);
+  });
+
   it("uses a pure white page canvas in light mode", () => {
     expect(declaration(":root", "--color-background")).toBe("#ffffff");
     expect(declaration(":root", "--background")).toBe("#ffffff");
+  });
+
+  it("uses the approved six-percent fill weak color in light mode", () => {
+    expect(declaration(":root", "--fill-neutral-weak")).toBe(
+      "rgba(15, 7, 0, 0.06)",
+    );
   });
 
   it("uses the approved app canvas throughout dark mode", () => {

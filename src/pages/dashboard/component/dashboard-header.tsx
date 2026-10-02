@@ -2,8 +2,6 @@ import zapIcon from "@/assets/icon/zap.svg";
 import {
   ChevronLeft,
   PanelLeft,
-  PanelLeftClose,
-  PanelLeftOpen,
   MoreHorizontal,
   Phone,
   Volume2,
@@ -127,9 +125,6 @@ export function DashboardHeader({
       dayjs(chrome.memory.created_at).format("MMM DD, YYYY");
     const metaLine = host?.subtitle ?? createdLine;
 
-    const railExpanded = mdUp ? !mainSidebarCollapsed : mobileSidebarOpen;
-    const toggleMainSidebar = onMainSidebarToggle ?? onMenuClick;
-
     return (
       <div className="w-full h-[60px] fixed top-0 left-0 right-0 sm:relative z-[45] flex items-center border-b border-border bg-background px-3 sm:px-5">
         <header className="flex w-full min-w-0 items-center justify-between gap-3">
@@ -147,31 +142,7 @@ export function DashboardHeader({
                   aria-hidden
                 />
               </Link>
-            ) : (
-              <button
-                type="button"
-                onClick={toggleMainSidebar}
-                className={convIconBtn}
-                aria-expanded={railExpanded}
-                aria-label={
-                  railExpanded ? "Collapse sidebar" : "Expand sidebar"
-                }
-              >
-                {railExpanded ? (
-                  <PanelLeftClose
-                    className="size-5"
-                    strokeWidth={1.75}
-                    aria-hidden
-                  />
-                ) : (
-                  <PanelLeftOpen
-                    className="size-5"
-                    strokeWidth={1.75}
-                    aria-hidden
-                  />
-                )}
-              </button>
-            )}
+            ) : null}
             <h1
               className="min-w-0 truncate font-inter text-sm font-semibold text-foreground sm:text-base"
               title={title}

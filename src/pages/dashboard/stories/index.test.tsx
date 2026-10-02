@@ -46,6 +46,7 @@ describe("StoriesPage", () => {
     expect(workspace).toHaveClass("min-h-0", "overflow-y-auto");
     expect(workspace).not.toHaveClass("sm:px-6", "lg:px-8");
     expect(viewport).toHaveClass("overflow-hidden");
+    expect(viewport).toHaveClass("max-w-[1900px]!");
   });
 
   it("keeps memory statistics permanently visible without collapse controls", () => {

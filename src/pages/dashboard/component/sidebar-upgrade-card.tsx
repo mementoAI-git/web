@@ -49,7 +49,7 @@ export function SidebarUpgradeCard({ onNavigate }: SidebarUpgradeCardProps) {
             type="button"
             className={cn(
               "flex h-fit w-full shrink-0 flex-row items-center justify-center gap-1 rounded-full",
-              "bg-[#FF5E00] px-2.5 py-2 font-inter text-xs font-semibold leading-[18px] text-white",
+              "bg-fill-brand-strong px-2.5 py-2 font-inter text-xs font-semibold leading-[18px] text-white",
               "shadow-[inset_0_-3px_12px_rgba(0,0,0,0.29)]",
               "outline-none transition-opacity hover:opacity-95",
               "focus-visible:ring-2 focus-visible:ring-v3-brand-strong focus-visible:ring-offset-2",

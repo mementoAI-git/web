@@ -32,7 +32,7 @@ export default function BrowseTopics() {
                 <>
                   {Array.from({ length: 4 }).map((_, i) => (
                     <div
-                      className="flex w-[min(220px,calc(100vw-3rem))] shrink-0 snap-start flex-col sm:w-[220px]"
+                      className="flex w-[min(238px,calc(100vw-3rem))] shrink-0 snap-start flex-col sm:w-[238px]"
                       key={`sk-${i}`}
                     >
                       <TopicSkeleton />
@@ -44,7 +44,7 @@ export default function BrowseTopics() {
                     const category = getCategory(t?.category)
                     return (
                       <div
-                        className="flex w-[min(220px,calc(100vw-3rem))] shrink-0 snap-start flex-col sm:w-[220px]"
+                        className="flex w-[min(238px,calc(100vw-3rem))] shrink-0 snap-start flex-col sm:w-[238px]"
                         key={i}
                       >
                         <CategoryCard
@@ -52,7 +52,7 @@ export default function BrowseTopics() {
                           href={`/chat/reply/${t?._id}`}
                           image={category?.image}
                           category={t?.category}
-                          className="w-full max-w-[220px]"
+                          className="w-full max-w-[238px]"
                         />
                       </div>
                     )
@@ -60,13 +60,8 @@ export default function BrowseTopics() {
             }
           </div>
 
-          <div
-            className="pointer-events-none absolute top-0 right-0 bottom-2 z-10 w-10 bg-gradient-to-l from-background to-transparent sm:bottom-4 sm:w-16"
-            aria-hidden
-          />
         </div>
       </div>
     </div>
   );
 }
-

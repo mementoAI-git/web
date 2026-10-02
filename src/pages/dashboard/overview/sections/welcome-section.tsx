@@ -10,17 +10,7 @@ import brightButtonIcon from "@/assets/icon/noto_bright-button.svg";
 import moonfaceIcon from "@/assets/icon/moonface.svg";
 import zapIcon from "@/assets/icon/zap.svg";
 import trophyIcon from "@/assets/icon/noto_trophy.svg";
-// deprecated backgrounds — kept for reference
-// import _bg2 from "@/assets/icon/folder/side cards for streak.png";
-// import _bg3 from "@/assets/icon/folder/green side cards for streak.png";
 import enrichmentBgPng from "@/assets/icon/enrichment bg.png";
-import memoriesCardBg from "@/assets/icon/backgrounds/dash memories card.png";
-import benefiCardBg from "@/assets/icon/backgrounds/dash benefi card.png";
-import timeCapCardBg from "@/assets/icon/backgrounds/dash time cap card.png";
-import streakCardBg from "@/assets/icon/backgrounds/side cards for streak.png";
-import blueFolderIcon from "@/assets/icon/blue folder 2.svg";
-import surferIcon from "@/assets/icon/noto_man-surfing-medium-skin-tone.svg";
-import hourglassIcon from "@/assets/icon/noto_hourglass-not-done.svg";
 import {
   getGreetingPunctuation,
   shouldUseBrightWelcomeIcon,
@@ -74,12 +64,6 @@ export default function WelcomeSection() {
     return () => window.clearInterval(id);
   }, []);
   const { data: statsData, mutate: mutateUserStats } = useSWR(endpoint.userStats);
-  const { data: memoriesStatsData } = useSWR(endpoint.memoriesStats);
-  const { data: storiesListData } = useSWR(`${endpoint.stories}?page=1&limit=1`);
-  const { data: beneficiariesData } = useSWR(
-    `${endpoint.beneficiaries}?page=1`,
-  );
-  const { data: capsuleStatsData } = useSWR(endpoint.capsuleStats);
   const stats = statsData?.data ?? {};
   const quickPending = Number(stats.quick_capture_pending_count) || 0;
   const quickLatestId =
@@ -96,15 +80,6 @@ export default function WelcomeSection() {
   }, [quickPending, mutateUserStats]);
   const streakCount = Number(user?.streak) || Number(stats.streak_count) || 0;
   const enrichmentScore = Number(stats.enrichment_score) || 0;
-  const memoriesCount =
-    memoriesStatsData?.data?.stories_count ??
-    memoriesStatsData?.stories_count ??
-    storiesListData?.data?.totalDocs ??
-    0;
-  const weeklyMemories =
-    memoriesStatsData?.data?.week_count ?? memoriesStatsData?.week_count ?? 0;
-  const beneficiariesCount = beneficiariesData?.data?.totalDocs || 0;
-  const capsuleCount = capsuleStatsData?.data?.scheduled_count || 0;
 
   return (
     <div className="w-full space-y-6 sm:space-y-8 lg:space-y-10 py-4 sm:py-9 lg:py-12">
@@ -254,133 +229,6 @@ export default function WelcomeSection() {
           </button>
         </div>
       ) : null}
-
-      {/* Stat cards row — 2×2 below xl; extra horizontal padding on very narrow widths */}
-      <div className="grid grid-cols-2 gap-3 min-[380px]:gap-4 xl:grid-cols-4">
-        {/* All Memories */}
-        <Link
-          to="/stories"
-          className="relative col-span-2 block min-h-[99px] overflow-hidden rounded-2xl border border-stroke-neutral-weaker transition-opacity hover:opacity-95 xl:col-span-1"
-        >
-          <img
-            src={memoriesCardBg}
-            alt=""
-            className="absolute inset-0 object-cover w-full h-full rounded-[16px]"
-          />
-          <div className="relative flex min-h-[99px] items-center justify-between px-3.5 py-3 font-inter min-[380px]:px-5 min-[380px]:py-0 rounded-[16px]">
-            <div className="flex min-w-0 flex-col gap-0.5 min-[380px]:gap-1">
-              <span className="font-inter text-[11px] font-normal uppercase tracking-widest text-text-neutral-weaker min-[380px]:text-[12px] md:truncate">
-                All Memories
-              </span>
-              <span className="font-inter text-[13px] font-semibold leading-tight text-text-neutral-strong min-[380px]:text-[14px]">
-                <span className="font-bold text-text-info-strong">
-                  {memoriesCount}
-                </span>{" "}
-                items
-              </span>
-              {weeklyMemories > 0 && (
-                <span className="font-inter text-[12px] font-normal text-text-neutral-weaker">
-                  +{weeklyMemories} this week
-                </span>
-              )}
-            </div>
-            <img
-              src={blueFolderIcon}
-              alt=""
-              className="size-9 object-contain shrink-0 min-[380px]:size-11"
-            />
-          </div>
-        </Link>
-
-        {/* Beneficiaries */}
-        <button
-          type="button"
-          onClick={() => navigate("/settings/beneficiary")}
-          className="relative col-span-2 block min-h-[99px] w-full overflow-hidden rounded-2xl border border-stroke-neutral-weaker text-left transition-opacity hover:opacity-95 xl:col-span-1"
-        >
-          <img
-            src={benefiCardBg}
-            alt=""
-            className="absolute inset-0 object-cover w-full h-full rounded-[16px]"
-          />
-          <div className="relative flex min-h-[99px] items-center justify-between px-3.5 py-3 text-white/90 min-[380px]:px-5 min-[380px]:py-0">
-            <div className="flex min-w-0 flex-col gap-0.5 min-[380px]:gap-1">
-              <span className="font-inter text-[11px] font-normal uppercase tracking-widest text-white/75 min-[380px]:text-[12px] md:truncate">
-                Beneficiaries
-              </span>
-              <span className="font-inter text-[13px] font-semibold leading-tight text-text-neutral-strong min-[380px]:text-[14px]">
-                <span className="font-bold text-text-brand-strong">
-                  {beneficiariesCount}
-                </span>{" "}
-                {beneficiariesCount === 1 ? "person" : "people"}
-              </span>
-            </div>
-            <img
-              src={surferIcon}
-              alt=""
-              className="size-10 object-contain shrink-0 min-[380px]:size-12"
-            />
-          </div>
-        </button>
-
-        {/* Time Capsules */}
-        <Link
-          to="/capsule"
-          className="relative col-span-2 block min-h-[99px] overflow-hidden rounded-2xl border border-stroke-neutral-weaker transition-opacity hover:opacity-95 xl:col-span-1"
-        >
-          <img
-            src={timeCapCardBg}
-            alt=""
-            className="absolute inset-0 object-cover w-full h-full rounded-[16px]"
-          />
-          <div className="relative flex min-h-[99px] items-center justify-between px-3.5 py-3 min-[380px]:px-5 min-[380px]:py-0">
-            <div className="flex min-w-0 flex-col gap-0.5 min-[380px]:gap-1">
-              <span className="font-inter text-[11px] font-normal uppercase tracking-widest text-text-neutral-weaker min-[380px]:text-[12px] md:truncate">
-                Time Capsules
-              </span>
-              <span className="font-inter text-[13px] font-semibold leading-tight text-text-neutral-strong min-[380px]:text-[14px]">
-                <span className="font-bold text-text-brand-strong">
-                  {capsuleCount}
-                </span>{" "}
-                {capsuleCount === 1 ? "post" : "posts"} scheduled
-              </span>
-            </div>
-            <img
-              src={hourglassIcon}
-              alt=""
-              className="size-10 object-contain shrink-0 min-[380px]:size-12"
-            />
-          </div>
-        </Link>
-
-        {/* Streak Count */}
-        <div className="relative col-span-2 min-h-[99px] overflow-hidden rounded-2xl border border-stroke-neutral-weaker xl:col-span-1">
-          <img
-            src={streakCardBg}
-            alt=""
-            className="absolute inset-0 object-cover w-full h-full rounded-[16px]"
-          />
-          <div className="relative flex min-h-[99px] items-center justify-between px-3.5 py-3 min-[380px]:px-5 min-[380px]:py-0">
-            <div className="flex min-w-0 flex-col gap-0.5 min-[380px]:gap-1">
-              <span className="font-inter text-[11px] font-normal uppercase tracking-widest text-text-neutral-weaker min-[380px]:text-[12px] md:truncate">
-                Streak Count
-              </span>
-              <p className="font-inter text-[13px] font-semibold leading-tight text-text-neutral-strong min-[380px]:text-[14px]">
-                You're on a{" "}
-                <span className="font-bold text-text-brand-strong">
-                  {streakCount}-day
-                </span>{" "}
-                streak
-              </p>
-            </div>
-            <img
-              src={zapIcon}
-              alt=""
-              className="size-9 object-contain shrink-0 min-[380px]:size-11"
-            />
-          </div>
-        </div>
-      </div>
     </div>
   );
 }

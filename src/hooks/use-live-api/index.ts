@@ -25,13 +25,20 @@ export type TranscriptEntry = {
 interface UseLiveAPIProps {
   memoryId?: string | null;
   turns?: { role: "user" | "ai", text: string }[];
+  languageCode?: string;
   /** When false (default), the session is not opened until `connect()` runs (e.g. user taps “Start call”). */
   autoConnect?: boolean;
 }
 
+export type LiveSessionOverrides = {
+  languageCode?: string;
+  voiceName?: string;
+};
+
 export function useLiveAPI({
   memoryId,
   turns = [],
+  languageCode = "en-US",
   autoConnect = false,
 }: UseLiveAPIProps) {
   const { user } = useStore();
@@ -208,14 +215,20 @@ export function useLiveAPI({
     isConnectingRef.current = false;
 
     setStatus('Recording stopped. Click Start to begin again.');
+  }, [stopTurnTimer]);
+
+  const setInputMuted = useCallback((muted: boolean) => {
+    mediaStreamRef.current?.getAudioTracks().forEach((track) => {
+      track.enabled = !muted;
+    });
   }, []);
 
   // Connect to Live API
-  const connect = useCallback(async () => {
+  const connect = useCallback(async (overrides: LiveSessionOverrides = {}) => {
     if (!outputAudioContextRef.current) return;
 
     // Prevent multiple simultaneous connection attempts
-    if (isConnectingRef.current || connected) {
+    if (isConnectingRef.current || hasConnectedRef.current) {
       return;
     }
 
@@ -223,19 +236,16 @@ export function useLiveAPI({
     const outputAudioContext = outputAudioContextRef.current;
 
     try {
-      if (!ephemeralTokenRef.current) {
-        const result = await fetchEphemeralToken();
-        if (result?.data?.token) {
-          ephemeralTokenRef.current = result.data.token;
-        }
+      const result = await fetchEphemeralToken();
+      if (!result?.data?.token) {
+        throw new Error("Failed to get a fresh Live API token");
       }
+      ephemeralTokenRef.current = result.data.token;
 
-      if (!clientRef.current) {
-        clientRef.current = new GoogleGenAI({
-          apiKey: ephemeralTokenRef.current || undefined,
-          httpOptions: { apiVersion: 'v1alpha' }
-        });
-      }
+      clientRef.current = new GoogleGenAI({
+        apiKey: ephemeralTokenRef.current,
+        httpOptions: { apiVersion: 'v1alpha' }
+      });
 
       if (!clientRef.current) {
         throw new Error("Failed to initialize Gemini client");
@@ -329,21 +339,22 @@ export function useLiveAPI({
           responseModalities: [Modality.AUDIO],
           systemInstruction: context,
           speechConfig: {
-            languageCode: 'en-US',
+            languageCode: overrides.languageCode || languageCode,
             voiceConfig: {
               prebuiltVoiceConfig: {
-                voiceName:
+                voiceName: overrides.voiceName || (
                   user?.chat_voice_provider === "gemini"
                     ? (user?.chat_voice || GEMINI_CONFIG.VOICE_CONFIG.voiceName)
                     : GEMINI_CONFIG.VOICE_CONFIG.voiceName
+                )
               }
             }
           },
           inputAudioTranscription: {
-            languageCode: "en-US",
+            languageCode: overrides.languageCode || languageCode,
           },
           outputAudioTranscription: {
-            languageCode: "en-US",
+            languageCode: overrides.languageCode || languageCode,
           }
         }
       });
@@ -375,7 +386,8 @@ export function useLiveAPI({
     context,
     outputNode,
     fetchEphemeralToken,
-    connected
+    languageCode,
+    turns,
   ]);
 
   const disconnect = useCallback(() => {
@@ -386,6 +398,13 @@ export function useLiveAPI({
     sessionPromiseRef.current = null;
     // Don't close audio contexts here - they're managed by the cleanup
   }, []);
+
+  const restartSession = useCallback(async (overrides: LiveSessionOverrides = {}) => {
+    setInputMuted(true);
+    disconnect();
+    await connect(overrides);
+    setInputMuted(false);
+  }, [connect, disconnect, setInputMuted]);
 
   useEffect(() => {
     const inputCtx = new ((window as Window & { webkitAudioContext?: typeof AudioContext }).AudioContext || (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext!)({
@@ -430,8 +449,10 @@ export function useLiveAPI({
     connected,
     connect,
     disconnect,
+    restartSession,
     startRecording,
     stopRecording,
+    setInputMuted,
     isRecording,
     error,
     inputNode,

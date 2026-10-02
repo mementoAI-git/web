@@ -15,19 +15,50 @@ vi.mock("sonner", () => ({
 }));
 
 describe("Bubble", () => {
-  it("has no fill background on AI message body", () => {
+  it("uses fill neutral weak for AI messages", () => {
     render(<Bubble role="ai" text="Hello from the assistant" />);
 
-    expect(screen.getByText("Hello from the assistant")).toBeInTheDocument();
-    const bubble = screen.getByText("Hello from the assistant").closest("div.w-full");
+    const bubble = screen
+      .getByText("Hello from the assistant")
+      .closest(".bg-fill-neutral-weak");
     expect(bubble).toBeInTheDocument();
-    expect(bubble?.className.includes("bg-fill-neutral-weaker")).toBe(false);
   });
 
-  it("uses fill neutral weaker for user messages", () => {
+  it("hides the model name from AI replies", () => {
+    render(
+      <Bubble
+        role="ai"
+        text="Hello from the assistant"
+        modelLabel="gemini:gemini-2.5-flash"
+      />,
+    );
+
+    expect(
+      screen.queryByText("gemini:gemini-2.5-flash"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("caps AI reply width at 75%", () => {
+    render(<Bubble role="ai" text="Assistant reply" />);
+
+    const body = screen
+      .getByText("Assistant reply")
+      .closest("div.rounded-\\[16px\\]");
+    expect(body?.parentElement).toHaveClass("w-fit", "max-w-[75%]");
+  });
+
+  it("keeps AI replies left-aligned", () => {
+    const { container } = render(<Bubble role="ai" text="Assistant reply" />);
+
+    expect(container.firstElementChild).not.toHaveClass("items-end");
+  });
+
+  it("uses fill neutral weak for user messages", () => {
     render(<Bubble role="user" text="User said this" />);
 
-    const bubble = screen.getByText("User said this").closest(".bg-fill-neutral-weaker");
+    const bubble = screen
+      .getByText("User said this")
+      .closest(".bg-fill-neutral-weak");
     expect(bubble).toBeInTheDocument();
   });
 
@@ -45,15 +76,41 @@ describe("Bubble", () => {
 
   it("caps user message body width at min(380px, 85%)", () => {
     render(<Bubble role="user" text="User said this" />);
-    const body = screen.getByText("User said this").closest("div.rounded-\\[8px\\]");
-    expect(body?.className).toContain("max-w-[min(380px,85%)]");
+    const body = screen
+      .getByText("User said this")
+      .closest("div.rounded-\\[16px\\]");
+    expect(body?.parentElement).toHaveClass("max-w-[min(380px,85%)]");
+    expect(body).not.toHaveClass("max-w-[min(380px,85%)]");
   });
 
-  it("uses 8px padding and radius on message bodies", () => {
+  it("aligns the user bubble and Reply row to the same right edge", () => {
+    const { container } = render(
+      <Bubble
+        role="user"
+        text="User said this"
+        createdAt="2026-09-24T20:40:00.000Z"
+        onReply={vi.fn()}
+      />,
+    );
+
+    const body = screen
+      .getByText("User said this")
+      .closest("div.rounded-\\[16px\\]");
+    const wrapper = body?.parentElement;
+    const meta = screen.getByRole("button", { name: /reply to message/i })
+      .parentElement;
+
+    expect(container.firstElementChild).toHaveClass("items-end");
+    expect(wrapper).toHaveClass("flex", "flex-col", "items-end");
+    expect(body).toHaveClass("w-fit", "max-w-full");
+    expect(meta).toHaveClass("w-fit", "max-w-full", "justify-end");
+  });
+
+  it("uses a 16px radius with 12px horizontal and 8px vertical padding", () => {
     render(<Bubble role="user" text="Hi" />);
-    const body = screen.getByText("Hi").closest("div.rounded-\\[8px\\]");
+    const body = screen.getByText("Hi").closest("div.rounded-\\[16px\\]");
     expect(body).toBeInTheDocument();
-    expect(body?.className).toMatch(/\bp-2\b/);
+    expect(body).toHaveClass("px-3", "py-2");
   });
 
   it("uses horizontal gutter on sm+ for the bubble column", () => {

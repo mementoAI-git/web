@@ -48,6 +48,11 @@ function pagination(hasNextPage: boolean): IPagination<IMemory> {
 
 describe("StoriesGrid", () => {
   beforeEach(() => {
+    Object.defineProperty(window, "innerWidth", {
+      configurable: true,
+      writable: true,
+      value: 1280,
+    });
     renderedBodyLines.value = 0;
     vi.spyOn(document, "createRange").mockReturnValue({
       selectNodeContents: vi.fn(),
@@ -114,6 +119,22 @@ describe("StoriesGrid", () => {
     );
 
     expect(screen.getByText("End of items")).toBeVisible();
+  });
+
+  it.each([
+    [1600, 5],
+    [1920, 6],
+  ])("at a %ipx viewport uses %i masonry columns", (width, columns) => {
+    window.innerWidth = width;
+    const { container } = renderWithProviders(
+      <StoriesGrid data={pagination(false)} />,
+      { route: "/stories", auth: true },
+    );
+
+    const loadMore = container.querySelector(
+      '[data-slot="stories-grid-load-more"]',
+    );
+    expect(loadMore?.previousElementSibling?.children).toHaveLength(columns);
   });
 
   it("keeps media-card hover chrome minimal and shows the attachment count", () => {

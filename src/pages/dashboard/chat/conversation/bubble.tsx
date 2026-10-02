@@ -65,7 +65,6 @@ export default function Bubble({
   replyQuote,
   onReply,
   hostChatDeepDive = false,
-  modelLabel,
   linkMetadata = [],
 }: IBubbleProps) {
 
@@ -94,13 +93,6 @@ export default function Bubble({
     if (!is_voice) return getDuration(0)
     return getDuration(duration)
   }, [is_voice, duration])
-  const showDevModelLabel = Boolean(
-    !isUser &&
-      modelLabel &&
-      (import.meta.env.DEV ||
-        (typeof window !== "undefined" &&
-          ["localhost", "127.0.0.1"].includes(window.location.hostname))),
-  );
   const messageLinks = useMemo(
     () => buildConversationAssetIndex([{ text, link_metadata: linkMetadata }]).links,
     [linkMetadata, text],
@@ -125,30 +117,19 @@ export default function Bubble({
     >
       <div
         className={cn(
-          "min-w-0 max-w-full",
-          isUser && "w-fit max-w-[min(380px,85%)]",
-          !isUser && "w-full",
+          "flex min-w-0 flex-col",
+          isUser && "w-fit max-w-[min(380px,85%)] items-end",
+          !isUser && "w-fit max-w-[75%] items-start",
         )}
       >
         <div
           className={cn(
-            "w-full max-w-full rounded-[8px] p-2 sm:p-2.5",
-            isUser && "max-w-[min(380px,85%)]",
-            isUser && compact && "bg-fill-neutral-weaker",
-            isUser && !compact && "bg-fill-neutral-weaker",
-            !isUser && "bg-transparent",
+            "w-fit max-w-full rounded-[16px] bg-fill-neutral-weak px-3 py-2",
             !isUser &&
               hostChatDeepDive &&
-              "border-l-[3px] border-stroke-brand-strong bg-fill-neutral-weaker pl-3",
+              "border-l-[3px] border-stroke-brand-strong pl-3",
           )}
         >
-          {showDevModelLabel ? (
-            <div className="mb-1.5">
-              <span className="inline-flex rounded-md bg-fill-brand-weak px-1.5 py-0.5 font-inter text-[10px] font-semibold uppercase tracking-wide text-text-brand-strong">
-                {modelLabel}
-              </span>
-            </div>
-          ) : null}
           {isUser && replyQuote?.text?.trim() ? (
             <div className="mb-2 border-b border-stroke-neutral-weaker pb-2">
               <p className="font-inter text-[10px] font-semibold uppercase tracking-wide text-text-neutral-weak">
@@ -213,8 +194,8 @@ export default function Bubble({
           (timeLabel || canCopy || (onReply && hasReplyableContent)) && (
             <div
             className={cn(
-              "mt-1 flex max-w-[min(470px,100%)] flex-wrap items-center gap-1 px-0.5",
-              isUser && "ml-auto justify-end",
+              "mt-1 flex w-fit max-w-full flex-wrap items-center gap-1 px-0.5",
+              isUser && "justify-end",
               !isUser && "justify-start",
             )}
           >
