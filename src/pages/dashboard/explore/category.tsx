@@ -1,23 +1,47 @@
-import { useMemo } from "react";
 import { useParams, Navigate } from "react-router-dom";
-import categoryData from "@/utility/data/categories";
-import { isEmpty } from "@/utility";
 import CategoryDetails from "./category-details";
-
-const categories = categoryData as Record<string, { slug: string; title: string; subtitle: string; image: string }>;
+import useSWR from "swr";
+import endpoint from "@/api/endpoint";
+import { collectionResponseFetcher } from "@/api/domain-fetchers";
+import type { ExploreCategory } from "@/features/explore/explore-types";
+import { resolveExploreCatalog } from "@/features/explore/explore-catalog";
+import { Link } from "react-router-dom";
+import {
+  getExploreCategoryImage,
+  resolveExploreCategorySlug,
+} from "@/utility/data/categories";
 
 export default function ExploreCategoryPage() {
   const { id = "" } = useParams<{ id: string }>();
 
-  const category = useMemo(() => {
-    if (!id) return null;
-    return categories[id] ?? null;
-  }, [id]);
+  const canonicalSlug = resolveExploreCategorySlug(id);
+  const { data, isLoading } = useSWR(
+    endpoint.exploreCategories,
+    collectionResponseFetcher<ExploreCategory>,
+  );
 
-  if (!category || isEmpty(category)) {
+  if (!canonicalSlug) {
     return <Navigate to="/explore" replace />;
   }
+  if (id !== canonicalSlug) {
+    return <Navigate to={`/explore/categories/${canonicalSlug}`} replace />;
+  }
+  if (isLoading) return null;
 
-  return <CategoryDetails category={category} />;
+  const { categories, usingBundledCatalog } = resolveExploreCatalog(data?.data);
+  const category = categories.find((item) => item.slug === canonicalSlug);
+  const image = getExploreCategoryImage(canonicalSlug);
+  if (!category || !image) return <Navigate to="/explore" replace />;
+
+  if (usingBundledCatalog) {
+    return (
+      <div className="container py-12 space-y-4">
+        <h1 className="font-garamond text-3xl text-text-neutral-strong">{category.title}</h1>
+        <p role="status" className="text-text-neutral-weak">Questions are temporarily unavailable while Explore is being updated. Please try again shortly.</p>
+        <Link className="inline-flex min-h-11 items-center text-text-brand-strong underline" to="/explore">Back to Explore</Link>
+      </div>
+    );
+  }
+
+  return <CategoryDetails category={{ ...category, image }} />;
 }
-

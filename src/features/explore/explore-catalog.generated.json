@@ -1,0 +1,79 @@
+[
+  {
+    "slug": "growing-up",
+    "title": "Growing Up",
+    "description": "Childhood, school, early memories, firsts, and formative experiences.",
+    "order": 0,
+    "starterTotal": 10
+  },
+  {
+    "slug": "people-i-love",
+    "title": "People I Love",
+    "description": "Family, friendships, romantic relationships, and important people.",
+    "order": 1,
+    "starterTotal": 10
+  },
+  {
+    "slug": "the-life-i-live",
+    "title": "The Life I Live",
+    "description": "Routines, home, habits, everyday life, and how you spend your time.",
+    "order": 2,
+    "starterTotal": 10
+  },
+  {
+    "slug": "things-i-love",
+    "title": "Things I Love",
+    "description": "Music, food, hobbies, interests, places, entertainment, and personal favorites.",
+    "order": 3,
+    "starterTotal": 10
+  },
+  {
+    "slug": "who-i-am",
+    "title": "Who I Am",
+    "description": "Personality, identity, strengths, fears, quirks, and self-perception.",
+    "order": 4,
+    "starterTotal": 10
+  },
+  {
+    "slug": "work-purpose",
+    "title": "Work & Purpose",
+    "description": "Career, ambition, money, contribution, meaningful work, and purpose.",
+    "order": 5,
+    "starterTotal": 10
+  },
+  {
+    "slug": "beliefs-faith",
+    "title": "Beliefs & Faith",
+    "description": "Religion, spirituality, values, morality, worldview, meaning, and doubt.",
+    "order": 6,
+    "starterTotal": 10
+  },
+  {
+    "slug": "where-i-come-from",
+    "title": "Where I Come From",
+    "description": "Family history, heritage, culture, traditions, community, and place.",
+    "order": 7,
+    "starterTotal": 10
+  },
+  {
+    "slug": "stories-adventures",
+    "title": "Stories & Adventures",
+    "description": "Travel, memorable experiences, funny stories, adventures, and unusual moments.",
+    "order": 8,
+    "starterTotal": 10
+  },
+  {
+    "slug": "what-life-taught-me",
+    "title": "What Life Taught Me",
+    "description": "Lessons, mistakes, advice, growth, perspective, and difficult periods.",
+    "order": 9,
+    "starterTotal": 10
+  },
+  {
+    "slug": "whats-ahead",
+    "title": "What's Ahead",
+    "description": "Hopes, goals, dreams, future experiences, and unfinished ambitions.",
+    "order": 10,
+    "starterTotal": 10
+  }
+]

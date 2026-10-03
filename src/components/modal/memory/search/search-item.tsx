@@ -5,8 +5,9 @@ import dayjs from "dayjs";
 import { Calendar1Icon } from "@/components/icons";
 import { CommandItem } from "@/components/ui/command";
 import { useModal } from "@/hooks/use-modal";
-import { getCategory } from "@/utility";
+import { getExploreCategoryImage } from "@/utility/data/categories";
 import type { IMemory } from "@/utility/interface";
+import questionImage from "@/assets/image/question-2.png";
 
 interface SearchItemProps {
   memory: IMemory;
@@ -68,15 +69,14 @@ export default function SearchItem({
   };
 
   const handleImageError = (event: SyntheticEvent<HTMLImageElement>) => {
-    const categoryImage = getCategory(memory?.category)?.image;
+    const categoryImage = getExploreCategoryImage(memory?.category);
     if (event.currentTarget.src !== categoryImage) {
-      event.currentTarget.src =
-        categoryImage || getCategory("career")?.image || "";
+      event.currentTarget.src = categoryImage || questionImage;
     }
   };
 
   const previewImage =
-    memory?.attachments?.[0]?.url || getCategory(memory?.category)?.image || "";
+    memory?.attachments?.[0]?.url || getExploreCategoryImage(memory?.category) || questionImage;
   const previewAlt =
     memory?.attachments?.[0]?.name ||
     memory?.category ||

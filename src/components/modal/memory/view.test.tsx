@@ -164,7 +164,7 @@ describe("ViewMemory", () => {
       await screen.findByDisplayValue("Unsaved title"),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: "Save changes" }),
+      await screen.findByRole("button", { name: "Save changes" }),
     ).toBeInTheDocument();
   });
 

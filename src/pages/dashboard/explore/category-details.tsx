@@ -5,23 +5,22 @@ import useSWRInfinite from "swr/infinite";
 import endpoint from "@/api/endpoint";
 import CategoryPromptCard from "./category-prompt-card";
 import Spinner from "@/components/spinner";
-import { cn, isEmpty } from "@/utility";
+import { cn } from "@/utility";
 import { paginatedResponseFetcher } from "@/api/domain-fetchers";
 import useIntersectionObserver from "@/hooks/use-intersection-observer";
 import { useStore } from "@/hooks/use-store";
 import { TypographyH2, TypographyMuted } from "@/components/ui/typography";
+import type { ExploreCategory, ExploreQuestion, ExploreQuestionStatus } from "@/features/explore/explore-types";
+import { setExploreQuestionFeedback } from "@/features/explore/explore-api";
+import { toast } from "sonner";
 
 interface CategoryDetailsProps {
-  category: {
-    slug: string;
-    image: string;
-    title: string;
-    subtitle: string;
-  } | null;
+  category: ExploreCategory & { image: string };
 }
 
 export default function CategoryDetails({ category }: CategoryDetailsProps) {
   const [activeTab, setActiveTab] = useState(0);
+  const [pendingFeedbackId, setPendingFeedbackId] = useState<string | null>(null);
   const { setHeaderTitle } = useStore();
 
   const getKey = useCallback(
@@ -43,7 +42,7 @@ export default function CategoryDetails({ category }: CategoryDetailsProps) {
     [activeTab, category?.slug],
   );
 
-  const { data, size, setSize, isLoading } = useSWRInfinite(getKey, paginatedResponseFetcher, {
+  const { data, size, setSize, isLoading, mutate } = useSWRInfinite(getKey, paginatedResponseFetcher<ExploreQuestion>, {
     revalidateOnFocus: false,
   });
 
@@ -63,35 +62,43 @@ export default function CategoryDetails({ category }: CategoryDetailsProps) {
 
   const totalDocs = data?.[0]?.data?.totalDocs || 0;
 
+  const handleFeedback = useCallback(
+    async (promptId: string, status: Extract<ExploreQuestionStatus, "skipped" | "not-relevant">) => {
+      setPendingFeedbackId(promptId);
+      try {
+        await setExploreQuestionFeedback(promptId, { status });
+        await mutate();
+        toast.success(status === "skipped" ? "Question skipped" : "We’ll avoid questions like this");
+      } catch {
+        toast.error("We couldn’t save that preference. Please try again.");
+      } finally {
+        setPendingFeedbackId(null);
+      }
+    },
+    [mutate],
+  );
+
   useEffect(() => {
     setHeaderTitle(category.title);
     return () => {
       setHeaderTitle(null);
     }
-  }, [category.title]);
-
-  if (!category || isEmpty(category)) {
-    return (
-      <div className="flex min-h-[200px] items-center justify-center text-gray-500">
-        Category not found.
-      </div>
-    );
-  }
+  }, [category.title, setHeaderTitle]);
 
   return (
     <div className="page-viewport hide-scrollbar">
       <div className="container">
         <div className="space-y-6 py-3 sm:py-12">
-          <div className="flex min-h-[253px] w-full flex-col gap-6 rounded-xl border border-sand-3 bg-sand-2 p-4 md:flex-row">
-            <div className="max-h-[221px] w-full overflow-hidden rounded-[10px] border border-v3-stroke-weak md:max-w-[346px]">
+          <div className="flex min-h-[253px] w-full flex-col gap-6 rounded-xl border border-stroke-neutral-weak bg-bg-neutral-weak p-4 md:flex-row">
+            <div className="max-h-[221px] w-full overflow-hidden rounded-[10px] border border-stroke-neutral-weak md:max-w-[346px]">
               <img src={category.image} className="size-full object-cover" alt={category.title} />
             </div>
             <div className="flex flex-1 flex-col gap-3 sm:gap-6">
-              <TypographyH2 className="font-garamond text-2xl leading-[38px] text-sand-12 sm:text-[32px]">{category.title}</TypographyH2>
-              <TypographyMuted className="font-georgia text-sand-11 sm:text-xl">{category.subtitle}</TypographyMuted>
+              <TypographyH2 className="font-garamond text-2xl leading-[38px] text-text-neutral-strong sm:text-[32px]">{category.title}</TypographyH2>
+              <TypographyMuted className="font-georgia text-text-neutral-weak sm:text-xl">{category.description}</TypographyMuted>
               <div className="flex gap-3">
-                <span className="flex items-center gap-[6px] rounded-full border-[1.5px] border-sand-10 px-3 py-1 text-xs text-sand-10">
-                  <span className="size-[6px] rounded-full bg-sand-10" />
+                <span className="flex items-center gap-[6px] rounded-full border border-stroke-neutral-strong px-3 py-1 text-xs text-text-neutral-weak">
+                  <span className="size-[6px] rounded-full bg-fill-neutral-strong" />
                   {totalDocs} topics
                 </span>
               </div>
@@ -101,13 +108,13 @@ export default function CategoryDetails({ category }: CategoryDetailsProps) {
         <div className="py-2 sm:py-12">
           <div className="space-y-6">
             <div className="flex w-full items-center gap-2 overflow-x-auto hide-scrollbar sm:gap-6">
-              {["Uploaded", "Answered", "Unanswered"].map((tab, index) => (
+              {["All", "Answered", "Unanswered"].map((tab, index) => (
                 <button
                   type="button"
                   key={tab}
                   className={cn(
-                    "p-4 font-inter font-normal text-gray-500 transition-all duration-200 ease-in-out hover:text-blue-6",
-                    index === activeTab && "border-b-2 font-bold text-blue-6",
+                    "min-h-11 p-4 font-inter font-normal text-text-neutral-weak transition-colors hover:text-text-brand-strong",
+                    index === activeTab && "border-b-2 border-stroke-brand-strong font-bold text-text-brand-strong",
                   )}
                   onClick={() => {
                     setActiveTab(index);
@@ -119,16 +126,23 @@ export default function CategoryDetails({ category }: CategoryDetailsProps) {
               ))}
             </div>
             {isEmptyData ? (
-              <TypographyMuted className="py-8 text-center text-gray-500">No prompts available for this category.</TypographyMuted>
+              <TypographyMuted className="py-8 text-center text-text-neutral-weak">No prompts available for this category.</TypographyMuted>
             ) : (
               <div className="space-y-6">
-                {(prompts as React.ComponentProps<typeof CategoryPromptCard>[]).map((prompt, index: number) => (
-                  <CategoryPromptCard key={prompt._id ?? index} {...prompt} />
+                {prompts.map((prompt, index: number) => (
+                  <CategoryPromptCard
+                    key={prompt._id ?? index}
+                    _id={prompt._id ?? String(index)}
+                    title={prompt.title}
+                    source={prompt.source}
+                    isFeedbackPending={pendingFeedbackId === prompt._id}
+                    onFeedback={handleFeedback}
+                  />
                 ))}
               </div>
             )}
             <div ref={loadMoreRef} className="flex justify-center py-8">
-              {isLoadingMore && <Spinner loading className="!size-16 text-blue-6" />}
+              {isLoadingMore && <Spinner loading className="!size-16 text-text-brand-strong" />}
             </div>
           </div>
         </div>

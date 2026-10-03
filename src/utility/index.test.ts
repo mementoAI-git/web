@@ -345,16 +345,16 @@ describe("createSystemContext", () => {
 });
 
 describe("getCategory", () => {
-  it("returns category by string key", () => {
+  it("resolves legacy Explore categories to canonical presentation data", () => {
     const cat = getCategory("career");
     expect(cat).toBeDefined();
-    expect(cat?.title).toBe("Career and ambition");
-    expect(cat?.slug).toBe("career");
+    expect(cat?.slug).toBe("work-purpose");
+    expect(cat?.image).toBeTruthy();
   });
 
-  it("returns category for family", () => {
+  it("returns presentation data for family", () => {
     const cat = getCategory("family");
-    expect(cat?.title).toBe("Family life");
+    expect(cat?.slug).toBe("people-i-love");
   });
 
   it("returns undefined for unknown key", () => {

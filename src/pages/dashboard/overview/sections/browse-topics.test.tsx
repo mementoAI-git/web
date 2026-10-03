@@ -14,7 +14,8 @@ vi.mock("swr", async (importOriginal) => {
           {
             _id: "topic-1",
             title: "A reflective topic prompt",
-            category: "identity",
+            category: "who-i-am",
+            category_title: "Who I Am",
           },
         ],
       },

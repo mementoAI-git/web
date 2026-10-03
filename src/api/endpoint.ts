@@ -58,6 +58,7 @@ export default {
   replyPrompt: "/prompts/reply",
   promptDetails: "/prompts/",
   promptCategories: "/prompts/categories/",
+  exploreCategories: "/prompts/categories",
   overviewPrompt: "/prompts/suggestions/overview",
 
   // memories

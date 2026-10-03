@@ -11,14 +11,11 @@ interface CategoryCardProps {
   href?: string;
 }
 
-/** Format slug "life-transition" → "Life transition", with known overrides */
+/** Format a slug or API-provided label for compact topic badges. */
 function formatCategory(slug: string): string {
-  const formatted = slug
+  return slug
     .replace(/-/g, " ")
     .replace(/\b\w/, (c) => c.toUpperCase());
-
-  if (slug.toLowerCase() === "relationship") return "Relationships";
-  return formatted;
 }
 
 export default function CategoryCard({
