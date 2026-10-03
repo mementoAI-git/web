@@ -465,6 +465,10 @@ describe("CreateMemory", () => {
     });
 
     expect(screen.getByTestId("desktop-story-environment")).toBeInTheDocument();
+    expect(screen.getByTestId("desktop-story-environment")).toHaveAttribute(
+      "data-story-journal",
+      "true",
+    );
     expect(screen.getByTestId("desktop-journal-shell")).toBeInTheDocument();
     expect(screen.getByTestId("desktop-album-artwork")).toHaveAttribute("alt", "");
     expect(screen.getByTestId("desktop-album-artwork")).toHaveAttribute("src", albumArtwork);
