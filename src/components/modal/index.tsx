@@ -50,8 +50,8 @@ import { UnpauseCapsule } from "./capsule";
 import { ExitConfirmation } from "./capsule/create/exit-confirmation";
 import ConversationFiles from "./conversation-files";
 
-const RIGHT_PANEL_MODALS = ["view-memory"];
-const FULL_SCREEN_MODALS = ["create-memory", "file-preview"];
+const RIGHT_PANEL_MODALS: string[] = [];
+const FULL_SCREEN_MODALS = ["create-memory", "view-memory", "file-preview"];
 
 /** Centered horizontally, anchored to the top (tall content / readability). */
 const TOP_ALIGNED_MODALS = ["memory-insights"];
@@ -190,10 +190,10 @@ export default function Modal() {
                   e.stopPropagation();
                   close(modal.name);
                 }}
-                className="absolute top-0 left-0 z-10 flex items-center gap-2 bg-white rounded-full pl-4 pr-3 py-2.5 shadow-md font-inter font-semibold text-sm text-gray-800 hover:bg-gray-50 transition-colors"
+                className="absolute top-0 left-0 z-10 flex items-center gap-2 rounded-full bg-background py-2.5 pr-3 pl-4 font-inter text-sm font-semibold text-text-neutral-strong shadow-md transition-colors hover:bg-fill-neutral-weaker"
               >
                 Cancel
-                <span className="inline-flex items-center bg-gray-100 text-gray-500 text-[10px] px-1.5 py-0.5 rounded font-mono leading-none">
+                <span className="inline-flex items-center rounded bg-fill-neutral-weak px-1.5 py-0.5 font-mono text-[10px] leading-none text-text-neutral-weak">
                   ESC
                 </span>
               </button>
