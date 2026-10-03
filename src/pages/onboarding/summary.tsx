@@ -20,13 +20,12 @@ import {
   readOnboardingSummarySnapshot,
 } from "./summary-helpers";
 
-const cardGradient =
-  "bg-[linear-gradient(133deg,rgba(251,210,148,0.14)_0%,rgba(255,252,247,0.45)_56%,rgba(224,229,255,0.88)_100%)]";
+const cardGradient = "bg-gradient-to-br from-fill-brand-weak via-bg-neutral to-fill-info-weak";
 
 function CoverageBadge({ label }: { label: string }) {
   return (
-    <span className="inline-flex items-center gap-1 rounded-md border border-[rgba(23,11,0,0.1)] bg-[rgba(23,11,0,0.02)] px-2 py-0.5 font-inter text-[12px] leading-5 text-[rgba(23,11,0,0.72)]">
-      <CircleCheck className="size-3.5 text-[#6BAF92]" />
+    <span className="inline-flex items-center gap-1 rounded-md border border-stroke-neutral-weak bg-bg-neutral-weaker px-2 py-0.5 font-inter text-[12px] leading-5 text-text-neutral-weak">
+      <CircleCheck className="size-3.5 text-icon-success-strong" />
       {label}
     </span>
   );
@@ -46,18 +45,18 @@ function SummaryCard({
   return (
     <article
       className={cn(
-        "flex h-[328px] flex-col justify-between rounded-2xl border border-[rgba(23,11,0,0.06)] p-6",
+        "flex h-[328px] flex-col justify-between rounded-2xl border border-stroke-neutral-weaker p-6",
         cardGradient,
         className,
       )}
     >
       <div className="space-y-3">
-        <p className="font-inter text-[11px] uppercase tracking-[0.08em] text-[rgba(23,11,0,0.45)]">
+        <p className="font-inter text-[11px] uppercase tracking-[0.08em] text-text-neutral-weaker">
           {eyebrow}
         </p>
         {children}
       </div>
-      <p className="font-geist text-sm leading-6 text-[rgba(30,30,30,0.9)]">{footer}</p>
+      <p className="font-geist text-sm leading-6 text-text-neutral-strong">{footer}</p>
     </article>
   );
 }
@@ -83,7 +82,7 @@ function SummaryBannerActions({
         onClick={onChat}
         variant="outline"
         className={cn(
-          "h-12 rounded-[999px] border-[rgba(23,11,0,0.08)] bg-white font-inter text-[15px] font-medium text-[rgba(23,11,0,0.88)] shadow-none transition-[transform,background-color,border-color] duration-150 ease-out hover:border-[rgba(23,11,0,0.14)] hover:bg-[rgba(255,255,255,0.96)] active:scale-[0.98]",
+          "h-12 rounded-[999px] border-stroke-neutral-weak bg-bg-neutral font-inter text-[15px] font-medium text-text-neutral-strong shadow-none transition-[transform,background-color,border-color] duration-150 ease-out hover:border-stroke-neutral-strong hover:bg-bg-neutral-weaker active:scale-[0.98]",
           compact ? "w-full sm:w-[92px] lg:w-[92px]" : "w-[92px]",
         )}
       >
@@ -94,7 +93,7 @@ function SummaryBannerActions({
         type="button"
         onClick={onAddStory}
         className={cn(
-          "h-12 rounded-[999px] border-0 bg-[#FF6B0A] font-inter text-[15px] font-medium text-white shadow-none transition-[transform,opacity] duration-150 ease-out hover:opacity-95 active:scale-[0.98]",
+          "h-12 rounded-[999px] border-0 bg-fill-brand-strong font-inter text-[15px] font-medium text-text-inverse-strong shadow-none transition-[transform,opacity] duration-150 ease-out hover:opacity-95 active:scale-[0.98]",
           compact ? "w-full sm:w-[127px] lg:w-[127px]" : "w-[127px]",
         )}
       >
@@ -121,13 +120,13 @@ function SummaryBannerContent({ compact = false }: { compact?: boolean }) {
       <div className={cn("min-w-0 space-y-1", compact ? "max-w-none" : "max-w-[363px]")}>
         <h3
           className={cn(
-            "font-inter font-bold text-[rgba(23,11,0,0.9)]",
+            "font-inter font-bold text-text-neutral-strong",
             compact ? "text-lg leading-6 md:text-[19px] md:leading-7" : "text-xl leading-7",
           )}
         >
           Continue building your profile.
         </h3>
-        <p className="font-geist text-[13px] leading-5 text-[rgba(30,30,30,0.9)]">
+        <p className="font-geist text-[13px] leading-5 text-text-neutral-strong">
           Add memories and stories, and start a conversation to create a deeper, richer Memento profile.
         </p>
       </div>
@@ -202,13 +201,13 @@ export default function OnboardingSummaryPage() {
   };
 
   return (
-    <div className="relative flex min-h-full flex-col bg-white lg:grid lg:h-full lg:min-h-0 lg:grid-cols-[clamp(260px,28vw,401px)_minmax(0,1fr)] lg:overflow-hidden">
-      <aside className="relative z-10 hidden flex-col justify-between gap-8 border-b border-[rgba(23,11,0,0.08)] bg-transparent px-5 py-5 md:px-8 md:py-6 lg:flex lg:h-full lg:gap-10 lg:border-r lg:border-b-0 lg:px-10 lg:py-10">
+    <div className="relative flex min-h-full flex-col bg-bg-neutral lg:grid lg:h-full lg:min-h-0 lg:grid-cols-[clamp(260px,28vw,401px)_minmax(0,1fr)] lg:overflow-hidden">
+      <aside className="relative z-10 hidden flex-col justify-between gap-8 border-b border-stroke-neutral-weak bg-transparent px-5 py-5 md:px-8 md:py-6 lg:flex lg:h-full lg:gap-10 lg:border-r lg:border-b-0 lg:px-10 lg:py-10">
         <div className="max-w-[170px] space-y-4">
-          <h2 className="font-garamond text-[20px] leading-6 text-[rgba(23,11,0,0.9)]">
+          <h2 className="font-garamond text-[20px] leading-6 text-text-neutral-strong">
             Reflect, quietly
           </h2>
-          <p className="font-inter text-sm leading-5 text-[rgba(30,30,30,0.9)]">
+          <p className="font-inter text-sm leading-5 text-text-neutral-strong">
             Take your time. Nothing here needs to be finished all at once.
           </p>
         </div>
@@ -217,27 +216,27 @@ export default function OnboardingSummaryPage() {
           type="button"
           variant="outline"
           onClick={handleContinueToDashboard}
-          className="h-11 w-full rounded-full border-[rgba(23,11,0,0.1)] bg-white px-5 font-inter text-sm font-semibold text-[#101828] shadow-none transition-[transform,background-color] duration-150 ease-out hover:bg-[rgba(23,11,0,0.03)] active:scale-[0.98] sm:w-fit"
+          className="h-11 w-full rounded-full border-stroke-neutral-weak bg-bg-neutral px-5 font-inter text-sm font-semibold text-text-neutral-strong shadow-none transition-[transform,background-color] duration-150 ease-out hover:bg-bg-neutral-weaker active:scale-[0.98] sm:w-fit"
         >
           Go to Dashboard
-          <ArrowUpRight className="ml-1 size-4 text-[rgba(23,11,0,0.45)]" />
+          <ArrowUpRight className="ml-1 size-4 text-icon-neutral-weak" />
         </Button>
       </aside>
 
       <main className="relative z-10 min-h-0 bg-transparent lg:overflow-y-auto">
         <div className="mx-auto flex w-full max-w-[1041px] flex-col gap-6 px-5 py-6 md:px-8 md:py-8 lg:min-h-full lg:gap-8 lg:px-10 lg:py-10 xl:px-[84px]">
           <section className="space-y-4">
-            <h1 className="font-garamond text-[28px] font-medium leading-[1.14] text-[rgba(23,11,0,0.9)] sm:text-[32px] sm:leading-[1.18]">
+            <h1 className="font-garamond text-[28px] font-medium leading-[1.14] text-text-neutral-strong sm:text-[32px] sm:leading-[1.18]">
               Your Memento profile is shaping up
             </h1>
-            <p className="max-w-[710px] font-inter text-sm leading-5 text-[rgba(30,30,30,0.9)]">
+            <p className="max-w-[710px] font-inter text-sm leading-5 text-text-neutral-strong">
               {isLoading
                 ? "We’re gathering the first outline of your Memento now."
                 : "A first outline is already here. You can keep building it at your own pace."}
             </p>
           </section>
 
-          <div className="h-px w-full bg-[rgba(23,11,0,0.1)]" />
+          <div className="w-full border-t border-stroke-neutral-weak" />
 
           <section className="grid gap-3 xl:grid-cols-2">
             <SummaryCard
@@ -246,7 +245,7 @@ export default function OnboardingSummaryPage() {
               className="min-h-[240px] md:min-h-[260px] xl:h-[328px]"
             >
               <div className="space-y-2">
-                <p className="font-garamond text-[60px] leading-none tracking-[-0.5px] text-[#FAAE44] sm:text-[72px]">
+                <p className="font-garamond text-[60px] leading-none tracking-[-0.5px] text-text-warning-strong sm:text-[72px]">
                   {enrichmentScore}%
                 </p>
               </div>
@@ -268,7 +267,7 @@ export default function OnboardingSummaryPage() {
                   ))}
                 </div>
               ) : (
-                <p className="max-w-[28ch] font-inter text-sm leading-6 text-[rgba(23,11,0,0.55)]">
+                <p className="max-w-[28ch] font-inter text-sm leading-6 text-text-neutral-weak">
                   Nothing has been covered yet.
                 </p>
               )}
@@ -276,18 +275,18 @@ export default function OnboardingSummaryPage() {
           </section>
 
           <section>
-            <p className="max-w-[704px] font-inter text-sm leading-5 text-[rgba(30,30,30,0.9)]">
+            <p className="max-w-[704px] font-inter text-sm leading-5 text-text-neutral-strong">
               You’ve began filling up an important metric we like to call the “Enrichment Score”. Your Enrichment
               score is decided across 10 different fields that cover different aspects of the human life, and continues
               to increase as you reflect and add more information to your Memento.
             </p>
           </section>
 
-          <div className="h-px w-full bg-[rgba(23,11,0,0.1)]" />
+          <div className="w-full border-t border-stroke-neutral-weak" />
 
           <section className="space-y-3">
-            <p className="font-inter text-sm leading-5 text-[rgba(23,11,0,0.65)]">Still quiet for now:</p>
-            <p className="max-w-[700px] font-inter text-sm leading-5 text-[rgba(30,30,30,0.9)]">
+            <p className="font-inter text-sm leading-5 text-text-neutral-weak">Still quiet for now:</p>
+            <p className="max-w-[700px] font-inter text-sm leading-5 text-text-neutral-strong">
               {quietLabels.join(", ")}.
             </p>
           </section>
@@ -297,10 +296,10 @@ export default function OnboardingSummaryPage() {
             onAddStory={handleAddStory}
           />
 
-          <section className="flex flex-col gap-3 rounded-xl bg-[rgba(23,11,0,0.04)] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+          <section className="flex flex-col gap-3 rounded-xl bg-bg-neutral-weak px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
-              <CircleCheck className="size-4 text-[rgba(6,122,87,0.8)]" />
-              <p className="font-inter text-sm leading-5 text-[rgba(30,30,30,0.9)]">
+              <CircleCheck className="size-4 text-icon-success-strong" />
+              <p className="font-inter text-sm leading-5 text-text-neutral-strong">
                 Your data is private, encrypted, and securely stored and certified on AWS and GCP S3 buckets.
               </p>
             </div>
@@ -308,19 +307,19 @@ export default function OnboardingSummaryPage() {
               href="https://mymemento.io/legal-pages/privacy"
               target="_blank"
               rel="noreferrer"
-              className="inline-flex w-fit shrink-0 self-start whitespace-nowrap cursor-pointer items-center gap-1 font-geist text-xs font-medium text-[rgba(23,11,0,0.65)] transition-colors duration-150 ease-out hover:text-[rgba(23,11,0,0.9)] sm:self-auto"
+              className="inline-flex w-fit shrink-0 self-start whitespace-nowrap cursor-pointer items-center gap-1 font-geist text-xs font-medium text-text-neutral-weak transition-colors duration-150 ease-out hover:text-text-neutral-strong sm:self-auto"
             >
               Learn more
               <ArrowUpRight className="size-3.5" />
             </a>
           </section>
 
-          <section className="space-y-4 border-t border-[rgba(23,11,0,0.08)] pt-6 lg:hidden">
+          <section className="space-y-4 border-t border-stroke-neutral-weak pt-6 lg:hidden">
             <div className="space-y-3">
-              <h2 className="font-garamond text-[20px] leading-6 text-[rgba(23,11,0,0.9)]">
+              <h2 className="font-garamond text-[20px] leading-6 text-text-neutral-strong">
                 Reflect, quietly
               </h2>
-              <p className="max-w-[26rem] font-inter text-sm leading-5 text-[rgba(30,30,30,0.9)]">
+              <p className="max-w-[26rem] font-inter text-sm leading-5 text-text-neutral-strong">
                 Take your time. Nothing here needs to be finished all at once.
               </p>
             </div>
@@ -329,10 +328,10 @@ export default function OnboardingSummaryPage() {
               type="button"
               variant="outline"
               onClick={handleContinueToDashboard}
-              className="h-11 w-full rounded-full border-[rgba(23,11,0,0.1)] bg-white px-5 font-inter text-sm font-semibold text-[#101828] shadow-none transition-[transform,background-color] duration-150 ease-out hover:bg-[rgba(23,11,0,0.03)] active:scale-[0.98] sm:w-fit"
+              className="h-11 w-full rounded-full border-stroke-neutral-weak bg-bg-neutral px-5 font-inter text-sm font-semibold text-text-neutral-strong shadow-none transition-[transform,background-color] duration-150 ease-out hover:bg-bg-neutral-weaker active:scale-[0.98] sm:w-fit"
             >
               Go to Dashboard
-              <ArrowUpRight className="ml-1 size-4 text-[rgba(23,11,0,0.45)]" />
+              <ArrowUpRight className="ml-1 size-4 text-icon-neutral-weak" />
             </Button>
           </section>
         </div>

@@ -14,6 +14,7 @@ type ConversationSuggestion = {
   _id: string;
   title: string;
   category?: string;
+  category_title?: string;
   tag?: string[];
 };
 
@@ -83,7 +84,7 @@ export default function SuggestedConversation() {
                     id={c?._id}
                     title={c.title}
                     image={category?.image}
-                    tag={category ? category?.title : c?.tag[0]}
+                    tag={c.category_title || 'Question'}
                     className="p-3"
                   />
                 )

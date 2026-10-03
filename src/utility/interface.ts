@@ -263,6 +263,9 @@ export interface IPrompt {
   title: string;
   type: string;
   tags: string[];
+  category?: string;
+  source?: "starter" | "ai-generated" | "legacy";
+  status?: "unanswered" | "answered" | "skipped" | "not-relevant";
   created_at: string;
   updated_at: string;
 }

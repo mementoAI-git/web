@@ -1,9 +1,6 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
-import albumArtwork from "@/assets/image/HD Album story bg memento.png";
-import darkAlbumArtwork from "@/assets/image/HD Album story bg memento dark.png";
-import scenicBackground from "@/assets/image/bg/1.png";
 import calendarIcon from "@/assets/icon/uim_calendar.svg";
 import { EditorContent, useEditorState } from "@tiptap/react";
 import { useModal } from "@/hooks/use-modal";
@@ -69,7 +66,7 @@ import { CreateMemoryAssistantComingSoonPanel } from "./create-memory-assistant-
 import { useCreateMemoryAssistant } from "./create-memory-ai";
 import { UpgradePrompt } from "@/features/pricing/upgrade-prompt";
 import { useFeatureFlags } from "@/contexts/feature-flags";
-import { useTheme } from "@/contexts/theme";
+import { StoryJournalShell } from "../story-journal-shell";
 import {
   Card,
   CardContent,
@@ -119,7 +116,7 @@ import {
   X,
 } from "lucide-react";
 
-const ACTIVE_BG = "bg-fill-neutral-strong text-inverse-strong hover:bg-fill-neutral-strong hover:text-inverse-strong";
+const ACTIVE_BG = "bg-fill-neutral-strong text-text-inverse-strong hover:bg-fill-neutral-strong hover:text-text-inverse-strong";
 const initial = { title: "", body: "", attachments: [] as string[] };
 const DRAFT_STORAGE_KEY = "create-memory-drafts";
 const MAX_DRAFTS = 10;
@@ -167,7 +164,6 @@ function CreateMemoryBase({
   const { close, open, push, registerCloseGuard } = useModal();
   const { user } = useStore();
   const { canUse } = useFeatureFlags();
-  const { resolvedTheme } = useTheme();
   const navigate = useNavigate();
   const [showUploadGate, setShowUploadGate] = useState(false);
   const fileInputImageRef = useRef<HTMLInputElement>(null);
@@ -1500,7 +1496,7 @@ function CreateMemoryBase({
                 size="lg"
                 onClick={handleUseVideo}
                 disabled={isUsingVideo}
-                className="h-10 flex-1 rounded-full bg-fill-neutral-strong font-inter font-semibold text-sm text-inverse-strong hover:opacity-90 disabled:opacity-50"
+                className="h-10 flex-1 rounded-full bg-fill-neutral-strong font-inter font-semibold text-sm text-text-inverse-strong hover:opacity-90 disabled:opacity-50"
               >
                 Add to post
                 <Spinner loading={isUsingVideo} className="size-4!" />
@@ -1590,38 +1586,21 @@ function CreateMemoryBase({
 
   return (
     <>
-      <div
-        data-testid="desktop-story-environment"
-        className="absolute inset-0 overflow-auto bg-cover bg-center py-4 pl-0 pr-4 xl:py-9 xl:pl-0 xl:pr-9 min-[1900px]:px-9"
-        style={{
-          backgroundImage: `linear-gradient(rgba(18, 12, 8, 0.22), rgba(18, 12, 8, 0.22)), url(${scenicBackground})`,
+      <StoryJournalShell
+        onKeyDown={(event) => {
+          if (event.key !== "Escape" || (!showLinkInput && !showEmoji)) return;
+          event.stopPropagation();
+          if (showLinkInput) {
+            setShowLinkInput(false);
+            editor?.commands.focus();
+          } else {
+            setShowEmoji(false);
+            emojiPickerRef.current?.querySelector("button")?.focus();
+          }
         }}
-        onClick={(event) => event.stopPropagation()}
       >
         {fileInputs}
-        <main
-          data-testid="desktop-journal-shell"
-          className="add-story-journal relative mx-0 h-[calc(100dvh-32px)] min-h-[720px] w-full max-w-[1440px] overflow-hidden rounded-l-none rounded-r-[30px] shadow-[0_28px_80px_rgba(20,12,7,0.28)] xl:h-[calc(100dvh-72px)] min-[1900px]:mx-auto"
-          onKeyDown={(event) => {
-            if (event.key !== "Escape" || (!showLinkInput && !showEmoji)) return;
-            event.stopPropagation();
-            if (showLinkInput) {
-              setShowLinkInput(false);
-              editor?.commands.focus();
-            } else {
-              setShowEmoji(false);
-              emojiPickerRef.current?.querySelector("button")?.focus();
-            }
-          }}
-        >
-          <img
-            data-testid="desktop-album-artwork"
-            src={resolvedTheme === "dark" ? darkAlbumArtwork : albumArtwork}
-            alt=""
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-0 size-full rounded-l-none rounded-r-[30px] object-cover object-left-top"
-          />
-          <div className="relative grid h-full min-h-[720px] grid-rows-[auto_minmax(0,1fr)] gap-5 py-6 pl-[max(225px,22%,calc((100dvh-32px)*0.31))] pr-6 xl:gap-8 xl:py-10 xl:pl-[max(250px,22%,calc((100dvh-72px)*0.31))] xl:pr-10">
+        <div className="relative grid h-full min-h-[720px] grid-rows-[auto_minmax(0,1fr)] gap-5 py-6 pl-[max(225px,22%,calc((100dvh-32px)*0.31))] pr-6 xl:gap-8 xl:py-10 xl:pl-[max(250px,22%,calc((100dvh-72px)*0.31))] xl:pr-10">
             <div>
               <header className="flex min-w-0 items-center justify-between gap-3">
                 <div className="flex shrink-0 items-center gap-2 font-geist text-sm text-text-neutral-weak">
@@ -2060,9 +2039,8 @@ function CreateMemoryBase({
                 </aside>
               </div>
             </div>
-          </div>
-        </main>
-      </div>
+        </div>
+      </StoryJournalShell>
       {closeConfirmationPortal}
       {videoRecorderDialog}
     </>

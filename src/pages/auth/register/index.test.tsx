@@ -76,7 +76,12 @@ describe("RegisterPage", () => {
     expect(screen.getByLabelText(/^password$/i, { selector: "input" })).toHaveClass("rounded-[8px]");
 
     const submit = screen.getByRole("button", { name: /create account/i });
-    expect(submit).toHaveClass("h-11", "rounded-[8px]", "bg-v3-brand-strong", "text-white");
+    expect(submit).toHaveClass(
+      "h-11",
+      "rounded-[8px]",
+      "bg-fill-brand-strong",
+      "text-text-inverse-strong",
+    );
 
     const card = container.querySelector("[data-slot='card']");
     expect(card?.className).toMatch(/\bborder-0\b/);

@@ -26,7 +26,12 @@ describe("ForgetPasswordPage", () => {
     expect(screen.getByLabelText(/^email$/i)).toBeInTheDocument();
     const submit = screen.getByRole("button", { name: /^submit$/i });
     expect(submit).toBeInTheDocument();
-    expect(submit).toHaveClass("h-11", "rounded-[8px]", "bg-v3-brand-strong", "text-white");
+    expect(submit).toHaveClass(
+      "h-11",
+      "rounded-[8px]",
+      "bg-fill-brand-strong",
+      "text-text-inverse-strong",
+    );
 
     expect(screen.getByLabelText(/^email$/i)).toHaveClass("rounded-[8px]");
 

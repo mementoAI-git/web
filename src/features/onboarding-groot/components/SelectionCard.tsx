@@ -52,7 +52,7 @@ export function SelectionCard({
     >
       {isSelected && (
         <span
-          className="absolute right-2 top-2 flex h-[18px] w-[18px] items-center justify-center rounded-full bg-v3-brand-strong text-[10px] text-white"
+          className="absolute right-2 top-2 flex h-[18px] w-[18px] items-center justify-center rounded-full bg-v3-brand-strong text-[10px] text-text-inverse-strong"
           aria-hidden
         >
           ✓
@@ -63,9 +63,9 @@ export function SelectionCard({
           {icon}
         </span>
         <div className="min-w-0 flex-1">
-          <span className={cn("block font-medium", isSelected ? "text-white" : "text-v3-text-strong")}>{label}</span>
+          <span className={cn("block font-medium", isSelected ? "text-text-inverse-strong" : "text-v3-text-strong")}>{label}</span>
           {sublabel && (
-            <span className={cn("mt-0.5 block text-sm", isSelected ? "text-white/80" : "text-v3-text-weak")}>{sublabel}</span>
+            <span className={cn("mt-0.5 block text-sm", isSelected ? "text-text-inverse-weak" : "text-v3-text-weak")}>{sublabel}</span>
           )}
         </div>
       </div>

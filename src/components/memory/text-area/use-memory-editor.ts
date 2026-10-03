@@ -1,11 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
 import Link from "@tiptap/extension-link";
-import Underline from "@tiptap/extension-underline";
 import type { CommandItem } from "./slash-commands";
 
 interface UseMemoryEditorParams {
@@ -15,6 +14,7 @@ interface UseMemoryEditorParams {
   linkClassName: string;
   onHtmlChange: (html: string) => void;
   onTextChange?: (text: string) => void;
+  editable?: boolean;
 }
 
 export function useMemoryEditor({
@@ -24,6 +24,7 @@ export function useMemoryEditor({
   linkClassName,
   onHtmlChange,
   onTextChange,
+  editable = true,
 }: UseMemoryEditorParams) {
   const [showLinkInput, setShowLinkInput] = useState(false);
   const [linkPosition, setLinkPosition] = useState({ top: 0, left: 0 });
@@ -33,6 +34,7 @@ export function useMemoryEditor({
 
   const editor = useEditor({
     immediatelyRender: false,
+    editable,
     extensions: [
       StarterKit.configure({
         heading: { levels: [1, 2, 3, 4] },
@@ -47,7 +49,6 @@ export function useMemoryEditor({
           rel: "noopener noreferrer",
         },
       }),
-      Underline,
     ],
     content: initialContent,
     editorProps: {
@@ -80,6 +81,12 @@ export function useMemoryEditor({
       }
     },
   });
+
+  useEffect(() => {
+    if (typeof editor?.setEditable === "function") {
+      editor.setEditable(editable);
+    }
+  }, [editable, editor]);
 
   const openLinkInputAtSelection = () => {
     if (!editor) return;

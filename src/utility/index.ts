@@ -4,7 +4,7 @@ import { twMerge } from "tailwind-merge";
 import dayjs from "dayjs";
 import calendar from "dayjs/plugin/calendar";
 import { storageKeys } from "./constant";
-import categories from "@/utility/data/categories";
+import { getExploreCategoryImage, resolveExploreCategorySlug } from "@/utility/data/categories";
 import type { IUser } from "./interface";
 
 dayjs.extend(calendar);
@@ -279,7 +279,10 @@ export const clearRecentMemories = () => {
 };
 
 export const getCategory = (c: string) => {
-  return categories[c];
+  const slug = resolveExploreCategorySlug(c);
+  const image = getExploreCategoryImage(c);
+  if (!slug || !image) return undefined;
+  return { slug, image };
 };
 
 export function createSystemContext(user: IUser): string {
