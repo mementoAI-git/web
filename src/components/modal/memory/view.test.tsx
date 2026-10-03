@@ -34,7 +34,10 @@ const story = {
 
 function renderStory() {
   return renderWithProviders(
-    <ViewMemory data={{ memoryId: story._id, memory: story }} isMobile={false} />,
+    <ViewMemory
+      data={{ memoryId: story._id, memory: story }}
+      isMobile={false}
+    />,
     { auth: true },
   );
 }
@@ -43,7 +46,10 @@ function StoryModalHarness() {
   const { open } = useModal();
   return (
     <>
-      <button type="button" onClick={() => open?.("view-memory", { memory: story })}>
+      <button
+        type="button"
+        onClick={() => open?.("view-memory", { memory: story })}
+      >
         Open story
       </button>
       <Modal />
@@ -99,7 +105,9 @@ describe("ViewMemory", () => {
     expect(
       screen.getByRole("heading", { name: "Sunday dinner" }),
     ).toBeInTheDocument();
-    expect(screen.queryByDisplayValue("Changed locally")).not.toBeInTheDocument();
+    expect(
+      screen.queryByDisplayValue("Changed locally"),
+    ).not.toBeInTheDocument();
   });
 
   it("saves edits and returns the journal to read-only mode", async () => {
@@ -152,8 +160,12 @@ describe("ViewMemory", () => {
     await user.type(title, "Unsaved title");
     await user.click(screen.getByRole("button", { name: "Save changes" }));
 
-    expect(await screen.findByDisplayValue("Unsaved title")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Save changes" })).toBeInTheDocument();
+    expect(
+      await screen.findByDisplayValue("Unsaved title"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Save changes" }),
+    ).toBeInTheDocument();
   });
 
   it("protects unsaved edits before closing the story", async () => {
@@ -162,7 +174,10 @@ describe("ViewMemory", () => {
 
     await user.click(screen.getByRole("button", { name: "Open story" }));
     await user.click(await screen.findByRole("button", { name: "Edit story" }));
-    await user.type(screen.getByRole("textbox", { name: "Story title" }), " changed");
+    await user.type(
+      screen.getByRole("textbox", { name: "Story title" }),
+      " changed",
+    );
     await user.click(screen.getByRole("button", { name: "Close story" }));
 
     expect(

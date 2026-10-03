@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import type { IMemory } from "@/utility/interface";
-import { buildStoryUpdatePayload, createStoryEditDraft } from "./story-edit-state";
+import {
+  buildStoryUpdatePayload,
+  createStoryEditDraft,
+} from "./story-edit-state";
 
 const memory = {
   _id: "memory-1",
@@ -31,7 +34,9 @@ describe("story edit state", () => {
   });
 
   it("returns an empty payload when the draft is unchanged", () => {
-    expect(buildStoryUpdatePayload(memory, createStoryEditDraft(memory))).toEqual({});
+    expect(
+      buildStoryUpdatePayload(memory, createStoryEditDraft(memory)),
+    ).toEqual({});
   });
 
   it("returns only changed story fields", () => {

@@ -116,7 +116,7 @@ import {
   X,
 } from "lucide-react";
 
-const ACTIVE_BG = "bg-fill-neutral-strong text-inverse-strong hover:bg-fill-neutral-strong hover:text-inverse-strong";
+const ACTIVE_BG = "bg-fill-neutral-strong text-text-inverse-strong hover:bg-fill-neutral-strong hover:text-text-inverse-strong";
 const initial = { title: "", body: "", attachments: [] as string[] };
 const DRAFT_STORAGE_KEY = "create-memory-drafts";
 const MAX_DRAFTS = 10;
@@ -1496,7 +1496,7 @@ function CreateMemoryBase({
                 size="lg"
                 onClick={handleUseVideo}
                 disabled={isUsingVideo}
-                className="h-10 flex-1 rounded-full bg-fill-neutral-strong font-inter font-semibold text-sm text-inverse-strong hover:opacity-90 disabled:opacity-50"
+                className="h-10 flex-1 rounded-full bg-fill-neutral-strong font-inter font-semibold text-sm text-text-inverse-strong hover:opacity-90 disabled:opacity-50"
               >
                 Add to post
                 <Spinner loading={isUsingVideo} className="size-4!" />

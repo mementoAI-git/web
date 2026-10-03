@@ -9,7 +9,10 @@ interface StoryJournalShellProps {
   onKeyDown?: KeyboardEventHandler<HTMLElement>;
 }
 
-export function StoryJournalShell({ children, onKeyDown }: StoryJournalShellProps) {
+export function StoryJournalShell({
+  children,
+  onKeyDown,
+}: StoryJournalShellProps) {
   const { resolvedTheme } = useTheme();
 
   return (

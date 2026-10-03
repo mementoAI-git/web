@@ -69,18 +69,24 @@ export function ViewMemory({ data, isMobile }: ViewMemoryProps) {
   const { user } = useStore();
   const memoryId = data.memoryId || data.memory?._id;
   const [mode, setMode] = useState<StoryViewerMode>("view");
-  const [localMemory, setLocalMemory] = useState<IMemory | undefined>(data.memory);
+  const [localMemory, setLocalMemory] = useState<IMemory | undefined>(
+    data.memory,
+  );
   const [draft, setDraft] = useState<StoryEditDraft | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [pendingExit, setPendingExit] = useState<PendingExit>(null);
-  const [removedAttachmentIds, setRemovedAttachmentIds] = useState<string[]>([]);
+  const [removedAttachmentIds, setRemovedAttachmentIds] = useState<string[]>(
+    [],
+  );
   const editButtonRef = useRef<HTMLButtonElement>(null);
   const titleRef = useRef<HTMLTextAreaElement>(null);
   const hasLocalSaveRef = useRef(false);
 
-  const { data: fetched, error, isLoading } = useSWR(
-    memoryId ? `${endpoint.memories}/${memoryId}` : null,
-  );
+  const {
+    data: fetched,
+    error,
+    isLoading,
+  } = useSWR(memoryId ? `${endpoint.memories}/${memoryId}` : null);
   const remoteMemory = (fetched?.data as IMemory | undefined) ?? data.memory;
   const memory = localMemory ?? remoteMemory;
   const isEditing = mode === "edit";
@@ -194,7 +200,11 @@ export function ViewMemory({ data, isMobile }: ViewMemoryProps) {
         visibility: draft.visibility,
         groups: draft.access
           .filter((item) => item.source === "group")
-          .map((item) => ({ _id: item.id, name: item.name, color: item.color })),
+          .map((item) => ({
+            _id: item.id,
+            name: item.name,
+            color: item.color,
+          })),
         beneficiaries: draft.access
           .filter((item) => item.source === "beneficiary")
           .map((item) => ({ _id: item.id, name: item.name })),
@@ -352,7 +362,9 @@ export function ViewMemory({ data, isMobile }: ViewMemoryProps) {
                 value={draft.title}
                 onChange={(event) =>
                   setDraft((current) =>
-                    current ? { ...current, title: event.target.value } : current,
+                    current
+                      ? { ...current, title: event.target.value }
+                      : current,
                   )
                 }
                 rows={1}
@@ -404,14 +416,18 @@ export function ViewMemory({ data, isMobile }: ViewMemoryProps) {
             </Toggle>
             <Toggle
               pressed={editor?.isActive("italic") ?? false}
-              onPressedChange={() => editor?.chain().focus().toggleItalic().run()}
+              onPressedChange={() =>
+                editor?.chain().focus().toggleItalic().run()
+              }
               aria-label="Italic"
             >
               <span className="italic">I</span>
             </Toggle>
             <Toggle
               pressed={editor?.isActive("underline") ?? false}
-              onPressedChange={() => editor?.chain().focus().toggleUnderline().run()}
+              onPressedChange={() =>
+                editor?.chain().focus().toggleUnderline().run()
+              }
               aria-label="Underline"
             >
               <span className="underline">U</span>
@@ -452,10 +468,7 @@ export function ViewMemory({ data, isMobile }: ViewMemoryProps) {
           onClick={() => setDetailsOpen(true)}
           className="gap-2 px-2 font-geist font-semibold text-text-neutral-strong hover:bg-fill-neutral-weak"
         >
-          <ListFilter
-            aria-hidden
-            className="size-4 text-icon-neutral-strong"
-          />
+          <ListFilter aria-hidden className="size-4 text-icon-neutral-strong" />
           Story Details
         </Button>
       </div>
@@ -563,7 +576,11 @@ export function ViewMemory({ data, isMobile }: ViewMemoryProps) {
             >
               Keep editing
             </Button>
-            <Button type="button" variant="destructive" onClick={discardChanges}>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={discardChanges}
+            >
               Discard changes
             </Button>
           </DialogFooter>
@@ -583,7 +600,9 @@ function ReadOnlyDetails({ memory }: { memory: IMemory }) {
   return (
     <div className="space-y-6 font-geist">
       <section>
-        <h3 className="text-sm font-semibold text-text-neutral-strong">Visibility</h3>
+        <h3 className="text-sm font-semibold text-text-neutral-strong">
+          Visibility
+        </h3>
         <p className="mt-2 text-sm text-text-neutral-weak">
           {memory.visibility === "everyone"
             ? "Visible to everyone"
@@ -613,7 +632,9 @@ function ReadOnlyDetails({ memory }: { memory: IMemory }) {
         </h3>
         <div className="mt-2 space-y-2 text-sm text-text-neutral-weak">
           <p>{memory.attachments.length} attachments</p>
-          <p>{words === 0 ? 0 : Math.max(1, Math.ceil(words / 200))} min read</p>
+          <p>
+            {words === 0 ? 0 : Math.max(1, Math.ceil(words / 200))} min read
+          </p>
         </div>
       </section>
       <section className="rounded-xl border border-stroke-neutral-weak bg-fill-neutral-weak p-3">
