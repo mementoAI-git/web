@@ -7,7 +7,7 @@ import type { ExploreCategory } from "@/features/explore/explore-types";
 import { resolveExploreCatalog } from "@/features/explore/explore-catalog";
 import { Link } from "react-router-dom";
 import {
-  getExploreCategoryImage,
+  getExploreCategoryArtwork,
   resolveExploreCategorySlug,
 } from "@/utility/data/categories";
 
@@ -30,8 +30,7 @@ export default function ExploreCategoryPage() {
 
   const { categories, usingBundledCatalog } = resolveExploreCatalog(data?.data);
   const category = categories.find((item) => item.slug === canonicalSlug);
-  const image = getExploreCategoryImage(canonicalSlug);
-  if (!category || !image) return <Navigate to="/explore" replace />;
+  if (!category || !getExploreCategoryArtwork(canonicalSlug)) return <Navigate to="/explore" replace />;
 
   if (usingBundledCatalog) {
     return (
@@ -43,5 +42,5 @@ export default function ExploreCategoryPage() {
     );
   }
 
-  return <CategoryDetails category={{ ...category, image }} />;
+  return <CategoryDetails category={category} />;
 }

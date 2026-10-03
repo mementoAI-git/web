@@ -1,4 +1,3 @@
-import { screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { renderWithProviders } from "@/test";
 import BrowseTopics from "./browse-topics";
@@ -31,9 +30,11 @@ describe("BrowseTopics", () => {
       auth: true,
     });
 
-    const image = screen.getByRole("img", {
-      name: "A reflective topic prompt",
-    });
+    const image = container.querySelector("img");
+    expect(image).toHaveAttribute("alt", "");
+    expect(image).toHaveAttribute("loading", "lazy");
+    expect(image).toHaveAttribute("sizes", "238px");
+    expect(image).toHaveAttribute("srcset");
     expect(image.closest("a")).toHaveClass("max-w-[238px]");
     expect(image.closest("a")?.parentElement).toHaveClass("sm:w-[238px]");
     expect(image.parentElement).toHaveClass(

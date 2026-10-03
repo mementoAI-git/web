@@ -8,7 +8,7 @@ import { collectionResponseFetcher } from "@/api/domain-fetchers";
 import type { DashboardPromptSlot } from "@/utility/interface";
 import PromptCard from "./prompt-card";
 import { TypographyH2 } from "@/components/ui/typography";
-import { getExploreCategoryImage } from "@/utility/data/categories";
+import { getExploreCategoryArtwork } from "@/utility/data/categories";
 import type { ExploreCategory } from "@/features/explore/explore-types";
 import { resolveExploreCatalog } from "@/features/explore/explore-catalog";
 
@@ -70,16 +70,17 @@ export default function ExplorePage() {
             </p>
           )}
           <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 md:grid-cols-3 md:gap-10">
-            {categories.map((category) => {
-              const image = getExploreCategoryImage(category.slug);
-              if (!image) return null;
+            {categories.map((category, index) => {
+              if (!getExploreCategoryArtwork(category.slug)) return null;
               return (
                 <CategoryCard
                   key={category.slug}
                   slug={category.slug}
                   title={category.title}
                   subtitle={category.description}
-                  image={image}
+                  imageCategory={category.slug}
+                  imageLoading={index === 0 ? "eager" : "lazy"}
+                  imageSizes="(min-width: 1280px) 384px, (min-width: 768px) 33vw, (min-width: 640px) 50vw, 100vw"
                 />
               );
             })}

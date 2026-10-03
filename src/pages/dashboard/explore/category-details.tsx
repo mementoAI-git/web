@@ -13,9 +13,10 @@ import { TypographyH2, TypographyMuted } from "@/components/ui/typography";
 import type { ExploreCategory, ExploreQuestion, ExploreQuestionStatus } from "@/features/explore/explore-types";
 import { setExploreQuestionFeedback } from "@/features/explore/explore-api";
 import { toast } from "sonner";
+import ExploreCategoryImage from "@/features/explore/explore-category-image";
 
 interface CategoryDetailsProps {
-  category: ExploreCategory & { image: string };
+  category: ExploreCategory;
 }
 
 export default function CategoryDetails({ category }: CategoryDetailsProps) {
@@ -90,8 +91,14 @@ export default function CategoryDetails({ category }: CategoryDetailsProps) {
       <div className="container">
         <div className="space-y-6 py-3 sm:py-12">
           <div className="flex min-h-[253px] w-full flex-col gap-6 rounded-xl border border-stroke-neutral-weak bg-bg-neutral-weak p-4 md:flex-row">
-            <div className="max-h-[221px] w-full overflow-hidden rounded-[10px] border border-stroke-neutral-weak md:max-w-[346px]">
-              <img src={category.image} className="size-full object-cover" alt={category.title} />
+            <div className="aspect-[4/3] w-full shrink-0 overflow-hidden rounded-[10px] border border-stroke-neutral-weak md:aspect-[346/221] md:max-w-[346px]">
+              <ExploreCategoryImage
+                slug={category.slug}
+                alt=""
+                sizes="(min-width: 768px) 346px, calc(100vw - 64px)"
+                loading="eager"
+                className="size-full object-cover object-center"
+              />
             </div>
             <div className="flex flex-1 flex-col gap-3 sm:gap-6">
               <TypographyH2 className="font-garamond text-2xl leading-[38px] text-text-neutral-strong sm:text-[32px]">{category.title}</TypographyH2>
