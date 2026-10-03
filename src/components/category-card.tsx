@@ -1,11 +1,16 @@
 import { Link } from "react-router-dom";
 import { cn, isEmpty } from "@/utility";
+import ExploreCategoryImage from "@/features/explore/explore-category-image";
+import { getExploreCategoryArtwork } from "@/utility/data/categories";
 
 interface CategoryCardProps {
   title?: string | null;
   subtitle: string;
   slug?: string;
-  image: string;
+  image?: string;
+  imageCategory?: string;
+  imageLoading?: "eager" | "lazy";
+  imageSizes?: string;
   category?: string;
   className?: string;
   href?: string;
@@ -20,6 +25,9 @@ function formatCategory(slug: string): string {
 
 export default function CategoryCard({
   image,
+  imageCategory,
+  imageLoading = "lazy",
+  imageSizes = "238px",
   slug,
   title = null,
   subtitle,
@@ -27,6 +35,8 @@ export default function CategoryCard({
   className,
   href = slug ? `/explore/categories/${slug}` : "/explore",
 }: CategoryCardProps) {
+  const hasResponsiveArtwork = Boolean(getExploreCategoryArtwork(imageCategory));
+
   return (
     <Link
       to={href}
@@ -34,11 +44,23 @@ export default function CategoryCard({
     >
       {/* Image wrapper — flat (no radius), category tag positioned absolute top-left */}
       <div className="relative h-[132px] w-full overflow-hidden sm:h-[152px] md:h-[164px]">
-        <img
-          src={image}
-          alt={title || subtitle}
-          className="size-full object-cover object-center transition-transform duration-300 ease-in-out group-hover:scale-110"
-        />
+        {hasResponsiveArtwork && imageCategory ? (
+          <ExploreCategoryImage
+            slug={imageCategory}
+            alt=""
+            sizes={imageSizes}
+            loading={imageLoading}
+            className="size-full object-cover object-center transition-transform duration-300 ease-in-out group-hover:scale-110"
+          />
+        ) : image ? (
+          <img
+            src={image}
+            alt={title || subtitle}
+            loading={imageLoading}
+            decoding="async"
+            className="size-full object-cover object-center transition-transform duration-300 ease-in-out group-hover:scale-110"
+          />
+        ) : null}
         {category && (
           <div className="absolute left-2.5 top-2.5 rounded-full bg-white/90 px-2.5 py-1 backdrop-blur-sm">
             <span className="font-inter text-[11px] font-semibold leading-none text-gray-950/80">

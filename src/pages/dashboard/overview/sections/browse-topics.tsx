@@ -51,6 +51,9 @@ export default function BrowseTopics() {
                           subtitle={t?.title}
                           href={`/chat/reply/${t?._id}`}
                           image={category?.image}
+                          imageCategory={t?.category}
+                          imageLoading="lazy"
+                          imageSizes="238px"
                           category={t?.category_title ?? t?.category}
                           className="w-full max-w-[238px]"
                         />

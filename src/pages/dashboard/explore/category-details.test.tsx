@@ -61,7 +61,6 @@ describe("CategoryDetails", () => {
           description: "Routines and everyday life.",
           order: 2,
           starterTotal: 10,
-          image: "/life.png",
         }}
       />,
       { auth: true },

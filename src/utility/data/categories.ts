@@ -1,12 +1,7 @@
-import careerImg from "@/assets/image/categories/career.png";
-import familyImg from "@/assets/image/categories/family.png";
-import relationshipImg from "@/assets/image/categories/relationship.png";
-import regionImg from "@/assets/image/categories/region.png";
-import purposeImg from "@/assets/image/categories/purpose.png";
-import lifeTransitionImg from "@/assets/image/categories/life-transition.png";
-import wellbeingImg from "@/assets/image/categories/wellbeing.png";
-import identifyImg from "@/assets/image/categories/identify.png";
-import experienceImg from "@/assets/image/categories/experience.png";
+import {
+  exploreCategoryArtwork,
+  type ExploreCategoryArtwork,
+} from "@/features/explore/explore-category-artwork.generated";
 
 export const EXPLORE_CATEGORY_SLUGS = [
   "growing-up",
@@ -37,20 +32,9 @@ export const LEGACY_EXPLORE_CATEGORY_ALIASES: Record<string, ExploreCategorySlug
   "experience-culture": "stories-adventures",
 };
 
-/** Temporary presentation assets. Dedicated category artwork will replace these later. */
-const categoryImages: Record<ExploreCategorySlug, string> = {
-  "growing-up": familyImg,
-  "people-i-love": relationshipImg,
-  "the-life-i-live": wellbeingImg,
-  "things-i-love": experienceImg,
-  "who-i-am": identifyImg,
-  "work-purpose": careerImg,
-  "beliefs-faith": regionImg,
-  "where-i-come-from": familyImg,
-  "stories-adventures": experienceImg,
-  "what-life-taught-me": lifeTransitionImg,
-  "whats-ahead": purposeImg,
-};
+const categoryImages = Object.fromEntries(
+  EXPLORE_CATEGORY_SLUGS.map((slug) => [slug, exploreCategoryArtwork[slug].src]),
+) as Record<ExploreCategorySlug, string>;
 
 const canonicalSlugs = new Set<string>(EXPLORE_CATEGORY_SLUGS);
 
@@ -63,6 +47,11 @@ export function resolveExploreCategorySlug(value?: string | null): ExploreCatego
 export function getExploreCategoryImage(value?: string | null): string | undefined {
   const slug = resolveExploreCategorySlug(value);
   return slug ? categoryImages[slug] : undefined;
+}
+
+export function getExploreCategoryArtwork(value?: string | null): ExploreCategoryArtwork | undefined {
+  const slug = resolveExploreCategorySlug(value);
+  return slug ? exploreCategoryArtwork[slug] : undefined;
 }
 
 export default categoryImages;

@@ -52,12 +52,16 @@ describe("ExplorePage", () => {
     }
   });
   it("renders categories supplied by the API catalog", () => {
-    renderWithProviders(<ExplorePage />, { route: "/explore", auth: true });
+    const { container } = renderWithProviders(<ExplorePage />, { route: "/explore", auth: true });
     expect(screen.getByRole("heading", { name: "Growing Up" })).toBeVisible();
     expect(screen.getByRole("heading", { name: "People I Love" })).toBeVisible();
     expect(screen.getByRole("link", { name: /Growing Up/i })).toHaveAttribute(
       "href",
       "/explore/categories/growing-up",
     );
+    const images = Array.from(container.querySelectorAll("img"));
+    expect(images[0]).toHaveAttribute("loading", "eager");
+    expect(images[0]).toHaveAttribute("fetchpriority", "high");
+    expect(images[1]).toHaveAttribute("loading", "lazy");
   });
 });
