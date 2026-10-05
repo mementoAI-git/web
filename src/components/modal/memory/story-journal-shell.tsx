@@ -1,7 +1,7 @@
 import type { KeyboardEventHandler, ReactNode } from "react";
-import albumArtwork from "@/assets/image/HD Album story bg memento.png";
-import darkAlbumArtwork from "@/assets/image/HD Album story bg memento dark.png";
-import scenicBackground from "@/assets/image/bg/1.png";
+import albumArtwork from "@/assets/image/HD Album story bg memento.webp";
+import darkAlbumArtwork from "@/assets/image/HD Album story bg memento dark.webp";
+import scenicBackground from "@/assets/image/bg/1.webp";
 import { useTheme } from "@/contexts/theme";
 
 interface StoryJournalShellProps {
