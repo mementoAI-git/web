@@ -35,10 +35,13 @@ export default function ConfirmEmailPage() {
       navigate("/login");
       return;
     }
-    sendLink({ email, type: "verify" })
+    sendLink({ email, type: "verify", delivery: "code" })
       .then((result) => {
         if (result?.data?.email) {
-          navigate(`/verify-email?email=${result.data.email}`);
+          navigate(
+            `/verify-email?email=${encodeURIComponent(result.data.email)}`,
+            { state: { verificationSentAt: Date.now() } },
+          );
         }
       })
       .catch(() => navigate("/login"));
@@ -65,7 +68,7 @@ export default function ConfirmEmailPage() {
         title="Email verification failed"
         className="error"
         icon={<TimesIcon width={32} height={32} />}
-        subtitle="We couldn’t verify your email. Please try again or request a new verification link."
+        subtitle="We couldn’t verify your email. Please try again or request a new verification code."
       >
         <Card className="border border-v3-stroke-weak bg-v3-fill-weaker/30 py-0 shadow-none">
           <CardContent className="p-4 sm:p-5">
@@ -75,12 +78,14 @@ export default function ConfirmEmailPage() {
               disabled={sending}
               onClick={handleResendLink}
             >
-              {sending ?
+              {sending ? (
                 <>
                   <Loader2 className="size-4 animate-spin" />
                   Sending...
                 </>
-              : "Resend link"}
+              ) : (
+                "Send verification code"
+              )}
             </Button>
           </CardContent>
         </Card>

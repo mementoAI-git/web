@@ -17,11 +17,11 @@ import {
   SidebarProvider,
   SidebarSeparator,
 } from "@/components/ui/sidebar";
-import { PanelLeftClose } from "lucide-react";
-import inviteFriendsIcon from "@/assets/icon/noto_link.svg";
-import feedbackIcon from "@/assets/icon/noto_light-bulb.svg";
-import upgradePlanIcon from "@/assets/icon/emojione_up-arrow.svg";
-
+import { ChartNoAxesCombined, PanelLeftClose, UsersRound } from "lucide-react";
+import hourglassIcon from "@/assets/icon/sidebar/hourglass.svg";
+import linkIcon from "@/assets/icon/sidebar/link.svg";
+import lightBulbIcon from "@/assets/icon/sidebar/light-bulb.svg";
+import upArrowIcon from "@/assets/icon/sidebar/up-arrow.svg";
 type DashboardSideBarProps = {
   onCollapse?: () => void;
 };
@@ -31,7 +31,6 @@ export function DashboardSideBar({ onCollapse }: DashboardSideBarProps) {
   const { open } = useModal();
 
   const pathname = location.pathname;
-  const primaryNavigations = [...topNavigations, ...bottomNavigations];
 
   return (
     <SidebarProvider
@@ -40,10 +39,10 @@ export function DashboardSideBar({ onCollapse }: DashboardSideBarProps) {
     >
       <Sidebar
         collapsible="none"
-        className="dynamic-height min-h-screen border-r border-stroke-neutral-weak"
+        className="dynamic-height min-h-screen bg-bg-overview-sidebar"
       >
-        <SidebarHeader className="flex-row items-center justify-between pb-5 pl-8 pr-4 pt-6">
-          <Logo className="text-[24px] leading-8 text-foreground" />
+        <SidebarHeader className="flex-row items-center justify-between pb-3 pl-7 pr-4 pt-6">
+          <Logo className="text-[24px] font-normal leading-9 text-foreground" />
           <Button
             type="button"
             variant="ghost"
@@ -52,21 +51,52 @@ export function DashboardSideBar({ onCollapse }: DashboardSideBarProps) {
             onClick={onCollapse}
             className="rounded-lg active:scale-[0.97]"
           >
-            <PanelLeftClose data-icon="inline-start" aria-hidden />
+            <PanelLeftClose
+              data-icon="inline-start"
+              className="text-icon-neutral-weak"
+              aria-hidden
+            />
           </Button>
         </SidebarHeader>
 
         <SidebarContent>
-          <SidebarGroup className="px-5 py-0">
+          <SidebarGroup className="px-4 py-3">
             <SidebarGroupContent>
-              <SidebarMenu>
-                {primaryNavigations.map((navigation) => (
+              <SidebarMenu className="gap-0.5">
+                {topNavigations.map((navigation) => (
                   <SideBarItem
                     {...navigation}
                     active={
                       navigation.link === pathname ||
                       pathname.startsWith(`${navigation.link}/`) ||
                       (navigation.link === "/overview" && pathname === "/")
+                    }
+                    key={navigation.link}
+                  />
+                ))}
+                <SideBarItem
+                  icon={hourglassIcon}
+                  title="Time capsule"
+                  link="/capsule"
+                />
+                <SideBarItem
+                  Icon={ChartNoAxesCombined}
+                  title="Insights"
+                  onClick={() => open("memory-insights")}
+                />
+                <SideBarItem
+                  Icon={UsersRound}
+                  title="People"
+                  link="/settings/beneficiary"
+                  active={pathname.startsWith("/settings/beneficiary")}
+                />
+                {bottomNavigations.map((navigation) => (
+                  <SideBarItem
+                    {...navigation}
+                    active={
+                      (pathname === navigation.link ||
+                        pathname.startsWith(`${navigation.link}/`)) &&
+                      !pathname.startsWith("/settings/beneficiary")
                     }
                     key={navigation.link}
                   />
@@ -78,31 +108,32 @@ export function DashboardSideBar({ onCollapse }: DashboardSideBarProps) {
 
         <SidebarFooter className="gap-0 p-0">
           <SidebarSeparator className="mx-0" />
-          <SidebarGroup className="px-5 py-4">
+          <SidebarGroup className="px-4 pb-2 pt-8">
             <SidebarGroupContent>
               <SidebarMenu>
                 <SideBarItem
-                  icon={inviteFriendsIcon}
+                  icon={linkIcon}
                   title="Invite friends"
                   link="/settings/beneficiary"
                   active={pathname.startsWith("/settings/beneficiary")}
                 />
                 <SideBarItem
-                  icon={feedbackIcon}
+                  icon={lightBulbIcon}
                   title="Feedback"
                   onClick={() => {
                     open("create-feedback");
                   }}
                 />
                 <SideBarItem
-                  icon={upgradePlanIcon}
+                  icon={upArrowIcon}
                   title="Upgrade plan"
+                  tone="brand"
                   link="/pricing"
                 />
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
-          <div className="px-5 pb-8">
+          <div className="px-4 pb-8">
             <ProfileDropdown subtitle="Host user" />
           </div>
         </SidebarFooter>

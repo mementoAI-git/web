@@ -1,4 +1,15 @@
 "use client";
+import type { VoiceMessage, VoiceRuntime } from "@/features/voice/types";
+
+import voiceGridMask from "@/assets/icon/voice/grid-mask.svg";
+import voiceGridVertical from "@/assets/icon/voice/grid-vertical.svg";
+import voiceGridHorizontal from "@/assets/icon/voice/grid-horizontal.svg";
+import voiceSettingsIcon from "@/assets/icon/voice/settings.svg";
+import voiceMutedIcon from "@/assets/icon/voice/microphone-off.svg";
+import voiceHangUpIcon from "@/assets/icon/voice/hang-up.svg";
+import { VoiceBeam } from "voice-glow";
+import { useAiPlaybackLevel } from "@/hooks/use-ai-playback-level";
+import { useTheme } from "@/contexts/theme";
 
 import {
   AudioLines,
@@ -48,6 +59,14 @@ import {
 
 interface VoiceinputProps {
   onCancel: () => void;
+  onSessionChange?: (active: boolean) => void;
+  autoStart?: boolean;
+  inline?: boolean;
+  variant?: "composer" | "overview" | "floating";
+  persistent?: boolean;
+  onRuntime?: (runtime: VoiceRuntime | null) => void;
+  onMessages?: (messages: VoiceMessage[]) => void;
+  onAutoStartConsumed?: () => void;
   memoryId?: string | null;
   history?: { role: "user" | "ai"; text: string }[];
 }
@@ -116,7 +135,7 @@ function VoicePicker({
       <DialogContent
         showCloseButton={false}
         overlayClassName="z-[210] bg-overlay-backdrop"
-        className="z-[220] min-h-[600px] max-w-md grid-rows-[1fr_auto] overflow-hidden bg-background p-6 sm:p-8"
+        className="z-[220] min-h-[min(600px,calc(100dvh-2rem))] max-h-[calc(100dvh-2rem)] max-w-md grid-rows-[1fr_auto] overflow-y-auto bg-background p-6 sm:p-8"
       >
         <DialogHeader className="items-center justify-center gap-4 text-center">
           <DialogTitle className="sr-only">Choose a voice</DialogTitle>
@@ -202,7 +221,7 @@ function VoiceSettings({
   const [draftLanguage, setDraftLanguage] = useState<VoiceLanguageCode>(initialLanguage);
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-3">
       <div>
         <h2 className="font-geist text-base font-semibold text-text-neutral-strong">Settings</h2>
         <p className="mt-1 font-geist text-sm font-normal text-text-neutral-weak">Customize your voice conversation.</p>
@@ -243,14 +262,14 @@ function VoiceSettings({
                 type="button"
                 variant="outline"
                 className={cn(
-                  "h-auto min-h-14 w-full justify-start gap-3 rounded-xl px-3 py-2.5 text-left transition-[transform,border-color] duration-150 active:scale-[0.98]",
+                  "h-auto min-h-11 w-full justify-start gap-2 rounded-xl px-2 py-1.5 text-left transition-[transform,border-color] duration-150 active:scale-[0.98]",
                   selected && "border-stroke-brand-strong",
                 )}
                 role="radio"
                 aria-checked={selected}
                 onClick={() => setDraftVoice(voice)}
               >
-                <VoiceArtwork voice={voice} className="size-9 shrink-0" />
+                <VoiceArtwork voice={voice} className="size-7 shrink-0" />
                 <span className="grid min-w-0 flex-1 text-left">
                   <span className="truncate font-geist text-sm font-semibold text-text-neutral-strong">{voice.title}</span>
                   <span className="truncate font-geist text-xs font-normal text-text-neutral-weak">{voice.metadata}</span>
@@ -262,7 +281,7 @@ function VoiceSettings({
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-2">
         <Button type="button" variant="outline" onClick={onDismiss}>
           Dismiss
         </Button>
@@ -278,23 +297,39 @@ function VoiceSettings({
   );
 }
 
-export default function Voiceinput({ onCancel, memoryId, history = [] }: VoiceinputProps) {
+export default function Voiceinput({ onCancel, memoryId, history = [], autoStart = false, onAutoStartConsumed, inline = false, variant = "composer", onSessionChange, persistent = false, onRuntime, onMessages }: VoiceinputProps) {
   const { user } = useStore();
   const [languageCode, setLanguageCode] = useState<VoiceLanguageCode>("en-US");
   const {
     connected,
+    sendChatInput,
+    audioPaused,
+    resumeAudio,
     connect,
     startRecording,
+    greet,
     stopRecording,
     disconnect,
     restartSession,
     setInputMuted,
     isRecording,
     error,
-  } = useLiveAPI({ memoryId, turns: history, languageCode, autoConnect: false });
-  const { voices, selectedVoice, saveVoice, isSaving } = useVoiceModeVoices();
+    outputNode,
+  } = useLiveAPI({ memoryId, turns: history, languageCode, autoConnect: false, onMessages });
+  const aiLevel = useAiPlaybackLevel(outputNode);
+  const { resolvedTheme } = useTheme();
+  const autoStartAttempted = useRef(false);
+  const catalog = useVoiceModeVoices();
+  const { saveVoice, isSaving } = catalog;
+  const voices = useMemo(() => persistent ? catalog.voices.filter(voice => voice.provider === "gemini") : catalog.voices, [persistent, catalog.voices]);
+  const selectedVoice = persistent && catalog.selectedVoice?.provider !== "gemini" ? voices[0] ?? null : catalog.selectedVoice;
+  useEffect(() => {
+    onRuntime?.({ send: sendChatInput, ready: connected && isRecording });
+    return () => onRuntime?.(null);
+  }, [onRuntime, sendChatInput, connected, isRecording]);
   const [introOpen, setIntroOpen] = useState<boolean | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [chosenVoice, setChosenVoice] = useState<VoiceModeVoice | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [endDialogOpen, setEndDialogOpen] = useState(false);
   const [muted, setMuted] = useState(false);
@@ -303,15 +338,27 @@ export default function Voiceinput({ onCancel, memoryId, history = [] }: Voicein
   const [isStartingCall, setIsStartingCall] = useState(false);
   const [elevenLabsActive, setElevenLabsActive] = useState(false);
   const intervalRef = useRef<number | null>(null);
-  const isElevenLabsProvider = user?.chat_voice_provider === "elevenlabs";
+  const isElevenLabsProvider = (chosenVoice?.provider ?? user?.chat_voice_provider) === "elevenlabs";
   const sessionActive = isRecording || elevenLabsActive;
+  const sessionObserver = useRef(onSessionChange);
+  const reportedActive = useRef(false);
+  useEffect(() => { sessionObserver.current = onSessionChange; }, [onSessionChange]);
+  useEffect(() => {
+    if (reportedActive.current === sessionActive) return;
+    reportedActive.current = sessionActive;
+    sessionObserver.current?.(sessionActive);
+  }, [sessionActive]);
+  useEffect(() => () => {
+    if (reportedActive.current) sessionObserver.current?.(false);
+    reportedActive.current = false;
+  }, []);
   const elevenLabsTalkToUrl =
     import.meta.env.VITE_ELEVENLABS_TALK_TO_URL ||
     "https://elevenlabs.io/app/talk-to?agent_id=agent_1701kpzx5njhfxp991evy221ybnj&branch_id=agtbrch_0401kpzx5qmbf76rx7zbsrety678";
 
   useEffect(() => {
-    if (user && introOpen === null) setIntroOpen(!user.chat_voice);
-  }, [introOpen, user]);
+    if (user && introOpen === null) setIntroOpen(!user.chat_voice || (persistent && user.chat_voice_provider === "elevenlabs"));
+  }, [introOpen, user, persistent]);
 
   useEffect(() => {
     if (!sessionActive) return;
@@ -334,14 +381,26 @@ export default function Voiceinput({ onCancel, memoryId, history = [] }: Voicein
         setElevenLabsActive(true);
         return;
       }
-      await connect();
-      await startRecording();
+      const ready = await connect(chosenVoice ? { voiceName: chosenVoice.voiceName } : undefined);
+      if (ready === false) return;
+      const recording = await startRecording();
+      if (recording !== false && inline) await greet();
     } catch (startError) {
       console.error(startError);
     } finally {
       setIsStartingCall(false);
     }
   };
+
+  useEffect(() => {
+    if (!autoStart || autoStartAttempted.current || !user || introOpen !== false || pickerOpen) return;
+    if (!isElevenLabsProvider && !outputNode) return;
+    autoStartAttempted.current = true;
+    onAutoStartConsumed?.();
+    void handleStartCall();
+    // One attempt per explicit Overview entry, after setup and the audio graph are ready.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoStart, user, introOpen, pickerOpen, outputNode, isElevenLabsProvider, chosenVoice]);
 
   const toggleMute = () => {
     if (!sessionActive || isElevenLabsProvider) return;
@@ -376,7 +435,10 @@ export default function Voiceinput({ onCancel, memoryId, history = [] }: Voicein
       toast.error("Failed to update voice settings");
       return;
     }
-    if (close === "picker") setPickerOpen(false);
+    if (close === "picker") {
+      setChosenVoice(voice);
+      setPickerOpen(false);
+    }
     else setSettingsOpen(false);
   };
 
@@ -386,6 +448,7 @@ export default function Voiceinput({ onCancel, memoryId, history = [] }: Voicein
       toast.error("Failed to update voice settings");
       return;
     }
+    setChosenVoice(voice);
     setLanguageCode(language);
     setSettingsOpen(false);
     if (sessionActive && voice.provider === "gemini") {
@@ -403,12 +466,152 @@ export default function Voiceinput({ onCancel, memoryId, history = [] }: Voicein
     return connected ? "Live session" : "Connecting…";
   }, [connected, isElevenLabsProvider, sessionActive]);
 
+  const onboardingModals = (<>
+      <Dialog open={introOpen === true} onOpenChange={(open) => !open && onCancel()}>
+        <DialogContent showCloseButton={false} overlayClassName="z-[210] bg-overlay-backdrop" className="z-[220] max-h-[calc(100dvh-2rem)] max-w-md gap-5 overflow-y-auto bg-background p-0">
+          <div className="flex min-h-56 items-center justify-center bg-fill-warning-weak px-6 pt-6">
+            <img src={phoneArtwork} alt="A friendly phone ready for a voice conversation" className="size-40 object-contain" />
+          </div>
+          <div className="flex flex-col gap-5 px-6 pb-6 sm:px-8 sm:pb-8">
+            <DialogHeader className="text-center">
+              <DialogTitle className="font-geist text-2xl font-semibold text-text-neutral-strong">Try Voicemode</DialogTitle>
+              <DialogDescription className="text-text-neutral-weak">
+                A natural way to talk with Memento using the context you have already shared.
+                {persistent && user?.chat_voice_provider === "elevenlabs" && " Choose an integrated voice to talk about texts and images in the same conversation."}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="flex flex-col gap-4">
+              {[
+                [MessageCircleMore, "Intelligent, natural conversations", "Senses and responds to interruptions and nuance."],
+                [UserRound, "Personalized for you", "Uses memory and your existing Memento context."],
+                [AudioLines, "You’re in control", "Audio is transcribed into your chat history."],
+              ].map(([Icon, title, description]) => {
+                const BenefitIcon = Icon as typeof MessageCircleMore;
+                return (
+                  <div key={String(title)} className="flex gap-3">
+                    <BenefitIcon className="mt-0.5 shrink-0 text-text-brand-strong" aria-hidden />
+                    <div>
+                      <p className="font-geist text-sm font-semibold text-text-neutral-strong">{String(title)}</p>
+                      <p className="font-geist text-sm leading-5 text-text-neutral-weak">{String(description)}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="flex flex-col gap-3 pt-2">
+              <Button type="button" size="lg" onClick={() => { setIntroOpen(false); setPickerOpen(true); }}>Continue</Button>
+              <Button type="button" variant="outline" size="lg" onClick={onCancel}>Dismiss</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <VoicePicker
+        open={pickerOpen}
+        onOpenChange={(open) => {
+          setPickerOpen(open);
+          if (!open) onCancel();
+        }}
+        voices={voices}
+        initialVoice={selectedVoice}
+        isSaving={isSaving}
+        onSelect={(voice) => handleVoiceSelection(voice, "picker")}
+      />
+  </>);
+
+  if (inline) {
+    const overview = variant === "overview";
+    const floating = variant === "floating";
+    const callStatus = isStartingCall ? "Connecting…" : sessionActive
+      ? (audioPaused ? "Audio paused" : muted ? "You’re muted" : "Listening") : error ? "Connection interrupted" : "Ready to connect";
+    const settings = (
+      <Popover open={settingsOpen} onOpenChange={setSettingsOpen}>
+        <PopoverTrigger asChild>
+          <Button type="button" variant="ghost" size="icon-lg" aria-label="Voice settings" className={floating ? "absolute right-4 top-4 size-10 rounded-full text-icon-neutral-weaker" : overview ? "size-12 rounded-full bg-fill-neutral-weak" : undefined}>
+            {overview ? <img src={voiceSettingsIcon} alt="" className="dark:brightness-0 dark:invert dark:opacity-60" /> : <Settings />}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent align="end" side="bottom" sideOffset={8} collisionPadding={16} aria-label="Voice settings" className="max-h-[min(35dvh,calc(100dvh-2rem))] w-[min(13rem,calc(100vw-2rem))] overflow-y-auto p-3">
+          <VoiceSettings voices={voices} initialVoice={selectedVoice} initialLanguage={languageCode} sessionActive={sessionActive} isSaving={isSaving} onDismiss={() => setSettingsOpen(false)} onSave={handleSettingsSave} />
+        </PopoverContent>
+      </Popover>
+    );
+    const controls = (
+      <div className={cn("flex items-center", overview || floating ? "gap-4" : "gap-2")}>
+        <Button type="button" variant={overview ? "ghost" : "outline"} size="icon-lg" className={floating ? "size-16 rounded-full bg-fill-neutral-strong text-primary-foreground [&_svg]:size-6" : overview ? "size-16 rounded-full bg-fill-neutral-weak [&_svg]:size-6" : undefined} disabled={!sessionActive || isElevenLabsProvider} onClick={toggleMute} aria-label={muted ? "Unmute microphone" : "Mute microphone"} aria-pressed={muted}>
+          {muted ? (overview ? <img src={voiceMutedIcon} alt="" className="dark:brightness-0 dark:invert dark:opacity-60" /> : <MicOff />) : <Mic className="text-icon-neutral-weaker" />}
+        </Button>
+        {!overview && !floating && settings}
+        <Button type="button" variant={overview ? "ghost" : "outline"} size="icon-lg" className={overview || floating ? "size-16 rounded-full bg-fill-error-weak text-icon-error-strong hover:bg-fill-error-weak/80" : undefined} aria-label="End voice conversation" disabled={isDisconnecting} onClick={() => void handleEndCall()}>
+          {overview ? <img src={voiceHangUpIcon} alt="" className="dark:brightness-150 dark:saturate-50" /> : <PhoneOff />}
+        </Button>
+      </div>
+    );
+    return (
+      <>
+      {onboardingModals}
+      <VoiceBeam type="default" theme={resolvedTheme} colorVariant="sunset" level={aiLevel} idle={0} active={sessionActive && !isElevenLabsProvider} style={{ display: "block", width: "100%" }}>
+        <section aria-label="Voice conversation" className={cn("relative isolate flex flex-col text-text-neutral-strong", overview ? "min-h-[178px] justify-between gap-[18px] overflow-hidden rounded-3xl bg-[image:var(--gradient-overview-voice)] p-6" : floating ? "dark min-h-[378px] max-h-[calc(100dvh-100px)] items-center justify-center gap-12 overflow-y-auto rounded-[32px] bg-fill-voice-elevated px-6 py-12 text-white shadow-[0_20px_60px_rgba(0,0,0,0.45),0_4px_16px_rgba(0,0,0,0.25)] ring-1 ring-white/10" : "min-h-[130px] justify-center gap-4 rounded-3xl border border-stroke-neutral-weak bg-fill-neutral-weak p-4")}>
+          {floating ? <>
+            <button type="button" data-voice-drag-handle aria-label="Move voice window" title="Drag to move. Use arrow keys when focused." className="absolute left-4 top-4 flex h-8 w-16 touch-none cursor-grab items-center justify-center rounded-full text-white/60 hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-white active:cursor-grabbing"><span aria-hidden className="h-1 w-8 rounded-full bg-current" /></button>
+            {settings}
+            <div className="flex flex-col items-center gap-4">
+              <VoiceArtwork voice={selectedVoice} className="size-[92px]" />
+              <div className="flex flex-col items-center gap-1">
+                <span aria-label="Call duration" className="font-geist text-xl font-bold tabular-nums">{formatVoiceSessionTime(recordingTime)}</span>
+                <p role="status" className="flex items-center gap-2 font-geist text-sm text-text-neutral-weak"><span aria-hidden className={cn("size-2 rounded-full", muted || error ? "bg-fill-error-strong" : "bg-fill-success-strong")} />{callStatus}</p>
+              </div>
+            </div>
+            {controls}
+          </> : overview ? <>
+            <div aria-hidden className="pointer-events-none absolute -top-[203px] left-1/2 -z-10 h-[573.383px] w-[764.51px] -translate-x-1/2 rotate-[6.45deg] opacity-20" style={{ maskImage: `url(${voiceGridMask})`, maskRepeat: "no-repeat", maskPosition: "240px 0" }}>
+              <img src={voiceGridVertical} alt="" className="absolute left-0 top-0 max-w-none" />
+              <img src={voiceGridHorizontal} alt="" className="absolute left-0 top-0 max-w-none" />
+            </div>
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-1">
+                <span aria-label="Call duration" className="font-garamond text-[30px] leading-[34px] tabular-nums">{formatVoiceSessionTime(recordingTime)}</span>
+                <p role="status" className="flex items-center gap-2 font-geist text-sm text-text-neutral-weak"><span aria-hidden className={cn("size-2 shrink-0 rounded-full", muted || error ? "bg-fill-error-strong" : sessionActive ? "bg-fill-success-strong" : "bg-fill-neutral-strong")} />{callStatus}</p>
+              </div>
+              {settings}
+            </div>
+            {controls}
+          </> : <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <VoiceArtwork voice={selectedVoice} className="size-12" />
+              <div className="flex flex-col gap-1">
+                <p className="font-inter text-sm font-semibold">{isStartingCall ? "Connecting…" : sessionActive ? "Let’s talk" : "Voice conversation"}</p>
+                <p role="status" className="font-inter text-xs text-text-neutral-weak">{callStatus} · {formatVoiceSessionTime(recordingTime)}</p>
+              </div>
+            </div>
+            {controls}
+          </div>}
+          {sessionActive && audioPaused && <Button type="button" variant="outline" onClick={() => void resumeAudio()}>Enable audio</Button>}
+          {error && <p role="alert" className="text-sm text-text-error-strong">{error}</p>}
+          {!sessionActive && !isStartingCall && introOpen === false && !pickerOpen && <Button type="button" variant="outline" className="self-start" onClick={() => void handleStartCall()}>Try again</Button>}
+          {isElevenLabsProvider && elevenLabsActive && <iframe src={elevenLabsTalkToUrl} title="ElevenLabs Agent" className="h-[300px] w-full rounded-xl" allow="microphone; autoplay" />}
+        </section>
+      </VoiceBeam>
+      </>
+    );
+  }
+
   if (!user || introOpen === null) {
     return createPortal(<div className="fixed inset-0 z-[200] bg-background" />, document.body);
   }
 
   return createPortal(
-    <div className="fixed inset-0 z-[200] flex flex-col bg-background text-text-neutral-strong" data-testid="voice-mode-layer">
+    <VoiceBeam
+      type="mobile"
+      theme={resolvedTheme}
+      colorVariant="sunset"
+      level={aiLevel}
+      idle={0}
+      active={sessionActive && !isElevenLabsProvider}
+      className="fixed inset-0 z-[200]"
+      style={{ position: "fixed", inset: 0, zIndex: 200, width: "100%", height: "100%" }}
+    >
+    <div className="flex h-full flex-col bg-background text-text-neutral-strong" data-testid="voice-mode-layer">
       <header className="flex shrink-0 items-start px-4 pt-[max(1rem,env(safe-area-inset-top))] sm:px-6">
         {!sessionActive ? (
           <Button type="button" variant="secondary" onClick={onCancel}>
@@ -427,7 +630,7 @@ export default function Voiceinput({ onCancel, memoryId, history = [] }: Voicein
               side="bottom"
               sideOffset={8}
               collisionPadding={16}
-              className="z-[220] max-h-[calc(100dvh-5rem)] w-[min(26rem,calc(100vw-2rem))] overflow-y-auto bg-background p-5 shadow-overlay-backdrop-dark"
+              className="z-[220] max-h-[min(35dvh,calc(100dvh-2rem))] w-[min(13rem,calc(100vw-2rem))] overflow-y-auto bg-background p-3 shadow-overlay-backdrop-dark"
             >
               <VoiceSettings
                 voices={voices}
@@ -512,55 +715,7 @@ export default function Voiceinput({ onCancel, memoryId, history = [] }: Voicein
         </div>
       </main>
 
-      <Dialog open={introOpen} onOpenChange={(open) => !open && onCancel()}>
-        <DialogContent showCloseButton={false} overlayClassName="z-[210] bg-overlay-backdrop" className="z-[220] max-w-md gap-5 overflow-hidden bg-background p-0">
-          <div className="flex min-h-56 items-center justify-center bg-fill-warning-weak px-6 pt-6">
-            <img src={phoneArtwork} alt="A friendly phone ready for a voice conversation" className="size-40 object-contain" />
-          </div>
-          <div className="flex flex-col gap-5 px-6 pb-6 sm:px-8 sm:pb-8">
-            <DialogHeader className="text-center">
-              <DialogTitle className="font-geist text-2xl font-semibold text-text-neutral-strong">Try Voicemode</DialogTitle>
-              <DialogDescription className="text-text-neutral-weak">
-                A natural way to talk with Memento using the context you have already shared.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="flex flex-col gap-4">
-              {[
-                [MessageCircleMore, "Intelligent, natural conversations", "Senses and responds to interruptions and nuance."],
-                [UserRound, "Personalized for you", "Uses memory and your existing Memento context."],
-                [AudioLines, "You’re in control", "Audio is transcribed into your chat history."],
-              ].map(([Icon, title, description]) => {
-                const BenefitIcon = Icon as typeof MessageCircleMore;
-                return (
-                  <div key={String(title)} className="flex gap-3">
-                    <BenefitIcon className="mt-0.5 shrink-0 text-text-brand-strong" aria-hidden />
-                    <div>
-                      <p className="font-geist text-sm font-semibold text-text-neutral-strong">{String(title)}</p>
-                      <p className="font-geist text-sm leading-5 text-text-neutral-weak">{String(description)}</p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-            <div className="flex flex-col gap-3 pt-2">
-              <Button type="button" size="lg" onClick={() => { setIntroOpen(false); setPickerOpen(true); }}>Continue</Button>
-              <Button type="button" variant="outline" size="lg" onClick={onCancel}>Dismiss</Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      <VoicePicker
-        open={pickerOpen}
-        onOpenChange={(open) => {
-          setPickerOpen(open);
-          if (!open) onCancel();
-        }}
-        voices={voices}
-        initialVoice={selectedVoice}
-        isSaving={isSaving}
-        onSelect={(voice) => handleVoiceSelection(voice, "picker")}
-      />
+      {onboardingModals}
       <Dialog open={endDialogOpen} onOpenChange={setEndDialogOpen}>
         <DialogContent showCloseButton={false} overlayClassName="z-[210] bg-overlay-backdrop" className="z-[220] min-h-96 max-w-md content-between bg-background p-6 sm:p-8">
           <DialogHeader className="items-center gap-5 pt-5 text-center">
@@ -582,7 +737,8 @@ export default function Voiceinput({ onCancel, memoryId, history = [] }: Voicein
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>,
+    </div>
+    </VoiceBeam>,
     document.body,
   );
 }

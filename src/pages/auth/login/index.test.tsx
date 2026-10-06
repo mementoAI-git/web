@@ -36,36 +36,52 @@ describe("LoginPage", () => {
   it("renders shadcn auth card fields", () => {
     renderWithProviders(<LoginPage />, { route: "/login" });
 
-    expect(screen.getByRole("heading", { level: 1, name: /^welcome back$/i })).toBeInTheDocument();
-    expect(screen.getByText(/^please login to continue$/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { level: 1, name: /^welcome back$/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/^please sign in to continue$/i),
+    ).toBeInTheDocument();
 
     expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/^password$/i, { selector: "input" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /^login$/i })).toBeInTheDocument();
+    expect(
+      screen.getByLabelText(/^password$/i, { selector: "input" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /^sign in$/i }),
+    ).toBeInTheDocument();
   });
 
   it("applies auth control heights and forgot-password link styles", () => {
     renderWithProviders(<LoginPage />, { route: "/login" });
 
-    expect(screen.getByRole("button", { name: /^login$/i })).toHaveClass(
-      "h-11",
+    expect(screen.getByRole("button", { name: /^sign in$/i })).toHaveClass(
+      "h-12",
       "bg-fill-brand-strong",
       "text-text-inverse-strong",
     );
 
     expect(screen.getByLabelText(/email/i)).toHaveClass("rounded-[8px]");
-    expect(screen.getByLabelText(/^password$/i, { selector: "input" })).toHaveClass("rounded-[8px]");
+    expect(
+      screen.getByLabelText(/^password$/i, { selector: "input" }),
+    ).toHaveClass("rounded-[8px]");
 
-    const passkey = screen.getByRole("button", { name: /sign in with a passkey/i });
-    expect(passkey).toHaveClass("h-11");
-    expect(passkey.querySelector("svg.lucide-fingerprint-pattern")).toBeInTheDocument();
+    const passkey = screen.getByRole("button", {
+      name: /sign in with a passkey/i,
+    });
+    expect(passkey).toHaveClass("h-14");
+    expect(
+      passkey.querySelector("svg.lucide-fingerprint-pattern"),
+    ).toBeInTheDocument();
 
     const forgot = screen.getByRole("link", { name: /forgot password/i });
     expect(forgot).toHaveClass("flex", "font-semibold");
 
-    const signup = screen.getByRole("link", { name: /create an account/i });
+    const signup = screen.getByRole("link", {
+      name: /I don’t have an account/i,
+    });
     expect(signup).toHaveAttribute("href", "/register");
-    expect(signup).toHaveClass("text-xs", "font-semibold");
+    expect(signup).toBeVisible();
   });
 
   it("does not duplicate the OAuth divider after the passkey control", () => {
@@ -77,11 +93,19 @@ describe("LoginPage", () => {
     renderWithProviders(<LoginPage />, { route: "/login" });
 
     const email = screen.getByLabelText(/email/i);
-    const passkey = screen.getByRole("button", { name: /sign in with a passkey/i });
-    const google = screen.getByRole("button", { name: /continue with google/i });
+    const passkey = screen.getByRole("button", {
+      name: /sign in with a passkey/i,
+    });
+    const google = screen.getByRole("button", {
+      name: /continue with google/i,
+    });
 
-    expect(email.compareDocumentPosition(passkey) & Node.DOCUMENT_POSITION_PRECEDING).toBeTruthy();
-    expect(email.compareDocumentPosition(google) & Node.DOCUMENT_POSITION_PRECEDING).toBeTruthy();
+    expect(
+      email.compareDocumentPosition(passkey) & Node.DOCUMENT_POSITION_PRECEDING,
+    ).toBeTruthy();
+    expect(
+      email.compareDocumentPosition(google) & Node.DOCUMENT_POSITION_PRECEDING,
+    ).toBeTruthy();
   });
 
   it("submits valid credentials and navigates to overview when onboarded", async () => {
@@ -105,8 +129,11 @@ describe("LoginPage", () => {
     renderWithProviders(<LoginPage />, { route: "/login" });
 
     await user.type(screen.getByLabelText(/email/i), "test@example.com");
-    await user.type(screen.getByLabelText(/^password$/i, { selector: "input" }), "password123");
-    await user.click(screen.getByRole("button", { name: /^login$/i }));
+    await user.type(
+      screen.getByLabelText(/^password$/i, { selector: "input" }),
+      "password123",
+    );
+    await user.click(screen.getByRole("button", { name: /^sign in$/i }));
 
     await waitFor(() => {
       expect(mockNavigate).toHaveBeenCalledWith("/overview");
@@ -142,8 +169,36 @@ describe("LoginPage", () => {
       screen.getByLabelText(/^password$/i, { selector: "input" }),
       "password123",
     );
-    await user.click(screen.getByRole("button", { name: /^login$/i }));
+    await user.click(screen.getByRole("button", { name: /^sign in$/i }));
 
     await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith("/overview"));
+  });
+});
+
+it("toggles password visibility without submitting the form", async () => {
+  const user = userEvent.setup();
+  renderWithProviders(<LoginPage />, { route: "/login" });
+  const password = screen.getByLabelText(/^password$/i, { selector: "input" });
+  expect(password).toHaveAttribute("type", "password");
+  await user.click(screen.getByRole("button", { name: "Show password" }));
+  expect(password).toHaveAttribute("type", "text");
+  await user.click(screen.getByRole("button", { name: "Hide password" }));
+  expect(password).toHaveAttribute("type", "password");
+});
+
+it("displays and dismisses the successful password reset dialog", async () => {
+  const user = userEvent.setup();
+  renderWithProviders(<LoginPage />, {
+    routerProps: {
+      initialEntries: [{ pathname: "/login", state: { passwordReset: true } }],
+    },
+  });
+  expect(
+    screen.getByRole("dialog", { name: "Password reset successful" }),
+  ).toBeInTheDocument();
+  await user.click(screen.getByRole("button", { name: "Done" }));
+  expect(mockNavigate).toHaveBeenCalledWith("/login", {
+    replace: true,
+    state: { passwordReset: false },
   });
 });

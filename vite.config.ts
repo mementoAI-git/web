@@ -11,6 +11,8 @@ export default defineConfig({
     // port: 3000,
   },
   resolve: {
+    // Voice effects and the app must share the same React runtime.
+    dedupe: ["react", "react-dom"],
     alias: {
       "@": path.resolve(fileURLToPath(new URL(".", import.meta.url)), "src"),
     },

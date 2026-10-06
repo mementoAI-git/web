@@ -13,7 +13,7 @@ const navItemBase =
   "flex w-full items-center gap-2.5 rounded-lg px-3 py-2 font-inter text-sm text-v3-text-weak outline-none " +
   "motion-safe:transition-[background-color,color] motion-safe:duration-150 motion-safe:ease-out " +
   "hover:bg-v3-fill-weak hover:text-v3-text-strong " +
-  "focus-visible:ring-2 focus-visible:ring-v3-stroke-strong focus-visible:ring-offset-2 focus-visible:ring-offset-white " +
+  "focus-visible:ring-2 focus-visible:ring-v3-stroke-strong focus-visible:ring-offset-2 focus-visible:ring-offset-bg-neutral " +
   "[&_svg]:shrink-0 [&_svg]:text-current";
 
 const mobileNavItemBase =
@@ -157,7 +157,7 @@ export default function SettingsPage() {
           <nav
             aria-label="Settings sections mobile"
             className={cn(
-              "flex flex-col gap-0.5 rounded-2xl border border-v3-stroke-weak bg-white p-2 shadow-lg lg:hidden",
+              "flex flex-col gap-0.5 rounded-2xl border border-v3-stroke-weak bg-bg-neutral p-2 shadow-lg lg:hidden",
               "motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-top-2",
               "motion-safe:duration-200",
             )}

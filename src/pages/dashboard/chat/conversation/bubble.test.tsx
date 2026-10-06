@@ -53,20 +53,20 @@ describe("Bubble", () => {
     expect(container.firstElementChild).not.toHaveClass("items-end");
   });
 
-  it("uses fill neutral weak for user messages", () => {
+  it("uses the warm translucent fill for user messages", () => {
     render(<Bubble role="user" text="User said this" />);
 
     const bubble = screen
       .getByText("User said this")
-      .closest(".bg-fill-neutral-weak");
+      .closest(".bg-fill-chat-user");
     expect(bubble).toBeInTheDocument();
   });
 
-  it("uses a calm readable 16px body size in the full chat", () => {
+  it("uses the design body size on desktop and compact text in the sidebar", () => {
     const { rerender } = render(<Bubble role="ai" text="Full thread" />);
     const full = screen.getByText("Full thread").closest("span");
     expect(full?.className).toMatch(/text-base/);
-    expect(full?.className).not.toMatch(/md:text-xl/);
+    expect(full?.className).toMatch(/sm:text-xl/);
 
     rerender(<Bubble role="ai" text="Sidebar" compact />);
     const compact = screen.getByText("Sidebar").closest("span");

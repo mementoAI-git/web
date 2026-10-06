@@ -24,60 +24,66 @@ describe("RegisterPage", () => {
     renderWithProviders(<RegisterPage />, { route: "/register" });
 
     expect(
-      screen.queryByText(/Create a new account on Memento to start crafting your stories/i),
+      screen.queryByText(
+        /Create a new account on Memento to start crafting your stories/i,
+      ),
     ).not.toBeInTheDocument();
     expect(screen.getByLabelText(/first name/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/last name/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/^email$/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/^password$/i, { selector: "input" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /create account/i })).toBeInTheDocument();
+    expect(
+      screen.getByLabelText(/^password$/i, { selector: "input" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /create account/i }),
+    ).toBeInTheDocument();
   });
 
-  it("renders terms disclaimer at 12px with medium-weight links", () => {
+  it("places the legal notice after the account actions", () => {
     renderWithProviders(<RegisterPage />, { route: "/register" });
-
-    const disclaimer = screen.getByText(/By clicking "Create account" you agree to the/i);
-    expect(disclaimer.tagName).toBe("P");
-    expect(disclaimer).toHaveClass("text-xs");
-
-    const terms = screen.getByText("Terms of Use");
-    const privacy = screen.getByText("Privacy Policy");
-    expect(terms).toHaveClass("text-xs", "font-medium", "text-primary", "underline");
-    expect(privacy).toHaveClass("text-xs", "font-medium", "text-primary", "underline");
+    const disclaimer = screen.getByText(
+      /By creating an account, you agree to our/i,
+    );
+    const submit = screen.getByRole("button", { name: /create account/i });
+    const login = screen.getByRole("link", {
+      name: /I already have an account/i,
+    });
+    expect(
+      disclaimer.compareDocumentPosition(submit) &
+        Node.DOCUMENT_POSITION_PRECEDING,
+    ).toBeTruthy();
+    expect(
+      disclaimer.compareDocumentPosition(login) &
+        Node.DOCUMENT_POSITION_PRECEDING,
+    ).toBeTruthy();
+    expect(login).toHaveAttribute("href", "/login");
   });
 
-  it("places the terms disclaimer above the create account submit button", () => {
-    renderWithProviders(<RegisterPage />, { route: "/register" });
-
-    const form = screen.getByRole("button", { name: /create account/i }).closest("form");
-    expect(form).toBeTruthy();
-    const children = Array.from(form!.children);
-    const disclaimer = screen.getByText(/By clicking "Create account" you agree to the/i);
-    expect(disclaimer.tagName).toBe("P");
-    const disclaimerIdx = children.indexOf(disclaimer);
-    const buttonIdx = children.indexOf(screen.getByRole("button", { name: /create account/i }));
-    expect(disclaimerIdx).toBeGreaterThanOrEqual(0);
-    expect(buttonIdx).toBeGreaterThanOrEqual(0);
-    expect(disclaimerIdx).toBeLessThan(buttonIdx);
-  });
-
-  it("uses 8px input radius, 44px submit height, and flat card chrome", () => {
-    const { container } = renderWithProviders(<RegisterPage />, { route: "/register" });
+  it("uses 8px input radius, 48px submit height, and flat card chrome", () => {
+    const { container } = renderWithProviders(<RegisterPage />, {
+      route: "/register",
+    });
 
     const form = container.querySelector("form");
     expect(form).toHaveClass("box-content");
 
     const emailField = screen.getByLabelText(/^email$/i);
-    expect(emailField.parentElement).toHaveClass("grid", "gap-2", "box-content");
+    expect(emailField.parentElement).toHaveClass(
+      "grid",
+      "gap-1.5",
+      "box-content",
+    );
 
     expect(screen.getByLabelText(/first name/i)).toHaveClass("rounded-[8px]");
     expect(screen.getByLabelText(/last name/i)).toHaveClass("rounded-[8px]");
     expect(screen.getByLabelText(/^email$/i)).toHaveClass("rounded-[8px]");
-    expect(screen.getByLabelText(/^password$/i, { selector: "input" })).toHaveClass("rounded-[8px]");
+    expect(
+      screen.getByLabelText(/^password$/i, { selector: "input" }),
+    ).toHaveClass("rounded-[8px]");
 
     const submit = screen.getByRole("button", { name: /create account/i });
     expect(submit).toHaveClass(
-      "h-11",
+      "h-12",
       "rounded-[8px]",
       "bg-fill-brand-strong",
       "text-text-inverse-strong",
@@ -90,13 +96,14 @@ describe("RegisterPage", () => {
 
   it("submits registration and navigates to verify email", async () => {
     server.use(
-      http.post(`${API}/auth/register`, async () =>
-        HttpResponse.json({
+      http.post(`${API}/auth/register`, async ({ request }) => {
+        expect(await request.json()).toMatchObject({ delivery: "code" });
+        return HttpResponse.json({
           success: true,
           message: "Registered",
           data: {},
-        }),
-      ),
+        });
+      }),
     );
 
     const user = userEvent.setup();
@@ -105,11 +112,28 @@ describe("RegisterPage", () => {
     await user.type(screen.getByLabelText(/first name/i), "Test");
     await user.type(screen.getByLabelText(/last name/i), "User");
     await user.type(screen.getByLabelText(/^email$/i), "test@example.com");
-    await user.type(screen.getByLabelText(/^password$/i, { selector: "input" }), "Password1!");
+    await user.type(
+      screen.getByLabelText(/^password$/i, { selector: "input" }),
+      "Password1!",
+    );
     await user.click(screen.getByRole("button", { name: /create account/i }));
 
     await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith("/verify-email?email=test@example.com");
+      expect(mockNavigate).toHaveBeenCalledWith(
+        "/verify-email?email=test%40example.com",
+        { state: { verificationSentAt: expect.any(Number) } },
+      );
     });
   });
+});
+
+it("toggles password visibility without submitting the form", async () => {
+  const user = userEvent.setup();
+  renderWithProviders(<RegisterPage />, { route: "/register" });
+  const password = screen.getByLabelText(/^password$/i, { selector: "input" });
+  expect(password).toHaveAttribute("type", "password");
+  await user.click(screen.getByRole("button", { name: "Show password" }));
+  expect(password).toHaveAttribute("type", "text");
+  await user.click(screen.getByRole("button", { name: "Hide password" }));
+  expect(password).toHaveAttribute("type", "password");
 });

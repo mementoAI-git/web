@@ -1,0 +1,63 @@
+<svg width="661" height="194" viewBox="0 0 661 194" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0_25675_35855)">
+<rect width="661" height="194" rx="24" fill="url(#paint0_linear_25675_35855)"/>
+<mask id="mask0_25675_35855" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="4" y="-193" width="636" height="636">
+<rect width="573.383" height="573.383" transform="translate(69.6938 -191.994) rotate(6.44868)" fill="url(#paint1_radial_25675_35855)"/>
+</mask>
+<g mask="url(#mask0_25675_35855)">
+<g clip-path="url(#clip1_25675_35855)">
+<g clip-path="url(#clip2_25675_35855)">
+<line x1="50.5933" y1="-194.153" x2="-13.8052" y2="375.602" stroke="#0F0700" stroke-opacity="0.1" stroke-width="0.398183"/>
+<line x1="88.5772" y1="-189.86" x2="24.1787" y2="379.895" stroke="#0F0700" stroke-opacity="0.1" stroke-width="0.398183"/>
+<line x1="126.561" y1="-185.567" x2="62.1621" y2="384.188" stroke="#0F0700" stroke-opacity="0.1" stroke-width="0.398183"/>
+<line x1="164.545" y1="-181.274" x2="100.146" y2="388.481" stroke="#0F0700" stroke-opacity="0.1" stroke-width="0.398183"/>
+<line x1="202.528" y1="-176.981" x2="138.129" y2="392.774" stroke="#0F0700" stroke-opacity="0.1" stroke-width="0.398183"/>
+<line x1="240.512" y1="-172.687" x2="176.113" y2="397.068" stroke="#0F0700" stroke-opacity="0.1" stroke-width="0.398183"/>
+<line x1="278.495" y1="-168.394" x2="214.097" y2="401.361" stroke="#0F0700" stroke-opacity="0.1" stroke-width="0.398183"/>
+<line x1="316.479" y1="-164.101" x2="252.081" y2="405.654" stroke="#0F0700" stroke-opacity="0.1" stroke-width="0.398183"/>
+<line x1="354.462" y1="-159.808" x2="290.064" y2="409.947" stroke="#0F0700" stroke-opacity="0.1" stroke-width="0.398183"/>
+<line x1="392.446" y1="-155.514" x2="328.048" y2="414.241" stroke="#0F0700" stroke-opacity="0.1" stroke-width="0.398183"/>
+<line x1="430.43" y1="-151.221" x2="366.031" y2="418.534" stroke="#0F0700" stroke-opacity="0.1" stroke-width="0.398183"/>
+<line x1="468.414" y1="-146.928" x2="404.015" y2="422.827" stroke="#0F0700" stroke-opacity="0.1" stroke-width="0.398183"/>
+<line x1="506.398" y1="-142.634" x2="441.999" y2="427.121" stroke="#0F0700" stroke-opacity="0.1" stroke-width="0.398183"/>
+<line x1="544.381" y1="-138.341" x2="479.982" y2="431.414" stroke="#0F0700" stroke-opacity="0.1" stroke-width="0.398183"/>
+<line x1="582.365" y1="-134.048" x2="517.966" y2="435.707" stroke="#0F0700" stroke-opacity="0.1" stroke-width="0.398183"/>
+<line x1="620.348" y1="-129.755" x2="555.95" y2="440" stroke="#0F0700" stroke-opacity="0.1" stroke-width="0.398183"/>
+<line x1="658.332" y1="-125.462" x2="593.934" y2="444.293" stroke="#0F0700" stroke-opacity="0.1" stroke-width="0.398183"/>
+</g>
+<g clip-path="url(#clip3_25675_35855)">
+<line x1="-42.7223" y1="-51.0255" x2="716.951" y2="34.8392" stroke="#0F0700" stroke-opacity="0.1" stroke-width="0.398183"/>
+<line x1="-47.0157" y1="-13.0416" x2="712.658" y2="72.8231" stroke="#0F0700" stroke-opacity="0.1" stroke-width="0.398183"/>
+<line x1="-51.3087" y1="24.9418" x2="708.365" y2="110.807" stroke="#0F0700" stroke-opacity="0.1" stroke-width="0.398183"/>
+<line x1="-55.6022" y1="62.9257" x2="704.071" y2="148.79" stroke="#0F0700" stroke-opacity="0.1" stroke-width="0.398183"/>
+<line x1="-59.8951" y1="100.909" x2="699.778" y2="186.774" stroke="#0F0700" stroke-opacity="0.1" stroke-width="0.398183"/>
+<line x1="-64.1886" y1="138.893" x2="695.485" y2="224.758" stroke="#0F0700" stroke-opacity="0.1" stroke-width="0.398183"/>
+<line x1="-68.4815" y1="176.876" x2="691.192" y2="262.741" stroke="#0F0700" stroke-opacity="0.1" stroke-width="0.398183"/>
+</g>
+</g>
+</g>
+</g>
+<rect x="0.5" y="0.5" width="660" height="193" rx="23.5" stroke="black" stroke-opacity="0.03"/>
+<defs>
+<linearGradient id="paint0_linear_25675_35855" x1="330.5" y1="194" x2="330.5" y2="-8.04102e-06" gradientUnits="userSpaceOnUse">
+<stop stop-color="#FFDF76" stop-opacity="0.03"/>
+<stop offset="1" stop-color="#FFB029" stop-opacity="0.12"/>
+</linearGradient>
+<radialGradient id="paint1_radial_25675_35855" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(286.691 -8.65033e-05) rotate(126.11) scale(460.177 240.183)">
+<stop/>
+<stop offset="0.953125" stop-opacity="0"/>
+</radialGradient>
+<clipPath id="clip0_25675_35855">
+<rect width="661" height="194" rx="24" fill="white"/>
+</clipPath>
+<clipPath id="clip1_25675_35855">
+<rect width="764.51" height="573.383" fill="white" transform="translate(-25.5718 -202.762) rotate(6.44868)"/>
+</clipPath>
+<clipPath id="clip2_25675_35855">
+<rect width="764.51" height="573.383" fill="white" transform="translate(-25.5718 -202.762) rotate(6.44868)"/>
+</clipPath>
+<clipPath id="clip3_25675_35855">
+<rect width="764.51" height="573.383" fill="white" transform="translate(-25.5718 -202.762) rotate(6.44868)"/>
+</clipPath>
+</defs>
+</svg>

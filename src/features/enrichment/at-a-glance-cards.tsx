@@ -18,7 +18,7 @@ export interface AtAGlanceCardData {
 
 export function AtAGlanceCard({ icon, iconBg, title, body }: AtAGlanceCardData) {
   return (
-    <div className="flex w-60 min-w-60 sm:w-64 sm:min-w-64 flex-col gap-3 rounded-2xl border border-v3-stroke-weak bg-white p-4">
+    <div className="flex w-60 min-w-60 sm:w-64 sm:min-w-64 flex-col gap-3 rounded-2xl border border-v3-stroke-weak bg-bg-neutral p-4">
       <div className="flex items-center gap-3">
         <div className={cn("flex size-9 shrink-0 items-center justify-center rounded-xl", iconBg)}>
           {icon}
@@ -47,8 +47,8 @@ export function useAtAGlanceCards(): AtAGlanceCardData[] {
   return useMemo(
     () => [
       {
-        icon: <Clock size={16} strokeWidth={1.5} className="text-amber-600" />,
-        iconBg: "bg-amber-50",
+        icon: <Clock size={16} strokeWidth={1.5} className="text-icon-warning-strong" />,
+        iconBg: "bg-fill-warning-weak",
         title:
           enrichmentScore > 50 ? "The picture is filling in" : "You're at the beginning of the map",
         body:
@@ -57,8 +57,8 @@ export function useAtAGlanceCards(): AtAGlanceCardData[] {
             : "There is still room to wander—what you add next will tilt the balance.",
       },
       {
-        icon: <TrendingUp size={16} strokeWidth={1.5} className="text-emerald-600" />,
-        iconBg: "bg-emerald-50",
+        icon: <TrendingUp size={16} strokeWidth={1.5} className="text-icon-success-strong" />,
+        iconBg: "bg-fill-success-weak",
         title: topDimension ? `${topDimension} shows up most often` : "A few corners are still quiet",
         body: topDimension ? (
           <>
@@ -70,8 +70,8 @@ export function useAtAGlanceCards(): AtAGlanceCardData[] {
         ),
       },
       {
-        icon: <BookOpen size={16} strokeWidth={1.5} className="text-blue-600" />,
-        iconBg: "bg-blue-50",
+        icon: <BookOpen size={16} strokeWidth={1.5} className="text-icon-info-strong" />,
+        iconBg: "bg-fill-info-weak",
         title:
           memoriesCount > 0
             ? `${memoriesCount} ${memoriesCount === 1 ? "memory" : "memories"} on the shelf`
@@ -88,8 +88,8 @@ export function useAtAGlanceCards(): AtAGlanceCardData[] {
           ),
       },
       {
-        icon: <Star size={16} strokeWidth={1.5} className="text-purple-600" />,
-        iconBg: "bg-purple-50",
+        icon: <Star size={16} strokeWidth={1.5} className="text-icon-brand-strong" />,
+        iconBg: "bg-fill-brand-weak",
         title: streakCount > 0 ? `${streakCount} days in a row` : "Streak starts with today",
         body:
           streakCount > 0 ? (

@@ -20,13 +20,34 @@ describe("ConversationChatinput", () => {
     ).toBeInTheDocument();
   });
 
+  it("focuses the textarea when the composer background is clicked", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<ConversationChatinput onSend={() => {}} />, { auth: true });
+    await user.click(screen.getByTestId("chat-composer-surface"));
+    const input = screen.getByRole("textbox");
+    expect(input).toHaveFocus();
+    await user.keyboard("Writing from the whole box");
+    expect(input).toHaveValue("Writing from the whole box");
+  });
+
+  it("does not steal focus from composer actions", async () => {
+    const user = userEvent.setup();
+    const onClear = vi.fn();
+    renderWithProviders(<ConversationChatinput onSend={() => {}} replyQuote={{ role: "ai", text: "Earlier" }} onClearReplyQuote={onClear} />, { auth: true });
+    const cancel = screen.getByRole("button", { name: "Cancel reply" });
+    await user.click(cancel);
+    expect(onClear).toHaveBeenCalledOnce();
+    expect(cancel).toHaveFocus();
+    expect(screen.getByRole("textbox")).not.toHaveFocus();
+  });
+
   it("shows the microphone and swaps it for Send when there is content", async () => {
     const user = userEvent.setup();
     renderWithProviders(
       <ConversationChatinput onSend={() => {}} memoryId="m1" />,
       { auth: true, route: "/chat/m1" },
     );
-    expect(screen.queryByRole("link", { name: /voice call/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /voice call/i })).toHaveClass("bg-fill-overview-voice");
     expect(
       screen.getByRole("button", { name: /record voice clip/i }),
     ).toBeInTheDocument();
@@ -37,6 +58,9 @@ describe("ConversationChatinput", () => {
       "x",
     );
     expect(screen.getByRole("button", { name: /^send$/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /voice call/i })).not.toBeInTheDocument();
+    await user.clear(screen.getByRole("textbox"));
+    expect(screen.getByRole("button", { name: /voice call/i })).toBeInTheDocument();
   });
 
   it("uses its own outer shell (full width, no landing max width)", () => {
@@ -55,7 +79,7 @@ describe("ConversationChatinput", () => {
       auth: true,
     });
     expect(screen.getByTestId("chat-composer-surface")).toHaveClass(
-      "rounded-xl",
+      "rounded-3xl",
       "border-stroke-neutral-weak",
     );
   });

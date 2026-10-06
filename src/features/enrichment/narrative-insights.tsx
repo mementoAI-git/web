@@ -185,7 +185,7 @@ export function NarrativeInsightsBlock({ insights }: { insights: NarrativeInsigh
         {insights.map((ins) => (
           <Card
             key={ins.id}
-            className="flex w-[min(100%,20rem)] min-w-[min(100%,18rem)] shrink-0 flex-col gap-3 rounded-2xl border border-v3-stroke-weak bg-white p-4 shadow-none"
+            className="flex w-[min(100%,20rem)] min-w-[min(100%,18rem)] shrink-0 flex-col gap-3 rounded-2xl border border-v3-stroke-weak bg-bg-neutral p-4 shadow-none"
           >
             <p className="font-garamond text-lg font-medium leading-snug text-v3-text-strong text-pretty">
               {ins.headline}
@@ -207,7 +207,7 @@ export function NarrativeInsightsBlock({ insights }: { insights: NarrativeInsigh
       <Dialog open={Boolean(selected)} onOpenChange={(o) => !o && setOpenId(null)}>
         <DialogContent
           showCloseButton
-          className="max-h-[85vh] overflow-y-auto border border-v3-stroke-weak bg-white text-v3-text-strong ring-v3-stroke-weak sm:max-w-lg"
+          className="max-h-[85vh] overflow-y-auto border border-v3-stroke-weak bg-bg-neutral text-v3-text-strong ring-v3-stroke-weak sm:max-w-lg"
         >
           {selected ? (
             <>

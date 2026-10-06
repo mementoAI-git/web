@@ -229,7 +229,7 @@ function RecentActivitySkeleton({ isFirst }: { isFirst?: boolean }) {
 }
 
 // ── Section ───────────────────────────────────────────────────────────────────
-export default function RecentActivitiesSection() {
+export default function RecentActivitiesSection({ onNavigate }: { onNavigate?: () => void } = {}) {
   const { data, isLoading } = useSWR<ActivitiesResponse>(
     `${endpoint.activities}?page=1&limit=4`,
   );
@@ -247,7 +247,7 @@ export default function RecentActivitiesSection() {
           asChild
           className="inline-flex min-h-[44px] shrink-0 items-center px-0 font-inter text-sm font-medium text-text-brand-strong underline hover:no-underline sm:min-h-0"
         >
-          <Link to="/stories">See all</Link>
+          <Link to="/stories" onClick={onNavigate}>See all</Link>
         </Button>
       </header>
       <div className="flex flex-col">

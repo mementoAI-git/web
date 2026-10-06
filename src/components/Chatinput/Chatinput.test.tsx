@@ -34,13 +34,12 @@ describe("Chatinput", () => {
     expect(sendBtn).not.toBeDisabled();
   });
 
-  it("links voice call to /chat/:id/voice when memory id is set", () => {
+  it("offers voice in the composer when memory id is set", () => {
     renderWithProviders(
       <Chatinput onSend={() => {}} memoryId="abc123" />,
       { auth: true, route: "/chat/abc123" },
     );
-    const link = screen.getByRole("link", { name: /voice call/i });
-    expect(link).toHaveAttribute("href", "/chat/abc123/voice");
+    expect(screen.getByRole("button", { name: /voice call/i })).toBeEnabled();
   });
 
   it("fills container width without a 680px max on the outer shell", () => {

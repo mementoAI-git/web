@@ -59,7 +59,7 @@ export default function BeneficiaryAndGroup() {
         )}
       </header>
 
-      <div className="flex w-full flex-col gap-5 rounded-2xl border border-v3-stroke-weak bg-white p-5">
+      <div className="flex w-full flex-col gap-5 rounded-2xl border border-v3-stroke-weak bg-bg-neutral p-5">
         {/* Tabs + CTA */}
         <div className="flex items-center justify-between gap-3">
           <nav aria-label="Beneficiary and group sections">
@@ -85,7 +85,7 @@ export default function BeneficiaryAndGroup() {
                     )}
                   >
                     {label}
-                    <span className={cn("rounded-full px-1.5 py-px text-[10px]", isActive ? "bg-white/20 text-white" : "bg-v3-fill-weak text-v3-text-weaker")}>
+                    <span className={cn("rounded-full px-1.5 py-px text-[10px]", isActive ? "bg-fill-inverse-strong/20 text-white" : "bg-v3-fill-weak text-v3-text-weaker")}>
                       {count}
                     </span>
                   </button>

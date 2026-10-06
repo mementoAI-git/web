@@ -1,8 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import type { KeyboardEvent as ReactKeyboardEvent, MouseEvent as ReactMouseEvent } from "react";
+import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
+import "./volume-slider.css";
+import { useCallback } from "react";
 import { mutate } from "swr";
 import { toast } from "sonner";
-import { CheckCircle2, VolumeX } from "lucide-react";
+import { CheckCircle2, Disc3, Play, SkipBack, SkipForward, Square, VolumeX } from "lucide-react";
 import musicImage from "@/assets/image/music.png";
 import endpoint from "@/api/endpoint";
 import useFetcher from "@/hooks/use-fetcher";
@@ -10,126 +12,7 @@ import { useStore } from "@/hooks/use-store";
 import { useBackgroundMusic } from "@/hooks/use-background-music";
 import { cn } from "@/utility";
 
-function Slider({
-  volume,
-  onVolumeChange,
-  disabled = false,
-}: {
-  volume: number;
-  onVolumeChange: (volume: number) => void;
-  disabled?: boolean;
-}) {
-  const sliderRef = useRef<HTMLDivElement>(null);
-  const [isDragging, setIsDragging] = useState(false);
-
-  const updateVolume = useCallback(
-    (event: MouseEvent | ReactMouseEvent) => {
-      if (!sliderRef.current) return;
-      const rect = sliderRef.current.getBoundingClientRect();
-      const x = event.clientX - rect.left;
-      const percentage = Math.max(0, Math.min(100, (x / rect.width) * 100));
-      onVolumeChange(Math.round(percentage));
-    },
-    [onVolumeChange],
-  );
-
-  const handleMouseDown = useCallback(
-    (event: ReactMouseEvent) => {
-      if (disabled) return;
-      setIsDragging(true);
-      updateVolume(event);
-    },
-    [disabled, updateVolume],
-  );
-
-  const handleMouseMove = useCallback(
-    (event: MouseEvent) => {
-      if (!isDragging) return;
-      updateVolume(event);
-    },
-    [isDragging, updateVolume],
-  );
-
-  const handleMouseUp = useCallback(() => {
-    setIsDragging(false);
-  }, []);
-
-  const handleSliderClick = useCallback(
-    (event: ReactMouseEvent) => {
-      if (disabled) return;
-      updateVolume(event);
-    },
-    [disabled, updateVolume],
-  );
-
-  const handleKeyDown = useCallback(
-    (event: ReactKeyboardEvent<HTMLDivElement>) => {
-      if (disabled) return;
-      if (event.key === "ArrowRight" || event.key === "ArrowUp") {
-        event.preventDefault();
-        onVolumeChange(Math.min(100, volume + 1));
-      } else if (event.key === "ArrowLeft" || event.key === "ArrowDown") {
-        event.preventDefault();
-        onVolumeChange(Math.max(0, volume - 1));
-      } else if (event.key === "Home") {
-        event.preventDefault();
-        onVolumeChange(0);
-      } else if (event.key === "End") {
-        event.preventDefault();
-        onVolumeChange(100);
-      }
-    },
-    [disabled, onVolumeChange, volume],
-  );
-
-  useEffect(() => {
-    if (disabled) setIsDragging(false);
-  }, [disabled]);
-
-  useEffect(() => {
-    if (!isDragging || disabled) return;
-    document.addEventListener("mousemove", handleMouseMove);
-    document.addEventListener("mouseup", handleMouseUp);
-    return () => {
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
-    };
-  }, [disabled, handleMouseMove, handleMouseUp, isDragging]);
-
-  return (
-    <div
-      ref={sliderRef}
-      role="slider"
-      tabIndex={disabled ? -1 : 0}
-      aria-label="Background ambience volume"
-      aria-valuemin={0}
-      aria-valuemax={100}
-      aria-valuenow={volume}
-      className={cn(
-        "relative flex h-5 w-full items-center overflow-hidden rounded bg-fill-neutral-weaker focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stroke-brand-strong",
-        disabled
-          ? "cursor-not-allowed opacity-50"
-          : "cursor-pointer",
-      )}
-      onClick={handleSliderClick}
-      onMouseDown={handleMouseDown}
-      onKeyDown={handleKeyDown}
-      aria-disabled={disabled}
-    >
-      <div
-        className="relative h-full rounded-sm bg-fill-brand-strong"
-        style={{ width: `${volume}%` }}
-      >
-        <div
-          data-testid="ambience-volume-marker"
-          className="absolute right-1 top-1/2 h-2.5 w-px -translate-y-1/2 rounded-sm bg-background"
-        />
-      </div>
-    </div>
-  );
-}
-
-export default function BackgroundMusic() {
+export default function BackgroundMusic({ compact = false }: { compact?: boolean } = {}) {
   const { user, setUser } = useStore();
   const { isMutating, trigger } = useFetcher(endpoint.profile, "put");
   const { isPlaying, currentTrack, volume, setVolume, playTrack, pauseTrack, resumeTrack, stopTrack, audioFiles } =
@@ -212,12 +95,62 @@ export default function BackgroundMusic() {
     [audioFiles, mergeBgMusic, playTrack, stopTrack, trigger, user?.bg_music],
   );
 
+  if (compact) {
+    const savedIndex = audioFiles.findIndex((audio) => audio.key === user?.bg_music);
+    const selectedIndex = currentTrackIndex >= 0 ? currentTrackIndex : Math.max(savedIndex, 0);
+    const selectedTrack = audioFiles[selectedIndex];
+    const skipTrack = (direction: number) => {
+      if (!audioFiles.length) return;
+      void handleTrackSelect((selectedIndex + direction + audioFiles.length) % audioFiles.length);
+    };
+    return (
+      <section aria-label="Music player" className="flex flex-col gap-3 rounded-xl bg-fill-neutral-weaker p-3">
+        <div className="flex items-center gap-3">
+          <div className="flex size-16 shrink-0 items-center justify-center rounded-full bg-fill-neutral-strong text-text-inverse-strong">
+            <Disc3 className="size-12" strokeWidth={1} aria-hidden />
+          </div>
+          <div className="flex min-w-0 flex-1 flex-col gap-1">
+            <span className="text-xs text-text-neutral-weak">Music</span>
+            <span className="truncate text-sm font-medium text-text-neutral-strong" aria-live="polite">
+              {selectedTrack?.title ?? "No music available"}
+            </span>
+            <div className="flex items-center gap-1">
+              <Button type="button" variant="ghost" size="icon-sm" aria-label="Previous track" disabled={isMutating || audioFiles.length < 2} onClick={() => skipTrack(-1)}>
+                <SkipBack aria-hidden />
+              </Button>
+              <Button type="button" variant="outline" size="icon-sm" aria-label={isPlaying ? "Stop music" : "Play music"} disabled={isMutating || !selectedTrack} onClick={() => {
+                if (isPlaying) stopTrack();
+                else if (currentTrack) resumeTrack();
+                else void handleTrackSelect(selectedIndex);
+              }}>
+                {isPlaying ? <Square aria-hidden /> : <Play aria-hidden />}
+              </Button>
+              <Button type="button" variant="ghost" size="icon-sm" aria-label="Next track" disabled={isMutating || audioFiles.length < 2} onClick={() => skipTrack(1)}>
+                <SkipForward aria-hidden />
+              </Button>
+            </div>
+          </div>
+        </div>
+        <Slider className="ambience-volume-slider" label="Volume" size="compact" value={volume} onChange={(value) => { if (typeof value === "number") setVolume(value); }} min={0} max={100} formatValue={(value) => `${value}%`} />
+      </section>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-3">
       <h2 className="font-geist text-base font-semibold leading-6 text-text-neutral-strong">
         Background Ambience
       </h2>
-      <Slider volume={volume} onVolumeChange={setVolume} />
+      <Slider
+        className="ambience-volume-slider"
+        label="Volume"
+        size="default"
+        value={volume}
+        onChange={(value) => { if (typeof value === "number") setVolume(value); }}
+        min={0}
+        max={100}
+        formatValue={(value) => `${value}%`}
+      />
       <div className="grid grid-cols-2 gap-3">
         <button
           type="button"

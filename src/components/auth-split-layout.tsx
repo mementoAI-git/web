@@ -1,3 +1,4 @@
+import { ThemeSwitcher } from "@/components/theme-switcher";
 import type { PropsWithChildren } from "react";
 import authHeroCoastal from "@/assets/image/auth/auth-hero-coastal.png";
 import { Badge } from "@/components/ui/badge";
@@ -32,8 +33,9 @@ function AuthCenteredHeroAside() {
 export function AuthCenteredSplitShell({ children }: PropsWithChildren) {
   return (
     <div className="min-h-dvh bg-bg-neutral px-4 py-6 sm:px-6 sm:py-8 lg:px-10 lg:py-10">
-      <header className="mx-auto flex w-full items-center">
-        <Logo />
+      <header className="mx-auto flex w-full items-center justify-between gap-4">
+        <Logo className="text-foreground" />
+        <ThemeSwitcher />
       </header>
 
       <main className="mx-auto flex w-full flex-1 items-center justify-center py-6 sm:py-8 lg:py-12">
@@ -96,7 +98,10 @@ function AuthMarketingPanel({ className }: { className?: string }) {
 /** Full-viewport auth shell: marketing panel + scrollable form column. Form column is first on mobile. */
 export function AuthSplitShell({ children }: PropsWithChildren) {
   return (
-    <div className="min-h-dvh bg-background">
+    <div className="relative min-h-dvh bg-background">
+      <header className="absolute right-4 top-5 sm:right-6">
+        <ThemeSwitcher />
+      </header>
       <div className="flex min-h-dvh flex-col lg:flex-row">
         <div className="order-1 flex flex-1 flex-col lg:order-none lg:min-h-dvh lg:basis-2/5 lg:overflow-y-auto">
           <div className="shrink-0 px-4 pt-5 sm:px-6 lg:hidden">

@@ -34,7 +34,7 @@ describe("NicknamePage", () => {
     });
 
     await user.type(
-      screen.getByPlaceholderText(/preferred name or nickname/i),
+      screen.getByPlaceholderText(/Jane or a Nickname/i),
       "River",
     );
     await user.click(screen.getByRole("button", { name: /Continue/i }));

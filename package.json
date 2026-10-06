@@ -82,6 +82,7 @@
     "three": "^0.180.0",
     "tippy.js": "^6.3.7",
     "uuid": "^11.1.0",
+    "voice-glow": "^0.3.0",
     "yup": "^1.6.1"
   },
   "devDependencies": {

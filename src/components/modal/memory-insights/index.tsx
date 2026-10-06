@@ -1,3 +1,4 @@
+import RecentActivitiesSection from "@/pages/dashboard/overview/sections/recent-activities-section";
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import useSWR from "swr";
@@ -268,7 +269,7 @@ export default function MemoryInsightsModal() {
       : allInsights.filter((i) => i.category === activeCategory);
 
   return (
-    <div className="flex max-h-[88vh] w-full max-w-3xl flex-col overflow-hidden rounded-[24px] bg-white shadow-xl">
+    <div className="flex max-h-[88vh] w-full max-w-3xl flex-col overflow-hidden rounded-[24px] bg-bg-neutral shadow-xl">
       <div className="flex items-start justify-between gap-3 border-b border-v3-stroke-weak px-6 py-5">
         <div className="min-w-0">
           <h2 className="font-garamond text-2xl font-medium text-v3-text-strong">
@@ -318,7 +319,7 @@ export default function MemoryInsightsModal() {
                       <div className="flex flex-wrap items-center gap-2">
                         <Badge
                           variant="outline"
-                          className="border-v3-stroke-weak bg-white/80 font-inter text-[10px] font-semibold uppercase tracking-widest text-v3-text-weak"
+                          className="border-v3-stroke-weak bg-bg-neutral/80 font-inter text-[10px] font-semibold uppercase tracking-widest text-v3-text-weak"
                         >
                           Snapshot
                         </Badge>
@@ -331,7 +332,7 @@ export default function MemoryInsightsModal() {
                       </div>
 
                       {spotlight ? (
-                        <div className="space-y-3 rounded-xl border border-v3-stroke-weak bg-white/90 p-4">
+                        <div className="space-y-3 rounded-xl border border-v3-stroke-weak bg-bg-neutral/90 p-4">
                           <div className="flex flex-wrap items-center justify-between gap-2">
                             <p className="font-inter text-xs font-medium text-v3-text-weak">
                               A thread from your Memento
@@ -398,7 +399,7 @@ export default function MemoryInsightsModal() {
                       ) : null}
 
                       {!summaryError && !narrativeLoading && !aiSummary ? (
-                        <div className="flex flex-col items-center rounded-xl border border-dashed border-v3-stroke-weak bg-white/50 py-10 text-center">
+                        <div className="flex flex-col items-center rounded-xl border border-dashed border-v3-stroke-weak bg-bg-neutral/50 py-10 text-center">
                           <div className="mb-3 flex size-12 items-center justify-center rounded-full bg-v3-fill-weak">
                             <Sparkles className="size-5 text-v3-icon-neutral" />
                           </div>
@@ -437,7 +438,7 @@ export default function MemoryInsightsModal() {
                                 key={pill.category_key}
                                 variant="outline"
                                 size="sm"
-                                className="h-auto max-w-full rounded-xl border-v3-stroke-weak bg-white/90 py-2 font-inter text-xs font-medium text-v3-text-strong transition-transform duration-150 ease-out hover:bg-v3-fill-weaker active:scale-[0.98]"
+                                className="h-auto max-w-full rounded-xl border-v3-stroke-weak bg-bg-neutral/90 py-2 font-inter text-xs font-medium text-v3-text-strong transition-transform duration-150 ease-out hover:bg-v3-fill-weaker active:scale-[0.98]"
                                 asChild
                               >
                                 <Link
@@ -489,7 +490,7 @@ export default function MemoryInsightsModal() {
                       ) : null}
                     </div>
 
-                    <div className="flex flex-wrap items-center justify-end gap-2 border-t border-v3-stroke-weak/80 bg-white/40 px-5 py-3">
+                    <div className="flex flex-wrap items-center justify-end gap-2 border-t border-v3-stroke-weak/80 bg-bg-neutral/40 px-5 py-3">
                       <Button
                         type="button"
                         variant="ghost"
@@ -624,7 +625,7 @@ export default function MemoryInsightsModal() {
 
                 {/* Power-user escape hatch */}
                 <details
-                  className="group rounded-2xl border border-v3-stroke-weak bg-white transition-[box-shadow] duration-200 ease-out open:shadow-sm"
+                  className="group rounded-2xl border border-v3-stroke-weak bg-bg-neutral transition-[box-shadow] duration-200 ease-out open:shadow-sm"
                   onToggle={(e) =>
                     setObservationsOpen((e.target as HTMLDetailsElement).open)
                   }
@@ -649,14 +650,14 @@ export default function MemoryInsightsModal() {
                         className="w-full"
                       >
                         <div className="relative">
-                          <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-3 bg-gradient-to-r from-white to-transparent" />
-                          <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-3 bg-gradient-to-l from-white to-transparent" />
+                          <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-3 bg-gradient-to-r from-bg-neutral to-transparent" />
+                          <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-3 bg-gradient-to-l from-bg-neutral to-transparent" />
                           <TabsList className="h-auto w-full justify-start gap-1 overflow-x-auto rounded-xl bg-v3-fill-weaker p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                             {OBSERVATION_TABS.map((cat) => (
                               <TabsTrigger
                                 key={cat.key}
                                 value={cat.key}
-                                className="shrink-0 whitespace-nowrap rounded-lg px-3 py-1.5 font-inter text-xs font-medium text-v3-text-weak data-active:bg-white data-active:text-v3-text-strong data-active:shadow-sm"
+                                className="shrink-0 whitespace-nowrap rounded-lg px-3 py-1.5 font-inter text-xs font-medium text-v3-text-weak data-active:bg-bg-neutral data-active:text-v3-text-strong data-active:shadow-sm"
                               >
                                 {cat.label}
                               </TabsTrigger>
@@ -699,7 +700,7 @@ export default function MemoryInsightsModal() {
                                   className="rounded-xl border border-v3-stroke-weak bg-v3-fill-weaker/50 px-3.5 py-3 transition-colors duration-150 ease-out hover:border-v3-stroke-strong"
                                 >
                                   <div className="flex items-start gap-2.5">
-                                    <div className="mt-0.5 rounded-md bg-white/90 p-1.5">
+                                    <div className="mt-0.5 rounded-md bg-bg-neutral/90 p-1.5">
                                       <InsightIcon className="size-3.5 text-v3-icon-neutral" />
                                     </div>
                                     <p className="font-inter text-sm leading-relaxed text-v3-text-strong">
@@ -717,6 +718,7 @@ export default function MemoryInsightsModal() {
                     </div>
                   ) : null}
                 </details>
+                <RecentActivitiesSection onNavigate={() => close()} />
               </div>
             ),
             observations: (

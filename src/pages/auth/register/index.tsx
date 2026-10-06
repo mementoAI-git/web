@@ -10,8 +10,8 @@ import useFetcher from "@/hooks/use-fetcher";
 import useForm from "@/hooks/use-form";
 import { toast } from "sonner";
 import * as yup from "yup";
-import AuthLayout from "../components/layout";
-import { TypographyMuted } from "@/components/ui/typography";
+import AuthEntryLayout from "../components/entry-layout";
+import AuthSocials from "../components/auth-social";
 
 const schema = yup.object().shape({
   first_name: yup.string().required("First name is required").trim(),
@@ -50,86 +50,123 @@ export default function RegisterPage() {
     schema,
     initial,
     async onSubmit(payload) {
-      const result = await trigger(payload);
+      const result = await trigger({ ...payload, delivery: "code" });
       if (result) {
         toast.success(result?.message);
       }
-      navigate(`/verify-email?email=${payload.email}`);
+      navigate(`/verify-email?email=${encodeURIComponent(payload.email)}`, {
+        state: { verificationSentAt: Date.now() },
+      });
     },
   });
 
   return (
-    <AuthLayout
-      title="Create account"
-      include_auth_socials
+    <AuthEntryLayout
+      title={
+        <>
+          Create an <em>account</em>
+        </>
+      }
       footer={
-        <TypographyMuted className="text-center font-inter text-xs text-v3-text-weak">
-          Already have an account?
-          <Link
-            to="/login"
-            className="font-inter text-xs font-medium text-primary underline underline-offset-2"
-          >
-            {" "}
-            Login
-          </Link>
-        </TypographyMuted>
+        <Link to="/login" className="rounded-lg px-6 py-3 hover:underline">
+          I already have an account
+        </Link>
+      }
+      legal={
+        <p>
+          By creating an account, you agree to our{" "}
+          <span className="font-semibold text-text-brand-strong underline">
+            Terms of Use
+          </span>{" "}
+          and{" "}
+          <span className="font-semibold text-text-brand-strong underline">
+            Privacy Policy.
+          </span>
+        </p>
       }
     >
-      <Card className="rounded-none border-0 bg-transparent py-0 shadow-none ring-0">
+      <div className="auth-entry-socials">
+        <AuthSocials showDivider />
+      </div>
+      <Card className="overflow-visible rounded-none border-0 bg-transparent py-0 shadow-none ring-0">
         <CardContent className="w-full p-0">
-          <form onSubmit={handleSubmit} className="box-content flex flex-col gap-3.5 px-0.5">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="grid gap-2 box-content">
-                <Label htmlFor="register-first-name" className="font-inter text-sm">
+          <form
+            onSubmit={handleSubmit}
+            className="box-content flex flex-col gap-3"
+          >
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid gap-1.5 box-content">
+                <Label
+                  htmlFor="register-first-name"
+                  className="font-geist text-sm"
+                >
                   First name
                 </Label>
                 <Input
                   id="register-first-name"
                   name="first_name"
-                  placeholder="John"
+                  autoComplete="given-name"
+                  placeholder="Jane"
                   className="rounded-[8px]"
                   value={values.first_name}
                   onChange={handleChange}
                   aria-invalid={Boolean(errors.first_name)}
                 />
-                {errors.first_name ? <p className="font-inter text-xs text-destructive">{errors.first_name}</p> : null}
+                {errors.first_name ? (
+                  <p className="font-geist text-xs text-destructive">
+                    {errors.first_name}
+                  </p>
+                ) : null}
               </div>
-              <div className="grid gap-2 box-content">
-                <Label htmlFor="register-last-name" className="font-inter text-sm">
+              <div className="grid gap-1.5 box-content">
+                <Label
+                  htmlFor="register-last-name"
+                  className="font-geist text-sm"
+                >
                   Last name
                 </Label>
                 <Input
                   id="register-last-name"
                   name="last_name"
+                  autoComplete="family-name"
                   placeholder="Doe"
                   className="rounded-[8px]"
                   value={values.last_name}
                   onChange={handleChange}
                   aria-invalid={Boolean(errors.last_name)}
                 />
-                {errors.last_name ? <p className="font-inter text-xs text-destructive">{errors.last_name}</p> : null}
+                {errors.last_name ? (
+                  <p className="font-geist text-xs text-destructive">
+                    {errors.last_name}
+                  </p>
+                ) : null}
               </div>
             </div>
 
-            <div className="grid gap-2 box-content">
-              <Label htmlFor="register-email" className="font-inter text-sm">
+            <div className="grid gap-1.5 box-content">
+              <Label htmlFor="register-email" className="font-geist text-sm">
                 Email
               </Label>
               <Input
                 id="register-email"
                 name="email"
                 type="email"
-                placeholder="johndoe@mail.com"
+                autoComplete="email"
+                placeholder="janedoe@mail.com"
                 className="rounded-[8px]"
                 value={values.email}
                 onChange={handleChange}
                 aria-invalid={Boolean(errors.email)}
               />
-              {errors.email ? <p className="font-inter text-xs text-destructive">{errors.email}</p> : null}
+              {errors.email ? (
+                <p className="font-geist text-xs text-destructive">
+                  {errors.email}
+                </p>
+              ) : null}
             </div>
 
-            <div className="grid gap-2 box-content">
-              <Label htmlFor="register-password" className="font-inter text-sm">
+            <div className="grid gap-1.5 box-content">
+              <Label htmlFor="register-password" className="font-geist text-sm">
                 Password
               </Label>
               <div className="relative">
@@ -143,28 +180,48 @@ export default function RegisterPage() {
                   onChange={handleChange}
                   aria-invalid={Boolean(errors.password)}
                   autoComplete="new-password"
+                  aria-describedby="register-password-hint"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword((p) => !p)}
-                  className="absolute right-1 top-1/2 flex size-9 -translate-y-1/2 items-center justify-center rounded-full text-v3-text-weak transition-colors hover:bg-v3-fill-weaker hover:text-v3-text-strong"
+                  className="absolute right-1 top-1/2 flex size-9 -translate-y-1/2 items-center justify-center rounded-full text-text-neutral-weak transition-colors hover:bg-fill-neutral-weaker hover:text-text-neutral-strong"
                   aria-label={showPassword ? "Hide password" : "Show password"}
                 >
-                  {showPassword ?
-                    <EyeOff className="size-4 shrink-0" strokeWidth={2} aria-hidden />
-                  : <Eye className="size-4 shrink-0" strokeWidth={2} aria-hidden />}
+                  {showPassword ? (
+                    <EyeOff
+                      className="size-4 shrink-0"
+                      strokeWidth={2}
+                      aria-hidden
+                    />
+                  ) : (
+                    <Eye
+                      className="size-4 shrink-0"
+                      strokeWidth={2}
+                      aria-hidden
+                    />
+                  )}
                 </button>
               </div>
-              {errors.password ? <p className="font-inter text-xs text-destructive">{errors.password}</p> : null}
+              <p
+                id="register-password-hint"
+                className="text-sm leading-5 text-text-neutral-weak"
+              >
+                At least 6 characters, including uppercase and lowercase
+                letters, a number, and a symbol.
+              </p>
+              {errors.password ? (
+                <p className="font-geist text-xs text-destructive">
+                  {errors.password}
+                </p>
+              ) : null}
             </div>
 
-            <TypographyMuted className="px-1 text-center font-inter text-xs leading-5 text-v3-text-weak">
-              By clicking "Create account" you agree to the{" "}
-              <span className="text-xs font-medium text-primary underline">Terms of Use</span> and{" "}
-              <span className="text-xs font-medium text-primary underline">Privacy Policy</span>
-            </TypographyMuted>
-
-            <Button type="submit" className="h-11 w-full rounded-[8px] bg-fill-brand-strong text-text-inverse-strong hover:opacity-90" disabled={isMutating}>
+            <Button
+              type="submit"
+              className="mt-3 h-12 w-full rounded-[8px] bg-fill-brand-strong text-text-inverse-strong hover:opacity-90"
+              disabled={isMutating}
+            >
               {isMutating ? (
                 <>
                   <Loader2 className="size-4 animate-spin" />
@@ -177,6 +234,6 @@ export default function RegisterPage() {
           </form>
         </CardContent>
       </Card>
-    </AuthLayout>
+    </AuthEntryLayout>
   );
 }

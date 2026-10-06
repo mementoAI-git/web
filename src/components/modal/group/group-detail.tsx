@@ -123,7 +123,7 @@ export function GroupDetail({ data: groupId }: GroupDetailProps) {
                 return (
                   <li
                     key={id}
-                    className="flex items-center justify-between gap-3 rounded-lg border border-v3-stroke-weak bg-white px-3 py-2.5"
+                    className="flex items-center justify-between gap-3 rounded-lg border border-v3-stroke-weak bg-bg-neutral px-3 py-2.5"
                   >
                     <div className="flex min-w-0 flex-col">
                       <span className="truncate font-inter text-sm font-medium text-v3-text-strong">{label}</span>

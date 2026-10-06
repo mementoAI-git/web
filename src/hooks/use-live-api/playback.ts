@@ -25,6 +25,8 @@ export async function scheduleGeminiLivePcmChunk(
   destination: AudioNode,
   state: GeminiLivePlaybackState,
 ): Promise<void> {
+  if (outputAudioContext.state === "closed") throw new Error("Voice audio output is closed. Please reconnect.");
+  if (outputAudioContext.state !== "running") await outputAudioContext.resume();
   state.nextStartTime = Math.max(state.nextStartTime, outputAudioContext.currentTime);
   const audioBuffer = await decodeAudioData(
     decode(base64Pcm),

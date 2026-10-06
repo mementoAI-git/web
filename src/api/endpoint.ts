@@ -2,6 +2,8 @@ export default {
   // auth
   login: "/auth/login",
   register: "/auth/register",
+  sendRecoveryCode: "/auth/recovery/send-code",
+  verifyRecoveryCode: "/auth/recovery/verify-code",
   sendLink: "/auth/send-link",
   resendLink: "/auth/resend-link",
   verifyEmail: "/auth/verify-email",

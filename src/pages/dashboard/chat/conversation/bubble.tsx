@@ -1,9 +1,9 @@
 import { cn, getDuration, isEmpty } from "@/utility";
-import { CopyIcon, WaveIcon } from "@/components/icons";
+import { WaveIcon } from "@/components/icons";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import dayjs from "dayjs";
-import { CornerDownRight } from "lucide-react";
+import { ChatDesignIcon } from "@/components/chat-design-icon";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { snippetReplyText } from "@/utility/chat-reply-prompt";
@@ -48,7 +48,7 @@ function formatMessageTime(iso?: string) {
   if (!iso) return null;
   const d = dayjs(iso);
   if (!d.isValid()) return null;
-  return d.format("MMM D, h:mm A");
+  return d.format("h:mma");
 }
 
 export default function Bubble({
@@ -124,19 +124,20 @@ export default function Bubble({
       >
         <div
           className={cn(
-            "w-fit max-w-full rounded-[16px] bg-fill-neutral-weak px-3 py-2",
+            "w-fit max-w-full rounded-[16px] px-3 py-2",
+            isUser && !compact ? "bg-fill-chat-user" : "bg-fill-neutral-weak",
             !isUser &&
               hostChatDeepDive &&
               "border-l-[3px] border-stroke-brand-strong pl-3",
           )}
         >
           {isUser && replyQuote?.text?.trim() ? (
-            <div className="mb-2 border-b border-stroke-neutral-weaker pb-2">
-              <p className="font-inter text-[10px] font-semibold uppercase tracking-wide text-text-neutral-weak">
+            <div className="mb-1 rounded-r-[3px] border-l-[3px] border-stroke-brand-strong bg-fill-neutral-weak pl-1">
+              <p className="sr-only">
                 Replying to{" "}
                 {replyQuote.role === "user" ? "your message" : "Memento"}
               </p>
-              <p className="mt-0.5 line-clamp-2 font-inter text-xs text-text-neutral-strong opacity-90">
+              <p className="line-clamp-2 font-geist text-base leading-6 text-text-neutral-strong">
                 {snippetReplyText(replyQuote.text, 160)}
               </p>
             </div>
@@ -153,7 +154,7 @@ export default function Bubble({
               "block min-w-0 max-w-full break-words font-geist font-normal text-text-neutral-strong [&_pre]:max-w-full [&_pre]:overflow-x-auto [&_table]:block [&_table]:max-w-full [&_table]:overflow-x-auto",
               compact
                 ? "text-[14px] leading-relaxed [&_p]:m-0 [&_p]:text-[14px] [&_p]:leading-relaxed"
-                : "text-base leading-6 [&_p]:m-0 [&_p]:text-base [&_p]:leading-6",
+                : "text-base leading-6 sm:text-xl sm:leading-7 [&_p]:m-0 [&_p]:text-inherit [&_p]:leading-[inherit]",
             )}
           >
             <Markdown
@@ -164,7 +165,7 @@ export default function Bubble({
                     className={
                       compact
                         ? "text-[14px] leading-relaxed"
-                        : "text-base leading-6"
+                        : "text-base leading-6 sm:text-xl sm:leading-7"
                     }
                     {...props}
                   >
@@ -201,7 +202,7 @@ export default function Bubble({
           >
             {timeLabel ? (
               <time
-                className="font-inter text-xs text-text-neutral-weak"
+                className="font-geist text-sm text-text-neutral-weak"
                 dateTime={createdAt}
               >
                 {timeLabel}
@@ -214,7 +215,7 @@ export default function Bubble({
                 className="inline-flex size-7 shrink-0 items-center justify-center rounded-md text-text-neutral-weak transition-colors hover:bg-fill-neutral-weaker hover:text-text-neutral-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stroke-neutral-weak"
                 aria-label="Copy message"
               >
-                <CopyIcon className="size-4" aria-hidden />
+                <ChatDesignIcon name="copy" />
               </button>
             ) : null}
             {onReply && hasReplyableContent && !sendFailed ? (
@@ -224,10 +225,10 @@ export default function Bubble({
                   e.stopPropagation();
                   onReply();
                 }}
-                className="inline-flex h-7 items-center gap-1 rounded-md px-1.5 font-inter text-xs font-medium text-text-neutral-weak transition-colors hover:bg-fill-neutral-weaker hover:text-text-neutral-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stroke-neutral-weak"
+                className="inline-flex h-7 items-center gap-1 rounded-md px-1 font-geist text-sm font-normal text-text-neutral-weak transition-colors hover:bg-fill-neutral-weaker hover:text-text-neutral-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stroke-neutral-weak"
                 aria-label="Reply to message"
               >
-                <CornerDownRight className="size-3.5 shrink-0" strokeWidth={2} aria-hidden />
+                <ChatDesignIcon name="reply" />
                 Reply
               </button>
             ) : null}
@@ -256,7 +257,7 @@ export default function Bubble({
             <WaveIcon className={cn("size-[18px] text-icon-neutral-weaker", { "ml-auto size-[15px] text-text-neutral-weak": isUser })} />
             {
               isUser && (
-                <span className="font-inter text-xs text-text-neutral-weak">
+                <span className="font-geist text-sm text-text-neutral-weak">
                   {mins}:{secs}
                 </span>
               )

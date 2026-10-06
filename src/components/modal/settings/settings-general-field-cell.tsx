@@ -5,7 +5,6 @@ type SettingsGeneralFieldCellProps = {
   label: string;
   placeholder: string;
   displayValue: string;
-  valueEmphasis?: boolean;
   valueAdornment?: ReactNode;
   className?: string;
 };
@@ -14,7 +13,6 @@ export function SettingsGeneralFieldCell({
   label,
   placeholder,
   displayValue,
-  valueEmphasis = false,
   valueAdornment,
   className,
 }: SettingsGeneralFieldCellProps) {
@@ -27,10 +25,7 @@ export function SettingsGeneralFieldCell({
         {hasValue ? (
           <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
             <span
-              className={cn(
-                "min-w-0 break-words font-inter text-sm font-semibold",
-                valueEmphasis ? "text-v3-fill-strong" : "text-v3-text-strong",
-              )}
+              className="min-w-0 break-words font-inter text-sm font-semibold text-v3-text-strong"
             >
               {displayValue}
             </span>

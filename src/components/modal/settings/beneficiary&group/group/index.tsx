@@ -77,7 +77,7 @@ function RowMenu({ group: _group, onViewMembers, onEdit, onDelete }: RowMenuProp
         <div
           ref={menuRef}
           style={{ top: pos.top, left: pos.left, width: 160 }}
-          className="fixed z-[9999] overflow-hidden rounded-xl border border-v3-stroke-weak bg-white py-1 shadow-lg"
+          className="fixed z-[9999] overflow-hidden rounded-xl border border-v3-stroke-weak bg-bg-neutral py-1 shadow-lg"
         >
           {items.map((item) => (
             <button

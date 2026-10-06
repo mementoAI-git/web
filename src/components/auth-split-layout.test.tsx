@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { screen } from "@testing-library/react";
+import { renderWithProviders as render } from "@/test";
 
 import { AuthCenteredSplitShell, AuthSplitShell } from "./auth-split-layout";
 
@@ -73,3 +74,8 @@ describe("AuthSplitShell", () => {
     expect(mobileLogoRow?.textContent).toContain("memento.");
   });
 });
+
+  it.each([AuthCenteredSplitShell, AuthSplitShell])("exposes theme options without signing in", (Shell) => {
+    render(<Shell><p>Form</p></Shell>);
+    expect(screen.getByRole("button", { name: /switch to (light|dark) mode/i })).toBeVisible();
+  });

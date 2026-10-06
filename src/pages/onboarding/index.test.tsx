@@ -6,28 +6,24 @@ import { renderWithProviders } from "@/test";
 import { OnboardPage } from "./index";
 
 describe("OnboardPage", () => {
-  it("renders hero image and CTA, then navigates to welcome", async () => {
+  it("starts at the welcome card and continues to the nickname screen", async () => {
     const user = userEvent.setup();
     renderWithProviders(
       <Routes>
         <Route path="/onboarding" element={<OnboardPage />} />
-        <Route path="/onboarding/welcome" element={<div>Welcome route</div>} />
+        <Route
+          path="/onboarding/nickname"
+          element={<div>Nickname route</div>}
+        />
       </Routes>,
       { route: "/onboarding", auth: true },
     );
-
     expect(
-      screen.getByRole("img", { name: /welcome - memories and moments to cherish/i }),
+      screen.getByRole("heading", {
+        name: /hey there, welcome to memento ai/i,
+      }),
     ).toBeInTheDocument();
-    expect(
-      screen.getByText(/your quiet space to reflect, to preserve, to remember/i),
-    ).toBeInTheDocument();
-
-    const cta = screen.getByRole("button", { name: /let's go!/i });
-    expect(cta).toHaveClass("!bg-fill-brand-strong");
-    expect(cta).toHaveClass("rounded-[64px]");
-
-    await user.click(cta);
-    expect(await screen.findByText("Welcome route")).toBeInTheDocument();
+    await user.click(screen.getByRole("link", { name: "Continue" }));
+    expect(await screen.findByText("Nickname route")).toBeInTheDocument();
   });
 });

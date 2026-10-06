@@ -14,11 +14,12 @@ import HostChatEntryPage from "./host-chat-entry";
 
 const BASE = "http://localhost:3000/api";
 
-function renderHostEntry(initialEntry = "/chat") {
+function renderHostEntry(initialEntry: string | { pathname: string; search: string; state: unknown } = "/chat") {
   seedAuth();
   const router = createMemoryRouter(
     [
       { path: "/chat", element: <HostChatEntryPage /> },
+      { path: "/chat/:id/voice", element: <div>voice mode</div> },
       {
         path: "/chat/:id",
         element: <div data-testid="conversation-open">thread</div>,
@@ -51,6 +52,19 @@ function renderHostEntry(initialEntry = "/chat") {
 }
 
 describe("HostChatEntryPage", () => {
+  it.each(["thread-xyz", null])("opens voice mode with primary conversation %s", async (primaryId) => {
+    server.use(http.get(`${BASE}/users/profile`, () => HttpResponse.json({
+      success: true,
+      data: { ...mockUser, primary_conversation_id: primaryId },
+    })));
+    const { router } = renderHostEntry({ pathname: "/chat", search: "?mode=voice", state: { autoStartVoice: true } });
+    await waitFor(() => {
+      expect(router.state.location.pathname).toBe(`/chat/${primaryId || "new"}`);
+      expect(router.state.location.search).toBe("?voice=1");
+      expect(router.state.location.state).toEqual({ autoStartVoice: true });
+    });
+  });
+
   it("navigates to the existing conversation when primary_conversation_id is set", async () => {
     server.use(
       http.get(`${BASE}/users/profile`, () =>

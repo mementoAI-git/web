@@ -1,10 +1,13 @@
-import { fireEvent, screen, waitFor } from "@testing-library/react";
+import { ThemeProvider } from "@/contexts/theme";
+import type { ReactNode } from "react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { renderWithProviders } from "@/test";
 import Voiceinput from "./Voiceinput";
 
 const liveApi = vi.hoisted(() => ({
+  greet: vi.fn().mockResolvedValue(undefined),
   connected: false,
   isRecording: false,
   connect: vi.fn().mockResolvedValue(undefined),
@@ -14,6 +17,10 @@ const liveApi = vi.hoisted(() => ({
   restartSession: vi.fn().mockResolvedValue(undefined),
   setInputMuted: vi.fn(),
 }));
+
+const outputLevel = vi.hoisted(() => ({ value: 0 }));
+vi.mock("@/hooks/use-ai-playback-level", () => ({ useAiPlaybackLevel: () => () => outputLevel.value }));
+vi.mock("voice-glow", () => ({ VoiceBeam: ({ children, active, level }: { children: ReactNode; active: boolean; level: () => number }) => <div data-testid="voice-beam" data-active={active} data-level={level()}>{children}</div> }));
 
 const useLiveAPIOptions = vi.hoisted(() => vi.fn());
 
@@ -51,7 +58,7 @@ const voices = [
 vi.mock("@/hooks/use-live-api", () => ({
   useLiveAPI: (options: unknown) => {
     useLiveAPIOptions(options);
-    return { ...liveApi, inputNode: null, outputNode: null, error: null };
+    return { ...liveApi, inputNode: null, outputNode: {} as GainNode, error: null };
   },
 }));
 
@@ -76,9 +83,11 @@ vi.mock("./voice-mode-voices", async (importOriginal) => {
 describe("Voiceinput", () => {
   beforeEach(() => {
     window.HTMLElement.prototype.scrollIntoView = vi.fn();
+    outputLevel.value = 0;
     liveApi.connected = false;
     liveApi.isRecording = false;
     liveApi.connect.mockClear();
+    liveApi.greet.mockClear();
     liveApi.startRecording.mockClear();
     liveApi.stopRecording.mockClear();
     liveApi.disconnect.mockClear();
@@ -87,6 +96,131 @@ describe("Voiceinput", () => {
     useLiveAPIOptions.mockClear();
     voiceState.saveVoice.mockClear();
     voiceState.user = { chat_voice: "Kore", chat_voice_provider: "gemini" };
+  });
+
+  it("starts and greets inline without taking over the page", async () => {
+    const { container } = renderWithProviders(<Voiceinput inline autoStart onCancel={vi.fn()} />, { auth: true });
+    await waitFor(() => expect(liveApi.greet).toHaveBeenCalledOnce());
+    expect(container.querySelector('[aria-label="Voice conversation"]')).toBeInTheDocument();
+    expect(screen.queryByTestId("voice-mode-layer")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "End voice conversation" })).toBeInTheDocument();
+  });
+
+  it("ends an inline call and returns controls to its parent", async () => {
+    liveApi.isRecording = true;
+    liveApi.connected = true;
+    const onEnd = vi.fn();
+    const user = userEvent.setup();
+    renderWithProviders(<Voiceinput inline onCancel={onEnd} />, { auth: true });
+    await user.click(screen.getByRole("button", { name: "End voice conversation" }));
+    await waitFor(() => expect(onEnd).toHaveBeenCalledOnce());
+    expect(liveApi.stopRecording).toHaveBeenCalledOnce();
+    expect(liveApi.disconnect).toHaveBeenCalledOnce();
+  });
+
+  it("shows first-time inline modals and starts with the chosen voice only after saving", async () => {
+    voiceState.user = {};
+    let finishSaving!: (saved: boolean) => void;
+    voiceState.saveVoice.mockReturnValueOnce(new Promise<boolean>(resolve => { finishSaving = resolve; }));
+    const user = userEvent.setup();
+    renderWithProviders(<Voiceinput inline autoStart variant="overview" onCancel={vi.fn()} />, { auth: true });
+    expect(await screen.findByRole("dialog", { name: "Try Voicemode" })).toBeInTheDocument();
+    expect(liveApi.connect).not.toHaveBeenCalled();
+    expect(liveApi.startRecording).not.toHaveBeenCalled();
+    await user.click(screen.getByRole("button", { name: "Continue" }));
+    expect(screen.getByRole("dialog", { name: "Choose a voice" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Next voice" }));
+    await user.click(screen.getByRole("button", { name: "Select Voice" }));
+    expect(voiceState.saveVoice).toHaveBeenCalledWith(voices[1]);
+    expect(liveApi.connect).not.toHaveBeenCalled();
+    finishSaving(true);
+    await waitFor(() => expect(liveApi.connect).toHaveBeenCalledWith({ voiceName: "Aoede" }));
+    await waitFor(() => expect(liveApi.greet).toHaveBeenCalledOnce());
+    expect(liveApi.startRecording).toHaveBeenCalledOnce();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("does not start a call if first-time setup is dismissed", async () => {
+    voiceState.user = {};
+    const onCancel = vi.fn();
+    const user = userEvent.setup();
+    renderWithProviders(<Voiceinput inline autoStart onCancel={onCancel} />, { auth: true });
+    await user.click(await screen.findByRole("button", { name: "Dismiss" }));
+    expect(onCancel).toHaveBeenCalledOnce();
+    expect(liveApi.connect).not.toHaveBeenCalled();
+    expect(liveApi.startRecording).not.toHaveBeenCalled();
+  });
+
+  it("keeps the picker open when saving the preferred voice fails", async () => {
+    voiceState.user = {};
+    voiceState.saveVoice.mockResolvedValueOnce(false);
+    const user = userEvent.setup();
+    renderWithProviders(<Voiceinput inline autoStart onCancel={vi.fn()} />, { auth: true });
+    await user.click(await screen.findByRole("button", { name: "Continue" }));
+    await user.click(screen.getByRole("button", { name: "Select Voice" }));
+    expect(screen.getByRole("dialog", { name: "Choose a voice" })).toBeInTheDocument();
+    expect(liveApi.connect).not.toHaveBeenCalled();
+  });
+
+  it("automatically starts once for returning users from Overview", async () => {
+    const consumed = vi.fn();
+    const { rerender } = render(<ThemeProvider><Voiceinput autoStart onAutoStartConsumed={consumed} onCancel={vi.fn()} /></ThemeProvider>);
+    await waitFor(() => expect(liveApi.startRecording).toHaveBeenCalledOnce());
+    expect(liveApi.connect).toHaveBeenCalledOnce();
+    expect(consumed).toHaveBeenCalledOnce();
+    rerender(<ThemeProvider><Voiceinput autoStart onAutoStartConsumed={consumed} onCancel={vi.fn()} /></ThemeProvider>);
+    expect(liveApi.connect).toHaveBeenCalledOnce();
+  });
+
+  it("shows the overview call card and opens anchored settings without ending the call", async () => {
+    liveApi.isRecording = true;
+    liveApi.connected = true;
+    const user = userEvent.setup();
+    const onCancel = vi.fn();
+    render(<ThemeProvider><Voiceinput inline variant="overview" onCancel={onCancel} /></ThemeProvider>);
+    expect(screen.getByLabelText("Call duration")).toHaveTextContent("00:00");
+    expect(screen.getByRole("status")).toHaveTextContent("Listening");
+    expect(screen.queryByText("Let’s talk")).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Mute microphone", exact: true }));
+    expect(screen.getByRole("status")).toHaveTextContent("You’re muted");
+    expect(liveApi.setInputMuted).toHaveBeenCalledWith(true);
+    await user.click(screen.getByRole("button", { name: "Voice settings" }));
+    expect(screen.getByRole("dialog", { name: "Voice settings" })).toHaveAttribute("data-side", "bottom");
+    expect(document.querySelector('[data-slot="sheet-content"]')).toBeNull();
+    expect(screen.getByRole("combobox", { name: "Language" })).toBeInTheDocument();
+    expect(document.querySelector('[data-slot="sheet-overlay"]')).toBeNull();
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(liveApi.stopRecording).not.toHaveBeenCalled();
+    await user.click(screen.getByRole("button", { name: "End voice conversation" }));
+    expect(onCancel).toHaveBeenCalledOnce();
+  });
+
+  it("reports actual session transitions and ends the marker on unmount", () => {
+    const onSessionChange = vi.fn();
+    const { rerender, unmount } = render(<ThemeProvider><Voiceinput inline onCancel={vi.fn()} onSessionChange={onSessionChange} /></ThemeProvider>);
+    expect(onSessionChange).not.toHaveBeenCalled();
+    liveApi.isRecording = true;
+    rerender(<ThemeProvider><Voiceinput inline onCancel={vi.fn()} onSessionChange={onSessionChange} /></ThemeProvider>);
+    expect(onSessionChange).toHaveBeenLastCalledWith(true);
+    liveApi.isRecording = false;
+    rerender(<ThemeProvider><Voiceinput inline onCancel={vi.fn()} onSessionChange={onSessionChange} /></ThemeProvider>);
+    expect(onSessionChange).toHaveBeenLastCalledWith(false);
+    liveApi.isRecording = true;
+    rerender(<ThemeProvider><Voiceinput inline onCancel={vi.fn()} onSessionChange={onSessionChange} /></ThemeProvider>);
+    unmount();
+    expect(onSessionChange.mock.calls.map(([active]) => active)).toEqual([true, false, true, false]);
+  });
+
+  it("drives the beam from AI playback while a session is active", async () => {
+    liveApi.isRecording = true;
+    outputLevel.value = 0.6;
+    const { rerender } = render(<ThemeProvider><Voiceinput onCancel={vi.fn()} /></ThemeProvider>);
+    expect(await screen.findByTestId("voice-beam")).toHaveAttribute("data-active", "true");
+    expect(screen.getByTestId("voice-beam")).toHaveAttribute("data-level", "0.6");
+    outputLevel.value = 0;
+    rerender(<ThemeProvider><Voiceinput onCancel={vi.fn()} /></ThemeProvider>);
+    expect(screen.getByTestId("voice-beam")).toHaveAttribute("data-level", "0");
   });
 
   it("shows first-use introduction and continues into voice selection", async () => {

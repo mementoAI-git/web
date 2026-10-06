@@ -1,7 +1,14 @@
 import { Link } from "react-router-dom";
-import questionImage from "@/assets/image/question-2.png";
+import { Ellipsis } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import type { ExploreQuestionSource } from "@/features/explore/explore-types";
 
 interface CategoryPromptCardProps {
@@ -19,48 +26,71 @@ export default function CategoryPromptCard({
   isFeedbackPending = false,
   onFeedback,
 }: CategoryPromptCardProps) {
-  const sourceLabel = source === "ai-generated" ? "Just for you" : source === "legacy" ? "From your history" : "Starter question";
+  const sourceLabel =
+    source === "ai-generated"
+      ? "Just for you"
+      : source === "legacy"
+        ? "From your history"
+        : "Starter question";
 
   return (
-    <article className="flex w-full flex-col items-start gap-4 rounded-2xl border border-stroke-neutral-weak bg-bg-neutral p-6 sm:flex-row sm:items-center sm:gap-10">
-      <div className="flex w-full items-start justify-between sm:w-fit">
-        <div className="flex size-18 shrink-0 items-center justify-center sm:size-37 sm:p-6">
-          <img className="size-full shrink-0 object-contain" alt="" aria-hidden="true" src={questionImage} />
-        </div>
-        <Badge variant={source === "ai-generated" ? "default" : "secondary"}>{sourceLabel}</Badge>
+    <article className="relative flex w-full items-start gap-3 rounded-3xl border border-stroke-neutral-weak bg-fill-neutral-weaker p-4 sm:gap-6">
+      <img
+        className="size-20 shrink-0 rounded-md bg-fill-neutral-weak object-cover sm:h-[113px] sm:w-[135px]"
+        alt=""
+        src={`https://api.dicebear.com/10.x/disco/svg?seed=${encodeURIComponent(_id)}`}
+        width={135}
+        height={113}
+        loading="lazy"
+        decoding="async"
+        referrerPolicy="no-referrer"
+      />
+      <div className="flex min-w-0 flex-1 flex-col items-start justify-between gap-4 self-stretch">
+        <h3 className="font-garamond text-xl font-normal leading-snug text-text-neutral-strong sm:text-2xl">
+          <Link
+            to={`/chat/reply/${_id}`}
+            aria-label={`Reply to: ${title}`}
+            className="outline-none after:absolute after:inset-0 after:rounded-3xl focus-visible:after:ring-2 focus-visible:after:ring-stroke-brand-strong"
+          >
+            {title}
+          </Link>
+        </h3>
+        <Badge
+          variant="outline"
+          className="h-auto gap-1.5 rounded-full border-stroke-neutral-strong bg-transparent px-2 py-1 font-geist text-sm font-medium text-text-neutral-strong"
+        >
+          <span
+            aria-hidden="true"
+            className="size-2.5 rounded-full bg-fill-info-strong"
+          />
+          {sourceLabel}
+        </Badge>
       </div>
-      <div className="flex flex-1 flex-col gap-4">
-        <h3 className="font-garamond text-xl text-text-neutral-strong md:text-2xl">{title}</h3>
-        <div className="flex flex-wrap items-center gap-2">
-          <Button asChild>
-            <Link to={`/chat/reply/${_id}`} aria-label={`Reply to: ${title}`}>
-              Reply
-            </Link>
-          </Button>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
           <Button
             type="button"
             variant="ghost"
-            className="min-h-11"
+            size="icon"
+            className="relative size-9 shrink-0 rounded-lg text-icon-neutral-weak"
+            aria-label={`Topic options: ${title}`}
             disabled={isFeedbackPending}
-            aria-label="Skip this question"
             aria-busy={isFeedbackPending}
-            onClick={() => onFeedback(_id, "skipped")}
           >
-            Skip
+            <Ellipsis aria-hidden="true" />
           </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            className="min-h-11"
-            disabled={isFeedbackPending}
-            aria-label="Mark this question as not relevant"
-            aria-busy={isFeedbackPending}
-            onClick={() => onFeedback(_id, "not-relevant")}
-          >
-            Not relevant to me
-          </Button>
-        </div>
-      </div>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuGroup>
+            <DropdownMenuItem
+              disabled={isFeedbackPending}
+              onSelect={() => onFeedback(_id, "not-relevant")}
+            >
+              Not relevant to me
+            </DropdownMenuItem>
+          </DropdownMenuGroup>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </article>
   );
 }

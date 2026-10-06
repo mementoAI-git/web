@@ -6,31 +6,36 @@ import CategoryDetails from "./category-details";
 import { setExploreQuestionFeedback } from "@/features/explore/explore-api";
 
 const mutate = vi.fn();
+const setSize = vi.fn();
+let currentKey = "";
 
 vi.mock("swr/infinite", () => ({
-  default: () => ({
-    data: [
-      {
-        data: {
-          docs: [
-            {
-              _id: "prompt-1",
-              title: "What makes an ordinary day better?",
-              category: "the-life-i-live",
-              source: "starter",
-              status: "unanswered",
-            },
-          ],
-          totalDocs: 1,
-          hasNextPage: false,
+  default: (getKey: (index: number, previous: null) => string) => {
+    currentKey = getKey(0, null);
+    return {
+      data: [
+        {
+          data: {
+            docs: [
+              {
+                _id: "prompt-1",
+                title: "What makes an ordinary day better?",
+                category: "the-life-i-live",
+                source: "starter",
+                status: "unanswered",
+              },
+            ],
+            totalDocs: 1,
+            hasNextPage: false,
+          },
         },
-      },
-    ],
-    size: 1,
-    setSize: vi.fn(),
-    isLoading: false,
-    mutate,
-  }),
+      ],
+      size: 1,
+      setSize,
+      isLoading: false,
+      mutate,
+    };
+  },
 }));
 
 vi.mock("@/features/explore/explore-api", () => ({
@@ -66,14 +71,28 @@ describe("CategoryDetails", () => {
       { auth: true },
     );
 
-    expect(screen.getByRole("button", { name: "All" })).toBeVisible();
-    expect(screen.queryByText(/5\/10|unlock personalized/i)).not.toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Mark this question as not relevant" }));
+    expect(screen.getByText("All topics")).toBeVisible();
+    expect(
+      screen.queryByText(/5\/10|unlock personalized/i),
+    ).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /topic options/i }));
+    await user.click(
+      screen.getByRole("menuitem", { name: "Not relevant to me" }),
+    );
     await waitFor(() =>
       expect(setExploreQuestionFeedback).toHaveBeenCalledWith("prompt-1", {
         status: "not-relevant",
       }),
     );
     expect(mutate).toHaveBeenCalled();
+    expect(screen.getByRole("link", { name: "Back" })).toHaveAttribute(
+      "href",
+      "/explore",
+    );
+    await user.click(screen.getByText("Answered"));
+    expect(currentKey).toContain("answered=true");
+    expect(setSize).toHaveBeenCalledWith(1);
+    await user.click(screen.getByText("All topics"));
+    expect(currentKey).not.toContain("answered=");
   });
 });

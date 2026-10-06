@@ -26,7 +26,7 @@ export default function Stats({ embedded = false }: StatsProps) {
         </header>
       ) : null}
 
-      <div className="flex w-full flex-col gap-8 rounded-2xl border border-v3-stroke-weak bg-white p-6">
+      <div className="flex w-full flex-col gap-8 rounded-2xl border border-v3-stroke-weak bg-bg-neutral p-6">
         <section className="flex flex-col gap-3" aria-labelledby="settings-stats-narrative-heading">
           <p
             id="settings-stats-narrative-heading"

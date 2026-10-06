@@ -27,17 +27,17 @@ export default function LogoutAccount({ close, open }: LogoutAccountProps) {
           <ModalCloseBtn onClick={close} />
           <div className="space-y-6">
             <div className="space-y-4">
-              <h4 className="modal-title !font-garamond !font-medium text-gray-950/90">
+              <h4 className="modal-title !font-garamond !font-medium text-v3-text-strong">
                 Logout from all devices?
               </h4>
-              <span className="font-inter text-base text-gray-950/70">
+              <span className="font-inter text-base text-v3-text-weak">
                 Are you sure you want to logout from all devices? You will need to log in again on all your devices.
               </span>
             </div>
             <div className="flex items-center justify-end gap-4">
               <button
                 type="button"
-                className="h-10 cursor-pointer rounded-full border border-stroke-neutral-weak bg-white/1 px-4 py-2.5 font-inter text-sm font-semibold shadow"
+                className="h-10 cursor-pointer rounded-full border border-stroke-neutral-weak bg-bg-neutral/1 px-4 py-2.5 font-inter text-sm font-semibold shadow"
                 onClick={close}
               >
                 Cancel

@@ -20,7 +20,7 @@ interface SharePostProps {
 
 /** Match delete-prompt-modal secondary / primary control sizing. */
 const cancelClass =
-  "h-10 cursor-pointer rounded-full border border-stroke-neutral-weak bg-white/1 px-4 py-2.5 font-inter text-sm font-semibold shadow";
+  "h-10 cursor-pointer rounded-full border border-stroke-neutral-weak bg-fill-neutral-weak px-4 py-2.5 font-inter text-sm font-semibold text-text-neutral-strong shadow transition-colors hover:bg-fill-neutral-weaker";
 
 const primaryClass =
   "flex h-10 cursor-pointer items-center justify-center gap-2 rounded-full bg-fill-brand-strong px-4 py-2.5 font-inter text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90";
@@ -45,9 +45,16 @@ function SharePostContent({ data }: SharePostProps) {
     <div className="space-y-6">
       <div className="space-y-4">
         <div className="flex items-start gap-3">
-          <img src={confetti} alt="" className="size-12 shrink-0 object-contain" aria-hidden />
+          <img
+            src={confetti}
+            alt=""
+            className="size-12 shrink-0 object-contain"
+            aria-hidden
+          />
           <div className="min-w-0 space-y-2">
-            <h4 className="modal-title text-text-neutral-strong">Story added successfully</h4>
+            <h4 className="modal-title !text-text-neutral-strong">
+              Story added successfully
+            </h4>
             <p className="font-inter text-sm text-text-neutral-weak">
               You have added a new story to your Memento.
             </p>
@@ -57,8 +64,10 @@ function SharePostContent({ data }: SharePostProps) {
 
       <div className="space-y-4 rounded-2xl border border-stroke-neutral-weak bg-fill-neutral-weaker/50 p-4 sm:p-5">
         <div>
-          <span className="font-inter text-sm font-medium text-text-neutral-strong">Share link</span>
-          <div className="relative mt-2 flex min-h-10 items-stretch gap-0 overflow-hidden rounded-xl border border-stroke-neutral-weak bg-v3-bg">
+          <span className="font-inter text-sm font-medium text-text-neutral-strong">
+            Share link
+          </span>
+          <div className="relative mt-2 flex min-h-10 items-stretch gap-0 overflow-hidden rounded-xl border border-stroke-neutral-weak bg-bg-neutral">
             <span className="min-w-0 flex-1 truncate px-3 py-2.5 font-inter text-sm text-text-neutral-strong">
               {link}
             </span>
@@ -86,7 +95,9 @@ function SharePostContent({ data }: SharePostProps) {
 
         <div className="flex items-center gap-3">
           <div className="h-px flex-1 bg-stroke-neutral-weak" />
-          <span className="shrink-0 font-inter text-xs text-text-neutral-weaker">Or share on social</span>
+          <span className="shrink-0 font-inter text-xs text-text-neutral-weaker">
+            Or share on social
+          </span>
           <div className="h-px flex-1 bg-stroke-neutral-weak" />
         </div>
 
@@ -96,17 +107,26 @@ function SharePostContent({ data }: SharePostProps) {
               key={platform.name}
               type="button"
               onClick={platform.onClick}
-              className="flex size-14 shrink-0 cursor-pointer items-center justify-center rounded-full border border-stroke-neutral-weak bg-v3-bg transition-colors hover:border-stroke-neutral-strong hover:bg-fill-neutral-weaker"
+              className="flex size-14 shrink-0 cursor-pointer items-center justify-center rounded-full border border-stroke-neutral-weak bg-bg-neutral transition-colors hover:border-stroke-neutral-strong hover:bg-fill-neutral-weaker"
               aria-label={`Share on ${platform.name}`}
             >
-              <img className="size-7 object-contain" src={platform.img} alt="" aria-hidden />
+              <img
+                className="size-7 object-contain"
+                src={platform.img}
+                alt=""
+                aria-hidden
+              />
             </button>
           ))}
         </div>
       </div>
 
       <div className="flex items-center justify-end gap-3">
-        <button type="button" className={cancelClass} onClick={() => close("share-post")}>
+        <button
+          type="button"
+          className={cancelClass}
+          onClick={() => close("share-post")}
+        >
           Dismiss
         </button>
         <button
@@ -129,15 +149,27 @@ export function SharePost({ data, isMobile = false }: SharePostProps) {
 
   if (isMobile) {
     return (
-      <Sheet detent="content" isOpen onClose={handleClose} snapPoints={[0, 0.88]} initialSnap={1}>
-        <Sheet.Container className="max-h-[88dvh] overflow-hidden rounded-t-3xl border border-stroke-neutral-weak bg-fill-neutral-weaker shadow-lg">
-          <Sheet.Header className="rounded-t-3xl bg-fill-neutral-weaker" />
+      <Sheet
+        detent="content"
+        isOpen
+        onClose={handleClose}
+        snapPoints={[0, 0.88]}
+        initialSnap={1}
+      >
+        <Sheet.Container className="max-h-[88dvh] overflow-hidden rounded-t-3xl border border-stroke-neutral-weak !bg-bg-neutral text-text-neutral-strong shadow-lg">
+          <Sheet.Header className="rounded-t-3xl bg-bg-neutral" />
           <Sheet.Content className="max-h-[88dvh] min-h-0 overflow-y-auto overscroll-contain px-5 pb-6 pt-1">
-            <ModalCloseBtn className="!relative ml-auto mb-2 !right-0 !top-0" onClick={handleClose} />
+            <ModalCloseBtn
+              className="!relative ml-auto mb-2 !right-0 !top-0 !bg-fill-neutral-weak text-icon-neutral-strong hover:!bg-fill-neutral-weaker"
+              onClick={handleClose}
+            />
             <SharePostContent data={data} />
           </Sheet.Content>
         </Sheet.Container>
-        <Sheet.Backdrop onTap={handleClose} />
+        <Sheet.Backdrop
+          className="!bg-overlay-backdrop dark:!bg-overlay-backdrop-dark"
+          onTap={handleClose}
+        />
       </Sheet>
     );
   }
@@ -147,8 +179,11 @@ export function SharePost({ data, isMobile = false }: SharePostProps) {
       className="mx-auto w-full max-w-lg shrink-0 px-4"
       onClick={(e) => e.stopPropagation()}
     >
-      <div className="modal-container !max-w-120 !p-5">
-        <ModalCloseBtn onClick={handleClose} />
+      <div className="modal-container !max-w-120 !p-5 border border-stroke-neutral-weak !bg-bg-neutral text-text-neutral-strong">
+        <ModalCloseBtn
+          className="!bg-fill-neutral-weak text-icon-neutral-strong hover:!bg-fill-neutral-weaker"
+          onClick={handleClose}
+        />
         <SharePostContent data={data} />
       </div>
     </div>
