@@ -5,9 +5,8 @@ import dayjs from "dayjs";
 import { Calendar1Icon } from "@/components/icons";
 import { CommandItem } from "@/components/ui/command";
 import { useModal } from "@/hooks/use-modal";
-import { getExploreCategoryImage } from "@/utility/data/categories";
+import { inferMimeType, uploadMimeBaseType } from "@/utility/constant";
 import type { IMemory } from "@/utility/interface";
-import questionImage from "@/assets/image/question-2.png";
 
 interface SearchItemProps {
   memory: IMemory;
@@ -68,20 +67,24 @@ export default function SearchItem({
     close?.("search-memory");
   };
 
+  const imageAttachment = memory.attachments?.find((attachment) => {
+    const mimeType = uploadMimeBaseType(
+      attachment.type ||
+        inferMimeType(attachment.name) ||
+        inferMimeType(attachment.url),
+    );
+    return Boolean(attachment.url) && mimeType.startsWith("image/");
+  });
+  const fallbackImage = `https://api.dicebear.com/10.x/disco/svg?seed=${encodeURIComponent(memory._id)}`;
+  const previewImage = imageAttachment?.url || fallbackImage;
+  const previewAlt = imageAttachment?.name || memory.title || "Memory";
+
   const handleImageError = (event: SyntheticEvent<HTMLImageElement>) => {
-    const categoryImage = getExploreCategoryImage(memory?.category);
-    if (event.currentTarget.src !== categoryImage) {
-      event.currentTarget.src = categoryImage || questionImage;
+    if (event.currentTarget.src !== fallbackImage) {
+      event.currentTarget.src = fallbackImage;
     }
   };
 
-  const previewImage =
-    memory?.attachments?.[0]?.url || getExploreCategoryImage(memory?.category) || questionImage;
-  const previewAlt =
-    memory?.attachments?.[0]?.name ||
-    memory?.category ||
-    memory?.title ||
-    "Memory";
   const previewText = getPreviewText(memory?.body || "");
 
   return (
@@ -96,6 +99,8 @@ export default function SearchItem({
         className="size-11 shrink-0 rounded-lg object-cover shadow-sm"
         onError={handleImageError}
         loading="lazy"
+        decoding="async"
+        referrerPolicy="no-referrer"
       />
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
         <span className="line-clamp-1 font-inter text-sm font-semibold text-v3-text-strong">

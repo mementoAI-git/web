@@ -338,6 +338,8 @@ export const handlers = [
     });
   }),
 
+  http.get(`${BASE_URL}/prompts/shuffle`, () => HttpResponse.json({ data: { used: 0, remaining: 2, limit: 2, resets_at: new Date(Date.now() + 86400000).toISOString() } })),
+  http.post(`${BASE_URL}/prompts/shuffle`, () => HttpResponse.json({ data: { used: 1, remaining: 1, limit: 2, allowed: true, resets_at: new Date(Date.now() + 86400000).toISOString() } })),
   http.get(`${BASE_URL}/prompts`, () => {
     const dk = "2026-05-01";
     return HttpResponse.json({

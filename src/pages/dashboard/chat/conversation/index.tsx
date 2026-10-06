@@ -1,3 +1,5 @@
+import { useVoiceSession } from "@/contexts/voice-session";
+import type { VoiceSessionEvent } from "./voice-session-divider";
 import {
   ConversationChatinput,
   type IOnSendPayload,
@@ -60,6 +62,16 @@ export default function Conversation({ id, type = "memory" }) {
   const isVoiceRoute = Boolean(voiceRouteMatch);
   const { canAccess, isLoading: subscriptionLoading } = useSubscription();
   const [messages, setMessages] = useState<Partial<IMessage>[]>([])
+  const voiceSession = useVoiceSession();
+  const liveTimeline = useMemo(() => voiceSession?.timeline.filter(entry => entry.memoryId === id || (id === "new" && entry.memoryId === voiceSession.memoryId)) ?? [], [voiceSession?.timeline, voiceSession?.memoryId, id]);
+  const [voiceEvents, setVoiceEvents] = useState<VoiceSessionEvent[]>([]);
+  const handleVoiceSessionChange = useCallback((active: boolean) => {
+    setVoiceEvents(previous => {
+      if ((previous.at(-1)?.active ?? false) === active) return previous;
+      return [...previous, { id: crypto.randomUUID(), active, afterMessage: messages.at(-1) ?? null }];
+    });
+  }, [messages]);
+  useEffect(() => { setVoiceEvents([]); }, [id]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false) // Sidebar closed by default
   const [replyQuote, setReplyQuote] = useState<ChatReplyQuote | null>(null)
   const [streamDone, setStreamDone] = useState(false);
@@ -105,6 +117,8 @@ export default function Conversation({ id, type = "memory" }) {
       });
     }
   }, []);
+
+  useEffect(() => { if (liveTimeline.length) scrollToBottom(); }, [liveTimeline.length, scrollToBottom]);
 
   // Close sidebar handler
   const handleCloseSidebar = useCallback(() => {
@@ -427,11 +441,11 @@ export default function Conversation({ id, type = "memory" }) {
     <div className="flex h-full min-h-0 min-w-0 flex-1 items-stretch overflow-hidden">
       <div className="flex min-h-0 min-w-0 flex-1 justify-center overflow-hidden">
         <div
-          className="hide-scrollbar mx-auto flex h-full min-h-0 w-full min-w-0 max-w-[900px] flex-col overflow-y-auto overscroll-y-contain px-3 sm:px-4 md:px-5"
+          className="hide-scrollbar mx-auto flex h-full min-h-0 w-full min-w-0 max-w-[900px] flex-col overflow-y-auto overscroll-y-contain px-3 pt-6 sm:px-4 sm:pt-12"
           ref={scrollContainerRef}
           onScroll={handleScroll}
         >
-          {isNew && messages.length === 0 && !isTyping ? (
+          {isNew && messages.length === 0 && voiceEvents.length === 0 && liveTimeline.length === 0 && !isTyping ? (
             <ChatEmptyState
               onPrompt={(text) => handleSend({ text, attachments: [] })}
             />
@@ -440,6 +454,8 @@ export default function Conversation({ id, type = "memory" }) {
             {...{
               memory,
               messages,
+              voiceEvents,
+              liveTimeline,
               setMessages,
               scrollContainerRef,
               onViewDetails: handleToggleSettingsDrawer,
@@ -473,10 +489,11 @@ export default function Conversation({ id, type = "memory" }) {
             }
           </History>
           )}
-          <div className="sticky bottom-0 z-[4] bg-background pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-1">
+          <div className="sticky bottom-0 z-[4] bg-background pb-[calc(max(0.5rem,env(safe-area-inset-bottom))_+_12px)] pt-1">
             <div className="w-full">
               <ConversationChatinput
                 key={`chat-draft-${memory?._id ?? id}`}
+                onVoiceSessionChange={handleVoiceSessionChange}
                 loading={isTyping}
                 onStop={handleStop}
                 onSend={handleSend}

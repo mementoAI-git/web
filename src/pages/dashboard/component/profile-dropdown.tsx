@@ -1,9 +1,7 @@
 import { UserAvatar } from "@/components/user-avatar";
 import { useSubscription } from "@/contexts/subscription";
-import { useTheme } from "@/contexts/theme";
 import { isFeatureFlagAdminUser } from "@/contexts/feature-flags";
 import { useStore } from "@/hooks/use-store";
-import { isThemePreference, type ThemePreference } from "@/lib/theme";
 import { isEmpty } from "@/utility";
 import { cn } from "@/utility";
 import { useNavigate } from "react-router-dom";
@@ -12,12 +10,7 @@ import {
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
   DropdownMenuSeparator,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -26,11 +19,7 @@ import {
   CircleHelp,
   Flag,
   LogOut,
-  Monitor,
-  Moon,
   Settings,
-  Sun,
-  SunMoon,
   Twitter,
   UsersRound,
 } from "lucide-react";
@@ -55,7 +44,6 @@ export function ProfileDropdown({
 }) {
   const { user, unsetAuth } = useStore();
   const { tier, isLoading: subscriptionLoading } = useSubscription();
-  const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
   const rawName = [user?.first_name, user?.last_name]
     .filter(Boolean)
@@ -73,10 +61,6 @@ export function ProfileDropdown({
   const handleLogout = () => {
     unsetAuth?.();
     navigate("/login");
-  };
-
-  const handleThemeChange = (value: string) => {
-    if (isThemePreference(value)) setTheme(value satisfies ThemePreference);
   };
 
   return (
@@ -144,31 +128,6 @@ export function ProfileDropdown({
               <span className={itemLabelClass}>Feature flags</span>
             </DropdownMenuItem>
           ) : null}
-          <DropdownMenuSub>
-            <DropdownMenuSubTrigger className={itemRowClass}>
-              <SunMoon className={lucideItemIcon} strokeWidth={2} />
-              <span className={itemLabelClass}>Theme</span>
-            </DropdownMenuSubTrigger>
-            <DropdownMenuSubContent aria-label="Theme options">
-              <DropdownMenuRadioGroup
-                value={theme}
-                onValueChange={handleThemeChange}
-              >
-                <DropdownMenuRadioItem value="light" className={itemRowClass}>
-                  <Sun className={lucideItemIcon} strokeWidth={2} />
-                  <span className={itemLabelClass}>Light</span>
-                </DropdownMenuRadioItem>
-                <DropdownMenuRadioItem value="dark" className={itemRowClass}>
-                  <Moon className={lucideItemIcon} strokeWidth={2} />
-                  <span className={itemLabelClass}>Dark</span>
-                </DropdownMenuRadioItem>
-                <DropdownMenuRadioItem value="system" className={itemRowClass}>
-                  <Monitor className={lucideItemIcon} strokeWidth={2} />
-                  <span className={itemLabelClass}>System</span>
-                </DropdownMenuRadioItem>
-              </DropdownMenuRadioGroup>
-            </DropdownMenuSubContent>
-          </DropdownMenuSub>
           <DropdownMenuItem onClick={handleLogout} className={itemRowClass}>
             <LogOut className={lucideItemIcon} strokeWidth={2} />
             <span className={itemLabelClass}>Log out</span>

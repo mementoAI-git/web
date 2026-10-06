@@ -161,7 +161,7 @@ export default function Billing() {
               value={promo}
               onChange={(e) => setPromo(e.target.value)}
               className={cn(
-                "h-10 rounded-xl border border-v3-stroke-weak bg-white px-3 font-inter text-sm text-v3-text-strong",
+                "h-10 rounded-xl border border-v3-stroke-weak bg-bg-neutral px-3 font-inter text-sm text-v3-text-strong",
                 "outline-none focus-visible:ring-2 focus-visible:ring-v3-stroke-strong",
               )}
               placeholder="Enter code"
@@ -189,7 +189,7 @@ export default function Billing() {
                   {inv.url ?
                     <a
                       href={inv.url}
-                      className="font-inter text-sm font-medium text-v3-fill-strong underline-offset-2 hover:underline"
+                      className="font-inter text-sm font-medium text-v3-text-strong underline-offset-2 hover:underline"
                       target="_blank"
                       rel="noreferrer"
                     >

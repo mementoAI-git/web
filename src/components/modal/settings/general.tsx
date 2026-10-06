@@ -84,7 +84,7 @@ export default function General() {
                   type="button"
                   variant="outline"
                   className={cn(
-                    "h-8 min-h-8 shrink-0 rounded-full !border !border-v3-stroke-weak bg-white px-3 font-inter text-sm font-semibold text-v3-text-strong",
+                    "h-8 min-h-8 shrink-0 rounded-full !border !border-v3-stroke-weak bg-bg-neutral px-3 font-inter text-sm font-semibold text-v3-text-strong",
                     "hover:bg-v3-fill-weaker",
                   )}
                   onClick={() => setEditOpen(true)}
@@ -105,7 +105,6 @@ export default function General() {
                 label="Email"
                 placeholder="No email on file"
                 displayValue={user?.email ?? ""}
-                valueEmphasis
                 valueAdornment={
                   user?.email ? (
                     <button
@@ -113,7 +112,7 @@ export default function General() {
                       onClick={() => void copyEmail()}
                       className={cn(
                         "inline-flex min-h-8 min-w-8 items-center justify-center rounded-md",
-                        "text-v3-fill-strong motion-safe:transition-opacity motion-safe:duration-200 motion-safe:ease-out",
+                        "text-v3-text-strong motion-safe:transition-opacity motion-safe:duration-200 motion-safe:ease-out",
                         "hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-v3-stroke-strong focus-visible:ring-offset-2",
                       )}
                       aria-label="Copy email address"

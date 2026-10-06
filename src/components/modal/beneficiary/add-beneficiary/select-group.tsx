@@ -114,8 +114,8 @@ export function SelectGroup({
           className={cn(
             "flex min-h-10 flex-wrap items-center gap-1.5 rounded-xl border px-3 py-2 transition-colors",
             showDropdown
-              ? "border-v3-stroke-strong bg-white"
-              : "border-v3-stroke-weak bg-white hover:border-v3-stroke-strong",
+              ? "border-v3-stroke-strong bg-bg-neutral"
+              : "border-v3-stroke-weak bg-bg-neutral hover:border-v3-stroke-strong",
           )}
         >
           {selectedGroups.map((g) => {
@@ -156,7 +156,7 @@ export function SelectGroup({
         </div>
 
         {showDropdown && (
-          <div className="absolute left-0 right-0 top-full z-20 mt-1 max-h-48 overflow-y-auto rounded-xl border border-v3-stroke-weak bg-white py-1 shadow-lg">
+          <div className="absolute left-0 right-0 top-full z-20 mt-1 max-h-48 overflow-y-auto rounded-xl border border-v3-stroke-weak bg-bg-neutral py-1 shadow-lg">
             {!hasQuery ? (
               <p className="px-3 py-4 font-inter text-sm text-v3-text-weaker">{emptyMessage}</p>
             ) : isSearchLoading ? (

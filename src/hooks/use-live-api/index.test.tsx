@@ -49,8 +49,8 @@ describe("useLiveAPI", () => {
       getTracks: () => [{ stop: liveMocks.stopTrack }],
     });
     liveMocks.stopTrack.mockClear();
-    liveMocks.connect.mockImplementation(async (options: { callbacks: { onopen: () => void } }) => {
-      options.callbacks.onopen();
+    liveMocks.connect.mockImplementation(async (options: { callbacks: { onmessage: (message: { setupComplete: object }) => void } }) => {
+      options.callbacks.onmessage({ setupComplete: {} });
       return { close: liveMocks.close };
     });
     liveMocks.fetchToken
@@ -62,6 +62,7 @@ describe("useLiveAPI", () => {
     vi.stubGlobal(
       "AudioContext",
       class {
+        state = "running";
         destination = {};
         close = vi.fn().mockResolvedValue(undefined);
         resume = vi.fn().mockResolvedValue(undefined);

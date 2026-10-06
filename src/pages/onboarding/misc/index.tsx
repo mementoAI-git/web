@@ -1,872 +1,294 @@
-"use client";
-
-import type { ReactNode } from "react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { fetchOnboardingDetails } from "@/api/onboarding";
+import { migrateLegacyPriorityList } from "@/features/enrichment/enrichment-categories";
 import { useStore } from "@/hooks/use-store";
-import { isEmpty } from "@/utility";
-import {
-  AGE_BAND_OPTIONS,
-  MISC_MOTIVATION_OPTIONS,
-  LIFE_SITUATION_OPTIONS,
-  PERSONALITY_TRAIT_OPTIONS,
-  MEMORY_TREASURE_OPTIONS,
-  HOME_PLACE_SUGGESTION_OPTIONS,
-  MISC_PASSION_OPTIONS,
-  CHRONOTYPE_OPTIONS,
-  SHARING_INTENT_OPTIONS,
-  ONBOARDING_FOCUS_FIRST_OPTIONS,
-} from "@/features/onboarding-groot/types";
-import type {
-  MiscMotivationChip,
-  MotivationType,
-  PersonalityTraitKey,
-  MemoryTreasureKey,
-  PassionKey,
-} from "@/features/onboarding-groot/types";
-import { getPrimaryCTA } from "@/features/onboarding-groot/adaptive";
-import { OnboardSelectionCard } from "./OnboardSelectionCard";
-import { OnboardQuestionHeader } from "./OnboardQuestionHeader";
-import {
-  useOnboardQuestionsState,
-  ONBOARD_QUESTIONS_STEP_LABELS,
-  MAX_PERSONALITY_TRAITS,
-  MAX_MEMORY_TREASURES,
-  MAX_PASSIONS_MISC,
-  MAX_FOCUS_FIRST,
-} from "./useOnboardQuestionsState";
-import type { OnboardQuestionsStep } from "./useOnboardQuestionsState";
-import { ONBOARD_MISC_WHY } from "./onboard-misc-copy";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import endpoint from "@/api/endpoint";
-import useFetcher from "@/hooks/use-fetcher";
-import { mutate } from "swr";
+import { cn } from "@/lib/utils";
+import { onboardingAssets as assets } from "../assets";
 import {
-  fetchOnboardingDetails,
-  mapOnboardingDetailsToMiscState,
-} from "@/api/onboarding";
+  inspirationOptions,
+  lifeAreaOptions,
+  reasonOptions,
+} from "../flow-options";
+import { useOnboardingDraft } from "../use-onboarding-draft";
 import {
-  deriveTouchedCategoriesFromMiscState,
-  saveOnboardingSummarySnapshot,
-  type PostOnboardingAction,
-} from "../summary-helpers";
-
-function motivationForApi(
-  chips: MiscMotivationChip[],
-): MotivationType {
-  const primary = chips.find((chip) => chip !== "something_else");
-  if (!primary) return "explorer";
-  return primary as MotivationType;
-}
-
-function progressDots(step: OnboardQuestionsStep): {
-  completed: (i: number) => boolean;
-  current: (i: number) => boolean;
-} {
-  return {
-    completed: (i: number) =>
-      step === 12 ||
-      (step <= 5 && i < step) ||
-      (step === 6 && i < 5) ||
-      (step >= 7 && step <= 11 && i < step - 1),
-    current: (i: number) =>
-      step !== 12 &&
-      ((step <= 5 && step === i) ||
-        (step === 6 && i === 5) ||
-        (step >= 7 && step <= 11 && step - 1 === i)),
-  };
-}
-
-const TOTAL_QUESTION_DOTS = 10;
-const fieldClassName =
-  "border border-stroke-neutral-weak bg-bg-neutral text-text-neutral-strong shadow-sm placeholder:text-text-neutral-weaker focus-visible:border-stroke-brand-strong focus-visible:ring-stroke-brand-weak";
-const primaryButtonClassName =
-  "flex h-14 w-full cursor-pointer items-center justify-center gap-2 rounded-full border-0 bg-fill-neutral-strong px-8 text-sm font-semibold leading-5 text-text-inverse-strong shadow-none transition-[transform,opacity] duration-150 ease-out hover:opacity-90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto";
-const secondaryButtonClassName =
-  "h-14 w-full cursor-pointer rounded-full border border-stroke-neutral-weak bg-bg-neutral px-6 text-sm font-semibold leading-5 text-text-neutral-strong shadow-none transition-[transform,background-color,border-color] duration-150 ease-out hover:border-stroke-neutral-strong hover:bg-bg-neutral-weaker active:scale-[0.98] disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto sm:px-8";
-
-function StepSection({ children }: { children: ReactNode }) {
-  return <section className="space-y-4">{children}</section>;
-}
-
-function OptionalField({
-  htmlFor,
-  label,
-  children,
-}: {
-  htmlFor: string;
-  label: ReactNode;
-  children: ReactNode;
-}) {
-  return (
-    <div className="space-y-2">
-      <Label htmlFor={htmlFor} className="text-sm text-v3-text-weak">
-        {label}
-      </Label>
-      {children}
-    </div>
-  );
-}
-
-function ErrorText({ children }: { children: ReactNode }) {
-  return <p className="text-sm text-text-error-strong">{children}</p>;
-}
-
-function FooterDivider() {
-  return <div className="w-full border-t border-stroke-neutral-weak" />;
-}
+  OnboardingActions,
+  OnboardingButton,
+  OnboardingCard,
+  OnboardingQuestionFrame,
+  OnboardingTitle,
+} from "../components/onboarding-card";
+import { LifeAreaChip } from "../components/life-area-chip";
 
 export default function MiscPage() {
-  const { user, setUser } = useStore();
+  const { user } = useStore();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const isRevisitMode = searchParams.get("mode") === "revisit";
-  const nickname = (user?.nickname as string) || "there";
-  const [validationAttempted, setValidationAttempted] = useState(false);
-  const [prefill, setPrefill] = useState<
-    Partial<import("./useOnboardQuestionsState").OnboardQuestionsState> | null
-  >(isRevisitMode ? null : undefined);
-
-  const {
-    state,
-    nextStep,
-    prevStep,
-    goToDeepPhase,
-    canAdvance,
-    setMotivationChips,
-    setMotivationDetail,
-    setAgeBand,
-    setLifeSituation,
-    setLifeSituationDetail,
-    setHomePlace,
-    setPersonalityTraits,
-    setPersonalityDetail,
-    setMemoryTreasures,
-    setMemoryTreasuresDetail,
-    setPassions,
-    setPassionsDetail,
-    setChronotype,
-    setSharingIntent,
-    setPriorityDimensions,
-    setDimensionsDetail,
-  } = useOnboardQuestionsState(prefill ?? undefined);
-
-  const { trigger: completeOnboarding, isMutating } = useFetcher(endpoint.completeOnboarding);
-
-  const step = state.step;
-  const canProceed = canAdvance(step);
-  const contentRef = useRef<HTMLDivElement>(null);
-  const loaderStartedRef = useRef(false);
-  const completeAndNavigateRef =
-    useRef<((action: PostOnboardingAction, opts?: { skippedDeep?: boolean }) => Promise<void>) | null>(null);
-  const autoSubmitActionRef = useRef<PostOnboardingAction>("dashboard");
-  const dots = progressDots(step);
-
+  const isRevisit = searchParams.get("mode") === "revisit";
+  const [loadingSaved, setLoadingSaved] = useState(isRevisit);
+  const savedAbout = user?.context?.self_description ?? "";
+  const nickname = user?.nickname || user?.first_name || "there";
+  const [draft, setDraft] = useOnboardingDraft(user?._id ?? "anonymous");
   useEffect(() => {
-    contentRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }, [step]);
-
-  useEffect(() => {
-    if (user && isEmpty(user?.nickname)) {
-      navigate("/onboarding/nickname");
-    }
-  }, [user, navigate]);
-
-  useEffect(() => {
-    if (!isRevisitMode) return;
-
+    if (!isRevisit || !user?._id) return;
     let cancelled = false;
-    fetchOnboardingDetails().then((data) => {
+    fetchOnboardingDetails().then((details) => {
       if (cancelled) return;
-      setPrefill(data ? mapOnboardingDetailsToMiscState(data) : {});
+      if (details) {
+        const knownReasons = reasonOptions
+          .filter((option) =>
+            details.persona.join_reasons.includes(option.value),
+          )
+          .map((option) => option.value);
+        const fallbackReason = reasonOptions.find(
+          (option) => option.value === details.persona.motivation,
+        )?.value;
+        setDraft((value) => ({
+          ...value,
+          step: 1,
+          reasons: knownReasons.length
+            ? knownReasons
+            : fallbackReason
+              ? [fallbackReason]
+              : value.reasons,
+          about: savedAbout.slice(0, 500) || value.about,
+          areas: migrateLegacyPriorityList(
+            details.persona.current_priority,
+          ).slice(0, 3),
+        }));
+      }
+      setLoadingSaved(false);
     });
-
     return () => {
       cancelled = true;
     };
-  }, [isRevisitMode]);
-
-  const completeAndNavigate = useCallback(
-    async (action: PostOnboardingAction, opts?: { skippedDeep?: boolean }) => {
-      const skipped = opts?.skippedDeep ?? state.skippedDeepPersonalization;
-      const motivationApi = motivationForApi(state.motivationChips);
-      const joinExtras = [
-        ...state.motivationChips.filter(
-          (chip): chip is MotivationType => chip !== "something_else",
-        ),
-        ...state.passions,
-        ...(state.passionsDetail.trim() ? [state.passionsDetail.trim()] : []),
-        ...state.memoryTreasures,
-        ...state.personalityTraits.filter((p) => p !== "something_else"),
-        ...(state.personalityTraits.includes("something_else") &&
-        state.personalityDetail.trim()
-          ? [state.personalityDetail.trim()]
-          : []),
-      ];
-      const selfDescription = [
-        state.personalityTraits.join(", "),
-        state.homePlace.trim().slice(0, 240),
-      ]
-        .filter(Boolean)
-        .join(" · ");
-
-      try {
-        await completeOnboarding({
-          fullName: nickname,
-          displayName: nickname,
-          ageBand: state.ageBand ?? "",
-          whereFrom: state.homePlace.trim() || undefined,
-          mementoFor: [],
-          passions: state.passions,
-          passionsFreetext: state.passionsDetail.trim() || undefined,
-          lifeContext: [],
-          motivationType: motivationApi,
-          priorityDimensions: state.priorityDimensions,
-          dimensionsFreetext: state.dimensionsDetail.trim() || undefined,
-          expressionMode: [],
-          isComplete: true,
-          stepReached: skipped ? 6 : 12,
-          lifeSituation: state.lifeSituation ?? undefined,
-          lifeSituationDetail: state.lifeSituationDetail.trim() || undefined,
-          personalityTraits: state.personalityTraits,
-          memoryTreasures: state.memoryTreasures,
-          chronotype: skipped ? undefined : state.chronotype ?? undefined,
-          sharingIntent: skipped ? undefined : state.sharingIntent ?? undefined,
-          motivationDetail:
-            state.motivationChips.includes("something_else")
-              ? state.motivationDetail.trim() || undefined
-              : undefined,
-          skippedDeepPersonalization: skipped,
-        });
-        await completeOnboarding({
-          dob: "",
-          join_reasons: joinExtras,
-          self_description: selfDescription || state.passions.join(", "),
-          current_priority: state.priorityDimensions.join(", ") || "",
-        });
-        await mutate(endpoint.profile);
-        if (user && setUser) {
-          setUser({ ...user, onboarded: true, onboarding_status: "completed" });
-        }
-      } catch {
-        if (user && setUser) {
-          setUser({ ...user, onboarded: true, onboarding_status: "completed" });
-        }
-      }
-
-      saveOnboardingSummarySnapshot({
-        nextAction: action,
-        skippedDeepPersonalization: skipped,
-        touchedCategories: deriveTouchedCategoriesFromMiscState(state),
-        priorityDimensions: state.priorityDimensions,
-        motivationType: motivationApi,
-        nickname,
-        motivationDetail: state.motivationDetail.trim() || undefined,
-        lifeSituation: state.lifeSituation,
-        lifeSituationDetail: state.lifeSituationDetail.trim() || undefined,
-        homePlace: state.homePlace.trim() || undefined,
-        personalityTraits: state.personalityTraits,
-        personalityDetail: state.personalityDetail.trim() || undefined,
-        memoryTreasures: state.memoryTreasures,
-        sharingIntent: skipped ? undefined : state.sharingIntent,
-      });
-
-      navigate("/onboarding/summary");
-    },
-    [nickname, state, completeOnboarding, navigate, user, setUser],
-  );
-
+  }, [isRevisit, user?._id, savedAbout, setDraft]);
+  const headingRef = useRef<HTMLDivElement>(null);
+  const previousStep = useRef(draft.step);
   useEffect(() => {
-    completeAndNavigateRef.current = completeAndNavigate;
-    const motivationApi = motivationForApi(state.motivationChips);
-    autoSubmitActionRef.current = getPrimaryCTA(motivationApi, []).action;
-  }, [completeAndNavigate, state.motivationChips]);
-
-  useEffect(() => {
-    if (step !== 12 || loaderStartedRef.current) return;
-    loaderStartedRef.current = true;
-
-    const timeout = window.setTimeout(() => {
-      void completeAndNavigateRef.current?.(autoSubmitActionRef.current);
-    }, 700);
-
-    return () => window.clearTimeout(timeout);
-  }, [step]);
-
-  if (prefill === null) {
-    return (
-      <div className="flex min-h-full items-start justify-center pb-4 sm:pb-6 lg:pb-8">
-        <div className="w-fit max-w-[664px] rounded-[24px] bg-bg-neutral p-10">
-          <div className="flex min-h-[40vh] items-center justify-center font-inter text-sm text-v3-text-weak">
-            Loading your story…
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  const handleContinue = () => {
-    if (step === 6) return;
-    setValidationAttempted(true);
-    if (!canProceed && step !== 12) return;
-    setValidationAttempted(false);
-
-    if (step === 12) {
-      const motivationApi = motivationForApi(state.motivationChips);
-      const { action } = getPrimaryCTA(motivationApi, []);
-      void completeAndNavigate(action);
-    } else {
-      nextStep();
+    if (draft.step !== previousStep.current) {
+      headingRef.current?.focus();
+      previousStep.current = draft.step;
     }
+  }, [draft.step]);
+  const canContinue =
+    !loadingSaved &&
+    (draft.step === 1
+      ? draft.reasons.length > 0
+      : draft.step === 2
+        ? draft.about.trim().length > 0
+        : draft.areas.length >= 2);
+  const goBack = () => {
+    if (draft.step === 1) navigate("/onboarding/nickname");
+    else setDraft((value) => ({ ...value, step: value.step === 3 ? 2 : 1 }));
   };
-
-  const appendHomeSuggestion = (
-    promptText: string,
-  ) => {
-    setHomePlace(promptText);
+  const goNext = () => {
+    if (!canContinue) return;
+    if (draft.step === 3) navigate("/onboarding/summary");
+    else setDraft((value) => ({ ...value, step: value.step === 1 ? 2 : 3 }));
   };
-
-  const togglePersonality = (v: PersonalityTraitKey) => {
-    if (state.personalityTraits.includes(v)) {
-      setPersonalityTraits(state.personalityTraits.filter((p) => p !== v));
-    } else if (
-      v === "something_else" ||
-      state.personalityTraits.filter((trait) => trait !== "something_else").length <
-        MAX_PERSONALITY_TRAITS
-    ) {
-      setPersonalityTraits([...state.personalityTraits, v]);
-    }
-  };
-
-  const toggleMemory = (v: MemoryTreasureKey) => {
-    if (state.memoryTreasures.includes(v)) {
-      setMemoryTreasures(state.memoryTreasures.filter((m) => m !== v));
-    } else if (state.memoryTreasures.length < MAX_MEMORY_TREASURES) {
-      setMemoryTreasures([...state.memoryTreasures, v]);
-    }
-  };
-
-  const togglePassion = (v: PassionKey) => {
-    if (state.passions.includes(v)) {
-      setPassions(state.passions.filter((p) => p !== v));
-    } else if (state.passions.length < MAX_PASSIONS_MISC) {
-      setPassions([...state.passions, v]);
-    }
-  };
-
-  const toggleFocus = (v: (typeof ONBOARDING_FOCUS_FIRST_OPTIONS)[0]["value"]) => {
-    if (state.priorityDimensions.includes(v)) {
-      setPriorityDimensions(state.priorityDimensions.filter((d) => d !== v));
-    } else if (state.priorityDimensions.length < MAX_FOCUS_FIRST) {
-      setPriorityDimensions([...state.priorityDimensions, v]);
-    }
-  };
-
-  const showIntro = step === 1;
-
-  const whyFor = (s: keyof typeof ONBOARD_MISC_WHY) => ONBOARD_MISC_WHY[s];
 
   return (
-    <div className="flex min-h-full items-start justify-center pb-4 sm:pb-6 lg:pb-8">
-      <div className="w-fit max-w-[664px] rounded-[24px] bg-bg-neutral p-10">
-        <div ref={contentRef} className="flex flex-col gap-6">
-          <div className="flex shrink-0 flex-col gap-3">
-            <div className="flex flex-wrap items-center justify-center gap-2" aria-hidden>
-              {Array.from({ length: TOTAL_QUESTION_DOTS }, (_, i) => {
-                const n = i + 1;
-                const isCompleted = dots.completed(n);
-                const isCurrent = dots.current(n);
-                return (
-                  <span
-                    key={n}
-                    className={cn(
-                      "h-2.5 w-2.5 rounded-full transition-colors duration-150 ease-out",
-                      (isCompleted || isCurrent) && "bg-fill-brand-strong",
-                      !isCompleted && !isCurrent && "bg-v3-stroke-weak",
-                    )}
-                  />
-                );
-              })}
-            </div>
-            <p className="text-center font-inter text-sm leading-6 text-text-neutral-weak">
-              {ONBOARD_QUESTIONS_STEP_LABELS[step]}
-            </p>
+    <OnboardingQuestionFrame step={draft.step}>
+      <OnboardingCard>
+        <div
+          ref={headingRef}
+          tabIndex={-1}
+          className="flex flex-col gap-3 outline-none"
+        >
+          <div aria-hidden className="relative size-10">
+            {draft.step === 1 && (
+              <img
+                src={assets["19031-32042/imgGroup"]}
+                alt=""
+                className="absolute left-[6.25%] top-[6.25%]"
+              />
+            )}
+            {draft.step === 2 && (
+              <img
+                src={assets["19031-32152/imgGroup"]}
+                alt=""
+                className="absolute left-[16.67%] top-[8.33%]"
+              />
+            )}
+            {draft.step === 3 && (
+              <img
+                src={assets["19031-32212/imgGroup"]}
+                alt=""
+                className="absolute left-[6.25%] top-[18.75%]"
+              />
+            )}
           </div>
-
-          {showIntro && (
-            <div className="flex flex-col gap-2">
-              <h3 className="font-garamond text-[22px] font-normal leading-[1.25] text-text-neutral-strong sm:text-[24px]">
-                Okay, <span className="capitalize">{nickname}</span>. I&apos;ve got some questions for you.
-              </h3>
-              <p className="font-inter text-base font-normal leading-6 text-text-neutral-strong">
-                These questions will help Memento better personalize your experience on the product.
-              </p>
-            </div>
+          {draft.step === 1 && (
+            <OnboardingTitle className="sm:max-w-[440px]">
+              Okay <em className="text-text-brand-strong">{nickname}</em>, let’s
+              get started
+            </OnboardingTitle>
           )}
-
-          {step === 1 && (
-            <StepSection>
-              <OnboardQuestionHeader
-                title={<>What brings you to Memento?</>}
-                required
-                whyDetail={whyFor(1).detail}
-              />
-              {validationAttempted && !canAdvance(1) && (
-                <ErrorText>
-                  Please choose one or more options, and add a note if you pick Something else.
-                </ErrorText>
-              )}
-              <div className="flex flex-wrap gap-2">
-                {MISC_MOTIVATION_OPTIONS.map((opt) => (
-                  <OnboardSelectionCard
-                    key={opt.value}
-                    value={opt.value}
-                    label={opt.label}
-                    icon={opt.icon}
-                    isSelected={state.motivationChips.includes(opt.value)}
-                    onClick={() => {
-                      const value = opt.value as MiscMotivationChip;
-                      setMotivationChips(
-                        state.motivationChips.includes(value)
-                          ? state.motivationChips.filter((chip) => chip !== value)
-                          : [...state.motivationChips, value],
-                      );
-                    }}
-                  />
-                ))}
-              </div>
-              {state.motivationChips.includes("something_else") && (
-                <OptionalField htmlFor="motivation-other" label="In your own words">
-                  <Textarea
-                    id="motivation-other"
-                    value={state.motivationDetail}
-                    onChange={(e) => setMotivationDetail(e.target.value)}
-                    placeholder="Tell us in a sentence or two"
-                    maxLength={400}
-                    className={cn("min-h-[96px]", fieldClassName)}
-                  />
-                </OptionalField>
-              )}
-            </StepSection>
+          {draft.step === 2 && (
+            <OnboardingTitle className="sm:max-w-[416px]">
+              Tell us a little bit about yourself,{"\u00a0\u00a0"}
+              <em className="text-text-brand-strong">{nickname}</em>
+            </OnboardingTitle>
           )}
-
-          {step === 2 && (
-            <StepSection>
-              <OnboardQuestionHeader
-                title={<>A little about you: how old are you?</>}
-                required
-                whyDetail={whyFor(2).detail}
-              />
-              {validationAttempted && !state.ageBand && (
-                <ErrorText>Please pick an age range.</ErrorText>
-              )}
-              <div className="flex flex-wrap gap-2">
-                {AGE_BAND_OPTIONS.map((opt) => (
-                  <OnboardSelectionCard
-                    key={opt.value}
-                    value={opt.value}
-                    label={opt.label}
-                    icon={opt.icon}
-                    isSelected={state.ageBand === opt.value}
-                    onClick={() => setAgeBand(opt.value)}
-                  />
-                ))}
-              </div>
-            </StepSection>
+          {draft.step === 3 && (
+            <OnboardingTitle className="sm:max-w-[467px]">
+              Which parts of your life would you like <em>explore</em> first?
+            </OnboardingTitle>
           )}
-
-          {step === 3 && (
-            <StepSection>
-              <OnboardQuestionHeader
-                title={<>What do you do?</>}
-                required
-                whyDetail={whyFor(3).detail}
-              />
-              {validationAttempted && !canAdvance(3) && (
-                <ErrorText>
-                  Please choose one option, and add context if you pick Something else.
-                </ErrorText>
-              )}
-              <div className="flex flex-wrap gap-2">
-                {LIFE_SITUATION_OPTIONS.map((opt) => (
-                  <OnboardSelectionCard
-                    key={opt.value}
-                    value={opt.value}
-                    label={opt.label}
-                    icon={opt.icon}
-                    isSelected={state.lifeSituation === opt.value}
-                    onClick={() => setLifeSituation(opt.value)}
-                    variant={opt.value === "something_else" ? "add" : undefined}
-                  />
-                ))}
-              </div>
-              <OptionalField
-                htmlFor="work-other"
-                label={
-                  state.lifeSituation === "something_else" ? "Something else" : "Add more context (optional)"
-                }
-              >
-                  <Textarea
-                    id="work-other"
-                    value={state.lifeSituationDetail}
-                    onChange={(e) => setLifeSituationDetail(e.target.value)}
-                    maxLength={200}
-                    className={cn("min-h-[96px]", fieldClassName)}
-                    placeholder="For example: I run a business and also work for an organization"
-                  />
-              </OptionalField>
-            </StepSection>
-          )}
-
-          {step === 4 && (
-            <StepSection>
-              <OnboardQuestionHeader
-                title={
-                  <>Is there a specific place in the world that feels most like home to you?</>
-                }
-                required
-                whyDetail={whyFor(4).detail}
-              />
-              {validationAttempted && !state.homePlace.trim() && (
-                <ErrorText>Please add a few words—there&apos;s no wrong answer.</ErrorText>
-              )}
-              <Textarea
-                value={state.homePlace}
-                onChange={(e) => setHomePlace(e.target.value)}
-                placeholder="Places, people, a feeling—whatever home means to you"
-                maxLength={500}
-                className={cn("min-h-[112px]", fieldClassName)}
-              />
-              <p className="text-xs font-medium uppercase tracking-wide text-v3-text-weaker">
-                Quick prompts
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {HOME_PLACE_SUGGESTION_OPTIONS.map((opt) => (
-                  <OnboardSelectionCard
-                    key={opt.value}
-                    value={opt.value}
-                    label={opt.label}
-                    icon={opt.icon}
-                    isSelected={false}
-                    onClick={() => appendHomeSuggestion(opt.promptText)}
-                  />
-                ))}
-              </div>
-            </StepSection>
-          )}
-
-          {step === 5 && (
-            <StepSection>
-              <OnboardQuestionHeader
-                title={<>How would the people closest to you describe you?</>}
-                required
-                whyDetail={whyFor(5).detail}
-              />
-              <p className="text-sm text-v3-text-weak">
-                Pick up to {MAX_PERSONALITY_TRAITS}
-                {validationAttempted && !canAdvance(5) && (
-                  <span className="ml-2 text-text-error-strong">Choose at least one.</span>
-                )}
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {PERSONALITY_TRAIT_OPTIONS.map((opt) => (
-                  <OnboardSelectionCard
-                    key={opt.value}
-                    value={opt.value}
-                    label={opt.label}
-                    icon={opt.icon}
-                    isSelected={state.personalityTraits.includes(opt.value)}
-                    onClick={() => togglePersonality(opt.value)}
-                    variant={opt.value === "something_else" ? "add" : undefined}
-                  />
-                ))}
-              </div>
-              {state.personalityTraits.includes("something_else") && (
-                <OptionalField htmlFor="personality-other" label="Something else">
-                  <Textarea
-                    id="personality-other"
-                    value={state.personalityDetail}
-                    onChange={(e) => setPersonalityDetail(e.target.value)}
-                    maxLength={200}
-                    className={cn("min-h-[96px]", fieldClassName)}
-                  />
-                </OptionalField>
-              )}
-            </StepSection>
-          )}
-
-          {step === 6 && (
-            <div className="flex flex-col gap-6">
-              <h3 className="font-garamond text-xl font-normal text-v3-text-strong sm:text-2xl">
-                You&apos;re off to a great start
-              </h3>
-              <p className="font-inter text-base leading-6 text-text-neutral-weak">
-                You can wrap up now and head into Memento, or spend another minute so we can personalize your space a
-                little more.
-              </p>
-            </div>
-          )}
-
-          {step === 7 && (
-            <StepSection>
-              <OnboardQuestionHeader
-                title={<>What kind of moments do you treasure most?</>}
-                required
-                whyDetail={whyFor(7).detail}
-              />
-              <p className="text-sm text-v3-text-weak">Pick up to {MAX_MEMORY_TREASURES}</p>
-              {validationAttempted && state.memoryTreasures.length < 1 && (
-                <ErrorText>Pick at least one.</ErrorText>
-              )}
-              <div className="flex flex-wrap gap-2">
-                {MEMORY_TREASURE_OPTIONS.map((opt) => (
-                  <OnboardSelectionCard
-                    key={opt.value}
-                    value={opt.value}
-                    label={opt.label}
-                    icon={opt.icon}
-                    isSelected={state.memoryTreasures.includes(opt.value)}
-                    onClick={() => toggleMemory(opt.value)}
-                  />
-                ))}
-              </div>
-              <OptionalField
-                htmlFor="memory-extra"
-                label={
-                  <>
-                    Anything else? <span className="font-normal">(optional)</span>
-                  </>
-                }
-              >
-                <Textarea
-                  id="memory-extra"
-                  value={state.memoryTreasuresDetail}
-                  onChange={(e) => setMemoryTreasuresDetail(e.target.value)}
-                  maxLength={300}
-                  className={cn("min-h-[96px]", fieldClassName)}
-                  placeholder="A moment only you would think to mention"
-                />
-              </OptionalField>
-            </StepSection>
-          )}
-
-          {step === 8 && (
-            <StepSection>
-              <OnboardQuestionHeader
-                title={<>What pulls you in outside of work?</>}
-                required
-                whyDetail={whyFor(8).detail}
-              />
-              <p className="text-sm text-v3-text-weak">Pick up to {MAX_PASSIONS_MISC}</p>
-              {validationAttempted && state.passions.length < 1 && (
-                <ErrorText>Pick at least one.</ErrorText>
-              )}
-              <div className="flex flex-wrap gap-2">
-                {MISC_PASSION_OPTIONS.map((opt) => (
-                  <OnboardSelectionCard
-                    key={opt.value}
-                    value={opt.value}
-                    label={opt.label}
-                    icon={opt.icon || undefined}
-                    isSelected={state.passions.includes(opt.value)}
-                    onClick={() => togglePassion(opt.value)}
-                  />
-                ))}
-              </div>
-              <OptionalField
-                htmlFor="passion-extra"
-                label={
-                  <>
-                    Add your own <span className="font-normal">(optional)</span>
-                  </>
-                }
-              >
-                <Textarea
-                  id="passion-extra"
-                  value={state.passionsDetail}
-                  onChange={(e) => setPassionsDetail(e.target.value)}
-                  maxLength={200}
-                  className={cn("min-h-[96px]", fieldClassName)}
-                  placeholder="e.g. chess, local history…"
-                />
-              </OptionalField>
-            </StepSection>
-          )}
-
-          {step === 9 && (
-            <StepSection>
-              <OnboardQuestionHeader
-                title={<>Are you a morning person or a night owl?</>}
-                required
-                whyDetail={whyFor(9).detail}
-              />
-              {validationAttempted && !state.chronotype && (
-                <ErrorText>Please pick one.</ErrorText>
-              )}
-              <div className="flex flex-wrap gap-2">
-                {CHRONOTYPE_OPTIONS.map((opt) => (
-                  <OnboardSelectionCard
-                    key={opt.value}
-                    value={opt.value}
-                    label={opt.label}
-                    icon={opt.icon}
-                    isSelected={state.chronotype === opt.value}
-                    onClick={() => setChronotype(opt.value)}
-                  />
-                ))}
-              </div>
-            </StepSection>
-          )}
-
-          {step === 10 && (
-            <StepSection>
-              <OnboardQuestionHeader
-                title={<>Memento can be a private vault or a shared legacy. Which sounds most like you today?</>}
-                required
-                whyDetail={whyFor(10).detail}
-              />
-              {validationAttempted && !state.sharingIntent && (
-                <ErrorText>Please pick one.</ErrorText>
-              )}
-              <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-                {SHARING_INTENT_OPTIONS.map((opt) => (
-                  <OnboardSelectionCard
-                    key={opt.value}
-                    value={opt.value}
-                    label={opt.label}
-                    icon={opt.icon}
-                    isSelected={state.sharingIntent === opt.value}
-                    onClick={() => setSharingIntent(opt.value)}
-                  />
-                ))}
-              </div>
-            </StepSection>
-          )}
-
-          {step === 11 && (
-            <StepSection>
-              <OnboardQuestionHeader
-                title={<>Where should Memento focus first?</>}
-                required
-                whyDetail={whyFor(11).detail}
-              />
-              <p className="text-sm text-v3-text-weak">Pick up to {MAX_FOCUS_FIRST}</p>
-              {validationAttempted && state.priorityDimensions.length < 1 && (
-                <ErrorText>Pick at least one.</ErrorText>
-              )}
-              <div className="flex flex-wrap gap-2">
-                {ONBOARDING_FOCUS_FIRST_OPTIONS.map((opt) => (
-                  <OnboardSelectionCard
-                    key={opt.value}
-                    value={opt.value}
-                    label={opt.label}
-                    icon={opt.icon}
-                    isSelected={state.priorityDimensions.includes(opt.value)}
-                    onClick={() => toggleFocus(opt.value)}
-                  />
-                ))}
-              </div>
-              <OptionalField
-                htmlFor="focus-extra"
-                label={
-                  <>
-                    Something else <span className="font-normal">(optional)</span>
-                  </>
-                }
-              >
-                <Textarea
-                  id="focus-extra"
-                  value={state.dimensionsDetail}
-                  onChange={(e) => setDimensionsDetail(e.target.value)}
-                  maxLength={200}
-                  className={cn("min-h-[96px]", fieldClassName)}
-                />
-              </OptionalField>
-            </StepSection>
-          )}
-
-          {step === 12 && (
-            <div className="flex flex-col items-center gap-6 py-6 text-center sm:py-10">
-              <div className="flex items-center gap-2" aria-hidden>
-                {[0, 1, 2].map((index) => (
+        </div>
+        <p className="font-geist text-xl leading-7 text-text-neutral-strong">
+          {draft.step === 1
+            ? "First off, what brings you to Memento AI?"
+            : draft.step === 2
+              ? "Share anything you think would help Memento learn about you. Just something to give us a starting point."
+              : "Pick 2 to 3 areas. We’ll prioritize prompts and suggestions around these to help you start."}
+        </p>
+        {draft.step === 1 && (
+          <div
+            role="group"
+            aria-label="What brings you to Memento AI?"
+            className="flex flex-col gap-2.5"
+          >
+            {reasonOptions.map((option) => {
+              const selected = draft.reasons.includes(option.value);
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  aria-pressed={selected}
+                  onClick={() =>
+                    setDraft((value) => ({
+                      ...value,
+                      reasons: selected
+                        ? value.reasons.filter(
+                            (reason) => reason !== option.value,
+                          )
+                        : [...value.reasons, option.value],
+                    }))
+                  }
+                  className={cn(
+                    "flex min-h-[52px] w-full cursor-pointer items-center gap-3 rounded-lg border bg-bg-neutral px-[15px] py-[13px] text-left font-geist text-base leading-6 text-text-neutral-strong transition-colors hover:bg-fill-neutral-weaker focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stroke-brand-strong",
+                    selected
+                      ? "border-stroke-neutral-strong"
+                      : "border-stroke-neutral-weak",
+                  )}
+                >
                   <span
-                    key={index}
-                    className="size-2.5 rounded-full bg-v3-brand-strong motion-safe:animate-pulse"
-                    style={{ animationDelay: `${index * 180}ms` }}
-                  />
-                ))}
-              </div>
-              <div className="space-y-4">
-                <h1 className="font-garamond text-2xl font-normal leading-tight text-v3-text-strong sm:text-[28px]">
-                  Creating your starting space
-                </h1>
-                <p className="max-w-md font-inter text-base leading-6 text-text-neutral-weak">
-                  We&apos;re organizing what you shared so Memento can begin in a way that feels personal.
+                    aria-hidden
+                    className="relative flex size-6 shrink-0 items-center justify-center"
+                  >
+                    <img src={option.icon} alt="" />
+                  </span>
+                  <span className="flex-1">{option.label}</span>
+                  {selected && (
+                    <img
+                      src={assets["19031-32042/imgLetsIconsCheckFill"]}
+                      alt=""
+                      className="shrink-0"
+                    />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        )}
+        {draft.step === 2 && (
+          <>
+            <div className="flex flex-col gap-1.5">
+              <label
+                htmlFor="onboarding-about"
+                className="text-sm font-medium leading-5"
+              >
+                Enter About info
+              </label>
+              <div className="relative">
+                <Textarea
+                  id="onboarding-about"
+                  value={draft.about}
+                  maxLength={500}
+                  aria-describedby="about-counter"
+                  onChange={(event) =>
+                    setDraft((value) => ({
+                      ...value,
+                      about: event.target.value.slice(0, 500),
+                    }))
+                  }
+                  placeholder="Eg: I am a software engineer and a father of 2 living in Dubln. I care about family, creativity and personal growth. Lately i’ve been focused on building the things i’m proud of..."
+                  className="h-[196px] rounded-2xl border-stroke-neutral-weak bg-fill-neutral-weaker px-3 py-2 pb-9 font-geist text-base leading-6 text-text-neutral-strong placeholder:text-text-neutral-weaker md:text-base"
+                />
+                <p
+                  id="about-counter"
+                  className="pointer-events-none absolute right-3 bottom-2 text-sm leading-5"
+                >
+                  {draft.about.length}/500
                 </p>
               </div>
             </div>
-          )}
-
-          {step !== 6 && step !== 12 && (
-            <>
-              <FooterDivider />
-              <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={prevStep}
-              disabled={step === 1 || isMutating}
-              className={secondaryButtonClassName}
-            >
-              Prev
-            </Button>
-            <Button
-              type="button"
-              onClick={() => void handleContinue()}
-              disabled={(step < 12 && !canProceed) || isMutating}
-              className={primaryButtonClassName}
-            >
-              {step === 11 ? "Submit" : "Continue"}
-            </Button>
-              </div>
-            </>
-          )}
-
-          {step === 6 && (
-            <div className="space-y-6 pt-6">
-              <FooterDivider />
-              <div className="flex flex-col gap-3 sm:items-end">
-                <div className="flex flex-col gap-3 sm:w-full sm:max-w-[420px] sm:flex-row sm:justify-end sm:gap-4">
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    disabled={isMutating}
-                    className={cn(secondaryButtonClassName, "sm:flex-1")}
-                    onClick={() => {
-                      void completeAndNavigate("dashboard", { skippedDeep: true });
-                    }}
+            <div className="flex flex-col gap-1.5">
+              <p className="font-azeret text-sm leading-5 text-text-neutral-weak">
+                Need inspiration?
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {inspirationOptions.map((option) => (
+                  <span
+                    key={option.label}
+                    className="rounded-full border border-stroke-neutral-weak bg-bg-neutral px-[15px] py-2.5 text-xs leading-4 text-text-neutral-strong"
                   >
-                    Continue later
-                  </Button>
-                  <Button
-                    type="button"
-                    disabled={isMutating}
-                    className={cn(primaryButtonClassName, "sm:flex-1")}
-                    onClick={() => {
-                      goToDeepPhase();
-                    }}
-                  >
-                    Keep going
-                  </Button>
-                </div>
+                    {option.label}
+                  </span>
+                ))}
               </div>
             </div>
-          )}
-        </div>
-      </div>
-    </div>
+          </>
+        )}
+        {draft.step === 3 && (
+          <div className="flex flex-col gap-1.5">
+            <p
+              id="life-areas-label"
+              className="font-azeret text-sm leading-5 text-text-neutral-weak"
+            >
+              Life areas
+            </p>
+            <div
+              role="group"
+              aria-labelledby="life-areas-label"
+              className="flex flex-wrap gap-2"
+            >
+              {lifeAreaOptions.map((option) => (
+                <LifeAreaChip
+                  key={option.value}
+                  option={option}
+                  selected={draft.areas.includes(option.value)}
+                  disabled={
+                    draft.areas.length === 3 &&
+                    !draft.areas.includes(option.value)
+                  }
+                  onClick={() =>
+                    setDraft((value) => ({
+                      ...value,
+                      areas: value.areas.includes(option.value)
+                        ? value.areas.filter((area) => area !== option.value)
+                        : value.areas.length < 3
+                          ? [...value.areas, option.value]
+                          : value.areas,
+                    }))
+                  }
+                />
+              ))}
+            </div>
+          </div>
+        )}
+        <OnboardingActions>
+          <OnboardingButton variant="outline" onClick={goBack}>
+            Back
+          </OnboardingButton>
+          <OnboardingButton onClick={goNext} disabled={!canContinue}>
+            Continue
+          </OnboardingButton>
+        </OnboardingActions>
+      </OnboardingCard>
+    </OnboardingQuestionFrame>
   );
 }

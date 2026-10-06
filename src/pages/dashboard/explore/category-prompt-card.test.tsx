@@ -5,27 +5,62 @@ import { renderWithProviders } from "@/test";
 import CategoryPromptCard from "./category-prompt-card";
 
 describe("CategoryPromptCard", () => {
-  it("offers separate accessible reply, skip, and not-relevant actions", async () => {
+  it("opens not-relevant feedback from the menu without navigating", async () => {
     const user = userEvent.setup();
     const onFeedback = vi.fn();
     renderWithProviders(
       <CategoryPromptCard
         _id="prompt-1"
         title="What makes an ordinary day better?"
-        source="starter"
         onFeedback={onFeedback}
       />,
       { route: "/explore/categories/the-life-i-live", auth: true },
     );
-
-    expect(screen.getByRole("link", { name: /reply/i })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: /reply to/i })).toHaveAttribute(
       "href",
       "/chat/reply/prompt-1",
     );
-    await user.click(screen.getByRole("button", { name: "Skip this question" }));
-    expect(onFeedback).toHaveBeenCalledWith("prompt-1", "skipped");
-    await user.click(screen.getByRole("button", { name: "Mark this question as not relevant" }));
-    expect(onFeedback).toHaveBeenCalledWith("prompt-1", "not-relevant");
+    expect(screen.queryByText("Not relevant to me")).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /topic options/i }));
+    await user.click(
+      screen.getByRole("menuitem", { name: "Not relevant to me" }),
+    );
+    expect(onFeedback).toHaveBeenCalledExactlyOnceWith(
+      "prompt-1",
+      "not-relevant",
+    );
+  });
+
+  it("supports keyboard dismissal and prevents duplicate feedback while saving", async () => {
+    const user = userEvent.setup();
+    const { unmount } = renderWithProviders(
+      <CategoryPromptCard
+        _id="prompt-1"
+        title="A topic"
+        onFeedback={vi.fn()}
+      />,
+    );
+    const trigger = screen.getByRole("button", { name: /topic options/i });
+    trigger.focus();
+    await user.keyboard("{Enter}");
+    expect(
+      await screen.findByRole("menuitem", { name: "Not relevant to me" }),
+    ).toBeVisible();
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("menuitem")).not.toBeInTheDocument();
+    expect(trigger).toHaveFocus();
+    unmount();
+    renderWithProviders(
+      <CategoryPromptCard
+        _id="prompt-1"
+        title="A topic"
+        isFeedbackPending
+        onFeedback={vi.fn()}
+      />,
+    );
+    expect(
+      screen.getByRole("button", { name: /topic options/i }),
+    ).toBeDisabled();
   });
 
   it("labels personalized questions without exposing an unlock", () => {

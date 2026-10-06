@@ -43,4 +43,9 @@ export default defineConfig([
       'shadcn/no-raw-colors': 'warn',
     },
   },
+  {
+    // Published Fluid helpers intentionally colocate providers, hooks, and tokens.
+    files: ['src/lib/shape-context.tsx', 'src/lib/size-context.tsx'],
+    rules: { 'react-refresh/only-export-components': 'off' },
+  },
 ])

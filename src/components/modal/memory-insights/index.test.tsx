@@ -41,6 +41,13 @@ const minimalUserStats = {
 };
 
 describe("MemoryInsightsModal", () => {
+  it("shows Recent Activities in the General panel", async () => {
+    renderWithProviders(<MemoryInsightsModal />, { route: "/overview", auth: true });
+    expect(await screen.findByRole("heading", { name: /recent activities/i })).toBeInTheDocument();
+    expect(await screen.findByText("What are your thoughts on the...")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /see all/i })).toHaveAttribute("href", "/stories");
+  });
+
   it("uses the Insights sidebar to switch the visible modal section", async () => {
     const user = userEvent.setup();
     renderWithProviders(<MemoryInsightsModal />, {

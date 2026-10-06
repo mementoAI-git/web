@@ -1,5 +1,6 @@
 /** Greetings that are implied questions; use "?" after the name instead of "." */
 const QUESTION_GREETINGS = new Set([
+  "Back at it,",
   "Can't sleep,",
   "Burning the midnight oil,",
   "Keeping a late night,",

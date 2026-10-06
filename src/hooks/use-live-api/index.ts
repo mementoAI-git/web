@@ -1,4 +1,6 @@
-'use client'
+"use client";
+import { buildVoiceInputParts } from "@/features/voice/message-input";
+import type { VoiceMessage, VoiceTextInput } from "@/features/voice/types";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { GoogleGenAI, LiveServerMessage, Session, Modality } from "@google/genai";
@@ -28,6 +30,7 @@ interface UseLiveAPIProps {
   languageCode?: string;
   /** When false (default), the session is not opened until `connect()` runs (e.g. user taps “Start call”). */
   autoConnect?: boolean;
+  onMessages?: (messages: VoiceMessage[]) => void;
 }
 
 export type LiveSessionOverrides = {
@@ -40,15 +43,23 @@ export function useLiveAPI({
   turns = [],
   languageCode = "en-US",
   autoConnect = false,
+  onMessages,
 }: UseLiveAPIProps) {
   const { user } = useStore();
+  const messageObserver = useRef(onMessages);
+  messageObserver.current = onMessages;
+  const memoryIdRef = useRef(memoryId);
+  if (memoryId) memoryIdRef.current = memoryId;
   const [isRecording, setIsRecording] = useState(false);
   const [, setStatus] = useState('');
   const [inputNode, setInputNode] = useState<GainNode | null>(null);
   const [outputNode, setOutputNode] = useState<GainNode | null>(null);
+  const [audioPaused, setAudioPaused] = useState(false);
   const [connected, setConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const connectionAttempt = useRef(0);
+  const cancelSetup = useRef<(() => void) | null>(null);
   const clientRef = useRef<GoogleGenAI | null>(null);
   const sessionPromiseRef = useRef<Promise<Session> | null>(null);
   const isRecordingRef = useRef(false);
@@ -62,6 +73,7 @@ export function useLiveAPI({
   const sessionIdRef = useRef<string | null>(null);
   const ephemeralTokenRef = useRef<string | null>(null);
   const hasConnectedRef = useRef(false);
+  const saveQueue = useRef<Promise<unknown>>(Promise.resolve());
   const transcriptText = useRef({ user: "", ai: "" })
 
   const turnTimerRef = useRef({
@@ -77,26 +89,32 @@ export function useLiveAPI({
 
   // Start audio recording
   const startRecording = useCallback(async () => {
-    if (isRecordingRef.current) return;
+    if (isRecordingRef.current) return true;
     isRecordingRef.current = true;
 
     if (!sessionIdRef.current) {
       sessionIdRef.current = uuidv4();
     }
 
-    setIsRecording(true);
-
     const inputAudioContext = inputAudioContextRef.current;
-    if (!inputAudioContext) return;
+    if (!inputAudioContext) {
+      isRecordingRef.current = false;
+      setIsRecording(false);
+      return false;
+    }
 
-    await inputAudioContext.resume();
     setStatus('Requesting microphone access...');
 
     try {
+      await inputAudioContext.resume();
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: true,
         video: false,
       });
+      if (inputAudioContextRef.current !== inputAudioContext || !hasConnectedRef.current) {
+        stream.getTracks().forEach(track => track.stop());
+        return false;
+      }
       mediaStreamRef.current = stream;
 
       setStatus('Microphone access granted. Starting capture...');
@@ -128,11 +146,15 @@ export function useLiveAPI({
 
       source.connect(scriptProcessor);
       scriptProcessor.connect(inputAudioContext.destination);
+      setIsRecording(true);
       setStatus('🔴 Recording... Capturing PCM chunks.');
+      return true;
     } catch (err) {
+      setError(`Microphone access failed: ${err instanceof Error ? err.message : String(err)}`);
       setStatus(`Error: ${err instanceof Error ? err.message : String(err)}`);
       isRecordingRef.current = false;
       setIsRecording(false);
+      return false;
     }
   }, [inputNode]);
 
@@ -157,42 +179,67 @@ export function useLiveAPI({
     turnTimerRef.current.startTime = null;
   }, []);
 
-  const updateTranscriptText = useCallback((role: "user" | "ai", text: string, finished = false) => {
-    console.log(role, text, finished);
-    if (finished) {
-      const messages = Object
-        .entries(transcriptText.current)
-        .filter(([_, text]) => !isEmpty(text) && !text.match(/<noise>/))
-        .map(([role, text]) => ({
-          role,
-          text,
-          is_voice: true,
-          duration: turnTimerRef.current.duration
-        }));
+  const persistMessages = useCallback(async (messages: Record<string, unknown>[]) => {
+    const job = saveQueue.current.catch(() => {}).then(async () => {
+      const response = await addMessageToMemory({ memory_id: memoryIdRef.current, session_id: sessionIdRef.current, messages });
+      const saved = response?.data;
+      if (!Array.isArray(saved)) throw new Error("Could not save the voice conversation.");
+      if (saved[0]?.memory) memoryIdRef.current = String(saved[0].memory);
+      return saved;
+    });
+    saveQueue.current = job;
+    return job;
+  }, [addMessageToMemory]);
 
-      if (!isEmpty(messages)) {
-        addMessageToMemory({
-          memory_id: memoryId,
-          session_id: sessionIdRef.current,
-          messages
-        })
-      }
+  const recordMessages = useCallback((messages: Record<string, unknown>[], attachments: VoiceTextInput["attachments"] = []) => {
+    const observer = messageObserver.current;
+    const local = messages.map(message => ({ ...message, _id: `voice-local-${uuidv4()}`, created_at: new Date().toISOString(), attatchments: attachments } as VoiceMessage));
+    observer?.(local);
+    void persistMessages(messages).then(saved => {
+      observer?.(saved.map((message, index) => ({ ...message, clientId: local[index]._id, attatchments: attachments })));
+    }).catch(() => {
+      setError("Voice is connected, but the latest messages could not be saved. Keep this conversation open.");
+    });
+  }, [persistMessages]);
 
-      transcriptText.current = {
-        user: "",
-        ai: ""
-      }
-      stopTurnTimer(); // Stop timer when turn is complete
-      turnTimerRef.current.duration = 0;
-      return;
-    }
-
-    if (isEmpty(text)) return;
+  const updateTranscriptText = useCallback((role: "user" | "ai", text?: string) => {
+    if (!text) return;
     transcriptText.current[role] += text;
-    if (!turnTimerRef.current.interval) {
-      startTurnTimer();
+    startTurnTimer();
+  }, [startTurnTimer]);
+
+  const flushTranscript = useCallback(() => {
+    const messages = Object.entries(transcriptText.current)
+      .filter(([, text]) => text.trim() && !text.match(/<noise>/))
+      .map(([role, text]) => ({ role, text, is_voice: true, duration: turnTimerRef.current.duration }));
+    transcriptText.current = { user: "", ai: "" };
+    stopTurnTimer();
+    turnTimerRef.current.duration = 0;
+    if (!messages.length) return;
+    recordMessages(messages);
+  }, [recordMessages, stopTurnTimer]);
+
+  const sendChatInput = useCallback(async (input: VoiceTextInput) => {
+    if (!hasConnectedRef.current || !isRecordingRef.current) throw new Error("Voice is not connected yet.");
+    const attempt = connectionAttempt.current;
+    const parts = await buildVoiceInputParts(input);
+    const session = await sessionPromiseRef.current;
+    if (!session || !hasConnectedRef.current || attempt !== connectionAttempt.current) throw new Error("The voice connection ended. Please retry your message.");
+    // The audio connection stays open; this turn becomes part of the same context.
+    const images = parts.filter(part => part.inlineData);
+    for (let index = 0; index < images.length; index++) {
+      if (!hasConnectedRef.current || attempt !== connectionAttempt.current) throw new Error("Voice disconnected while sharing the image.");
+      session.sendRealtimeInput({ video: images[index].inlineData! });
+      // Live image input is a video stream, with a maximum rate of one frame/second.
+      if (index < images.length - 1) await new Promise(resolve => setTimeout(resolve, 1000));
     }
-  }, [addMessageToMemory, startTurnTimer, stopTurnTimer, memoryId]);
+    session.sendRealtimeInput({ text: parts.find(part => part.text)?.text ?? input.text });
+    // Persistence must never gate delivery to the live model.
+    recordMessages([{
+      role: "user", text: input.text.trim() || "Shared an image", is_voice: true,
+      ...(input.attachments?.length ? { attachments: input.attachments.map(file => file._id) } : {}),
+    }], input.attachments);
+  }, [recordMessages]);
 
   // Stop audio recording
   const stopRecording = useCallback(() => {
@@ -225,18 +272,22 @@ export function useLiveAPI({
 
   // Connect to Live API
   const connect = useCallback(async (overrides: LiveSessionOverrides = {}) => {
-    if (!outputAudioContextRef.current) return;
+    if (!outputAudioContextRef.current) return false;
 
     // Prevent multiple simultaneous connection attempts
-    if (isConnectingRef.current || hasConnectedRef.current) {
-      return;
-    }
+    if (hasConnectedRef.current) return true;
+    if (isConnectingRef.current) return false;
 
     isConnectingRef.current = true;
     const outputAudioContext = outputAudioContextRef.current;
+    const attempt = ++connectionAttempt.current;
+    let setupTimer: ReturnType<typeof setTimeout> | undefined;
 
     try {
+      setError(null);
+      await outputAudioContext.resume();
       const result = await fetchEphemeralToken();
+      if (outputAudioContextRef.current !== outputAudioContext || connectionAttempt.current !== attempt) return false;
       if (!result?.data?.token) {
         throw new Error("Failed to get a fresh Live API token");
       }
@@ -262,19 +313,28 @@ export function useLiveAPI({
         sessionPromiseRef.current = null;
       }
 
+      let acceptSetup!: () => void;
+      let rejectSetup!: (error: Error) => void;
+      const setupReady = new Promise<void>((resolve, reject) => {
+        acceptSetup = resolve;
+        rejectSetup = reject;
+      });
+      cancelSetup.current = () => rejectSetup(new Error("Voice connection cancelled"));
+      setupTimer = setTimeout(() => rejectSetup(new Error("Voice connection timed out. Please try again.")), 20000);
+      const isCurrent = () => connectionAttempt.current === attempt;
       sessionPromiseRef.current = clientRef.current.live.connect({
         model: GEMINI_CONFIG.MODEL,
         callbacks: {
-          onopen: () => {
-            setConnected(true);
-            isConnectingRef.current = false;
-            hasConnectedRef.current = true;
-            if (!sessionIdRef.current) {
-              sessionIdRef.current = uuidv4();
-            }
-            turnTimerRef.current.duration = 0;
-          },
           onmessage: async (message: LiveServerMessage) => {
+            if (!isCurrent()) return;
+            if (message.setupComplete) {
+              setConnected(true);
+              isConnectingRef.current = false;
+              hasConnectedRef.current = true;
+              if (!sessionIdRef.current) sessionIdRef.current = uuidv4();
+              turnTimerRef.current.duration = 0;
+              acceptSetup();
+            }
             const parts = message.serverContent?.modelTurn?.parts;
             const playback = playbackStateRef.current;
 
@@ -290,31 +350,15 @@ export function useLiveAPI({
                       playback,
                     );
                   } catch (error) {
-                    console.error('Failed to play audio response:', error);
+                    setError(`Voice audio could not play: ${error instanceof Error ? error.message : String(error)}`);
                   }
                 }
               }
             }
 
-            console.log(message.serverContent);
-            console.log("outputTranscription", message.serverContent?.outputTranscription);
-            const aiTranscription = message.serverContent?.outputTranscription;
-            if (!isEmpty(aiTranscription) || message?.serverContent?.turnComplete) {
-              updateTranscriptText(
-                "ai",
-                aiTranscription?.text,
-                message?.serverContent?.turnComplete
-              );
-            }
-
-            const userTranscription = message.serverContent?.inputTranscription;
-            if (!isEmpty(userTranscription) || message?.serverContent?.turnComplete) {
-              updateTranscriptText(
-                "user",
-                userTranscription?.text,
-                message?.serverContent?.turnComplete
-              );
-            }
+            updateTranscriptText("user", message.serverContent?.inputTranscription?.text);
+            updateTranscriptText("ai", message.serverContent?.outputTranscription?.text);
+            if (message.serverContent?.turnComplete || message.serverContent?.interrupted) flushTranscript();
 
             // Handle interruption
             const interrupted = message.serverContent?.interrupted;
@@ -322,14 +366,24 @@ export function useLiveAPI({
               stopAllGeminiLivePlayback(playbackStateRef.current);
             }
           },
-          onerror: (error: unknown) => {
-            const message = error instanceof Error ? error.message : String(error);
-            setError(`Live API error: ${message}`);
+          onerror: () => {
+            if (!isCurrent()) return;
+            const failure = new Error("Voice connection failed. Please try again.");
+            rejectSetup(failure);
+            setError(failure.message);
+            stopRecording();
+            if (playbackStateRef.current) stopAllGeminiLivePlayback(playbackStateRef.current);
             setConnected(false);
-            isConnectingRef.current = false;
             hasConnectedRef.current = false;
           },
-          onclose: () => {
+          onclose: (event: CloseEvent) => {
+            if (!isCurrent()) return;
+            const detail = event.reason || "The voice connection closed. Please try again.";
+            const failure = new Error(`Voice connection closed (${event.code}): ${detail}`);
+            rejectSetup(failure);
+            if (event.code !== 1000 || !hasConnectedRef.current) setError(failure.message);
+            stopRecording();
+            if (playbackStateRef.current) stopAllGeminiLivePlayback(playbackStateRef.current);
             setConnected(false);
             isConnectingRef.current = false;
             hasConnectedRef.current = false;
@@ -350,27 +404,34 @@ export function useLiveAPI({
               }
             }
           },
-          inputAudioTranscription: {
-            languageCode: overrides.languageCode || languageCode,
-          },
-          outputAudioTranscription: {
-            languageCode: overrides.languageCode || languageCode,
-          }
+          inputAudioTranscription: {},
+          outputAudioTranscription: {}
         }
       });
 
+      const pendingSession = sessionPromiseRef.current;
+      // The SDK resolves on socket open, before Gemini accepts the setup.
+      void pendingSession.then(session => {
+        if (!isCurrent()) session.close();
+      }).catch(() => {});
+      const [session] = await Promise.all([pendingSession, setupReady]);
+      if (!isCurrent() || !hasConnectedRef.current) return false;
       if (!isEmpty(turns)) {
-        sessionPromiseRef.current?.then((session) => {
-          session.sendClientContent({
-            turns: turns.map(({ role, text }) => ({
-              role: role === "ai" ? "model" : "user",
-              parts: [{ text }]
-            })),
-            turnComplete: false
-          })
-        })
+        session.sendClientContent({
+          turns: turns.map(({ role, text }) => ({
+            role: role === "ai" ? "model" : "user",
+            parts: [{ text }],
+          })),
+          turnComplete: false,
+        });
       }
+      return true;
     } catch (error) {
+      if (connectionAttempt.current !== attempt) return false;
+      ++connectionAttempt.current;
+      cancelSetup.current = null;
+      void sessionPromiseRef.current?.then(session => session.close()).catch(() => {});
+      sessionPromiseRef.current = null;
       setError(`Connection failed: ${error instanceof Error ? error.message : error}`);
       setConnected(false);
       isConnectingRef.current = false;
@@ -378,9 +439,15 @@ export function useLiveAPI({
 
       // Clear token on error to force refresh on next attempt
       ephemeralTokenRef.current = null;
+      return false;
+    } finally {
+      clearTimeout(setupTimer);
+      if (connectionAttempt.current === attempt) cancelSetup.current = null;
     }
   }, [
+    stopRecording,
     updateTranscriptText,
+    flushTranscript,
     user?.chat_voice,
     user?.chat_voice_provider,
     context,
@@ -391,6 +458,9 @@ export function useLiveAPI({
   ]);
 
   const disconnect = useCallback(() => {
+    ++connectionAttempt.current;
+    cancelSetup.current?.();
+    cancelSetup.current = null;
     isConnectingRef.current = false;
     setConnected(false);
     hasConnectedRef.current = false;
@@ -406,7 +476,21 @@ export function useLiveAPI({
     setInputMuted(false);
   }, [connect, disconnect, setInputMuted]);
 
+  const resumeAudio = useCallback(async () => {
+    const output = outputAudioContextRef.current;
+    if (!output || output.state === "closed") return;
+    await output.resume();
+    setAudioPaused(output.state !== "running");
+  }, []);
+
   useEffect(() => {
+    // Fast Refresh preserves hook state while replacing the audio graph.
+    // Never leave a disconnected graph advertised as an active call.
+    hasConnectedRef.current = false;
+    isConnectingRef.current = false;
+    isRecordingRef.current = false;
+    setConnected(false);
+    setIsRecording(false);
     const inputCtx = new ((window as Window & { webkitAudioContext?: typeof AudioContext }).AudioContext || (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext!)({
       sampleRate: 16000,
     });
@@ -417,6 +501,8 @@ export function useLiveAPI({
     inputAudioContextRef.current = inputCtx;
     outputAudioContextRef.current = outputCtx;
     playbackStateRef.current = createPlaybackState(outputCtx);
+    outputCtx.onstatechange = () => setAudioPaused(outputCtx.state !== "running");
+    setAudioPaused(outputCtx.state !== "running");
 
     const inNode = inputCtx.createGain();
     const outNode = outputCtx.createGain();
@@ -425,7 +511,23 @@ export function useLiveAPI({
     setOutputNode(outNode);
 
     return () => {
-      sessionPromiseRef.current?.then((session) => session.close());
+      // This is a cancellation counter, not a captured DOM node.
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      ++connectionAttempt.current;
+      cancelSetup.current?.();
+      cancelSetup.current = null;
+      isRecordingRef.current = false;
+      hasConnectedRef.current = false;
+      isConnectingRef.current = false;
+      outputCtx.onstatechange = null;
+      mediaStreamRef.current?.getTracks().forEach(track => track.stop());
+      mediaStreamRef.current = null;
+      scriptProcessorNodeRef.current?.disconnect();
+      sourceNodeRef.current?.disconnect();
+      if (playbackStateRef.current) stopAllGeminiLivePlayback(playbackStateRef.current);
+      inputAudioContextRef.current = null;
+      outputAudioContextRef.current = null;
+      sessionPromiseRef.current?.then((session) => session.close()).catch(() => {});
       inputCtx.close().catch(console.error);
       outputCtx.close().catch(console.error);
       ephemeralTokenRef.current = null;
@@ -445,7 +547,20 @@ export function useLiveAPI({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [outputNode, connected, autoConnect]);
 
+  const greet = useCallback(async () => {
+    const session = await sessionPromiseRef.current;
+    if (!isRecordingRef.current) return;
+    session?.sendClientContent({
+      turns: [{ role: "user", parts: [{ text: "Begin our voice conversation with a brief warm greeting and one gentle question based on the context you have. Keep it short." }] }],
+      turnComplete: true,
+    });
+  }, []);
+
   return {
+    sendChatInput,
+    audioPaused,
+    resumeAudio,
+    greet,
     connected,
     connect,
     disconnect,

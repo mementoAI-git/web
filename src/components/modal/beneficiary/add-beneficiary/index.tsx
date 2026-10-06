@@ -28,7 +28,7 @@ const schema = yup.object().shape({
 });
 
 const inputClass =
-  "h-10 w-full rounded-xl border border-v3-stroke-weak bg-white px-3 font-inter text-sm text-v3-text-strong shadow-none outline-none placeholder:text-v3-text-weaker transition-colors hover:border-v3-stroke-strong focus:border-v3-stroke-strong";
+  "h-10 w-full rounded-xl border border-v3-stroke-weak bg-bg-neutral px-3 font-inter text-sm text-v3-text-strong shadow-none outline-none placeholder:text-v3-text-weaker transition-colors hover:border-v3-stroke-strong focus:border-v3-stroke-strong";
 
 export function AddBeneficiary() {
   const { close } = useModal();

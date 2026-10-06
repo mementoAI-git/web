@@ -42,6 +42,14 @@ function renderDashboardHeader(ui: ReactElement, options?: { route?: string }) {
 }
 
 describe("DashboardHeader", () => {
+  it("exposes theme options in the top navigation", () => {
+    renderDashboardHeader(<DashboardHeader />);
+    expect(
+      screen.getByRole("button", { name: /switch to (light|dark) mode/i }),
+    ).toBeVisible();
+    expect(screen.getByRole("button", { name: "Quick tools" })).toBeVisible();
+  });
+
   it("shows the streak control in the default header", () => {
     const { container } = renderDashboardHeader(<DashboardHeader />);
 
@@ -55,7 +63,33 @@ describe("DashboardHeader", () => {
     expect(searchColumn?.className).toMatch(/justify-self-center/);
     expect(
       searchTrigger?.querySelector('[data-slot="search-command-shortcut"]'),
-    ).toBeInTheDocument();
+    ).not.toBeInTheDocument();
+  });
+
+  it("uses the overview navigation controls on Explore", () => {
+    const { container } = renderDashboardHeader(<DashboardHeader />, {
+      route: "/explore",
+    });
+    expect(screen.getByText("explore")).toBeInTheDocument();
+    expect(container.firstElementChild).toHaveClass("sm:h-[76px]");
+    expect(screen.getByRole("button", { name: "Open search" })).toHaveClass(
+      "h-9",
+      "bg-fill-neutral-weak",
+    );
+    expect(
+      screen
+        .getByRole("button", { name: "Open search" })
+        .querySelector('[data-slot="search-command-shortcut"]'),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Quick tools" })).toHaveClass(
+      "h-8",
+      "w-[52px]",
+      "bg-fill-neutral-weak",
+    );
+    expect(
+      screen.getByRole("button", { name: /switch to (light|dark) mode/i }),
+    ).toHaveClass("h-8", "w-[52px]");
+    expect(screen.getByAltText("Streak")).toHaveClass("size-5");
   });
 
   it("removes the navigation search field on the stories page", () => {
@@ -69,12 +103,12 @@ describe("DashboardHeader", () => {
   it("uses semantic surfaces and foregrounds in the default header", () => {
     const { container } = renderDashboardHeader(<DashboardHeader />);
     const shell = container.firstElementChild;
-    expect(shell).toHaveClass("bg-background", "border-border");
+    expect(shell).toHaveClass("bg-background", "sm:h-[76px]");
     expect(shell).not.toHaveClass("bg-card");
     expect(shell).not.toHaveClass("bg-white");
     expect(screen.getByText("overview")).toHaveClass("text-foreground");
     expect(screen.getByRole("button", { name: "Open search" })).toHaveClass(
-      "bg-background",
+      "bg-fill-neutral-weak",
       "border-border",
     );
   });
@@ -107,16 +141,24 @@ describe("DashboardHeader", () => {
       { route: "/chat/m1", auth: true },
     );
 
-    expect(screen.getByRole("button", { name: /search memories/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Quick tools" })).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /search memories/i }),
+    ).toBeInTheDocument();
     expect(screen.getByText(/active since mar 29, 2026/i)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /audio settings/i })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /voice mode/i })).toHaveAttribute(
-      "href",
-      "/chat/m1/voice",
-    );
-    expect(screen.getByRole("button", { name: /chat settings/i })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /share conversation/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /open memory sidebar/i })).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /audio settings/i }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /voice mode/i })).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /chat settings/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /share conversation/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /open memory sidebar/i }),
+    ).not.toBeInTheDocument();
   });
 
   it("uses semantic surfaces and foregrounds in the conversation header", () => {
@@ -128,7 +170,7 @@ describe("DashboardHeader", () => {
     );
 
     const shell = container.firstElementChild;
-    expect(shell).toHaveClass("bg-background", "border-border");
+    expect(shell).toHaveClass("bg-background", "sm:h-[76px]");
     expect(shell).not.toHaveClass("bg-card");
     expect(shell).not.toHaveClass("bg-white");
     expect(screen.getByRole("heading", { name: "Chat" })).toHaveClass(

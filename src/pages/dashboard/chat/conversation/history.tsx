@@ -1,3 +1,6 @@
+import { mergeVoiceTimeline } from "@/features/voice/timeline";
+import type { VoiceTimelineEntry } from "@/features/voice/types";
+import { VoiceSessionDivider, type VoiceSessionEvent } from "./voice-session-divider";
 import {
   Fragment,
   type Dispatch,
@@ -27,6 +30,8 @@ import { useMatch } from "react-router-dom";
 interface IHistory extends PropsWithChildren {
   setMessages: Dispatch<SetStateAction<Partial<IMessage>[]>>;
   messages: Partial<IMessage>[];
+  voiceEvents?: VoiceSessionEvent[];
+  liveTimeline?: VoiceTimelineEntry[];
   memory: IMemory;
   scrollContainerRef: React.RefObject<HTMLDivElement | null>;
   onViewDetails: () => void
@@ -38,6 +43,8 @@ interface IHistory extends PropsWithChildren {
 export default function History({
   memory,
   messages,
+  voiceEvents = [],
+  liveTimeline = [],
   children,
   setMessages,
   scrollContainerRef,
@@ -158,11 +165,14 @@ export default function History({
           </div>
         )}
         <div ref={loadMoreRef} className="w-full h-1" />
+        {voiceEvents.filter(event => !event.afterMessage).map(event => <VoiceSessionDivider key={event.id} active={event.active} />)}
         {messages &&
           (() => {
             let lastDayKey: string | null = null;
             let lastMonthKey: string | null = null;
-            return messages.map((m, i) => {
+            return mergeVoiceTimeline(messages, liveTimeline).map((row, i) => {
+              if (row.kind !== "message") return <VoiceSessionDivider key={row.id} active={row.kind === "started"} />;
+              const m = row.message;
               const failed = Boolean((m as { sendFailed?: boolean }).sendFailed);
               const attachments = m.attatchments;
               const storedReply = (m as { replyTo?: ChatReplyQuote }).replyTo;
@@ -213,6 +223,7 @@ export default function History({
                       }
                     />
                   </div>
+                  {voiceEvents.filter(event => event.afterMessage === m).map(event => <VoiceSessionDivider key={event.id} active={event.active} />)}
                 </Fragment>
               );
             });

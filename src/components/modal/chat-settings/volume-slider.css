@@ -1,0 +1,9 @@
+/* Fluid Functionalism tokens, scoped to the ambience control. */
+.ambience-volume-slider {
+  --active: rgb(0 0 0 / 0.07);
+  --focus-ring: var(--stroke-brand-strong);
+}
+
+.dark .ambience-volume-slider {
+  --active: rgb(255 255 255 / 0.1);
+}

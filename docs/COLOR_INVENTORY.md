@@ -24,6 +24,22 @@ This document catalogs all colors used in the Memento web application, organized
 
 ---
 
+## Overview design tokens
+
+The overview uses these component tokens in addition to the V3 semantic families:
+
+| Token | Purpose |
+| --- | --- |
+| `--gradient-overview-banner` | Warm decorative banner gradient from the overview Figma frame |
+| `--gradient-overview-story` | Orange Add story button surface |
+| `--fill-topic-badge` / `--text-topic-badge` | Light topic labels over artwork, consistent across themes |
+| `--fill-overview-voice` | Green voice conversation action surface |
+| `--text-overview-voice` | Dark foreground on the voice conversation action |
+| `--text-overview-greeting` | Gold italic greeting accent |
+| `--bg-overview-sidebar` | Sidebar surface, with a dark theme override matching Figma |
+
+Sidebar navigation uses the exact Figma SVG assets and emoji, preserving their original illustrative colors. Insights and People use Lucide icons with `icon-neutral-strong`; the upgrade label uses `text-brand-strong`. Semantic colors inherit the system's light and dark theme values.
+
 ## V3 Design System (Primary)
 
 The V3 design system uses CSS custom properties based on a base color of `#170B00` (deep brown/black). These are the **recommended** colors for all new development.
@@ -882,3 +898,24 @@ These colors should be avoided in new code and gradually replaced.
 
 States & Edge Cases
 ScenarioBehaviourUser saves with no contentDisabled save button — but no error message shownVoice transcript is unclearSaved as-is, AI flags it gently in chatUser closes sheet mid-captureDraft auto-saved, recoverable on next openNo internetSaves locally, syncs when connection returns
+
+
+### Signup and login illustration
+
+The `.auth-entry` scope uses V3 semantic surface, stroke, text, and brand tokens.
+Its `--auth-art-*` variables preserve the supplied Figma illustration's colored
+caption tags and green text highlights; these are decorative artwork colors,
+not new general UI tokens. The theme-specific gradient artwork is stored locally
+in `src/assets/image/auth/`. Other auth screens retain their existing layout.
+
+## Onboarding flow tokens
+
+The Figma onboarding cards use V3 neutral surfaces and text, brand selection borders, and `--gradient-overview-story` for primary buttons. The privacy callout uses success tokens; the reasons summary uses info tokens. `--stroke-info-weak` and `--stroke-success-weak` map to the existing blue/green 200 primitives and are exposed to Tailwind.
+
+The About you summary uses `--text-onboarding-about`, `--fill-onboarding-about`, and `--stroke-onboarding-about`, mapped to the documented purple 1000/50/200 palette. These primitives inherit the documented dark palette. Figma illustration assets retain their original artwork colours.
+
+### Chat message surface
+
+- `--fill-chat-user` / `bg-fill-chat-user`: warm translucent user-message fill from Chat Figma (rgba(224, 148, 67, 0.14)); assistant messages retain `bg-fill-neutral-weak`.
+
+- `--fill-voice-elevated` / `bg-fill-voice-elevated`: floating voice surface, #1D1E26, with a raised shadow.

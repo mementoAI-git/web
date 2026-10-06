@@ -164,7 +164,7 @@ export function GeneralProfileEditModal({ open, onOpenChange }: GeneralProfileEd
         role="dialog"
         aria-modal="true"
         aria-labelledby={headingId}
-        className="flex max-h-[min(90vh,720px)] w-full max-w-xl flex-col overflow-hidden rounded-2xl border border-v3-stroke-weak bg-white shadow-lg"
+        className="flex max-h-[min(90vh,720px)] w-full max-w-xl flex-col overflow-hidden rounded-2xl border border-v3-stroke-weak bg-bg-neutral shadow-lg"
         onMouseDown={(e) => e.stopPropagation()}
       >
         <div className="flex shrink-0 items-start justify-between gap-4 border-b border-v3-stroke-weak px-5 py-4">
@@ -300,7 +300,7 @@ export function GeneralProfileEditModal({ open, onOpenChange }: GeneralProfileEd
             onClick={() => onOpenChange(false)}
             className={cn(
               "inline-flex h-10 min-h-10 items-center justify-center rounded-full border border-v3-stroke-weak",
-              "bg-white px-5 font-inter text-sm font-semibold text-v3-text-strong",
+              "bg-bg-neutral px-5 font-inter text-sm font-semibold text-v3-text-strong",
               "motion-safe:transition-colors motion-safe:duration-200 motion-safe:ease-out",
               "hover:bg-v3-fill-weaker focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-v3-stroke-strong focus-visible:ring-offset-2",
             )}

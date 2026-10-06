@@ -97,6 +97,23 @@
   --orange-200: rgba(233, 130, 70, 0.2);
   --orange-50: rgba(233, 130, 70, 0.05);
 
+  /* Overview design surfaces and accents. */
+  --gradient-overview-banner: linear-gradient(
+    0deg,
+    rgba(255, 223, 118, 0.03),
+    rgba(255, 176, 41, 0.12)
+  );
+  --gradient-overview-voice: linear-gradient(0deg, rgba(255, 223, 118, 0.08), rgba(255, 176, 41, 0.15));
+  --fill-overview-voice: #20c660;
+  --fill-voice-elevated: #1d1e26;
+  --fill-chat-user: rgba(224, 148, 67, 0.14);
+  --text-overview-voice: #000000;
+  --text-overview-greeting: #e5c600;
+  --gradient-overview-story: linear-gradient(#f3945c, #e97532);
+  --fill-topic-badge: rgba(255, 255, 255, 0.9);
+  --text-topic-badge: #414651;
+  --bg-overview-sidebar: var(--fill-neutral-weaker);
+
   /* Brand Button Surface */
   --gradient-brand-button-surface: radial-gradient(
     ellipse 100% 100% at 50% 0%,
@@ -218,7 +235,9 @@
   --stroke-brand-strong: var(--orange-1000);
   --stroke-brand-weak: var(--orange-200);
   --stroke-info-strong: var(--blue-1000);
+  --stroke-info-weak: var(--blue-200);
   --stroke-success-strong: var(--green-1000);
+  --stroke-success-weak: var(--green-200);
   --stroke-warning-strong: var(--amber-1000);
   --stroke-error-strong: var(--red-1000);
 
@@ -336,6 +355,7 @@
 }
 
 .dark {
+  --bg-overview-sidebar: #17181e;
   --color-secondary: var(--secondary);
   --color-background: #12131a;
 
@@ -405,6 +425,15 @@
 }
 
 @theme {
+  --color-bg-overview-sidebar: var(--bg-overview-sidebar);
+  --color-fill-topic-badge: var(--fill-topic-badge);
+  --color-topic-badge: var(--text-topic-badge);
+  --color-fill-voice-elevated: var(--fill-voice-elevated);
+  --color-fill-chat-user: var(--fill-chat-user);
+  --color-fill-overview-voice: var(--fill-overview-voice);
+  --color-overview-voice: var(--text-overview-voice);
+  --color-overview-greeting: var(--text-overview-greeting);
+
   --color-primary: var(--color-primary);
   --color-secondary: var(--color-secondary);
   --color-surface: var(--color-surface);
@@ -533,7 +562,9 @@
   --color-stroke-brand-strong: var(--stroke-brand-strong);
   --color-stroke-brand-weak: var(--stroke-brand-weak);
   --color-stroke-info-strong: var(--stroke-info-strong);
+  --color-stroke-info-weak: var(--stroke-info-weak);
   --color-stroke-success-strong: var(--stroke-success-strong);
+  --color-stroke-success-weak: var(--stroke-success-weak);
   --color-stroke-warning-strong: var(--stroke-warning-strong);
   --color-stroke-error-strong: var(--stroke-error-strong);
 
@@ -1418,4 +1449,192 @@ body {
       rgb(185 28 28) 100%
     );
   }
+}
+
+/* Signup and login: Figma entry screens. Decorative colors belong to this art. */
+.auth-entry {
+  --auth-art-highlight: #a6d469;
+  --auth-art-highlight-text: rgba(5, 17, 34, 0.9);
+  --auth-art-red-fill: #fee1e3;
+  --auth-art-red-text: #fe7877;
+  --auth-art-green-fill: #d6ffd4;
+  --auth-art-green-text: #0caa48;
+  --auth-art-orange-fill: #feebe1;
+  --auth-art-orange-text: #f3945c;
+  --auth-art-blue-fill: #e1f6fe;
+  --auth-art-blue-text: #0071c2;
+}
+.auth-entry-main {
+  display: grid;
+  grid-template-columns: minmax(0, 575fr) minmax(0, 560fr);
+  align-items: center;
+  gap: 38px;
+  max-width: 1010px;
+  margin-inline: auto;
+  padding: 40px 32px;
+}
+.auth-entry-main-signup { align-items: start; }
+.auth-entry-header { height: 64px; padding: 12px 32px; }
+.auth-entry-header .auth-entry-logo { font-size: 28px; line-height: 36px; }
+.auth-entry-heading { margin-bottom: 24px; }
+.auth-entry-form { min-width: 0; width: 100%; }
+.auth-entry-illustration {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+  aspect-ratio: 575 / 736;
+  padding: 32px;
+  overflow: hidden;
+  border: 1px solid var(--stroke-neutral-weaker);
+  border-radius: 26px;
+}
+.auth-entry-gradient {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  transform: scaleY(-1);
+}
+.auth-entry-art {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 493 / 432;
+  container-type: inline-size;
+}
+.auth-entry-sparkle { position: absolute; left: 2.49%; top: 11.52%; width: 5.84%; }
+.auth-entry-monogram { position: absolute; left: 38.86%; top: 62.78%; width: 19.07%; }
+.auth-entry-prompt {
+  position: absolute;
+  left: 53.2%;
+  top: 0;
+  width: 40.59%;
+  min-height: 17.73%;
+  padding: 1.57%;
+  border-radius: 9px;
+  background: var(--bg-neutral-weak);
+  box-shadow: 0 9px 0 var(--fill-neutral-weak);
+  transform: rotate(-9.54deg);
+  font-size: 1.988cqw;
+  line-height: 1.334;
+}
+.auth-entry-prompt-tag {
+  padding: 2px 4px;
+  border-radius: 2px;
+  font-size: 1.35cqw;
+  background: var(--auth-art-blue-fill);
+  color: var(--auth-art-blue-text);
+}
+.auth-entry-feature { position: absolute; width: 19.86%; }
+.auth-entry-feature-image { position: relative; aspect-ratio: 97.97 / 69.52; overflow: hidden; border-radius: 10px; }
+.auth-entry-feature-image img { width: 100%; height: 100%; object-fit: cover; }
+.auth-entry-feature > span {
+  position: relative;
+  display: block;
+  width: max-content;
+  margin-top: -8%;
+  margin-left: 8%;
+  padding: 2.6px 3.4px;
+  border-radius: 3.5px;
+  font-size: 1.59cqw;
+  line-height: 1.333;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.auth-entry-feature-journal { left: 5.41%; top: 42.85%; }
+.auth-entry-feature-beneficiaries { left: 29.07%; top: 20.94%; }
+.auth-entry-feature-chat { left: 56.9%; top: 29.95%; }
+.auth-entry-feature-voice { left: 72.03%; top: 52.59%; }
+.auth-entry-feature-beneficiaries img { position: absolute; height: 211.38%; top: -31.4%; }
+.auth-entry-feature-chat img { position: absolute; height: 250.53%; top: -70.24%; }
+.auth-entry-feature-journal > span { background: var(--auth-art-red-fill); color: var(--auth-art-red-text); }
+.auth-entry-feature-beneficiaries > span { background: var(--auth-art-green-fill); color: var(--auth-art-green-text); }
+.auth-entry-feature-chat > span { background: var(--auth-art-orange-fill); color: var(--auth-art-orange-text); }
+.auth-entry-feature-voice > span { background: var(--auth-art-blue-fill); color: var(--auth-art-blue-text); }
+.auth-entry-caption { position: relative; text-align: center; padding-top: 12px; }
+.auth-entry-caption mark { background: var(--auth-art-highlight); color: var(--auth-art-highlight-text); font-style: italic; padding-inline: 3px; }
+.auth-entry-form [data-slot="input"] { height: 40px; padding: 8px 12px; font-size: 14px; background: var(--fill-neutral-weak); border-color: var(--stroke-neutral-weak); }
+.auth-entry-form [data-slot="input"][aria-invalid="true"] { border-color: var(--stroke-error-strong); }
+.auth-entry-form [data-slot="label"] { line-height: 20px; }
+.auth-entry-form [data-variant="outline"], .auth-entry-passkey { height: 44px; border-radius: 8px; background: var(--bg-neutral-weak); border-color: var(--stroke-neutral-weak); color: var(--text-neutral-strong); font-family: var(--font-geist); font-size: 14px; }
+.auth-entry-form [data-variant="outline"]:hover, .auth-entry-passkey:hover { background: var(--fill-neutral-weak); }
+.auth-entry-form button[type="submit"] { height: 44px; font-size: 14px; font-weight: 700; }
+@media (max-width: 899px) {
+  .auth-entry-main { display: block; max-width: 496px; padding: 32px 24px; }
+  .auth-entry-form [data-slot="input"] { height: 44px; font-size: 16px; }
+  .auth-entry-illustration { display: none; }
+}
+@media (max-width: 479px) {
+  .auth-entry-main { padding: 28px 20px; }
+  .auth-entry-header { padding-inline: 20px; }
+}
+
+.auth-entry-socials > div { gap: 20px; }
+.auth-entry-form [data-variant="outline"] svg { width: 20px; height: 20px; }
+.auth-entry-form input[autocomplete$="-password"] { padding-right: 44px; }
+
+/* Onboarding summary accent — the purple palette documented in COLOR_INVENTORY. */
+:root {
+  --purple-1000: #7e47cc;
+  --purple-200: rgba(126, 71, 204, 0.2);
+  --purple-50: rgba(126, 71, 204, 0.05);
+  --text-onboarding-about: var(--purple-1000);
+  --fill-onboarding-about: var(--purple-50);
+  --stroke-onboarding-about: var(--purple-200);
+}
+.dark {
+  --purple-1000: #d2b2ff;
+  --purple-200: rgba(210, 178, 255, 0.2);
+  --purple-50: rgba(210, 178, 255, 0.05);
+}
+@theme inline {
+  --color-text-onboarding-about: var(--text-onboarding-about);
+  --color-fill-onboarding-about: var(--fill-onboarding-about);
+  --color-stroke-onboarding-about: var(--stroke-onboarding-about);
+}
+
+/* Keep the onboarding composition proportional to its 1440 × 1000 Figma frame.
+   Small screens use the existing reflow instead of shrinking touch controls. */
+@media (min-width: 768px) {
+  .onboarding-layout {
+    --onboarding-scale: clamp(
+      0.72,
+      min(1, calc(100vw / 1440px), calc(100dvh / 1000px)),
+      1
+    );
+  }
+
+  .onboarding-layout > header,
+  .onboarding-layout > main {
+    zoom: var(--onboarding-scale);
+  }
+}
+
+.auth-entry-main-recovery .auth-entry-illustration {
+  aspect-ratio: 575 / 728;
+}
+
+.auth-entry-main-recovery .auth-entry-heading > p {
+  max-width: 375px;
+  line-height: 20px;
+}
+
+.auth-entry-recovery-gradient {
+  top: auto;
+  height: 57.53%;
+}
+
+.auth-entry-form .auth-recovery-code [data-slot="input"] {
+  height: 44px;
+  padding: 0;
+  border: 2px solid var(--stroke-brand-weak);
+  background: var(--fill-brand-weak);
+  color: var(--text-brand-strong);
+  font-size: 20px;
+}
+
+.auth-entry-form .auth-recovery-code [data-slot="input"][aria-invalid="true"] {
+  border-color: var(--stroke-error-strong);
 }

@@ -1,25 +1,22 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Loader2 } from "lucide-react";
-import { toast } from "sonner";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 import * as yup from "yup";
 import endpoint from "@/api/endpoint";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import StrengthIndicator from "@/components/strength-indicator";
 import useFetcher from "@/hooks/use-fetcher";
 import useForm from "@/hooks/use-form";
-import AuthLayout from "../components/layout";
+import AuthEntryLayout from "../components/entry-layout";
 
 const schema = yup.object().shape({
   password: yup
     .string()
     .required("Password is required")
-    .min(6, "Password must be at least 6 characters long")
+    .min(8, "Password must be at least 8 characters long")
     .matches(/[A-Z]/, "Password must contain at least one uppercase letter")
     .matches(/[a-z]/, "Password must contain at least one lowercase letter")
     .matches(/[0-9]/, "Password must contain at least one number")
@@ -47,32 +44,15 @@ export default function SetPasswordPage() {
     async onSubmit(payload) {
       const result = await trigger(payload);
       if (result) {
-        toast.success(result?.message);
-        navigate("/login");
+        navigate("/login", { replace: true, state: { passwordReset: true } });
       }
     },
   });
 
-  const level = useMemo(() => {
-    let strength = 0;
-    if (/[A-Z]/.test(values.password)) {
-      strength += 1;
-    }
-    if (/[a-z]/.test(values.password)) {
-      strength += 1;
-    }
-    if (/[0-9]/.test(values.password)) {
-      strength += 1;
-    }
-    if (/[!@#$%^&*(),.?":{}|<>]/.test(values.password)) {
-      strength += 1;
-    }
-    if (values.password.length >= 8) {
-      strength += 1;
-    }
-
-    return strength;
-  }, [values.password]);
+  const [visible, setVisible] = useState({
+    password: false,
+    confirm_password: false,
+  });
 
   useEffect(() => {
     if (!token) {
@@ -81,65 +61,95 @@ export default function SetPasswordPage() {
   }, [token, navigate]);
 
   return (
-    <AuthLayout
-      title="Set new password"
-      can_go_back
-      subtitle="Your new password must be different from previously used passwords on this platform."
+    <AuthEntryLayout
+      title={
+        <>
+          Enter a new <em>password</em>
+        </>
+      }
+      recovery
+      subtitle="Enter your new password to finish off the process."
     >
-      <Card className="border border-v3-stroke-weak bg-v3-fill-weaker/20 py-0 shadow-none">
-        <CardContent className="p-4 sm:p-5">
-          <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-            <div className="grid gap-2">
-              <Label htmlFor="set-password-new" className="font-inter text-sm">
-                Password
-              </Label>
+      <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+        {(["password", "confirm_password"] as const).map((name) => (
+          <div key={name} className="grid gap-1.5">
+            <Label htmlFor={`set-${name}`} className="text-sm">
+              {name === "password" ? "New password" : "Confirm password"}
+            </Label>
+            <div className="relative">
               <Input
-                id="set-password-new"
-                name="password"
-                type="password"
-                placeholder="New password"
-                className="rounded-[12px]"
-                value={values.password}
+                id={`set-${name}`}
+                name={name}
+                type={visible[name] ? "text" : "password"}
+                placeholder={
+                  name === "password" ? "New password" : "Confirm password"
+                }
+                className="rounded-lg pr-11"
+                value={values[name]}
                 onChange={handleChange}
-                aria-invalid={Boolean(errors.password)}
+                aria-invalid={Boolean(errors[name])}
+                aria-describedby={
+                  errors[name]
+                    ? `${name}-error`
+                    : name === "password"
+                      ? "password-help"
+                      : undefined
+                }
                 autoComplete="new-password"
               />
-              {errors.password ? <p className="font-inter text-xs text-destructive">{errors.password}</p> : null}
+              <button
+                type="button"
+                className="absolute right-1 top-1/2 flex size-9 -translate-y-1/2 items-center justify-center rounded-full text-icon-neutral-weak hover:bg-fill-neutral-weaker"
+                aria-label={`${visible[name] ? "Hide" : "Show"} ${name === "password" ? "new password" : "confirm password"}`}
+                aria-pressed={visible[name]}
+                onClick={() =>
+                  setVisible((current) => ({
+                    ...current,
+                    [name]: !current[name],
+                  }))
+                }
+              >
+                {visible[name] ? (
+                  <EyeOff className="size-4" aria-hidden />
+                ) : (
+                  <Eye className="size-4" aria-hidden />
+                )}
+              </button>
             </div>
-
-            <div className="grid gap-2">
-              <Label htmlFor="set-password-confirm" className="font-inter text-sm">
-                Confirm password
-              </Label>
-              <Input
-                id="set-password-confirm"
-                name="confirm_password"
-                type="password"
-                placeholder="Confirm password"
-                className="rounded-[12px]"
-                value={values.confirm_password}
-                onChange={handleChange}
-                aria-invalid={Boolean(errors.confirm_password)}
-                autoComplete="new-password"
-              />
-              {errors.confirm_password ?
-                <p className="font-inter text-xs text-destructive">{errors.confirm_password}</p>
-              : null}
-            </div>
-
-            <StrengthIndicator level={level} />
-
-            <Button type="submit" className="mt-1 h-11 w-full rounded-full" disabled={isMutating}>
-              {isMutating ?
-                <>
-                  <Loader2 className="size-4 animate-spin" />
-                  Saving...
-                </>
-              : "Set new password"}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
-    </AuthLayout>
+            {name === "password" && (
+              <p
+                id="password-help"
+                className="text-xs leading-[18px] text-text-neutral-weak"
+              >
+                At least 8 characters containing uppercase and lowercase
+                letters, a number, and a symbol.
+              </p>
+            )}
+            {errors[name] && (
+              <p
+                id={`${name}-error`}
+                className="text-xs text-text-error-strong"
+              >
+                {errors[name]}
+              </p>
+            )}
+          </div>
+        ))}
+        <Button
+          type="submit"
+          className="h-11 w-full rounded-lg"
+          disabled={isMutating}
+        >
+          {isMutating ? (
+            <>
+              <Loader2 className="size-4 animate-spin" />
+              Saving...
+            </>
+          ) : (
+            "Reset password"
+          )}
+        </Button>
+      </form>
+    </AuthEntryLayout>
   );
 }

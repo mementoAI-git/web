@@ -63,7 +63,7 @@ function ChangePasswordModal({ onClose }: { onClose: () => void }) {
     >
       <div
         className={cn(
-          "relative w-full max-w-md rounded-2xl border border-v3-stroke-weak bg-white p-6 shadow-xl",
+          "relative w-full max-w-md rounded-2xl border border-v3-stroke-weak bg-bg-neutral p-6 shadow-xl",
           "motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-95 motion-safe:duration-200",
         )}
       >

@@ -80,3 +80,17 @@ describe("History", () => {
     expect(document.querySelector(".py-3.px-6")).toBeTruthy();
   });
 });
+
+
+it("places voice start and end dividers in the conversation and keeps them when older messages load", () => {
+  const lastMessage = { _id: "last", text: "Hello", role: "user" };
+  const voiceEvents = [
+    { id: "start", active: true, afterMessage: lastMessage },
+    { id: "end", active: false, afterMessage: lastMessage },
+  ];
+  const view = (messages: typeof lastMessage[]) => <MemoryRouter><History memory={memory} messages={messages} voiceEvents={voiceEvents} setMessages={() => {}} scrollContainerRef={{ current: null }} onViewDetails={() => {}} /></MemoryRouter>;
+  const { rerender } = render(view([lastMessage]));
+  expect(screen.getAllByRole("separator").map(node => node.getAttribute("aria-label"))).toEqual(["Voice conversation started", "Voice conversation ended"]);
+  rerender(view([{ _id: "older", text: "Earlier", role: "ai" }, lastMessage]));
+  expect(screen.getAllByRole("separator")).toHaveLength(2);
+});

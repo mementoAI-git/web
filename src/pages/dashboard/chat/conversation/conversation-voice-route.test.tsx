@@ -9,8 +9,8 @@ import Conversation from "./index";
 const API = "http://localhost:3000/api";
 
 vi.mock("@/components/Chatinput/Voiceinput", () => ({
-  default: function VoiceinputMock() {
-    return <div data-testid="voice-input-mock">Voice mode</div>;
+  default: function VoiceinputMock({ memoryId }: { memoryId: string | null }) {
+    return <div data-testid="voice-input-mock" data-memory-id={memoryId ?? "none"}>Voice mode</div>;
   },
 }));
 
@@ -40,6 +40,15 @@ describe("Conversation voice route", () => {
       data: { tier: "pro", status: "active", features: [] },
     }),
   );
+
+  it("opens a new voice session without sending the route placeholder as a memory id", async () => {
+    server.use(proSubscription);
+    renderWithProviders(
+      <ConversationChromeProvider><Conversation id="new" /></ConversationChromeProvider>,
+      { auth: true, route: "/chat/new/voice" },
+    );
+    expect(await screen.findByTestId("voice-input-mock")).toHaveAttribute("data-memory-id", "none");
+  });
 
   it("renders voice UI while memory is still loading (does not block on Loader)", async () => {
     server.use(
@@ -94,7 +103,7 @@ describe("Conversation voice route", () => {
       </ConversationChromeProvider>,
       {
         auth: true,
-        route: "/chat/mem-voice-2/voice",
+        route: "/chat/mem-voice-2?voice=1",
       },
     );
 

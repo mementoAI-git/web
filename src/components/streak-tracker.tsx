@@ -1,3 +1,4 @@
+import chatSettingsGradient from "@/assets/image/chat settings gradient.png";
 import { useStore } from "@/hooks/use-store";
 import { cn } from "@/utility";
 import type { PropsWithChildren } from "react";
@@ -54,7 +55,15 @@ function Streak() {
   const weekStreakDisplay = user?.streak ? (Number(user.streak) / 7).toFixed(0) : "0";
 
   return (
-    <div className="flex w-[311px] flex-col gap-5 rounded-2xl border border-stroke-neutral-weak bg-bg-neutral p-4 shadow-btn">
+    <div
+      className="relative isolate flex w-[311px] flex-col gap-5 overflow-hidden rounded-2xl border border-stroke-neutral-weak bg-bg-neutral p-4 shadow-btn [&>div]:relative"
+    >
+      <img
+        src={chatSettingsGradient}
+        alt=""
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 h-[466px] w-full object-fill opacity-50"
+      />
       <div className="flex flex-col items-center justify-center gap-8 py-4">
         <div
           className="flex size-[115px] items-center justify-center rounded-full border border-stroke-neutral-weak bg-fill-brand-weak"

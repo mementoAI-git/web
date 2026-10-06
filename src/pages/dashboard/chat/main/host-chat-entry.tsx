@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import useSWR from "swr";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import endpoint from "@/api/endpoint";
 import Loader from "@/pages/dashboard/chat/conversation/loader";
 
@@ -11,6 +11,7 @@ import Loader from "@/pages/dashboard/chat/conversation/loader";
  */
 export default function HostChatEntryPage() {
   const navigate = useNavigate();
+  const { state } = useLocation();
   const [searchParams] = useSearchParams();
   const { data, isLoading, error } = useSWR(endpoint.profile);
 
@@ -18,13 +19,18 @@ export default function HostChatEntryPage() {
 
   useEffect(() => {
     if (isLoading || data == null) return;
-    const suffix = searchParams.toString() ? `?${searchParams.toString()}` : "";
-    if (primaryConversationId) {
-      navigate(`/chat/${primaryConversationId}${suffix}`, { replace: true });
-    } else {
-      navigate(`/chat/new${suffix}`, { replace: true });
+    const params = new URLSearchParams(searchParams);
+    const wantsVoice = params.get("mode") === "voice";
+    if (wantsVoice) {
+      params.delete("mode");
+      params.set("voice", "1");
     }
-  }, [isLoading, data, primaryConversationId, navigate, searchParams]);
+    const suffix = params.toString() ? `?${params.toString()}` : "";
+    navigate(`/chat/${primaryConversationId || "new"}${suffix}`, {
+      replace: true,
+      state,
+    });
+  }, [isLoading, data, primaryConversationId, navigate, searchParams, state]);
 
   if (error) {
     return (

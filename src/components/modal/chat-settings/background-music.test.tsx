@@ -1,8 +1,11 @@
 import { render, screen } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import BackgroundMusic from "./background-music";
 
 const setVolume = vi.fn();
+const playTrack = vi.fn();
+const trigger = vi.fn();
+let currentTrack: string | null = "moonlight";
 let mockBackgroundMusic: string | null = "moonlight";
 
 vi.mock("swr", async (importOriginal) => {
@@ -13,10 +16,10 @@ vi.mock("swr", async (importOriginal) => {
 vi.mock("@/hooks/use-background-music", () => ({
   useBackgroundMusic: () => ({
     isPlaying: false,
-    currentTrack: "moonlight",
+    currentTrack,
     volume: 50,
     setVolume,
-    playTrack: vi.fn(),
+    playTrack,
     pauseTrack: vi.fn(),
     resumeTrack: vi.fn(),
     stopTrack: vi.fn(),
@@ -35,12 +38,45 @@ vi.mock("@/hooks/use-store", () => ({
 }));
 
 vi.mock("@/hooks/use-fetcher", () => ({
-  default: () => ({ isMutating: false, trigger: vi.fn() }),
+  default: () => ({ isMutating: false, trigger }),
 }));
 
+afterEach(() => vi.unstubAllGlobals());
+
 describe("BackgroundMusic", () => {
+  it.each(["Next track", "Previous track"])("cycles tracks using %s in the compact player", async (label) => {
+    const user = await import("@testing-library/user-event").then(({ default: userEvent }) => userEvent.setup());
+    render(<BackgroundMusic compact />);
+    expect(screen.queryByRole("button", { name: /off no tune/i })).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: label }));
+    expect(trigger).toHaveBeenCalledWith({ bg_music: "seawaves" });
+    expect(playTrack).toHaveBeenCalledWith("seawaves");
+  });
+
+  it("starts the saved track after stopping", async () => {
+    currentTrack = null;
+    mockBackgroundMusic = "seawaves";
+    const user = await import("@testing-library/user-event").then(({ default: userEvent }) => userEvent.setup());
+    render(<BackgroundMusic compact />);
+    expect(screen.getByText("Sea Waves")).toBeVisible();
+    await user.click(screen.getByRole("button", { name: "Play music" }));
+    expect(playTrack).toHaveBeenCalledWith("seawaves");
+  });
+
+  it("can start music when no track was previously selected", async () => {
+    currentTrack = null;
+    mockBackgroundMusic = null;
+    const user = await import("@testing-library/user-event").then(({ default: userEvent }) => userEvent.setup());
+    render(<BackgroundMusic compact />);
+    await user.click(screen.getByRole("button", { name: "Play music" }));
+    expect(playTrack).toHaveBeenCalledWith("moonlight");
+  });
+
   beforeEach(() => {
+    vi.clearAllMocks();
+    currentTrack = "moonlight";
     mockBackgroundMusic = "moonlight";
+    vi.stubGlobal("ResizeObserver", class { observe() {} unobserve() {} disconnect() {} });
   });
 
   it("shows Background Ambience with Off as an explicit choice", () => {
@@ -56,17 +92,22 @@ describe("BackgroundMusic", () => {
     expect(title.parentElement).toHaveClass("flex", "flex-col");
   });
 
-  it("renders the Figma volume track and supports keyboard adjustment", async () => {
+  it("renders the Fluid volume slider and supports keyboard adjustment", async () => {
     setVolume.mockClear();
     const user = await import("@testing-library/user-event").then(({ default: userEvent }) => userEvent.setup());
     render(<BackgroundMusic />);
 
-    const slider = screen.getByRole("slider", { name: /background ambience volume/i });
-    expect(slider).toHaveClass("h-5");
-    expect(screen.getByTestId("ambience-volume-marker")).toHaveClass("w-px", "h-2.5");
-    await user.click(slider);
+    const slider = screen.getByRole("slider", { name: /^volume$/i });
+    expect(slider).toHaveAttribute("aria-valuenow", "50");
+    expect(slider).toHaveAttribute("min", "0");
+    expect(slider).toHaveAttribute("max", "100");
+    slider.focus();
     await user.keyboard("{ArrowRight}");
     expect(setVolume).toHaveBeenCalledWith(51);
+    await user.keyboard("{Home}");
+    expect(setVolume).toHaveBeenLastCalledWith(0);
+    await user.keyboard("{End}");
+    expect(setVolume).toHaveBeenLastCalledWith(100);
   });
 
   it("keeps track cards visually available when ambience is off", () => {

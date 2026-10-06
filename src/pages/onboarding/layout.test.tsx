@@ -1,40 +1,40 @@
 import { describe, it, expect, vi } from "vitest";
 import { screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { Routes, Route } from "react-router-dom";
 import { renderWithProviders } from "@/test";
 import OnboardLayout from "./layout";
-
 vi.mock("@/components/layouts/auth-check", () => ({
-  default: ({ children }: { children: React.ReactNode }) => <div data-testid="auth-check">{children}</div>,
+  default: ({ children }: { children: React.ReactNode }) => children,
 }));
 
 describe("OnboardLayout", () => {
-  it("uses v3 fill token for skip control hover color", () => {
+  it("centres the wordmark with no header skip on welcome", () => {
     renderWithProviders(
       <Routes>
         <Route path="/onboarding" element={<OnboardLayout />}>
-          <Route index element={<div>Child</div>} />
+          <Route path="welcome" element={<div>Welcome</div>} />
         </Route>
       </Routes>,
-      { route: "/onboarding", auth: true },
+      { route: "/onboarding/welcome", auth: true },
     );
-
-    const skip = screen.getByRole("button", { name: /skip for now/i });
-    expect(skip).toHaveClass("hover:text-v3-fill-strong");
+    expect(screen.getByRole("link", { name: "Memento." })).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Skip" }),
+    ).not.toBeInTheDocument();
   });
-
-  it("does not render the skip control on the summary route", () => {
+  it("shows Skip on summary and sends the user to the dashboard", async () => {
+    const user = userEvent.setup();
     renderWithProviders(
       <Routes>
         <Route path="/onboarding" element={<OnboardLayout />}>
           <Route path="summary" element={<div>Summary</div>} />
         </Route>
+        <Route path="/overview" element={<div>Dashboard</div>} />
       </Routes>,
       { route: "/onboarding/summary", auth: true },
     );
-
-    expect(
-      screen.queryByRole("button", { name: /skip for now/i }),
-    ).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Skip" }));
+    expect(await screen.findByText("Dashboard")).toBeInTheDocument();
   });
 });

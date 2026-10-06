@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, it, expect, vi } from "vitest";
 import { screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { useModal } from "@/hooks/use-modal";
 import { renderWithProviders } from "@/test";
 import { default as WelcomeSection } from "./welcome-section";
 import {
@@ -7,14 +9,65 @@ import {
   shouldUseBrightWelcomeIcon,
 } from "./welcome-section-helpers";
 
+vi.mock("@/components/Chatinput/inline-voice-session", () => ({
+  InlineVoiceSession: ({ onEnd }: { onEnd: () => void }) => <section aria-label="Inline voice"><button onClick={onEnd}>End call</button></section>,
+}));
+
 describe("WelcomeSection", () => {
-  it("renders View insights button", () => {
+  it("starts voice inside the banner and restores actions when the call ends", async () => {
+    const user = userEvent.setup();
+    const { container } = renderWithProviders(<WelcomeSection />, { route: "/overview", auth: true });
+    await user.click(screen.getByRole("button", { name: "Voice conversation" }));
+    const voice = await screen.findByRole("region", { name: "Inline voice" });
+    expect(container.contains(voice)).toBe(true);
+    expect(screen.queryByText("What’s on your mind today?")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Add story" })).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "End call" }));
+    expect(screen.getByRole("button", { name: "Voice conversation" })).toBeInTheDocument();
+    expect(screen.getByText("What’s on your mind today?")).toBeInTheDocument();
+  });
+
+  it("replaces the secondary actions with a voice-mode entry link", () => {
     renderWithProviders(<WelcomeSection />, { route: "/overview", auth: true });
-    expect(screen.getByRole("button", { name: /view insights/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Voice conversation" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /^add story$/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /quick add/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: /^chat$/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("opens story creation from the banner", async () => {
+    function ModalState() {
+      const { state } = useModal();
+      return <output data-testid="modal-state">{state[0]?.name}</output>;
+    }
+    const user = userEvent.setup();
+    renderWithProviders(
+      <>
+        <WelcomeSection />
+        <ModalState />
+      </>,
+      { route: "/overview", auth: true },
+    );
+    await user.click(screen.getByRole("button", { name: /^add story$/i }));
+    expect(screen.getByTestId("modal-state")).toHaveTextContent(
+      "create-memory",
+    );
+    expect(screen.queryByText("Enrichment score")).not.toBeInTheDocument();
   });
 
   it("renders the section without crashing", () => {
-    const { container } = renderWithProviders(<WelcomeSection />, { route: "/overview", auth: true });
+    const { container } = renderWithProviders(<WelcomeSection />, {
+      route: "/overview",
+      auth: true,
+    });
     expect(container.firstChild).toBeTruthy();
   });
 
@@ -57,6 +110,7 @@ describe("shouldUseBrightWelcomeIcon", () => {
 
 describe("getGreetingPunctuation", () => {
   it("returns '?' for question-style greetings", () => {
+    expect(getGreetingPunctuation("Back at it,")).toBe("?");
     expect(getGreetingPunctuation("Can't sleep,")).toBe("?");
     expect(getGreetingPunctuation("Burning the midnight oil,")).toBe("?");
     expect(getGreetingPunctuation("Keeping a late night,")).toBe("?");

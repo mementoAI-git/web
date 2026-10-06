@@ -1,80 +1,66 @@
-import AuthCheck from "@/components/layouts/auth-check";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
-import Logo from "@/components/logo";
+import AuthCheck from "@/components/layouts/auth-check";
 import { useStore } from "@/hooks/use-store";
 import { cn } from "@/lib/utils";
+import { OnboardingButton } from "./components/onboarding-card";
+import { onboardingAssets as assets } from "./assets";
 
 export default function OnboardLayout() {
+  const { pathname } = useLocation();
   const navigate = useNavigate();
-  const location = useLocation();
-
   const { user, setUser } = useStore();
-  const isSummaryRoute =
-    location.pathname === "/onboarding/summary" ||
-    location.pathname.startsWith("/onboarding/summary?");
-  const isWelcomeRoute =
-    location.pathname === "/onboarding/welcome" ||
-    location.pathname.startsWith("/onboarding/welcome?");
-  const isNicknameRoute =
-    location.pathname === "/onboarding/nickname" ||
-    location.pathname.startsWith("/onboarding/nickname?");
-  const isMiscRoute =
-    location.pathname === "/onboarding/misc" ||
-    location.pathname.startsWith("/onboarding/misc?");
-
+  const isWelcome =
+    pathname === "/onboarding" ||
+    pathname === "/onboarding/" ||
+    pathname === "/onboarding/welcome";
+  const isSummary = pathname === "/onboarding/summary";
+  const isBeneficiary = pathname === "/onboarding/beneficiary";
   const handleSkip = () => {
-    try {
-      if (user && setUser) {
-        setUser({ ...user, onboarding_status: "skipped" });
-      }
-    } catch {
-      // ignore
-    }
+    if (user) setUser?.({ ...user, onboarding_status: "skipped" });
     navigate("/overview");
   };
-
   return (
-    <div className="flex h-dvh w-screen flex-col bg-bg-neutral">
-      {!(isWelcomeRoute || isNicknameRoute || isSummaryRoute) ? (
-        <header className="sticky top-0 z-[100] flex shrink-0 items-center justify-between gap-3 bg-bg-neutral px-4 py-[6px] sm:px-6 sm:py-[14px]">
-          <Link
-            to="/"
-            className="rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-v3-brand-strong focus-visible:ring-offset-2"
-          >
-            <Logo />
-          </Link>
-          <button
-            type="button"
+    <div
+      className={cn(
+        "flex min-h-dvh w-full flex-col bg-bg-neutral font-geist text-text-neutral-strong",
+        !isBeneficiary && "onboarding-layout",
+        isSummary && "h-dvh overflow-x-hidden overflow-y-auto",
+      )}
+    >
+      <header
+        className={cn(
+          "flex shrink-0 items-center border-b border-stroke-neutral-weak px-5 pt-5 pb-[19px] sm:px-10",
+          isWelcome ? "h-20 justify-center" : "h-[88px] justify-between",
+        )}
+      >
+        <Link
+          to="/"
+          className="font-garamond text-[32px] font-medium leading-10 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-stroke-brand-strong"
+        >
+          Memento.
+        </Link>
+        {!isWelcome && (
+          <OnboardingButton
+            variant="outline"
             onClick={handleSkip}
-            className="cursor-pointer rounded text-xs font-medium text-v3-text-weak transition-colors hover:text-v3-fill-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-v3-brand-strong focus-visible:ring-offset-2 sm:text-sm"
+            className="w-[119px] gap-1 px-0"
           >
-            Skip for now →
-          </button>
-        </header>
-      ) : null}
+            Skip
+            <img
+              src={assets["19031-32001/imgArrowNarrowRight"]}
+              alt=""
+              className="dark:invert"
+            />
+          </OnboardingButton>
+        )}
+      </header>
       <AuthCheck>
         <main
           className={cn(
-            "min-h-0 bg-bg-neutral",
-            isSummaryRoute
-              ? "w-full flex-1"
-              : isMiscRoute
-                ? "mx-auto h-fit w-fit max-w-[620px]"
-                : "mx-auto w-full flex-1",
-            isWelcomeRoute || isNicknameRoute
-              ? "overflow-y-auto lg:overflow-hidden"
-              : isSummaryRoute
-                ? "overflow-y-auto lg:overflow-hidden"
-                : "overflow-y-auto",
-            isSummaryRoute
-              ? "max-w-none p-0"
-              : isWelcomeRoute
-                ? "max-w-none px-5 py-8 sm:px-10 sm:py-12"
-                : isNicknameRoute
-                  ? "max-w-none px-5 py-8 sm:px-10 sm:py-12"
-                  : isMiscRoute
-                    ? null
-                    : "max-w-[620px] px-4 pb-6 sm:px-6",
+            "flex w-full flex-1 justify-center px-4 py-8 sm:px-10",
+            isWelcome ? "sm:py-16" : "sm:py-8",
+            isWelcome ? "items-start" : "items-center",
+            isBeneficiary && "mx-auto max-w-[620px]",
           )}
         >
           <Outlet />

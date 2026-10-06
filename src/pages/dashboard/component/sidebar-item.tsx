@@ -9,6 +9,7 @@ interface SideBarItemProps {
   /** Shown in the icon column instead of Icon / image URL */
   emoji?: string;
   title: string;
+  tone?: "neutral" | "brand";
   link?: string;
   active?: boolean;
   onClick?: () => void;
@@ -22,6 +23,7 @@ export default function SideBarItem({
   icon,
   emoji,
   title,
+  tone = "neutral",
 }: SideBarItemProps) {
   const navigate = useNavigate();
 
@@ -39,14 +41,18 @@ export default function SideBarItem({
         isActive={active}
         onClick={handleClick}
         className={cn(
-          "h-10 gap-3 px-3 py-2 font-inter text-sm font-normal",
+          "[&_svg]:size-6 h-11 gap-3 px-3 py-2.5 font-inter text-sm font-normal",
           "transition-[transform,background-color,color] duration-150 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-[0.98]",
           active && "font-semibold",
+          tone === "brand" && "text-text-brand-strong",
         )}
       >
-        <span className="flex size-5 shrink-0 items-center justify-center">
+        <span className="flex size-6 shrink-0 items-center justify-center">
           {emoji ? (
-            <span className="text-lg leading-none select-none" aria-hidden>
+            <span
+              className="text-[23.896px] leading-none select-none"
+              aria-hidden
+            >
               {emoji}
             </span>
           ) : icon ? (
@@ -54,10 +60,19 @@ export default function SideBarItem({
               src={icon}
               alt=""
               aria-hidden
-              className="size-5 object-contain"
+              className="shrink-0 object-contain"
             />
           ) : Icon ? (
-            <Icon aria-hidden />
+            <Icon
+              className={cn(
+                "size-6",
+                tone === "brand"
+                  ? "text-icon-brand-strong"
+                  : "text-icon-neutral-strong",
+              )}
+              strokeWidth={1.75}
+              aria-hidden
+            />
           ) : null}
         </span>
         <span

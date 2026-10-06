@@ -1,3 +1,6 @@
+import { ChatDesignIcon } from "@/components/chat-design-icon";
+import { useVoiceSession } from "@/contexts/voice-session";
+import { buildPromptWithReplyQuote } from "@/utility/chat-reply-prompt";
 import { TimesIcon } from "@/components/icons";
 import { cn, toBase64 } from "@/utility";
 import { toast } from "sonner";
@@ -15,7 +18,7 @@ import React, {
   useRef,
   useState,
 } from "react";
-import Voiceinput from "./Voiceinput";
+import { InlineVoiceSession } from "./inline-voice-session";
 import Spinner from "../spinner";
 import useFileUpload from "@/hooks/use-file-upload";
 import { type IFile, type IOnUploadPayload } from "@/utility/interface";
@@ -29,8 +32,8 @@ import {
   CHAT_SLASH_COMMANDS,
   type ChatSlashCommandItem,
 } from "./chat-slash-commands";
-import { ArrowUp, Mic, Paperclip, Phone } from "lucide-react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { ArrowUp } from "lucide-react";
+import { useLocation, useNavigate } from "react-router-dom";
 
 export interface IOnSendPayload {
   attachments?: IFile[];
@@ -48,6 +51,7 @@ export interface IChatinputProps {
   loading?: boolean
   onChangeText?: (str: string) => void;
   onSend?: (p: IOnSendPayload) => void
+  onVoiceSessionChange?: (active: boolean) => void;
   onStop?: () => void
   memoryId?: string | null
   history?: { role: "user" | "ai", text: string }[]
@@ -71,6 +75,7 @@ function ChatinputImpl({
   typing = false,
   loading = false,
   onStop,
+  onVoiceSessionChange,
   onSend,
   memoryId,
   history = [],
@@ -79,6 +84,8 @@ function ChatinputImpl({
   onClearReplyQuote,
 }: ChatinputImplProps) {
   const location = useLocation();
+  const voice = useVoiceSession();
+  const [voiceSending, setVoiceSending] = useState(false);
   const navigate = useNavigate();
   const voiceRouteMatch = location.pathname.match(/^\/chat\/([^/]+)\/voice\/?$/);
   const voiceRouteChatId = voiceRouteMatch?.[1] ?? null;
@@ -86,7 +93,7 @@ function ChatinputImpl({
   const pathChatId = location.pathname.match(/^\/chat\/([^/]+)\/?$/)?.[1];
   const voiceNavTargetId = memoryId ?? pathChatId ?? null;
   const voiceCallTo =
-    voiceNavTargetId ? `/chat/${voiceNavTargetId}/voice` : null;
+    voiceNavTargetId ? `/chat/${voiceNavTargetId}?voice=1` : null;
 
   const readDraft = useCallback(() => {
     if (!draftStorageKey || typeof localStorage === "undefined") return "";
@@ -116,7 +123,16 @@ function ChatinputImpl({
 
   const { files, handleUpload, setFiles, handleDeleteFile } = useFileUpload();
 
-  const isVoiceMode = isVoiceCallRoute || inlineVoiceOpen;
+  const isVoiceMode = isVoiceCallRoute || new URLSearchParams(location.search).get("voice") === "1" || inlineVoiceOpen;
+
+  useEffect(() => {
+    if (!voice || !isVoiceMode) return;
+    voice.start({ memoryId: voiceNavTargetId === "new" ? null : voiceNavTargetId, history });
+    const params = new URLSearchParams(location.search);
+    params.delete("voice");
+    navigate(`${isVoiceCallRoute ? `/chat/${voiceRouteChatId}` : location.pathname}${params.size ? `?${params}` : ""}`, { replace: true });
+    setInlineVoiceOpen(false);
+  }, [voice, isVoiceMode, voiceNavTargetId, history, location.pathname, location.search, navigate, isVoiceCallRoute, voiceRouteChatId]);
 
   const textBeforeCursor = text.slice(0, cursorPosition)
   const lastSlashIndex = textBeforeCursor.lastIndexOf("/")
@@ -363,7 +379,8 @@ function ChatinputImpl({
     [processFileForUpload],
   );
 
-  const handleSend = () => {
+  const handleSend = async () => {
+    if (voiceSending) return;
     if (!isEmpty(files) && files.every(f => f.progress < 100)) {
       return;
     }
@@ -380,7 +397,18 @@ function ChatinputImpl({
       attachments,
       replyTo: replyQuote ?? null,
     };
-    onSend?.(payload);
+    if (voice?.active) {
+      setVoiceSending(true);
+      try {
+        await voice.send({ text: buildPromptWithReplyQuote(text, replyQuote ?? null), attachments });
+        onClearReplyQuote?.();
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Could not send to voice. Please try again.");
+        return;
+      } finally {
+        setVoiceSending(false);
+      }
+    } else onSend?.(payload);
     if (draftStorageKey) {
       try {
         localStorage.removeItem(draftStorageKey);
@@ -455,19 +483,23 @@ function ChatinputImpl({
     typing ||
     loading ||
     uploadsPending ||
+    voiceSending ||
+    Boolean(voice?.active && !voice.ready) ||
     !hasSendableContent;
   const showSendControl = !typing && (hasSendableContent || loading);
 
   /** URL /chat/:id/voice supplies id before memory SWR resolves — Live API needs this for context + saving. */
-  const voiceMemoryId = memoryId ?? voiceRouteChatId ?? null;
+  const voiceMemoryId = memoryId ?? (voiceRouteChatId === "new" ? null : voiceRouteChatId);
 
-  if (isVoiceMode) {
+  if (isVoiceMode && !voice) {
     return (
-      <Voiceinput
-        onCancel={() => {
-          if (isVoiceCallRoute && voiceRouteChatId) {
-            navigate(`/chat/${voiceRouteChatId}`, { replace: true });
-          }
+      <InlineVoiceSession
+        onSessionChange={onVoiceSessionChange}
+        onEnd={() => {
+          const params = new URLSearchParams(location.search);
+          params.delete("voice");
+          const path = isVoiceCallRoute ? `/chat/${voiceRouteChatId}` : location.pathname;
+          navigate(`${path}${params.size ? `?${params}` : ""}`, { replace: true });
           setInlineVoiceOpen(false);
         }}
         memoryId={voiceMemoryId}
@@ -482,9 +514,14 @@ function ChatinputImpl({
         <div
           ref={inputWrapperRef}
           data-testid="chat-composer-surface"
+          onClick={(event) => {
+            // Keep toolbar actions and native textarea caret placement intact.
+            if ((event.target as Element).closest('button, a, input, textarea, select, label, [role="button"], [role="menuitem"], [contenteditable="true"]')) return;
+            textareaRef.current?.focus();
+          }}
           className={
             cn(
-              "flex min-h-24 w-full min-w-0 flex-col gap-2 rounded-xl border border-stroke-neutral-weak bg-background px-3 py-2.5 transition-[border-color,box-shadow] duration-150 focus-within:border-stroke-neutral-strong focus-within:shadow-sm sm:px-4 sm:py-3",
+              "flex min-h-[140px] w-full min-w-0 cursor-text flex-col gap-4 rounded-3xl border border-stroke-neutral-weak bg-fill-neutral-weak p-4 transition-[border-color,box-shadow] duration-150 focus-within:border-stroke-neutral-strong focus-within:shadow-sm sm:p-5",
               className
             )
           }
@@ -525,7 +562,7 @@ function ChatinputImpl({
             onSelect={() => setCursorPosition(textareaRef.current?.selectionStart ?? 0)}
             placeholder="Type text here... Type / for formatting"
             className={cn(
-              "min-h-10 w-full shrink-0 resize-none overflow-hidden bg-transparent font-geist text-sm leading-5 text-text-neutral-strong outline-none placeholder:text-text-neutral-weaker sm:text-base sm:leading-6",
+              "min-h-12 w-full shrink-0 resize-none overflow-hidden bg-transparent font-geist text-sm leading-5 text-text-neutral-strong outline-none placeholder:text-text-neutral-weaker sm:text-base sm:leading-6",
               {
                 [inputClassName]: !isEmpty(inputClassName),
               },
@@ -549,9 +586,9 @@ function ChatinputImpl({
               <label
                 htmlFor="chat-file-trigger"
                 aria-label="Attach file"
-                className="flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-full bg-fill-neutral-weaker text-icon-neutral-weak transition-[transform,background-color,color] duration-150 hover:bg-fill-neutral-weak hover:text-text-neutral-strong active:scale-[0.97]"
+                className="flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-full bg-fill-neutral-weak text-icon-neutral-weak transition-[transform,background-color,color] duration-150 hover:bg-fill-neutral-weak hover:text-text-neutral-strong active:scale-[0.97]"
               >
-                <Paperclip className="size-4" strokeWidth={1.75} aria-hidden />
+                <ChatDesignIcon name="attachment" />
                 <input
                   id="chat-file-trigger"
                   type="file"
@@ -562,34 +599,7 @@ function ChatinputImpl({
                 />
               </label>
 
-              {shellTestId !== "chat-input-conversation-shell" && !typing ? (
-                voiceCallTo ? (
-                  <Link
-                    to={voiceCallTo}
-                    className="inline-flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-xl border border-stroke-neutral-weaker bg-fill-neutral-weaker text-icon-neutral-weak no-underline transition-colors hover:bg-fill-neutral-weak hover:text-text-neutral-strong md:size-11"
-                    aria-label="Voice call"
-                  >
-                    <Phone
-                      className="size-[18px] shrink-0 md:size-5"
-                      strokeWidth={1.75}
-                      aria-hidden
-                    />
-                  </Link>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => setInlineVoiceOpen(true)}
-                    className="flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-xl border border-stroke-neutral-weaker bg-fill-neutral-weaker text-icon-neutral-weak transition-colors hover:bg-fill-neutral-weak hover:text-text-neutral-strong md:size-11"
-                    aria-label="Voice call"
-                  >
-                    <Phone
-                      className="size-[18px] shrink-0 md:size-5"
-                      strokeWidth={1.75}
-                      aria-hidden
-                    />
-                  </button>
-                )
-              ) : null}
+
             </div>
 
             <div className="flex shrink-0 items-center gap-2">
@@ -598,17 +608,29 @@ function ChatinputImpl({
                   type="button"
                   onClick={() => void toggleQuickRecording()}
                   className={cn(
-                    "flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-full bg-fill-neutral-weaker text-icon-neutral-weak transition-[transform,background-color,color] duration-150 hover:bg-fill-neutral-weak hover:text-text-neutral-strong active:scale-[0.97]",
+                    "flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-full bg-fill-neutral-weak text-icon-neutral-weak transition-[transform,background-color,color] duration-150 hover:bg-fill-neutral-weak hover:text-text-neutral-strong active:scale-[0.97]",
                     isQuickRecording &&
                       "border-stroke-error-strong bg-fill-error-weak text-text-error-strong hover:bg-fill-error-weak",
                   )}
                   aria-label={isQuickRecording ? "Stop recording" : "Record voice clip"}
                 >
-                  <Mic
-                    className="size-4 shrink-0"
-                    strokeWidth={1.75}
-                    aria-hidden
-                  />
+                  <ChatDesignIcon name="microphone" />
+                </button>
+              ) : null}
+              {!typing && !showSendControl && !isQuickRecording ? (
+                <button
+                  type="button"
+                  aria-label="Voice call"
+                  aria-pressed={Boolean(voice?.active)}
+                  disabled={Boolean(voice?.active)}
+                  onClick={() => {
+                    if (voice) voice.start({ memoryId: voiceNavTargetId === "new" ? null : voiceNavTargetId ?? memoryId, history });
+                    else if (voiceCallTo) navigate(voiceCallTo);
+                    else setInlineVoiceOpen(true);
+                  }}
+                  className="flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-full bg-fill-overview-voice text-overview-voice transition-[transform,opacity] hover:opacity-90 active:scale-[0.97] disabled:cursor-default disabled:opacity-50"
+                >
+                  <ChatDesignIcon name="phone" />
                 </button>
               ) : null}
               {typing ? (

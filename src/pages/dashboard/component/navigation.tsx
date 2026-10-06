@@ -1,9 +1,7 @@
 // Updated: 2026-02-26
-import globeIcon from "@/assets/icon/folder/noto_globe-showing-asia-australia.png";
-import chatsIcon from "@/assets/icon/folder/chats icon.png";
-import cardFileBoxIcon from "@/assets/icon/folder/noto_card-file-box.png";
-import compassIcon from "@/assets/icon/folder/compass.png";
-import gearIcon from "@/assets/icon/folder/noto_gear.png";
+import globeIcon from "@/assets/icon/sidebar/globe.svg";
+import cardFileBoxIcon from "@/assets/icon/sidebar/card-file-box.svg";
+import gearIcon from "@/assets/icon/sidebar/gear.svg";
 
 /** Sub-routes under /settings/:tab (full-page settings). */
 export const settingNavigations = [
@@ -15,9 +13,9 @@ export const settingNavigations = [
 
 export const topNavigations = [
   { icon: globeIcon, title: "Overview", link: "/overview" },
-  { icon: chatsIcon, title: "Chat", link: "/chat" },
+  { emoji: "💬", title: "Chat", link: "/chat" },
   { icon: cardFileBoxIcon, title: "My Stories", link: "/stories" },
-  { icon: compassIcon, title: "Explore topics", link: "/explore" },
+  { emoji: "🧭", title: "Explore topics", link: "/explore" },
 ];
 
 export const bottomNavigations = [

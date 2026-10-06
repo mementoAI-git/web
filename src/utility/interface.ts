@@ -275,7 +275,7 @@ export interface IPromptWithAnswer extends IPrompt {
 }
 
 /** GET /prompts?date_key= — daily dashboard slots */
-export type DashboardPromptSlot =
+export type DashboardPromptSlot = (
   | {
       slot_kind: "ai";
       display_label: string;
@@ -289,7 +289,11 @@ export type DashboardPromptSlot =
       answered: boolean;
       prompt: IPrompt;
       reflection_day_key: string;
-    };
+    }
+) & {
+  /** Number of distinct users who submitted a reply to this prompt. */
+  reply_user_count?: number;
+};
 
 export interface IMessage {
   _id?: string;

@@ -1,155 +1,92 @@
-import { afterEach, describe, expect, it } from "vitest";
-import { Route, Routes, useLocation } from "react-router-dom";
-import { screen } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-
 import { renderWithProviders } from "@/test";
-
 import SummaryPage from "./summary";
-import {
-  ONBOARDING_SUMMARY_STORAGE_KEY,
-  type OnboardingSummarySnapshot,
-} from "./summary-helpers";
 
-function seedSummarySnapshot(snapshot: OnboardingSummarySnapshot) {
-  sessionStorage.setItem(
-    ONBOARDING_SUMMARY_STORAGE_KEY,
-    JSON.stringify(snapshot),
-  );
-}
+const navigate = vi.fn();
+const trigger = vi.fn();
+const setUser = vi.fn();
+vi.mock("react-router-dom", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("react-router-dom")>()),
+  useNavigate: () => navigate,
+}));
+vi.mock("@/hooks/use-store", () => ({
+  useStore: () => ({ user: { _id: "user-123", nickname: "Jane" }, setUser }),
+  StoreProvider: ({ children }: { children: React.ReactNode }) => children,
+}));
+vi.mock("@/hooks/use-fetcher", () => ({
+  default: () => ({ trigger, isMutating: false }),
+}));
+vi.mock("swr", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("swr")>()),
+  mutate: vi.fn().mockResolvedValue(undefined),
+}));
 
-function ChatLocationEcho() {
-  const location = useLocation();
-  const starter = new URLSearchParams(location.search).get("starter");
-  return <div>{starter}</div>;
-}
-
-function OverviewLocationEcho() {
-  const location = useLocation();
-  return <div>{String(location.state?.openModal ?? "none")}</div>;
-}
-
-describe("OnboardingSummaryPage", () => {
-  afterEach(() => {
-    sessionStorage.removeItem(ONBOARDING_SUMMARY_STORAGE_KEY);
-  });
-
-  it("renders live enrichment score and onboarding coverage", async () => {
-    seedSummarySnapshot({
-      nextAction: "dashboard",
-      skippedDeepPersonalization: false,
-      touchedCategories: ["identity_self", "heritage_roots"],
-      priorityDimensions: ["heritage_roots"],
-      motivationType: "memory_preservation",
-      nickname: "Jane",
-    });
-
-    renderWithProviders(
-      <Routes>
-        <Route path="/onboarding/summary" element={<SummaryPage />} />
-      </Routes>,
-      { route: "/onboarding/summary", auth: true },
+describe("onboarding summary", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    trigger.mockResolvedValue({});
+    sessionStorage.clear();
+    sessionStorage.setItem(
+      "memento:onboarding-flow:user-123",
+      JSON.stringify({
+        step: 3,
+        reasons: ["memory_preservation"],
+        about: "I care about family.",
+        areas: ["identity_self", "passions_interests"],
+      }),
     );
-
-    expect(await screen.findAllByText(/enrichment score/i)).toHaveLength(2);
+  });
+  it("reviews the actual answers and saves the supported API payload on Continue", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<SummaryPage />, { auth: true });
     expect(
       screen.getByRole("heading", {
-        name: /your memento profile is shaping up/i,
+        name: /Alright Jane, you’re ready to dive right in/i,
       }),
     ).toBeInTheDocument();
-    expect(
-      screen.getByText(/a first outline is already here\. you can keep building it at your own pace\./i),
-    ).toBeInTheDocument();
-    expect(screen.getAllByText("Identity & Self").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Heritage & Roots").length).toBeGreaterThan(0);
-    expect(
-      screen.getByText(/so far, your story is already opening around who you are/i),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(/still quiet for now:/i),
-    ).toBeInTheDocument();
-  });
-
-  it("goes to the dashboard from the left rail and clears the snapshot", async () => {
-    const user = userEvent.setup();
-    seedSummarySnapshot({
-      nextAction: "dashboard",
-      skippedDeepPersonalization: false,
-      touchedCategories: ["identity_self"],
-      priorityDimensions: [],
-      motivationType: "explorer",
-      nickname: "Jane",
-    });
-
-    renderWithProviders(
-      <Routes>
-        <Route path="/onboarding/summary" element={<SummaryPage />} />
-        <Route path="/overview" element={<div>Overview route</div>} />
-      </Routes>,
-      { route: "/onboarding/summary", auth: true },
+    expect(screen.getByText("I care about family.")).toBeInTheDocument();
+    expect(screen.getByText("Identity and self")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Continue" }));
+    await waitFor(() => expect(navigate).toHaveBeenCalledWith("/overview"));
+    expect(trigger).toHaveBeenCalledWith(
+      expect.objectContaining({
+        self_description: "I care about family.",
+        current_priority: ["identity_self", "passions_interests"],
+        join_reasons: ["memory_preservation"],
+        stepReached: 4,
+      }),
     );
-
-    const dashboardButtons = await screen.findAllByRole("button", {
-      name: /go to dashboard/i,
-    });
-    await user.click(dashboardButtons[0]);
-    expect(await screen.findByText("Overview route")).toBeInTheDocument();
-    expect(sessionStorage.getItem(ONBOARDING_SUMMARY_STORAGE_KEY)).toBeNull();
-  });
-
-  it("opens host chat with a personalized starter and clears the snapshot", async () => {
-    const user = userEvent.setup();
-    seedSummarySnapshot({
-      nextAction: "dashboard",
-      skippedDeepPersonalization: false,
-      touchedCategories: ["identity_self"],
-      priorityDimensions: ["relationships_people"],
-      motivationType: "memory_preservation",
-      nickname: "Jane",
-      lifeSituation: "caregiver",
-      homePlace: "Lagos",
-      personalityTraits: ["warm_caring"],
-      memoryTreasures: ["family_gatherings"],
-      sharingIntent: "shared_legacy",
-    });
-
-    renderWithProviders(
-      <Routes>
-        <Route path="/onboarding/summary" element={<SummaryPage />} />
-        <Route path="/chat" element={<ChatLocationEcho />} />
-      </Routes>,
-      { route: "/onboarding/summary", auth: true },
+    expect(setUser).toHaveBeenCalledWith(
+      expect.objectContaining({ onboarding_status: "completed" }),
     );
-
-    const chatButtons = await screen.findAllByRole("button", { name: /chat/i });
-    await user.click(chatButtons[0]);
-    expect(await screen.findByText(/hi memento, it's jane\./i)).toBeInTheDocument();
-    expect(screen.getByText(/family gatherings/i)).toBeInTheDocument();
-    expect(sessionStorage.getItem(ONBOARDING_SUMMARY_STORAGE_KEY)).toBeNull();
+    expect(
+      sessionStorage.getItem("memento:onboarding-flow:user-123"),
+    ).toBeNull();
   });
-
-  it("opens the add story modal from the banner card and clears the snapshot", async () => {
+  it("keeps the draft and stays on the summary when saving fails", async () => {
+    trigger.mockRejectedValue(new Error("offline"));
     const user = userEvent.setup();
-    seedSummarySnapshot({
-      nextAction: "dashboard",
-      skippedDeepPersonalization: false,
-      touchedCategories: ["identity_self"],
-      priorityDimensions: [],
-      motivationType: "explorer",
-      nickname: "Jane",
-    });
-
-    renderWithProviders(
-      <Routes>
-        <Route path="/onboarding/summary" element={<SummaryPage />} />
-        <Route path="/overview" element={<OverviewLocationEcho />} />
-      </Routes>,
-      { route: "/onboarding/summary", auth: true },
+    renderWithProviders(<SummaryPage />, { auth: true });
+    await user.click(screen.getByRole("button", { name: "Continue" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      /couldn’t save/i,
     );
-
-    const addStoryButtons = await screen.findAllByRole("button", { name: /add a story/i });
-    await user.click(addStoryButtons[0]);
-    expect(await screen.findByText("create-memory")).toBeInTheDocument();
-    expect(sessionStorage.getItem(ONBOARDING_SUMMARY_STORAGE_KEY)).toBeNull();
+    expect(navigate).not.toHaveBeenCalled();
+    expect(setUser).not.toHaveBeenCalled();
+    expect(
+      sessionStorage.getItem("memento:onboarding-flow:user-123"),
+    ).not.toBeNull();
+    trigger.mockResolvedValue({});
+    await user.click(screen.getByRole("button", { name: "Continue" }));
+    await waitFor(() => expect(navigate).toHaveBeenCalledWith("/overview"));
+  });
+  it("returns to the life area step for editing", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<SummaryPage />, { auth: true });
+    await user.click(screen.getByRole("button", { name: "Back" }));
+    expect(navigate).toHaveBeenCalledWith("/onboarding/misc");
+    expect(trigger).not.toHaveBeenCalled();
   });
 });

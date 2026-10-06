@@ -1,3 +1,4 @@
+import { VoiceSessionProvider } from "@/contexts/voice-session";
 import { useEffect, useState } from "react";
 import { cn } from "@/utility";
 import { Outlet, useLocation, useMatch, useNavigate } from "react-router-dom";
@@ -54,6 +55,7 @@ export default function DashboardLayout() {
   return (
     <AuthCheck>
       <OnboardingGuard>
+        <VoiceSessionProvider>
         <div className="bg-background w-full h-full min-h-screen flex flex-col md:flex-row overflow-hidden hide-scrollbar dynamic-height">
           <Modal />
           {sidebarOpen && (
@@ -69,7 +71,7 @@ export default function DashboardLayout() {
                 : "-translate-x-full md:translate-x-0",
               "fixed md:relative inset-y-0 left-0 z-50 md:z-auto",
               "transition-all duration-300 ease-in-out md:transition-all",
-              "w-full md:w-[260px] shrink-0",
+              "w-full md:w-[280px] shrink-0",
               mainSidebarCollapsed &&
                 "md:!w-0 md:!min-w-0 md:overflow-hidden md:opacity-0",
             )}
@@ -119,6 +121,7 @@ export default function DashboardLayout() {
             </DashboardHeaderActionsProvider>
           </main>
         </div>
+      </VoiceSessionProvider>
       </OnboardingGuard>
     </AuthCheck>
   );

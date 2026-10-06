@@ -52,17 +52,17 @@ export function AddGroupMembers({ data: groupId }: AddGroupMembersProps) {
       <ModalCloseBtn onClick={() => close?.("add-group-members")} />
       <div className="space-y-6">
         <h4 className="modal-title">Add members</h4>
-        <p className="font-inter text-sm text-gray-600">
+        <p className="font-inter text-sm text-v3-text-weak">
           Select beneficiaries to add to this group.
         </p>
         <ul className="max-h-64 space-y-2 overflow-y-auto">
           {beneficiaries.length === 0 ? (
-            <li className="font-inter text-sm text-gray-500">No beneficiaries to add.</li>
+            <li className="font-inter text-sm text-v3-text-weaker">No beneficiaries to add.</li>
           ) : (
             beneficiaries.map((b) => (
               <li
                 key={b._id}
-                className="flex items-center justify-between rounded-lg border border-gray-100 py-2 px-3"
+                className="flex items-center justify-between rounded-lg border border-v3-stroke-weak py-2 px-3"
               >
                 <UserItem {...b} avatarSize="sm" />
                 <Checkbox

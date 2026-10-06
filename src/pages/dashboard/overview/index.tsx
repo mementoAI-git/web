@@ -17,11 +17,11 @@ export default function OverviewPage() {
     } catch {
       /* Storage may be unavailable (private mode, embedded context). */
     }
-  }, []);
+  }, [open]);
 
   return (
     <div className="page-viewport hide-scrollbar">
-      <div className="mx-auto flex w-full min-w-0 max-w-[1038px] flex-col gap-6 px-4 pb-[max(2.5rem,env(safe-area-inset-bottom))] sm:gap-8 sm:px-5 sm:pb-10 md:px-6 lg:px-8">
+      <div className="mx-auto flex w-full min-w-0 max-w-[964px] flex-col gap-10 px-4 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-6 sm:gap-16 sm:px-5 sm:pt-12 sm:pb-10 md:px-6 lg:px-8">
         <WelcomeSection />
         <ActivitySummary />
         <BrowseTopics />
@@ -29,4 +29,3 @@ export default function OverviewPage() {
     </div>
   );
 }
-
