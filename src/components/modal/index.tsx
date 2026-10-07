@@ -1,3 +1,4 @@
+import { InviteFriends } from "./invite-friends";
 import { useModal } from "@/hooks/use-modal";
 import { SharePost } from "./share-post";
 import Welcome from "./welcome";
@@ -115,7 +116,7 @@ export default function Modal() {
   // ESC key dismissal: always closes the topmost modal
   useEffect(() => {
     const modal = state?.[0];
-    if (!modal) return;
+    if (!modal || modal.name === "invite-friends") return;
     const modalName = modal.name;
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") close(modalName);
@@ -129,6 +130,7 @@ export default function Modal() {
   }
 
   const topModal = state[0];
+  if (topModal.name === "invite-friends") return <InviteFriends />;
   const isTopFullscreenModal =
     FULL_SCREEN_MODALS.includes(topModal.name) && !isMobile;
 

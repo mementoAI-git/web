@@ -39,6 +39,7 @@ export interface RequestOptions extends AxiosRequestConfig {
 }
 
 export interface ApiResponse<T = unknown> {
+  success?: boolean;
   data: T;
   message?: string;
   status?: number;

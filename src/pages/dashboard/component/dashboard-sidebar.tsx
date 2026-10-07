@@ -114,8 +114,7 @@ export function DashboardSideBar({ onCollapse }: DashboardSideBarProps) {
                 <SideBarItem
                   icon={linkIcon}
                   title="Invite friends"
-                  link="/settings/beneficiary"
-                  active={pathname.startsWith("/settings/beneficiary")}
+                  onClick={() => open("invite-friends")}
                 />
                 <SideBarItem
                   icon={lightBulbIcon}

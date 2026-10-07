@@ -1,3 +1,4 @@
+import { captureReferral, getReferralCode } from "@/features/referrals/attribution";
 import { describe, expect, it, vi } from "vitest";
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -94,10 +95,11 @@ describe("RegisterPage", () => {
     expect(card?.className).not.toMatch(/\bborder-v3-stroke-weak\b/);
   });
 
-  it("submits registration and navigates to verify email", async () => {
+  it("submits referral attribution and clears it after registration", async () => {
+    captureReferral(`?ref=${"a".repeat(32)}`);
     server.use(
       http.post(`${API}/auth/register`, async ({ request }) => {
-        expect(await request.json()).toMatchObject({ delivery: "code" });
+        expect(await request.json()).toMatchObject({ delivery: "code", referral_code: "a".repeat(32) });
         return HttpResponse.json({
           success: true,
           message: "Registered",
@@ -119,6 +121,7 @@ describe("RegisterPage", () => {
     await user.click(screen.getByRole("button", { name: /create account/i }));
 
     await waitFor(() => {
+      expect(getReferralCode()).toBeUndefined();
       expect(mockNavigate).toHaveBeenCalledWith(
         "/verify-email?email=test%40example.com",
         { state: { verificationSentAt: expect.any(Number) } },

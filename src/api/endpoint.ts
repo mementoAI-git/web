@@ -18,6 +18,7 @@ export default {
   passkeyLoginComplete: "/auth/passkey/login/complete",
 
   // user
+  referrals: "/users/referrals",
   profile: "/users/profile",
   listPasskeys: "/users/passkeys",
   deletePasskey: "/users/passkeys/:credential_id",

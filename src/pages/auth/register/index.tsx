@@ -1,3 +1,4 @@
+import { clearReferral, getReferralCode } from "@/features/referrals/attribution";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
@@ -50,8 +51,13 @@ export default function RegisterPage() {
     schema,
     initial,
     async onSubmit(payload) {
-      const result = await trigger({ ...payload, delivery: "code" });
+      const result = await trigger({
+        ...payload,
+        delivery: "code",
+        referral_code: getReferralCode(),
+      });
       if (result) {
+        if (result.success !== false) clearReferral();
         toast.success(result?.message);
       }
       navigate(`/verify-email?email=${encodeURIComponent(payload.email)}`, {

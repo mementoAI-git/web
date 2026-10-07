@@ -131,6 +131,14 @@ describe("DashboardSideBar", () => {
     expect(screen.getByText("Host user")).toBeInTheDocument();
   });
 
+  it("opens Invite friends without navigating to settings", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<><DashboardSideBar /><ModalState /><CurrentLocation /></>, { route: "/overview", auth: true });
+    await user.click(screen.getByRole("button", { name: "Invite friends" }));
+    expect(screen.getByTestId("modal-state")).toHaveTextContent("invite-friends");
+    expect(screen.getByTestId("current-location")).toHaveTextContent("/overview");
+  });
+
   it("calls the supplied collapse handler", async () => {
     const user = userEvent.setup();
     const onCollapse = vi.fn();
