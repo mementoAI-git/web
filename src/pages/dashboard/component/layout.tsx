@@ -9,6 +9,7 @@ import { SecurityNudgeBanner } from "@/components/security-nudge-banner";
 import { TrialBanner } from "@/components/trial-banner";
 import { useModal } from "@/hooks/use-modal";
 import { useChatSidebar } from "@/contexts/chat-sidebar";
+import { isSkyCardPage } from "./sky-card-page";
 import { DashboardHeader } from "./dashboard-header";
 import { DashboardSideBar } from "./dashboard-sidebar";
 import { DashboardChatSidebar } from "./dashboard-chat-sidebar";
@@ -56,7 +57,7 @@ export default function DashboardLayout() {
     <AuthCheck>
       <OnboardingGuard>
         <VoiceSessionProvider>
-        <div className="bg-background w-full h-full min-h-screen flex flex-col md:flex-row overflow-hidden hide-scrollbar dynamic-height">
+        <div data-sky-card-page={isSkyCardPage(location.pathname) ? "" : undefined} className="bg-background w-full h-full min-h-screen flex flex-col md:flex-row overflow-hidden hide-scrollbar dynamic-height">
           <Modal />
           {sidebarOpen && (
             <div

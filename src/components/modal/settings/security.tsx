@@ -58,12 +58,13 @@ function ChangePasswordModal({ onClose }: { onClose: () => void }) {
 
   return createPortal(
     <div
+      data-sky-card-page=""
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div
         className={cn(
-          "relative w-full max-w-md rounded-2xl border border-v3-stroke-weak bg-bg-neutral p-6 shadow-xl",
+          "sky-card relative w-full max-w-md rounded-2xl border border-v3-stroke-weak bg-bg-neutral p-6 shadow-xl",
           "motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-95 motion-safe:duration-200",
         )}
       >
@@ -206,7 +207,18 @@ function PasskeyManager() {
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <SettingsSectionCard
+      title="Passkeys"
+      description="Sign in with your fingerprint, face, or device PIN."
+      className="[&>div:first-child]:gap-0"
+      headerAction={
+<SettingsPillButton type="button" variant="default" className="sm:-translate-y-1.5" disabled={adding} onClick={handleAddPasskey}>
+          <Fingerprint size={14} strokeWidth={1.5} />
+          <span>Add a passkey</span>
+          {adding ? <Spinner loading className="!size-4 text-v3-text-strong" /> : null}
+        </SettingsPillButton>
+      }
+    >
       {isLoading ? (
         <div className="flex items-center gap-2 font-inter text-sm text-v3-text-weak">
           <Spinner loading className="!size-4" /> Loading passkeys…
@@ -218,7 +230,7 @@ function PasskeyManager() {
           {passkeys.map((pk) => (
             <li
               key={pk.credential_id}
-              className="flex items-center justify-between gap-3 rounded-xl border border-v3-stroke-weak px-4 py-3"
+              className="sky-card flex items-center justify-between gap-3 rounded-xl border border-v3-stroke-weak px-4 py-3"
             >
               <div className="flex min-w-0 items-center gap-3">
                 <Fingerprint size={16} className="shrink-0 text-v3-text-weak" strokeWidth={1.5} />
@@ -247,14 +259,8 @@ function PasskeyManager() {
         </ul>
       )}
 
-      <div className="flex justify-end">
-        <SettingsPillButton type="button" variant="default" disabled={adding} onClick={handleAddPasskey}>
-          <Fingerprint size={14} strokeWidth={1.5} />
-          <span>Add a passkey</span>
-          {adding ? <Spinner loading className="!size-4 text-v3-text-strong" /> : null}
-        </SettingsPillButton>
-      </div>
-    </div>
+
+    </SettingsSectionCard>
   );
 }
 
@@ -271,27 +277,17 @@ export default function Security() {
       <SettingsSectionCard
         title="Password"
         description="Update the password you use to sign in to Memento."
-      >
-        <div className="flex justify-end">
+        className="sm:min-h-[97px]"
+        headerAction={
           <SettingsPillButton variant="default" onClick={() => setPasswordModalOpen(true)}>
             Change password
           </SettingsPillButton>
-        </div>
-      </SettingsSectionCard>
+        }
+      />
 
-      <SettingsSectionCard
-        title="Passkeys"
-        description="Sign in with your device biometrics — fingerprint, Face ID, or Windows Hello — without needing a password."
-      >
-        <PasskeyManager />
-      </SettingsSectionCard>
+      <PasskeyManager />
 
-      <SettingsSectionCard
-        title="Two-factor authentication"
-        description="An authenticator app adds a verification step each time you sign in."
-      >
-        <TwoFactorAuthenticator />
-      </SettingsSectionCard>
+      <TwoFactorAuthenticator />
 
       {passwordModalOpen && <ChangePasswordModal onClose={() => setPasswordModalOpen(false)} />}
     </div>

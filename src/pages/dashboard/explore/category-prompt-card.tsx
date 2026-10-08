@@ -10,6 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { ExploreQuestionSource } from "@/features/explore/explore-types";
+import { getQuestionIdenticonUrl } from "@/features/explore/question-identicon";
 
 interface CategoryPromptCardProps {
   title: string;
@@ -34,11 +35,11 @@ export default function CategoryPromptCard({
         : "Starter question";
 
   return (
-    <article className="relative flex w-full items-start gap-3 rounded-3xl border border-stroke-neutral-weak bg-fill-neutral-weaker p-4 sm:gap-6">
+    <article className="sky-card relative flex w-full items-start gap-3 rounded-3xl border border-stroke-neutral-weak bg-fill-neutral-weaker p-4 sm:gap-6">
       <img
         className="size-20 shrink-0 rounded-md bg-fill-neutral-weak object-cover sm:h-[113px] sm:w-[135px]"
         alt=""
-        src={`https://api.dicebear.com/10.x/disco/svg?seed=${encodeURIComponent(_id)}`}
+        src={getQuestionIdenticonUrl(_id)}
         width={135}
         height={113}
         loading="lazy"

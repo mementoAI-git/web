@@ -14,6 +14,7 @@ export type ConversationChromeState = {
   memory: IMemory | null;
   /** Open the unified conversation settings drawer. */
   onOpenChatPreferences?: () => void;
+  spokenReplies?: { enabled: boolean; supported: boolean; onToggle: () => void };
   /** Single-thread Host Chat chrome (top bar title, subtitle, search). */
   hostChat?: {
     title: string;

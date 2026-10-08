@@ -18,6 +18,8 @@ export default {
   passkeyLoginComplete: "/auth/passkey/login/complete",
 
   // user
+  referrals: "/users/referrals",
+  shareProfile: "/users/profile/share",
   profile: "/users/profile",
   listPasskeys: "/users/passkeys",
   deletePasskey: "/users/passkeys/:credential_id",
@@ -29,6 +31,9 @@ export default {
   personaMemoryInsightsSummary: "/users/persona/memory-insights-summary",
   completeOnboarding: "/users/complete-onboarding",
   uploadPicture: "/users/upload-picture",
+  profileBanner: "/users/banner",
+  profileBannerPosition: "/users/banner-position",
+  uploadBanner: "/users/upload-banner",
   changePassword: "/users/change-password",
   setup2FA: "/users/2fa/setup",
   verifyTOTP: "/users/2fa/verify",
@@ -115,6 +120,7 @@ export default {
   hostOnboardingChatPrompt: "/users/onboarding/chat/prompt",
 
   // billing (Polar)
+  billingAccount: "/billing/account",
   billingSubscription: "/billing/subscription",
   billingCheckout: "/billing/checkout",
   billingPortal: "/billing/portal",

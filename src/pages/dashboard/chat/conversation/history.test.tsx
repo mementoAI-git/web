@@ -11,6 +11,9 @@ vi.mock("@/components/go-back", () => ({
 vi.mock("./header", () => ({
   default: () => <div data-testid="conversation-header">Header</div>,
 }));
+vi.mock("./topic-header", () => ({
+  default: () => <div data-testid="topic-header">Topic</div>,
+}));
 
 vi.mock("./bubble", () => ({
   default: () => null,
@@ -71,13 +74,14 @@ describe("History", () => {
     ).toBeTruthy();
   });
 
-  it("shows inline go-back and conversation header outside /chat/:id", async () => {
+  it("shows the topic header on a question route without regular conversation chrome", async () => {
     renderHistoryAt("/chat/reply/r1");
     await waitFor(() => {
-      expect(screen.getByTestId("go-back")).toBeInTheDocument();
-      expect(screen.getByTestId("conversation-header")).toBeInTheDocument();
+      expect(screen.getByTestId("topic-header")).toBeInTheDocument();
+      expect(screen.queryByTestId("go-back")).not.toBeInTheDocument();
+      expect(screen.queryByTestId("conversation-header")).not.toBeInTheDocument();
     });
-    expect(document.querySelector(".py-3.px-6")).toBeTruthy();
+    expect(document.querySelector(".space-y-2.px-4")).toBeTruthy();
   });
 });
 

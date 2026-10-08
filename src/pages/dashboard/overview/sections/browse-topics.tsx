@@ -6,27 +6,9 @@ import useSWR from "swr";
 import endpoint from "@/api/endpoint";
 import CategoryCard from "@/components/category-card";
 import { TopicSkeleton } from "@/components/topic";
-import { getCategory } from "@/utility";
-import relationships from "@/assets/image/overview/topic-relationships.webp";
-import love from "@/assets/image/overview/topic-love.webp";
-import childhood from "@/assets/image/overview/topic-childhood.webp";
-import changes from "@/assets/image/overview/topic-changes.webp";
 import { TypographyH2 } from "@/components/ui/typography";
 
 const TOPIC_LIMIT = 7;
-
-const topicArtwork: Record<string, string> = {
-  relationships,
-  relationship: relationships,
-  family: relationships,
-  love,
-  "people-i-love": love,
-  childhood,
-  "growing-up": childhood,
-  changes,
-  "life-transition": changes,
-  "what-life-taught-me": changes,
-};
 
 export default function BrowseTopics() {
   const { data, isLoading } = useSWR(endpoint.overviewPrompt);
@@ -112,8 +94,6 @@ export default function BrowseTopics() {
               </>
             ) : (
               visibleTopics.map((t) => {
-                const category = getCategory(t?.category);
-                const artwork = topicArtwork[t?.category];
                 return (
                   <div
                     className="flex w-[min(230px,calc(100vw-3rem))] shrink-0 snap-start flex-col sm:w-[230px]"
@@ -122,8 +102,7 @@ export default function BrowseTopics() {
                     <CategoryCard
                       subtitle={t?.title}
                       href={`/chat/reply/${t?._id}`}
-                      image={artwork ?? category?.image}
-                      imageCategory={artwork ? undefined : t?.category}
+                      imageCategory={t?.category}
                       imageLoading="lazy"
                       imageSizes="230px"
                       variant="overview"

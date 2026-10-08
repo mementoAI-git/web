@@ -255,18 +255,32 @@ export async function postJsonQuiet(url: string, body: unknown): Promise<boolean
   }
 }
 
-/** Transcription: no error toasts (Quick Capture voice notes). */
+/** Transcribe transient audio or an existing file, retaining errors for inline recovery. */
+export async function transcribeAudio(recording: string | File): Promise<{ full_text?: string }> {
+  try {
+    const body = typeof recording === "string" ? { file_id: recording } : new FormData();
+    if (body instanceof FormData) body.append("file", recording as File, (recording as File).name);
+    const res = await axios.post(endpoint.transcription, body, {
+      headers: { "Content-Type": body instanceof FormData ? undefined : "application/json" },
+    });
+    const payload = res.data as { success?: boolean; message?: string; data?: { full_text?: string } } | undefined;
+    if (res.status !== 200 || payload?.success === false || !payload?.data) {
+      throw new Error(payload?.message || "Your recording couldn’t be transcribed. Try again.");
+    }
+    return payload.data;
+  } catch (error) {
+    if (Axios.isAxiosError(error)) {
+      const response = error.response?.data as { message?: string } | undefined;
+      throw new Error(response?.message || "Couldn’t reach transcription. Check your connection and try again.");
+    }
+    throw error;
+  }
+}
+
+/** Background Quick Capture transcription must not produce an unhandled rejection. */
 export async function postTranscribeQuiet(file_id: string): Promise<{ full_text?: string } | null> {
   try {
-    const res = await axios.post(
-      endpoint.transcription,
-      { file_id },
-      { headers: { "Content-Type": "application/json" } },
-    );
-    if (res.status !== 200) return null;
-    const payload = res.data as { success?: boolean; data?: { full_text?: string } } | undefined;
-    if (payload?.success === false) return null;
-    return payload?.data ?? null;
+    return await transcribeAudio(file_id);
   } catch {
     return null;
   }

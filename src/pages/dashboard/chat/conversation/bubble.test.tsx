@@ -15,6 +15,14 @@ vi.mock("sonner", () => ({
 }));
 
 describe("Bubble", () => {
+  it.each([false, true])("gives assistant replies a themeable panel including topic=%s", (topic) => {
+    const { rerender } = render(<Bubble role="ai" text="Assistant reply" topic={topic} />);
+    expect(screen.getByText("Assistant reply").closest(".chat-reply-surface")).toBeInTheDocument();
+    expect(screen.getByText("Assistant reply").closest("span")).toHaveClass("text-text-neutral-strong");
+    rerender(<Bubble role="user" text="User message" topic={topic} />);
+    expect(screen.getByText("User message").closest(".chat-reply-surface")).toBeNull();
+  });
+
   it("uses fill neutral weak for AI messages", () => {
     render(<Bubble role="ai" text="Hello from the assistant" />);
 
@@ -62,11 +70,13 @@ describe("Bubble", () => {
     expect(bubble).toBeInTheDocument();
   });
 
-  it("uses the design body size on desktop and compact text in the sidebar", () => {
+  it("keeps chat body text at 16px on desktop and compact text in the sidebar", () => {
     const { rerender } = render(<Bubble role="ai" text="Full thread" />);
     const full = screen.getByText("Full thread").closest("span");
     expect(full?.className).toMatch(/text-base/);
-    expect(full?.className).toMatch(/sm:text-xl/);
+    expect(full).not.toHaveClass("sm:text-xl");
+    expect(screen.getByText("Full thread")).toHaveClass("text-base");
+    expect(screen.getByText("Full thread")).not.toHaveClass("sm:text-xl");
 
     rerender(<Bubble role="ai" text="Sidebar" compact />);
     const compact = screen.getByText("Sidebar").closest("span");

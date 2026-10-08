@@ -23,6 +23,7 @@ interface IBubbleProps {
   is_voice?: boolean
   /** Compact variant for sidebar: 14px body text, user messages use bg-v3-fill-weak */
   compact?: boolean
+  topic?: boolean
   /** ISO timestamp from the server; shown when valid */
   createdAt?: string
   /** When true, show retry after a failed send (user messages only) */
@@ -39,7 +40,7 @@ interface IBubbleProps {
   linkMetadata?: ILinkMetadata[]
 }
 
-interface ITypingBubbleProps extends Pick<IBubbleProps, "text" | "modelLabel"> {
+interface ITypingBubbleProps extends Pick<IBubbleProps, "text" | "modelLabel" | "topic"> {
   streamDone: boolean
   onFinish: (text: string) => void
 }
@@ -58,6 +59,7 @@ export default function Bubble({
   text = "",
   is_voice = false,
   compact = false,
+  topic = false,
   createdAt,
   sendFailed = false,
   onRetry,
@@ -110,7 +112,8 @@ export default function Bubble({
   return (
     <div
       className={cn(
-        "flex min-w-0 max-w-full flex-col space-y-1 px-0 sm:px-1",
+        "flex min-w-0 max-w-full flex-col space-y-1",
+        !topic && "px-0 sm:px-1",
         isUser && "items-end",
       )}
       title={bubbleTimeTitle}
@@ -119,20 +122,23 @@ export default function Bubble({
         className={cn(
           "flex min-w-0 flex-col",
           isUser && "w-fit max-w-[min(380px,85%)] items-end",
-          !isUser && "w-fit max-w-[75%] items-start",
+          !isUser && (topic ? "w-fit max-w-full items-start" : "w-fit max-w-[75%] items-start"),
         )}
       >
         <div
           className={cn(
-            "w-fit max-w-full rounded-[16px] px-3 py-2",
-            isUser && !compact ? "bg-fill-chat-user" : "bg-fill-neutral-weak",
+            "w-fit max-w-full",
+            !hostChatDeepDive && "sky-card",
+            !isUser && "chat-reply-surface",
+            topic ? (isUser ? "rounded-md bg-fill-neutral-weak px-[5px] py-1" : "p-0") : "rounded-[16px] px-3 py-2",
+            !topic && (isUser && !compact ? "bg-fill-chat-user" : "bg-fill-neutral-weak"),
             !isUser &&
               hostChatDeepDive &&
               "border-l-[3px] border-stroke-brand-strong pl-3",
           )}
         >
           {isUser && replyQuote?.text?.trim() ? (
-            <div className="mb-1 rounded-r-[3px] border-l-[3px] border-stroke-brand-strong bg-fill-neutral-weak pl-1">
+            <div className={cn("mb-1 rounded-r-[3px] bg-fill-neutral-weak pl-1", topic ? "border-l-2 border-stroke-info-strong" : "border-l-[3px] border-stroke-brand-strong")}>
               <p className="sr-only">
                 Replying to{" "}
                 {replyQuote.role === "user" ? "your message" : "Memento"}
@@ -154,7 +160,7 @@ export default function Bubble({
               "block min-w-0 max-w-full break-words font-geist font-normal text-text-neutral-strong [&_pre]:max-w-full [&_pre]:overflow-x-auto [&_table]:block [&_table]:max-w-full [&_table]:overflow-x-auto",
               compact
                 ? "text-[14px] leading-relaxed [&_p]:m-0 [&_p]:text-[14px] [&_p]:leading-relaxed"
-                : "text-base leading-6 sm:text-xl sm:leading-7 [&_p]:m-0 [&_p]:text-inherit [&_p]:leading-[inherit]",
+                : "text-base leading-6 sm:leading-7 [&_p]:m-0 [&_p]:text-inherit [&_p]:leading-[inherit]",
             )}
           >
             <Markdown
@@ -165,7 +171,7 @@ export default function Bubble({
                     className={
                       compact
                         ? "text-[14px] leading-relaxed"
-                        : "text-base leading-6 sm:text-xl sm:leading-7"
+                        : "text-base leading-6 sm:leading-7"
                     }
                     {...props}
                   >
@@ -270,7 +276,7 @@ export default function Bubble({
 }
 
 
-export function TypingBubble({ text, streamDone, onFinish, modelLabel }: ITypingBubbleProps) {
+export function TypingBubble({ text, streamDone, onFinish, modelLabel, topic }: ITypingBubbleProps) {
   const [displayLength, setDisplayLength] = useState(0);
   const finishedTextRef = useRef("");
   const safeText = text || "";
@@ -303,7 +309,7 @@ export function TypingBubble({ text, streamDone, onFinish, modelLabel }: ITyping
     onFinish(safeText);
   }, [displayLength, onFinish, safeText, streamDone]);
 
-  return <Bubble role="ai" text={safeText.slice(0, displayLength)} modelLabel={modelLabel} />
+  return <Bubble role="ai" topic={topic} text={safeText.slice(0, displayLength)} modelLabel={modelLabel} />
 }
 
 export function Typing() {

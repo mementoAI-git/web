@@ -28,9 +28,13 @@ describe("UpgradePrompt", () => {
       { route: "/overview", auth: true },
     );
 
-    expect(screen.getByRole("heading", { name: /voice mode is a pro feature/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: /voice mode is a pro feature/i }),
+    ).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: /upgrade to pro/i }));
+    await user.click(
+      (await screen.findAllByRole("button", { name: /upgrade to pro/i }))[0],
+    );
     expect(onUpgrade).toHaveBeenCalledTimes(1);
   });
 
@@ -48,28 +52,23 @@ describe("UpgradePrompt", () => {
       { route: "/overview", auth: true },
     );
 
-    await user.click(screen.getByRole("button", { name: /let me think about it/i }));
+    await user.click(
+      screen.getByRole("button", { name: /let me think about it/i }),
+    );
 
     expect(onOpenChange).toHaveBeenCalledWith(false);
     expect(isUpgradeGateDismissed("voice_mode")).toBe(false);
   });
 
-  it("keeps the desktop modal layout constrained so the content column does not collapse", () => {
+  it("reuses mobile plans without outdated lifetime offers", async () => {
     renderWithProviders(
-      <UpgradePrompt
-        feature="pro_plan"
-        variant="modal"
-        open
-      />,
+      <UpgradePrompt feature="pro_plan" variant="modal" open />,
       { route: "/overview", auth: true },
     );
-
-    const dialog = document.querySelector('[data-slot="dialog-content"]');
-    expect(dialog?.className).toContain("md:w-[min(92vw,1040px)]");
-    expect(dialog?.className).toContain("md:h-[min(720px,calc(100dvh-2rem))]");
-
-    const contentColumn = screen.getByRole("button", { name: /close upgrade modal/i }).parentElement;
-    expect(contentColumn?.className).toContain("md:min-w-[420px]");
-    expect(contentColumn?.className).toContain("md:overflow-y-auto");
+    expect(screen.getByRole("heading", { name: "Free" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Pro" })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("radio", { name: "Annual" }));
+    expect(screen.getByText("$79.00")).toBeInTheDocument();
+    expect(screen.queryByText(/lifetime/i)).not.toBeInTheDocument();
   });
 });

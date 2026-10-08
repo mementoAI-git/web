@@ -1,4 +1,5 @@
-import { useEffect } from "react";
+import { clearReferral, getReferralCode } from "@/features/referrals/attribution";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { TimesIcon } from "@/components/icons";
 import { AuthLoader } from "@/components/auth-loader";
@@ -9,7 +10,7 @@ import useFetcher from "@/hooks/use-fetcher";
 import { useStore } from "@/hooks/use-store";
 import { clearCache } from "@/utility";
 import AuthLayout from "../components/layout";
-import { extractSession } from "@/api/contract-adapter";
+import { extractSession, normalizeApiError } from "@/api/contract-adapter";
 
 export default function OAuthCallbackPage() {
   const { provider } = useParams<{ provider: string }>();
@@ -22,6 +23,8 @@ export default function OAuthCallbackPage() {
   );
 
   const code = searchParams.get("code");
+  const started = useRef(false);
+  const [callbackError, setCallbackError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!code || !provider) {
@@ -29,27 +32,32 @@ export default function OAuthCallbackPage() {
       return;
     }
 
-    trigger({ code }).then(async (result) => {
-      if (result?.data) {
+    if (started.current) return;
+    started.current = true;
+    trigger({ code, referral_code: getReferralCode() })
+      .then(async (result) => {
         const session = extractSession(result);
-        if (!session) throw new Error("Authentication session is missing");
+        if (result?.success === false || !session)
+          throw new Error("Authentication session is missing");
+        clearReferral();
         setAuth?.(session);
         await clearCache();
         navigate(session.onboarded ? "/overview" : "/onboarding");
-      }
-    });
+      })
+      .catch((error: unknown) => {
+        setCallbackError(normalizeApiError(error).message);
+      });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  if (error) {
+  if (error || callbackError) {
     return (
       <AuthLayout
         title="Sign in failed"
         className="error"
         icon={<TimesIcon width={32} height={32} />}
         subtitle={
-          error?.message ??
-          "We couldn't sign you in with that provider. Please try again."
+          callbackError ?? normalizeApiError(error).message
         }
       >
         <Card className="border border-v3-stroke-weak bg-v3-fill-weaker/30 py-0 shadow-none">

@@ -5,6 +5,10 @@ import { mockUser } from "../fixtures";
 const BASE_URL = "http://localhost:3000/api";
 
 export const handlers = [
+  http.get(`${BASE_URL}/billing/account`, () => HttpResponse.json({
+    success: true,
+    data: {has_customer: false, email: mockUser.email, name: "Test User", address: null, payment_methods: []},
+  })),
   http.get(`${BASE_URL}/billing/subscription`, () => {
     return HttpResponse.json({
       success: true,

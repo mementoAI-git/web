@@ -8,6 +8,16 @@ import type { ChatReplyQuote } from "@/utility/chat-reply-prompt";
 const DRAFT_KEY = "memento-chat-draft:test-m";
 
 describe("ConversationChatinput", () => {
+  it("keeps the topic microphone visible and enables Send only after content is entered", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<ConversationChatinput topic onSend={() => {}} />, { auth: true, route: "/chat/reply/q1" });
+    expect(screen.getByRole("button", { name: "Send" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Record voice clip" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Voice call" })).not.toBeInTheDocument();
+    await user.type(screen.getByPlaceholderText("Type text here..."), "A memory of my friends");
+    expect(screen.getByRole("button", { name: "Send" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Record voice clip" })).toBeInTheDocument();
+  });
   afterEach(() => {
     localStorage.removeItem(DRAFT_KEY);
   });
@@ -16,7 +26,7 @@ describe("ConversationChatinput", () => {
       auth: true,
     });
     expect(
-      screen.getByPlaceholderText("Type text here... Type / for formatting"),
+      screen.getByPlaceholderText("Type text here..."),
     ).toBeInTheDocument();
   });
 
@@ -54,7 +64,7 @@ describe("ConversationChatinput", () => {
     expect(screen.queryByRole("button", { name: /^send$/i })).toBeNull();
 
     await user.type(
-      screen.getByPlaceholderText("Type text here... Type / for formatting"),
+      screen.getByPlaceholderText("Type text here..."),
       "x",
     );
     expect(screen.getByRole("button", { name: /^send$/i })).toBeInTheDocument();
@@ -115,7 +125,7 @@ describe("ConversationChatinput", () => {
       { auth: true },
     );
 
-    const ta = screen.getByPlaceholderText("Type text here... Type / for formatting");
+    const ta = screen.getByPlaceholderText("Type text here...");
     expect(ta).toHaveValue("saved line");
 
     await user.clear(ta);
@@ -136,7 +146,7 @@ describe("ConversationChatinput", () => {
       { auth: true, route: "/chat/thread-99?starter=From%20URL" },
     );
 
-    const ta = screen.getByPlaceholderText("Type text here... Type / for formatting");
+    const ta = screen.getByPlaceholderText("Type text here...");
     await waitFor(() => {
       expect(ta).toHaveValue("From URL");
     });

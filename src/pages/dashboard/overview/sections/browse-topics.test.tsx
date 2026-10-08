@@ -3,6 +3,11 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { renderWithProviders } from "@/test";
 import BrowseTopics from "./browse-topics";
+import {
+  EXPLORE_CATEGORY_SLUGS,
+  LEGACY_EXPLORE_CATEGORY_ALIASES,
+  getExploreCategoryArtwork,
+} from "@/utility/data/categories";
 
 const mockResponse = vi.hoisted(() => ({
   data: [] as {
@@ -38,6 +43,29 @@ beforeEach(() => {
 });
 
 describe("BrowseTopics", () => {
+  it.each([
+    ...EXPLORE_CATEGORY_SLUGS,
+    ...Object.keys(LEGACY_EXPLORE_CATEGORY_ALIASES),
+  ])("uses current responsive artwork for %s", (category) => {
+    mockResponse.data = [
+      {
+        _id: "topic-current",
+        title: "A topic question",
+        category,
+        category_title: category,
+      },
+    ];
+    const { container } = renderWithProviders(<BrowseTopics />, {
+      route: "/overview",
+      auth: true,
+    });
+    const image = container.querySelector("img");
+    const artwork = getExploreCategoryArtwork(category)!;
+    expect(image).toHaveAttribute("src", artwork.src);
+    expect(image).toHaveAttribute("srcset", artwork.srcSet);
+    expect(image?.getAttribute("src")).toContain("/categories/generated/");
+  });
+
   it("renders wider overview topic images without changing their height", () => {
     const { container } = renderWithProviders(<BrowseTopics />, {
       route: "/overview",

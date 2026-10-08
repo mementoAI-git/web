@@ -14,12 +14,16 @@ describe("SettingsPage", () => {
       { route: "/settings/general", auth: true },
     );
 
-    expect(await screen.findByText("Profile details")).toBeInTheDocument();
+    expect(
+      await screen.findByRole("heading", { name: "About me" }),
+    ).toBeInTheDocument();
 
     const viewport = container.querySelector(".page-viewport");
     expect(viewport).toBeTruthy();
 
-    const settingsNavs = screen.getAllByRole("navigation", { name: /settings sections/i });
+    const settingsNavs = screen.getAllByRole("navigation", {
+      name: /settings sections/i,
+    });
     expect(settingsNavs.length).toBeGreaterThanOrEqual(1);
   });
 
@@ -32,7 +36,9 @@ describe("SettingsPage", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText("Profile details")).toBeInTheDocument();
+      expect(
+        screen.getByRole("heading", { name: "About me" }),
+      ).toBeInTheDocument();
     });
   });
 
@@ -45,27 +51,41 @@ describe("SettingsPage", () => {
       { route: "/settings/general", auth: true },
     );
 
-    await screen.findByText("Profile details");
-    const settingsNavs = screen.getAllByRole("navigation", { name: /settings sections/i });
+    await screen.findByRole("heading", { name: "About me" });
+    const settingsNavs = screen.getAllByRole("navigation", {
+      name: /settings sections/i,
+    });
     expect(settingsNavs.length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByRole("link", { name: /personal info/i })).toHaveAttribute("href", "/settings/general");
+    expect(
+      screen.getByRole("link", { name: /personal info/i }),
+    ).toHaveAttribute("href", "/settings/general");
 
     const securityLinks = screen.getAllByRole("link", { name: /security/i });
-    const securityLink = securityLinks.find((el) => el.getAttribute("href") === "/settings/security");
+    const securityLink = securityLinks.find(
+      (el) => el.getAttribute("href") === "/settings/security",
+    );
     expect(securityLink).toBeTruthy();
     await user.click(securityLink!);
 
     await waitFor(() => {
-      expect(screen.getByText("Manage your Memento account security")).toBeInTheDocument();
+      expect(
+        screen.getByText("Manage your Memento account security"),
+      ).toBeInTheDocument();
     });
 
-    const personalLinks = screen.getAllByRole("link", { name: /personal info/i });
-    const personalLink = personalLinks.find((el) => el.getAttribute("href") === "/settings/general");
+    const personalLinks = screen.getAllByRole("link", {
+      name: /personal info/i,
+    });
+    const personalLink = personalLinks.find(
+      (el) => el.getAttribute("href") === "/settings/general",
+    );
     expect(personalLink).toBeTruthy();
     await user.click(personalLink!);
 
     await waitFor(() => {
-      expect(screen.getByText("Profile details")).toBeInTheDocument();
+      expect(
+        screen.getByRole("heading", { name: "About me" }),
+      ).toBeInTheDocument();
     });
   });
 });

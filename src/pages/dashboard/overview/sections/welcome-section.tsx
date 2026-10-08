@@ -1,22 +1,22 @@
+import { toast } from "sonner";
+import { OverviewCaptureCard } from "./overview-capture-card";
 import { OverviewVoiceSlot, useVoiceSession } from "@/contexts/voice-session";
 import { InlineVoiceSession } from "@/components/Chatinput/inline-voice-session";
 import { useNavigate } from "react-router-dom";
-import { useModal } from "@/hooks/use-modal";
 import { useStore } from "@/hooks/use-store";
+import { useModal } from "@/hooks/use-modal";
 import { useEffect, useMemo, useState } from "react";
 import useSWR from "swr";
 import endpoint from "@/api/endpoint";
-import storyIllustration from "@/assets/image/overview/story-illustration.png";
-import bannerPattern from "@/assets/image/overview/banner-pattern.png";
 import brightButtonIcon from "@/assets/icon/noto_bright-button.svg";
 import moonfaceIcon from "@/assets/icon/moonface.svg";
 import {
   getGreetingPunctuation,
   shouldUseBrightWelcomeIcon,
 } from "./welcome-section-helpers";
-import { PencilLine, PhoneCall } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { TypographyH1, TypographyH2 } from "@/components/ui/typography";
+import { Spinner } from "@/components/ui/spinner";
+import { TypographyH1 } from "@/components/ui/typography";
 
 function getGreeting(): string {
   const hour = new Date().getHours();
@@ -50,7 +50,12 @@ export default function WelcomeSection() {
       else voice.end();
     } else setLocalVoiceActive(active);
   };
-  const { data: voiceProfile, error: voiceProfileError, mutate: retryVoiceProfile } = useSWR(endpoint.profile);
+  const { data: voiceProfile, error: voiceProfileError } = useSWR(endpoint.profile);
+  useEffect(() => {
+    if (!voiceActive || voice || !voiceProfileError) return;
+    toast.error("Couldn’t prepare voice. Please try again.");
+    setLocalVoiceActive(false);
+  }, [voiceActive, voice, voiceProfileError]);
   const navigate = useNavigate();
   const { open } = useModal();
   const greeting = useMemo(() => getGreeting(), []);
@@ -91,7 +96,7 @@ export default function WelcomeSection() {
         <TypographyH1 className="min-w-0 font-garamond text-[28px] font-normal leading-[1.2] tracking-normal text-text-neutral-strong sm:text-[40px] lg:text-[40px]">
           {greeting}
           {(user?.nickname || user?.first_name || user?.last_name) && (
-            <i className="text-overview-greeting">
+            <i className="text-text-neutral-weak">
               {" "}
               {user?.nickname || user?.first_name || user?.last_name}
               {getGreetingPunctuation(greeting)}
@@ -102,48 +107,12 @@ export default function WelcomeSection() {
       {voiceActive && voice ? <OverviewVoiceSlot /> : voiceActive ? (
           voiceProfile?.data ? <InlineVoiceSession variant="overview" memoryId={voiceProfile.data.primary_conversation_id ?? null} onEnd={() => setVoiceActive(false)} /> : (
             <div className="flex items-center gap-3">
-              <p role="status" className="text-sm text-text-neutral-weak">{voiceProfileError ? "Couldn’t prepare voice." : "Preparing voice…"}</p>
-              {voiceProfileError && <Button variant="outline" onClick={() => void retryVoiceProfile()}>Try again</Button>}
+              <p role="status" className="text-sm text-text-neutral-weak">Preparing voice…</p>
               <Button variant="ghost" onClick={() => setVoiceActive(false)}>Cancel</Button>
             </div>
           )
         ) : (
-      <div className="relative isolate flex min-h-[178px] flex-col justify-between gap-8 overflow-hidden rounded-3xl bg-[image:var(--gradient-overview-banner)] p-6">
-        <img
-          src={bannerPattern}
-          alt=""
-          aria-hidden
-          className="pointer-events-none absolute -top-[203px] left-1/2 -z-10 h-[592px] w-[817px] max-w-none -translate-x-1/2"
-        />
-        <div className="flex items-start justify-between gap-4 sm:pr-[144px]">
-          <TypographyH2 className="font-garamond text-[24px] font-normal leading-[34px] tracking-normal text-text-neutral-strong sm:text-[30px] lg:text-[30px]">
-            What’s on your mind today?
-          </TypographyH2>
-          <img
-            src={storyIllustration}
-            alt=""
-            className="absolute right-6 top-6 hidden h-[94px] w-[128px] object-contain sm:block"
-          />
-        </div>
-        <div className="relative flex flex-wrap items-center gap-4">
-          <Button
-            type="button"
-            onClick={() => open("create-memory")}
-            className="h-10 w-[130px] gap-2 rounded-lg px-4 font-inter text-sm font-semibold [background-image:var(--gradient-overview-story)]"
-          >
-            <PencilLine className="size-5" aria-hidden />
-            Add story
-          </Button>
-          <Button
-            type="button"
-            onClick={() => setVoiceActive(true)}
-            className="h-10 w-[193px] gap-2 rounded-lg bg-fill-overview-voice px-4 font-inter text-sm font-semibold text-overview-voice [background-image:none] hover:bg-fill-overview-voice/90"
-          >
-              <PhoneCall className="size-5" aria-hidden />
-              Voice conversation
-          </Button>
-        </div>
-      </div>
+      <OverviewCaptureCard key={user?._id ?? "guest"} userId={user?._id} onVoiceConversation={() => setVoiceActive(true)} />
       )}
 
       {quickPending > 0 ? (
@@ -151,16 +120,17 @@ export default function WelcomeSection() {
           <button
             type="button"
             onClick={() => {
-              if (quickLatestId) navigate(`/chat/${quickLatestId}`);
+              if (quickLatestId) open("view-memory", { memoryId: quickLatestId });
               else navigate("/stories");
             }}
             className="inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-full border border-stroke-neutral-weak bg-fill-neutral-weaker px-4 py-2 font-inter text-sm font-medium text-text-neutral-strong transition-colors hover:bg-fill-neutral-weak sm:w-auto sm:min-h-0"
           >
-            <span className="text-text-brand-strong">{quickPending}</span>
-            <span>
+            <Spinner aria-hidden role="presentation" className="shrink-0 text-icon-brand-strong motion-reduce:animate-none" />
+            <span className="text-text-brand-strong">{quickPending}</span>{" "}
+            <span aria-live="polite">
               {quickPending === 1
-                ? "Quick capture finishing up"
-                : `${quickPending} quick captures finishing up`}
+                ? "Quick note finishing up…"
+                : "Quick notes finishing up…"}
             </span>
           </button>
         </div>

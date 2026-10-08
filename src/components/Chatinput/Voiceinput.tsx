@@ -10,6 +10,7 @@ import voiceHangUpIcon from "@/assets/icon/voice/hang-up.svg";
 import { VoiceBeam } from "voice-glow";
 import { useAiPlaybackLevel } from "@/hooks/use-ai-playback-level";
 import { useTheme } from "@/contexts/theme";
+import { EndSessionDialog } from "./end-session-dialog";
 
 import {
   AudioLines,
@@ -34,7 +35,6 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -340,6 +340,18 @@ export default function Voiceinput({ onCancel, memoryId, history = [], autoStart
   const intervalRef = useRef<number | null>(null);
   const isElevenLabsProvider = (chosenVoice?.provider ?? user?.chat_voice_provider) === "elevenlabs";
   const sessionActive = isRecording || elevenLabsActive;
+  const hadActiveSession = useRef(false);
+  const interruptionHandled = useRef(false);
+  const interrupted = inline && (variant === "overview" || persistent) &&
+    !isStartingCall && !isDisconnecting && !sessionActive && !connected &&
+    (Boolean(error) || hadActiveSession.current);
+  useEffect(() => {
+    if (sessionActive) hadActiveSession.current = true;
+    if (!interrupted || interruptionHandled.current) return;
+    interruptionHandled.current = true;
+    toast.error("Voice conversation was interrupted. Please try again.");
+    onCancel();
+  }, [interrupted, sessionActive, onCancel]);
   const sessionObserver = useRef(onSessionChange);
   const reportedActive = useRef(false);
   useEffect(() => { sessionObserver.current = onSessionChange; }, [onSessionChange]);
@@ -387,10 +399,20 @@ export default function Voiceinput({ onCancel, memoryId, history = [], autoStart
       if (recording !== false && inline) await greet();
     } catch (startError) {
       console.error(startError);
+      toast.error("Couldn’t start voice conversation. Please try again.");
+      if (inline && (variant === "overview" || persistent)) onCancel();
     } finally {
       setIsStartingCall(false);
     }
   };
+
+  const reportedVoiceError = useRef<string | null>(null);
+  useEffect(() => {
+    if (!error) { reportedVoiceError.current = null; return; }
+    if (interrupted || reportedVoiceError.current === error) return;
+    reportedVoiceError.current = error;
+    toast.error(error);
+  }, [error, interrupted]);
 
   useEffect(() => {
     if (!autoStart || autoStartAttempted.current || !user || introOpen !== false || pickerOpen) return;
@@ -422,6 +444,7 @@ export default function Voiceinput({ onCancel, memoryId, history = [], autoStart
       onCancel();
     } catch (disconnectError) {
       console.error(disconnectError);
+      toast.error("Couldn’t finish the voice session cleanly. Please try again.");
       onCancel();
     } finally {
       void mutate(`${endpoint.conversations}?page=1`);
@@ -465,6 +488,8 @@ export default function Voiceinput({ onCancel, memoryId, history = [], autoStart
     if (isElevenLabsProvider) return "Live session";
     return connected ? "Live session" : "Connecting…";
   }, [connected, isElevenLabsProvider, sessionActive]);
+
+  const endConfirmation = <EndSessionDialog open={endDialogOpen} onOpenChange={setEndDialogOpen} duration={formatVoiceSessionTime(recordingTime)} ending={isDisconnecting} onConfirm={() => void handleEndCall()} />;
 
   const onboardingModals = (<>
       <Dialog open={introOpen === true} onOpenChange={(open) => !open && onCancel()}>
@@ -519,11 +544,13 @@ export default function Voiceinput({ onCancel, memoryId, history = [], autoStart
       />
   </>);
 
+  if (interrupted) return null;
+
   if (inline) {
     const overview = variant === "overview";
     const floating = variant === "floating";
     const callStatus = isStartingCall ? "Connecting…" : sessionActive
-      ? (audioPaused ? "Audio paused" : muted ? "You’re muted" : "Listening") : error ? "Connection interrupted" : "Ready to connect";
+      ? (audioPaused ? "Audio paused" : muted ? "You’re muted" : "Listening") : "Ready to connect";
     const settings = (
       <Popover open={settingsOpen} onOpenChange={setSettingsOpen}>
         <PopoverTrigger asChild>
@@ -538,11 +565,11 @@ export default function Voiceinput({ onCancel, memoryId, history = [], autoStart
     );
     const controls = (
       <div className={cn("flex items-center", overview || floating ? "gap-4" : "gap-2")}>
-        <Button type="button" variant={overview ? "ghost" : "outline"} size="icon-lg" className={floating ? "size-16 rounded-full bg-fill-neutral-strong text-primary-foreground [&_svg]:size-6" : overview ? "size-16 rounded-full bg-fill-neutral-weak [&_svg]:size-6" : undefined} disabled={!sessionActive || isElevenLabsProvider} onClick={toggleMute} aria-label={muted ? "Unmute microphone" : "Mute microphone"} aria-pressed={muted}>
-          {muted ? (overview ? <img src={voiceMutedIcon} alt="" className="dark:brightness-0 dark:invert dark:opacity-60" /> : <MicOff />) : <Mic className="text-icon-neutral-weaker" />}
+        <Button type="button" variant={overview ? "ghost" : "outline"} size="icon-lg" className={floating ? "size-16 rounded-full bg-fill-neutral-strong text-primary-foreground [&_svg]:size-6" : overview ? "size-16 rounded-full bg-fill-neutral-weak p-5 text-icon-neutral-weak" : undefined} disabled={!sessionActive || isElevenLabsProvider} onClick={toggleMute} aria-label={muted ? "Unmute microphone" : "Mute microphone"} aria-pressed={muted}>
+          {overview ? <img src={voiceMutedIcon} alt="" aria-hidden className="shrink-0 dark:brightness-0 dark:invert" /> : muted ? <MicOff /> : <Mic className="text-icon-neutral-weaker" />}
         </Button>
         {!overview && !floating && settings}
-        <Button type="button" variant={overview ? "ghost" : "outline"} size="icon-lg" className={overview || floating ? "size-16 rounded-full bg-fill-error-weak text-icon-error-strong hover:bg-fill-error-weak/80" : undefined} aria-label="End voice conversation" disabled={isDisconnecting} onClick={() => void handleEndCall()}>
+        <Button type="button" variant={overview ? "ghost" : "outline"} size="icon-lg" className={overview || floating ? "size-16 rounded-full bg-fill-error-weak text-icon-error-strong hover:bg-fill-error-weak/80" : undefined} aria-label="End voice conversation" disabled={isDisconnecting} onClick={() => setEndDialogOpen(true)}>
           {overview ? <img src={voiceHangUpIcon} alt="" className="dark:brightness-150 dark:saturate-50" /> : <PhoneOff />}
         </Button>
       </div>
@@ -550,8 +577,9 @@ export default function Voiceinput({ onCancel, memoryId, history = [], autoStart
     return (
       <>
       {onboardingModals}
-      <VoiceBeam type="default" theme={resolvedTheme} colorVariant="sunset" level={aiLevel} idle={0} active={sessionActive && !isElevenLabsProvider} style={{ display: "block", width: "100%" }}>
-        <section aria-label="Voice conversation" className={cn("relative isolate flex flex-col text-text-neutral-strong", overview ? "min-h-[178px] justify-between gap-[18px] overflow-hidden rounded-3xl bg-[image:var(--gradient-overview-voice)] p-6" : floating ? "dark min-h-[378px] max-h-[calc(100dvh-100px)] items-center justify-center gap-12 overflow-y-auto rounded-[32px] bg-fill-voice-elevated px-6 py-12 text-white shadow-[0_20px_60px_rgba(0,0,0,0.45),0_4px_16px_rgba(0,0,0,0.25)] ring-1 ring-white/10" : "min-h-[130px] justify-center gap-4 rounded-3xl border border-stroke-neutral-weak bg-fill-neutral-weak p-4")}>
+      {endConfirmation}
+      <VoiceBeam type="default" theme={resolvedTheme} colorVariant="sunset" level={aiLevel} idle={0} active={sessionActive && !isElevenLabsProvider} borderRadius={overview ? 24 : undefined} style={{ display: "block", width: "100%" }}>
+        <section aria-label="Voice conversation" className={cn("relative isolate flex flex-col text-text-neutral-strong", overview ? "min-h-[178px] justify-between gap-[18px] overflow-hidden rounded-3xl border border-stroke-neutral-weaker bg-fill-overview-banner p-6" : floating ? "dark min-h-[378px] max-h-[calc(100dvh-100px)] items-center justify-center gap-12 overflow-y-auto rounded-[32px] bg-fill-voice-elevated px-6 py-12 text-white shadow-[0_20px_60px_rgba(0,0,0,0.45),0_4px_16px_rgba(0,0,0,0.25)] ring-1 ring-white/10" : "min-h-[130px] justify-center gap-4 rounded-3xl border border-stroke-neutral-weak bg-fill-neutral-weak p-4")}>
           {floating ? <>
             <button type="button" data-voice-drag-handle aria-label="Move voice window" title="Drag to move. Use arrow keys when focused." className="absolute left-4 top-4 flex h-8 w-16 touch-none cursor-grab items-center justify-center rounded-full text-white/60 hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-white active:cursor-grabbing"><span aria-hidden className="h-1 w-8 rounded-full bg-current" /></button>
             {settings}
@@ -559,7 +587,7 @@ export default function Voiceinput({ onCancel, memoryId, history = [], autoStart
               <VoiceArtwork voice={selectedVoice} className="size-[92px]" />
               <div className="flex flex-col items-center gap-1">
                 <span aria-label="Call duration" className="font-geist text-xl font-bold tabular-nums">{formatVoiceSessionTime(recordingTime)}</span>
-                <p role="status" className="flex items-center gap-2 font-geist text-sm text-text-neutral-weak"><span aria-hidden className={cn("size-2 rounded-full", muted || error ? "bg-fill-error-strong" : "bg-fill-success-strong")} />{callStatus}</p>
+                <p role="status" className="flex items-center gap-2 font-geist text-sm text-text-neutral-weak"><span aria-hidden className={cn("size-2 rounded-full", muted ? "bg-fill-error-strong" : "bg-fill-success-strong")} />{callStatus}</p>
               </div>
             </div>
             {controls}
@@ -571,7 +599,7 @@ export default function Voiceinput({ onCancel, memoryId, history = [], autoStart
             <div className="flex items-start justify-between gap-3">
               <div className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-1">
                 <span aria-label="Call duration" className="font-garamond text-[30px] leading-[34px] tabular-nums">{formatVoiceSessionTime(recordingTime)}</span>
-                <p role="status" className="flex items-center gap-2 font-geist text-sm text-text-neutral-weak"><span aria-hidden className={cn("size-2 shrink-0 rounded-full", muted || error ? "bg-fill-error-strong" : sessionActive ? "bg-fill-success-strong" : "bg-fill-neutral-strong")} />{callStatus}</p>
+                <p role="status" className="flex items-center gap-2 font-geist text-sm text-text-neutral-weak"><span aria-hidden className={cn("size-2 shrink-0 rounded-full", muted ? "bg-fill-error-strong" : sessionActive ? "bg-fill-success-strong" : "bg-fill-neutral-strong")} />{callStatus}</p>
               </div>
               {settings}
             </div>
@@ -587,8 +615,7 @@ export default function Voiceinput({ onCancel, memoryId, history = [], autoStart
             {controls}
           </div>}
           {sessionActive && audioPaused && <Button type="button" variant="outline" onClick={() => void resumeAudio()}>Enable audio</Button>}
-          {error && <p role="alert" className="text-sm text-text-error-strong">{error}</p>}
-          {!sessionActive && !isStartingCall && introOpen === false && !pickerOpen && <Button type="button" variant="outline" className="self-start" onClick={() => void handleStartCall()}>Try again</Button>}
+          {!error && !sessionActive && !isStartingCall && introOpen === false && !pickerOpen && <Button type="button" variant="outline" className="self-start" onClick={() => void handleStartCall()}>Try again</Button>}
           {isElevenLabsProvider && elevenLabsActive && <iframe src={elevenLabsTalkToUrl} title="ElevenLabs Agent" className="h-[300px] w-full rounded-xl" allow="microphone; autoplay" />}
         </section>
       </VoiceBeam>
@@ -661,13 +688,6 @@ export default function Voiceinput({ onCancel, memoryId, history = [], autoStart
             </p>
           </div>
 
-          {error ? (
-            <div className="flex max-w-sm flex-col items-center gap-3" role="alert">
-              <p className="font-geist text-sm text-text-error-strong">{error}</p>
-              <Button type="button" variant="outline" onClick={() => void handleStartCall()}>Try again</Button>
-            </div>
-          ) : null}
-
           {isElevenLabsProvider && elevenLabsActive ? (
             <div className="w-full overflow-hidden rounded-2xl border border-stroke-neutral-weak bg-background">
               <iframe src={elevenLabsTalkToUrl} title="ElevenLabs Agent" className="h-[360px] w-full" allow="microphone; autoplay" />
@@ -716,27 +736,7 @@ export default function Voiceinput({ onCancel, memoryId, history = [], autoStart
       </main>
 
       {onboardingModals}
-      <Dialog open={endDialogOpen} onOpenChange={setEndDialogOpen}>
-        <DialogContent showCloseButton={false} overlayClassName="z-[210] bg-overlay-backdrop" className="z-[220] min-h-96 max-w-md content-between bg-background p-6 sm:p-8">
-          <DialogHeader className="items-center gap-5 pt-5 text-center">
-            <PhoneOff className="text-text-warning-strong" aria-hidden />
-            <div className="flex flex-col items-center gap-3">
-              <DialogTitle className="max-w-xs font-geist text-xl font-semibold leading-7 text-text-neutral-strong">
-                Are you sure you want to end this session?
-              </DialogTitle>
-              <DialogDescription className="font-geist tabular-nums text-text-neutral-weak">
-                {formatVoiceSessionTime(recordingTime)}
-              </DialogDescription>
-            </div>
-          </DialogHeader>
-          <DialogFooter className="grid grid-cols-2 gap-3 sm:grid-cols-2">
-            <Button type="button" variant="outline" size="lg" onClick={() => setEndDialogOpen(false)}>Dismiss</Button>
-            <Button type="button" size="lg" disabled={isDisconnecting} onClick={() => void handleEndCall()}>
-              {isDisconnecting ? "Ending…" : "End Session"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {endConfirmation}
     </div>
     </VoiceBeam>,
     document.body,

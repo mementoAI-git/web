@@ -14,7 +14,6 @@ import React, {
   useCallback,
   useEffect,
   useLayoutEffect,
-  useMemo,
   useRef,
   useState,
 } from "react";
@@ -26,13 +25,7 @@ import { v4 as uuidv4 } from "uuid";
 import ImagePreview from "./ImagePreveiw";
 import { isEmpty } from "lodash";
 import { SUPPORTED_FILE_TYPES, inferMimeType, isSupportedFileMime } from "@/utility/constant";
-import { getTextareaCaretCoordinates } from "@/utility/textarea-caret";
-import { SlashCommandPopup } from "@/components/memory/text-area/slash-command-popup";
-import {
-  CHAT_SLASH_COMMANDS,
-  type ChatSlashCommandItem,
-} from "./chat-slash-commands";
-import { ArrowUp } from "lucide-react";
+import { ArrowUp, Square } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 export interface IOnSendPayload {
@@ -47,6 +40,7 @@ export type { ChatReplyQuote };
 export interface IChatinputProps {
   className?: string
   inputClassName?: string
+  topic?: boolean
   typing?: boolean
   loading?: boolean
   onChangeText?: (str: string) => void;
@@ -72,6 +66,7 @@ function ChatinputImpl({
   shellTestId,
   className = "",
   inputClassName = "",
+  topic = false,
   typing = false,
   loading = false,
   onStop,
@@ -107,10 +102,6 @@ function ChatinputImpl({
   const [text, setText] = useState("")
   /** Voice UI when URL is …/chat/:id/voice or user chose voice without a chat URL (e.g. landing). */
   const [inlineVoiceOpen, setInlineVoiceOpen] = useState(false)
-  const [cursorPosition, setCursorPosition] = useState(0)
-  const [showSlashMenu, setShowSlashMenu] = useState(false)
-  const [slashPosition, setSlashPosition] = useState({ top: 0, left: 0 })
-  const [slashSelectedIndex, setSlashSelectedIndex] = useState(0)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const inputWrapperRef = useRef<HTMLDivElement>(null)
   const quickRecRef = useRef<MediaRecorder | null>(null)
@@ -133,50 +124,6 @@ function ChatinputImpl({
     navigate(`${isVoiceCallRoute ? `/chat/${voiceRouteChatId}` : location.pathname}${params.size ? `?${params}` : ""}`, { replace: true });
     setInlineVoiceOpen(false);
   }, [voice, isVoiceMode, voiceNavTargetId, history, location.pathname, location.search, navigate, isVoiceCallRoute, voiceRouteChatId]);
-
-  const textBeforeCursor = text.slice(0, cursorPosition)
-  const lastSlashIndex = textBeforeCursor.lastIndexOf("/")
-  const slashQuery = lastSlashIndex === -1 ? "" : textBeforeCursor.slice(lastSlashIndex + 1)
-  const filteredSlashCommands = useMemo(() => {
-    if (!slashQuery) return CHAT_SLASH_COMMANDS
-    const q = slashQuery.toLowerCase()
-    return CHAT_SLASH_COMMANDS.filter(
-      (c) =>
-        c.label.toLowerCase().includes(q) ||
-        (c.shortcut?.toLowerCase().includes(q) ?? false),
-    )
-  }, [slashQuery])
-  const clampedSlashIndex = Math.min(
-    slashSelectedIndex,
-    Math.max(0, filteredSlashCommands.length - 1),
-  )
-
-  useEffect(() => {
-    if (lastSlashIndex === -1 || slashQuery.includes(" ") || slashQuery.includes("\n")) {
-      setShowSlashMenu(false)
-    } else {
-      if (slashQuery === "") setSlashSelectedIndex(0)
-      setShowSlashMenu(true)
-      const el = textareaRef.current
-      if (el) {
-        const coords = getTextareaCaretCoordinates(el, cursorPosition)
-        if (coords) {
-          setSlashPosition({ top: coords.top + 20, left: coords.left })
-        } else if (inputWrapperRef.current) {
-          const rect = inputWrapperRef.current.getBoundingClientRect()
-          setSlashPosition({ top: rect.bottom + 4, left: rect.left })
-        }
-      }
-    }
-  }, [lastSlashIndex, slashQuery, cursorPosition])
-
-  useEffect(() => {
-    setSlashSelectedIndex((i) => Math.min(i, Math.max(0, filteredSlashCommands.length - 1)))
-  }, [filteredSlashCommands.length])
-
-  useEffect(() => {
-    if (showSlashMenu && filteredSlashCommands.length === 0) setShowSlashMenu(false)
-  }, [showSlashMenu, filteredSlashCommands.length])
 
   useLayoutEffect(() => {
     if (!draftStorageKey) {
@@ -420,28 +367,6 @@ function ChatinputImpl({
     setFiles([]);
   }
 
-  const handleSlashCommandSelect = useCallback(
-    (command: ChatSlashCommandItem) => {
-      const start = lastSlashIndex
-      const end = cursorPosition
-      const insert = command.textToInsert
-      const offset = command.cursorOffsetAfterInsert ?? insert.length
-      const newText = text.slice(0, start) + insert + text.slice(end)
-      setText(newText)
-      setShowSlashMenu(false)
-      const newCursor = start + offset
-      requestAnimationFrame(() => {
-        const el = textareaRef.current
-        if (el) {
-          el.focus()
-          el.setSelectionRange(newCursor, newCursor)
-        }
-        adjustHeight()
-      })
-    },
-    [lastSlashIndex, cursorPosition, text, adjustHeight],
-  )
-
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
       e.preventDefault();
@@ -521,7 +446,7 @@ function ChatinputImpl({
           }}
           className={
             cn(
-              "flex min-h-[140px] w-full min-w-0 cursor-text flex-col gap-4 rounded-3xl border border-stroke-neutral-weak bg-fill-neutral-weak p-4 transition-[border-color,box-shadow] duration-150 focus-within:border-stroke-neutral-strong focus-within:shadow-sm sm:p-5",
+              "sky-card chat-composer-surface flex min-h-[140px] w-full min-w-0 cursor-text flex-col gap-4 rounded-3xl border border-stroke-neutral-weak bg-fill-neutral-weak p-4 transition-[border-color,box-shadow] duration-150 focus-within:border-stroke-neutral-strong focus-within:shadow-sm sm:p-5",
               className
             )
           }
@@ -555,12 +480,8 @@ function ChatinputImpl({
           <textarea
             ref={textareaRef}
             value={text}
-            onChange={e => {
-              setText(e.target.value)
-              setCursorPosition(e.target.selectionStart)
-            }}
-            onSelect={() => setCursorPosition(textareaRef.current?.selectionStart ?? 0)}
-            placeholder="Type text here... Type / for formatting"
+            onChange={e => setText(e.target.value)}
+            placeholder="Type text here..."
             className={cn(
               "min-h-12 w-full shrink-0 resize-none overflow-hidden bg-transparent font-geist text-sm leading-5 text-text-neutral-strong outline-none placeholder:text-text-neutral-weaker sm:text-base sm:leading-6",
               {
@@ -571,24 +492,15 @@ function ChatinputImpl({
             onKeyDown={handleKeyDown}
             onPaste={handlePaste}
           />
-          <SlashCommandPopup
-            show={showSlashMenu}
-            position={slashPosition}
-            commands={filteredSlashCommands}
-            selectedIndex={clampedSlashIndex}
-            onSelectedIndexChange={setSlashSelectedIndex}
-            onCommandSelect={handleSlashCommandSelect}
-            onClose={() => setShowSlashMenu(false)}
-          />
           <div className="mt-auto flex justify-between gap-3">
             <div className="flex items-center gap-2">
               {/* File Upload Button */}
               <label
                 htmlFor="chat-file-trigger"
                 aria-label="Attach file"
-                className="flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-full bg-fill-neutral-weak text-icon-neutral-weak transition-[transform,background-color,color] duration-150 hover:bg-fill-neutral-weak hover:text-text-neutral-strong active:scale-[0.97]"
+                className="flex size-9 md:size-10 shrink-0 cursor-pointer items-center justify-center rounded-full border border-stroke-neutral-weak bg-fill-neutral-weak text-icon-neutral-strong transition-[transform,background-color,color] duration-150 hover:bg-fill-neutral-weak hover:text-text-neutral-strong active:scale-[0.97]"
               >
-                <ChatDesignIcon name="attachment" />
+                <ChatDesignIcon name={topic ? "plus" : "attachment"} />
                 <input
                   id="chat-file-trigger"
                   type="file"
@@ -602,13 +514,14 @@ function ChatinputImpl({
 
             </div>
 
-            <div className="flex shrink-0 items-center gap-2">
-              {!typing && !showSendControl ? (
+            <div className={cn("flex shrink-0 items-center", topic ? "gap-1" : "gap-2")}>
+              {!typing && (!showSendControl || topic) ? (
                 <button
                   type="button"
                   onClick={() => void toggleQuickRecording()}
                   className={cn(
-                    "flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-full bg-fill-neutral-weak text-icon-neutral-weak transition-[transform,background-color,color] duration-150 hover:bg-fill-neutral-weak hover:text-text-neutral-strong active:scale-[0.97]",
+                    "flex size-9 md:size-10 shrink-0 cursor-pointer items-center justify-center rounded-full border border-stroke-neutral-weak bg-fill-neutral-weak text-icon-neutral-strong transition-[transform,background-color,color] duration-150 hover:bg-fill-neutral-weak hover:text-text-neutral-strong active:scale-[0.97]",
+                    topic && "bg-transparent",
                     isQuickRecording &&
                       "border-stroke-error-strong bg-fill-error-weak text-text-error-strong hover:bg-fill-error-weak",
                   )}
@@ -617,7 +530,7 @@ function ChatinputImpl({
                   <ChatDesignIcon name="microphone" />
                 </button>
               ) : null}
-              {!typing && !showSendControl && !isQuickRecording ? (
+              {!topic && !typing && !showSendControl && !isQuickRecording ? (
                 <button
                   type="button"
                   aria-label="Voice call"
@@ -628,7 +541,7 @@ function ChatinputImpl({
                     else if (voiceCallTo) navigate(voiceCallTo);
                     else setInlineVoiceOpen(true);
                   }}
-                  className="flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-full bg-fill-overview-voice text-overview-voice transition-[transform,opacity] hover:opacity-90 active:scale-[0.97] disabled:cursor-default disabled:opacity-50"
+                  className="flex size-9 md:size-10 shrink-0 cursor-pointer items-center justify-center rounded-full border border-stroke-neutral-weak bg-fill-overview-voice text-icon-neutral-strong transition-[transform,opacity] hover:opacity-90 active:scale-[0.97] disabled:cursor-default disabled:opacity-50"
                 >
                   <ChatDesignIcon name="phone" />
                 </button>
@@ -637,26 +550,27 @@ function ChatinputImpl({
                 <button
                   type="button"
                   onClick={onStop}
-                  className="btn text-white"
+                  aria-label="Stop"
+                  className="flex size-9 shrink-0 items-center justify-center rounded-full bg-fill-neutral-strong text-primary-foreground md:size-10"
                 >
-                  Stop
+                  <Square className="size-4" fill="currentColor" aria-hidden />
                 </button>
               ) : null}
-              {showSendControl ? (
+              {showSendControl || topic ? (
                 <button
                   type="button"
                   onClick={handleSend}
-                  disabled={sendDisabled}
+                  disabled={sendDisabled || (topic && !showSendControl)}
                   aria-label="Send"
-                  className="flex size-9 shrink-0 items-center justify-center rounded-full bg-fill-neutral-strong text-primary-foreground transition-[transform,opacity] duration-150 active:scale-[0.97] disabled:pointer-events-none disabled:opacity-50"
+                  className="flex size-9 md:size-10 shrink-0 items-center justify-center rounded-full bg-fill-neutral-strong text-primary-foreground transition-[transform,opacity] duration-150 active:scale-[0.97] disabled:pointer-events-none disabled:opacity-50"
                 >
                   {loading ? (
                     <>
-                      <span>Sending..</span>
+                      <span className="sr-only">Sending...</span>
                       <Spinner loading className="!size-4" />
                     </>
                   ) : (
-                    <><ArrowUp className="size-4" strokeWidth={2} aria-hidden /><span className="sr-only">Send</span></>
+                    <>{topic ? <ChatDesignIcon name="send" /> : <ArrowUp className="size-4" strokeWidth={2} aria-hidden />}<span className="sr-only">Send</span></>
                   )}
                 </button>
               ) : null}

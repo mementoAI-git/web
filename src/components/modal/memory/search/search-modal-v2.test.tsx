@@ -118,7 +118,7 @@ describe("SearchMemoriesV2", () => {
     ).not.toHaveLength(0);
   });
 
-  it("uses the theme background token across the desktop search surface", () => {
+  it("uses the solid neutral surface token across the desktop search surface", () => {
     const { container } = render(
       <MemoryRouter>
         <SearchMemoriesV2 />
@@ -127,14 +127,14 @@ describe("SearchMemoriesV2", () => {
 
     expect(
       container.querySelector('[data-slot="memory-search-panel"]'),
-    ).toHaveClass("bg-background");
+    ).toHaveClass("bg-bg-neutral-solid");
     expect(container.querySelector('[data-slot="command"]')).toHaveClass(
-      "bg-background",
+      "bg-bg-neutral-solid",
     );
     expect(container.querySelector(".bg-white")).not.toBeInTheDocument();
   });
 
-  it("uses the theme background token across the mobile search surface", () => {
+  it("uses the solid neutral surface token across the mobile search surface", () => {
     const { container } = render(
       <MemoryRouter>
         <SearchMemoriesV2 isMobile />
@@ -142,16 +142,16 @@ describe("SearchMemoriesV2", () => {
     );
 
     expect(container.querySelector('[data-slot="sheet-container"]')).toHaveClass(
-      "bg-background",
+      "bg-bg-neutral-solid",
     );
     expect(container.querySelector('[data-slot="sheet-header"]')).toHaveClass(
-      "bg-background",
+      "bg-bg-neutral-solid",
     );
     expect(container.querySelector('[data-slot="sheet-content"]')).toHaveClass(
-      "bg-background",
+      "bg-bg-neutral-solid",
     );
     expect(container.querySelector('[data-slot="command"]')).toHaveClass(
-      "bg-background",
+      "bg-bg-neutral-solid",
     );
     expect(container.querySelector(".bg-white")).not.toBeInTheDocument();
   });

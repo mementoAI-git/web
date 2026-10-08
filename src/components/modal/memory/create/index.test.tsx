@@ -10,6 +10,7 @@ import { server } from "@/test/mocks/server";
 import { http, HttpResponse } from "msw";
 import type { IOnUploadPayload } from "@/utility/interface";
 import albumArtwork from "@/assets/image/HD Album story bg memento.webp";
+import referenceAlbum from "@/assets/image/story-overlay-c-tall-album.webp";
 import darkAlbumArtwork from "@/assets/image/HD Album story bg memento dark.webp";
 import privateIcon from "@/assets/icon/mingcute_lock-fill.svg";
 import everyoneIcon from "@/assets/icon/heroicons_users-16-solid.svg";
@@ -446,6 +447,29 @@ function ComposerModal() {
 }
 
 describe("CreateMemory", () => {
+  it("opens overlay C with the leather cover and layered pages while preserving composer controls", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<CreateMemory data={{}} isMobile={false} />, { auth: true, route: "/overview?storyOverlay=C" });
+    expect(screen.getByRole("dialog", { name: "Add Story" })).toHaveAttribute("data-story-presentation", "overlay-c");
+    expect(screen.getByTestId("desktop-album-artwork")).toHaveAttribute("src", referenceAlbum);
+    expect(screen.getByTestId("desktop-album-artwork")).toHaveAttribute("aria-hidden", "true");
+    expect(screen.queryByTestId("album-c-page-layer")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("desktop-paper-grain")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("desktop-story-environment")).not.toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/give this story a title/i)).toBeInTheDocument();
+    for (const name of ["Publish Story", "Drafts", "Add attachment", "Insert emoji", "Record audio", "Record video"]) {
+      expect(screen.getByRole("button", { name })).toBeInTheDocument();
+    }
+    await user.click(screen.getByRole("button", { name: "Details" }));
+    const panel = document.getElementById("story-details-panel");
+    expect(document.querySelector(".album-c-content")?.contains(panel)).toBe(false);
+    expect(document.querySelector(".album-c-sidecar")?.contains(panel)).toBe(true);
+    expect(screen.getByRole("button", { name: "Collapse story details" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Assistant" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Collapse story details" }));
+    expect(screen.getByRole("button", { name: "Details" })).toHaveFocus();
+  });
+
   beforeEach(() => {
     aiTaskRunMock.mockReset();
     editorSetContentMock.mockReset();
@@ -456,7 +480,7 @@ describe("CreateMemory", () => {
     uploadState.files = null;
   });
 
-  it("renders the desktop composer as a journal without changing the mobile sheet", () => {
+  it("defaults to overlay B without changing the mobile sheet", () => {
     const container = document.createElement("div");
     document.body.appendChild(container);
     const { rerender } = renderWithProviders(<CreateMemory data={{}} isMobile={false} />, {
@@ -464,11 +488,8 @@ describe("CreateMemory", () => {
       container,
     });
 
-    expect(screen.getByTestId("desktop-story-environment")).toBeInTheDocument();
-    expect(screen.getByTestId("desktop-story-environment")).toHaveAttribute(
-      "data-story-journal",
-      "true",
-    );
+    expect(screen.queryByTestId("desktop-story-environment")).not.toBeInTheDocument();
+    expect(screen.getByRole("dialog", { name: "Add Story" })).toHaveAttribute("data-story-presentation", "overlay-b");
     expect(screen.getByTestId("desktop-journal-shell")).toBeInTheDocument();
     expect(screen.getByTestId("desktop-album-artwork")).toHaveAttribute("alt", "");
     expect(screen.getByTestId("desktop-album-artwork")).toHaveAttribute("src", albumArtwork);
@@ -480,6 +501,48 @@ describe("CreateMemory", () => {
 
     expect(screen.getByTestId("sheet-container")).toBeInTheDocument();
     expect(screen.queryByTestId("desktop-journal-shell")).not.toBeInTheDocument();
+  });
+
+  it.each(["light", "dark"])("opens the default Add Story overlay with the %s album artwork and no scenic background", async (theme) => {
+    localStorage.setItem("memento:theme", theme);
+    const user = userEvent.setup();
+    renderWithProviders(<ComposerModal />, { auth: true, route: "/overview" });
+    await user.click(screen.getByRole("button", { name: "Open composer" }));
+    expect(screen.getByRole("dialog", { name: "Add Story" })).toHaveClass("bg-bg-neutral");
+    expect(screen.getByTestId("desktop-album-artwork")).toHaveAttribute("src", theme === "dark" ? darkAlbumArtwork : albumArtwork);
+    expect(screen.queryByTestId("desktop-story-environment")).not.toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/give this story a title/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Publish Story" })).toBeInTheDocument();
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("dialog", { name: "Add Story" })).not.toBeInTheDocument();
+  });
+
+  it.each(["B", "C"])("preserves unsaved-story safeguards in overlay %s", async (overlay) => {
+    // Keep this draft unsaved while testing the close guard; autosave is covered separately.
+    const scheduleTimeout = window.setTimeout.bind(window);
+    vi.spyOn(window, "setTimeout").mockImplementation((handler, timeout, ...args) =>
+      scheduleTimeout(handler, timeout === 900 ? 60_000 : timeout, ...args),
+    );
+    const user = userEvent.setup();
+    renderWithProviders(<ComposerModal />, { auth: true, route: `/overview?storyOverlay=${overlay}` });
+    await user.click(screen.getByRole("button", { name: "Open composer" }));
+    await user.type(screen.getByPlaceholderText(/give this story a title/i), "Overlay draft");
+    await user.click(screen.getByRole("button", { name: "Close" }));
+    expect(screen.getByRole("dialog", { name: "Save this story?" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Keep editing" }));
+    expect(screen.getByPlaceholderText(/give this story a title/i)).toHaveValue("Overlay draft");
+    await user.click(screen.getByRole("button", { name: "Close" }));
+    await user.click(screen.getByRole("button", { name: "Save draft and exit" }));
+    expect(JSON.parse(localStorage.getItem("create-memory-drafts") ?? "[]")[0].title).toBe("Overlay draft");
+    expect(screen.queryByRole("dialog", { name: "Add Story" })).not.toBeInTheDocument();
+  }, 20_000);
+
+  it.each(["/overview?storyOverlay=A", "/overview?storyOverlay=B", "/stories"])("keeps variant A hidden on %s", async (route) => {
+    const user = userEvent.setup();
+    renderWithProviders(<ComposerModal />, { auth: true, route });
+    await user.click(screen.getByRole("button", { name: "Open composer" }));
+    expect(screen.getByRole("dialog", { name: "Add Story" })).toHaveAttribute("data-story-presentation", "overlay-b");
+    expect(screen.queryByTestId("desktop-story-environment")).not.toBeInTheDocument();
   });
 
   it("uses the dark album artwork for the desktop composer in dark mode", () => {
@@ -657,7 +720,7 @@ describe("CreateMemory", () => {
     const user = userEvent.setup();
     renderWithProviders(<CreateMemory data={{}} isMobile={false} />, { auth: true });
 
-    await user.click(screen.getByRole("button", { name: "Story Details" }));
+    await user.click(screen.getByRole("button", { name: "Details" }));
     await user.click(screen.getByLabelText("Who can see this story?"));
 
     const picker = screen.getByRole("dialog", { name: "Sharing options" });
@@ -715,7 +778,7 @@ describe("CreateMemory", () => {
     const user = userEvent.setup();
     renderWithProviders(<CreateMemory data={{}} isMobile={false} />, { auth: true });
 
-    const openDetails = screen.getByRole("button", { name: "Story Details" });
+    const openDetails = screen.getByRole("button", { name: "Details" });
     expect(openDetails).toHaveAttribute("aria-expanded", "false");
     expect(openDetails).toHaveAttribute("aria-controls", "story-details-panel");
     expect(screen.queryByRole("tab", { name: "Story Details" })).not.toBeInTheDocument();
@@ -728,19 +791,20 @@ describe("CreateMemory", () => {
 
     await user.click(screen.getByRole("button", { name: "Collapse story details" }));
 
-    const restoredTrigger = screen.getByRole("button", { name: "Story Details" });
+    const restoredTrigger = screen.getByRole("button", { name: "Details" });
     expect(restoredTrigger).toHaveAttribute("aria-expanded", "false");
     expect(restoredTrigger).toHaveFocus();
   });
 
-  it("uses theme tokens for the desktop property panel and formatting strip", async () => {
+  it("uses theme tokens for the desktop property panel and leaves the formatting strip unframed", async () => {
     const user = userEvent.setup();
     renderWithProviders(<CreateMemory data={{}} isMobile={false} />, { auth: true });
 
-    expect(screen.getByTestId("desktop-formatting-strip")).toHaveClass("bg-fill-neutral-weak");
+    expect(screen.getByTestId("desktop-formatting-strip")).toHaveClass("px-3");
+    expect(screen.getByTestId("desktop-formatting-strip")).not.toHaveClass("bg-fill-neutral-weak", "border", "py-2");
     expect(screen.getByTestId("desktop-story-date-icon")).toHaveAttribute("src", calendarIcon);
 
-    await user.click(screen.getByRole("button", { name: "Story Details" }));
+    await user.click(screen.getByRole("button", { name: "Details" }));
 
     expect(screen.getByText("Who can see this story?")).toHaveClass("text-text-neutral-strong");
     expect(
@@ -754,9 +818,13 @@ describe("CreateMemory", () => {
     expect(screen.getByTestId("story-visibility-icon")).toHaveAttribute("src", everyoneIcon);
     expect(screen.getByText("Add Tags")).toHaveClass("text-text-neutral-strong");
     expect(screen.getByRole("button", { name: "Auto tag" })).toHaveClass(
-      "bg-fill-info-weak",
-      "text-text-info-strong",
+      "bg-transparent",
+      "border-0",
+      "text-text-brand-strong",
     );
+    const autoTagIcon = screen.getByRole("button", { name: "Auto tag" }).querySelector('[aria-hidden="true"]');
+    expect(autoTagIcon).toHaveClass("size-3", "bg-icon-brand-strong");
+    expect(autoTagIcon?.getAttribute("style")).toContain("mask-image: url(");
     expect(screen.getByPlaceholderText("Manually add tags or click to autogenerate").parentElement)
       .toHaveClass("bg-fill-neutral-weak");
     expect(screen.getByText("Story Overview")).toHaveClass("text-text-neutral-strong");
@@ -766,7 +834,7 @@ describe("CreateMemory", () => {
     const user = userEvent.setup();
     renderWithProviders(<CreateMemory data={{}} isMobile={false} />, { auth: true });
 
-    await user.click(screen.getByRole("button", { name: "Story Details" }));
+    await user.click(screen.getByRole("button", { name: "Details" }));
 
     expect(screen.queryByRole("button", { name: "Save Draft" })).not.toBeInTheDocument();
   });
@@ -782,7 +850,7 @@ describe("CreateMemory", () => {
     const dialog = screen.getByRole("dialog", { name: "Save this story?" });
     expect(dialog).toHaveAttribute("data-slot", "dialog-content");
     expect(dialog).toHaveClass("z-[310]");
-    expect(document.querySelector('[data-slot="dialog-overlay"]')).toHaveClass("z-[300]");
+    expect(document.querySelector('[data-slot="dialog-overlay"].z-\\[300\\]')).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Save draft and exit" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Discard" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Keep editing" })).toBeInTheDocument();
@@ -818,7 +886,7 @@ describe("CreateMemory", () => {
   it("shows assistant content when the Assistant tab is selected", async () => {
     const user = userEvent.setup();
     renderWithProviders(<CreateMemory data={{}} isMobile={false} />, { auth: true });
-    await user.click(screen.getByRole("button", { name: "Story Details" }));
+    await user.click(screen.getByRole("button", { name: "Details" }));
 
     const detailsTab = screen.getByRole("tab", { name: "Story Details" });
     const assistantTab = screen.getByRole("tab", { name: "Assistant" });
@@ -843,7 +911,7 @@ describe("CreateMemory", () => {
   it("stacks the Story Details tabs above their scrollable panel", async () => {
     const user = userEvent.setup();
     renderWithProviders(<CreateMemory data={{}} isMobile={false} />, { auth: true });
-    await user.click(screen.getByRole("button", { name: "Story Details" }));
+    await user.click(screen.getByRole("button", { name: "Details" }));
 
     expect(screen.getByRole("tablist").closest('[data-slot="tabs"]')).toHaveClass("flex-col");
   });
@@ -852,7 +920,7 @@ describe("CreateMemory", () => {
     const user = userEvent.setup();
     renderWithProviders(<CreateMemory data={{}} isMobile={false} />, { auth: true });
 
-    await user.click(screen.getByRole("button", { name: "Story Details" }));
+    await user.click(screen.getByRole("button", { name: "Details" }));
     await user.click(screen.getByRole("tab", { name: "Assistant" }));
     const assistantPanel = screen.getByRole("tabpanel", { name: "Assistant" });
     expect(assistantPanel).toHaveClass("data-active:flex", "data-active:flex-col");

@@ -82,7 +82,8 @@ export function notifySubscriptionGate(payload: SubscriptionGatePayload) {
     action: {
       label: "Upgrade",
       onClick: () => {
-        globalThis.location.href = "/pricing";
+        const returnTo = globalThis.location.pathname + globalThis.location.search + globalThis.location.hash;
+        globalThis.location.href = `/pricing?returnTo=${encodeURIComponent(returnTo)}`;
       },
     },
   });

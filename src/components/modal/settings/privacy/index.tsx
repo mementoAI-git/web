@@ -31,7 +31,7 @@ export default function Privacy() {
       </p>
 
       {/* Protection Info Card */}
-      <div className="flex flex-col gap-4 rounded-2xl border border-v3-stroke-weak bg-bg-neutral p-4 sm:p-5">
+      <div className="sky-card flex flex-col gap-4 rounded-3xl border border-v3-stroke-weak bg-fill-neutral-weak p-4 sm:p-5">
         <span className="font-inter text-sm font-semibold text-v3-text-strong">
           How we protect your information
         </span>
@@ -54,7 +54,7 @@ export default function Privacy() {
       </div>
 
       {/* Privacy Settings Card */}
-      <div className="flex flex-col gap-4 rounded-2xl border border-v3-stroke-weak bg-bg-neutral p-4 sm:p-5">
+      <div className="sky-card flex flex-col gap-4 rounded-3xl border border-v3-stroke-weak bg-fill-neutral-weak p-4 sm:p-5">
         <span className="font-inter text-sm font-semibold text-v3-text-strong">
           Privacy settings
         </span>
@@ -89,7 +89,7 @@ export default function Privacy() {
       </div>
 
       {/* Account Settings Card */}
-      <div className="flex flex-col gap-4 rounded-2xl border border-v3-stroke-weak bg-bg-neutral p-4 sm:p-5">
+      <div className="sky-card flex flex-col gap-4 rounded-3xl border border-v3-stroke-weak bg-fill-neutral-weak p-4 sm:p-5">
         <span className="font-inter text-sm font-semibold text-v3-text-strong">Account Settings</span>
         <div className="flex flex-col gap-4">
           <div className={actionRowBase}>

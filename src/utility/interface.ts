@@ -59,6 +59,7 @@ export interface IPersona {
   emotional_state_trends?: string[];
   goals_and_aspirations?: string[];
   self_description?: string;
+  social_accounts?: import("@/features/profile/social-accounts").SocialAccounts;
   current_priority?: string[];
   join_reasons?: string[];
   audience?: string[];
@@ -102,6 +103,9 @@ export interface IUser {
   location?: string;
   picture: string;
   picture_url?: string;
+  banner_url?: string | null;
+  banner_preset?: number;
+  banner_position?: {x: number; y: number};
   last_seen: string;
   streak: number;
   bg_music?: string;
@@ -219,8 +223,16 @@ export interface IGroup {
   color?: number;
 }
 
-export type CreateGroupBody = { name: string; description?: string; color?: number };
-export type UpdateGroupBody = { name?: string; description?: string; color?: number };
+export type CreateGroupBody = {
+  name: string;
+  description?: string;
+  color?: number;
+};
+export type UpdateGroupBody = {
+  name?: string;
+  description?: string;
+  color?: number;
+};
 export type AddGroupMembersBody = { beneficiaryIds: string[] };
 
 export interface ICapsule {

@@ -1,13 +1,32 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { screen } from "@testing-library/react";
+import {
+  describe,
+  it,
+  expect,
+  vi,
+  beforeEach,
+  beforeAll,
+  afterAll,
+} from "vitest";
+import { screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "@/test";
 import { Feedback } from "./index";
+import Modal from "../index";
+import { useModal } from "@/hooks/use-modal";
 import type { IOnUploadPayload } from "@/utility/interface";
+
+// The host imports story previews; feedback never renders their PDF worker.
+vi.mock("pdfjs-dist", () => ({
+  getDocument: vi.fn(),
+  GlobalWorkerOptions: {},
+  version: "test",
+}));
+
+const submitFeedback = vi.fn().mockResolvedValue({ success: true });
 
 vi.mock("@/hooks/use-fetcher", () => ({
   default: () => ({
-    trigger: vi.fn().mockResolvedValue({ success: true }),
+    trigger: submitFeedback,
     isMutating: false,
   }),
 }));
@@ -33,8 +52,26 @@ vi.mock("@/hooks/use-file-upload", () => ({
   }),
 }));
 
+function FeedbackHost() {
+  const { open } = useModal();
+  return (
+    <>
+      <button onClick={() => open("create-feedback")}>Open feedback</button>
+      <Modal />
+    </>
+  );
+}
+
 describe("Feedback", () => {
+  const originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
+  beforeAll(() => {
+    HTMLElement.prototype.scrollIntoView = vi.fn();
+  });
+  afterAll(() => {
+    HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
+  });
   beforeEach(() => {
+    submitFeedback.mockClear();
     uploadState.files = [];
     uploadState.handleUpload.mockReset();
     uploadState.handleDeleteFile.mockReset();
@@ -48,47 +85,122 @@ describe("Feedback", () => {
     });
   });
 
-  it("renders desktop modal with 500px width and 24px padding utilities", async () => {
-    Object.defineProperty(window, "innerWidth", {
-      writable: true,
-      configurable: true,
-      value: 800,
+  it("renders an accessible dialog with labelled fields and a stable submit action", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<Feedback data={{}} />, { auth: true });
+    const dialog = await screen.findByRole("dialog", {
+      name: /send feedback/i,
     });
-
-    const { container } = renderWithProviders(<Feedback data={{}} />, {
-      auth: true,
-    });
-
-    await screen.findByRole("heading", { name: /send feedback/i });
-
-    expect(screen.getByRole("combobox")).toBeInTheDocument();
+    expect(dialog).toHaveAccessibleDescription(
+      "Share a bug, an idea, or something we could improve.",
+    );
     expect(
-      screen.getByRole("button", { name: /choose images/i }),
+      within(dialog).getByRole("combobox", { name: /feedback type/i }),
     ).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /^close$/i })).toBeInTheDocument();
-
-    const modal = container.querySelector(".modal-container");
-    expect(modal).toBeTruthy();
-    expect(modal?.className).toContain("!w-[500px]");
-    expect(modal?.className).toContain("!min-w-[500px]");
-    expect(modal?.className).toContain("!max-w-[500px]");
-    expect(modal?.className).toContain("!p-6");
+    await user.type(
+      within(dialog).getByRole("textbox", { name: /^message$/i }),
+      "A useful suggestion",
+    );
+    expect(
+      within(dialog).getByRole("button", { name: /^send feedback$/i }),
+    ).toBeInTheDocument();
   });
 
-  it("wraps form content in full-width stacks", async () => {
-    Object.defineProperty(window, "innerWidth", {
-      writable: true,
-      configurable: true,
-      value: 800,
-    });
+  it("shows accessible validation and submits the selected feedback type", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<Feedback data={{}} />, { auth: true });
+    await user.click(screen.getByRole("button", { name: /^send feedback$/i }));
+    expect(await screen.findByText("Message is required")).toHaveAttribute(
+      "role",
+      "alert",
+    );
+    expect(screen.getByRole("textbox", { name: /^message$/i })).toHaveAttribute(
+      "aria-invalid",
+      "true",
+    );
+    screen.getByRole("combobox", { name: /feedback type/i }).focus();
+    await user.keyboard("{Enter}");
+    await user.click(
+      await screen.findByRole("option", { name: "Feature Request" }),
+    );
+    await user.type(
+      screen.getByRole("textbox", { name: /^message$/i }),
+      "Please add this feature",
+    );
+    await user.click(screen.getByRole("button", { name: /^send feedback$/i }));
+    expect(submitFeedback).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "Feature Request",
+        message: "Please add this feature",
+      }),
+    );
+  });
 
-    const { container } = renderWithProviders(<Feedback data={{}} />, {
-      auth: true,
+  it("asks before discarding screenshots on Escape", async () => {
+    const user = userEvent.setup();
+    uploadState.files = [
+      {
+        id: "pending",
+        file: new File(["x"], "pending.png", { type: "image/png" }),
+        progress: 20,
+      },
+    ];
+    renderWithProviders(<Feedback data={{}} />, { auth: true });
+    expect(
+      screen.getByRole("button", { name: /^send feedback$/i }),
+    ).toBeDisabled();
+    await user.keyboard("{Escape}");
+    const confirmation = await screen.findByRole("alertdialog", {
+      name: /discard feedback/i,
     });
+    expect(confirmation).toHaveTextContent("Your screenshots will be removed.");
+    await user.click(
+      within(confirmation).getByRole("button", { name: /keep editing/i }),
+    );
+    expect(
+      screen.getByRole("dialog", { name: /send feedback/i }),
+    ).toBeInTheDocument();
+  });
 
-    await screen.findByRole("heading", { name: /send feedback/i });
-    const stacks = container.querySelectorAll(".modal-container .w-full.space-y-4");
-    expect(stacks.length).toBeGreaterThanOrEqual(1);
+  it("uses one dialog in the modal host and closes on Escape", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<FeedbackHost />, { auth: true });
+    await user.click(screen.getByRole("button", { name: /open feedback/i }));
+    expect(screen.getAllByRole("dialog")).toHaveLength(1);
+    expect(screen.getAllByRole("button", { name: /^cancel$/i })).toHaveLength(
+      1,
+    );
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("submits uploaded screenshots and closes without a discard prompt", async () => {
+    const user = userEvent.setup();
+    uploadState.files = [
+      {
+        id: "uploaded",
+        file: new File(["x"], "image.png", { type: "image/png" }),
+        progress: 100,
+        uploadedFile: {
+          _id: "uf1",
+          name: "image.png",
+          url: "https://example.com/image.png",
+          size: 1,
+        },
+      },
+    ];
+    renderWithProviders(<FeedbackHost />, { auth: true });
+    await user.click(screen.getByRole("button", { name: /open feedback/i }));
+    await user.type(
+      screen.getByRole("textbox", { name: /^message$/i }),
+      "See this screenshot",
+    );
+    await user.click(screen.getByRole("button", { name: /^send feedback$/i }));
+    expect(submitFeedback).toHaveBeenCalledWith(
+      expect.objectContaining({ screenshots: ["uf1"] }),
+    );
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
   });
 
   it("renders thumbnail grid, image preview, and remove control for screenshots", async () => {
@@ -114,16 +226,15 @@ describe("Feedback", () => {
       },
     ];
 
-    const { container } = renderWithProviders(<Feedback data={{}} />, {
+    renderWithProviders(<Feedback data={{}} />, {
       auth: true,
     });
 
     await screen.findByRole("heading", { name: /send feedback/i });
 
-    expect(container.querySelector("img[alt='image.png']")).toBeTruthy();
+    expect(screen.getByRole("img", { name: "image.png" })).toBeInTheDocument();
 
     const remove = screen.getByRole("button", { name: /remove image\.png/i });
-    expect(remove).toHaveClass("rounded-full");
     await user.click(remove);
     expect(uploadState.handleDeleteFile).toHaveBeenCalledTimes(1);
     expect(uploadState.handleDeleteFile).toHaveBeenCalledWith(

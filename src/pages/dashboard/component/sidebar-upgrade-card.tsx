@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { cn } from "@/utility";
 import starBadge from "@/assets/image/star-badge.png";
 import { UpgradePrompt } from "@/features/pricing/upgrade-prompt";
@@ -9,19 +8,12 @@ type SidebarUpgradeCardProps = {
   onNavigate?: () => void;
 };
 
-const upgradeCardBackground =
-  "linear-gradient(234.11deg, rgba(99, 255, 125, 0.1) 11.28%, rgba(255, 255, 255, 0) 81.83%), #FFFFFF";
-
 export function SidebarUpgradeCard({ onNavigate }: SidebarUpgradeCardProps) {
-  const navigate = useNavigate();
   const [upgradeOpen, setUpgradeOpen] = useState(false);
 
   return (
     <>
-      <div
-        className="relative box-border flex min-h-[131px] w-full min-w-0 shrink-0 flex-col items-start rounded-[12px] p-2"
-        style={{ background: upgradeCardBackground }}
-      >
+      <div className="relative box-border flex min-h-[131px] w-full min-w-0 shrink-0 flex-col items-start rounded-[12px] bg-fill-neutral-weaker p-2">
         <div className="flex min-h-0 w-full flex-1 flex-col gap-3">
           <div className="flex min-h-0 flex-col gap-1 self-stretch">
             <div className="flex flex-row items-center gap-1 self-stretch">
@@ -36,23 +28,22 @@ export function SidebarUpgradeCard({ onNavigate }: SidebarUpgradeCardProps) {
                   draggable={false}
                 />
               </span>
-              <h3 className="min-w-0 flex-1 font-garamond text-[14px] font-normal leading-[18px] text-[#1E1E1E]">
+              <h3 className="min-w-0 flex-1 font-garamond text-[14px] font-normal leading-[18px] text-text-neutral-strong">
                 Unlock more with Pro
               </h3>
             </div>
-            <p className="line-clamp-3 font-inter text-[12px] font-normal leading-[18px] text-[rgba(30,30,30,0.65)]">
-              Advanced features, more storage, voice chat, and better memory context
-              with Pro.
+            <p className="line-clamp-3 font-inter text-[12px] font-normal leading-[18px] text-text-neutral-weak">
+              Advanced features, more storage, voice chat, and better memory
+              context with Pro.
             </p>
           </div>
           <button
             type="button"
             className={cn(
               "flex h-fit w-full shrink-0 flex-row items-center justify-center gap-1 rounded-full",
-              "bg-fill-brand-strong px-2.5 py-2 font-inter text-xs font-semibold leading-[18px] text-white",
-              "shadow-[inset_0_-3px_12px_rgba(0,0,0,0.29)]",
+              "bg-fill-brand-strong px-2.5 py-2 font-inter text-xs font-semibold leading-[18px] text-text-inverse-strong",
               "outline-none transition-opacity hover:opacity-95",
-              "focus-visible:ring-2 focus-visible:ring-v3-brand-strong focus-visible:ring-offset-2",
+              "focus-visible:ring-2 focus-visible:ring-stroke-brand-strong focus-visible:ring-offset-2",
             )}
             onClick={() => {
               setUpgradeOpen(true);
@@ -68,7 +59,6 @@ export function SidebarUpgradeCard({ onNavigate }: SidebarUpgradeCardProps) {
         variant="modal"
         open={upgradeOpen}
         onOpenChange={setUpgradeOpen}
-        onUpgrade={() => navigate("/pricing")}
       />
     </>
   );

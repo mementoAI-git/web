@@ -74,6 +74,7 @@
     "react-spring-bottom-sheet": "^3.4.1",
     "remark-gfm": "^4.0.1",
     "retune": "^0.6.0",
+    "shaders": "^4.0.0",
     "sonner": "^2.0.3",
     "swr": "^2.3.3",
     "tailwind-datepicker-react": "^1.4.3",

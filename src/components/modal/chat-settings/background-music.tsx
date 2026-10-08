@@ -104,10 +104,15 @@ export default function BackgroundMusic({ compact = false }: { compact?: boolean
       void handleTrackSelect((selectedIndex + direction + audioFiles.length) % audioFiles.length);
     };
     return (
-      <section aria-label="Music player" className="flex flex-col gap-3 rounded-xl bg-fill-neutral-weaker p-3">
+      <section aria-label="Music player" className="sky-card music-player-panel flex h-fit shrink-0 flex-col gap-3 rounded-xl border border-stroke-neutral-weak bg-fill-neutral-weak p-4">
         <div className="flex items-center gap-3">
           <div className="flex size-16 shrink-0 items-center justify-center rounded-full bg-fill-neutral-strong text-text-inverse-strong">
-            <Disc3 className="size-12" strokeWidth={1} aria-hidden />
+            <Disc3
+              className="music-player-disc size-12"
+              style={{ animationPlayState: isPlaying ? "running" : "paused" }}
+              strokeWidth={1}
+              aria-hidden
+            />
           </div>
           <div className="flex min-w-0 flex-1 flex-col gap-1">
             <span className="text-xs text-text-neutral-weak">Music</span>
@@ -131,7 +136,7 @@ export default function BackgroundMusic({ compact = false }: { compact?: boolean
             </div>
           </div>
         </div>
-        <Slider className="ambience-volume-slider" label="Volume" size="compact" value={volume} onChange={(value) => { if (typeof value === "number") setVolume(value); }} min={0} max={100} formatValue={(value) => `${value}%`} />
+        <Slider className="ambience-volume-slider" label="Volume" size="compact" trackStyle={{ backgroundColor: "var(--stroke-neutral-weak)" }} fillStyle={{ backgroundColor: "var(--icon-neutral-weak)" }} thumbColor="var(--icon-neutral-strong)" thumbBorderColor="var(--bg-neutral-solid)" value={volume} onChange={(value) => { if (typeof value === "number") setVolume(value); }} min={0} max={100} formatValue={(value) => `${value}%`} />
       </section>
     );
   }

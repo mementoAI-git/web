@@ -1,3 +1,4 @@
+import { captureReferral } from "@/features/referrals/attribution";
 import "../instrument";
 import * as Sentry from "@sentry/react";
 import { StrictMode } from "react";
@@ -43,6 +44,8 @@ const sentryHandler = {
 };
 
 initializeTheme();
+
+captureReferral();
 
 createRoot(document.getElementById("root")!, sentryHandler).render(
   <StrictMode>

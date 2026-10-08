@@ -13,23 +13,51 @@ import {
   type ChangeEvent,
 } from "react";
 import endpoint from "@/api/endpoint";
-import { cn, isEmpty } from "@/utility";
+import { isEmpty } from "@/utility";
 import { toast } from "sonner";
-import { Sheet } from "react-modal-sheet";
 import useFileUpload from "@/hooks/use-file-upload";
 import { v4 as uuidv4 } from "uuid";
-import { createPortal } from "react-dom";
 import { mutate } from "swr";
-import { CloseWithFilesConfirmation } from "../memory/close-with-files-confirmation";
 import { useStore } from "@/hooks/use-store";
 import * as yup from "yup";
 import useFetcher from "@/hooks/use-fetcher";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Spinner } from "@/components/ui/spinner";
-import { X } from "lucide-react";
+import { Check, Paperclip, X } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Field,
+  FieldDescription,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from "@/components/ui/field";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const FEEDBACK_OPTIONS = [
   { label: "Bug", value: "Bug" },
@@ -55,19 +83,18 @@ export interface FeedbackModalData {
 
 interface IContentProps {
   data: FeedbackModalData;
+  onClose: () => void;
 }
-
-const triggerV3Outline =
-  "font-inter w-full justify-between !rounded-[12px] border border-v3-stroke-weak bg-white px-3 py-2 text-left text-sm text-v3-text-strong shadow-none hover:bg-v3-fill-weaker data-focus-visible:outline-none data-focus-visible:ring-2 data-focus-visible:ring-v3-brand-strong data-focus-visible:ring-offset-0";
-
-const textFieldV3 =
-  "font-inter !rounded-[12px] border border-v3-stroke-weak bg-white px-3 py-2 text-sm text-v3-text-strong outline-none data-focus-visible:ring-2 data-focus-visible:ring-v3-brand-strong data-focus-visible:ring-offset-0";
 
 const Content = forwardRef<
   { handleDeleteAllFiles: () => Promise<void>; hasFiles: boolean },
   IContentProps
->(({ data }, ref) => {
-  const messageFieldId = useId();
+>(({ data, onClose }, ref) => {
+  const fieldId = useId();
+  const messageFieldId = `${fieldId}-message`;
+  const typeFieldId = `${fieldId}-type`;
+  const emailFieldId = `${fieldId}-email`;
+  const screenshotsFieldId = `${fieldId}-screenshots`;
   const { payload } = data;
   const { user } = useStore();
   const { close } = useModal();
@@ -78,48 +105,46 @@ const Content = forwardRef<
     message: "",
   };
 
-  const [editMode, setEditMode] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const activeToastId = useRef<string | number | undefined>(undefined);
   const isCheckingClipboard = useRef(false);
 
   const { trigger, isMutating } = useFetcher(endpoint.feedback);
   const { files, handleUpload, handleDeleteFile, setFiles } = useFileUpload();
-  const { values, errors, handleChange, setValues, handleSubmit, handleValue } =
-    useForm({
-      initial: { ...initial, ...payload },
-      schema,
-      async onSubmit(p) {
-        if (isEmpty(p.message)) return toast.error("Message is required");
+  const { values, errors, handleChange, handleSubmit, handleValue } = useForm({
+    initial: { ...initial, ...payload },
+    schema,
+    async onSubmit(p) {
+      if (isEmpty(p.message)) return toast.error("Message is required");
 
-        const uploadedScreenshots = files
-          .filter((f) => f.uploadedFile)
-          .map((f) => f.uploadedFile._id);
+      const uploadedScreenshots = files
+        .filter((f) => f.uploadedFile)
+        .map((f) => f.uploadedFile._id);
 
-        const payload = {
-          type: p.type,
-          message: p.message,
-          email: p.email || user?.email,
-          screenshots: uploadedScreenshots,
-        };
+      const payload = {
+        type: p.type,
+        message: p.message,
+        email: p.email || user?.email,
+        screenshots: uploadedScreenshots,
+      };
 
-        try {
-          const result = await trigger(payload);
-          if (result?.success) {
-            toast.success("Feedback sent successfully!");
-            mutate(
-              (key) =>
-                typeof key === "string" && key.startsWith(endpoint.feedback),
-            );
-            setFiles([]);
-            close("create-feedback");
-          }
-        } catch (error) {
-          console.error("Failed to send feedback:", error);
-          toast.error("Failed to send feedback");
+      try {
+        const result = await trigger(payload);
+        if (result?.success) {
+          toast.success("Feedback sent successfully!");
+          mutate(
+            (key) =>
+              typeof key === "string" && key.startsWith(endpoint.feedback),
+          );
+          setFiles([]);
+          close("create-feedback", { force: true });
         }
-      },
-    });
+      } catch (error) {
+        console.error("Failed to send feedback:", error);
+        toast.error("Failed to send feedback");
+      }
+    },
+  });
 
   const uploadFileRef = useRef<((file: File) => Promise<void>) | undefined>(
     undefined,
@@ -168,7 +193,7 @@ const Content = forwardRef<
             position: "bottom-right",
             classNames: {
               actionButton:
-                "!bg-v3-brand-strong !rounded-lg !px-4 !py-2 !font-semibold transition-colors hover:!opacity-90",
+                "!bg-fill-brand-strong !rounded-lg !px-4 !py-2 !font-semibold transition-colors hover:!opacity-90",
             },
             action: {
               label: "Paste",
@@ -283,294 +308,289 @@ const Content = forwardRef<
     [handleDeleteAllFiles, files.length],
   );
 
-  const handleDiscard = () => {
-    setEditMode(false);
-    setValues(initial);
-    setFiles([]);
-    close("create-feedback");
-  };
-
-  const submitDisabled = files.some((f) => !f.uploadedFile);
-  const showContinueLabel = editMode || !isEmpty(values.message);
-  const dimFooter = submitDisabled;
+  const submitDisabled = isMutating || files.some((f) => !f.uploadedFile);
 
   return (
-    <div className="w-full space-y-4">
-      <div className="flex w-full flex-col gap-3">
-        <div className="font-inter flex w-full flex-col gap-1.5">
-          <Label className="font-inter text-sm font-medium text-v3-text-strong">
-            Type
-          </Label>
-          <select
-            name="type"
-            value={values.type}
-            onChange={(e) => handleValue("type", e.target.value)}
-            className={triggerV3Outline}
-          >
-            {FEEDBACK_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-        </div>
-        {errors.type && (
-          <small className="text-xs text-danger">{errors.type}</small>
-        )}
-
-        <div className="flex flex-col gap-1.5">
-          <Label
-            className="font-inter text-sm font-medium text-v3-text-strong"
-            htmlFor={messageFieldId}
-          >
-            Message
-          </Label>
-          <Textarea
-            id={messageFieldId}
-            name="message"
-            value={values.message}
-            onChange={handleChange}
-            placeholder="Attach a message"
-            className={cn(
-              textFieldV3,
-              "min-h-24 resize-y placeholder:text-v3-text-weak",
+    <form
+      onSubmit={handleSubmit}
+      className="flex min-h-0 flex-col gap-6"
+      noValidate
+    >
+      <fieldset disabled={isMutating} className="min-w-0">
+        <FieldGroup className="gap-5">
+          <Field data-invalid={Boolean(errors.type)}>
+            <FieldLabel htmlFor={typeFieldId}>Feedback type</FieldLabel>
+            <Select
+              name="type"
+              value={values.type}
+              onValueChange={(value) => handleValue("type", value)}
+            >
+              <SelectTrigger
+                id={typeFieldId}
+                className="w-full"
+                aria-invalid={Boolean(errors.type)}
+                aria-describedby={
+                  errors.type ? `${typeFieldId}-error` : undefined
+                }
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  {FEEDBACK_OPTIONS.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+            {errors.type && (
+              <FieldError id={`${typeFieldId}-error`}>{errors.type}</FieldError>
             )}
-          />
-          {errors.message && (
-            <small className="text-xs text-danger">{errors.message}</small>
-          )}
-        </div>
-
-        {!user && (
-          <div className="font-inter flex flex-col gap-1.5">
-            <Label className="font-inter text-sm font-medium text-v3-text-strong">
-              Email (optional)
-            </Label>
-            <Input
-              type="email"
-              name="email"
-              value={values.email}
+          </Field>
+          <Field data-invalid={Boolean(errors.message)}>
+            <FieldLabel htmlFor={messageFieldId}>Message</FieldLabel>
+            <Textarea
+              id={messageFieldId}
+              name="message"
+              value={values.message}
               onChange={handleChange}
-              placeholder="you@example.com"
-              className={textFieldV3}
+              placeholder="What happened, or what would you like to see?"
+              className="min-h-32 max-h-64 resize-y"
+              aria-invalid={Boolean(errors.message)}
+              aria-describedby={
+                errors.message ? `${messageFieldId}-error` : undefined
+              }
+              required
             />
-            {errors.email && (
-              <small className="text-xs text-danger">{errors.email}</small>
+            {errors.message && (
+              <FieldError id={`${messageFieldId}-error`}>
+                {errors.message}
+              </FieldError>
             )}
-          </div>
-        )}
-
-        <div className="flex flex-col gap-1.5">
-          <Label className="font-inter text-sm font-medium text-v3-text-strong">
-            Screenshots (optional)
-          </Label>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            multiple
-            onChange={handleScreenshots}
-            className="sr-only"
-          />
-          <Button
-            type="button"
-            variant="secondary"
-            className="font-inter w-full max-w-full justify-center rounded-full border border-v3-stroke-weak bg-v3-fill-weaker text-sm font-medium text-v3-text-strong hover:bg-v3-stroke-weak/20 sm:w-auto"
-            onClick={() => fileInputRef.current?.click()}
-          >
-            Choose images
-          </Button>
-          <p className="text-xs text-v3-text-weak">
-            Or press Ctrl+V (Cmd+V on Mac) to paste from clipboard
-          </p>
-
-          {files.length > 0 && (
-            <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
-              {files.map((file) => (
-                <div
-                  key={file.id}
-                  className="group relative overflow-hidden rounded-lg border border-v3-stroke-weak bg-v3-fill-weaker"
-                >
-                  <div className="relative aspect-video min-h-0 w-full">
-                    <img
-                      src={file.base64 ?? ""}
-                      alt={file.file.name}
-                      className="h-full w-full object-cover"
-                    />
-                    {!file.uploadedFile && (
-                      <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/50">
-                        <Spinner className="size-5 text-white" />
-                        <span className="text-xs font-medium text-white">
-                          {file.progress}%
-                        </span>
-                      </div>
-                    )}
-                    {file.uploadedFile && (
-                      <div className="absolute right-1 top-1 rounded-full bg-v3-brand-strong p-1">
-                        <svg
-                          className="size-3 text-white"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          aria-hidden
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={3}
-                            d="M5 13l4 4L19 7"
-                          />
-                        </svg>
-                      </div>
-                    )}
-                    <button
-                      type="button"
-                      aria-label={`Remove ${file.file.name}`}
-                      onClick={() => void handleDeleteFile(file)}
-                      className="absolute left-1 top-1 z-10 flex size-8 shrink-0 items-center justify-center rounded-full bg-black/55 text-white opacity-0 shadow-sm backdrop-blur-sm transition-opacity hover:bg-black/70 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-0 group-hover:opacity-100"
-                    >
-                      <X size={14} strokeWidth={1.5} />
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
+          </Field>
+          {!user && (
+            <Field data-invalid={Boolean(errors.email)}>
+              <FieldLabel htmlFor={emailFieldId}>
+                Email{" "}
+                <span className="text-muted-foreground font-normal">
+                  (optional)
+                </span>
+              </FieldLabel>
+              <Input
+                id={emailFieldId}
+                type="email"
+                name="email"
+                autoComplete="email"
+                value={values.email}
+                onChange={handleChange}
+                placeholder="you@example.com"
+                aria-invalid={Boolean(errors.email)}
+                aria-describedby={
+                  errors.email ? `${emailFieldId}-error` : undefined
+                }
+              />
+              {errors.email && (
+                <FieldError id={`${emailFieldId}-error`}>
+                  {errors.email}
+                </FieldError>
+              )}
+            </Field>
           )}
-        </div>
-      </div>
-
-      <div
-        className={cn(
-          "mt-2 flex items-center justify-end gap-2",
-          dimFooter && "cursor-not-allowed opacity-40",
-        )}
-      >
+          <Field>
+            <FieldLabel htmlFor={screenshotsFieldId}>
+              Screenshots{" "}
+              <span className="text-muted-foreground font-normal">
+                (optional)
+              </span>
+            </FieldLabel>
+            <input
+              id={screenshotsFieldId}
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={handleScreenshots}
+              className="sr-only"
+              tabIndex={-1}
+            />
+            <div className="flex flex-wrap items-center gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <Paperclip data-icon="inline-start" />
+                Add screenshots
+              </Button>
+              <FieldDescription>
+                Or paste an image from your clipboard.
+              </FieldDescription>
+            </div>
+            {files.length > 0 && (
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                {files.map((file) => (
+                  <div key={file.id} className="flex min-w-0 flex-col gap-1.5">
+                    <div className="relative aspect-video overflow-hidden rounded-xl border border-stroke-neutral-weak bg-fill-neutral-weaker">
+                      {file.base64 && (
+                        <img
+                          src={file.base64}
+                          alt={file.file.name}
+                          className="size-full object-cover"
+                        />
+                      )}
+                      {!file.uploadedFile && (
+                        <div
+                          className="absolute inset-0 flex items-center justify-center gap-2 bg-fill-neutral-strong/60 text-text-inverse-strong"
+                          role="status"
+                          aria-label={`Uploading ${file.file.name}`}
+                        >
+                          <Spinner className="size-4" />
+                          <span className="text-xs tabular-nums">
+                            {file.progress}%
+                          </span>
+                        </div>
+                      )}
+                      {file.uploadedFile && (
+                        <span
+                          className="absolute bottom-1.5 left-1.5 rounded-full bg-fill-success-strong p-1 text-icon-inverse-strong"
+                          aria-label="Uploaded"
+                        >
+                          <Check className="size-3" />
+                        </span>
+                      )}
+                      <div className="absolute right-1.5 top-1.5 rounded-full bg-bg-neutral">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon-sm"
+                          aria-label={`Remove ${file.file.name}`}
+                          onClick={() => void handleDeleteFile(file)}
+                        >
+                          <X />
+                        </Button>
+                      </div>
+                    </div>
+                    <span
+                      className="truncate text-xs text-muted-foreground"
+                      title={file.file.name}
+                    >
+                      {file.file.name}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Field>
+        </FieldGroup>
+      </fieldset>
+      <DialogFooter>
         <Button
           type="button"
           variant="outline"
-          disabled={submitDisabled}
-          className="font-inter rounded-full border-v3-stroke-weak text-v3-text-strong"
-          onClick={handleDiscard}
+          disabled={isMutating}
+          onClick={onClose}
         >
           Cancel
         </Button>
-        <Button
-          type="button"
-          disabled={submitDisabled}
-          className="font-inter rounded-full !bg-v3-brand-strong !text-white hover:!opacity-90"
-          onClick={() => void handleSubmit()}
-        >
-          {showContinueLabel ? "Continue" : "Send Feedback"}
-          {isMutating ? (
-            <Spinner className="size-4 text-white" />
-          ) : null}
+        <Button type="submit" disabled={submitDisabled}>
+          {isMutating && <Spinner data-icon="inline-start" />}
+          {isMutating ? "Sending…" : "Send feedback"}
         </Button>
-      </div>
-    </div>
+      </DialogFooter>
+    </form>
   );
 });
 
 Content.displayName = "Content";
 
-function FeedbackHeader({
-  onClose,
-  className,
-}: {
-  onClose: () => void;
-  className?: string;
-}) {
-  return (
-    <div
-      className={cn(
-        "mb-1 flex items-center justify-between gap-3",
-        className,
-      )}
-    >
-      <h4 className="modal-title min-w-0 flex-1 text-left leading-tight">
-        Send Feedback
-      </h4>
-      <button
-        type="button"
-        onClick={onClose}
-        className="flex size-8 shrink-0 items-center justify-center rounded-full bg-v3-fill-weaker text-v3-text-strong hover:bg-v3-stroke-weak/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-v3-brand-strong focus-visible:ring-offset-2"
-        aria-label="Close"
-      >
-        <X size={14} strokeWidth={1.5} />
-      </button>
-    </div>
-  );
-}
-
 export function Feedback({ data }: { data: FeedbackModalData }) {
-  const { close } = useModal();
+  const { close, registerCloseGuard } = useModal();
   const [showCloseConfirmation, setShowCloseConfirmation] = useState(false);
+  const [isDiscarding, setIsDiscarding] = useState(false);
   const contentRef = useRef<{
     handleDeleteAllFiles: () => Promise<void>;
     hasFiles: boolean;
   } | null>(null);
-  const [isMobile, setIsMobile] = useState(false);
 
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 640);
-    };
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
-
-  const handleCloseWithConfirmation = () => {
+  const handleClose = useCallback(() => {
     if (contentRef.current?.hasFiles) {
       setShowCloseConfirmation(true);
-    } else {
-      close("create-feedback");
+      return false;
     }
+    return true;
+  }, []);
+
+  useEffect(
+    () => registerCloseGuard?.("create-feedback", handleClose),
+    [registerCloseGuard, handleClose],
+  );
+
+  const requestClose = () => {
+    if (handleClose()) close("create-feedback");
   };
 
   const handleConfirmClose = async () => {
-    setShowCloseConfirmation(false);
-    if (contentRef.current) await contentRef.current.handleDeleteAllFiles();
-    close("create-feedback");
+    setIsDiscarding(true);
+    try {
+      await contentRef.current?.handleDeleteAllFiles();
+      close("create-feedback", { force: true });
+    } catch {
+      toast.error("Could not remove screenshots. Please try again.");
+    } finally {
+      setIsDiscarding(false);
+    }
   };
 
   return (
-    <div>
-      {!isMobile ? (
-        <div className="modal-container flex flex-col gap-4 !w-[500px] !min-w-[500px] !max-w-[500px] !p-6 sm:!p-6 md:!p-6">
-          <FeedbackHeader onClose={handleCloseWithConfirmation} />
-          <Content data={data} ref={contentRef} />
-        </div>
-      ) : (
-        <Sheet
-          detent="content"
-          isOpen
-          onClose={handleCloseWithConfirmation}
-          snapPoints={[0, 0.8]}
-          initialSnap={1}
+    <>
+      <Dialog
+        open
+        onOpenChange={(open) => {
+          if (!open) requestClose();
+        }}
+      >
+        <DialogContent
+          className="max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-[480px]"
+          overlayClassName="bg-overlay-backdrop dark:bg-overlay-backdrop-dark"
         >
-          <Sheet.Container className="max-h-[80dvh] overflow-hidden bg-white">
-            <Sheet.Header className="rounded-3xl bg-white" />
-            <Sheet.Content className="max-h-[80dvh] min-h-0 overflow-y-auto overscroll-contain bg-white px-4 pb-6">
-              <FeedbackHeader
-                onClose={handleCloseWithConfirmation}
-                className="mb-3"
-              />
-              <Content data={data} ref={contentRef} />
-            </Sheet.Content>
-          </Sheet.Container>
-          <Sheet.Backdrop />
-        </Sheet>
-      )}
-
-      {showCloseConfirmation &&
-        createPortal(
-          <CloseWithFilesConfirmation
-            open={showCloseConfirmation}
-            close={() => setShowCloseConfirmation(false)}
-            onConfirm={handleConfirmClose}
-          />,
-          document.body,
-        )}
-    </div>
+          <DialogHeader className="pr-8">
+            <DialogTitle>Send feedback</DialogTitle>
+            <DialogDescription>
+              Share a bug, an idea, or something we could improve.
+            </DialogDescription>
+          </DialogHeader>
+          <Content data={data} ref={contentRef} onClose={requestClose} />
+        </DialogContent>
+      </Dialog>
+      <AlertDialog
+        open={showCloseConfirmation}
+        onOpenChange={setShowCloseConfirmation}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Discard feedback?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Your screenshots will be removed. This feedback won’t be sent.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDiscarding}>
+              Keep editing
+            </AlertDialogCancel>
+            <Button
+              variant="destructive"
+              disabled={isDiscarding}
+              onClick={() => void handleConfirmClose()}
+            >
+              {isDiscarding && <Spinner data-icon="inline-start" />}
+              {isDiscarding ? "Discarding…" : "Discard feedback"}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }

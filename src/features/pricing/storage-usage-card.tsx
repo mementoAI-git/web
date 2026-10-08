@@ -1,5 +1,4 @@
 import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -31,14 +30,15 @@ type StorageUsageCardProps = {
   usage: SubscriptionUsage | undefined;
   isProOrAbove: boolean;
   className?: string;
+  variant?: "default" | "billing";
 };
 
 export function StorageUsageCard({
   usage,
   isProOrAbove,
   className,
+  variant = "default",
 }: StorageUsageCardProps) {
-  const navigate = useNavigate();
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const used = usage?.storage_used_bytes ?? 0;
   const reserved = usage?.storage_reserved_bytes ?? 0;
@@ -69,19 +69,53 @@ export function StorageUsageCard({
       ? "You’re running low on storage. Clear some space before your next upload."
       : null;
 
+  if (variant === "billing") {
+    return (
+      <section
+        aria-label="Storage"
+        className={cn(
+          "flex flex-col gap-2 rounded-3xl bg-fill-neutral-weak p-4 font-geist",
+          className,
+        )}
+      >
+        <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+          <h3 className="font-semibold text-text-neutral-strong">Storage</h3>
+          <span className="tabular-nums text-text-neutral-weak">
+            {formatBytes(used)} / {formatBytes(limit)} Used
+          </span>
+        </div>
+        <Progress
+          value={pct}
+          aria-valuenow={pct}
+          aria-label="Storage used"
+          className="h-3 rounded-none bg-bg-neutral [&_[data-slot=progress-indicator]]:bg-fill-brand-strong"
+        />
+        <p className="text-xs text-text-neutral-weak">
+          {formatBytes(remaining)} Available
+          {reserved > 0 ? ` · ${formatBytes(reserved)} uploading` : ""}
+        </p>
+        {warning ? (
+          <p role="alert" className="text-xs text-text-warning-strong">
+            {warning}
+          </p>
+        ) : null}
+      </section>
+    );
+  }
+
   return (
     <Card
       size="sm"
       className={cn(
-        "border-v3-stroke-weak bg-gradient-to-br from-card to-v3-fill-weaker/30 ring-v3-stroke-weak/80",
+        "sky-card border-stroke-neutral-weak bg-gradient-to-br from-card to-fill-neutral-weaker/30 ring-stroke-neutral-weak/80",
         className,
       )}
     >
       <CardHeader className="gap-1 pb-2">
-        <CardTitle className="font-garamond text-lg text-v3-text-strong">
+        <CardTitle className="font-garamond text-lg text-text-neutral-strong">
           Storage
         </CardTitle>
-        <CardDescription className="font-inter text-v3-text-weak">
+        <CardDescription className="font-inter text-text-neutral-weak">
           {isProOrAbove
             ? "Your plan includes 10 GB for memories and media."
             : "Free includes 200 MB. Upgrade for 10 GB."}
@@ -91,7 +125,7 @@ export function StorageUsageCard({
         <div className="flex flex-wrap items-baseline justify-between gap-2 font-inter text-sm">
           <span
             className={cn(
-              "tabular-nums text-v3-text-strong",
+              "tabular-nums text-text-neutral-strong",
               nearFull && "font-semibold text-text-warning-strong",
             )}
           >
@@ -109,7 +143,7 @@ export function StorageUsageCard({
               "[&_[data-slot=progress-indicator]]:bg-fill-warning-strong",
           )}
         />
-        <div className="flex flex-wrap justify-between gap-2 font-inter text-xs text-v3-text-weak">
+        <div className="flex flex-wrap justify-between gap-2 font-inter text-xs text-text-neutral-weak">
           {reserved > 0 ? (
             <span>{formatBytes(reserved)} currently uploading</span>
           ) : (
@@ -143,7 +177,6 @@ export function StorageUsageCard({
               variant="modal"
               open={upgradeOpen}
               onOpenChange={setUpgradeOpen}
-              onUpgrade={() => navigate("/pricing")}
             />
           </>
         </CardFooter>

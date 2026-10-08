@@ -123,7 +123,7 @@ export default function CategoryDetails({ category }: CategoryDetailsProps) {
               Back
             </Link>
           </Button>
-          <header className="flex w-full flex-col gap-6 rounded-[32px] border border-stroke-neutral-weak bg-fill-neutral-weak px-6 py-5 md:flex-row">
+          <header className="sky-card flex w-full flex-col gap-6 rounded-[32px] border border-stroke-neutral-weak bg-fill-neutral-weak px-6 py-5 md:flex-row">
             <div className="aspect-[336/266] w-full shrink-0 overflow-hidden rounded-[20px] md:w-[40%] md:max-w-[336px]">
               <ExploreCategoryImage
                 slug={category.slug}
@@ -138,7 +138,7 @@ export default function CategoryDetails({ category }: CategoryDetailsProps) {
                 <h1 className="font-garamond text-[32px] font-medium leading-tight text-text-neutral-strong sm:text-[40px] sm:leading-[48px]">
                   {category.title}
                 </h1>
-                <p className="font-garamond text-2xl font-normal leading-tight text-text-neutral-strong sm:text-[30px] sm:leading-[34px]">
+                <p className="font-garamond text-[24px] font-normal leading-[34px] text-text-neutral-strong">
                   {category.description}
                 </p>
               </div>
@@ -174,7 +174,7 @@ export default function CategoryDetails({ category }: CategoryDetailsProps) {
               <ToggleGroupItem
                 key={tab.value}
                 value={tab.value}
-                className="h-10 rounded-lg bg-fill-neutral-weak px-4 font-geist text-sm font-medium text-text-neutral-weak data-[state=on]:bg-foreground data-[state=on]:text-background"
+                className="h-10 rounded-lg bg-fill-neutral-weak px-4 font-geist text-sm font-medium text-text-neutral-strong hover:bg-fill-neutral-weaker hover:text-text-neutral-strong data-[state=on]:bg-fill-neutral-strong data-[state=on]:text-text-inverse-strong data-[state=on]:hover:bg-fill-neutral-strong data-[state=on]:hover:text-text-inverse-strong dark:data-[state=on]:bg-fill-inverse-strong dark:data-[state=on]:[--color-text-neutral-strong:var(--fill-neutral-strong)] dark:data-[state=on]:text-text-neutral-strong dark:data-[state=on]:hover:bg-fill-inverse-strong dark:data-[state=on]:hover:text-text-neutral-strong"
               >
                 {tab.label}
               </ToggleGroupItem>

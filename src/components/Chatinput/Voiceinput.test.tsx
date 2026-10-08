@@ -1,6 +1,8 @@
 import { ThemeProvider } from "@/contexts/theme";
-import type { ReactNode } from "react";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { useReducer, useState, type ReactNode } from "react";
+import { toast } from "sonner";
+import { OverviewCaptureCard } from "@/pages/dashboard/overview/sections/overview-capture-card";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { renderWithProviders } from "@/test";
@@ -9,6 +11,7 @@ import Voiceinput from "./Voiceinput";
 const liveApi = vi.hoisted(() => ({
   greet: vi.fn().mockResolvedValue(undefined),
   connected: false,
+  error: null as string | null,
   isRecording: false,
   connect: vi.fn().mockResolvedValue(undefined),
   startRecording: vi.fn().mockResolvedValue(undefined),
@@ -58,7 +61,7 @@ const voices = [
 vi.mock("@/hooks/use-live-api", () => ({
   useLiveAPI: (options: unknown) => {
     useLiveAPIOptions(options);
-    return { ...liveApi, inputNode: null, outputNode: {} as GainNode, error: null };
+    return { ...liveApi, inputNode: null, outputNode: {} as GainNode, error: liveApi.error };
   },
 }));
 
@@ -85,6 +88,8 @@ describe("Voiceinput", () => {
     window.HTMLElement.prototype.scrollIntoView = vi.fn();
     outputLevel.value = 0;
     liveApi.connected = false;
+    liveApi.error = null;
+    vi.spyOn(toast, "error").mockClear();
     liveApi.isRecording = false;
     liveApi.connect.mockClear();
     liveApi.greet.mockClear();
@@ -98,6 +103,42 @@ describe("Voiceinput", () => {
     voiceState.user = { chat_voice: "Kore", chat_voice_provider: "gemini" };
   });
 
+  it.each(["Voice connection closed (1011): Internal error encountered.", null])("restores the capture card and toasts once when an active voice session closes: %s", async (error) => {
+    liveApi.connected = true;
+    liveApi.isRecording = true;
+    let refresh!: () => void;
+    function Harness() {
+      const [, update] = useReducer((value: number) => value + 1, 0);
+      refresh = update;
+      const [active, setActive] = useState(true);
+      return active ? <Voiceinput inline variant="overview" onCancel={() => setActive(false)} /> : <OverviewCaptureCard userId="interrupted-call" onVoiceConversation={vi.fn()} />;
+    }
+    renderWithProviders(<Harness />);
+    expect(screen.getByRole("status")).toHaveTextContent("Listening");
+    liveApi.connected = false;
+    liveApi.isRecording = false;
+    liveApi.error = error;
+    act(() => refresh());
+    expect(await screen.findByRole("button", { name: "Add story" })).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("What’s on your mind today?")).toBeInTheDocument();
+    expect(screen.queryByText("Connection interrupted")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Try again" })).not.toBeInTheDocument();
+    expect(toast.error).toHaveBeenCalledOnce();
+    expect(toast.error).toHaveBeenCalledWith("Voice conversation was interrupted. Please try again.");
+  });
+
+  it("keeps a live session open when only message saving fails", () => {
+    liveApi.connected = true;
+    liveApi.isRecording = true;
+    liveApi.error = "Voice is connected, but the latest messages could not be saved.";
+    const onCancel = vi.fn();
+    render(<ThemeProvider><Voiceinput inline variant="overview" onCancel={onCancel} /></ThemeProvider>);
+    expect(onCancel).not.toHaveBeenCalled();
+    expect(toast.error).toHaveBeenCalledWith(liveApi.error);
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Mute microphone", exact: true })).toBeEnabled();
+  });
+
   it("starts and greets inline without taking over the page", async () => {
     const { container } = renderWithProviders(<Voiceinput inline autoStart onCancel={vi.fn()} />, { auth: true });
     await waitFor(() => expect(liveApi.greet).toHaveBeenCalledOnce());
@@ -106,13 +147,22 @@ describe("Voiceinput", () => {
     expect(screen.getByRole("button", { name: "End voice conversation" })).toBeInTheDocument();
   });
 
-  it("ends an inline call and returns controls to its parent", async () => {
+  it.each(["composer", "overview", "floating"] as const)("confirms before ending a %s inline call", async (variant) => {
     liveApi.isRecording = true;
     liveApi.connected = true;
     const onEnd = vi.fn();
     const user = userEvent.setup();
-    renderWithProviders(<Voiceinput inline onCancel={onEnd} />, { auth: true });
+    renderWithProviders(<Voiceinput inline variant={variant} onCancel={onEnd} />, { auth: true });
     await user.click(screen.getByRole("button", { name: "End voice conversation" }));
+    expect(screen.getByRole("dialog", { name: "Are you sure you want to end this session?" })).toBeInTheDocument();
+    expect(onEnd).not.toHaveBeenCalled();
+    expect(liveApi.stopRecording).not.toHaveBeenCalled();
+    expect(liveApi.disconnect).not.toHaveBeenCalled();
+    await user.click(screen.getByRole("button", { name: "Dismiss" }));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(onEnd).not.toHaveBeenCalled();
+    await user.click(screen.getByRole("button", { name: "End voice conversation" }));
+    await user.click(screen.getByRole("button", { name: "End Session" }));
     await waitFor(() => expect(onEnd).toHaveBeenCalledOnce());
     expect(liveApi.stopRecording).toHaveBeenCalledOnce();
     expect(liveApi.disconnect).toHaveBeenCalledOnce();
@@ -181,9 +231,13 @@ describe("Voiceinput", () => {
     expect(screen.getByLabelText("Call duration")).toHaveTextContent("00:00");
     expect(screen.getByRole("status")).toHaveTextContent("Listening");
     expect(screen.queryByText("Let’s talk")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Mute microphone", exact: true })).toBeEnabled();
     await user.click(screen.getByRole("button", { name: "Mute microphone", exact: true }));
     expect(screen.getByRole("status")).toHaveTextContent("You’re muted");
     expect(liveApi.setInputMuted).toHaveBeenCalledWith(true);
+    await user.click(screen.getByRole("button", { name: "Unmute microphone", exact: true }));
+    expect(liveApi.setInputMuted).toHaveBeenLastCalledWith(false);
+    expect(screen.getByRole("status")).toHaveTextContent("Listening");
     await user.click(screen.getByRole("button", { name: "Voice settings" }));
     expect(screen.getByRole("dialog", { name: "Voice settings" })).toHaveAttribute("data-side", "bottom");
     expect(document.querySelector('[data-slot="sheet-content"]')).toBeNull();
@@ -193,6 +247,8 @@ describe("Voiceinput", () => {
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(liveApi.stopRecording).not.toHaveBeenCalled();
     await user.click(screen.getByRole("button", { name: "End voice conversation" }));
+    expect(onCancel).not.toHaveBeenCalled();
+    await user.click(screen.getByRole("button", { name: "End Session" }));
     expect(onCancel).toHaveBeenCalledOnce();
   });
 
