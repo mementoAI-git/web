@@ -14,7 +14,7 @@ import instagram from "@/assets/image/instagram.png";
 import linkedin from "@/assets/image/linkedin.png";
 
 interface SharePostProps {
-  data: { id: string };
+  data: { id: string; kind?: "conversation" };
   isMobile?: boolean;
 }
 
@@ -36,7 +36,10 @@ function SharePostContent({ data }: SharePostProps) {
 
   const socialPlatforms = getSocialShareLinks({
     shareUrl: link,
-    shareText: "Check out this story",
+    shareText:
+      data.kind === "conversation"
+        ? "Check out this conversation"
+        : "Check out this story",
     onCopy: handleCopy,
     images: { facebook, linkedin, twitter, instagram },
   });
@@ -53,10 +56,14 @@ function SharePostContent({ data }: SharePostProps) {
           />
           <div className="min-w-0 space-y-2">
             <h4 className="modal-title !text-text-neutral-strong">
-              Story added successfully
+              {data.kind === "conversation"
+                ? "Share conversation"
+                : "Story added successfully"}
             </h4>
             <p className="font-inter text-sm text-text-neutral-weak">
-              You have added a new story to your Memento.
+              {data.kind === "conversation"
+                ? "Share a link to this conversation."
+                : "You have added a new story to your Memento."}
             </p>
           </div>
         </div>
@@ -129,14 +136,16 @@ function SharePostContent({ data }: SharePostProps) {
         >
           Dismiss
         </button>
-        <button
-          type="button"
-          onClick={() => open?.("create-memory")}
-          className={primaryClass}
-        >
-          <PlusIcon width={9} />
-          <span>Add story</span>
-        </button>
+        {data.kind !== "conversation" && (
+          <button
+            type="button"
+            onClick={() => open?.("create-memory")}
+            className={primaryClass}
+          >
+            <PlusIcon width={9} />
+            <span>Add story</span>
+          </button>
+        )}
       </div>
     </div>
   );

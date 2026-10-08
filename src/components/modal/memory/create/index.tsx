@@ -5,7 +5,7 @@ import calendarIcon from "@/assets/icon/uim_calendar.svg";
 import { EditorContent, useEditorState } from "@tiptap/react";
 import { useModal } from "@/hooks/use-modal";
 import { useStore } from "@/hooks/use-store";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import useForm from "@/hooks/use-form";
 import useFileUpload from "@/hooks/use-file-upload";
 import useSWR from "swr";
@@ -98,6 +98,7 @@ import {
 import type { IBeneficiary, IOnUploadPayload } from "@/utility/interface";
 import {
   Check,
+  ChevronsRight,
   Circle,
   Clock3,
   Cloud,
@@ -108,7 +109,6 @@ import {
   Mic,
   Music,
   Paperclip,
-  PanelRightClose,
   Plus,
   Quote,
   Smile,
@@ -145,10 +145,13 @@ interface CreateMemoryProps {
 
 interface CreateMemoryBaseProps extends CreateMemoryProps {
   variant?: "next" | "legacy";
+  presentation?: "original" | "overlay-b" | "overlay-c";
 }
 
 export function CreateMemory(props: CreateMemoryProps) {
-  return <CreateMemoryBase {...props} variant={props.isMobile ? "legacy" : "next"} />;
+  const { search } = useLocation();
+  const presentation = new URLSearchParams(search).get("storyOverlay") === "C" ? "overlay-c" : "overlay-b";
+  return <CreateMemoryBase {...props} presentation={presentation} variant={props.isMobile ? "legacy" : "next"} />;
 }
 
 export function AddMemory2(props: CreateMemoryProps) {
@@ -159,12 +162,15 @@ function CreateMemoryBase({
   data,
   isMobile = false,
   variant = "next",
+  presentation = "original",
 }: CreateMemoryBaseProps) {
   const isDesktopComposer = variant === "next" && !isMobile;
+  const isCenteredOverlay = presentation !== "original";
   const { close, open, push, registerCloseGuard } = useModal();
   const { user } = useStore();
   const { canUse } = useFeatureFlags();
   const navigate = useNavigate();
+  const location = useLocation();
   const [showUploadGate, setShowUploadGate] = useState(false);
   const fileInputImageRef = useRef<HTMLInputElement>(null);
   const fileInputVideoRef = useRef<HTMLInputElement>(null);
@@ -1024,7 +1030,7 @@ function CreateMemoryBase({
         feature="storage"
         variant="inline"
         upgradeLabel="View plans"
-        onUpgrade={() => navigate("/pricing")}
+        onUpgrade={() => navigate("/pricing", { state: { returnTo: location.pathname + location.search + location.hash } })}
         onDismiss={() => setShowUploadGate(false)}
       />
     </div>
@@ -1450,7 +1456,8 @@ function CreateMemoryBase({
     >
       <DialogContent
         showCloseButton={false}
-        className="max-h-[90vh] gap-0 overflow-hidden rounded-[28px] border border-stroke-neutral-weak bg-background p-0 sm:max-w-[480px]"
+        overlayClassName={isCenteredOverlay ? "z-[230]" : undefined}
+        className={cn("max-h-[90vh] gap-0 overflow-hidden rounded-[28px] border border-stroke-neutral-weak bg-background p-0 sm:max-w-[480px]", isCenteredOverlay && "z-[240]")}
         onClick={(e) => e.stopPropagation()}
       >
         <DialogHeader className="space-y-0 border-b border-stroke-neutral-weak px-6 pt-6 pb-4">
@@ -1584,9 +1591,193 @@ function CreateMemoryBase({
     </Toggle>
   );
 
+  const storyDetailsSection = (
+              <div className="relative min-h-0 min-w-0">
+                <div
+                  className="story-details-trigger-rail absolute inset-0 flex items-end justify-end pb-0.5"
+                  data-visible={!isDetailsOpen}
+                  aria-hidden={isDetailsOpen}
+                  inert={isDetailsOpen}
+                >
+                  <Button
+                    ref={detailsTriggerRef}
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    aria-expanded={isDetailsOpen}
+                    aria-controls="story-details-panel"
+                    onClick={() => {
+                      hasToggledDetailsRef.current = true;
+                      setIsDetailsOpen(true);
+                    }}
+                    className="gap-2 px-2 font-geist font-semibold text-text-neutral-strong hover:bg-fill-neutral-weak"
+                  >
+                    <ListFilter aria-hidden className="size-4 text-icon-neutral-strong" />
+                    Details
+                  </Button>
+                </div>
+
+                <aside
+                  id="story-details-panel"
+                  className="story-details-panel absolute inset-0 flex min-h-0 min-w-0 flex-col overflow-hidden rounded-[18px] border border-stroke-neutral-weak bg-fill-neutral-weaker"
+                  data-visible={isDetailsOpen}
+                  aria-hidden={!isDetailsOpen}
+                  inert={!isDetailsOpen}
+                >
+                  <div className={cn(
+                    "flex min-h-0 flex-1 flex-col overflow-hidden",
+                    isCenteredOverlay && "pb-14",
+                  )}>
+                  <Tabs
+                    value={activeSidebarTab}
+                    onValueChange={(value) => {
+                      if (value === "properties" || value === "assistant") {
+                        setActiveSidebarTab(value);
+                      }
+                    }}
+                    className="min-h-0 flex-1 flex-col gap-0"
+                  >
+                    <div className="mb-5 flex shrink-0 items-center gap-1 px-3 pt-4">
+                      <TabsList className="h-9 min-w-0 flex-1 rounded-[10px] bg-fill-neutral-weaker p-0">
+                        <TabsTrigger
+                          ref={detailsTabRef}
+                          value="properties"
+                          className="rounded-[8px] px-3 font-geist text-sm text-text-neutral-weak data-active:bg-fill-neutral-weak data-active:text-text-neutral-strong"
+                        >
+                          Story Details
+                        </TabsTrigger>
+                        <TabsTrigger
+                          value="assistant"
+                          className="rounded-[8px] px-3 font-geist text-sm text-text-neutral-weak data-active:bg-fill-neutral-weak data-active:text-text-neutral-strong"
+                        >
+                          Assistant
+                        </TabsTrigger>
+                      </TabsList>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-sm"
+                        aria-label="Collapse story details"
+                        title="Collapse story details"
+                        onClick={() => {
+                          hasToggledDetailsRef.current = true;
+                          setIsDetailsOpen(false);
+                        }}
+                        className={cn(
+                          "rounded-[8px] text-icon-neutral-weak hover:bg-fill-neutral-weak hover:text-icon-neutral-strong",
+                          isCenteredOverlay && "absolute bottom-[10px] right-[14px]",
+                        )}
+                      >
+                        <ChevronsRight aria-hidden className="size-4" />
+                      </Button>
+                    </div>
+
+                    <TabsContent value="properties" className="hide-scrollbar min-h-0 overflow-y-auto px-4 pb-5">
+                      <div className="flex flex-col gap-6">
+                        <AccessField
+                          value={selectedAccess}
+                          onChange={setSelectedAccess}
+                          shareAudience={shareAudience}
+                          onShareAudienceChange={setShareAudience}
+                          variant="panel"
+                          dismissOnEscape
+                        />
+
+                        <TagsField
+                          tags={tags}
+                          setTags={setTags}
+                          title={values.title ?? ""}
+                          body={bodyPlainText}
+                          variant="panel"
+                        />
+
+                        <section className="flex flex-col gap-3">
+                          <h3 className="font-geist text-base font-semibold leading-6 text-text-neutral-strong">
+                            Story quality
+                          </h3>
+                          <div className="rounded-[12px] border border-stroke-neutral-weak bg-fill-neutral-weaker px-3 py-2">
+                            {qualityChecks.map((item) => (
+                              <div key={item.label} className="flex items-center justify-between gap-3 py-1">
+                                <span className="font-geist text-sm leading-5 text-text-neutral-strong">{item.label}</span>
+                                {item.complete ? (
+                                  <Check aria-label={`${item.label} complete`} className="size-4 shrink-0 text-icon-success-strong" />
+                                ) : (
+                                  <Circle aria-label={`${item.label} incomplete`} className="size-4 shrink-0 text-icon-neutral-weaker" />
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </section>
+
+                        <section className="space-y-3">
+                          <h3 className="font-geist text-base font-semibold leading-6 text-text-neutral-strong">
+                            Story Overview
+                          </h3>
+                          <div className="space-y-2">
+                            {[
+                              { label: "Photos", value: photoCount, icon: ImageIcon },
+                              { label: "Videos", value: videoCount, icon: Video },
+                              { label: "Voice notes", value: voiceNoteCount, icon: Mic },
+                              { label: "Documents", value: documentCount, icon: FileText },
+                              { label: "Mins read", value: readingMinutes, icon: Clock3 },
+                            ].map(({ label, value, icon: Icon }) => (
+                              <div key={label} className="flex items-center gap-2.5">
+                                <Icon className="size-4 text-icon-neutral-weak" aria-hidden />
+                                <div className="flex min-w-0 flex-1 items-center gap-1.5 font-geist text-xs leading-4 text-text-neutral-strong">
+                                  <span>{value}</span>
+                                  <span>{label}</span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </section>
+                      </div>
+                    </TabsContent>
+
+                    <TabsContent value="assistant" className="hide-scrollbar min-h-0 overflow-y-auto px-4 pb-5 data-active:flex data-active:flex-col">
+                      {STORY_COMPOSER_ASSISTANT_VARIANT === "coming-soon" ? (
+                        <CreateMemoryAssistantComingSoonPanel />
+                      ) : (
+                        <CreateMemoryAssistantPanel
+                          input={assistantInput}
+                          isWorking={isAssistantWorking}
+                          messages={assistantMessages}
+                          onApplyAction={(action) => {
+                            applyAssistantAction(action);
+                            setActiveSidebarTab("properties");
+                          }}
+                          onInputChange={setAssistantInput}
+                          onSubmit={submitAssistantMessage}
+                          suggestions={assistantSuggestions}
+                          tone={assistantTone}
+                          onToneChange={setAssistantTone}
+                        />
+                      )}
+                    </TabsContent>
+                  </Tabs>
+
+                  </div>
+                </aside>
+              </div>
+  );
+
   return (
     <>
       <StoryJournalShell
+        presentation={presentation}
+        sidebar={presentation === "overlay-c" ? storyDetailsSection : undefined}
+        onClose={handleClose}
+        onEscapeKeyDown={() => {
+          if (showLinkInput) {
+            setShowLinkInput(false);
+            editor?.commands.focus();
+          } else if (showEmoji) {
+            setShowEmoji(false);
+            emojiPickerRef.current?.querySelector("button")?.focus();
+          } else {
+            handleClose();
+          }
+        }}
         onKeyDown={(event) => {
           if (event.key !== "Escape" || (!showLinkInput && !showEmoji)) return;
           event.stopPropagation();
@@ -1600,7 +1791,12 @@ function CreateMemoryBase({
         }}
       >
         {fileInputs}
-        <div className="relative grid h-full min-h-[720px] grid-rows-[auto_minmax(0,1fr)] gap-5 py-6 pl-[max(225px,22%,calc((100dvh-32px)*0.31))] pr-6 xl:gap-8 xl:py-10 xl:pl-[max(250px,22%,calc((100dvh-72px)*0.31))] xl:pr-10">
+        <div className={cn(
+          "relative grid h-full grid-rows-[auto_minmax(0,1fr)] gap-5 xl:gap-8",
+          presentation === "overlay-c" ? "album-c-composer" : isCenteredOverlay
+            ? "min-h-0 py-6 pl-[max(225px,22%,min(254px,calc((100dvh-48px)*0.31)))] pr-6 xl:py-8 xl:pr-8"
+            : "min-h-[720px] py-6 pl-[max(225px,22%,calc((100dvh-32px)*0.31))] pr-6 xl:py-10 xl:pl-[max(250px,22%,calc((100dvh-72px)*0.31))] xl:pr-10",
+        )}>
             <div>
               <header className="flex min-w-0 items-center justify-between gap-3">
                 <div className="flex shrink-0 items-center gap-2 font-geist text-sm text-text-neutral-weak">
@@ -1648,7 +1844,7 @@ function CreateMemoryBase({
               {showUploadGate ? <div className="mt-4">{uploadGateBanner}</div> : null}
             </div>
             <div
-              className="story-composer-layout grid min-h-0 gap-5 xl:gap-7"
+              className={cn("story-composer-layout grid min-h-0 gap-5 xl:gap-7", presentation === "overlay-c" && "album-c-writing-layout")}
               data-details-open={isDetailsOpen}
             >
               <section className="flex min-h-0 min-w-0 flex-col pr-1">
@@ -1714,7 +1910,7 @@ function CreateMemoryBase({
 
                   <div
                     data-testid="desktop-formatting-strip"
-                    className="mt-4 w-full max-w-[760px] shrink-0 rounded-[14px] border border-stroke-neutral-weak bg-fill-neutral-weak px-3 py-2 shadow-none backdrop-blur-[6px]"
+                    className="mt-4 w-full max-w-[760px] shrink-0 px-3"
                   >
                     <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
                       <div className="flex min-w-0 flex-wrap items-center gap-1.5">
@@ -1878,166 +2074,7 @@ function CreateMemoryBase({
                   </div>
                 </div>
               </section>
-              <div className="relative min-h-0 min-w-0">
-                <div
-                  className="story-details-trigger-rail absolute inset-0 flex items-start justify-start pt-8 xl:pt-10"
-                  data-visible={!isDetailsOpen}
-                  aria-hidden={isDetailsOpen}
-                  inert={isDetailsOpen}
-                >
-                  <Button
-                    ref={detailsTriggerRef}
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    aria-expanded={isDetailsOpen}
-                    aria-controls="story-details-panel"
-                    onClick={() => {
-                      hasToggledDetailsRef.current = true;
-                      setIsDetailsOpen(true);
-                    }}
-                    className="gap-2 px-2 font-geist font-semibold text-text-neutral-strong hover:bg-fill-neutral-weak"
-                  >
-                    <ListFilter aria-hidden className="size-4 text-icon-neutral-strong" />
-                    Story Details
-                  </Button>
-                </div>
-
-                <aside
-                  id="story-details-panel"
-                  className="story-details-panel absolute inset-0 flex min-h-0 min-w-0 flex-col overflow-hidden rounded-[18px] border border-stroke-neutral-weak bg-fill-neutral-weaker"
-                  data-visible={isDetailsOpen}
-                  aria-hidden={!isDetailsOpen}
-                  inert={!isDetailsOpen}
-                >
-                  <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-                  <Tabs
-                    value={activeSidebarTab}
-                    onValueChange={(value) => {
-                      if (value === "properties" || value === "assistant") {
-                        setActiveSidebarTab(value);
-                      }
-                    }}
-                    className="min-h-0 flex-1 flex-col gap-0"
-                  >
-                    <div className="mb-5 flex shrink-0 items-center gap-1 px-3 pt-4">
-                      <TabsList className="h-9 min-w-0 flex-1 rounded-[10px] bg-fill-neutral-weaker p-0">
-                        <TabsTrigger
-                          ref={detailsTabRef}
-                          value="properties"
-                          className="rounded-[8px] px-3 font-geist text-sm text-text-neutral-weak data-active:bg-fill-neutral-weak data-active:text-text-neutral-strong"
-                        >
-                          Story Details
-                        </TabsTrigger>
-                        <TabsTrigger
-                          value="assistant"
-                          className="rounded-[8px] px-3 font-geist text-sm text-text-neutral-weak data-active:bg-fill-neutral-weak data-active:text-text-neutral-strong"
-                        >
-                          Assistant
-                        </TabsTrigger>
-                      </TabsList>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon-sm"
-                        aria-label="Collapse story details"
-                        onClick={() => {
-                          hasToggledDetailsRef.current = true;
-                          setIsDetailsOpen(false);
-                        }}
-                        className="rounded-[8px] text-icon-neutral-weak hover:bg-fill-neutral-weak hover:text-icon-neutral-strong"
-                      >
-                        <PanelRightClose aria-hidden className="size-4" />
-                      </Button>
-                    </div>
-
-                    <TabsContent value="properties" className="hide-scrollbar min-h-0 overflow-y-auto px-4 pb-5">
-                      <div className="flex flex-col gap-6">
-                        <AccessField
-                          value={selectedAccess}
-                          onChange={setSelectedAccess}
-                          shareAudience={shareAudience}
-                          onShareAudienceChange={setShareAudience}
-                          variant="panel"
-                          dismissOnEscape
-                        />
-
-                        <TagsField
-                          tags={tags}
-                          setTags={setTags}
-                          title={values.title ?? ""}
-                          body={bodyPlainText}
-                          variant="panel"
-                        />
-
-                        <section className="flex flex-col gap-3">
-                          <h3 className="font-geist text-base font-semibold leading-6 text-text-neutral-strong">
-                            Story quality
-                          </h3>
-                          <div className="rounded-[12px] border border-stroke-neutral-weak bg-fill-neutral-weaker px-3 py-2">
-                            {qualityChecks.map((item) => (
-                              <div key={item.label} className="flex items-center justify-between gap-3 py-1">
-                                <span className="font-geist text-sm leading-5 text-text-neutral-strong">{item.label}</span>
-                                {item.complete ? (
-                                  <Check aria-label={`${item.label} complete`} className="size-4 shrink-0 text-icon-success-strong" />
-                                ) : (
-                                  <Circle aria-label={`${item.label} incomplete`} className="size-4 shrink-0 text-icon-neutral-weaker" />
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        </section>
-
-                        <section className="space-y-3">
-                          <h3 className="font-geist text-base font-semibold leading-6 text-text-neutral-strong">
-                            Story Overview
-                          </h3>
-                          <div className="space-y-2">
-                            {[
-                              { label: "Photos", value: photoCount, icon: ImageIcon },
-                              { label: "Videos", value: videoCount, icon: Video },
-                              { label: "Voice notes", value: voiceNoteCount, icon: Mic },
-                              { label: "Documents", value: documentCount, icon: FileText },
-                              { label: "Mins read", value: readingMinutes, icon: Clock3 },
-                            ].map(({ label, value, icon: Icon }) => (
-                              <div key={label} className="flex items-center gap-2.5">
-                                <Icon className="size-4 text-icon-neutral-weak" aria-hidden />
-                                <div className="flex min-w-0 flex-1 items-center gap-1.5 font-geist text-xs leading-4 text-text-neutral-strong">
-                                  <span>{value}</span>
-                                  <span>{label}</span>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </section>
-                      </div>
-                    </TabsContent>
-
-                    <TabsContent value="assistant" className="hide-scrollbar min-h-0 overflow-y-auto px-4 pb-5 data-active:flex data-active:flex-col">
-                      {STORY_COMPOSER_ASSISTANT_VARIANT === "coming-soon" ? (
-                        <CreateMemoryAssistantComingSoonPanel />
-                      ) : (
-                        <CreateMemoryAssistantPanel
-                          input={assistantInput}
-                          isWorking={isAssistantWorking}
-                          messages={assistantMessages}
-                          onApplyAction={(action) => {
-                            applyAssistantAction(action);
-                            setActiveSidebarTab("properties");
-                          }}
-                          onInputChange={setAssistantInput}
-                          onSubmit={submitAssistantMessage}
-                          suggestions={assistantSuggestions}
-                          tone={assistantTone}
-                          onToneChange={setAssistantTone}
-                        />
-                      )}
-                    </TabsContent>
-                  </Tabs>
-
-                  </div>
-                </aside>
-              </div>
+              {presentation === "overlay-c" ? null : storyDetailsSection}
             </div>
         </div>
       </StoryJournalShell>

@@ -1,0 +1,76 @@
+/* Trim 80 source pixels of left leather, preserving every chrome ring. */
+.album-c-shell {
+  --album-sidebar-width: 304px;
+  --album-sidebar-gap: 24px;
+  width: min(1560px, calc(100vw - 48px - var(--album-sidebar-width) - var(--album-sidebar-gap)), calc((100dvh - 48px) * 1516 / 983));
+  max-width: 1560px;
+  margin-left: calc((var(--album-sidebar-width) + var(--album-sidebar-gap)) / -2);
+  height: auto;
+  aspect-ratio: 1516 / 983;
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  outline: none;
+  --tw-ring-shadow: 0 0 transparent;
+}
+
+.album-c-artwork {
+  position: absolute;
+  top: 0;
+  left: calc(-100% * 80 / 1516);
+  width: calc(100% * 1596 / 1516);
+  max-width: none;
+  height: 100%;
+  object-fit: contain;
+  clip-path: inset(0 0 0 calc(100% * 80 / 1596));
+  pointer-events: none;
+}
+
+/* UI stays within the blank paper, clear of the binding and leather edges. */
+.album-c-content {
+  /* This reference has cream paper in both themes; keep its UI legible. */
+  --text-neutral-strong: var(--brown-1000);
+  --text-neutral-weak: var(--brown-700);
+  --text-neutral-weaker: var(--brown-500);
+  --text-neutral-disabled: var(--brown-100);
+  --text-inverse-strong: var(--brown-dark-1000);
+  --icon-neutral-strong: var(--brown-1000);
+  --icon-neutral-weak: var(--brown-500);
+  --icon-neutral-weaker: var(--brown-100);
+  --fill-neutral-strong: var(--brown-1000);
+  --fill-neutral-weak: var(--brown-50);
+  --fill-neutral-weaker: var(--brown-25);
+  --stroke-neutral-strong: var(--brown-500);
+  --stroke-neutral-weak: var(--brown-100);
+  --stroke-neutral-weaker: var(--brown-50);
+  position: absolute;
+  inset: 9% calc(100% * 87.78 / 1516) 8% calc(100% * 271.12 / 1516);
+}
+
+.album-c-composer {
+  min-height: 0;
+  padding: 0;
+}
+
+.album-c-writing-layout,
+.album-c-writing-layout[data-details-open="true"] {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.album-c-sidecar {
+  position: absolute;
+  top: 9%;
+  bottom: 8%;
+  left: calc(100% + var(--album-sidebar-gap));
+  width: var(--album-sidebar-width);
+}
+
+.album-c-sidecar > div {
+  height: 100%;
+}
+
+.album-c-sidecar .story-details-panel {
+  background: var(--bg-neutral);
+}

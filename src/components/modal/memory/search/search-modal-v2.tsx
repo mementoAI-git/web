@@ -70,7 +70,7 @@ function SearchModalContent() {
       label="Search memories"
       shouldFilter={false}
       defaultValue="__memory-search-no-selection__"
-      className="flex size-full flex-col rounded-none bg-background p-0"
+      className="flex size-full flex-col rounded-none bg-bg-neutral-solid p-0"
     >
       <div
         data-slot="memory-search-header"
@@ -169,7 +169,7 @@ export function SearchMemoriesV2({ isMobile = false }: SearchMemoriesV2Props) {
       >
         <div
           data-slot="memory-search-panel"
-          className="h-[min(520px,calc(100dvh-3rem))] w-[min(640px,calc(100vw-3rem))] overflow-hidden rounded-2xl border border-v3-stroke-weak bg-background shadow-[0px_8px_40px_var(--brown-100)]"
+          className="h-[min(520px,calc(100dvh-3rem))] w-[min(640px,calc(100vw-3rem))] overflow-hidden rounded-2xl border border-v3-stroke-weak bg-bg-neutral-solid shadow-[0px_8px_40px_var(--brown-100)]"
           onClick={(e) => e.stopPropagation()}
         >
           <SearchModalContent />
@@ -187,9 +187,9 @@ export function SearchMemoriesV2({ isMobile = false }: SearchMemoriesV2Props) {
         onClose={() => close?.("search-memory")}
         snapPoints={[0, 0.8]}
       >
-        <Sheet.Container className="h-[80dvh] max-h-[80dvh] overflow-hidden bg-background">
-          <Sheet.Header className="rounded-3xl bg-background" />
-          <Sheet.Content className="h-full min-h-0 overflow-hidden overscroll-contain bg-background px-0 pb-6">
+        <Sheet.Container className="h-[80dvh] max-h-[80dvh] overflow-hidden bg-bg-neutral-solid">
+          <Sheet.Header className="rounded-3xl bg-bg-neutral-solid" />
+          <Sheet.Content className="h-full min-h-0 overflow-hidden overscroll-contain bg-bg-neutral-solid px-0 pb-6">
             <SearchModalContent />
           </Sheet.Content>
         </Sheet.Container>

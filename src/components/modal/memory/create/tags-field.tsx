@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import zapIcon from "@/assets/icon/zap.svg";
 import { AutogenerateTagsButton } from "@/components/Buttons";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 import { Label } from "@/components/ui/label";
@@ -59,7 +60,20 @@ export function TagsField({
               })
             }
             label="Auto tag"
-            className="h-[25px] rounded-full border border-stroke-info-strong/20 bg-fill-info-weak px-2.5 font-geist text-xs font-bold text-text-info-strong hover:bg-fill-info-weak/80"
+            icon={
+              <span
+                aria-hidden
+                className="size-3 shrink-0 bg-icon-brand-strong"
+                style={{
+                  maskImage: `url("${zapIcon}")`,
+                  WebkitMaskImage: `url("${zapIcon}")`,
+                  maskPosition: "center",
+                  maskSize: "contain",
+                  maskRepeat: "no-repeat",
+                }}
+              />
+            }
+            className="h-[25px] rounded-none border-0 bg-transparent px-0 font-geist text-xs font-semibold text-text-brand-strong underline-offset-4 hover:bg-transparent hover:text-text-brand-strong hover:underline"
           />
         </div>
         <div className="rounded-[8px] border border-stroke-neutral-weak bg-fill-neutral-weak px-3 py-2.5">
@@ -157,7 +171,7 @@ export function TagsField({
             }
           }}
           placeholder="Manually add tags or click to autogenerate"
-          className="min-h-12 py-3 px-4 font-inter md:text-sm text-text-neutral-strong placeholder:text-neutral-weak"
+          className="min-h-12 py-3 px-4 font-inter md:text-sm text-text-neutral-strong placeholder:text-text-neutral-weak"
         />
         <InputGroupAddon align="inline-end" className="pr-2">
           <AutogenerateTagsButton

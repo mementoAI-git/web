@@ -182,10 +182,12 @@ export default function Modal() {
             {isTop &&
               !isMobile &&
               topModal.name !== "create-memory" &&
+              topModal.name !== "view-memory" &&
               topModal.name !== "quick-capture" &&
               topModal.name !== "share-post" &&
               topModal.name !== "file-preview" &&
-              topModal.name !== "conversation-files" && (
+              topModal.name !== "conversation-files" &&
+              topModal.name !== "memory-insights" && (
               <button
                 type="button"
                 onClick={(e) => {

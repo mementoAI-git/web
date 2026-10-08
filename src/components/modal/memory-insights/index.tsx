@@ -1,3 +1,4 @@
+import { MemoryStatistics } from "@/features/insights/memory-statistics";
 import RecentActivitiesSection from "@/pages/dashboard/overview/sections/recent-activities-section";
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
@@ -28,7 +29,7 @@ import { normalizeObservationForDisplay } from "@/features/insights/observation-
 import { TimesIcon, PlusIcon } from "@/components/icons";
 import endpoint from "@/api/endpoint";
 import type { IBeneficiary, IPersona, IUser } from "@/utility/interface";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { UserAvatar } from "@/components/user-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -155,15 +156,6 @@ const INSIGHT_ICONS: Record<string, typeof Target> = {
   emotional_state_trends: Heart,
 };
 
-function getInitials(name: string) {
-  return (name || "")
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
-}
-
 export default function MemoryInsightsModal() {
   const { close, open } = useModal();
   const { user } = useStore();
@@ -269,7 +261,7 @@ export default function MemoryInsightsModal() {
       : allInsights.filter((i) => i.category === activeCategory);
 
   return (
-    <div className="flex max-h-[88vh] w-full max-w-3xl flex-col overflow-hidden rounded-[24px] bg-bg-neutral shadow-xl">
+    <div data-slot="memory-insights-panel" className="flex max-h-[88vh] w-full max-w-3xl flex-col overflow-hidden rounded-[24px] bg-bg-neutral-solid shadow-xl">
       <div className="flex items-start justify-between gap-3 border-b border-v3-stroke-weak px-6 py-5">
         <div className="min-w-0">
           <h2 className="font-garamond text-2xl font-medium text-v3-text-strong">
@@ -281,6 +273,7 @@ export default function MemoryInsightsModal() {
         </div>
         <Button
           onClick={() => close()}
+          aria-label="Close memory insights"
           variant="ghost"
           size="icon-xs"
           className="size-8 shrink-0 rounded-full bg-v3-fill-weak text-v3-icon-neutral transition-transform duration-150 ease-out hover:bg-v3-fill-weak/80 active:scale-[0.97]"
@@ -294,6 +287,7 @@ export default function MemoryInsightsModal() {
           content={{
             general: (
               <div className="space-y-6">
+                <MemoryStatistics />
                 {heroSnoozed ? (
                   <div className="flex flex-col gap-3 rounded-2xl border border-v3-stroke-weak bg-v3-fill-weaker/50 p-4 sm:flex-row sm:items-center sm:justify-between">
                     <p className="font-inter text-sm leading-relaxed text-v3-text-weak text-pretty">
@@ -583,18 +577,7 @@ export default function MemoryInsightsModal() {
                           key={b._id}
                           className="flex w-14 flex-col items-center gap-1.5"
                         >
-                          <Avatar className="size-12 bg-v3-fill-weak" size="lg">
-                            {b.user?.picture_url ? (
-                              <AvatarImage
-                                src={b.user.picture_url}
-                                alt={b.name}
-                              />
-                            ) : (
-                              <AvatarFallback className="bg-v3-fill-weak font-inter text-sm font-semibold text-v3-text-strong">
-                                {getInitials(b.name)}
-                              </AvatarFallback>
-                            )}
-                          </Avatar>
+                          <UserAvatar src={b.user?.picture_url} name={b.name} alt={b.name} size="lg" className="size-12 bg-v3-fill-weak" />
                           <span className="w-full truncate text-center font-inter text-xs font-medium leading-tight text-v3-text-strong">
                             {b.name?.split(" ")[0]}
                           </span>
