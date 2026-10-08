@@ -21,7 +21,7 @@ export default function Beneficiary() {
             <div
               key={k}
               className={cn(
-                "h-56 rounded-2xl border border-v3-stroke-weak bg-v3-fill-weaker/40",
+                "h-56 rounded-3xl border border-v3-stroke-weak bg-fill-neutral-weak",
                 "motion-safe:animate-pulse",
               )}
               aria-hidden
@@ -29,7 +29,7 @@ export default function Beneficiary() {
           ))}
         </div>
       ) : docs.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-v3-stroke-weak bg-v3-fill-weaker/20 px-4 py-10 text-center">
+        <div className="rounded-3xl border border-dashed border-v3-stroke-weak bg-fill-neutral-weak px-4 py-10 text-center">
           <p className="font-inter text-sm font-medium text-v3-text-strong">No beneficiaries yet</p>
           <p className="mt-1 font-inter text-sm text-v3-text-weak">
             Add a beneficiary to give them access to your Memento.

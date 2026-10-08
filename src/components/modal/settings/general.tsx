@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
-import { NavLink, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/utility";
@@ -10,7 +10,10 @@ import { SettingsSectionCard } from "./settings-section-card";
 import { formatProfileDobDisplay } from "./inline-profile-date-field";
 import { GeneralProfileEditModal } from "./general-profile-edit-modal";
 import { SettingsProfileHeader } from "@/pages/dashboard/settings/settings-profile-header";
-import Stats from "./stats";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { SettingsSocialProfiles } from "./settings-social-profiles";
+import { SettingsAbout } from "./settings-about";
+import RecentActivitiesSection from "@/pages/dashboard/overview/sections/recent-activities-section";
 
 const personalSubTabPill =
   "inline-flex h-8 items-center rounded-full px-3 font-inter text-xs font-medium " +
@@ -19,9 +22,13 @@ const personalSubTabPill =
 
 export default function General() {
   const { user } = useStore();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [editOpen, setEditOpen] = useState(false);
-  const statsOpen = searchParams.get("view") === "stats";
+  const requestedTab = searchParams.get("view");
+  const activeTab =
+    requestedTab === "profile" || requestedTab === "activities"
+      ? requestedTab
+      : "about";
 
   const copyEmail = useCallback(async () => {
     if (!user?.email) return;
@@ -33,49 +40,54 @@ export default function General() {
     }
   }, [user?.email]);
 
-  const dobDisplay = useMemo(() => formatProfileDobDisplay(user?.dob ?? ""), [user?.dob]);
+  const dobDisplay = useMemo(
+    () => formatProfileDobDisplay(user?.dob ?? ""),
+    [user?.dob],
+  );
 
   return (
     <div className="flex w-full flex-col gap-6">
       <SettingsProfileHeader />
 
-      <hr className="border-t border-v3-stroke-weak" />
-
-      <nav aria-label="Profile details and stats">
-        <div role="tablist" aria-orientation="horizontal" className="flex flex-wrap items-center gap-1.5">
-          <NavLink
-            to="/settings/general"
-            role="tab"
-            aria-selected={!statsOpen}
-            className={cn(
-              personalSubTabPill,
-              !statsOpen
-                ? "bg-v3-fill-strong text-white"
-                : "text-v3-text-weak hover:bg-v3-fill-weak hover:text-v3-text-strong",
-            )}
+      <Tabs
+        value={activeTab}
+        onValueChange={(value) => {
+          const next = new URLSearchParams(searchParams);
+          next.set("view", String(value));
+          setSearchParams(next);
+        }}
+        className="flex-col gap-6"
+      >
+        <nav aria-label="Personal information">
+          <TabsList
+            aria-label="Personal information sections"
+            className="h-auto flex-wrap justify-start gap-3 rounded-none bg-transparent px-6 py-0 sm:px-8"
           >
-            My profile
-          </NavLink>
-          <NavLink
-            to="/settings/general?view=stats"
-            role="tab"
-            aria-selected={statsOpen}
-            className={cn(
-              personalSubTabPill,
-              statsOpen
-                ? "bg-v3-fill-strong text-white"
-                : "text-v3-text-weak hover:bg-v3-fill-weak hover:text-v3-text-strong",
-            )}
-          >
-            My Stats
-          </NavLink>
-        </div>
-      </nav>
-
-      {statsOpen ? (
-        <Stats embedded />
-      ) : (
-        <>
+            {[
+              ["about", "About me"],
+              ["profile", "Profile"],
+              ["activities", "Activities"],
+            ].map(([value, label]) => (
+              <TabsTrigger
+                key={value}
+                value={value}
+                className={cn(
+                  personalSubTabPill,
+                  "flex-none bg-fill-neutral-weak text-text-neutral-weak hover:bg-fill-neutral-weak hover:text-text-neutral-strong data-active:bg-fill-tab-active data-active:text-text-tab-active dark:data-active:bg-fill-tab-active dark:data-active:text-text-tab-active",
+                )}
+              >
+                {label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </nav>
+        <TabsContent value="about">
+          <SettingsAbout key={user?._id} />
+        </TabsContent>
+        <TabsContent value="activities">
+          <RecentActivitiesSection />
+        </TabsContent>
+        <TabsContent value="profile">
           <SettingsSectionCard
             title={
               <div className="flex items-center justify-between gap-3">
@@ -160,10 +172,10 @@ export default function General() {
               />
             </div>
           </SettingsSectionCard>
-
-          <GeneralProfileEditModal open={editOpen} onOpenChange={setEditOpen} />
-        </>
-      )}
+          <SettingsSocialProfiles key={user?._id} />
+        </TabsContent>
+      </Tabs>
+      <GeneralProfileEditModal open={editOpen} onOpenChange={setEditOpen} />
     </div>
   );
 }

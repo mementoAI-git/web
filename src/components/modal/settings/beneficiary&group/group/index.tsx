@@ -119,7 +119,7 @@ export default function GroupManagement() {
 
   if (!docs.length) {
     return (
-      <div className="rounded-xl border border-dashed border-v3-stroke-weak px-4 py-10 text-center">
+      <div className="rounded-3xl border border-dashed border-v3-stroke-weak bg-fill-neutral-weak px-4 py-10 text-center">
         <p className="font-inter text-sm font-medium text-v3-text-strong">No groups yet</p>
         <p className="mt-1 font-inter text-sm text-v3-text-weak">
           Create a group to organize your beneficiaries.
@@ -130,7 +130,7 @@ export default function GroupManagement() {
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="overflow-hidden rounded-xl border border-v3-stroke-weak">
+      <div className="overflow-hidden rounded-3xl border border-v3-stroke-weak bg-fill-neutral-weak">
         <table className="w-full border-collapse">
           <thead>
             <tr className="bg-v3-fill-weaker">

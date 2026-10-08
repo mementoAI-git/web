@@ -59,7 +59,7 @@ export default function BeneficiaryAndGroup() {
         )}
       </header>
 
-      <div className="flex w-full flex-col gap-5 rounded-2xl border border-v3-stroke-weak bg-bg-neutral p-5">
+      <div className="flex w-full flex-col gap-5 rounded-3xl border border-v3-stroke-weak bg-fill-neutral-weak p-5">
         {/* Tabs + CTA */}
         <div className="flex items-center justify-between gap-3">
           <nav aria-label="Beneficiary and group sections">

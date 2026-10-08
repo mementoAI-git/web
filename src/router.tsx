@@ -112,7 +112,7 @@ export const router = createBrowserRouter([
           { path: "capsule", element: <Navigate to="/overview" replace /> },
           { path: "pricing", element: <PricingPage /> },
           { path: "settings", element: <Navigate to="/settings/general" replace /> },
-          { path: "settings/stats", element: <Navigate to="/settings/general?view=stats" replace /> },
+          { path: "settings/stats", element: <Navigate to="/settings/general?view=about" replace /> },
           { path: "settings/:tab", element: <SettingsPage /> },
           { path: "admin/feature-flags", element: <AdminFeatureFlagsPage /> },
         ],
