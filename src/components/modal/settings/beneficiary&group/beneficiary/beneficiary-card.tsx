@@ -18,7 +18,7 @@ export function BeneficiaryCard({ beneficiary }: BeneficiaryCardProps) {
   return (
     <article
       className={cn(
-        "flex flex-col gap-4 rounded-2xl border border-v3-stroke-weak bg-bg-neutral p-4",
+        "flex flex-col gap-4 rounded-3xl border border-v3-stroke-weak bg-fill-neutral-weak p-4",
         "motion-safe:transition-shadow motion-safe:duration-200 motion-safe:ease-out",
       )}
     >
