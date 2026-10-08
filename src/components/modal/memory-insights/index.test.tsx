@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "@/test";
@@ -6,6 +6,11 @@ import { createMockUser } from "@/test/fixtures";
 import { server } from "@/test/mocks/server";
 import { http, HttpResponse } from "msw";
 import MemoryInsightsModal from "./index";
+import Modal from "@/components/modal";
+import { useModal } from "@/hooks/use-modal";
+
+// The modal shell imports story media previews; they are outside this insights test.
+vi.mock("@/components/modal/memory/create/file-thumbnails", () => ({ FileThumbnails: () => null }));
 
 const API_BASE = "http://localhost:3000/api";
 
@@ -40,10 +45,28 @@ const minimalUserStats = {
   spotlight: null,
 };
 
+function InsightsLauncher() {
+  const { open } = useModal();
+  return <><button onClick={() => open("memory-insights")}>Open insights</button><Modal /></>;
+}
+
 describe("MemoryInsightsModal", () => {
+  it("uses a solid surface and only its own close control when opened as a modal", async () => {
+    const user = userEvent.setup();
+    const { container } = renderWithProviders(<InsightsLauncher />, { route: "/overview", auth: true });
+    await user.click(screen.getByRole("button", { name: "Open insights" }));
+    expect(container.querySelector('[data-slot="memory-insights-panel"]')).toHaveClass("bg-bg-neutral-solid");
+    expect(screen.queryByRole("button", { name: /Cancel/ })).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Close memory insights" }));
+    expect(screen.queryByRole("heading", { name: "Memory insights" })).not.toBeInTheDocument();
+  });
+
   it("shows Recent Activities in the General panel", async () => {
     renderWithProviders(<MemoryInsightsModal />, { route: "/overview", auth: true });
     expect(await screen.findByRole("heading", { name: /recent activities/i })).toBeInTheDocument();
+    expect(screen.getByRole("region", {name:"Memory statistics"})).toBeInTheDocument();
+    expect(screen.getByText("Memories captured")).toBeInTheDocument();
+    expect(screen.getByText("Top dimension")).toBeInTheDocument();
     expect(await screen.findByText("What are your thoughts on the...")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /see all/i })).toHaveAttribute("href", "/stories");
   });

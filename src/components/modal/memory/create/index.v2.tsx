@@ -4,7 +4,7 @@ import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { EditorContent } from "@tiptap/react";
 import { useModal } from "@/hooks/use-modal";
 import { useStore } from "@/hooks/use-store";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import useForm from "@/hooks/use-form";
 import useFileUpload from "@/hooks/use-file-upload";
 import useSWR from "swr";
@@ -140,6 +140,7 @@ function CreateMemoryBase({
   const { user } = useStore();
   const { canUse } = useFeatureFlags();
   const navigate = useNavigate();
+  const location = useLocation();
   const [showUploadGate, setShowUploadGate] = useState(false);
   const fileInputImageRef = useRef<HTMLInputElement>(null);
   const fileInputVideoRef = useRef<HTMLInputElement>(null);
@@ -767,7 +768,7 @@ function CreateMemoryBase({
         feature="storage"
         variant="inline"
         upgradeLabel="View plans"
-        onUpgrade={() => navigate("/pricing")}
+        onUpgrade={() => navigate("/pricing", { state: { returnTo: location.pathname + location.search + location.hash } })}
         onDismiss={() => setShowUploadGate(false)}
       />
     </div>

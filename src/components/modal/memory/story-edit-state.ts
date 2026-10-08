@@ -21,7 +21,6 @@ export interface StoryUpdatePayload {
   groups?: string[];
   beneficiaries?: string[];
   attachments?: string[];
-  removeAttachments?: string[];
 }
 
 const sorted = (values: string[]) => [...values].sort();
@@ -69,7 +68,6 @@ export function buildStoryUpdatePayload(
   memory: IMemory,
   draft: StoryEditDraft,
   addedAttachmentIds: string[] = [],
-  removedAttachmentIds: string[] = [],
 ): StoryUpdatePayload {
   const payload: StoryUpdatePayload = {};
 
@@ -104,15 +102,7 @@ export function buildStoryUpdatePayload(
     payload.beneficiaries = beneficiaries;
   }
 
-  if (addedAttachmentIds.length > 0 || removedAttachmentIds.length > 0) {
-    payload.attachments = [
-      ...draft.attachments.map((attachment) => attachment._id),
-      ...addedAttachmentIds,
-    ];
-  }
-  if (removedAttachmentIds.length > 0) {
-    payload.removeAttachments = removedAttachmentIds;
-  }
+  if (addedAttachmentIds.length > 0) payload.attachments = addedAttachmentIds;
 
   return payload;
 }

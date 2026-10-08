@@ -15,7 +15,7 @@ import { GROUP_COLORS } from "@/utility/constant";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { UserAvatar } from "@/components/user-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
@@ -349,11 +349,7 @@ export function AccessField({
                         onCheckedChange={() => toggleAccess(beneficiary)}
                         aria-label={beneficiary.name}
                       />
-                      <Avatar size="sm">
-                        <AvatarFallback className="font-geist font-bold text-text-neutral-strong">
-                          {beneficiary.name.trim().charAt(0).toUpperCase() || "?"}
-                        </AvatarFallback>
-                      </Avatar>
+                      <UserAvatar name={beneficiary.name} alt={beneficiary.name} size="sm" />
                       <span className="min-w-0 flex-1 truncate">{beneficiary.name}</span>
                     </label>
                   );
