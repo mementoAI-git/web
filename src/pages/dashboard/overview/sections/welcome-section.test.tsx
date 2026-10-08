@@ -1,5 +1,8 @@
+import { toast } from "sonner";
 import { afterEach, beforeEach, describe, it, expect, vi } from "vitest";
-import { screen } from "@testing-library/react";
+import { screen, waitFor, waitForElementToBeRemoved } from "@testing-library/react";
+import { http, HttpResponse } from "msw";
+import { server } from "@/test/mocks/server";
 import userEvent from "@testing-library/user-event";
 import { useModal } from "@/hooks/use-modal";
 import { renderWithProviders } from "@/test";
@@ -14,17 +17,43 @@ vi.mock("@/components/Chatinput/inline-voice-session", () => ({
 }));
 
 describe("WelcomeSection", () => {
+  it("opens a pending quick note in the story overlay", async () => {
+    server.use(http.get("*/users/stats", () => HttpResponse.json({
+      success: true, data: { quick_capture_pending_count: 2, quick_capture_latest_id: "note-1" },
+    })));
+    function ModalState() {
+      const { state } = useModal();
+      return <output data-testid="note-modal">{JSON.stringify(state[0])}</output>;
+    }
+    const user = userEvent.setup();
+    renderWithProviders(<><WelcomeSection /><ModalState /></>, { route: "/overview", auth: true });
+    await user.click(await screen.findByRole("button", { name: "2 Quick notes finishing up…" }));
+    expect(screen.getByTestId("note-modal")).toHaveTextContent("view-memory");
+    expect(screen.getByTestId("note-modal")).toHaveTextContent('"memoryId":"note-1"');
+  });
+
+  it("automatically removes the indicator once background enrichment completes", async () => {
+    let pending = true;
+    server.use(http.get("*/users/stats", () => HttpResponse.json({
+      success: true, data: { quick_capture_pending_count: pending ? 1 : 0, quick_capture_latest_id: pending ? "note-1" : null },
+    })));
+    renderWithProviders(<WelcomeSection />, { route: "/overview", auth: true });
+    const indicator = await screen.findByRole("button", { name: "1 Quick note finishing up…" });
+    pending = false;
+    await waitForElementToBeRemoved(indicator, { timeout: 6000 });
+  });
+
   it("starts voice inside the banner and restores actions when the call ends", async () => {
     const user = userEvent.setup();
     const { container } = renderWithProviders(<WelcomeSection />, { route: "/overview", auth: true });
     await user.click(screen.getByRole("button", { name: "Voice conversation" }));
     const voice = await screen.findByRole("region", { name: "Inline voice" });
     expect(container.contains(voice)).toBe(true);
-    expect(screen.queryByText("What’s on your mind today?")).not.toBeInTheDocument();
+    expect(screen.queryByPlaceholderText("What’s on your mind today?")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Add story" })).not.toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "End call" }));
     expect(screen.getByRole("button", { name: "Voice conversation" })).toBeInTheDocument();
-    expect(screen.getByText("What’s on your mind today?")).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("What’s on your mind today?")).toBeInTheDocument();
   });
 
   it("replaces the secondary actions with a voice-mode entry link", () => {
@@ -61,6 +90,17 @@ describe("WelcomeSection", () => {
       "create-memory",
     );
     expect(screen.queryByText("Enrichment score")).not.toBeInTheDocument();
+  });
+
+  it("offers inline dictation with a browser fallback", async () => {
+    const report = vi.spyOn(toast, "error");
+    const user = userEvent.setup();
+    renderWithProviders(<WelcomeSection />, { route: "/overview", auth: true });
+    await user.click(screen.getByRole("button", { name: "Record your thoughts" }));
+    await waitFor(() => expect(report).toHaveBeenCalledWith(expect.stringContaining("Voice recording isn’t available"), expect.any(Object)));
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    report.mockRestore();
+    expect(screen.getByRole("textbox", { name: "Your thoughts" })).toBeInTheDocument();
   });
 
   it("renders the section without crashing", () => {

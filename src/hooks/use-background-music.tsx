@@ -71,11 +71,6 @@ export function BackgroundMusicProvider({ children }: PropsWithChildren) {
         setCurrentTrack(user.bg_music);
         audioRef.current.src = audioFile.file;
         audioRef.current.load();
-        audioRef.current.play().catch(() => {
-          console.log(
-            "Autoplay blocked by browser - user can manually start music",
-          );
-        });
       }
     } else if (!user?.bg_music && currentTrack) {
       stopTrack();
@@ -163,4 +158,3 @@ export const useBackgroundMusic = () => {
   }
   return context;
 };
-

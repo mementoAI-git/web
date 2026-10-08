@@ -1,3 +1,4 @@
+import { useSpokenReplies } from "@/hooks/use-spoken-replies";
 import { useVoiceSession } from "@/contexts/voice-session";
 import type { VoiceSessionEvent } from "./voice-session-divider";
 import {
@@ -8,7 +9,7 @@ import Bubble, { Typing, TypingBubble } from "./bubble";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import useSWR, { mutate } from "swr";
 import endpoint from "@/api/endpoint";
-import { isEmpty } from "@/utility";
+import { cn, isEmpty } from "@/utility";
 import History from "./history";
 import { type IMessage } from "@/utility/interface";
 import Loader from "./loader";
@@ -18,7 +19,7 @@ import { toast } from "sonner";
 import SidebarDetails from "@/components/memory/sidebar-details";
 import useFetcher from "@/hooks/use-fetcher";
 import { useStore } from "@/hooks/use-store";
-import { useMatch, useNavigate } from "react-router-dom";
+import { useLocation, useMatch, useNavigate } from "react-router-dom";
 import { useConversationChrome } from "@/contexts/conversation-chrome";
 import {
   buildPromptWithReplyQuote,
@@ -53,16 +54,20 @@ export default function Conversation({ id, type = "memory" }) {
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const wasAtBottomRef = useRef(true);
   const isNew = id === "new";
+  const isTopic = type === "prompt";
   const isHostChat = type === "memory" && !isNew;
   const { setHeaderTitle } = useStore();
   const { setChrome } = useConversationChrome();
   const { open, push } = useModal();
   const navigate = useNavigate();
+  const location = useLocation();
+  const discussionHandled = useRef<string | null>(null);
   const voiceRouteMatch = useMatch({ path: "/chat/:id/voice", end: true });
   const isVoiceRoute = Boolean(voiceRouteMatch);
   const { canAccess, isLoading: subscriptionLoading } = useSubscription();
   const [messages, setMessages] = useState<Partial<IMessage>[]>([])
   const voiceSession = useVoiceSession();
+  const { enabled: spokenRepliesEnabled, supported: spokenRepliesSupported, toggle: toggleSpokenReplies, speak: speakReply, stop: stopSpokenReply } = useSpokenReplies(id, isVoiceRoute || Boolean(voiceSession?.active));
   const liveTimeline = useMemo(() => voiceSession?.timeline.filter(entry => entry.memoryId === id || (id === "new" && entry.memoryId === voiceSession.memoryId)) ?? [], [voiceSession?.timeline, voiceSession?.memoryId, id]);
   const [voiceEvents, setVoiceEvents] = useState<VoiceSessionEvent[]>([]);
   const handleVoiceSessionChange = useCallback((active: boolean) => {
@@ -163,6 +168,7 @@ export default function Conversation({ id, type = "memory" }) {
 
   const handleOnFinishTyping = useCallback((text: string) => {
     if (text && text.trim()) {
+      speakReply(text);
       setMessages((p) => ([
         ...p,
         {
@@ -177,7 +183,7 @@ export default function Conversation({ id, type = "memory" }) {
     setStreamModelLabel(undefined);
     // Refetch enrichment stats after each AI response to update delta + milestone
     mutate(endpoint.userStats);
-  }, [streamModelLabel]);
+  }, [streamModelLabel, speakReply]);
 
   const sendChatMessage = useCallback(
     async (
@@ -185,6 +191,7 @@ export default function Conversation({ id, type = "memory" }) {
       options: { appendUserMessage: boolean },
     ) => {
       if (isEmpty(text)) return;
+      stopSpokenReply();
       const apiText = buildPromptWithReplyQuote(text, replyTo ?? null);
       try {
         if (aiMessage && aiMessage.trim()) {
@@ -271,6 +278,7 @@ export default function Conversation({ id, type = "memory" }) {
     },
     [
       aiMessage,
+      stopSpokenReply,
       memory?._id,
       scrollToBottom,
       sendMessage,
@@ -287,6 +295,17 @@ export default function Conversation({ id, type = "memory" }) {
     },
     [sendChatMessage],
   );
+
+  useEffect(() => {
+    const text = location.state?.overviewDiscussion;
+    if (typeof text !== "string" || !text.trim() || discussionHandled.current === location.key) return;
+    if (loadingMemory || loadingPrompt || (!isNew && !memory?._id)) return;
+    discussionHandled.current = location.key;
+    const remainingState = { ...location.state };
+    delete remainingState.overviewDiscussion;
+    navigate({ pathname: location.pathname, search: location.search }, { replace: true, state: remainingState });
+    handleSend({ text, attachments: [] });
+  }, [location, loadingMemory, loadingPrompt, isNew, memory?._id, navigate, handleSend]);
 
   const handleExportConversation = useCallback(() => {
     const hasStreaming = Boolean(aiMessage?.trim());
@@ -341,6 +360,7 @@ export default function Conversation({ id, type = "memory" }) {
   );
 
   const handleStop = () => {
+    stopSpokenReply();
     if (abortCtrl.current) {
       abortCtrl.current.abort();
       abortCtrl.current = null
@@ -372,12 +392,12 @@ export default function Conversation({ id, type = "memory" }) {
     if (isHostChat) {
       setHeaderTitle(null);
     } else {
-      setHeaderTitle(memory?.title || "New conversation");
+      setHeaderTitle(isTopic ? "Topic" : memory?.title || "New conversation");
     }
     return () => {
       setHeaderTitle(null);
     };
-  }, [isHostChat, memory?.title, setHeaderTitle]);
+  }, [isHostChat, isTopic, memory?.title, setHeaderTitle]);
 
   useEffect(() => {
     if (loadingMemory || loadingPrompt) {
@@ -399,6 +419,7 @@ export default function Conversation({ id, type = "memory" }) {
     setChrome({
       memory: memory ?? null,
       onOpenChatPreferences: memory?._id ? handleToggleSettingsDrawer : undefined,
+      spokenReplies: { enabled: spokenRepliesEnabled, supported: spokenRepliesSupported, onToggle: toggleSpokenReplies },
       ...((isHostChat || isVoiceRoute) ?
         {
           hostChat: {
@@ -414,6 +435,9 @@ export default function Conversation({ id, type = "memory" }) {
     loadingPrompt,
     memory,
     handleToggleSettingsDrawer,
+    spokenRepliesEnabled,
+    spokenRepliesSupported,
+    toggleSpokenReplies,
     setChrome,
     isHostChat,
     hostChatSubtitle,
@@ -441,10 +465,11 @@ export default function Conversation({ id, type = "memory" }) {
     <div className="flex h-full min-h-0 min-w-0 flex-1 items-stretch overflow-hidden">
       <div className="flex min-h-0 min-w-0 flex-1 justify-center overflow-hidden">
         <div
-          className="hide-scrollbar mx-auto flex h-full min-h-0 w-full min-w-0 max-w-[900px] flex-col overflow-y-auto overscroll-y-contain px-3 pt-6 sm:px-4 sm:pt-12"
+          className="chat-conversation-scroll hide-scrollbar flex h-full min-h-0 w-full min-w-0 flex-col overflow-y-auto overscroll-y-contain"
           ref={scrollContainerRef}
           onScroll={handleScroll}
         >
+          <div className={cn("mx-auto flex w-full min-w-0 max-w-[900px] flex-1 flex-col", isTopic ? "px-3 pt-3 sm:px-0" : "px-3 pt-6 sm:px-4 sm:pt-12")}>
           {isNew && messages.length === 0 && voiceEvents.length === 0 && liveTimeline.length === 0 && !isTyping ? (
             <ChatEmptyState
               onPrompt={(text) => handleSend({ text, attachments: [] })}
@@ -467,12 +492,14 @@ export default function Conversation({ id, type = "memory" }) {
               <Typing /> :
               aiMessage.trim() ?
                 <TypingBubble
+                  topic={isTopic}
                   text={aiMessage}
                   streamDone={streamDone}
                   onFinish={handleOnFinishTyping}
                   modelLabel={streamModelLabel}
                 /> :
                 <Bubble
+                  topic={isTopic}
                   role="ai"
                   text={aiMessage}
                   modelLabel={streamModelLabel}
@@ -489,8 +516,9 @@ export default function Conversation({ id, type = "memory" }) {
             }
           </History>
           )}
-          <div className="sticky bottom-0 z-[4] bg-background pb-[calc(max(0.5rem,env(safe-area-inset-bottom))_+_12px)] pt-1">
-            <div className="w-full">
+          </div>
+          <div className={cn("chat-composer-footer sticky bottom-0 z-[4] shrink-0 bg-background pb-[calc(max(0.5rem,env(safe-area-inset-bottom))_+_12px)]", isTopic ? "pt-2" : "pt-1")}>
+            <div className={cn("mx-auto w-full min-w-0 max-w-[900px] sm:px-4", isTopic ? "px-7" : "px-3")}>
               <ConversationChatinput
                 key={`chat-draft-${memory?._id ?? id}`}
                 onVoiceSessionChange={handleVoiceSessionChange}
