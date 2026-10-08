@@ -32,10 +32,10 @@ function AuthCenteredHeroAside() {
  */
 export function AuthCenteredSplitShell({ children }: PropsWithChildren) {
   return (
-    <div className="min-h-dvh bg-bg-neutral px-4 py-6 sm:px-6 sm:py-8 lg:px-10 lg:py-10">
-      <header className="mx-auto flex w-full items-center justify-between gap-4">
+    <div className="flex min-h-dvh flex-col bg-bg-neutral px-4 py-6 sm:px-6 sm:py-8 lg:px-10 lg:py-10">
+      <header className="mx-auto flex w-full shrink-0 items-center justify-between gap-4">
         <Logo className="text-foreground" />
-        <ThemeSwitcher />
+        <ThemeSwitcher className="size-10 shrink-0 rounded-full bg-fill-neutral-weak hover:bg-fill-neutral-weaker" />
       </header>
 
       <main className="mx-auto flex w-full flex-1 items-center justify-center py-6 sm:py-8 lg:py-12">
@@ -100,7 +100,7 @@ export function AuthSplitShell({ children }: PropsWithChildren) {
   return (
     <div className="relative min-h-dvh bg-background">
       <header className="absolute right-4 top-5 sm:right-6">
-        <ThemeSwitcher />
+        <ThemeSwitcher className="size-10 shrink-0 rounded-full bg-fill-neutral-weak hover:bg-fill-neutral-weaker" />
       </header>
       <div className="flex min-h-dvh flex-col lg:flex-row">
         <div className="order-1 flex flex-1 flex-col lg:order-none lg:min-h-dvh lg:basis-2/5 lg:overflow-y-auto">

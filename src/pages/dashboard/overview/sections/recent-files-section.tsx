@@ -122,12 +122,12 @@ function RecentFileItem({ memory }: RecentFileItemProps) {
     <button
       type="button"
       onClick={handleClick}
-      className="flex w-full items-center gap-3 rounded-[12px] border border-stroke-neutral-weaker bg-fill-neutral-weaker p-3 text-left transition-colors hover:border-stroke-neutral-weak hover:bg-fill-neutral-weakest"
+      className="sky-card flex w-full items-center gap-3 rounded-[12px] border border-stroke-neutral-weaker bg-fill-neutral-weaker p-3 text-left transition-colors hover:border-stroke-neutral-weak hover:bg-fill-neutral-weak"
     >
       <div
         className={`flex size-10 shrink-0 items-center justify-center rounded-lg ${bg}`}
       >
-        <Icon className="size-5 text-icon-neutral" />
+        <Icon className="size-5 text-icon-neutral-weak" />
       </div>
       <div className="min-w-0 flex-1">
         <TypographyH2 className="truncate font-inter text-sm font-semibold text-text-neutral-strong">
@@ -156,7 +156,7 @@ function RecentFilesSkeleton() {
         {[1, 2, 3, 4].map((i) => (
           <div
             key={i}
-            className="flex items-center gap-3 rounded-[12px] border border-stroke-neutral-weaker bg-fill-neutral-weak p-3"
+            className="sky-card flex items-center gap-3 rounded-[12px] border border-stroke-neutral-weaker bg-fill-neutral-weak p-3"
           >
             <div className="size-10 shrink-0 animate-pulse rounded-lg bg-fill-neutral-weaker" />
             <div className="flex-1 space-y-1">
@@ -193,7 +193,7 @@ export default function RecentFilesSection() {
     <div className="flex flex-1 flex-col gap-4 rounded-2xl bg-fill-neutral-weaker p-5 shadow-sm">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <FolderIcon className="size-5 text-icon-neutral" />
+          <FolderIcon className="size-5 text-icon-neutral-weak" />
           <TypographyH2 className="font-inter text-base font-semibold text-text-neutral-strong">
             Recent Files
           </TypographyH2>

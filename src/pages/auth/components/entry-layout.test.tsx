@@ -31,14 +31,16 @@ it("keeps the theme switcher available and changes the illustration with the the
   expect(
     screen.getByRole("region", { name: "Create an account" }),
   ).toBeInTheDocument();
-  await user.click(screen.getByRole("button", { name: "Switch to dark mode" }));
+  await user.click(screen.getByRole("button", { name: "Choose theme" }));
+  await user.click(screen.getByRole("menuitemradio", { name: "Dark", exact: true }));
   expect(document.documentElement).toHaveClass("dark");
   expect(
     container.querySelector(".auth-entry-gradient")?.getAttribute("src"),
   ).not.toBe(lightImage);
   await user.click(
-    screen.getByRole("button", { name: "Switch to light mode" }),
+    screen.getByRole("button", { name: "Choose theme" }),
   );
+  await user.click(screen.getByRole("menuitemradio", { name: "Light", exact: true }));
   expect(
     container.querySelector(".auth-entry-gradient")?.getAttribute("src"),
   ).toBe(lightImage);

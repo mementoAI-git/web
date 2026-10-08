@@ -7,3 +7,26 @@
 .dark .ambience-volume-slider {
   --active: rgb(255 255 255 / 0.1);
 }
+
+/* Sky themes use a transparent page background; the value bubble needs its own surface. */
+.ambience-volume-slider .text-background {
+  background-color: var(--bg-neutral-solid);
+  color: var(--text-neutral-strong);
+  border: 1px solid var(--stroke-neutral-weak);
+}
+
+.music-player-disc {
+  animation: music-disc-spin 6s linear infinite;
+}
+
+@keyframes music-disc-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .music-player-disc {
+    animation: none;
+  }
+}

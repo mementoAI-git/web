@@ -7,24 +7,40 @@ import { useModal } from "@/hooks/use-modal";
 import { DashboardSideBar } from "./dashboard-sidebar";
 import globeIcon from "@/assets/icon/sidebar/globe.svg";
 import cardFileBoxIcon from "@/assets/icon/sidebar/card-file-box.svg";
-import hourglassIcon from "@/assets/icon/sidebar/hourglass.svg";
 import gearIcon from "@/assets/icon/sidebar/gear.svg";
 import linkIcon from "@/assets/icon/sidebar/link.svg";
 import lightBulbIcon from "@/assets/icon/sidebar/light-bulb.svg";
 import upArrowIcon from "@/assets/icon/sidebar/up-arrow.svg";
 
 function ModalState() {
-  const { state } = useModal();
-  return <output data-testid="modal-state">{state[0]?.name}</output>;
+  const { state, close } = useModal();
+  return <><output data-testid="modal-state">{state[0]?.name}</output><button onClick={() => close()}>Dismiss overlay</button></>;
 }
 
 function CurrentLocation() {
+  const location = useLocation();
   return (
-    <output data-testid="current-location">{useLocation().pathname}</output>
+    <output data-testid="current-location">{location.pathname + location.search + location.hash}</output>
   );
 }
 
 describe("DashboardSideBar", () => {
+  it.each([
+    ["Insights", "memory-insights"],
+    ["Invite friends", "invite-friends"],
+    ["Feedback", "create-feedback"],
+    ["Upgrade plan", "pricing"],
+  ])("keeps the originating page when opening and closing %s", async (label, modalName) => {
+    const route = "/stories?tab=bookmarked#saved";
+    renderWithProviders(<><DashboardSideBar /><ModalState /><CurrentLocation /></>, { route, auth: true });
+    await userEvent.click(screen.getByRole("button", { name: new RegExp(label) }));
+    expect(screen.getByTestId("modal-state")).toHaveTextContent(modalName);
+    expect(screen.getByTestId("current-location")).toHaveTextContent(route);
+    await userEvent.click(screen.getByRole("button", { name: "Dismiss overlay" }));
+    expect(screen.getByTestId("modal-state")).toBeEmptyDOMElement();
+    expect(screen.getByTestId("current-location")).toHaveTextContent(route);
+  });
+
   it("opens People settings and marks the People item active", async () => {
     const user = userEvent.setup();
     renderWithProviders(
@@ -47,6 +63,21 @@ describe("DashboardSideBar", () => {
     ).not.toHaveAttribute("data-active");
   });
 
+  it("opens the invite modal without navigating away", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<><DashboardSideBar /><ModalState /><CurrentLocation /></>, {route: "/overview", auth: true});
+    await user.click(screen.getByRole("button", {name: "Invite friends"}));
+    expect(screen.getByTestId("modal-state")).toHaveTextContent("invite-friends");
+    expect(screen.getByTestId("current-location")).toHaveTextContent("/overview");
+  });
+
+  it("opens pricing over the current screen", async () => {
+    renderWithProviders(<><DashboardSideBar /><ModalState /><CurrentLocation /></>, { route: "/overview", auth: true });
+    await userEvent.click(screen.getByRole("button", { name: "Upgrade plan" }));
+    expect(screen.getByTestId("modal-state")).toHaveTextContent("pricing");
+    expect(screen.getByTestId("current-location")).toHaveTextContent("/overview");
+  });
+
   it("opens Insights from the main navigation", async () => {
     const user = userEvent.setup();
     renderWithProviders(
@@ -62,19 +93,13 @@ describe("DashboardSideBar", () => {
     );
   });
 
-  it("keeps the time capsule entry on its existing route", async () => {
-    const user = userEvent.setup();
-    renderWithProviders(
-      <>
-        <DashboardSideBar />
-        <CurrentLocation />
-      </>,
-      { route: "/overview", auth: true },
-    );
-    await user.click(screen.getByRole("button", { name: "Time capsule" }));
-    expect(screen.getByTestId("current-location")).toHaveTextContent(
-      "/capsule",
-    );
+  it("omits the duplicate time capsule navigation entry", () => {
+    renderWithProviders(<DashboardSideBar />, {
+      route: "/overview",
+      auth: true,
+    });
+    expect(screen.queryByRole("button", { name: "Time capsule" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Overview" })).toBeInTheDocument();
   });
 
   it("composes the approved shadcn sidebar structure", () => {
@@ -107,10 +132,9 @@ describe("DashboardSideBar", () => {
     for (const [title, asset] of [
       ["Overview", globeIcon],
       ["My Stories", cardFileBoxIcon],
-      ["Time capsule", hourglassIcon],
       ["Settings", gearIcon],
       ["Invite friends", linkIcon],
-      ["Feedback", lightBulbIcon],
+      ["Insights", lightBulbIcon],
       ["Upgrade plan", upArrowIcon],
     ]) {
       expect(
@@ -119,10 +143,8 @@ describe("DashboardSideBar", () => {
     }
     expect(screen.getByText("💬")).toBeInTheDocument();
     expect(screen.getByText("🧭")).toBeInTheDocument();
-    for (const title of ["Insights", "People"]) {
-      expect(
-        screen.getByRole("button", { name: title }).querySelector("svg"),
-      ).toHaveClass("text-icon-neutral-strong");
+    for (const [title, emoji] of [["People", "🫂"], ["Feedback", "📝"]]) {
+      expect(screen.getByRole("button", { name: title })).toHaveTextContent(emoji);
     }
     expect(screen.getByRole("button", { name: "Upgrade plan" })).toHaveClass(
       "text-text-brand-strong",

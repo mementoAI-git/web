@@ -34,6 +34,22 @@ describe("Invite friends", () => {
     expect(await screen.findByLabelText("7 friends joined")).toHaveTextContent(
       "7",
     );
+    expect(screen.getByText("Bring your people along.")).toBeInTheDocument();
+    expect(
+      screen
+        .getByLabelText("Your invite link")
+        .compareDocumentPosition(screen.getByLabelText("7 friends joined")) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      screen
+        .getByText("Signups through your link")
+        .closest('[data-slot="card"]'),
+    ).toHaveClass("bg-fill-lime-weak");
+    expect(screen.queryByText("Friends who joined")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Thanks for bringing your friends along."),
+    ).not.toBeInTheDocument();
     expect(screen.getByLabelText("Your invite link")).toHaveValue(
       details.invite_url,
     );
@@ -59,6 +75,9 @@ describe("Invite friends", () => {
     await waitFor(() =>
       expect(screen.getByLabelText("0 friends joined")).toHaveTextContent("0"),
     );
+    expect(
+      screen.queryByText("Your first invite starts here."),
+    ).not.toBeInTheDocument();
   });
   it("closes with Escape and restores focus to the sidebar action", async () => {
     const user = userEvent.setup();

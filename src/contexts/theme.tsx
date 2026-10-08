@@ -31,14 +31,14 @@ export function ThemeProvider({ children }: PropsWithChildren) {
   const [theme, setPreference] = useState(readThemePreference);
   const [systemTheme, setSystemTheme] = useState(getSystemTheme);
   const themeRef = useRef(theme);
-  const resolvedTheme = theme === "system" ? systemTheme : theme;
+  const resolvedTheme = theme === "system" ? systemTheme : resolveTheme(theme);
 
   const setTheme = useCallback((nextTheme: ThemePreference) => {
     const resolved = resolveTheme(nextTheme);
     themeRef.current = nextTheme;
     if (nextTheme === "system") setSystemTheme(resolved);
     setPreference(nextTheme);
-    applyResolvedTheme(resolved);
+    applyResolvedTheme(resolved, nextTheme);
     try {
       window.localStorage.setItem(THEME_STORAGE_KEY, nextTheme);
     } catch {
@@ -47,8 +47,8 @@ export function ThemeProvider({ children }: PropsWithChildren) {
   }, []);
 
   useLayoutEffect(() => {
-    applyResolvedTheme(resolvedTheme);
-  }, [resolvedTheme]);
+    applyResolvedTheme(resolvedTheme, theme);
+  }, [resolvedTheme, theme]);
 
   useLayoutEffect(() => {
     if (theme !== "system" || typeof window.matchMedia !== "function") return;
@@ -70,7 +70,10 @@ export function ThemeProvider({ children }: PropsWithChildren) {
   );
 
   return (
-    <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
+    <ThemeContext.Provider value={value}>
+      {(theme === "deep-sky" || theme === "light-sky") && <div className="deep-sky-backdrop" aria-hidden="true" />}
+      {children}
+    </ThemeContext.Provider>
   );
 }
 

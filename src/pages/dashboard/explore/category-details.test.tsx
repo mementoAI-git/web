@@ -56,6 +56,42 @@ describe("CategoryDetails", () => {
     mutate.mockResolvedValue(undefined);
   });
 
+  it.each(["light", "dark", "deep-sky"])("uses visible semantic filter colours in the %s theme", async (theme) => {
+    localStorage.setItem("memento:theme", theme);
+    const user = userEvent.setup();
+    renderWithProviders(
+      <CategoryDetails category={{
+        slug: "the-life-i-live",
+        title: "The Life I Live",
+        description: "Routines and everyday life.",
+        order: 2,
+        starterTotal: 10,
+      }} />,
+      { auth: true },
+    );
+    const all = screen.getByRole("radio", { name: "All topics" });
+    const answered = screen.getByRole("radio", { name: "Answered" });
+    for (const button of [all, answered]) {
+      expect(button).toHaveClass(
+        "text-text-neutral-strong",
+        "data-[state=on]:bg-fill-neutral-strong",
+        "data-[state=on]:text-text-inverse-strong",
+        "data-[state=on]:hover:text-text-inverse-strong",
+        "dark:data-[state=on]:bg-fill-inverse-strong",
+        "dark:data-[state=on]:text-text-neutral-strong",
+        "dark:data-[state=on]:[--color-text-neutral-strong:var(--fill-neutral-strong)]",
+        "dark:data-[state=on]:hover:bg-fill-inverse-strong",
+        "dark:data-[state=on]:hover:text-text-neutral-strong",
+      );
+      expect(button).not.toHaveClass("data-[state=on]:text-background");
+      expect(button.className).not.toMatch(/#[0-9a-f]/i);
+    }
+    expect(all).toHaveAttribute("aria-checked", "true");
+    await user.click(answered);
+    expect(answered).toHaveAttribute("aria-checked", "true");
+    expect(all).toHaveAttribute("aria-checked", "false");
+  });
+
   it("keeps progress invisible and saves not-relevant feedback", async () => {
     const user = userEvent.setup();
     renderWithProviders(

@@ -1,5 +1,6 @@
 import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
+import svgr from "vite-plugin-svgr";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { storybookTest } from "@storybook/addon-vitest/vitest-plugin";
@@ -10,7 +11,7 @@ const dirname =
     : path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), svgr()],
   resolve: {
     alias: {
       "@": path.resolve(fileURLToPath(new URL(".", import.meta.url)), "src"),

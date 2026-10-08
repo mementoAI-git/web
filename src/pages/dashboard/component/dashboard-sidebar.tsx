@@ -17,8 +17,7 @@ import {
   SidebarProvider,
   SidebarSeparator,
 } from "@/components/ui/sidebar";
-import { ChartNoAxesCombined, PanelLeftClose, UsersRound } from "lucide-react";
-import hourglassIcon from "@/assets/icon/sidebar/hourglass.svg";
+import { PanelLeftClose } from "lucide-react";
 import linkIcon from "@/assets/icon/sidebar/link.svg";
 import lightBulbIcon from "@/assets/icon/sidebar/light-bulb.svg";
 import upArrowIcon from "@/assets/icon/sidebar/up-arrow.svg";
@@ -67,7 +66,7 @@ export function DashboardSideBar({ onCollapse }: DashboardSideBarProps) {
                   <SideBarItem
                     {...navigation}
                     active={
-                      navigation.link === pathname ||
+                      pathname.startsWith("/chat/reply/") ? navigation.link === "/explore" : navigation.link === pathname ||
                       pathname.startsWith(`${navigation.link}/`) ||
                       (navigation.link === "/overview" && pathname === "/")
                     }
@@ -75,17 +74,12 @@ export function DashboardSideBar({ onCollapse }: DashboardSideBarProps) {
                   />
                 ))}
                 <SideBarItem
-                  icon={hourglassIcon}
-                  title="Time capsule"
-                  link="/capsule"
-                />
-                <SideBarItem
-                  Icon={ChartNoAxesCombined}
+                  icon={lightBulbIcon}
                   title="Insights"
                   onClick={() => open("memory-insights")}
                 />
                 <SideBarItem
-                  Icon={UsersRound}
+                  emoji="🫂"
                   title="People"
                   link="/settings/beneficiary"
                   active={pathname.startsWith("/settings/beneficiary")}
@@ -117,7 +111,7 @@ export function DashboardSideBar({ onCollapse }: DashboardSideBarProps) {
                   onClick={() => open("invite-friends")}
                 />
                 <SideBarItem
-                  icon={lightBulbIcon}
+                  emoji="📝"
                   title="Feedback"
                   onClick={() => {
                     open("create-feedback");
@@ -127,7 +121,9 @@ export function DashboardSideBar({ onCollapse }: DashboardSideBarProps) {
                   icon={upArrowIcon}
                   title="Upgrade plan"
                   tone="brand"
-                  link="/pricing"
+                  onClick={() => {
+                    open("pricing");
+                  }}
                 />
               </SidebarMenu>
             </SidebarGroupContent>

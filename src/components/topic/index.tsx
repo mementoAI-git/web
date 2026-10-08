@@ -1,4 +1,4 @@
-import careerImage from "@/assets/image/image-6.png"
+import { getExploreCategoryImage } from "@/utility/data/categories";
 import { cn } from "@/utility";
 import { Link } from "react-router-dom";
 
@@ -33,7 +33,7 @@ export default function Topic({
         <div className="absolute top-2 left-2 rounded-full bg-gray-50 w-fit max-w-[90%] py-0.5 px-2 border border-gray-200">
           <span className="font-inter block capitalize font-medium text-xs text-gray-700 truncate">{tag}</span>
         </div>
-        <img alt="" width={120} height={120} className="size-full object-cover transition-transform duration-300 ease-in-out hover:scale-110" src={image || careerImage} />
+        <img alt="" width={120} height={120} className="size-full object-cover transition-transform duration-300 ease-in-out hover:scale-110" src={image || getExploreCategoryImage("work-purpose")} />
       </div>
       <div className="w-[220px]">
         <span className="font-georgia text-base text-sand-12 font-light w-full block">{title}</span>
