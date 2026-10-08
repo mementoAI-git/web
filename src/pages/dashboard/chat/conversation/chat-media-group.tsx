@@ -105,7 +105,7 @@ function CompactFileRow({
       </span>
     </>
   );
-  const classes = "flex min-h-14 w-full min-w-0 items-center gap-3 rounded-lg border border-stroke-neutral-weaker bg-fill-neutral-weaker px-3 py-2 text-left transition-colors hover:bg-fill-neutral-weak focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stroke-brand-strong";
+  const classes = "sky-card flex min-h-14 w-full min-w-0 items-center gap-3 rounded-lg border border-stroke-neutral-weaker bg-fill-neutral-weaker px-3 py-2 text-left transition-colors hover:bg-fill-neutral-weak focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stroke-brand-strong";
   return kind === "audio" ? (
     <button type="button" onClick={() => push?.("file-preview", { files, startIndex: index })} aria-label={`Open ${file.name || "file"} in viewer`} className={classes}>{content}</button>
   ) : (

@@ -16,6 +16,7 @@ import dayjs from "dayjs";
 import Bubble from "./bubble";
 import { dayDividerLabel } from "@/features/host-chat/month-navigation";
 import ConversationHeader from "./header";
+import TopicHeader from "./topic-header";
 import type { ChatReplyQuote } from "@/utility/chat-reply-prompt";
 import { type IMemory, type IMessage } from "@/utility/interface";
 import { replyQuoteBodyFromMessage } from "./reply-quote-body";
@@ -55,6 +56,7 @@ export default function History({
 }: IHistory) {
   const chatDetailMatch = useMatch({ path: "/chat/:id", end: true });
   const chatVoiceMatch = useMatch({ path: "/chat/:id/voice", end: true });
+  const isTopic = Boolean(useMatch({ path: "/chat/reply/:id", end: true }));
   const hideInlineConversationHeader = Boolean(chatDetailMatch || chatVoiceMatch);
 
   const isLoadingMoreRef = useRef(false);
@@ -147,7 +149,7 @@ export default function History({
   return (
     <div className="w-full max-w-full flex-1">
 
-      {!hideInlineConversationHeader ? (
+      {isTopic ? <TopicHeader memory={memory} /> : !hideInlineConversationHeader ? (
         <div className="w-full h-fit overflow-hidden space-y-6 py-3 px-6">
           <div>
             <GoBack />
@@ -155,7 +157,7 @@ export default function History({
           <ConversationHeader {...{ onViewDetails, memory }} />
         </div>
       ) : null}
-      <div className="min-w-0 space-y-6 px-0">
+      <div className={isTopic ? "min-w-0 space-y-2 px-4 pt-4" : "min-w-0 space-y-6 px-0"}>
         {isLoadingMore && (
           <div className="py-3 flex justify-center items-center">
             <div className="flex gap-1.5 text-sm text-text-neutral-weaker">
@@ -191,17 +193,18 @@ export default function History({
                 <Fragment key={`${m._id ?? "msg"}-${i}`}>
                   {showDayDivider && validIso && iso ? (
                     <div
-                      className="flex justify-center py-2"
+                      className={isTopic ? "flex justify-center" : "flex justify-center py-2"}
                       role="separator"
                       aria-label={dayDividerLabel(iso)}
                     >
-                      <span className="px-3 py-1 font-inter text-xs font-normal text-text-neutral-weaker">
-                        {dayDividerLabel(iso)}
+                      <span className={isTopic ? "font-geist text-xs leading-4 text-text-neutral-weaker opacity-70" : "px-3 py-1 font-inter text-xs font-normal text-text-neutral-weaker"}>
+                        {isTopic ? dayjs(iso).format("MMMM D, YYYY") : dayDividerLabel(iso)}
                       </span>
                     </div>
                   ) : null}
                   <div id={showMonthAnchor && monthK ? `host-chat-anchor-${monthK}` : undefined}>
                     <Bubble
+                      topic={isTopic}
                       role={m.role}
                       text={m.text ?? ""}
                       createdAt={m.created_at}

@@ -5,10 +5,10 @@ import { renderWithProviders } from "@/test";
 import Chatinput from "./index";
 
 describe("Chatinput", () => {
-  it("renders textarea with slash-command placeholder", () => {
+  it("renders textarea without formatting instructions", () => {
     renderWithProviders(<Chatinput onSend={() => {}} />, { auth: true });
     expect(
-      screen.getByPlaceholderText("Type text here... Type / for formatting"),
+      screen.getByPlaceholderText("Type text here..."),
     ).toBeInTheDocument();
     expect(screen.getByTestId("chat-input-landing-shell")).toBeInTheDocument();
   });
@@ -26,7 +26,7 @@ describe("Chatinput", () => {
     expect(screen.queryByRole("button", { name: /^send$/i })).toBeNull();
 
     const textarea = screen.getByPlaceholderText(
-      "Type text here... Type / for formatting",
+      "Type text here...",
     );
     await user.type(textarea, "hi");
     const sendBtn = screen.getByRole("button", { name: /^send$/i });
@@ -45,7 +45,7 @@ describe("Chatinput", () => {
   it("fills container width without a 680px max on the outer shell", () => {
     renderWithProviders(<Chatinput onSend={() => {}} />, { auth: true });
     const textarea = screen.getByPlaceholderText(
-      "Type text here... Type / for formatting",
+      "Type text here...",
     );
     let el: HTMLElement | null = textarea;
     let max680layers = 0;
@@ -61,69 +61,33 @@ describe("Chatinput", () => {
     expect(max680layers).toBe(0);
   });
 
-  it("shows slash command menu when user types /", () => {
-    renderWithProviders(<Chatinput onSend={() => {}} />, { auth: true });
-    const textarea = screen.getByPlaceholderText(
-      "Type text here... Type / for formatting",
-    );
-    fireEvent.change(textarea, { target: { value: "/", selectionStart: 1 } });
-    expect(screen.getByText("Heading 1")).toBeInTheDocument();
-    expect(screen.getByText("Bold")).toBeInTheDocument();
-  });
-
-  it("hides slash command menu when user deletes the slash", () => {
-    renderWithProviders(<Chatinput onSend={() => {}} />, { auth: true });
-    const textarea = screen.getByPlaceholderText(
-      "Type text here... Type / for formatting",
-    );
-    fireEvent.change(textarea, { target: { value: "/", selectionStart: 1 } });
-    expect(screen.getByText("Heading 1")).toBeInTheDocument();
-
-    fireEvent.change(textarea, { target: { value: "", selectionStart: 0 } });
-    fireEvent.select(textarea);
+  it("treats slash-prefixed text as a normal message without a command menu", async () => {
+    const user = userEvent.setup();
+    const onSend = vi.fn();
+    renderWithProviders(<Chatinput onSend={onSend} />, { auth: true });
+    const textarea = screen.getByRole("textbox");
+    await user.type(textarea, "/");
     expect(screen.queryByText("Heading 1")).not.toBeInTheDocument();
+    expect(screen.queryByText("Bold")).not.toBeInTheDocument();
+    await user.type(textarea, "remember this");
+    await user.keyboard("{Enter}");
+    expect(onSend).toHaveBeenCalledWith(expect.objectContaining({ text: "/remember this" }));
+    expect(textarea).toHaveValue("");
   });
 
-  it("applies format when user selects a command from the menu", () => {
-    renderWithProviders(<Chatinput onSend={() => {}} />, { auth: true });
-    const textarea = screen.getByPlaceholderText(
-      "Type text here... Type / for formatting",
-    );
-    fireEvent.change(textarea, { target: { value: "/", selectionStart: 1 } });
-    const heading1 = screen.getByText("Heading 1");
-    fireEvent.click(heading1);
-
-    expect(textarea).toHaveValue("# ");
-  });
-
-  it("applies format when user presses Enter with menu open", () => {
-    renderWithProviders(<Chatinput onSend={() => {}} />, { auth: true });
-    const textarea = screen.getByPlaceholderText(
-      "Type text here... Type / for formatting",
-    );
-    fireEvent.change(textarea, { target: { value: "/", selectionStart: 1 } });
-    expect(screen.getByText("Heading 1")).toBeInTheDocument();
-
-    fireEvent.keyDown(document, { key: "Enter" });
-    expect(textarea).toHaveValue("# ");
-  });
-
-  it("navigates menu with arrow keys and applies with Enter", () => {
-    renderWithProviders(<Chatinput onSend={() => {}} />, { auth: true });
-    const textarea = screen.getByPlaceholderText(
-      "Type text here... Type / for formatting",
-    );
-    fireEvent.change(textarea, { target: { value: "/", selectionStart: 1 } });
-
-    fireEvent.keyDown(document, { key: "ArrowDown" });
-    fireEvent.keyDown(document, { key: "Enter" });
-    expect(textarea).toHaveValue("## ");
+  it("keeps Shift+Enter available for multiline messages containing slashes", async () => {
+    const user = userEvent.setup();
+    const onSend = vi.fn();
+    renderWithProviders(<Chatinput onSend={onSend} />, { auth: true });
+    await user.type(screen.getByRole("textbox"), "/first{Shift>}{Enter}{/Shift}second");
+    expect(screen.getByRole("textbox")).toHaveValue("/first\nsecond");
+    expect(onSend).not.toHaveBeenCalled();
   });
 
   it("grows textarea height as content gains lines", () => {
     renderWithProviders(<Chatinput onSend={() => {}} />, { auth: true });
     const textarea = screen.getByPlaceholderText(
-      "Type text here... Type / for formatting",
+      "Type text here...",
     ) as HTMLTextAreaElement;
 
     const setScrollHeight = (value: number) => {
@@ -152,7 +116,7 @@ describe("Chatinput", () => {
   it("pastes an image from the clipboard and shows a preview above the textarea", async () => {
     renderWithProviders(<Chatinput onSend={() => {}} />, { auth: true });
     const textarea = screen.getByPlaceholderText(
-      "Type text here... Type / for formatting",
+      "Type text here...",
     );
 
     const file = new File([Uint8Array.from([137, 80, 78, 71])], "clip.png", {
@@ -182,7 +146,7 @@ describe("Chatinput", () => {
     const onSend = vi.fn();
     renderWithProviders(<Chatinput onSend={onSend} />, { auth: true });
     const textarea = screen.getByPlaceholderText(
-      "Type text here... Type / for formatting",
+      "Type text here...",
     );
     fireEvent.change(textarea, {
       target: { value: "send via shortcut", selectionStart: 17 },
@@ -193,14 +157,4 @@ describe("Chatinput", () => {
     );
   });
 
-  it("does not apply slash command when document receives Ctrl+Enter", () => {
-    renderWithProviders(<Chatinput onSend={() => {}} />, { auth: true });
-    const textarea = screen.getByPlaceholderText(
-      "Type text here... Type / for formatting",
-    );
-    fireEvent.change(textarea, { target: { value: "/", selectionStart: 1 } });
-    expect(screen.getByText("Heading 1")).toBeInTheDocument();
-    fireEvent.keyDown(document, { key: "Enter", ctrlKey: true });
-    expect(textarea).toHaveValue("/");
-  });
 });

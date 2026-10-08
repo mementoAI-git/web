@@ -5,6 +5,9 @@ import { MemoryRouter } from "react-router-dom";
 import { EnrichmentSummary } from "./enrichment-summary";
 import type { CategoryScore } from "@/features/enrichment";
 
+const {openInsights} = vi.hoisted(()=>({openInsights:vi.fn()}));
+vi.mock("@/hooks/use-modal", ()=>({useModal:()=>({open:openInsights})}));
+
 const categoryScores: CategoryScore[] = [
   { key: "identity_self", label: "Identity & Self", score: 1, weight: 0.1, itemCount: 1, unlocked: true },
   { key: "memories_experiences", label: "Memories & Experiences", score: 10, weight: 0.1, itemCount: 1, unlocked: true },
@@ -89,4 +92,11 @@ describe("EnrichmentSummary", () => {
     expect(Array.from(chart.children)).toHaveLength(10);
     expect(chart.firstElementChild).toHaveStyle({ flexGrow: "1" });
   });
+  it("opens Insights instead of the removed Stats tab", async () => {
+    const user = userEvent.setup();
+    render(<MemoryRouter><EnrichmentSummary /></MemoryRouter>);
+    await user.click(screen.getByRole("button", {name:"Discover which areas need more context"}));
+    expect(openInsights).toHaveBeenCalledWith("memory-insights");
+  });
+
 });

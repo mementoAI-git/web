@@ -1,5 +1,5 @@
 import { CalendarDays, ChevronRight, FileText, Film, Image, Link2, Music2, Route, UsersRound } from "lucide-react";
-import { Link } from "react-router-dom";
+import { useModal } from "@/hooks/use-modal";
 import type { CategoryScore } from "@/features/enrichment";
 import type { EnrichmentCategory } from "@/features/enrichment/enrichment-categories";
 import type { ConversationFilesRequest } from "@/pages/dashboard/chat/conversation/conversation-assets";
@@ -44,6 +44,7 @@ export function EnrichmentSummary({
   categoryScores?: CategoryScore[] | null;
   onOpenFiles?: (request: ConversationFilesRequest) => void;
 }) {
+  const { open } = useModal();
   const strength = enrichmentStrength(score);
   const scoreByCategory = new Map(
     (categoryScores ?? []).map((category) => [category.key, Math.max(0, category.score)]),
@@ -89,10 +90,10 @@ export function EnrichmentSummary({
             );
           })}
         </div>
-        <Link to="/settings/general?view=stats" className="mt-4 flex items-center gap-2 font-geist text-sm text-text-neutral-strong no-underline">
+        <button type="button" onClick={() => open("memory-insights")} className="mt-4 flex w-full items-center gap-2 text-left font-geist text-sm text-text-neutral-strong no-underline">
           <span className="flex-1">Discover which areas need more context</span>
           <ChevronRight className="size-4" aria-hidden />
-        </Link>
+        </button>
       </section>
 
       <nav aria-label="Media shortcuts" className="grid grid-cols-5 gap-1">
