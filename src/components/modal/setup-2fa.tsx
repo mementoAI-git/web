@@ -1,32 +1,60 @@
-import { useState } from "react";
+import { useLocation } from "react-router-dom";
+import { isSkyCardPage } from "@/pages/dashboard/component/sky-card-page";
+import { useId, useState } from "react";
 import * as yup from "yup";
-import { Sheet } from "react-modal-sheet";
+import { Copy } from "lucide-react";
 import { toast } from "sonner";
-import { ModalCloseBtn } from "./modalLayout";
+import { mutate } from "swr";
 import { useModal } from "@/hooks/use-modal";
-import { Textinput } from "@/components/Form";
 import useForm from "@/hooks/use-form";
 import useFetcher from "@/hooks/use-fetcher";
 import endpoint from "@/api/endpoint";
-import Spinner from "@/components/spinner";
-import { mutate } from "swr";
-import { CopyIcon } from "@/components/icons";
+import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
+import { Separator } from "@/components/ui/separator";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Field,
+  FieldDescription,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+  FieldTitle,
+} from "@/components/ui/field";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+} from "@/components/ui/input-group";
 
 const initial = { token: "" };
-
 const schema = yup.object().shape({
-  token: yup.string().required("Token is required").length(6, "Invalid token").trim(),
+  token: yup
+    .string()
+    .required("Enter your verification code")
+    .length(6, "Enter a 6-digit code")
+    .trim(),
 });
 
-interface Setup2FAContentProps {
+interface Setup2FAProps {
   data: { qrcode: string; secret: string };
 }
 
-function Content({ data }: Setup2FAContentProps) {
+export default function Setup2FA({ data }: Setup2FAProps) {
+  const { pathname } = useLocation();
   const { close } = useModal();
   const { trigger, isMutating } = useFetcher(endpoint.verifyTOTP);
   const [showSecret, setShowSecret] = useState(false);
-
+  const id = useId();
+  const codeId = `${id}-code`;
+  const secretId = `${id}-secret`;
   const { values, errors, handleValue, handleChange, handleSubmit } = useForm({
     initial,
     schema,
@@ -42,13 +70,11 @@ function Content({ data }: Setup2FAContentProps) {
 
   const handlePaste = async () => {
     try {
-      const text = await navigator.clipboard.readText();
-      handleValue("token", text);
+      handleValue("token", (await navigator.clipboard.readText()).trim());
     } catch {
       toast.error("Failed to paste");
     }
   };
-
   const handleCopySecret = async () => {
     try {
       await navigator.clipboard.writeText(data.secret);
@@ -59,123 +85,141 @@ function Content({ data }: Setup2FAContentProps) {
   };
 
   return (
-    <div className="space-y-4">
-      <h3 className="modal-title !text-gray-800">Setup 2FA</h3>
-      <div className="space-y-3 font-inter">
-        <h4 className="leading-6 font-medium text-gray-950/90">Step 1:</h4>
-        <span className="inline-block text-gray-950/70">Download the 2FA apps</span>
-        <ol className="list-inside list-decimal text-v3-brand-strong">
-          <li>Google Authenticator</li>
-          <li>Authy.</li>
-        </ol>
-      </div>
-      <div className="space-y-3 font-inter">
-        <h4 className="leading-6 font-medium text-gray-950/90">Step 2:</h4>
-        <span className="inline-block text-gray-950/70">
-          Scan the QR code below to pair Memento with your authenticator app. Cannot scan the QR code?
-          <button
-            type="button"
-            className="ml-1 inline-block text-base font-bold text-[#4284B6] hover:underline"
-            onClick={() => setShowSecret((previous) => !previous)}
-          >
-            {showSecret ? "Show QR code" : "Add Secret code manually"}
-          </button>
-        </span>
-        {!showSecret ? (
-          <div className="size-56 overflow-hidden rounded-lg border border-[#0011661A]">
-            <img src={data.qrcode} alt="Setup QR code" className="size-full object-cover" />
-          </div>
-        ) : (
-          <div className="space-y-2 rounded-lg bg-grey-400 p-4">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-gray-950/90">Secret Code:</span>
-              <button
-                type="button"
-                onClick={handleCopySecret}
-                className="flex items-center gap-1 text-primary transition-colors hover:text-primary/80"
-              >
-                <CopyIcon width={16} height={16} />
-                <span className="text-sm font-medium">Copy</span>
-              </button>
-            </div>
-            <div className="overflow-hidden rounded border p-2 font-mono text-sm break-all">
-              {data.secret}
-            </div>
-            <p className="text-xs text-grey-600">
-              Enter this code manually in your authenticator app if you can&apos;t scan the QR code.
-            </p>
-          </div>
-        )}
-      </div>
-      <div className="space-y-3 font-inter">
-        <h4 className="leading-6 font-medium text-gray-950/90">Step 3:</h4>
-        <span className="inline-block text-gray-950/70">
-          Copy and paste the 6-digit code from your authenticator app below:
-        </span>
-        <Textinput
-          name="token"
-          value={values.token}
-          error={errors.token}
-          onChange={handleChange}
-          placeholder="673528"
-          end={
-            <button
-              type="button"
-              onClick={handlePaste}
-              className="cursor-pointer font-inter text-sm font-semibold text-blue-6"
-            >
-              Paste code
-            </button>
-          }
-        />
-      </div>
-      <div className="mt-5 flex items-center justify-end gap-3">
-        <button type="button" onClick={() => close?.("setup2fa")} className="btn-outline">
-          Cancel
-        </button>
-        <button type="button" onClick={handleSubmit} className="btn !bg-gray-950/90">
-          <span>Complete setup</span>
-          <Spinner loading={isMutating} className="!size-4" />
-        </button>
-      </div>
-    </div>
-  );
-}
-
-interface Setup2FAProps {
-  data: { qrcode: string; secret: string };
-}
-
-export default function Setup2FA({ data }: Setup2FAProps) {
-  const { close } = useModal();
-
-  return (
-    <div>
-      <div className="modal-container hidden !min-w-[618px] sm:block">
-        <ModalCloseBtn onClick={() => close?.("setup2fa")} />
-        <Content data={data} />
-      </div>
-      <Sheet
-        detent="content"
-        className="block sm:hidden"
-        isOpen
-        onClose={() => close?.("setup2fa")}
-        snapPoints={[0, 0.8]}
-        initialSnap={1}
+    <Dialog
+      open
+      onOpenChange={(open) => {
+        if (!open) close?.("setup2fa");
+      }}
+    >
+      <DialogContent
+        data-sky-card-page={isSkyCardPage(pathname) ? "" : undefined}
+        aria-describedby={undefined}
+        className="sky-card flex w-[calc(100vw_-_2rem)] max-h-[calc(100dvh_-_2rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-[480px] motion-reduce:animate-none"
       >
-        <Sheet.Container className="max-h-[80dvh] overflow-hidden bg-white">
-          <Sheet.Header className="rounded-3xl bg-white" />
-          <Sheet.Content className="max-h-[80dvh] min-h-0 overflow-y-auto overscroll-contain bg-white px-4 pb-6">
-            <ModalCloseBtn
-              className="!relative ml-auto mb-2 !right-0 !top-0"
+        <DialogHeader className="shrink-0 px-6 pt-6 pb-5 pr-12">
+          <DialogTitle>Set up two-factor authentication</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="flex min-h-0 flex-col">
+          <div className="min-h-0 overflow-y-auto overscroll-contain px-6 pb-6">
+            <FieldGroup className="gap-6">
+              <Field className="gap-2">
+                <FieldTitle>1. Choose an authenticator</FieldTitle>
+                <FieldDescription>
+                  Use Google Authenticator, Authy, or another authenticator app.
+                </FieldDescription>
+              </Field>
+              <Field className="gap-3">
+                <FieldTitle>2. Pair your app</FieldTitle>
+                {!showSecret ? (
+                  <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-center">
+                    {/* A light QR canvas is intentional in every theme for reliable scanning. */}
+                    <div className="sky-card size-44 shrink-0 rounded-xl border border-stroke-neutral-weak bg-white p-2">
+                      <img
+                        src={data.qrcode}
+                        alt="Authenticator setup QR code"
+                        className="size-full object-contain"
+                      />
+                    </div>
+                    <div className="flex min-w-0 flex-col items-center gap-3 sm:items-start">
+                      <FieldDescription>
+                        Scan this QR code in your authenticator app.
+                      </FieldDescription>
+                      <Button
+                        type="button"
+                        variant="link"
+                        size="sm"
+                        className="h-auto whitespace-normal px-0"
+                        onClick={() => setShowSecret(true)}
+                      >
+                        Can’t scan? Enter a setup key
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <Field className="gap-2">
+                    <FieldLabel htmlFor={secretId}>Setup key</FieldLabel>
+                    <InputGroup>
+                      <InputGroupInput
+                        id={secretId}
+                        value={data.secret}
+                        readOnly
+                      />
+                      <InputGroupAddon align="inline-end">
+                        <InputGroupButton
+                          onClick={handleCopySecret}
+                          aria-label="Copy setup key"
+                        >
+                          <Copy data-icon="inline-start" /> Copy
+                        </InputGroupButton>
+                      </InputGroupAddon>
+                    </InputGroup>
+                    <FieldDescription>
+                      Enter this key manually in your app.
+                    </FieldDescription>
+                    <Button
+                      type="button"
+                      variant="link"
+                      size="sm"
+                      onClick={() => setShowSecret(false)}
+                    >
+                      Show QR code
+                    </Button>
+                  </Field>
+                )}
+              </Field>
+              <Field data-invalid={Boolean(errors.token)} className="gap-2">
+                <FieldLabel htmlFor={codeId}>
+                  3. Enter your verification code
+                </FieldLabel>
+                <FieldDescription id={`${codeId}-hint`}>
+                  Enter the 6-digit code from your authenticator app.
+                </FieldDescription>
+                <InputGroup className="h-11">
+                  <InputGroupInput
+                    id={codeId}
+                    name="token"
+                    value={values.token}
+                    onChange={handleChange}
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    maxLength={6}
+                    placeholder="000000"
+                    aria-invalid={Boolean(errors.token)}
+                    aria-describedby={`${codeId}-hint${errors.token ? ` ${codeId}-error` : ""}`}
+                  />
+                  <InputGroupAddon align="inline-end">
+                    <InputGroupButton onClick={handlePaste}>
+                      Paste code
+                    </InputGroupButton>
+                  </InputGroupAddon>
+                </InputGroup>
+                {errors.token ? (
+                  <FieldError id={`${codeId}-error`}>{errors.token}</FieldError>
+                ) : null}
+              </Field>
+            </FieldGroup>
+          </div>
+          <Separator />
+          <DialogFooter className="shrink-0 p-6 pt-4">
+            <Button
+              type="button"
+              variant="outline"
               onClick={() => close?.("setup2fa")}
-            />
-            <Content data={data} />
-          </Sheet.Content>
-        </Sheet.Container>
-        <Sheet.Backdrop />
-      </Sheet>
-    </div>
+              className="motion-safe:active:scale-[0.97]"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              disabled={isMutating}
+              className="motion-safe:active:scale-[0.97]"
+            >
+              {isMutating ? <Spinner data-icon="inline-start" /> : null}
+              Complete setup
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }
-

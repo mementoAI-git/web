@@ -55,6 +55,13 @@ export function normalizeSubscriptionSummary(
   return {
     tier,
     status,
+    billing_interval:
+      raw.billing_interval === "monthly" ||
+      raw.billing_interval === "annual" ||
+      raw.billing_interval === "lifetime"
+        ? raw.billing_interval
+        : null,
+    can_manage_subscription: raw.can_manage_subscription === true,
     current_period_end:
       typeof raw.current_period_end === "string"
         ? raw.current_period_end
