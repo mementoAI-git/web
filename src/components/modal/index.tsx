@@ -1,3 +1,4 @@
+import { PricingOverlay } from "@/features/pricing/pricing-overlay";
 import { InviteFriends } from "./invite-friends";
 import { useModal } from "@/hooks/use-modal";
 import { SharePost } from "./share-post";
@@ -116,7 +117,11 @@ export default function Modal() {
   // ESC key dismissal: always closes the topmost modal
   useEffect(() => {
     const modal = state?.[0];
-    if (!modal || modal.name === "invite-friends") return;
+    if (
+      !modal ||
+      ["create-feedback", "invite-friends", "pricing", "setup2fa"].includes(modal.name)
+    )
+      return;
     const modalName = modal.name;
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") close(modalName);
@@ -130,7 +135,22 @@ export default function Modal() {
   }
 
   const topModal = state[0];
+  // Feedback owns its shadcn portal, backdrop, focus trap, and dismissal.
+  if (topModal.name === "create-feedback") {
+    return <Feedback data={topModal.props || {}} />;
+  }
+  if (topModal.name === "pricing")
+    return (
+      <PricingOverlay
+        open
+        onOpenChange={(next) => {
+          if (!next) close("pricing");
+        }}
+      />
+    );
   if (topModal.name === "invite-friends") return <InviteFriends />;
+  // This dialog owns its portal, backdrop, focus trap, and dismissal.
+  if (topModal.name === "setup2fa") return <Setup2FA data={topModal.props as { qrcode: string; secret: string }} />;
   const isTopFullscreenModal =
     FULL_SCREEN_MODALS.includes(topModal.name) && !isMobile;
 
@@ -162,19 +182,24 @@ export default function Modal() {
         return (
           <div
             key={`${modal.name}-${i}`}
-            className={`absolute ${isFullscreen ? "inset-0" : "inset-1.5"} flex ${isRightPanel
+            className={`absolute ${isFullscreen ? "inset-0" : "inset-1.5"} flex ${
+              isRightPanel
                 ? "flex-row justify-start items-start"
                 : isFullscreen
                   ? "flex-row justify-start items-start"
-                : isTopAligned
-                  ? "flex-row justify-center items-start pt-6 sm:pt-8 lg:pt-10"
-                  : "flex-row justify-center items-center"
-              }`}
+                  : isTopAligned
+                    ? "flex-row justify-center items-start pt-6 sm:pt-8 lg:pt-10"
+                    : "flex-row justify-center items-center"
+            }`}
             style={{ zIndex: isTop ? 10 : stackIndex + 1 }}
-            onClick={!isRightPanel && !isFullscreen ? (e) => {
-              e.stopPropagation();
-              if (e.target === e.currentTarget) close(modal.name);
-            } : undefined}
+            onClick={
+              !isRightPanel && !isFullscreen
+                ? (e) => {
+                    e.stopPropagation();
+                    if (e.target === e.currentTarget) close(modal.name);
+                  }
+                : undefined
+            }
           >
             {needsOverlay && (
               <div className="absolute -inset-1.5 bg-overlay-backdrop backdrop-blur-sm pointer-events-none" />
@@ -188,20 +213,20 @@ export default function Modal() {
               topModal.name !== "file-preview" &&
               topModal.name !== "conversation-files" &&
               topModal.name !== "memory-insights" && (
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  close(modal.name);
-                }}
-                className="absolute top-0 left-0 z-10 flex items-center gap-2 rounded-full bg-background py-2.5 pr-3 pl-4 font-inter text-sm font-semibold text-text-neutral-strong shadow-md transition-colors hover:bg-fill-neutral-weaker"
-              >
-                Cancel
-                <span className="inline-flex items-center rounded bg-fill-neutral-weak px-1.5 py-0.5 font-mono text-[10px] leading-none text-text-neutral-weak">
-                  ESC
-                </span>
-              </button>
-            )}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    close(modal.name);
+                  }}
+                  className="absolute top-0 left-0 z-10 flex items-center gap-2 rounded-full bg-background py-2.5 pr-3 pl-4 font-inter text-sm font-semibold text-text-neutral-strong shadow-md transition-colors hover:bg-fill-neutral-weaker"
+                >
+                  Cancel
+                  <span className="inline-flex items-center rounded bg-fill-neutral-weak px-1.5 py-0.5 font-mono text-[10px] leading-none text-text-neutral-weak">
+                    ESC
+                  </span>
+                </button>
+              )}
             <ModalComponent data={modal.props || {}} isMobile={isMobile} />
           </div>
         );

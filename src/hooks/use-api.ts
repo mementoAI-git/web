@@ -15,6 +15,7 @@ export function useApi<T = unknown>(
   endpoint: string | null,
   options?: {
     skipErrorHandling?: boolean;
+    refreshInterval?: number;
     onError?: (error: ApiError) => void;
     onSuccess?: (data: ApiResponse<T>) => void;
     pathParams?: Record<string, string | number>;
@@ -22,7 +23,7 @@ export function useApi<T = unknown>(
 ) {
   const navigate = useNavigate();
   const { unsetAuth } = useStore();
-  const { skipErrorHandling = true, onError, onSuccess, pathParams } = options || {};
+  const { skipErrorHandling = true, onError, onSuccess, pathParams, refreshInterval = 0 } = options || {};
 
   // Replace path parameters in endpoint if provided
   const resolvedEndpoint = endpoint && pathParams
@@ -32,6 +33,7 @@ export function useApi<T = unknown>(
   const { data, error, isLoading, mutate: swrMutate, isValidating } = useSWR<ApiResponse<T>, ApiError>(
     resolvedEndpoint,
     {
+      refreshInterval,
       onError: (error: ApiError) => {
         // Handle 401 Unauthorized - redirect to login
         if (error.status === 401 && endpoint !== endpoints.login) {

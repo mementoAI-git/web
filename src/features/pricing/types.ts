@@ -48,6 +48,8 @@ export interface SubscriptionSummary {
   /** ISO 8601 trial end (PRD: trial_ends_at) */
   trial_ends_at?: string;
   cancel_at_period_end?: boolean;
+  billing_interval?: "monthly" | "annual" | "lifetime" | null;
+  can_manage_subscription?: boolean;
   provider?: BillingProvider;
   external_product_id?: string;
   /** Optional explicit feature grants (e.g. promos) */
@@ -79,6 +81,26 @@ export interface BillingInvoice {
   label?: string;
   created_at?: string;
   amount?: number;
-  currency?: "USD" | "NGN";
+  currency?: string;
   status?: string;
+}
+
+export interface BillingAccount {
+  has_customer: boolean;
+  email: string;
+  name: string;
+  address: {
+    line1?: string;
+    line2?: string;
+    city?: string;
+    state?: string;
+    postal_code?: string;
+    country?: string;
+  } | null;
+  payment_methods: {
+    id: string;
+    brand: string;
+    last4: string | null;
+    is_default: boolean;
+  }[];
 }

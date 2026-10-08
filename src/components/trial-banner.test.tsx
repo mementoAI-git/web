@@ -1,3 +1,5 @@
+import userEvent from "@testing-library/user-event";
+import { useLocation } from "react-router-dom";
 import { screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
@@ -33,4 +35,11 @@ describe("TrialBanner", () => {
     expect(screen.getByRole("status")).toHaveTextContent(/trial/i);
     expect(screen.getByRole("link", { name: /upgrade now/i })).toHaveAttribute("href", "/pricing");
   });
+  it("carries the complete originating URL into pricing", async () => {
+    function Origin() { return <output data-testid="pricing-origin">{useLocation().state?.returnTo}</output>; }
+    renderWithProviders(<><TrialBanner /><Origin /></>, { route: "/stories?tab=bookmarked#saved", auth: true });
+    await userEvent.click(screen.getByRole("link", { name: /upgrade now/i }));
+    expect(screen.getByTestId("pricing-origin")).toHaveTextContent("/stories?tab=bookmarked#saved");
+  });
+
 });

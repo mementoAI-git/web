@@ -5,7 +5,8 @@ import { toast } from "sonner";
 import useFetcher from "@/hooks/use-fetcher";
 import endpoint from "@/api/endpoint";
 import { mutate } from "swr";
-import { SettingsActionRow, SettingsPillButton } from "./settings-action-row";
+import { SettingsPillButton } from "./settings-action-row";
+import { SettingsSectionCard } from "./settings-section-card";
 
 export default function TwoFactorAuthenticator() {
   const { push } = useModal();
@@ -33,15 +34,16 @@ export default function TwoFactorAuthenticator() {
   const statusLabel = !hydrated || !user ? (
     <span className="inline-block h-4 w-32 rounded-full bg-v3-fill-weaker" aria-hidden />
   ) : isEnabled ? (
-    "Authenticator app is enabled for your account."
+    "Authenticator app is set up."
   ) : (
     "Authenticator app is not set up yet."
   );
 
   return (
-    <SettingsActionRow
-      label={statusLabel}
-      action={
+    <SettingsSectionCard
+      title="Two-factor authentication"
+      description={statusLabel}
+      headerAction={
         !hydrated || !user ? null : isEnabled ? (
           <SettingsPillButton
             type="button"

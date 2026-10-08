@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import dayjs from "dayjs";
 
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { useSubscription } from "@/contexts/subscription";
 const DISMISS_KEY = "memento_trial_banner_dismissed";
 
 export function TrialBanner() {
+  const location = useLocation();
   const { status, trialEndsAt, isLoading } = useSubscription();
   const [dismissed, setDismissed] = useState(() => {
     try {
@@ -57,6 +58,7 @@ export function TrialBanner() {
         {message}{" "}
         <Link
           to="/pricing"
+          state={{ returnTo: location.pathname + location.search + location.hash }}
           className="font-semibold underline underline-offset-2 hover:opacity-90"
         >
           Upgrade now
