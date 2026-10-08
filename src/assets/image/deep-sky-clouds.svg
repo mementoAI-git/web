@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1200" viewBox="0 0 1920 1200">
+  <defs>
+    <filter id="cloud" x="-40%" y="-100%" width="180%" height="300%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.006 0.012" numOctaves="4" seed="12" result="noise"/>
+      <!-- Keep the fine cloud structure; low opacity supplies softness instead of blur. -->
+      <feColorMatrix in="noise" type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  1.5 1.5 1.5 0 -1.65" result="billows"/>
+      <feComposite in="SourceGraphic" in2="billows" operator="in" result="texturedCloud"/>
+      <feDisplacementMap in="texturedCloud" in2="noise" scale="95" xChannelSelector="R" yChannelSelector="G"/>
+      <feGaussianBlur stdDeviation="1.5"/>
+    </filter>
+    <radialGradient id="mist">
+      <stop stop-color="#8791ad" stop-opacity="0.5"/>
+      <stop offset="0.55" stop-color="#74809e" stop-opacity="0.2"/>
+      <stop offset="1" stop-color="#74809e" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <g fill="url(#mist)" filter="url(#cloud)">
+    <ellipse cx="220" cy="430" rx="580" ry="110" transform="rotate(-16 220 430)"/>
+    <ellipse cx="700" cy="660" rx="650" ry="125" transform="rotate(-17 700 660)"/>
+    <ellipse cx="1620" cy="370" rx="620" ry="140" transform="rotate(-14 1620 370)"/>
+    <ellipse cx="1430" cy="1050" rx="800" ry="170" transform="rotate(-12 1430 1050)"/>
+    <ellipse cx="120" cy="1100" rx="620" ry="190"/>
+  </g>
+</svg>

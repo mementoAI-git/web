@@ -30,15 +30,44 @@ The overview uses these component tokens in addition to the V3 semantic families
 
 | Token | Purpose |
 | --- | --- |
-| `--gradient-overview-banner` | Warm decorative banner gradient from the overview Figma frame |
+| `--fill-lime-weak` | Shared soft lime surface, `rgba(161, 177, 43, 0.11)`; overview prompt container and invite signup count card (`bg-fill-lime-weak`) |
+| `--fill-overview-banner` | Overview prompt surface; aliases `--fill-lime-weak` in both themes |
+| `--gradient-overview-banner` | Legacy warm decorative banner gradient |
 | `--gradient-overview-story` | Orange Add story button surface |
 | `--fill-topic-badge` / `--text-topic-badge` | Light topic labels over artwork, consistent across themes |
 | `--fill-overview-voice` | Green voice conversation action surface |
-| `--text-overview-voice` | Dark foreground on the voice conversation action |
-| `--text-overview-greeting` | Gold italic greeting accent |
+| `--text-overview-voice` | White voice action foreground in light mode; dark foreground in dark mode, matching Figma |
+| `--text-overview-greeting` | Legacy gold accent; the overview greeting now uses `text-neutral-weak` |
 | `--bg-overview-sidebar` | Sidebar surface, with a dark theme override matching Figma |
 
 Sidebar navigation uses the exact Figma SVG assets and emoji, preserving their original illustrative colors. Insights and People use Lucide icons with `icon-neutral-strong`; the upgrade label uses `text-brand-strong`. Semantic colors inherit the system's light and dark theme values.
+
+## Deep sky theme foundations
+
+Deep sky is an explicit appearance choice alongside Dark. It inherits dark semantic text, icon, border, and intent colors.
+
+| Token | Purpose |
+| --- | --- |
+| `--sky-canvas` | Deep navy upper sky (`#0d1226`) |
+| `--sky-midpoint` | Muted indigo transition (`#191d31`) |
+| `--sky-horizon` | Warmer gray-violet lower sky (`#2c2d3c`) |
+| `--sky-surface` | Solid dark cards and menus (`#191e2c`) |
+
+In Deep sky, `--background`, `--color-background`, and `--v3-bg` are transparent to reveal the shared fixed sky backdrop. `--bg-neutral`, `--card`, and `--popover` remain solid for readability. The sidebar uses a translucent navy surface. Decorative cloud colors are confined to `deep-sky-clouds.svg`; cloud drift is disabled for reduced motion.
+
+## Light sky theme foundations
+
+Light sky resolves to the light control appearance with its own persistent preference. It shares the textured cloud artwork with Deep sky, rendered white over a pale blue daytime gradient and a warmer gray horizon. Cloud passes last 35 and 47.5 seconds; reduced motion stops them.
+
+| Token | Purpose |
+| --- | --- |
+| `--sky-canvas` / `--sky-midpoint` / `--sky-horizon` | Pale silver-blue, daytime blue, and warm gray gradient |
+| `--sky-surface` | White at 68% opacity for cards and composer |
+| `--fill-chat-reply` | White at 68% opacity for assistant replies, including topic threads |
+| `--fill-chat-user` | White at 42% opacity for user messages |
+| `--fill-neutral-strong` / `--fill-tab-active` | Near-black action and selection surfaces |
+
+Body text and icons use near-black semantic tokens. Brand actions retain the existing brand color. Menu surfaces stay nearly opaque for readability; sidebar and quiet surfaces use lower white opacity. The canvas tokens are transparent so the shared backdrop remains visible.
 
 ## V3 Design System (Primary)
 
@@ -919,3 +948,21 @@ The About you summary uses `--text-onboarding-about`, `--fill-onboarding-about`,
 - `--fill-chat-user` / `bg-fill-chat-user`: warm translucent user-message fill from Chat Figma (rgba(224, 148, 67, 0.14)); assistant messages retain `bg-fill-neutral-weak`.
 
 - `--fill-voice-elevated` / `bg-fill-voice-elevated`: floating voice surface, #1D1E26, with a raised shadow.
+
+### Billing plan artwork
+
+Figma nodes 19090:71057 and 19090:71182 use theme-independent decorative fills: `--gradient-billing-free` (blue), `--gradient-billing-pro` (orange), `--fill-billing-upgrade` (white 20%), `--fill-billing-action` (white 24%), `--fill-billing-badge` (white), and `--text-billing-badge` (brown 90%). Other billing surfaces, inputs, tabs, and promo buttons use theme-adaptive semantic tokens.
+
+### Active tab controls
+
+`--fill-tab-active` and `--text-tab-active` describe selected tab surfaces and labels. Light mode retains the strong neutral fill and inverse text. Dark mode (including Deep sky) uses the white inverse fill with dark neutral text. No raw colors are used in tab components.
+
+The search command panel uses `--bg-neutral-solid` (`bg-bg-neutral-solid`) on desktop and mobile. This is the neutral white surface in Light and Light sky, with opaque neutral dark surfaces in Dark and Deep sky. It remains solid independently of translucent sky panels.
+
+In Light sky, `--fill-overview-banner` aliases the translucent white `--sky-surface`. Quick tools and its compact music player use this translucent surface with 20px backdrop blur. The compact volume slider uses neutral stroke for its track, weak neutral icon color for the filled range, and strong neutral icon color for the thumb. Memory insights uses `bg-bg-neutral-solid` for its reading surface.
+
+### Borderless sky cards
+
+Light sky and Deep sky hide perimeter borders on surfaces marked `sky-card` within an opted-in `data-sky-card-page` scope. Overview capture, Continue reflecting and file cards; Chat bubbles, composer, topic header and attachment cards; Explore question cards; Settings General, Security, Privacy and Billing cards; neutral pricing cards; and Quick tools use this treatment. Portaled Settings dialogs and Quick tools retain the same scope. Neutral card and dialog outline rings are hidden while layout spacing and shadows remain unchanged.
+
+Traditional Light and Dark retain their outlines. My stories, Memory insights and People (`/settings/beneficiary`) keep their existing cards. Control borders, dividers, brand accent lines and interactive focus rings retain their semantic tokens.

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { screen, waitFor } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useLocation } from "react-router-dom";
 import { renderWithProviders } from "@/test";
@@ -42,6 +42,18 @@ async function openTools() {
 }
 
 describe("QuickTools", () => {
+  it.each([
+    ["/overview", true],
+    ["/chat/new", true],
+    ["/settings/beneficiary", false],
+    ["/stories", false],
+  ])("preserves the page's sky card scope in its portal on %s", async (route, scoped) => {
+    const user = userEvent.setup();
+    renderWithProviders(<QuickTools />, { auth: true, route });
+    await user.click(screen.getByRole("button", { name: "Quick tools" }));
+    expect(screen.getByRole("dialog", { name: "Quick tools" }).hasAttribute("data-sky-card-page")).toBe(scoped);
+  });
+
   it("opens a desktop popover and restores focus on Escape", async () => {
     const user = await openTools();
     expect(screen.getByRole("dialog", { name: "Quick tools" })).toHaveAttribute("data-slot", "popover-content");
@@ -52,6 +64,23 @@ describe("QuickTools", () => {
     expect(screen.getByRole("button", { name: "Quick tools" })).toHaveFocus();
   });
 
+  it("shows Quick note and Add people without story, voice mode or links", async () => {
+    await openTools();
+    expect(screen.getByRole("dialog", { name: "Quick tools" })).toHaveClass("w-[315px]");
+    const player = screen.getByRole("region", { name: "Music player" });
+    expect(player).toHaveClass("bg-fill-neutral-weak");
+    const actions = screen.getByRole("region", { name: "Quick actions" });
+    for (const label of ["Quick note", "Add people"]) {
+      const button = within(actions).getByRole("button", { name: label });
+      expect(within(button).getByText(label)).toBeVisible();
+      expect(button).toHaveAttribute("title", label);
+    }
+    expect(screen.queryByRole("region", { name: "Quick links" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Insights" })).not.toBeInTheDocument();
+    expect(within(actions).queryByRole("button", { name: "Voice mode" })).not.toBeInTheDocument();
+    expect(within(actions).queryByRole("button", { name: "Add story" })).not.toBeInTheDocument();
+  });
+
   it("uses a bottom sheet on mobile", async () => {
     Object.defineProperty(window, "innerWidth", { configurable: true, value: 390 });
     const user = await openTools();
@@ -60,20 +89,17 @@ describe("QuickTools", () => {
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
   });
 
-  it("hands off from the mobile sheet to Insights", async () => {
+  it("hands off from the mobile sheet to Add people", async () => {
     Object.defineProperty(window, "innerWidth", { configurable: true, value: 390 });
     const user = await openTools();
-    await user.click(screen.getByRole("button", { name: "Insights" }));
-    await waitFor(() => expect(screen.getByTestId("destination")).toHaveTextContent("memory-insights"));
+    await user.click(screen.getByRole("button", { name: "Add people" }));
+    await waitFor(() => expect(screen.getByTestId("destination")).toHaveTextContent("add-beneficiary"));
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
   it.each([
-    ["Quick capture", "quick-capture"],
-    ["Add story/item", "create-memory"],
-    ["Insights", "memory-insights"],
-    ["People", "/settings/beneficiary"],
-    ["Voice mode", "/chat?mode=voice"],
+    ["Quick note", "quick-capture"],
+    ["Add people", "add-beneficiary"],
   ])("opens %s and closes the tools panel", async (label, destination) => {
     const user = await openTools();
     await user.click(screen.getByRole("button", { name: label }));
@@ -98,4 +124,19 @@ describe("QuickTools", () => {
     await user.click(screen.getByRole("button", { name: "Play music" }));
     expect(music.resumeTrack).toHaveBeenCalledOnce();
   });
+});
+
+it("uses a frosted music panel with contrasting volume controls", async () => {
+  const user = await openTools();
+  const musicPanel = screen.getByRole("region", { name: "Music player" });
+  expect(musicPanel).toHaveClass("music-player-panel", "border-stroke-neutral-weak");
+  expect(musicPanel.closest(".quick-tools-panel")).toBeInTheDocument();
+  const fills = [...musicPanel.querySelectorAll<HTMLElement>("[style]")].map((e) => e.style.backgroundColor);
+  expect(fills).toContain("var(--stroke-neutral-weak)");
+  expect(fills).toContain("var(--icon-neutral-weak)");
+  expect(fills).toContain("var(--icon-neutral-strong)");
+  const slider = within(musicPanel).getByRole("slider", { name: "Volume" });
+  slider.focus();
+  await user.keyboard("{ArrowRight}");
+  expect(music.setVolume).toHaveBeenCalledWith(51);
 });

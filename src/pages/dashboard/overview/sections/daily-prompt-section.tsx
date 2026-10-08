@@ -21,7 +21,7 @@ import { TypographyH2, TypographyMuted } from "@/components/ui/typography";
 
 function DailyPromptSkeleton() {
   return (
-    <div className="flex min-h-[267px] min-w-0 flex-col justify-between gap-10 rounded-3xl border border-stroke-neutral-weak bg-fill-neutral-weaker p-[23px]">
+    <div className="sky-card flex min-h-[267px] min-w-0 flex-col justify-between gap-10 rounded-3xl border border-stroke-neutral-weak bg-fill-neutral-weaker p-[23px]">
       <div className="flex flex-col gap-3">
         <Skeleton className="h-6 w-full" />
         <Skeleton className="h-6 w-full" />
@@ -168,7 +168,7 @@ export default function DailyPromptSection() {
                 <article
                   key={`${row.slot_kind}-${row.reflection_day_key}-${index}`}
                   aria-label={promptLabel(row, index)}
-                  className="relative flex min-h-[267px] min-w-0 flex-col justify-between gap-10 rounded-3xl border border-stroke-neutral-weak bg-fill-neutral-weaker p-[23px] transition-colors hover:bg-fill-neutral-weak"
+                  className="relative sky-card flex min-h-[267px] min-w-0 flex-col justify-between gap-10 rounded-3xl border border-stroke-neutral-weak bg-fill-neutral-weaker p-[23px] transition-colors hover:bg-fill-neutral-weak"
                 >
                   <p className="font-garamond text-[24px] font-normal leading-[31px] text-text-neutral-strong">
                     {row.answered ? (

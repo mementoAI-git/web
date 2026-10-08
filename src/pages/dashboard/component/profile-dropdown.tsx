@@ -78,6 +78,7 @@ export function ProfileDropdown({
             src={!isEmpty(photo) ? photo : undefined}
             name={rawName || undefined}
             email={user?.email}
+            userId={user?._id}
             size="lg"
             className="!rounded-full"
           />

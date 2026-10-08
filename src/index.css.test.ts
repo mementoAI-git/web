@@ -76,7 +76,8 @@ describe("dark color token compatibility", () => {
 
   it("uses the approved app canvas throughout dark mode", () => {
     expect(declaration(".dark", "--color-background")).toBe("#12131a");
-    expect(declaration(".dark", "--bg-neutral")).toBe("#12131a");
+    expect(declaration(".dark", "--bg-neutral")).toBe("var(--bg-neutral-solid)");
+    expect(declaration(".dark", "--bg-neutral-solid")).toBe("#12131a");
     expect(declaration(".dark", "--v3-bg")).toBe("#12131a");
     expect(declaration(".dark", "--background")).toBe("#12131a");
     expect(declaration(".dark", "--card")).toBe("var(--background)");

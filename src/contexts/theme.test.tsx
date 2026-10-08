@@ -53,6 +53,8 @@ function ThemeProbe() {
       <output data-testid="resolved-theme">{resolvedTheme}</output>
       <button onClick={() => setTheme("system")}>Use system</button>
       <button onClick={() => setTheme("dark")}>Use dark</button>
+      <button onClick={() => setTheme("deep-sky")}>Use deep sky</button>
+      <button onClick={() => setTheme("light-sky")}>Use light sky</button>
     </>
   );
 }
@@ -75,6 +77,51 @@ afterEach(() => {
 });
 
 describe("application theme", () => {
+  it("restores light sky before mount even when the OS is dark", () => {
+    localStorage.setItem(THEME_STORAGE_KEY, "light-sky");
+    const media = installMatchMedia(true);
+    expect(initializeTheme()).toBe("light");
+    expect(document.documentElement).toHaveClass("light-sky");
+    expect(document.documentElement).not.toHaveClass("dark", "deep-sky");
+    renderTheme();
+    expect(screen.getByTestId("resolved-theme")).toHaveTextContent("light");
+    expect(document.querySelector(".deep-sky-backdrop")).toHaveAttribute("aria-hidden", "true");
+    act(() => media.setDark(false));
+    act(() => media.setDark(true));
+    expect(screen.getByTestId("theme")).toHaveTextContent("light-sky");
+    fireEvent.click(screen.getByRole("button", { name: "Use system" }));
+    expect(document.documentElement).not.toHaveClass("light-sky");
+    expect(document.documentElement).toHaveClass("dark");
+    expect(document.querySelector(".deep-sky-backdrop")).toBeNull();
+  });
+
+  it("restores deep sky before mount with dark controls", () => {
+    localStorage.setItem(THEME_STORAGE_KEY, "deep-sky");
+    installMatchMedia(false);
+    expect(initializeTheme()).toBe("dark");
+    expect(document.documentElement).toHaveClass("dark", "deep-sky");
+    renderTheme();
+    expect(screen.getByTestId("theme")).toHaveTextContent("deep-sky");
+    expect(screen.getByTestId("resolved-theme")).toHaveTextContent("dark");
+    expect(document.querySelector(".deep-sky-backdrop")).toHaveAttribute("aria-hidden", "true");
+  });
+
+  it("persists deep sky, ignores OS changes, and removes its backdrop on plain dark", () => {
+    const media = installMatchMedia(false);
+    renderTheme();
+    fireEvent.click(screen.getByRole("button", { name: "Use deep sky" }));
+    expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe("deep-sky");
+    expect(document.documentElement.style.colorScheme).toBe("dark");
+    expect(document.documentElement).toHaveClass("dark", "deep-sky");
+    act(() => media.setDark(true));
+    act(() => media.setDark(false));
+    expect(screen.getByTestId("theme")).toHaveTextContent("deep-sky");
+    fireEvent.click(screen.getByRole("button", { name: "Use dark" }));
+    expect(document.documentElement).toHaveClass("dark");
+    expect(document.documentElement).not.toHaveClass("deep-sky");
+    expect(document.querySelector(".deep-sky-backdrop")).toBeNull();
+  });
+
   it("defaults to system and follows OS changes from light to dark", () => {
     const media = installMatchMedia(false);
     renderTheme();

@@ -34,7 +34,7 @@ function Streak() {
     };
   }, [user]);
 
-  const streakCount = Number(user?.streak) || Number(stats.streak_count) || 0;
+  const streakCount = Number(stats.streak_count ?? user?.streak ?? 0);
 
   const getStreakMessage = (days: number): string => {
     if (days >= 21) {
@@ -52,11 +52,9 @@ function Streak() {
     return "Every story starts with the first step. You've got this.";
   };
 
-  const weekStreakDisplay = user?.streak ? (Number(user.streak) / 7).toFixed(0) : "0";
-
   return (
     <div
-      className="relative isolate flex w-[311px] flex-col gap-5 overflow-hidden rounded-2xl border border-stroke-neutral-weak bg-bg-neutral p-4 shadow-btn [&>div]:relative"
+      className="relative isolate flex w-[311px] max-w-[calc(100vw-2rem)] flex-col gap-4 overflow-hidden rounded-3xl border border-stroke-neutral-weak bg-bg-neutral-solid p-4 shadow-btn sm:max-w-[calc(100vw-4rem)] [&>div]:relative"
     >
       <img
         src={chatSettingsGradient}
@@ -64,17 +62,17 @@ function Streak() {
         aria-hidden
         className="pointer-events-none absolute inset-x-0 top-0 h-[466px] w-full object-fill opacity-50"
       />
-      <div className="flex flex-col items-center justify-center gap-8 py-4">
+      <div className="flex flex-col items-center justify-center gap-4 py-2">
         <div
           className="flex size-[115px] items-center justify-center rounded-full border border-stroke-neutral-weak bg-fill-brand-weak"
           aria-hidden
         >
           <span className="font-garamond text-[50px] font-bold leading-none text-text-brand-strong">
-            {weekStreakDisplay}
+            {streakCount}
           </span>
         </div>
         <div className="flex flex-col gap-1 text-center">
-          <span className="font-garamond text-xl text-text-neutral-strong">Week streak</span>
+          <span className="font-garamond text-xl text-text-neutral-strong">Day streak</span>
           <span className="max-w-[230px] font-inter text-xs text-text-neutral-weak">
             {getStreakMessage(streakCount)}
           </span>
@@ -110,18 +108,18 @@ function Streak() {
           );
         })}
       </div>
-      <div className="flex flex-col gap-2 rounded-2xl bg-fill-neutral-weak px-1 pb-1 pt-2">
+      <div className="flex flex-col gap-2 rounded-2xl bg-[var(--neutral-50)] px-1 dark:bg-fill-neutral-weak pb-1 pt-2">
         <span className="text-center font-geist text-xs text-text-neutral-weaker">Streak restore coming soon</span>
-        <div className="flex w-full items-center justify-center rounded-2xl bg-bg-neutral px-6 py-4 text-center font-inter text-sm text-text-neutral-weaker">
-          <div className="flex flex-1 flex-col gap-2.5">
+        <div className="flex w-full items-center justify-center rounded-2xl bg-bg-neutral-solid px-4 py-3 text-center font-inter text-sm text-text-neutral-weaker">
+          <div className="flex flex-1 flex-col gap-2">
             <span>Days</span>
-            <span className="text-text-neutral-strong">{stats.streak_count || user?.streak || 0}</span>
+            <span className="text-text-neutral-strong">{streakCount}</span>
           </div>
-          <div className="flex flex-1 flex-col gap-2.5">
+          <div className="flex flex-1 flex-col gap-2">
             <span>Reflections</span>
             <span className="text-text-neutral-strong">{stats.reflections_count || 0}</span>
           </div>
-          <div className="flex flex-1 flex-col gap-2.5">
+          <div className="flex flex-1 flex-col gap-2">
             <span>Stories</span>
             <span className="text-text-neutral-strong">{stats.stories_count || 0}</span>
           </div>
@@ -136,7 +134,14 @@ export default function StreakTracker({ children }: PropsWithChildren) {
   const { refs, floatingStyles, context } = useFloating({
     open: isOpen,
     onOpenChange: setIsOpen,
-    middleware: [offset(8), flip(), shift()],
+    placement: "bottom-end",
+    middleware: [
+      offset(8),
+      flip(),
+      shift(() => ({
+        padding: window.innerWidth >= 640 ? 32 : 16,
+      })),
+    ],
     whileElementsMounted: autoUpdate,
   });
 

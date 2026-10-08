@@ -35,6 +35,26 @@ vi.mock("@/features/onboarding-groot", () => ({
 import DashboardLayout from "./layout";
 
 describe("DashboardLayout", () => {
+  it.each([
+    ["/overview", true],
+    ["/chat/new", true],
+    ["/settings/security", true],
+    ["/settings/beneficiary", false],
+    ["/stories", false],
+  ])("scopes sky cards on %s: %s", (route, scoped) => {
+    renderWithProviders(
+      <ChatSidebarProvider>
+        <Routes>
+          <Route element={<DashboardLayout />}>
+            <Route path="*" element={<div data-testid="scoped-outlet" />} />
+          </Route>
+        </Routes>
+      </ChatSidebarProvider>,
+      { route, auth: true },
+    );
+    expect(Boolean(screen.getByTestId("scoped-outlet").closest("[data-sky-card-page]"))).toBe(scoped);
+  });
+
   it("renders nudge banners above the scrollable outlet column", () => {
     const { container } = renderWithProviders(
       <ChatSidebarProvider>

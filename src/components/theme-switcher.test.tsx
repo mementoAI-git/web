@@ -5,28 +5,50 @@ import { ThemeProvider } from "@/contexts/theme";
 import { THEME_STORAGE_KEY } from "@/lib/theme";
 import { ThemeSwitcher } from "./theme-switcher";
 
-afterEach(() => {
-  localStorage.removeItem(THEME_STORAGE_KEY);
-  document.documentElement.classList.remove("dark");
-  vi.unstubAllGlobals();
-});
+afterEach(() => vi.unstubAllGlobals());
 
-it.each([false, true])("starts with system dark=%s and toggles directly to the opposite mode", async (dark) => {
-  localStorage.removeItem(THEME_STORAGE_KEY);
-  vi.stubGlobal("matchMedia", vi.fn(() => ({ matches: dark, addEventListener: vi.fn(), removeEventListener: vi.fn() })));
+it("offers deep sky alongside dark and restores the choice on remount", async () => {
   const user = userEvent.setup();
   const { unmount } = render(<ThemeProvider><ThemeSwitcher /></ThemeProvider>);
-  expect(document.documentElement.classList.contains("dark")).toBe(dark);
-  expect(localStorage.getItem(THEME_STORAGE_KEY)).toBeNull();
-  const next = dark ? "light" : "dark";
-  await user.click(screen.getByRole("button", { name: `Switch to ${next} mode` }));
-  expect(document.documentElement.classList.contains("dark")).toBe(!dark);
-  expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe(next);
-  expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+  await user.click(screen.getByRole("button", { name: "Choose theme" }));
+  expect(screen.getAllByRole("menuitemradio").map((item) => item.textContent)).toEqual(["Light", "Light sky", "Dark", "Deep sky", "System"]);
+  await user.click(screen.getByRole("menuitemradio", { name: "Deep sky" }));
+  expect(document.documentElement).toHaveClass("dark", "deep-sky");
+  expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe("deep-sky");
   unmount();
   render(<ThemeProvider><ThemeSwitcher /></ThemeProvider>);
-  expect(document.documentElement.classList.contains("dark")).toBe(!dark);
+  await user.click(screen.getByRole("button", { name: "Choose theme" }));
+  expect(screen.getByRole("menuitemradio", { name: "Deep sky" })).toHaveAttribute("aria-checked", "true");
+  await user.click(screen.getByRole("menuitemradio", { name: "Light", exact: true }));
+  expect(document.documentElement).not.toHaveClass("dark", "deep-sky");
+});
+
+it("supports choosing dark with the keyboard and returning to system", async () => {
+  vi.stubGlobal("matchMedia", vi.fn(() => ({ matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn() })));
+  const user = userEvent.setup();
+  render(<ThemeProvider><ThemeSwitcher /></ThemeProvider>);
   await user.tab();
-  await user.keyboard("{Enter}");
-  expect(document.documentElement.classList.contains("dark")).toBe(dark);
+  await user.keyboard("{Enter}{ArrowDown}{ArrowDown}{Enter}");
+  expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe("dark");
+  await user.click(screen.getByRole("button", { name: "Choose theme" }));
+  await user.click(screen.getByRole("menuitemradio", { name: "System" }));
+  expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe("system");
+  expect(document.documentElement).not.toHaveClass("dark");
+});
+
+it("selects light sky and keeps its own checked preference after remount", async () => {
+  const user = userEvent.setup();
+  const { unmount } = render(<ThemeProvider><ThemeSwitcher /></ThemeProvider>);
+  await user.click(screen.getByRole("button", { name: "Choose theme" }));
+  await user.click(screen.getByRole("menuitemradio", { name: "Light sky" }));
+  expect(document.documentElement).toHaveClass("light-sky");
+  expect(document.documentElement).not.toHaveClass("dark", "deep-sky");
+  expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe("light-sky");
+  unmount();
+  render(<ThemeProvider><ThemeSwitcher /></ThemeProvider>);
+  await user.click(screen.getByRole("button", { name: "Choose theme" }));
+  expect(screen.getByRole("menuitemradio", { name: "Light sky" })).toHaveAttribute("aria-checked", "true");
+  await user.click(screen.getByRole("menuitemradio", { name: "Deep sky" }));
+  expect(document.documentElement).not.toHaveClass("light-sky");
+  expect(document.documentElement).toHaveClass("dark", "deep-sky");
 });

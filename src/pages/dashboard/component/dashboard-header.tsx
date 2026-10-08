@@ -1,10 +1,13 @@
-import { ChatDesignIcon } from "@/components/chat-design-icon";
+import { OverviewDesignIcon } from "@/components/overview-design-icon";
 import { QuickTools } from "@/components/quick-tools";
 import { ThemeSwitcher } from "@/components/theme-switcher";
 import zapIcon from "@/assets/icon/zap.svg";
 import {
   ChevronLeft,
   PanelLeft,
+  VolumeX,
+  Volume2,
+  MoreHorizontal,
 } from "lucide-react";
 import dayjs from "dayjs";
 import { useEffect, useState } from "react";
@@ -18,6 +21,7 @@ import { SearchIcon as IconSearch } from "@/components/icons";
 import { useConversationChrome } from "@/contexts/conversation-chrome";
 import { useDashboardHeaderActions } from "@/contexts/dashboard-header-actions";
 import { StoriesActionButtons } from "@/pages/dashboard/stories/components/stories-action-buttons";
+import { Button } from "@/components/ui/button";
 import { SearchCommandShortcut } from "@/components/search-command-shortcut";
 
 const defaultHeaderTitle: Record<string, string> = {
@@ -67,7 +71,7 @@ interface DashboardHeaderProps {
 }
 
 const convIconBtn =
-  "flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-xl bg-muted text-muted-foreground transition-colors hover:bg-accent hover:text-foreground";
+  "flex size-10 shrink-0 cursor-pointer items-center justify-center rounded-full bg-muted text-muted-foreground transition-colors hover:bg-accent hover:text-foreground";
 
 export function DashboardHeader({
   onMenuClick,
@@ -112,59 +116,20 @@ export function DashboardHeader({
     (chatConversationMatch || chatVoiceMatch) && chrome,
   );
 
-  if (showConversationNav && chrome) {
-    const host = chrome.hostChat;
-    const title =
-      host?.title ?? headerTitle ?? chrome.memory?.title ?? "New conversation";
-    const createdLine =
-      chrome.memory?.created_at &&
-      dayjs(chrome.memory.created_at).format("MMM DD, YYYY");
-    const metaLine = host?.subtitle ?? createdLine;
+  const host = showConversationNav ? chrome?.hostChat : undefined;
+  const conversationTitle = host?.title ?? headerTitle ?? chrome?.memory?.title ?? "New conversation";
+  const createdLine = chrome?.memory?.created_at && dayjs(chrome.memory.created_at).format("MMM DD, YYYY");
+  const metaLine = host?.subtitle ?? createdLine;
 
-    const actionClass = "flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg bg-fill-neutral-weak text-icon-neutral-weak transition-colors hover:bg-fill-neutral-weaker sm:w-[52px]";
-    return (
-      <div className="fixed inset-x-0 top-0 z-[45] flex h-[60px] w-full items-center bg-background px-4 sm:relative sm:h-[76px] sm:items-start sm:px-8 sm:pb-4 sm:pt-6">
-        <header className="flex h-9 w-full min-w-0 items-center justify-between gap-4">
-          <div className="flex min-w-0 flex-1 items-center gap-1">
-            <button type="button" onClick={onMainSidebarToggle ?? onMenuClick} aria-label="Open sidebar" className={cn(actionClass, "mr-2 md:hidden", mainSidebarCollapsed && "md:flex")}>
-              <PanelLeft className="size-5" aria-hidden />
-            </button>
-            {chatVoiceMatch?.params?.id ? (
-              <Link to={`/chat/${chatVoiceMatch.params.id}`} replace className={cn(actionClass, "mr-2 no-underline")} aria-label="Back to chat"><ChevronLeft className="size-5" aria-hidden /></Link>
-            ) : null}
-            <h1 className="min-w-0 truncate font-inter text-sm font-semibold text-foreground" title={title}>Chat</h1>
-            {metaLine ? <>
-              <span aria-hidden className="hidden size-[5px] shrink-0 rounded-full bg-text-neutral-weaker lg:block" />
-              <span className="hidden min-w-0 truncate font-geist text-sm text-text-neutral-weaker lg:inline" aria-label={host?.subtitle ? metaLine : `Created ${metaLine}`}>{host?.subtitle ? metaLine : `Active since ${metaLine}`}</span>
-            </> : null}
-          </div>
-          <div className="flex shrink-0 items-center gap-2 sm:gap-3">
-            <button type="button" onClick={() => chrome.hostChat?.onSearch ? chrome.hostChat.onSearch() : open("search-memory")} className={cn(actionClass, "lg:mr-1 lg:w-[272px] lg:justify-start lg:gap-2 lg:border lg:border-stroke-neutral-weak lg:px-3.5")} aria-label="Search memories">
-              <ChatDesignIcon name="search" /><span className="hidden font-inter text-sm text-text-neutral-weaker lg:inline">Search</span>
-            </button>
-            <ThemeSwitcher className={cn(actionClass, "text-overview-greeting")} lightIcon={<ChatDesignIcon name="sun" />} />
-            {chrome.memory?._id && chrome.onOpenChatPreferences ? <>
-              <button type="button" className={actionClass} aria-label="Audio settings" onClick={() => chrome.onOpenChatPreferences?.()}><ChatDesignIcon name="audio" /></button>
-              <button type="button" className={actionClass} aria-label="Chat settings" onClick={() => chrome.onOpenChatPreferences?.()}><ChatDesignIcon name="more" /></button>
-            </> : null}
-          </div>
-        </header>
-      </div>
-    );
-  }
-
-  const usesOverviewNav =
-    pathForTitle === "overview" ||
-    pathForTitle === "" ||
-    pathForTitle === "explore";
-  const overviewActionClass = "h-8 w-[52px] rounded-lg bg-fill-neutral-weak";
+  const usesOverviewNav = showConversationNav || !pathForTitle.startsWith("chat") || pathForTitle.startsWith("chat/reply/");
+  const overviewActionClass = "size-10 shrink-0 rounded-full bg-fill-neutral-weak p-0 [&_svg]:size-5";
   const railExpanded = mdUp ? !mainSidebarCollapsed : mobileSidebarOpen;
   const toggleMainSidebar = onMainSidebarToggle ?? onMenuClick;
 
   return (
     <div
       className={cn(
-        "w-full h-[60px] fixed top-0 left-0 right-0 sm:relative flex items-center bg-background px-4 sm:px-8",
+        "z-[45] w-full h-[60px] fixed top-0 left-0 right-0 sm:relative flex items-center bg-background px-4 sm:px-8",
         usesOverviewNav
           ? "sm:h-[76px] sm:items-start sm:pb-4 sm:pt-6"
           : "border-b border-border",
@@ -184,17 +149,33 @@ export function DashboardHeader({
             onClick={toggleMainSidebar}
             className={cn(
               convIconBtn,
-              "hidden md:flex",
+              showConversationNav ? "flex md:hidden" : "hidden md:flex",
               usesOverviewNav && !mainSidebarCollapsed && "md:hidden",
+              showConversationNav && mainSidebarCollapsed && "md:flex",
             )}
             aria-expanded={railExpanded}
-            aria-label={railExpanded ? "Collapse sidebar" : "Expand sidebar"}
+            aria-label={showConversationNav ? "Open sidebar" : railExpanded ? "Collapse sidebar" : "Expand sidebar"}
           >
             <PanelLeft className="size-5" strokeWidth={1.75} aria-hidden />
           </button>
-          <span className="min-w-0 truncate font-inter font-semibold text-base text-foreground capitalize">
-            {truncateText(defaultHeaderTitle[pathForTitle] || headerTitle, 32)}
-          </span>
+          {chatVoiceMatch?.params?.id ? (
+            <Link to={`/chat/${chatVoiceMatch.params.id}`} replace className={cn(convIconBtn, "no-underline")} aria-label="Back to chat">
+              <ChevronLeft className="size-5" aria-hidden />
+            </Link>
+          ) : null}
+          {showConversationNav ? (
+            <div className="flex min-w-0 items-center gap-1">
+              <h1 className="min-w-0 truncate font-inter text-base font-semibold text-foreground" title={conversationTitle}>Chat</h1>
+              {metaLine ? <>
+                <span aria-hidden className="hidden size-[5px] shrink-0 rounded-full bg-text-neutral-weaker lg:block" />
+                <span className="hidden min-w-0 truncate font-geist text-sm text-text-neutral-weaker lg:inline" aria-label={host?.subtitle ? metaLine : `Created ${metaLine}`}>{host?.subtitle ? metaLine : `Active since ${metaLine}`}</span>
+              </> : null}
+            </div>
+          ) : (
+            <span className="min-w-0 truncate font-inter font-semibold text-base text-foreground capitalize">
+              {truncateText(defaultHeaderTitle[pathForTitle] || headerTitle, 32)}
+            </span>
+          )}
         </div>
 
         {pathForTitle !== "stories" ? (
@@ -206,13 +187,13 @@ export function DashboardHeader({
           >
             <button
               type="button"
-              onClick={() => open("search-memory")}
+              onClick={() => host?.onSearch ? host.onSearch() : open("search-memory")}
               className={cn(
                 "flex w-full cursor-pointer items-center rounded-lg border border-border bg-background",
                 usesOverviewNav ? "h-9 bg-fill-neutral-weak" : "h-10",
                 "focus-visible:ring-2 focus-visible:ring-v3-brand-strong focus-visible:ring-offset-2",
               )}
-              aria-label="Open search"
+              aria-label={showConversationNav ? "Search memories" : "Open search"}
               aria-haspopup="dialog"
             >
               <span className="pl-3.5">
@@ -238,38 +219,50 @@ export function DashboardHeader({
           )}
         >
           <ThemeSwitcher
-            className={
-              usesOverviewNav
-                ? `${overviewActionClass} text-overview-greeting`
-                : undefined
-            }
+            lightIcon={usesOverviewNav ? <OverviewDesignIcon name="sun" /> : undefined}
+            darkIcon={usesOverviewNav ? <OverviewDesignIcon name="sun" /> : undefined}
+            className={overviewActionClass}
           />
           <QuickTools
             overview={usesOverviewNav}
-            className={usesOverviewNav ? overviewActionClass : undefined}
+            icon={usesOverviewNav ? <OverviewDesignIcon name="tools" /> : undefined}
+            className={overviewActionClass}
           />
-          <StreakTracker>
-            <div
-              className={cn(
-                "flex shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-lg px-2.5 py-1.5 transition-colors hover:bg-muted",
-                usesOverviewNav ? overviewActionClass : "bg-transparent",
-              )}
+          {showConversationNav ? <>
+            {chrome?.spokenReplies ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-lg"
+                className={cn(overviewActionClass, chrome.spokenReplies.enabled ? "text-text-brand-strong" : "text-icon-neutral-weak")}
+                aria-label="Read AI replies aloud"
+                aria-pressed={chrome.spokenReplies.enabled}
+                title={!chrome.spokenReplies.supported ? "Spoken replies are unavailable in this browser" : chrome.spokenReplies.enabled ? "Turn off spoken replies" : "Turn on spoken replies"}
+                disabled={!chrome.spokenReplies.supported}
+                onClick={chrome.spokenReplies.onToggle}
+              >
+                {chrome.spokenReplies.enabled ? <Volume2 aria-hidden /> : <VolumeX aria-hidden />}
+              </Button>
+            ) : null}
+            {chrome?.memory?._id && chrome.onOpenChatPreferences ? (
+              <Button type="button" variant="ghost" size="icon-lg" className={cn(overviewActionClass, "text-icon-neutral-weak")} aria-label="Chat settings" onClick={chrome.onOpenChatPreferences}>
+                <MoreHorizontal aria-hidden />
+              </Button>
+            ) : null}
+          </> : <StreakTracker>
+            <button
+              type="button"
+              aria-label={`Streak: ${user?.streak || 0} days`}
+              className={cn(overviewActionClass, "relative flex cursor-pointer items-center justify-center transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stroke-neutral-strong")}
             >
-              <img
-                src={zapIcon}
-                alt="Streak"
-                className={cn(
-                  "object-contain opacity-80",
-                  usesOverviewNav ? "size-5" : "size-4",
-                )}
-              />
-              {!usesOverviewNav && (
-                <span className="text-[13px] font-semibold text-foreground">
-                  {user?.streak || 0}
-                </span>
+              {usesOverviewNav ? <OverviewDesignIcon name="streak" alt="Streak" /> : (
+                <img src={zapIcon} alt="Streak" className="size-5 object-contain opacity-80" />
               )}
-            </div>
-          </StreakTracker>
+              <span aria-hidden className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-bg-neutral px-1 font-geist text-[10px] font-semibold leading-none text-text-neutral-strong ring-1 ring-stroke-neutral-weak">
+                  {user?.streak || 0}
+              </span>
+            </button>
+          </StreakTracker>}
           {pathForTitle === "stories" && actions.showStoriesActions ? (
             <div className="hidden h-10 items-stretch xl:flex">
               <StoriesActionButtons
@@ -280,14 +273,14 @@ export function DashboardHeader({
               />
             </div>
           ) : null}
-          <button
+          {!showConversationNav ? <button
             type="button"
             onClick={onMenuClick}
             aria-label="Open sidebar"
-            className="md:hidden p-1.5 rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            className="flex size-10 shrink-0 items-center justify-center rounded-full md:hidden text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
           >
             <MenuIcon width={20} height={20} />
-          </button>
+          </button> : null}
         </div>
       </header>
     </div>

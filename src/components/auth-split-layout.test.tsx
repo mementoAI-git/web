@@ -77,5 +77,5 @@ describe("AuthSplitShell", () => {
 
   it.each([AuthCenteredSplitShell, AuthSplitShell])("exposes theme options without signing in", (Shell) => {
     render(<Shell><p>Form</p></Shell>);
-    expect(screen.getByRole("button", { name: /switch to (light|dark) mode/i })).toBeVisible();
+    expect(screen.getByRole("button", { name: "Choose theme" })).toBeVisible();
   });

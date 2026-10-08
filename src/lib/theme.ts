@@ -1,11 +1,11 @@
 export const THEME_STORAGE_KEY = "memento:theme";
 export const DARK_MODE_QUERY = "(prefers-color-scheme: dark)";
 
-export type ThemePreference = "light" | "dark" | "system";
-export type ResolvedTheme = Exclude<ThemePreference, "system">;
+export type ThemePreference = "light" | "dark" | "deep-sky" | "light-sky" | "system";
+export type ResolvedTheme = "light" | "dark";
 
 export function isThemePreference(value: unknown): value is ThemePreference {
-  return value === "light" || value === "dark" || value === "system";
+  return value === "light" || value === "dark" || value === "deep-sky" || value === "light-sky" || value === "system";
 }
 
 export function readThemePreference(): ThemePreference {
@@ -26,16 +26,19 @@ export function getSystemTheme(): ResolvedTheme {
 }
 
 export function resolveTheme(theme: ThemePreference): ResolvedTheme {
-  return theme === "system" ? getSystemTheme() : theme;
+  return theme === "system" ? getSystemTheme() : theme === "deep-sky" ? "dark" : theme === "light-sky" ? "light" : theme;
 }
 
-export function applyResolvedTheme(theme: ResolvedTheme): void {
+export function applyResolvedTheme(theme: ResolvedTheme, preference: ThemePreference = theme): void {
   document.documentElement.classList.toggle("dark", theme === "dark");
+  document.documentElement.classList.toggle("deep-sky", preference === "deep-sky");
+  document.documentElement.classList.toggle("light-sky", preference === "light-sky");
   document.documentElement.style.colorScheme = theme;
 }
 
 export function initializeTheme(): ResolvedTheme {
-  const resolved = resolveTheme(readThemePreference());
-  applyResolvedTheme(resolved);
+  const preference = readThemePreference();
+  const resolved = resolveTheme(preference);
+  applyResolvedTheme(resolved, preference);
   return resolved;
 }

@@ -4,7 +4,7 @@ import { renderWithProviders } from "@/test";
 import CategoryCard from "./category-card";
 
 describe("CategoryCard", () => {
-  it("uses a theme-aware token for the text below the image", () => {
+  it("uses weak text for category descriptions", () => {
     renderWithProviders(
       <CategoryCard
         image="/topic.jpg"
@@ -15,7 +15,7 @@ describe("CategoryCard", () => {
     );
 
     expect(screen.getByText("A reflective topic prompt")).toHaveClass(
-      "text-text-neutral-strong",
+      "text-text-neutral-weak",
     );
     expect(screen.getByText("A reflective topic prompt")).not.toHaveClass(
       "text-gray-950/90",
