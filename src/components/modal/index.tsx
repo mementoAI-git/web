@@ -104,22 +104,29 @@ const MODAL_COMPONENTS = {
 };
 
 export default function Modal() {
-  const { state, close } = useModal();
+  const { state } = useModal();
   const [isMobile, setIsMobile] = useState(false);
-
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 640);
     checkMobile();
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
+  return <>
+    <SearchMemoriesV2 open={state[0]?.name === "search-memory"} isMobile={isMobile} />
+    <ModalStack isMobile={isMobile} />
+  </>;
+}
+
+function ModalStack({ isMobile }: { isMobile: boolean }) {
+  const { state, close } = useModal();
 
   // ESC key dismissal: always closes the topmost modal
   useEffect(() => {
     const modal = state?.[0];
     if (
       !modal ||
-      ["create-feedback", "invite-friends", "pricing", "setup2fa"].includes(modal.name)
+      ["search-memory", "create-feedback", "invite-friends", "pricing", "setup2fa"].includes(modal.name)
     )
       return;
     const modalName = modal.name;
@@ -135,6 +142,7 @@ export default function Modal() {
   }
 
   const topModal = state[0];
+  if (topModal.name === "search-memory") return null;
   // Feedback owns its shadcn portal, backdrop, focus trap, and dismissal.
   if (topModal.name === "create-feedback") {
     return <Feedback data={topModal.props || {}} />;

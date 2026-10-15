@@ -70,6 +70,7 @@ export default {
 
   // memories
   memories: "/memories",
+  memorySearch: "/memories/search",
   publicMemory: "/memories/public",
   memoriesQuickCapture: "/memories/quick-capture",
   memory: "/memories/:id",
