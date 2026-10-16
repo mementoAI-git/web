@@ -1,10 +1,12 @@
-import FocusTrap from "focus-trap-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { FileText, Film, Image as ImageIcon, Link2, Music2, Search, X } from "lucide-react";
+import { FileText, Film, Image as ImageIcon, Link2, Music2, Search, X, FolderOpen, AlertCircle } from "lucide-react";
 import endpoint from "@/api/endpoint";
 import { fetcher } from "@/api/fetcher";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { InputGroup, InputGroupAddon, InputGroupInput, InputGroupButton } from "@/components/ui/input-group";
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from "@/components/ui/empty";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSignedMediaAccess } from "@/features/media/signed-media-access";
 import { useModal } from "@/hooks/use-modal";
@@ -65,7 +67,7 @@ function MediaCell({ asset, onOpen }: { asset: ConversationFileAsset; onOpen: ()
       type="button"
       onClick={onOpen}
       aria-label={`Open ${asset.file.name || "file"} in viewer`}
-      className="group relative aspect-square min-w-0 overflow-hidden bg-fill-neutral-weaker focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stroke-brand-strong"
+      className="group relative aspect-square min-w-0 overflow-hidden rounded-lg bg-fill-neutral-weaker transition-shadow hover:ring-2 hover:ring-stroke-neutral-strong active:opacity-80 focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stroke-brand-strong"
     >
       {isVideo ? (
         <video src={src} onError={onError} muted preload="metadata" className="size-full object-cover" />
@@ -98,7 +100,7 @@ function FileRow({ asset, onOpen }: { asset: ConversationFileAsset; onOpen?: () 
       </span>
     </>
   );
-  const classes = "flex min-h-16 w-full min-w-0 items-center gap-3 rounded-xl border border-stroke-neutral-weaker bg-background p-3 text-left transition-colors hover:bg-fill-neutral-weaker focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stroke-brand-strong";
+  const classes = "flex min-h-16 w-full min-w-0 items-center gap-3 rounded-xl border border-stroke-neutral-weaker bg-bg-neutral-solid p-3 text-left transition-colors hover:bg-fill-neutral-weaker focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stroke-brand-strong";
   return audio ? (
     <button type="button" onClick={onOpen} className={classes} aria-label={`Open ${asset.file.name} in viewer`}>{content}</button>
   ) : (
@@ -107,7 +109,8 @@ function FileRow({ asset, onOpen }: { asset: ConversationFileAsset; onOpen?: () 
 }
 
 export default function ConversationFiles({ data }: { data: ConversationFilesModalData }) {
-  const { close, push } = useModal();
+  const { close, push, state } = useModal();
+  const active = !state?.length || state[0]?.name === "conversation-files";
   const [messages, setMessages] = useState<Partial<IMessage>[]>(data.messages ?? []);
   const [tab, setTab] = useState<ConversationAssetTab>(data.initialTab ?? "media");
   const [query, setQuery] = useState("");
@@ -167,65 +170,78 @@ export default function ConversationFiles({ data }: { data: ConversationFilesMod
 
   const noResults = tab === "media" ? media.length === 0 : tab === "docs" ? filtered.docs.length === 0 : filtered.links.length === 0;
 
-  return (
-    <FocusTrap focusTrapOptions={{ initialFocus: () => searchRef.current ?? undefined, escapeDeactivates: false, clickOutsideDeactivates: false }}>
-      <section
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="conversation-files-title"
-        className="flex h-[min(925px,calc(100vh-24px))] w-[min(760px,calc(100vw-24px))] min-h-0 flex-col overflow-hidden rounded-2xl bg-background text-text-neutral-strong shadow-xl"
-        onClick={(event) => event.stopPropagation()}
-      >
-        <header className="shrink-0 space-y-4 p-5 pb-3 sm:p-6 sm:pb-4">
-          <div className="flex items-center gap-4">
-            <h2 id="conversation-files-title" className="min-w-0 flex-1 font-geist text-2xl font-bold">All files ({index.total})</h2>
-            <Button type="button" variant="ghost" size="icon-lg" onClick={() => close?.("conversation-files")} aria-label="Close all files" className="rounded-full bg-fill-neutral-weaker">
-              <X className="size-5" aria-hidden />
-            </Button>
-          </div>
-          <label className="relative block">
-            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-icon-neutral-weaker" aria-hidden />
-            <span className="sr-only">Search conversation files</span>
-            <Input ref={searchRef} value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search files and links" className="h-10 rounded-lg bg-fill-neutral-weaker pl-9" />
-          </label>
-        </header>
+  const emptyLabel = tab === "docs" ? "documents" : tab === "links" ? "links" : data.initialMediaFilter ?? "media";
+  const EmptyIcon = query.trim() ? Search : tab === "docs" ? FileText : tab === "links" ? Link2 : FolderOpen;
+  const initialLoading = loadingOlder && index.total === 0;
 
-        <Tabs value={tab} onValueChange={(value) => setTab(value as ConversationAssetTab)} className="min-h-0 flex-1 gap-0">
-          <TabsList className="mx-5 grid h-auto w-auto shrink-0 grid-cols-3 gap-2 rounded-none bg-transparent p-0 sm:mx-6">
-            <TabsTrigger value="media" className="h-12 rounded-lg bg-fill-neutral-weaker data-active:bg-fill-neutral-strong data-active:text-text-inverse-strong"><ImageIcon aria-hidden />Media ({index.media.length})</TabsTrigger>
-            <TabsTrigger value="docs" className="h-12 rounded-lg bg-fill-neutral-weaker data-active:bg-fill-neutral-strong data-active:text-text-inverse-strong"><FileText aria-hidden />Docs ({index.docs.length})</TabsTrigger>
-            <TabsTrigger value="links" className="h-12 rounded-lg bg-fill-neutral-weaker data-active:bg-fill-neutral-strong data-active:text-text-inverse-strong"><Link2 aria-hidden />Links ({index.links.length})</TabsTrigger>
+  return (
+    <Dialog open={active} onOpenChange={(open) => { if (!open) close?.("conversation-files"); }}>
+      <DialogContent
+        className="flex max-h-[min(600px,calc(100dvh-32px))] flex-col gap-5 overflow-hidden sm:max-w-xl motion-reduce:animate-none"
+        onOpenAutoFocus={(event) => { event.preventDefault(); searchRef.current?.focus(); }}
+        onCloseAutoFocus={(event) => event.preventDefault()}
+      >
+        <DialogHeader className="pr-8">
+          <DialogTitle>Shared files</DialogTitle>
+          <DialogDescription>Media, documents, and links from this conversation.</DialogDescription>
+        </DialogHeader>
+
+        <InputGroup>
+          <InputGroupAddon><Search aria-hidden /></InputGroupAddon>
+          <InputGroupInput ref={searchRef} value={query} onChange={(event) => setQuery(event.target.value)} aria-label="Search conversation files" placeholder="Search files and links" />
+          {query && <InputGroupAddon align="inline-end">
+            <InputGroupButton size="icon-xs" aria-label="Clear search" onClick={() => { setQuery(""); searchRef.current?.focus(); }}><X aria-hidden /></InputGroupButton>
+          </InputGroupAddon>}
+        </InputGroup>
+
+        <Tabs value={tab} onValueChange={(value) => setTab(value as ConversationAssetTab)} className="min-h-0 flex-auto flex-col gap-4">
+          <TabsList className="w-full shrink-0" aria-label="File types">
+            <TabsTrigger value="media"><ImageIcon aria-hidden />Media ({index.media.length})</TabsTrigger>
+            <TabsTrigger value="docs"><FileText aria-hidden />Docs ({index.docs.length})</TabsTrigger>
+            <TabsTrigger value="links"><Link2 aria-hidden />Links ({index.links.length})</TabsTrigger>
           </TabsList>
 
-          <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-6 pt-4 sm:px-6">
-            {loadingOlder ? <div className="mb-3 flex items-center justify-center gap-2 text-sm text-text-neutral-weak"><Spinner loading className="!m-0 !size-4" />Loading older files…</div> : null}
-            {loadError ? (
-              <div role="status" className="mb-3 flex items-center justify-between gap-3 rounded-lg bg-fill-neutral-weaker p-3 text-sm text-text-neutral-weak">
-                <span>Some older files couldn&apos;t be loaded.</span>
-                <Button type="button" variant="outline" size="sm" onClick={() => setLoadVersion((value) => value + 1)}>Retry</Button>
-              </div>
-            ) : null}
-            {noResults && !loadingOlder ? (
-              <p className="py-16 text-center font-geist text-sm text-text-neutral-weak">{query.trim() ? `No results for “${query.trim()}”` : `No ${tab} shared in this conversation yet.`}</p>
-            ) : null}
+          <div className="min-h-0 overflow-y-auto overscroll-contain p-1" aria-busy={loadingOlder}>
+            {initialLoading ? <div role="status" aria-label="Loading shared files" className="grid grid-cols-3 gap-2">
+              <span className="sr-only">Loading shared files…</span>
+              {Array.from({ length: 6 }, (_, i) => <Skeleton key={i} className="aspect-square motion-reduce:animate-none" />)}
+            </div> : loadingOlder ? <div role="status" className="mb-3 flex items-center gap-2 text-sm text-text-neutral-weak"><Spinner loading className="!m-0 !size-4 motion-reduce:animate-none" />Loading older files…</div> : null}
 
-            <TabsContent value="media" className="space-y-4">
-              {visualMedia.length ? <div className="grid grid-cols-2 gap-1 min-[480px]:grid-cols-3 md:grid-cols-4">
+            {loadError ? <Empty className="p-6" role="status">
+              <EmptyHeader>
+                <EmptyMedia variant="icon"><AlertCircle aria-hidden /></EmptyMedia>
+                <EmptyTitle>Couldn’t load all files</EmptyTitle>
+                <EmptyDescription>Some older files couldn’t be loaded. Please try again.</EmptyDescription>
+              </EmptyHeader>
+              <EmptyContent><Button variant="outline" size="sm" onClick={() => setLoadVersion((value) => value + 1)}>Retry</Button></EmptyContent>
+            </Empty> : null}
+
+            {noResults && !loadingOlder && !loadError ? <Empty className="min-h-48 p-6" role="status">
+              <EmptyHeader>
+                <EmptyMedia variant="icon"><EmptyIcon aria-hidden /></EmptyMedia>
+                <EmptyTitle>{query.trim() ? "No matching files" : `No ${emptyLabel} yet`}</EmptyTitle>
+                <EmptyDescription>{query.trim() ? `No results for “${query.trim()}”. Try another name or clear your search.` : `The ${emptyLabel} you share in this conversation will appear here.`}</EmptyDescription>
+              </EmptyHeader>
+              {query.trim() && <EmptyContent><Button variant="outline" size="sm" onClick={() => { setQuery(""); searchRef.current?.focus(); }}>Clear search</Button></EmptyContent>}
+            </Empty> : null}
+
+            <TabsContent value="media" className="flex flex-col gap-3">
+              {visualMedia.length ? <div className="grid grid-cols-2 gap-2 min-[480px]:grid-cols-3">
                 {visualMedia.map((asset) => <MediaCell key={asset.key} asset={asset} onOpen={() => openAssets(visualMedia, asset)} />)}
               </div> : null}
-              {audioMedia.length ? <div className="grid gap-2 sm:grid-cols-2">
+              {audioMedia.length ? <div className="grid gap-2">
                 {audioMedia.map((asset) => <FileRow key={asset.key} asset={asset} onOpen={() => openAssets(audioMedia, asset)} />)}
               </div> : null}
             </TabsContent>
-            <TabsContent value="docs" className="grid gap-2 sm:grid-cols-2">
+            <TabsContent value="docs" className="grid gap-2">
               {filtered.docs.map((asset) => <FileRow key={asset.key} asset={asset} />)}
             </TabsContent>
-            <TabsContent value="links" className="grid gap-2 sm:grid-cols-2">
+            <TabsContent value="links" className="grid gap-2">
               {filtered.links.map((link) => <ChatLinkPreview key={link.key} link={link} />)}
             </TabsContent>
           </div>
         </Tabs>
-      </section>
-    </FocusTrap>
+      </DialogContent>
+    </Dialog>
   );
 }

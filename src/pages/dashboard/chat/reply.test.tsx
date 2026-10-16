@@ -2,7 +2,7 @@ import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Route, Routes } from "react-router-dom";
 import { http, HttpResponse } from "msw";
-import { afterEach, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { renderWithProviders } from "@/test";
 import { server } from "@/test/mocks/server";
 import { ConversationChromeProvider } from "@/contexts/conversation-chrome";
@@ -21,6 +21,10 @@ vi.mock("./conversation/history", () => ({
     <div>{children}</div>
   ),
 }));
+
+beforeEach(() => {
+  Object.defineProperty(HTMLElement.prototype, "scrollTo", { configurable: true, value: vi.fn() });
+});
 
 const draftKey = "memento-chat-draft:topic-memory";
 afterEach(() => {

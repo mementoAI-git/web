@@ -1,3 +1,6 @@
+import { reportFetcherError } from "@/api/report-fetcher-error";
+import { Button } from "@/components/ui/button";
+import { useRequestRecovery } from "@/hooks/use-request-recovery";
 import { useSpokenReplies } from "@/hooks/use-spoken-replies";
 import { useVoiceSession } from "@/contexts/voice-session";
 import type { VoiceSessionEvent } from "./voice-session-divider";
@@ -47,10 +50,21 @@ type StreamlinePayload = {
   onMeta?: (meta: { model?: string }) => void;
 };
 
-export default function Conversation({ id, type = "memory" }) {
+export default function Conversation(props: { id: string; type?: "memory" | "prompt" }) {
+  return <ConversationSession key={`${props.type ?? "memory"}:${props.id}`} {...props} />;
+}
+
+function ConversationSession({ id, type = "memory" }: { id: string; type?: "memory" | "prompt" }) {
   const [aiMessage, setAiMessage] = useState("")
   const [streamModelLabel, setStreamModelLabel] = useState<string | undefined>(undefined);
-  const abortCtrl = useRef(null)
+  const abortCtrl = useRef<AbortController | null>(null);
+  const sendingRef = useRef(false);
+  const mounted = useRef(true);
+  const interrupted = useRef(false);
+  useEffect(() => {
+    mounted.current = true;
+    return () => { mounted.current = false; abortCtrl.current?.abort(); };
+  }, []);
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const wasAtBottomRef = useRef(true);
   const isNew = id === "new";
@@ -67,7 +81,7 @@ export default function Conversation({ id, type = "memory" }) {
   const { canAccess, isLoading: subscriptionLoading } = useSubscription();
   const [messages, setMessages] = useState<Partial<IMessage>[]>([])
   const voiceSession = useVoiceSession();
-  const { enabled: spokenRepliesEnabled, supported: spokenRepliesSupported, toggle: toggleSpokenReplies, speak: speakReply, stop: stopSpokenReply } = useSpokenReplies(id, isVoiceRoute || Boolean(voiceSession?.active));
+  const { enabled: spokenRepliesEnabled, supported: spokenRepliesSupported, isLoading: spokenRepliesLoading, toggle: toggleSpokenReplies, speak: speakReply, stop: stopSpokenReply } = useSpokenReplies(id, isVoiceRoute || Boolean(voiceSession?.active));
   const liveTimeline = useMemo(() => voiceSession?.timeline.filter(entry => entry.memoryId === id || (id === "new" && entry.memoryId === voiceSession.memoryId)) ?? [], [voiceSession?.timeline, voiceSession?.memoryId, id]);
   const [voiceEvents, setVoiceEvents] = useState<VoiceSessionEvent[]>([]);
   const handleVoiceSessionChange = useCallback((active: boolean) => {
@@ -93,14 +107,17 @@ export default function Conversation({ id, type = "memory" }) {
     StreamlinePayload
   >(endpoint.aiPrompt, streamlineFetcher)
 
-  const { data: memoryData, isLoading: loadingMemory } = useSWR(
+  const { data: memoryData, isLoading: loadingMemory, error: memoryError, mutate: refreshMemory } = useSWR(
     id && type === "memory" && !isNew ? `${endpoint.memories}/${id}` : null
   );
-  const { data: promptData, isLoading: loadingPrompt } = useSWR(
+  const { data: promptData, isLoading: loadingPrompt, error: promptError, mutate: refreshPrompt } = useSWR(
     id && type === "prompt" && !isNew ?
       `${endpoint.memoryPrompt}/${id}` :
       null
   );
+
+  const detailError = type === "prompt" ? promptError : memoryError;
+  const retryDetail = useRequestRecovery(`conversation:${type}:${id}`, detailError, type === "prompt" ? refreshPrompt : refreshMemory, "This conversation couldn’t be loaded. Try again.");
 
   const { trigger: startConversation, isMutating: startingConversation } = useFetcher(endpoint.startConversation)
 
@@ -149,8 +166,7 @@ export default function Conversation({ id, type = "memory" }) {
 
   const handleChuckArrival = useCallback((chunk: string) => {
     if (chunk.trim().startsWith("ERROR: ")) {
-      setAiMessage("");
-      return toast.error("Something went wrong, try again")
+      throw new Error("The response was interrupted. Please retry.");
     }
 
     if (typeof chunk === 'string' && chunk.trim() !== '') {
@@ -168,7 +184,7 @@ export default function Conversation({ id, type = "memory" }) {
 
   const handleOnFinishTyping = useCallback((text: string) => {
     if (text && text.trim()) {
-      speakReply(text);
+      if (!interrupted.current) speakReply(text);
       setMessages((p) => ([
         ...p,
         {
@@ -182,7 +198,7 @@ export default function Conversation({ id, type = "memory" }) {
     setAiMessage("");
     setStreamModelLabel(undefined);
     // Refetch enrichment stats after each AI response to update delta + milestone
-    mutate(endpoint.userStats);
+    void mutate(endpoint.userStats).catch(() => undefined);
   }, [streamModelLabel, speakReply]);
 
   const sendChatMessage = useCallback(
@@ -190,7 +206,9 @@ export default function Conversation({ id, type = "memory" }) {
       { text, attachments = [], replyTo }: IOnSendPayload,
       options: { appendUserMessage: boolean },
     ) => {
-      if (isEmpty(text)) return;
+      if (sendingRef.current || (!text.trim() && attachments.length === 0)) return;
+      sendingRef.current = true;
+      interrupted.current = false;
       stopSpokenReply();
       const apiText = buildPromptWithReplyQuote(text, replyTo ?? null);
       try {
@@ -228,7 +246,8 @@ export default function Conversation({ id, type = "memory" }) {
         setTimeout(scrollToBottom, 50);
 
         if (memory?._id) {
-          abortCtrl.current = new AbortController();
+          const controller = new AbortController();
+          abortCtrl.current = controller;
           setStreamDone(false);
           setStreamModelLabel(undefined);
 
@@ -236,44 +255,49 @@ export default function Conversation({ id, type = "memory" }) {
             text: apiText,
             attachments: attachments.map((a) => a._id),
             memory: memory?._id,
-            signal: abortCtrl.current.signal,
-            onChunk: handleChuckArrival,
-            onMeta: ({ model }) => setStreamModelLabel(model),
+            signal: controller.signal,
+            onChunk: (chunk) => { if (mounted.current && !controller.signal.aborted) handleChuckArrival(chunk); },
+            onMeta: ({ model }) => { if (mounted.current && !controller.signal.aborted) setStreamModelLabel(model); },
           })
-          setStreamDone(true);
+          if (mounted.current) setStreamDone(true);
           return;
         }
 
         const result = await startConversation({
           text: apiText,
+          ...(attachments.length ? { attachments: attachments.map((attachment) => attachment._id) } : {}),
         })
 
+        if (!mounted.current) return;
+        if (!result?.data?.response || !result?.data?.memory_id) throw new Error("Your chat could not be opened. Please retry.");
         if (result?.data?.response) {
           handleOnFinishTyping(result?.data?.response)
           // Invalidate profile so primary_conversation_id is fresh
-          mutate(endpoint.profile)
+          void mutate(endpoint.profile).catch(() => undefined)
           navigate(`/chat/${result?.data?.memory_id}`, { replace: true })
         }
 
       } catch (error: unknown) {
+        if (!mounted.current) return;
+        interrupted.current = true;
         const errName = error instanceof Error ? error.name : "";
         if (errName !== "AbortError") {
-          toast.error("Failed to send message");
-          setAiMessage("");
-          if (options.appendUserMessage) {
-            setMessages((p) => {
-              const n = [...p];
-              const last = n[n.length - 1];
-              if (last?.role === "user" && last.text === text) {
-                n[n.length - 1] = { ...last, sendFailed: true };
+          reportFetcherError(error, "Failed to send message");
+          setMessages((previous) => {
+            const next = [...previous];
+            for (let index = next.length - 1; index >= 0; index--) {
+              if (next[index]?.role === "user" && next[index]?.text === text) {
+                next[index] = { ...next[index], sendFailed: true };
+                break;
               }
-              return n;
-            });
-          }
+            }
+            return next;
+          });
         }
         setStreamDone(true);
       } finally {
-        abortCtrl.current = null
+        abortCtrl.current = null;
+        sendingRef.current = false;
       }
     },
     [
@@ -322,6 +346,7 @@ export default function Conversation({ id, type = "memory" }) {
   }, [aiMessage, memory?.title, messages]);
 
   const handleRetryFailedMessage = useCallback(() => {
+    if (sendingRef.current) return;
     let failIdx = -1;
     for (let i = messages.length - 1; i >= 0; i--) {
       const row = messages[i] as { role?: string; sendFailed?: boolean };
@@ -360,6 +385,7 @@ export default function Conversation({ id, type = "memory" }) {
   );
 
   const handleStop = () => {
+    interrupted.current = true;
     stopSpokenReply();
     if (abortCtrl.current) {
       abortCtrl.current.abort();
@@ -419,7 +445,7 @@ export default function Conversation({ id, type = "memory" }) {
     setChrome({
       memory: memory ?? null,
       onOpenChatPreferences: memory?._id ? handleToggleSettingsDrawer : undefined,
-      spokenReplies: { enabled: spokenRepliesEnabled, supported: spokenRepliesSupported, onToggle: toggleSpokenReplies },
+      spokenReplies: { enabled: spokenRepliesEnabled, isLoading: spokenRepliesLoading, supported: spokenRepliesSupported, onToggle: toggleSpokenReplies },
       ...((isHostChat || isVoiceRoute) ?
         {
           hostChat: {
@@ -436,6 +462,7 @@ export default function Conversation({ id, type = "memory" }) {
     memory,
     handleToggleSettingsDrawer,
     spokenRepliesEnabled,
+    spokenRepliesLoading,
     spokenRepliesSupported,
     toggleSpokenReplies,
     setChrome,
@@ -459,6 +486,9 @@ export default function Conversation({ id, type = "memory" }) {
   if ((loadingMemory || loadingPrompt) && !isVoiceRoute) {
     return <Loader />
   }
+  if (!isNew && detailError && !memory?._id) {
+    return <div className="flex flex-1 items-center justify-center"><Button variant="outline" onClick={retryDetail}>Retry loading conversation</Button></div>;
+  }
   const isTyping = isSending || startingConversation;
 
   return (
@@ -469,13 +499,14 @@ export default function Conversation({ id, type = "memory" }) {
           ref={scrollContainerRef}
           onScroll={handleScroll}
         >
-          <div className={cn("mx-auto flex w-full min-w-0 max-w-[900px] flex-1 flex-col", isTopic ? "px-3 pt-3 sm:px-0" : "px-3 pt-6 sm:px-4 sm:pt-12")}>
+          <div className={cn("mx-auto flex w-full min-w-0 max-w-[810px] flex-1 flex-col", isTopic ? "px-3 pt-3 sm:px-0" : "px-3 pt-6 sm:px-4 sm:pt-12")}>
           {isNew && messages.length === 0 && voiceEvents.length === 0 && liveTimeline.length === 0 && !isTyping ? (
             <ChatEmptyState
               onPrompt={(text) => handleSend({ text, attachments: [] })}
             />
           ) : (
           <History
+            key={memory?._id ?? id}
             {...{
               memory,
               messages,
@@ -518,7 +549,7 @@ export default function Conversation({ id, type = "memory" }) {
           )}
           </div>
           <div className={cn("chat-composer-footer sticky bottom-0 z-[4] shrink-0 bg-background pb-[calc(max(0.5rem,env(safe-area-inset-bottom))_+_12px)]", isTopic ? "pt-2" : "pt-1")}>
-            <div className={cn("mx-auto w-full min-w-0 max-w-[900px] sm:px-4", isTopic ? "px-7" : "px-3")}>
+            <div className={cn("mx-auto w-full min-w-0 max-w-[810px] sm:px-4", isTopic ? "px-7" : "px-3")}>
               <ConversationChatinput
                 key={`chat-draft-${memory?._id ?? id}`}
                 onVoiceSessionChange={handleVoiceSessionChange}
