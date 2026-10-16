@@ -17,6 +17,11 @@ vi.mock("@/hooks/use-store", async (importOriginal) => {
 });
 
 describe("General", () => {
+  it("aligns the section tabs with the left edge of their container", () => {
+    renderWithProviders(<General />, { route: "/settings/general", auth: true });
+    expect(screen.getByRole("tablist", { name: "Personal information sections" })).toHaveClass("w-full", "justify-start", "p-0");
+  });
+
   it("renders profile grid including birthday and country", () => {
     renderWithProviders(<General />, {
       route: "/settings/general?view=profile",
@@ -24,7 +29,7 @@ describe("General", () => {
     });
 
     expect(screen.getByText("Display name")).toBeInTheDocument();
-    expect(screen.getByText("Tester")).toBeInTheDocument();
+    expect(screen.getAllByText("Tester")).toHaveLength(2);
     expect(screen.getByText("Email")).toBeInTheDocument();
     expect(screen.getByText("First name")).toBeInTheDocument();
     expect(screen.getByText("Test")).toBeInTheDocument();

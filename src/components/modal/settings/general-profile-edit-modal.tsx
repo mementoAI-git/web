@@ -165,7 +165,7 @@ export function GeneralProfileEditModal({ open, onOpenChange }: GeneralProfileEd
         role="dialog"
         aria-modal="true"
         aria-labelledby={headingId}
-        className="sky-card flex max-h-[min(90vh,720px)] w-full max-w-xl flex-col overflow-hidden rounded-2xl border border-v3-stroke-weak bg-bg-neutral shadow-lg"
+        className="sky-card flex max-h-[min(90vh,720px)] w-full max-w-xl flex-col overflow-hidden rounded-[var(--radius-modal)] border border-v3-stroke-weak bg-bg-neutral shadow-lg"
         onMouseDown={(e) => e.stopPropagation()}
       >
         <div className="flex shrink-0 items-start justify-between gap-4 border-b border-v3-stroke-weak px-5 py-4">
