@@ -127,7 +127,7 @@ export default function RecentActivitiesModal() {
   const activities = data?.data?.docs ?? [];
 
   return (
-    <div className="bg-white rounded-[24px] w-full max-w-md max-h-[85vh] flex flex-col overflow-hidden shadow-xl">
+    <div className="bg-white rounded-[var(--radius-modal)] w-full max-w-md max-h-[85vh] flex flex-col overflow-hidden shadow-xl">
       <div className="flex items-center justify-between px-6 py-5 border-b border-v3-stroke-weak">
         <h2 className="font-inter text-xl font-semibold text-v3-text-strong">
           Recent <i className="font-garamond font-normal italic">activities</i>

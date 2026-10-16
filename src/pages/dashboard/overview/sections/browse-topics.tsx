@@ -1,3 +1,7 @@
+import { useRequestRecovery } from "@/hooks/use-request-recovery";
+import { useTextReveal } from "@/components/motion/use-text-reveal";
+import "@/components/motion/text-reveal.css";
+import "../overview-motion.css";
 import { useRef, useState } from "react";
 import { Shuffle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -11,7 +15,8 @@ import { TypographyH2 } from "@/components/ui/typography";
 const TOPIC_LIMIT = 7;
 
 export default function BrowseTopics() {
-  const { data, isLoading } = useSWR(endpoint.overviewPrompt);
+  const { data, isLoading, error, mutate } = useSWR(endpoint.overviewPrompt);
+  const retry = useRequestRecovery("overview-topics", error, mutate, "Topics couldn’t be loaded. Try again.");
   const [order, setOrder] = useState<number[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const topics = data?.data ?? [];
@@ -20,6 +25,8 @@ export default function BrowseTopics() {
   const visibleTopics = indices
     .slice(0, TOPIC_LIMIT)
     .map((index) => topics[index]);
+
+  useTextReveal(scrollRef, isLoading ? "loading" : visibleTopics.map((topic) => topic._id).join(","));
 
   const shuffleTopics = () => {
     const next = topics.map((_, index) => index);
@@ -74,12 +81,14 @@ export default function BrowseTopics() {
           </Link>
         </div>
       </div>
+      {error && <Button variant="outline" onClick={retry}>Retry loading topics</Button>}
+      {!error && !isLoading && topics.length === 0 && <p className="text-text-neutral-weak">No topics available right now.</p>}
       <div className="relative w-full">
         <div className="relative w-full">
           {/* Bleed horizontal scroll to screen edges on small viewports; snap for predictable swipes */}
           <div
             ref={scrollRef}
-            className="-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-pl-4 scroll-pr-4 hide-scrollbar sm:mx-0 sm:scroll-pl-0 sm:scroll-pr-0 sm:gap-6"
+            className="overview-topics-reveal t-stagger -mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-pl-4 scroll-pr-4 hide-scrollbar sm:mx-0 sm:scroll-pl-0 sm:scroll-pr-0 sm:gap-6"
           >
             {isLoading ? (
               <>
@@ -93,11 +102,12 @@ export default function BrowseTopics() {
                 ))}
               </>
             ) : (
-              visibleTopics.map((t) => {
+              visibleTopics.map((t, index) => {
                 return (
                   <div
-                    className="flex w-[min(230px,calc(100vw-3rem))] shrink-0 snap-start flex-col sm:w-[230px]"
+                    className="t-stagger-line flex w-[min(230px,calc(100vw-3rem))] shrink-0 snap-start flex-col sm:w-[230px]"
                     key={t._id}
+                    style={{ transitionDelay: `calc(var(--stagger-stagger) * ${index})` }}
                   >
                     <CategoryCard
                       subtitle={t?.title}

@@ -1,3 +1,5 @@
+import "../overview-motion.css";
+import { MotionHeading } from "@/components/motion/text-reveal";
 import { toast } from "sonner";
 import { OverviewCaptureCard } from "./overview-capture-card";
 import { OverviewVoiceSlot, useVoiceSession } from "@/contexts/voice-session";
@@ -86,14 +88,14 @@ export default function WelcomeSection() {
     return () => window.clearInterval(id);
   }, [quickPending, mutateUserStats]);
   return (
-    <section className="flex w-full flex-col gap-6">
-      <div className="flex min-w-0 items-center gap-2.5">
+    <section className="overview-motion flex w-full flex-col gap-6">
+      <MotionHeading className="flex min-w-0 items-center gap-2.5">
         <img
           src={useBrightWelcomeIcon ? brightButtonIcon : moonfaceIcon}
           alt=""
           className="size-8 shrink-0 sm:size-[38px]"
         />
-        <TypographyH1 className="min-w-0 font-garamond text-[28px] font-normal leading-[1.2] tracking-normal text-text-neutral-strong sm:text-[40px] lg:text-[40px]">
+        <TypographyH1 className="t-stagger-line min-w-0 font-garamond text-[28px] font-normal leading-[1.2] tracking-normal text-text-neutral-strong sm:text-[40px] lg:text-[40px]">
           {greeting}
           {(user?.nickname || user?.first_name || user?.last_name) && (
             <i className="text-text-neutral-weak">
@@ -103,11 +105,11 @@ export default function WelcomeSection() {
             </i>
           )}
         </TypographyH1>
-      </div>
+      </MotionHeading>
       {voiceActive && voice ? <OverviewVoiceSlot /> : voiceActive ? (
           voiceProfile?.data ? <InlineVoiceSession variant="overview" memoryId={voiceProfile.data.primary_conversation_id ?? null} onEnd={() => setVoiceActive(false)} /> : (
             <div className="flex items-center gap-3">
-              <p role="status" className="text-sm text-text-neutral-weak">Preparing voice…</p>
+              <p role="status" className="text-sm text-text-neutral-weak"><span className="t-shimmer" data-text="Preparing voice…">Preparing voice…</span></p>
               <Button variant="ghost" onClick={() => setVoiceActive(false)}>Cancel</Button>
             </div>
           )

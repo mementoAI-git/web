@@ -37,7 +37,7 @@ describe("NotFoundPage", () => {
     renderWithProviders(<NotFoundPage />, { route: "/missing", auth: false });
 
     await user.click(screen.getByRole("button", { name: /go back/i }));
-    expect(mockNavigate).toHaveBeenCalledWith(-1);
+    expect(mockNavigate).toHaveBeenCalledWith("/overview", { replace: true });
 
     await user.click(screen.getByRole("button", { name: /overview/i }));
     expect(mockNavigate).toHaveBeenCalledWith("/overview");

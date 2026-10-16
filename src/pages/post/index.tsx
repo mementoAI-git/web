@@ -1,5 +1,8 @@
+import { Button } from "@/components/ui/button";
+import { useRequestRecovery } from "@/hooks/use-request-recovery";
+import { isUnavailablePublicLink } from "@/lib/public-link-status";
 import useSWR from "swr";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import Logo from "@/components/logo";
 import endpoint from "@/api/endpoint";
 import { useStore } from "@/hooks/use-store";
@@ -12,10 +15,13 @@ import type { IPublicMemory } from "@/utility/interface";
 export function PostPage() {
   const { auth, hydrated } = useStore();
   const { id = "" } = useParams();
-  const { data, error, isLoading } = useSWR<IResponse<IPublicMemory>>(
+  const { data, error, isLoading, mutate } = useSWR<IResponse<IPublicMemory>>(
     id ? `${endpoint.publicMemory}/${id}` : null,
+    { shouldRetryOnError: false },
   );
-  const memory = data?.data;
+  const temporaryError = error && !isUnavailablePublicLink(error);
+  const retry = useRequestRecovery(`public-story:${id}`, temporaryError, mutate, "This story couldn’t be loaded. Try again.");
+  const memory = isUnavailablePublicLink(error) ? undefined : data?.data;
 
   return (
     <div className="min-h-screen w-screen bg-background">
@@ -25,12 +31,7 @@ export function PostPage() {
           <div className="h-12 min-w-38 rounded-lg bg-gray-200" />
         ) : (
           isEmpty(auth?.access_token) && (
-            <button
-              className="flex h-12 cursor-pointer items-center justify-center rounded-lg bg-primary px-4 font-geist font-bold text-white"
-              type="button"
-            >
-              Join Memento
-            </button>
+            <Button asChild><Link to="/register">Join Memento</Link></Button>
           )
         )}
       </header>
@@ -40,8 +41,10 @@ export function PostPage() {
             <Loading />
           ) : memory ? (
             <Post memory={memory} />
+          ) : temporaryError ? (
+            <Button variant="outline" onClick={retry}>Retry loading story</Button>
           ) : (
-            <div className="rounded-xl border border-stroke-neutral-weak bg-white p-8 text-center">
+            <div className="rounded-xl border border-stroke-neutral-weak bg-bg-neutral-solid p-8 text-center">
               <h1 className="font-garamond text-3xl text-text-neutral-strong">
                 This memory isn’t available
               </h1>

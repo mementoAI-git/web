@@ -1,4 +1,4 @@
-import { screen } from "@testing-library/react";
+import { fireEvent, screen } from "@testing-library/react";
 import { Route, Routes } from "react-router-dom";
 import { vi } from "vitest";
 import { renderWithProviders } from "@/test";
@@ -17,11 +17,11 @@ vi.mock("@/components/modal", () => ({
 }));
 
 vi.mock("./dashboard-header", () => ({
-  DashboardHeader: () => <div data-testid="dashboard-header" />,
+  DashboardHeader: ({ onMenuClick }: { onMenuClick: () => void }) => <button data-sidebar-toggle="" data-testid="dashboard-header" onClick={onMenuClick}>Open sidebar</button>,
 }));
 
 vi.mock("./dashboard-sidebar", () => ({
-  DashboardSideBar: () => <div data-testid="dashboard-sidebar" />,
+  DashboardSideBar: ({ onCollapse, compact }: { onCollapse: () => void; compact?: boolean }) => <div data-testid="dashboard-sidebar" data-compact={compact}><button onClick={onCollapse}>Close sidebar</button></div>,
 }));
 
 vi.mock("./dashboard-chat-sidebar", () => ({
@@ -35,6 +35,33 @@ vi.mock("@/features/onboarding-groot", () => ({
 import DashboardLayout from "./layout";
 
 describe("DashboardLayout", () => {
+  it.each([["/people", true], ["/overview", false], ["/stories", false]])("uses a compact global rail only on %s", (route, compact) => {
+    renderWithProviders(<ChatSidebarProvider><DashboardLayout /></ChatSidebarProvider>, {route, auth: true});
+    expect(screen.getByTestId("dashboard-sidebar")).toHaveAttribute("data-compact", String(compact));
+  });
+  it("removes the closed mobile sidebar from keyboard navigation", () => {
+    const originalWidth = window.innerWidth;
+    Object.defineProperty(window, "innerWidth", { configurable: true, value: 390 });
+    try {
+      renderWithProviders(
+        <ChatSidebarProvider><DashboardLayout /></ChatSidebarProvider>,
+        { route: "/overview", auth: true },
+      );
+      const sidebar = screen.getByTestId("dashboard-sidebar").parentElement!;
+      expect(sidebar).toHaveAttribute("inert");
+      fireEvent.click(screen.getByRole("button", { name: "Open sidebar" }));
+      expect(sidebar).not.toHaveAttribute("inert");
+      const closeButton = screen.getByRole("button", { name: "Close sidebar" });
+      closeButton.focus();
+      fireEvent.click(closeButton);
+      expect(sidebar).toHaveAttribute("inert");
+      expect(screen.getByRole("button", { name: "Open sidebar" })).toHaveFocus();
+    } finally {
+      Object.defineProperty(window, "innerWidth", { configurable: true, value: originalWidth });
+    }
+  });
+
+
   it.each([
     ["/overview", true],
     ["/chat/new", true],

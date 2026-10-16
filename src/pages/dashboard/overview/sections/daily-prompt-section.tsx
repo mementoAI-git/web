@@ -1,3 +1,7 @@
+import { useRequestRecovery } from "@/hooks/use-request-recovery";
+import { useTextReveal } from "@/components/motion/use-text-reveal";
+import "@/components/motion/text-reveal.css";
+import "../overview-motion.css";
 import {
   avatarsForCard,
   createAvatarOrder,
@@ -11,7 +15,7 @@ import endpoint from "@/api/endpoint";
 import type { DashboardPromptSlot } from "@/utility/interface";
 import { Shuffle } from "lucide-react";
 import useFetcher from "@/hooks/use-fetcher";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { getCategory } from "@/utility";
 import { useModal } from "@/hooks/use-modal";
 import type { DailyPromptCapturePayload } from "@/lib/quick-capture-drafts";
@@ -80,19 +84,21 @@ export default function DailyPromptSection() {
   const { open } = useModal();
   const shuffleUrl = `${endpoint.prompts}/shuffle`;
   const { data: shuffleData, error: shuffleError, mutate: refreshShuffle } = useSWR(shuffleUrl);
+  const retryShuffle = useRequestRecovery("reflection-shuffle", shuffleError, refreshShuffle, "Shuffle availability couldn’t be loaded. Try again.");
   const { trigger: requestShuffle, isMutating: shuffling } = useFetcher(shuffleUrl);
   const usage = shuffleData?.data as { used: number; remaining: number; resets_at: string } | undefined;
   const offset = usage?.used ?? 0;
   useEffect(() => {
     if (!usage?.resets_at) return;
-    const timeout = window.setTimeout(() => { void refreshShuffle(); }, Math.max(1000, Date.parse(usage.resets_at) - Date.now() + 100));
+    const timeout = window.setTimeout(() => { void refreshShuffle().catch(() => undefined); }, Math.max(1000, Date.parse(usage.resets_at) - Date.now() + 100));
     return () => window.clearTimeout(timeout);
   }, [usage?.resets_at, refreshShuffle]);
   const [avatarOrder, setAvatarOrder] = useState(createAvatarOrder);
   const dateKey = dayjs().format("YYYY-MM-DD");
   const promptsUrl = `${endpoint.prompts}?date_key=${encodeURIComponent(dateKey)}`;
-  const { data, isLoading } = useSWR(promptsUrl);
+  const { data, isLoading, error, mutate } = useSWR(promptsUrl);
 
+  const retry = useRequestRecovery("daily-reflections", error, mutate, "Reflections couldn’t be loaded. Try again.");
   const rows = (data?.data ?? []) as DashboardPromptSlot[];
   const replyCounts = getPromptReplyCounts(rows);
   const openCapture = (row: DashboardPromptSlot) => {
@@ -108,6 +114,9 @@ export default function DailyPromptSection() {
   const visibleRows = rows.map(
     (_, index) => rows[(index + offset) % rows.length],
   );
+
+  const cardsRef = useRef<HTMLDivElement>(null);
+  useTextReveal(cardsRef, isLoading ? "loading" : visibleRows.map(promptBodyText).join("|"));
 
   return (
     <section
@@ -136,7 +145,7 @@ export default function DailyPromptSection() {
               if ((response.data as { allowed?: boolean })?.allowed) setAvatarOrder(refreshAvatarOrder);
             } catch {
               // The request helper reports the error; preserve the current cards.
-              void refreshShuffle();
+              void refreshShuffle().catch(() => undefined);
             }
           }}
           className="rounded-lg text-icon-neutral-strong"
@@ -145,14 +154,14 @@ export default function DailyPromptSection() {
         </Button>
       </div>
       <p id="reflection-shuffle-status" role="status" className="-mt-4 text-xs text-text-neutral-weak">
-        {usage ? (usage.remaining === 0 ? "Daily shuffle limit reached. Resets at midnight UTC." : `${usage.remaining} ${usage.remaining === 1 ? "shuffle" : "shuffles"} left today`) : shuffleError ? "Shuffle is temporarily unavailable." : "Checking shuffle allowance…"}
+        {usage ? (usage.remaining === 0 ? "Daily shuffle limit reached. Resets at midnight UTC." : `${usage.remaining} ${usage.remaining === 1 ? "shuffle" : "shuffles"} left today`) : shuffleError ? <Button variant="ghost" size="sm" onClick={retryShuffle}>Retry shuffle availability</Button> : "Checking shuffle allowance…"}
       </p>
-      <div className="grid min-w-0 grid-cols-1 gap-6 lg:grid-cols-3">
+      <div ref={cardsRef} className="overview-reflections-reveal t-stagger grid min-w-0 grid-cols-1 gap-6 lg:grid-cols-3">
         {isLoading
           ? Array.from({ length: 3 }, (_, index) => (
               <DailyPromptSkeleton key={index} />
             ))
-          : visibleRows.map((row) => {
+          : visibleRows.map((row, position) => {
               const index = rows.indexOf(row);
               const category =
                 row.slot_kind === "static"
@@ -168,7 +177,8 @@ export default function DailyPromptSection() {
                 <article
                   key={`${row.slot_kind}-${row.reflection_day_key}-${index}`}
                   aria-label={promptLabel(row, index)}
-                  className="relative sky-card flex min-h-[267px] min-w-0 flex-col justify-between gap-10 rounded-3xl border border-stroke-neutral-weak bg-fill-neutral-weaker p-[23px] transition-colors hover:bg-fill-neutral-weak"
+                  style={{ transitionDelay: `calc(var(--stagger-stagger) * ${position})` }}
+                  className="t-stagger-line relative sky-card flex min-h-[267px] min-w-0 flex-col justify-between gap-10 rounded-3xl border border-stroke-neutral-weak bg-fill-neutral-weaker p-[23px] transition-colors hover:bg-fill-neutral-weak"
                 >
                   <p className="font-garamond text-[24px] font-normal leading-[31px] text-text-neutral-strong">
                     {row.answered ? (
@@ -227,7 +237,8 @@ export default function DailyPromptSection() {
               );
             })}
       </div>
-      {!isLoading && rows.length === 0 && (
+      {error && <Button variant="outline" onClick={retry}>Retry loading reflections</Button>}
+      {!error && !isLoading && rows.length === 0 && (
         <TypographyMuted>
           No reflections available today. Explore more topics below.
         </TypographyMuted>

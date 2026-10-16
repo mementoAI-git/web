@@ -6,7 +6,8 @@ export default function NotFoundPage() {
   const navigate = useNavigate();
 
   const handleGoBack = () => {
-    navigate(-1);
+    if (typeof window.history.state?.idx === "number" && window.history.state.idx > 0) navigate(-1);
+    else navigate("/overview", { replace: true });
   };
 
   const handleGoOverview = () => {

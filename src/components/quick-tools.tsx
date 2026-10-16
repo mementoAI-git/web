@@ -1,3 +1,4 @@
+import "@/components/motion/navigation-motion.css";
 import { useLocation } from "react-router-dom";
 import { isSkyCardPage } from "@/pages/dashboard/component/sky-card-page";
 import type { ReactNode } from "react";
@@ -111,7 +112,7 @@ export function QuickTools({
         <SheetContent
           side="bottom"
           data-sky-card-page={cardScope}
-          className="sky-card quick-tools-panel max-h-[85dvh] overflow-y-auto rounded-t-3xl pb-[max(1.5rem,env(safe-area-inset-bottom))]"
+          className="sky-card quick-tools-panel navigation-sheet max-h-[85dvh] overflow-y-auto rounded-t-3xl pb-[max(1.5rem,env(safe-area-inset-bottom))]"
           onCloseAutoFocus={onCloseAutoFocus}
         >
           <SheetHeader>
@@ -136,7 +137,7 @@ export function QuickTools({
         sideOffset={8}
         aria-label="Quick tools"
         data-sky-card-page={cardScope}
-        className="sky-card quick-tools-panel max-h-[var(--radix-popover-content-available-height)] w-[315px] max-w-[calc(100vw-2rem)] overflow-y-auto"
+        className="sky-card quick-tools-panel navigation-menu max-h-[var(--radix-popover-content-available-height)] w-[315px] max-w-[calc(100vw-2rem)] overflow-y-auto"
         onCloseAutoFocus={onCloseAutoFocus}
       >
         <h2 className="font-semibold">Quick tools</h2>
