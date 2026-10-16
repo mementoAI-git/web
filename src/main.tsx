@@ -25,9 +25,10 @@ import { initializeTheme } from "@/lib/theme";
 // Dev-only: admin tools for previewing empty states.
 // Gated behind import.meta.env.DEV — Vite tree-shakes this from production.
 // eslint-disable-next-line react-refresh/only-export-components
-let DevAdminProvider: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => <>{children}</>;
+let DevAdminProvider: React.FC<{
+  children: React.ReactNode;
+  router?: typeof router;
+}> = ({ children }) => <>{children}</>;
 if (import.meta.env.DEV) {
   DevAdminProvider = (await import("@/dev/admin-tools")).DevAdminProvider;
 }
@@ -52,33 +53,39 @@ createRoot(document.getElementById("root")!, sentryHandler).render(
     <Sentry.ErrorBoundary fallback={<ErrorPage />}>
       <ThemeProvider>
         <StoreProvider>
-          <BackgroundMusicProvider>
-            <ModalProvider>
-              <ChatProvider>
-                <SWRConfig value={{ fetcher, shouldRetryOnError: shouldRetryApiError, errorRetryCount: 3 }}>
-                  <SubscriptionProvider>
-                    <FeatureFlagsProvider>
-                      <DevAdminProvider>
+          <SWRConfig
+            value={{
+              fetcher,
+              shouldRetryOnError: shouldRetryApiError,
+              errorRetryCount: 3,
+            }}
+          >
+            <DevAdminProvider router={router}>
+              <BackgroundMusicProvider>
+                <ModalProvider>
+                  <ChatProvider>
+                    <SubscriptionProvider>
+                      <FeatureFlagsProvider>
                         <RootAppShell>
                           <RouterProvider router={router} />
                         </RootAppShell>
-                      </DevAdminProvider>
-                    </FeatureFlagsProvider>
-                  </SubscriptionProvider>
-                  <Toaster
-                    position="top-center"
-                    closeButton
-                    toastOptions={{
-                      classNames: {
-                        success: "!text-success",
-                        error: "!text-danger",
-                      },
-                    }}
-                  />
-                </SWRConfig>
-              </ChatProvider>
-            </ModalProvider>
-          </BackgroundMusicProvider>
+                      </FeatureFlagsProvider>
+                    </SubscriptionProvider>
+                    <Toaster
+                      position="top-center"
+                      closeButton
+                      toastOptions={{
+                        classNames: {
+                          success: "!text-success",
+                          error: "!text-danger",
+                        },
+                      }}
+                    />
+                  </ChatProvider>
+                </ModalProvider>
+              </BackgroundMusicProvider>
+            </DevAdminProvider>
+          </SWRConfig>
         </StoreProvider>
       </ThemeProvider>
     </Sentry.ErrorBoundary>
