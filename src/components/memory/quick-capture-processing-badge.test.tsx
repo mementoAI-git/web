@@ -1,7 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { QuickCaptureProcessingBadge } from "./quick-capture-processing-badge";
-import { renderWithProviders } from "@/test";
 
 const baseMemory = {
   _id: "1",
@@ -21,7 +20,7 @@ const baseMemory = {
 
 describe("QuickCaptureProcessingBadge", () => {
   it("renders In progress when quick capture is pending enrichment", () => {
-    renderWithProviders(
+    render(
       <QuickCaptureProcessingBadge
         memory={{
           ...baseMemory,
@@ -34,7 +33,7 @@ describe("QuickCaptureProcessingBadge", () => {
   });
 
   it("renders In progress for daily prompt reflections pending enrichment", () => {
-    renderWithProviders(
+    render(
       <QuickCaptureProcessingBadge
         memory={{
           ...baseMemory,
@@ -49,7 +48,7 @@ describe("QuickCaptureProcessingBadge", () => {
   });
 
   it("renders nothing when enrichment is complete", () => {
-    const { container } = renderWithProviders(
+    const { container } = render(
       <QuickCaptureProcessingBadge
         memory={{
           ...baseMemory,
@@ -62,7 +61,7 @@ describe("QuickCaptureProcessingBadge", () => {
   });
 
   it("renders nothing for standard memories", () => {
-    const { container } = renderWithProviders(
+    const { container } = render(
       <QuickCaptureProcessingBadge memory={{ ...baseMemory, capture_source: "standard" }} />,
     );
     expect(container.firstChild).toBeNull();
