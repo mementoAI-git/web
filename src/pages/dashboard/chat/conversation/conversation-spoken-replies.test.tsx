@@ -20,7 +20,7 @@ function AudioControl() {
 }
 beforeEach(() => {
   send.mockReset();
-  send.mockResolvedValue({ data: { response: "A completed AI reply." } });
+  send.mockResolvedValue({ data: { response: "A completed AI reply.", memory_id: "test-memory" } });
   speak.mockClear();
   vi.stubGlobal("speechSynthesis", { speak, cancel: vi.fn() });
   vi.stubGlobal("SpeechSynthesisUtterance", class { constructor(public text: string) {} });
@@ -42,6 +42,10 @@ it("keeps text responses silent with the volume toggle off", async () => {
   const user = userEvent.setup();
   renderWithProviders(<ConversationChromeProvider><AudioControl /><Conversation id="new" /></ConversationChromeProvider>, { route: "/chat/new", auth: true });
   await user.click(screen.getByRole("button", { name: "Send test message" }));
-  expect(await screen.findByText("A completed AI reply.")).toBeInTheDocument();
+  // Markdown can replace its paragraph during a conversation rerender.
+  // Query and assert together so we check the currently mounted reply.
+  await waitFor(() => {
+    expect(screen.getByText("A completed AI reply.")).toBeInTheDocument();
+  });
   expect(speak).not.toHaveBeenCalled();
 });
