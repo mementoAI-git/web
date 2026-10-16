@@ -26,9 +26,11 @@ export default function BeneficiaryAndGroup() {
 
   const { data: beneficiariesRes } = useSWR<{ data?: IPagination<IBeneficiaryWithGroups> }>(
     SETTINGS_BENEFICIARIES_SWR_KEY,
+    { shouldRetryOnError: false },
   );
   const { data: groupsPage } = useSWR<IPagination<IGroup>>(groupsListKey(1), groupsListFetcher, {
     revalidateOnFocus: false,
+    shouldRetryOnError: false,
   });
 
   const beneficiaryCount = beneficiariesRes?.data?.totalDocs ?? beneficiariesRes?.data?.docs?.length ?? 0;
@@ -86,7 +88,7 @@ export default function BeneficiaryAndGroup() {
                   >
                     {label}
                     <span className={cn("rounded-full px-1.5 py-px text-[10px]", isActive ? "bg-fill-inverse-strong/20 text-white" : "bg-v3-fill-weak text-v3-text-weaker")}>
-                      {count}
+                      {(tab === "beneficiary" ? beneficiariesRes : groupsPage) ? count : "—"}
                     </span>
                   </button>
                 );
