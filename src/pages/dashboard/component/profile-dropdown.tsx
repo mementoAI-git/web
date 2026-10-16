@@ -1,6 +1,5 @@
 import { UserAvatar } from "@/components/user-avatar";
 import { useSubscription } from "@/contexts/subscription";
-import { isFeatureFlagAdminUser } from "@/contexts/feature-flags";
 import { useStore } from "@/hooks/use-store";
 import { isEmpty } from "@/utility";
 import { cn } from "@/utility";
@@ -17,7 +16,6 @@ import {
   ChevronsUpDown,
   ChevronRight,
   CircleHelp,
-  Flag,
   LogOut,
   Settings,
   Twitter,
@@ -50,7 +48,6 @@ export function ProfileDropdown({
     .join(" ")
     .trim();
   const photo = user?.picture_url || user?.picture;
-  const showAdminFlags = isFeatureFlagAdminUser(user?.email);
 
   const planLabel = !subscriptionLoading
     ? tier === "pro" || tier === "legacy"
@@ -120,15 +117,6 @@ export function ProfileDropdown({
             <Settings className={lucideItemIcon} strokeWidth={2} />
             <span className={itemLabelClass}>Settings</span>
           </DropdownMenuItem>
-          {showAdminFlags ? (
-            <DropdownMenuItem
-              onClick={() => navigate("/admin/feature-flags")}
-              className={itemRowClass}
-            >
-              <Flag className={lucideItemIcon} strokeWidth={2} />
-              <span className={itemLabelClass}>Feature flags</span>
-            </DropdownMenuItem>
-          ) : null}
           <DropdownMenuItem onClick={handleLogout} className={itemRowClass}>
             <LogOut className={lucideItemIcon} strokeWidth={2} />
             <span className={itemLabelClass}>Log out</span>

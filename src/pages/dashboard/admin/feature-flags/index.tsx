@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useFeatureFlagsAdmin } from "@/contexts/feature-flags-admin";
 import { useStore } from "@/hooks/use-store";
-import { isFeatureFlagAdminUser } from "@/contexts/feature-flags";
+import { isFeatureFlagAdminUser } from "@/contexts/legacy-feature-flags-admin-access";
 import { FlagsTable } from "@/components/admin/feature-flags/flags-table";
 import { FlagDetailPanel } from "@/components/admin/feature-flags/flag-detail-panel";
 import { BulkActions } from "@/components/admin/feature-flags/bulk-actions";

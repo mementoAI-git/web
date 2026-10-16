@@ -19,7 +19,6 @@ import { ErrorPage } from "./pages";
 import { RootAppShell } from "@/components/layouts/root-app-shell";
 import { SubscriptionProvider } from "@/contexts/subscription";
 import { FeatureFlagsProvider } from "@/contexts/feature-flags";
-import { FeatureFlagsAdminProvider } from "@/contexts/feature-flags-admin";
 import { ThemeProvider } from "@/contexts/theme";
 import { initializeTheme } from "@/lib/theme";
 // Dev-only: admin tools for previewing empty states.
@@ -58,13 +57,11 @@ createRoot(document.getElementById("root")!, sentryHandler).render(
                 <SWRConfig value={{ fetcher }}>
                   <SubscriptionProvider>
                     <FeatureFlagsProvider>
-                      <FeatureFlagsAdminProvider>
-                        <DevAdminProvider>
-                          <RootAppShell>
-                            <RouterProvider router={router} />
-                          </RootAppShell>
-                        </DevAdminProvider>
-                      </FeatureFlagsAdminProvider>
+                      <DevAdminProvider>
+                        <RootAppShell>
+                          <RouterProvider router={router} />
+                        </RootAppShell>
+                      </DevAdminProvider>
                     </FeatureFlagsProvider>
                   </SubscriptionProvider>
                   <Toaster
