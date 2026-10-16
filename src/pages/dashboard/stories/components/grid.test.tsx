@@ -1,4 +1,4 @@
-import { screen } from "@testing-library/react";
+import { fireEvent, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { renderWithProviders } from "@/test";
 import type { IMemory, IPagination } from "@/utility/interface";
@@ -47,6 +47,22 @@ function pagination(hasNextPage: boolean): IPagination<IMemory> {
 }
 
 describe("StoriesGrid", () => {
+  it("uses a video poster in the story card", () => {
+    const data = { ...pagination(false), docs: [{ ...memory, attachments: [{ _id: "video-1", name: "clip.mov", type: "video/quicktime", url: "/clip.mov", thumbnail: "/clip-poster.jpg", size: 100 }] }] };
+    renderWithProviders(<StoriesGrid data={data} />, { route: "/stories", auth: true });
+    expect(screen.getByRole("img", { name: memory.title })).toHaveAttribute("src", "/clip-poster.jpg");
+  });
+
+  it("shows a decoded video frame when a story has no poster or MIME type", () => {
+    const data = { ...pagination(false), docs: [{ ...memory, attachments: [{ _id: "video-1", name: "clip.mov", url: "/clip.mov", size: 100 }] }] };
+    renderWithProviders(<StoriesGrid data={data} />, { route: "/stories", auth: true });
+    const video = screen.getByLabelText(memory.title) as HTMLVideoElement;
+    Object.defineProperty(video, "duration", { value: 6 });
+    fireEvent.loadedMetadata(video);
+    expect(video.tagName).toBe("VIDEO");
+    expect(video.currentTime).toBeGreaterThan(0);
+    expect(video.muted).toBe(true);
+  });
   beforeEach(() => {
     Object.defineProperty(window, "innerWidth", {
       configurable: true,

@@ -1,4 +1,5 @@
-import type { ReactNode } from "react";
+import { storageKeys } from "@/utility/constant";
+import { useState, type ReactNode } from "react";
 import { describe, it, expect, vi } from "vitest";
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -19,6 +20,23 @@ vi.mock("@/hooks/use-modal", () => ({
 }));
 
 describe("StoriesHeader", () => {
+  it("keeps keyboard selection and focus while the view marker moves", async () => {
+    const user = userEvent.setup();
+    function ControlledHeader() {
+      const [mode, setMode] = useState("list");
+      return <StoriesHeader mode={mode} onChangeMode={setMode} />;
+    }
+    renderWithProviders(<ControlledHeader />, { route: "/stories", auth: true });
+    const list = screen.getByRole("radio", { name: "List view" });
+    const grid = screen.getByRole("radio", { name: "Grid view" });
+    await user.click(list);
+    await user.keyboard("{ArrowLeft}");
+    expect(grid).toHaveFocus();
+    await user.keyboard(" ");
+    expect(grid).toHaveAttribute("aria-checked", "true");
+    expect(localStorage.getItem(storageKeys.listmode)).toBe("grid");
+  });
+
   it("renders a sticky semantic search trigger with the shared shortcut", async () => {
     const user = userEvent.setup();
     renderWithProviders(
@@ -36,9 +54,7 @@ describe("StoriesHeader", () => {
       "top-4",
       "z-40",
       "pb-3",
-      "before:-top-4",
-      "before:h-4",
-      "before:bg-background",
+      "stories-search-surface",
     );
     expect(search.closest('[data-slot="stories-sticky-search"]')).not.toHaveClass(
       "z-20",

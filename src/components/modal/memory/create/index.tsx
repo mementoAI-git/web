@@ -60,6 +60,7 @@ import { useMemoryEditor } from "@/components/memory/text-area/use-memory-editor
 import { VideoRecorder } from "@/components/recorder/video";
 import type { ComponentRef, ReactNode } from "react";
 import { FileThumbnails } from "./file-thumbnails";
+import { disposableDraftUploads } from "./draft-attachments";
 import { getUploadDisplayKind, resolveUploadMimeType } from "./upload-display";
 import { CreateMemoryAssistantPanel } from "./create-memory-assistant-panel";
 import { CreateMemoryAssistantComingSoonPanel } from "./create-memory-assistant-coming-soon-panel";
@@ -75,6 +76,11 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Toggle } from "@/components/ui/toggle";
+import { Empty, EmptyHeader, EmptyTitle, EmptyDescription } from "@/components/ui/empty";
+import { getQuestionIdenticonUrl } from "@/features/explore/question-identicon";
+import draftClearIcon from "@/assets/drafts/clear-all.svg";
+import draftDivider from "@/assets/drafts/divider.svg";
+import "./drafts-menu.css";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -164,7 +170,6 @@ function CreateMemoryBase({
   variant = "next",
   presentation = "original",
 }: CreateMemoryBaseProps) {
-  const isDesktopComposer = variant === "next" && !isMobile;
   const isCenteredOverlay = presentation !== "original";
   const { close, open, push, registerCloseGuard } = useModal();
   const { user } = useStore();
@@ -188,6 +193,9 @@ function CreateMemoryBase({
   const [drafts, setDrafts] = useState<MemoryDraft[]>([]);
   const [savedDraftSignature, setSavedDraftSignature] = useState<string | null>(null);
   const activeDraftIdRef = useRef<string | null>(null);
+  const autosaveTimerRef = useRef<number | null>(null);
+  const discardingRef = useRef(false);
+  const [discarding, setDiscarding] = useState(false);
   const emojiPickerRef = useRef<HTMLDivElement>(null);
   const emojiPickerPortalRef = useRef<HTMLDivElement>(null);
   const [selectedAccess, setSelectedAccess] = useState<SearchResultItem[]>([]);
@@ -212,7 +220,7 @@ function CreateMemoryBase({
   }, [isDetailsOpen]);
 
   const { trigger, isMutating } = useSWRMutation(endpoint.memories, postFetcher);
-  const { files, handleUpload, handleDeleteFile, setFiles } = useFileUpload();
+  const { files, handleUpload, retryUpload, handleDeleteFile, setFiles } = useFileUpload({ retainFailures: true });
   const { data: beneficiariesRes } = useSWR(
     `${endpoint.beneficiaries}?page=1&limit=100`,
     paginatedResponseFetcher<IBeneficiary>,
@@ -230,6 +238,9 @@ function CreateMemoryBase({
   const { values, handleChange, handleSubmit, handleValue, setValues } = useForm({
     initial: { ...initial, ...data?.payload },
     async onSubmit(p) {
+      if (files.some((file) => !file.uploadedFile?._id || file.uploadFailed)) {
+        return toast.error("Wait for your uploads to finish, or retry or remove unfinished files.");
+      }
       if (!canUse("memory.create")) {
         return toast.error("Creating memories is currently disabled.");
       }
@@ -425,8 +436,9 @@ function CreateMemoryBase({
       .filter((file): file is NonNullable<IOnUploadPayload["uploadedFile"]> => Boolean(file));
 
     const timeout = window.setTimeout(() => {
-      const draftId = isDesktopComposer ? (activeDraftIdRef.current ?? uuidv4()) : uuidv4();
-      if (isDesktopComposer) activeDraftIdRef.current = draftId;
+      if (discardingRef.current) return;
+      const draftId = activeDraftIdRef.current ?? uuidv4();
+      activeDraftIdRef.current = draftId;
       const nextDraft: MemoryDraft = {
         id: draftId,
         title: values.title,
@@ -437,18 +449,17 @@ function CreateMemoryBase({
       };
 
       setDrafts((prev) => {
-        const remaining = isDesktopComposer
-          ? prev.filter((draft) => draft.id !== draftId)
-          : prev.filter((draft) => draft.title !== nextDraft.title || draft.body !== nextDraft.body);
+        const remaining = prev.filter((draft) => draft.id !== draftId);
         const next = [nextDraft, ...remaining].slice(0, MAX_DRAFTS);
         localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(next));
         setSavedDraftSignature(getDraftSignature(nextDraft));
         return next;
       });
     }, 900);
+    autosaveTimerRef.current = timeout;
 
     return () => window.clearTimeout(timeout);
-  }, [values.title, values.body, tags, editor, files, isDesktopComposer]);
+  }, [values.title, values.body, tags, editor, files]);
 
   useEffect(() => {
     if (variant !== "next" || isMobile) return;
@@ -505,8 +516,20 @@ function CreateMemoryBase({
     async (fileId: string) => {
       const f = files.find((f) => f.id === fileId);
       if (!f) return;
-      if (f.uploadedFile) await handleDeleteFile(f);
-      else setFiles((prev) => prev.filter((f) => f.id !== fileId));
+      try {
+        const stored = JSON.parse(localStorage.getItem(DRAFT_STORAGE_KEY) ?? "[]") as MemoryDraft[];
+        // Keep saved/restored assets alive; removal detaches them from this draft.
+        if (disposableDraftUploads([f], stored).length) await handleDeleteFile(f);
+        else setFiles((prev) => prev.filter((file) => file.id !== fileId));
+        const next = stored.map((draft) => draft.id === activeDraftIdRef.current
+          ? { ...draft, attachments: (draft.attachments ?? []).filter((attachment) => attachment._id !== f.uploadedFile?._id) }
+          : draft);
+        localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(next));
+        setDrafts(next);
+        setSavedDraftSignature(null);
+      } catch {
+        toast.error("Couldn’t remove the attachment. Please try again.");
+      }
     },
     [files, handleDeleteFile, setFiles],
   );
@@ -541,11 +564,26 @@ function CreateMemoryBase({
   const handleClose = () => close("create-memory");
 
   const handleConfirmClose = async () => {
-    setShowCloseConfirmation(false);
-    const deletes = files.filter((f) => f.uploadedFile).map((f) => handleDeleteFile(f));
-    await Promise.all(deletes);
-    setFiles([]);
-    close("create-memory", { force: true });
+    if (discardingRef.current) return;
+    discardingRef.current = true;
+    setDiscarding(true);
+    if (autosaveTimerRef.current !== null) window.clearTimeout(autosaveTimerRef.current);
+    try {
+      const stored = JSON.parse(localStorage.getItem(DRAFT_STORAGE_KEY) ?? "[]") as MemoryDraft[];
+      const remaining = stored.filter((draft) => draft.id !== activeDraftIdRef.current);
+      // Persist first: a storage failure must never leave a draft pointing at deleted files.
+      localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(remaining));
+      setDrafts(remaining);
+      const results = await Promise.allSettled(disposableDraftUploads(files, remaining).map(handleDeleteFile));
+      if (results.some((result) => result.status === "rejected")) toast.error("Story discarded, but some unused files couldn’t be cleaned up.");
+      setFiles([]);
+      setShowCloseConfirmation(false);
+      close("create-memory", { force: true });
+    } catch {
+      discardingRef.current = false;
+      setDiscarding(false);
+      toast.error("Couldn’t discard your draft. Your story is still here.");
+    }
   };
 
   const handleLinkClick = () => {
@@ -557,7 +595,7 @@ function CreateMemoryBase({
   };
 
   const handleLoadDraft = (draft: MemoryDraft) => {
-    if (isDesktopComposer) activeDraftIdRef.current = draft.id;
+    activeDraftIdRef.current = draft.id;
     setValues((prev) => ({ ...prev, title: draft.title, body: draft.body }));
     setTags(draft.tags || []);
     const draftFiles: IOnUploadPayload[] = (draft.attachments || []).map((attachment) => ({
@@ -576,10 +614,8 @@ function CreateMemoryBase({
       const raw = localStorage.getItem(storageKey);
       const d = raw ? parseQuickCaptureDraftJson(raw) : null;
       if (!d) return;
-      if (isDesktopComposer) {
-        activeDraftIdRef.current = null;
-        setSavedDraftSignature(null);
-      }
+      activeDraftIdRef.current = null;
+      setSavedDraftSignature(null);
       const note = typeof d.note === "string" ? d.note : "";
       const html = htmlFromQuickCaptureNote(note);
       const noteText = plainTextFromQuickCaptureNote(note);
@@ -612,7 +648,7 @@ function CreateMemoryBase({
       setSelectedAccess(access);
       setShareAudience("private");
     },
-    [beneficiaryDocs, editor, isDesktopComposer, setFiles, setValues, setTags, setSelectedAccess],
+    [beneficiaryDocs, editor, setFiles, setValues, setTags, setSelectedAccess],
   );
 
   const handleDeleteQuickCaptureDraft = useCallback((storageKey: string) => {
@@ -640,8 +676,14 @@ function CreateMemoryBase({
   };
 
   const handleClearAllDrafts = () => {
-    setDrafts([]);
+    if (autosaveTimerRef.current !== null) {
+      window.clearTimeout(autosaveTimerRef.current);
+      autosaveTimerRef.current = null;
+    }
     localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify([]));
+    scanQuickCaptureDraftKeys(user?.email).forEach((key) => localStorage.removeItem(key));
+    setDrafts([]);
+    setQuickCaptureDraftNonce((n) => n + 1);
     setSavedDraftSignature(null);
     activeDraftIdRef.current = null;
   };
@@ -650,8 +692,8 @@ function CreateMemoryBase({
     const uploadedAttachments = files
       .map((file) => file.uploadedFile)
       .filter((file): file is NonNullable<IOnUploadPayload["uploadedFile"]> => Boolean(file));
-    const draftId = isDesktopComposer ? (activeDraftIdRef.current ?? uuidv4()) : uuidv4();
-    if (isDesktopComposer) activeDraftIdRef.current = draftId;
+    const draftId = activeDraftIdRef.current ?? uuidv4();
+    activeDraftIdRef.current = draftId;
     const nextDraft: MemoryDraft = {
       id: draftId,
       title: values.title.trim(),
@@ -662,16 +704,14 @@ function CreateMemoryBase({
     };
 
     setDrafts((prev) => {
-      const remaining = isDesktopComposer
-        ? prev.filter((draft) => draft.id !== draftId)
-        : prev.filter((draft) => draft.title !== nextDraft.title || draft.body !== nextDraft.body);
+      const remaining = prev.filter((draft) => draft.id !== draftId);
       const next = [nextDraft, ...remaining].slice(0, MAX_DRAFTS);
       localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(next));
       return next;
     });
     setSavedDraftSignature(getDraftSignature(nextDraft));
     toast.success("Draft saved");
-  }, [editor, files, isDesktopComposer, tags, values.title]);
+  }, [editor, files, tags, values.title]);
 
   const handleSaveDraftAndClose = useCallback(() => {
     handleSaveDraft();
@@ -686,7 +726,7 @@ function CreateMemoryBase({
   const { from, to } = editor?.state.selection || { from: 0, to: 0 };
   const selectedText = editor?.state.doc.textBetween(from, to, " ") || "";
   const previousUrl = editor?.getAttributes("link").href || "";
-  const isUploading = files.some((f) => !f.uploadedFile);
+  const isUploading = files.some((f) => !f.uploadedFile?._id || f.uploadFailed);
   const bodyPlainText = editor?.getText() ?? "";
   const currentDraftSignature = getDraftSignature({
     title: values.title.trim(),
@@ -850,132 +890,84 @@ function CreateMemoryBase({
     </Button>
   );
 
+  const renderDraftRow = (key: string, title: string, metadata: string, onLoad: () => void, onDelete: () => void) => (
+    <div key={key} className="drafts-menu-row">
+      <Button type="button" onClick={onLoad} variant="ghost" className="drafts-menu-load">
+        <span className="drafts-menu-thumbnail" aria-hidden="true">
+          <img src={getQuestionIdenticonUrl(key)} alt="" width={40} height={40} loading="lazy" decoding="async" referrerPolicy="no-referrer" />
+        </span>
+        <span className="drafts-menu-copy">
+          <span className="drafts-menu-title">{title}</span>
+          <span className="drafts-menu-date">{metadata}</span>
+        </span>
+      </Button>
+      <Button type="button" onClick={onDelete} variant="ghost" className="drafts-menu-delete" title="Delete draft">
+        Delete
+      </Button>
+    </div>
+  );
+
   const draftsDropdownContent = (
     <DropdownMenuContent
       align="end"
       side="bottom"
       onEscapeKeyDown={variant === "next" && !isMobile ? (event) => event.stopPropagation() : undefined}
-      className="z-[220] w-[min(320px,calc(100vw-2rem))] max-h-[min(320px,50vh)] overflow-y-auto border border-stroke-neutral-weak bg-popover text-popover-foreground shadow-lg"
+      onKeyDownCapture={(event) => {
+        // The rows use native buttons, so let Tab move between their actions.
+        if (event.key === "Tab") event.stopPropagation();
+      }}
+      className="drafts-menu z-[220] w-[min(320px,calc(100vw-2rem))]"
     >
-      {quickCaptureKeys.length > 0 ? (
-        <>
-          <DropdownMenuLabel className="font-inter text-xs font-semibold text-text-neutral-strong">
-            Quick capture &amp; daily prompt
-          </DropdownMenuLabel>
-          {quickCaptureKeys.map((k) => {
-            const raw = typeof window !== "undefined" ? localStorage.getItem(k) : null;
-            const d = raw ? parseQuickCaptureDraftJson(raw) : null;
-            const preview = d ? quickCaptureDraftPreviewLine(d) : "(empty note)";
-            const kind = quickCaptureDraftKindLabel(k);
-            return (
-              <div
-                key={k}
-                className="flex items-start gap-2 rounded-lg px-2 py-1 transition-colors hover:bg-fill-neutral-weaker"
-              >
-                <Button
-                  type="button"
-                  onClick={() => handleLoadQuickCaptureDraft(k)}
-                  variant="ghost"
-                  size="sm"
-                  className="min-w-0 h-auto flex-1 justify-start rounded-lg px-1 py-1 text-left"
-                >
-                  <div className="truncate text-sm font-medium text-text-neutral-strong">{preview}</div>
-                  <div className="mt-0.5 text-[11px] text-text-neutral-weaker">{kind}</div>
-                </Button>
-                <Button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDeleteQuickCaptureDraft(k);
-                  }}
-                  variant="ghost"
-                  size="sm"
-                  className="mt-1 h-auto rounded-md px-2 py-1 text-[11px] text-text-neutral-weak hover:text-text-neutral-strong"
-                  title="Delete draft"
-                >
-                  Delete
-                </Button>
-              </div>
-            );
-          })}
-          {drafts.length > 0 ? <DropdownMenuSeparator /> : null}
-        </>
-      ) : null}
-      {drafts.length > 0 ? (
-        <>
-          <DropdownMenuLabel
-            className={cn(
-              "font-inter text-xs font-semibold text-text-neutral-strong",
-              isDesktopComposer && "flex items-center justify-between gap-2",
-            )}
-          >
-            <span>Story composer</span>
-            {isDesktopComposer ? (
-              <Button
-                type="button"
-                onClick={handleClearAllDrafts}
-                variant="ghost"
-                size="xs"
-              >
-                Clear all
-              </Button>
-            ) : null}
-          </DropdownMenuLabel>
-          {!isDesktopComposer ? (
-            <div className="mb-1 flex items-center justify-end px-2 py-1">
-              <Button
-                type="button"
-                onClick={handleClearAllDrafts}
-                variant="ghost"
-                size="sm"
-                className="h-auto px-1 py-0 text-xs text-text-neutral-weak hover:text-text-neutral-strong"
-              >
-                Clear all
-              </Button>
-            </div>
-          ) : null}
-          {drafts.map((draft) => (
-            <div
-              key={draft.id}
-              className="flex items-start gap-2 rounded-lg px-2 py-1 transition-colors hover:bg-fill-neutral-weaker"
-            >
-              <Button
-                type="button"
-                onClick={() => handleLoadDraft(draft)}
-                variant="ghost"
-                size="sm"
-                className="min-w-0 h-auto flex-1 justify-start rounded-lg px-1 py-1 text-left"
-              >
-                <div className="truncate text-sm font-medium text-text-neutral-strong">
-                  {draft.title || "Untitled draft"}
-                </div>
-                <div className="mt-0.5 truncate text-xs text-text-neutral-weak">
-                  {(draft.body || "").replace(/<[^>]+>/g, "").trim() || "No content"}
-                </div>
-                <div className="mt-1 text-[11px] text-text-neutral-weaker">
-                  {new Date(draft.updatedAt).toLocaleString()}
-                </div>
-              </Button>
-              <Button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDeleteDraft(draft.id);
-                }}
-                variant="ghost"
-                size="sm"
-                className="mt-1 h-auto rounded-md px-2 py-1 text-[11px] text-text-neutral-weak hover:text-text-neutral-strong"
-                title="Delete draft"
-              >
-                Delete
-              </Button>
-            </div>
-          ))}
-        </>
-      ) : null}
+      <DropdownMenuLabel className="drafts-menu-header flex items-center justify-between">
+        <span>Drafts</span>
+        {quickCaptureKeys.length > 0 || drafts.length > 0 ? (
+          <Button type="button" onClick={handleClearAllDrafts} variant="ghost" className="drafts-menu-clear">
+            Clear all
+            <img src={draftClearIcon} alt="" aria-hidden="true" width={16} height={16} />
+          </Button>
+        ) : null}
+      </DropdownMenuLabel>
+      <div className="drafts-menu-divider" aria-hidden="true">
+        <img src={draftDivider} alt="" width={380} height={1} />
+      </div>
+      <div
+        className="drafts-menu-list"
+        role="region"
+        aria-label="Saved drafts"
+        tabIndex={quickCaptureKeys.length + drafts.length > 4 ? 0 : -1}
+        onKeyDown={(event) => {
+          if (event.target === event.currentTarget && ["ArrowUp", "ArrowDown", "PageUp", "PageDown", "Home", "End"].includes(event.key)) {
+            event.stopPropagation();
+          }
+        }}
+      >
+      {quickCaptureKeys.map((key) => {
+        const raw = typeof window !== "undefined" ? localStorage.getItem(key) : null;
+        const draft = raw ? parseQuickCaptureDraftJson(raw) : null;
+        return renderDraftRow(
+          key,
+          draft ? quickCaptureDraftPreviewLine(draft) : "(empty note)",
+          quickCaptureDraftKindLabel(key),
+          () => handleLoadQuickCaptureDraft(key),
+          () => handleDeleteQuickCaptureDraft(key),
+        );
+      })}
+      {drafts.map((draft) => renderDraftRow(
+        draft.id,
+        draft.title || "Untitled draft",
+        new Date(draft.updatedAt).toLocaleString(undefined, { year: "numeric", month: "numeric", day: "numeric", hour: "numeric", minute: "2-digit" }),
+        () => handleLoadDraft(draft),
+        () => handleDeleteDraft(draft.id),
+      ))}
       {quickCaptureKeys.length === 0 && drafts.length === 0 ? (
-        <div className="px-3 py-2 text-sm text-text-neutral-weak">No drafts yet</div>
+        <Empty className="drafts-menu-empty p-6">
+          <EmptyHeader>
+            <EmptyTitle>Draft is empty</EmptyTitle>
+            <EmptyDescription>Your saved drafts will appear here.</EmptyDescription>
+          </EmptyHeader>
+        </Empty>
       ) : null}
+      </div>
     </DropdownMenuContent>
   );
 
@@ -1318,7 +1310,7 @@ function CreateMemoryBase({
           Images, video, and audio appear inline
         </p>
       </div>
-      <FileThumbnails files={mediaFiles} onRemove={handleRemoveFile} variant="media-inline" />
+      <FileThumbnails files={mediaFiles} onRemove={handleRemoveFile} onRetry={retryUpload} variant="media-inline" />
     </div>
   ) : null;
 
@@ -1327,7 +1319,7 @@ function CreateMemoryBase({
       <p className="font-inter text-xs font-semibold uppercase tracking-[0.08em] text-[rgba(15,7,0,0.5)]">
         Attachments
       </p>
-      <FileThumbnails files={documentFiles} onRemove={handleRemoveFile} />
+      <FileThumbnails files={documentFiles} onRemove={handleRemoveFile} onRetry={retryUpload} />
     </div>
   ) : null;
 
@@ -1389,14 +1381,14 @@ function CreateMemoryBase({
   const closeConfirmationPortal = variant === "next" && !isMobile ? (
     <Dialog
       open={showCloseConfirmation}
-      onOpenChange={(open) => setShowCloseConfirmation(open)}
+      onOpenChange={(open) => { if (!discarding) setShowCloseConfirmation(open); }}
     >
       <DialogContent
         showCloseButton={false}
         overlayClassName="z-[300]"
         className="z-[310] gap-5 rounded-[24px] border border-stroke-neutral-weak bg-[#fffdf9] sm:max-w-[460px]"
         onClick={(event) => event.stopPropagation()}
-        onEscapeKeyDown={(event) => event.stopPropagation()}
+        onEscapeKeyDown={(event) => { event.stopPropagation(); if (discarding) event.preventDefault(); }}
       >
         <DialogHeader>
           <DialogTitle className="font-geist text-xl font-semibold text-text-neutral-strong">
@@ -1410,17 +1402,18 @@ function CreateMemoryBase({
           <Button
             type="button"
             variant="ghost"
+            disabled={discarding}
             onClick={() => setShowCloseConfirmation(false)}
           >
             Keep editing
           </Button>
-          <Button type="button" variant="destructive" onClick={handleConfirmClose}>
-            Discard
+          <Button type="button" variant="destructive" disabled={discarding} onClick={handleConfirmClose}>
+            {discarding ? "Discarding…" : "Discard"}
           </Button>
           <Button
             type="button"
             onClick={handleSaveDraftAndClose}
-            disabled={isUploading}
+            disabled={isUploading || discarding}
           >
             Save draft and exit
           </Button>
@@ -1431,6 +1424,7 @@ function CreateMemoryBase({
     createPortal(
       <CloseWithFilesConfirmation
         open={showCloseConfirmation}
+        busy={discarding}
         close={() => setShowCloseConfirmation(false)}
         onConfirm={handleConfirmClose}
       />,
@@ -1899,6 +1893,7 @@ function CreateMemoryBase({
                       >
                         {inlineAttachmentFiles.length > 0 ? (
                           <FileThumbnails
+                            onRetry={retryUpload}
                             files={inlineAttachmentFiles}
                             onRemove={handleRemoveFile}
                             variant="media-inline"

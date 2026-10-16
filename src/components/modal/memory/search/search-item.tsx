@@ -59,11 +59,17 @@ export default function SearchItem({
   memory,
   searchTerm = "",
 }: SearchItemProps) {
-  const { close } = useModal();
+  const { close, open } = useModal();
   const navigate = useNavigate();
 
   const handleMemorySelect = () => {
-    navigate(`/memories/${memory?._id}`);
+    if (memory.type !== "conversation" && window.innerWidth >= 640) {
+      open?.("view-memory", { memoryId: memory._id });
+      return;
+    }
+    navigate(
+      `/${memory.type === "conversation" ? "chat" : "stories"}/${memory._id}`,
+    );
     close?.("search-memory");
   };
 

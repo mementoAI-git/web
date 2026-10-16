@@ -85,7 +85,7 @@ function VoiceWaveformProgress({
             key={i}
             className={cn(
               "min-w-0 flex-1 rounded-full transition-[background-color] duration-100",
-              filled ? "bg-fill-brand-strong" : "bg-white/22",
+              filled ? "bg-fill-brand-strong" : "bg-fill-inverse-strong/25",
             )}
             style={{ height: `${h}px`, maxHeight: "100%" }}
           />
@@ -302,20 +302,20 @@ export function QuickCaptureMediaStack({
               <button
                 type="button"
                 onClick={() => onRemove(f.id)}
-                className="absolute top-2.5 right-2.5 z-10 flex size-7 items-center justify-center rounded-full text-inverse-weaker transition-colors hover:bg-white/10 hover:text-inverse-strong"
+                className="absolute top-2.5 right-2.5 z-10 flex size-7 items-center justify-center rounded-full text-text-inverse-weaker transition-colors hover:bg-fill-inverse-weak hover:text-text-inverse-strong"
                 aria-label="Remove voice note"
               >
                 <TimesIcon width={8} height={8} />
               </button>
               <div className="min-w-0 pr-9">
-                <p className="truncate font-inter text-[13px] leading-snug text-inverse-strong">{title}</p>
+                <p className="truncate font-inter text-[13px] leading-snug text-text-inverse-strong">{title}</p>
                 <div className="mt-3 flex items-end gap-3">
                   <div className="min-w-0 flex-1 pt-0.5">
                     <VoiceWaveformProgress progress={progress} barHeights={bars} />
                   </div>
                   <button
                     type="button"
-                    className="flex size-10 shrink-0 items-center justify-center rounded-full text-inverse-strong transition-opacity hover:opacity-90"
+                    className="flex size-10 shrink-0 items-center justify-center rounded-full text-text-inverse-strong transition-opacity hover:opacity-90"
                     aria-label={playingId === f.id ? "Pause voice note" : "Play voice note"}
                     onClick={() => toggleVoicePlay(f.id, src)}
                   >
@@ -345,7 +345,7 @@ export function QuickCaptureMediaStack({
               </button>
               <button
                 type="button"
-                className="flex size-10 shrink-0 items-center justify-center rounded-full bg-white shadow-sm"
+                className="flex size-10 shrink-0 items-center justify-center rounded-full bg-fill-neutral-weak text-icon-neutral-strong shadow-sm hover:bg-fill-neutral-weaker"
                 aria-label={playingId === f.id ? "Pause audio" : "Play audio"}
                 onClick={() => toggleAudioPlay(f.id, src)}
               >

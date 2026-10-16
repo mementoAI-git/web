@@ -107,6 +107,7 @@ export default function AudioPlayer({
             </span>
             <div className="flex items-center gap-2">
               <button
+                aria-label={isMuted ? "Unmute audio" : "Mute audio"}
                 onClick={toggleMute}
                 className="flex items-center justify-center rounded transition-colors hover:bg-grey-100 p-1"
                 type="button"
@@ -117,6 +118,7 @@ export default function AudioPlayer({
                 />
               </button>
               <input
+                aria-label="Audio volume"
                 type="range"
                 min="0"
                 max="1"
@@ -136,6 +138,7 @@ export default function AudioPlayer({
         <div className="flex w-full items-center justify-between">
           <button
             type="button"
+            aria-label="Skip back 15 seconds"
             onClick={() => backward()}
             className="flex size-11 cursor-pointer items-center justify-center rounded-full bg-grey-500 transition-all duration-200 hover:scale-[97%] hover:bg-grey-400"
           >
@@ -154,6 +157,7 @@ export default function AudioPlayer({
           </button>
           <button
             type="button"
+            aria-label="Skip forward 15 seconds"
             onClick={() => forward()}
             className="flex size-11 cursor-pointer items-center justify-center rounded-full bg-grey-500 transition-all duration-200 hover:scale-[97%] hover:bg-grey-400"
           >

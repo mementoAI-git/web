@@ -1,3 +1,5 @@
+import { Button } from "@/components/ui/button";
+import { DeletedMemoryStatus } from "./deleted-memory-status";
 import DOMPurify from "isomorphic-dompurify";
 import { DoubleHeartIcon } from "@/components/icons";
 import { ensureLinksOpenInNewTab } from "@/utility";
@@ -19,6 +21,8 @@ import { QuickCaptureProcessingBadge } from "@/components/memory/quick-capture-p
 import useIntersectionObserver from "@/hooks/use-intersection-observer";
 import Spinner from "@/components/spinner";
 import { TypographyMuted } from "@/components/ui/typography";
+import VideoThumbnail from "@/components/video-thumbnail";
+import { classifyConversationFile } from "@/pages/dashboard/chat/conversation/conversation-assets";
 
 import { PlaySolidIcon, WaveIcon } from "@/components/icons";
 import recordBanner from "@/assets/icon/record-banner.png";
@@ -92,20 +96,21 @@ function StoriesGridItem({
 
   const handleClick = useCallback(
     (e: React.MouseEvent) => {
+      if (memory.status === "deleted") { e.preventDefault(); return; }
       if (!isMobile) {
         e.preventDefault();
         open("view-memory", { memoryId: memory._id });
       }
     },
-    [isMobile, open, memory._id],
+    [isMobile, open, memory._id, memory.status],
   );
 
   const bannerMediaIndex = memory.attachments.findIndex(
-    (a) => a.type.includes("image") || a.type.includes("video"),
+    (a) => ["image", "video"].includes(classifyConversationFile(a)),
   );
   const bannerMedia = memory.attachments[bannerMediaIndex];
   const audioMediaIndex = memory.attachments.findIndex((a) =>
-    a.type.includes("audio"),
+    classifyConversationFile(a) === "audio",
   );
   const audioMedia = memory.attachments[audioMediaIndex];
   const storyTitle = getStoryCardTitle(memory);
@@ -140,11 +145,11 @@ function StoriesGridItem({
 
   const renderContent = () => {
     if (bannerMedia) {
-      const isVideo = bannerMedia.type.includes("video");
+      const isVideo = classifyConversationFile(bannerMedia) === "video";
       return (
         <div
           className={cn(
-            "relative w-full overflow-hidden rounded-[20px] border border-v3-stroke-weak bg-v3-fill-weaker shadow-sm transition-[filter] duration-300 group-hover/card:brightness-[0.97]",
+            "relative w-full overflow-hidden rounded-[20px] border border-v3-stroke-weak bg-v3-fill-weaker shadow-sm transition-[filter] duration-150 motion-reduce:transition-none group-hover/card:brightness-[0.97]",
             mediaAspectClass,
           )}
         >
@@ -154,14 +159,14 @@ function StoriesGridItem({
             className={memory.attachments.length > 1 ? "top-12" : undefined}
           />
           {renderMediaCounter(bannerMediaIndex)}
-          <img
+          {isVideo ? <VideoThumbnail key={bannerMedia._id} file={bannerMedia} label={storyTitle} memoryId={memory._id} className="h-full w-full object-cover" /> : <img
             src={bannerMedia.url}
             className="h-full w-full object-cover"
             alt={storyTitle}
             loading="lazy"
-          />
+          />}
           {isVideo ? (
-            <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/10 transition-opacity group-hover/card:bg-black/25">
+            <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/10 transition-colors duration-150 motion-reduce:transition-none group-hover/card:bg-black/25">
               <div className="rounded-full border border-white/40 bg-white/30 p-3 shadow-lg backdrop-blur-md">
                 <PlaySolidIcon className="size-8 text-white" />
               </div>
@@ -175,7 +180,7 @@ function StoriesGridItem({
       return (
         <div
           className={cn(
-            "relative flex w-full items-center justify-center overflow-hidden rounded-[20px] border border-v3-stroke-weak bg-v3-fill-strong shadow-sm transition-[filter] duration-300 group-hover/card:brightness-[0.97]",
+            "relative flex w-full items-center justify-center overflow-hidden rounded-[20px] border border-v3-stroke-weak bg-v3-fill-strong shadow-sm transition-[filter] duration-150 motion-reduce:transition-none group-hover/card:brightness-[0.97]",
             mediaAspectClass,
           )}
         >
@@ -209,7 +214,7 @@ function StoriesGridItem({
       <div
         data-slot="story-text-card"
         className={cn(
-          "relative flex w-full flex-col gap-3 overflow-hidden rounded-[20px] border border-stroke-neutral-weaker p-5 shadow-sm transition-[filter] duration-300 group-hover/card:brightness-[0.97]",
+          "relative flex w-full flex-col gap-3 overflow-hidden rounded-[20px] border border-stroke-neutral-weaker p-5 shadow-sm transition-[filter] duration-150 motion-reduce:transition-none group-hover/card:brightness-[0.97]",
           "backdrop-blur-md",
           textCardSurfaceClass,
           isTallTextCard ? "aspect-[3/4]" : textCardMinHeightClass,
@@ -270,13 +275,14 @@ function StoriesGridItem({
         to={`/stories/${memory._id}`}
         className="block rounded-[20px] outline-none"
         onClick={handleClick}
+        aria-disabled={memory.status === "deleted" || undefined}
         aria-label={`Open story: ${storyTitle}`}
       >
         <div className="relative overflow-hidden rounded-[20px]">
           {renderContent()}
           <div
             data-slot="story-hover-overlay"
-            className="pointer-events-none absolute inset-0 rounded-[20px] bg-black/20 opacity-0 transition-opacity duration-300 group-hover/card:opacity-100"
+            className="pointer-events-none absolute inset-0 rounded-[20px] bg-black/20 opacity-0 transition-opacity duration-150 motion-reduce:transition-none group-hover/card:opacity-100"
             aria-hidden
           />
         </div>
@@ -293,6 +299,7 @@ function StoriesGridItem({
           <MemoryItemActions memory={memory} trigger="horizontal" />
         </div>
       </div>
+      {memory.status === "deleted" && <div className="mt-1 px-0.5"><DeletedMemoryStatus memory={memory} showDeletedAt /></div>}
     </article>
   );
 }
@@ -302,6 +309,7 @@ interface StoriesGridProps {
   hasMore?: boolean;
   isLoadingMore?: boolean;
   onLoadMore?: () => void;
+  onRetry?: () => void;
 }
 
 export default function StoriesGrid({
@@ -309,6 +317,7 @@ export default function StoriesGrid({
   hasMore = false,
   isLoadingMore = false,
   onLoadMore,
+  onRetry,
 }: StoriesGridProps) {
   const [viewportWidth, setViewportWidth] = useState(
     () => typeof window !== "undefined" ? window.innerWidth : DEFAULT_VIEWPORT_WIDTH,
@@ -467,7 +476,9 @@ export default function StoriesGrid({
         className="flex min-h-10 w-full items-center justify-center py-2"
         aria-live="polite"
       >
-        {isLoadingMore ? (
+        {onRetry ? (
+          <Button variant="outline" onClick={onRetry}>Retry loading stories</Button>
+        ) : isLoadingMore ? (
           <Spinner loading />
         ) : hasMore ? (
           <span className="sr-only">Loading more items when visible</span>
