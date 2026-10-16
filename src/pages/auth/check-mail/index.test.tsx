@@ -1,3 +1,4 @@
+import { toast } from "sonner";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -5,6 +6,7 @@ import { http, HttpResponse } from "msw";
 import { renderWithProviders } from "@/test";
 import { server } from "@/test/mocks/server";
 import CheckMailPage from "./index";
+vi.mock("sonner", () => ({ toast: { error: vi.fn() } }));
 const API = "http://localhost:3000/api";
 const mockNavigate = vi.fn();
 vi.mock("react-router-dom", async (importOriginal) => ({
@@ -58,9 +60,8 @@ describe("CheckMailPage recovery code", () => {
     await user.click(screen.getByLabelText("Digit 1 of 6"));
     await user.paste("123456");
     await user.click(screen.getByRole("button", { name: "Verify code" }));
-    expect(await screen.findByRole("alert")).toHaveTextContent(
-      /invalid or expired code/i,
-    );
+    await waitFor(() => expect(toast.error).toHaveBeenCalled());
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     expect(mockNavigate).not.toHaveBeenCalled();
   });
   it("resends and prevents repeated resend clicks during cooldown", async () => {

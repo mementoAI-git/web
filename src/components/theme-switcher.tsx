@@ -20,7 +20,7 @@ const themes = [
   { value: "system", label: "System", Icon: Monitor },
 ] as const;
 
-export function ThemeSwitcher({ className, lightIcon, darkIcon }: { className?: string; lightIcon?: ReactNode; darkIcon?: ReactNode } = {}) {
+export function ThemeSwitcher({ className, contentClassName, lightIcon, darkIcon }: { className?: string; contentClassName?: string; lightIcon?: ReactNode; darkIcon?: ReactNode } = {}) {
   const { theme, resolvedTheme, setTheme } = useTheme();
   const icon = theme === "deep-sky" ? <CloudMoon aria-hidden="true" />
     : theme === "light-sky" ? <CloudSun aria-hidden="true" />
@@ -34,7 +34,7 @@ export function ThemeSwitcher({ className, lightIcon, darkIcon }: { className?: 
           {icon}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
+      <DropdownMenuContent align="end" className={contentClassName}>
         <DropdownMenuLabel>Appearance</DropdownMenuLabel>
         <DropdownMenuRadioGroup value={theme} onValueChange={(value) => setTheme(value as ThemePreference)}>
           {themes.map(({ value, label, Icon }) => (

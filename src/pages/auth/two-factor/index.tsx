@@ -1,14 +1,15 @@
+import { authRedirect } from "@/utility/auth-redirect";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Loader2, ShieldCheck } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import endpoint from "@/api/endpoint";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useStore } from "@/hooks/use-store";
 import { clearCache } from "@/utility";
 import { toast } from "sonner";
-import AuthLayout from "../components/layout";
+import AuthEntryLayout from "../components/entry-layout";
+import { AuthFieldMotion } from "../components/auth-motion";
 import { extractSession } from "@/api/contract-adapter";
 import { getMementoClientHeaders } from "@/api/client-metadata";
 
@@ -21,6 +22,9 @@ export default function TwoFactorPage() {
 
   const [code, setCode] = useState(["", "", "", "", "", ""]);
   const [loading, setLoading] = useState(false);
+  const pending = useRef(false);
+  const request = useRef<AbortController | null>(null);
+  useEffect(() => () => request.current?.abort(), []);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   useEffect(() => {
@@ -54,11 +58,15 @@ export default function TwoFactorPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const fullCode = code.join("");
-    if (fullCode.length < 6) return;
+    if (pending.current || !twoFaToken || fullCode.length < 6) return;
+    pending.current = true;
+    const controller = new AbortController();
+    request.current = controller;
 
     setLoading(true);
     try {
       const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}${endpoint.verify2FALogin}`, {
+        signal: controller.signal,
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -67,9 +75,10 @@ export default function TwoFactorPage() {
         body: JSON.stringify({ two_fa_token: twoFaToken, code: fullCode }),
       });
       const result = await res.json();
-      if (!res.ok) {
+      if (controller.signal.aborted) return;
+      if (!res.ok || result?.success === false) {
         toast.error(result?.message ?? "Invalid code");
-        setCode(["", "", "", "", "", ""]);
+        if (res.status === 400 || res.status === 401) setCode(["", "", "", "", "", ""]);
         inputRefs.current[0]?.focus();
         return;
       }
@@ -77,34 +86,27 @@ export default function TwoFactorPage() {
       if (!session) throw new Error("Authentication session is missing");
       toast.success(result?.message ?? "Logged in");
       setAuth?.(session);
-      await clearCache();
-      navigate(session.onboarded ? "/overview" : "/onboarding", { replace: true });
+      await clearCache().catch(() => undefined);
+      if (controller.signal.aborted) return;
+      navigate(session.onboarded ? authRedirect(searchParams.get("redirect")) : "/onboarding", { replace: true });
     } catch {
-      toast.error("Something went wrong. Please try again.");
+      if (!controller.signal.aborted) toast.error("Something went wrong. Please try again.");
     } finally {
-      setLoading(false);
+      pending.current = false;
+      if (!controller.signal.aborted) setLoading(false);
     }
   }
 
   return (
-    <AuthLayout
-      title="Two-factor authentication"
-      icon={<ShieldCheck className="size-7 sm:size-8" strokeWidth={1.75} aria-hidden />}
+    <AuthEntryLayout
+      title={<>Two-factor <em>authentication</em></>}
+      recovery
       subtitle="Enter the 6-digit code from your authenticator app."
-      footer={
-        <button
-          type="button"
-          className="font-inter text-sm text-primary underline underline-offset-4"
-          onClick={() => navigate("/login")}
-        >
-          Back to login
-        </button>
-      }
     >
-      <Card className="border border-v3-stroke-weak bg-v3-fill-weaker/30 py-0 shadow-none">
-        <CardContent className="p-4 sm:p-5">
-          <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-            <div className="flex justify-between gap-1.5 sm:gap-2" onPaste={handlePaste}>
+          <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+            <fieldset disabled={loading} className="min-w-0" onPaste={handlePaste}>
+              <legend className="sr-only">Six-digit authenticator code</legend>
+              <AuthFieldMotion className="auth-recovery-code flex gap-2 px-4">
               {code.map((digit, i) => (
                 <Input
                   key={i}
@@ -113,19 +115,22 @@ export default function TwoFactorPage() {
                   }}
                   type="text"
                   inputMode="numeric"
-                  autoComplete="one-time-code"
+                  autoComplete={i === 0 ? "one-time-code" : "off"}
                   maxLength={1}
                   value={digit}
+                  disabled={loading}
                   onChange={(e) => handleDigit(i, e.target.value)}
                   onKeyDown={(e) => handleKeyDown(i, e)}
-                  className="h-12 rounded-xl px-0 text-center font-inter text-lg font-semibold tabular-nums sm:h-14 sm:text-xl"
+                  className="min-w-0 flex-1 rounded-[10px] text-center tabular-nums"
+                  onFocus={(event) => event.target.select()}
                   aria-label={`Digit ${i + 1} of 6`}
                 />
               ))}
-            </div>
+              </AuthFieldMotion>
+            </fieldset>
             <Button
               type="submit"
-              className="h-11 w-full rounded-full"
+              className="h-11 w-full rounded-lg"
               disabled={code.join("").length < 6 || loading}
             >
               {loading ?
@@ -136,8 +141,6 @@ export default function TwoFactorPage() {
               : "Verify"}
             </Button>
           </form>
-        </CardContent>
-      </Card>
-    </AuthLayout>
+    </AuthEntryLayout>
   );
 }

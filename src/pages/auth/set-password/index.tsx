@@ -1,8 +1,10 @@
 "use client";
 
+import { AuthFieldMotion, PasswordVisibilityIcon } from "../components/auth-motion";
+
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import * as yup from "yup";
 import endpoint from "@/api/endpoint";
 import { Button } from "@/components/ui/button";
@@ -72,7 +74,7 @@ export default function SetPasswordPage() {
     >
       <form onSubmit={handleSubmit} className="flex flex-col gap-5">
         {(["password", "confirm_password"] as const).map((name) => (
-          <div key={name} className="grid gap-1.5">
+          <AuthFieldMotion error={errors[name]} key={name} className="grid gap-1.5">
             <Label htmlFor={`set-${name}`} className="text-sm">
               {name === "password" ? "New password" : "Confirm password"}
             </Label>
@@ -109,11 +111,7 @@ export default function SetPasswordPage() {
                   }))
                 }
               >
-                {visible[name] ? (
-                  <EyeOff className="size-4" aria-hidden />
-                ) : (
-                  <Eye className="size-4" aria-hidden />
-                )}
+                <PasswordVisibilityIcon visible={visible[name]} />
               </button>
             </div>
             {name === "password" && (
@@ -133,7 +131,7 @@ export default function SetPasswordPage() {
                 {errors[name]}
               </p>
             )}
-          </div>
+          </AuthFieldMotion>
         ))}
         <Button
           type="submit"

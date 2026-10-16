@@ -70,6 +70,7 @@ export default {
 
   // memories
   memories: "/memories",
+  memorySearch: "/memories/search",
   publicMemory: "/memories/public",
   memoriesQuickCapture: "/memories/quick-capture",
   memory: "/memories/:id",
@@ -87,6 +88,7 @@ export default {
   aiPrompt: "/ai/prompt",
   aiVoices: "/ai/voices",
   aiVoicePreview: "/ai/voice-preview",
+  spokenReply: "/ai/spoken-reply",
   aiGreet: "/ai/prompt/greet",
   aiPromptMessage: "/ai/prompt/messages",
   transcription: "/ai/transcribe-audio",

@@ -1,8 +1,9 @@
 "use client";
 
 import { useStore } from "@/hooks/use-store";
+import { authService } from "@/utility/auth-service";
 import { clearCache } from "@/utility";
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 export const useLogout = () => {
@@ -10,16 +11,20 @@ export const useLogout = () => {
   const [loading, setLoading] = useState(false);
   const { unsetAuth } = useStore();
 
-  const logout = useCallback(async () => {
+  const pending = useRef(false);
+  const logout = useCallback(async (options: { allDevices?: boolean; localOnly?: boolean } = {}) => {
+    if (pending.current) return;
+    pending.current = true;
     try {
       setLoading(true);
-      await unsetAuth?.();
-    } catch (error) {
-      console.error("Logout failed:", error);
+      if (options.allDevices) await authService.logoutAllDevices();
+      else if (options.localOnly) authService.clearAuth();
+      else await unsetAuth?.();
+      await clearCache().catch(() => undefined);
+      navigate("/login", { replace: true });
     } finally {
+      pending.current = false;
       setLoading(false);
-      clearCache();
-      navigate("/login");
     }
   }, [navigate, unsetAuth]);
 

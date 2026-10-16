@@ -11,6 +11,7 @@ import { router } from "./router";
 import { ModalProvider } from "./hooks/use-modal";
 import { SWRConfig } from "swr";
 import { Toaster } from "sonner";
+import { shouldRetryApiError } from "@/api/retry-policy";
 import { fetcher } from "@/api/fetcher";
 import { StoreProvider } from "@/hooks/use-store";
 import { ChatProvider } from "@/hooks/use-chat";
@@ -54,7 +55,7 @@ createRoot(document.getElementById("root")!, sentryHandler).render(
           <BackgroundMusicProvider>
             <ModalProvider>
               <ChatProvider>
-                <SWRConfig value={{ fetcher }}>
+                <SWRConfig value={{ fetcher, shouldRetryOnError: shouldRetryApiError, errorRetryCount: 3 }}>
                   <SubscriptionProvider>
                     <FeatureFlagsProvider>
                       <DevAdminProvider>

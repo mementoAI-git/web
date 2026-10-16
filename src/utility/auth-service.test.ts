@@ -106,6 +106,14 @@ describe("AuthService", () => {
       expect(authService.getCurrentPath()).toBe("/dashboard?tab=stories");
     });
 
+    it("does not reload an already open login page", () => {
+      (window.location as { pathname: string }).pathname = "/login";
+      const setHref = vi.fn();
+      Object.defineProperty(window.location, "href", { set: setHref, configurable: true });
+      authService.redirectToLoginWithPath();
+      expect(setHref).not.toHaveBeenCalled();
+    });
+
     it("returns empty string when on /login page", () => {
       (window.location as { pathname: string; search: string }).pathname =
         "/login";

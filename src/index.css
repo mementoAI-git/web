@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "./components/modal/overlay-controls.css";
 @plugin "@tailwindcss/typography";
 @config "../tailwind.config.ts";
 @custom-variant dark (&:where(.dark, .dark *));
@@ -186,6 +187,8 @@
   /* Overlay/Backdrop Colors */
   --overlay-backdrop: rgba(94, 94, 94, 0.5);
   --overlay-backdrop-dark: rgba(0, 0, 0, 0.6);
+  /* Media viewing needs consistent dimming across all appearance themes. */
+  --overlay-media-backdrop: rgba(0, 0, 0, 0.8);
 
   /* Selected tab controls retain the existing dark-on-light presentation. */
   --fill-tab-active: var(--fill-neutral-strong);
@@ -340,6 +343,7 @@
 
   /* SHADCN — aligned to V3 semantic tokens (docs/COLOR_INVENTORY.md, .cursor/rules/v3-color-system-usage.mdc) */
   --radius: 0.5rem;
+  --radius-modal: 1rem;
   --background: #ffffff;
   --foreground: var(--text-neutral-strong);
   --card: #ffffff;
@@ -507,6 +511,11 @@
   backdrop-filter: blur(20px);
 }
 
+/* A quiet neutral tint avoids stacking another white surface inside pricing. */
+.light-sky .pricing-billing-period {
+  background-color: color-mix(in srgb, var(--fill-neutral-strong) 8%, transparent);
+}
+
 .light-sky .chat-reply-surface {
   padding: 10px 14px;
   border-radius: 18px;
@@ -653,6 +662,7 @@
   /* Overlay Colors */
   --color-overlay-backdrop: var(--overlay-backdrop);
   --color-overlay-backdrop-dark: var(--overlay-backdrop-dark);
+  --color-overlay-media-backdrop: var(--overlay-media-backdrop);
 
   --color-blue-1: var(--color-blue-1);
   --color-blue-2: var(--color-blue-2);
@@ -989,7 +999,7 @@ body {
   }
 
   .modal-container {
-    @apply relative !w-[95%] sm:w-full max-w-[95vw] sm:max-w-[480px] md:max-w-[618px] rounded-2xl bg-white p-4 sm:p-8 md:p-10;
+    @apply relative !w-[95%] sm:w-full max-w-[95vw] sm:max-w-[480px] md:max-w-[618px] rounded-[var(--radius-modal)] bg-bg-neutral-solid text-text-neutral-strong p-4 sm:p-8 md:p-10;
   }
 
   .modal-overlay {
@@ -1045,7 +1055,7 @@ body {
   }
 
   .modal-close-btn {
-    @apply absolute top-4 right-4 sm:top-6 sm:right-[26px] flex aspect-square w-8 sm:w-9 cursor-pointer items-center justify-center rounded-full border-none bg-[#d6d6d6];
+    @apply absolute top-4 right-4 sm:top-6 sm:right-[26px] flex aspect-square w-8 sm:w-9 cursor-pointer items-center justify-center rounded-full border-none bg-fill-neutral-weak text-text-neutral-strong;
   }
 
   .modal-title {
@@ -1719,7 +1729,7 @@ body {
   border-radius: 9px;
   background: var(--bg-neutral-weak);
   box-shadow: 0 9px 0 var(--fill-neutral-weak);
-  transform: rotate(-9.54deg);
+  rotate: -9.54deg;
   font-size: 1.988cqw;
   line-height: 1.334;
 }
@@ -1757,6 +1767,35 @@ body {
 .auth-entry-feature-chat > span { background: var(--auth-art-orange-fill); color: var(--auth-art-orange-text); }
 .auth-entry-feature-voice > span { background: var(--auth-art-blue-fill); color: var(--auth-art-blue-text); }
 .auth-entry-caption { position: relative; text-align: center; padding-top: 12px; }
+/* Reuse the text-reveal recipe; independent translate keeps the float and
+   the prompt's resting rotation separate from the entrance transform. */
+.auth-entry-illustration {
+  --stagger-distance: 6px;
+  --stagger-blur: 0px;
+  --auth-entry-float-distance: -4px;
+  --auth-entry-float-duration: 7s;
+}
+.auth-entry-illustration .t-stagger-line {
+  transition-delay: calc(var(--auth-entry-order, 0) * var(--stagger-stagger));
+}
+.auth-entry-sparkle { --auth-entry-order: 0; --auth-entry-float-duration: 8s; }
+.auth-entry-prompt { --auth-entry-order: 1; --auth-entry-float-duration: 8.5s; }
+.auth-entry-feature-beneficiaries { --auth-entry-order: 2; --auth-entry-float-duration: 6.5s; }
+.auth-entry-feature-journal { --auth-entry-order: 3; --auth-entry-float-duration: 7.5s; }
+.auth-entry-feature-chat { --auth-entry-order: 4; --auth-entry-float-duration: 7s; }
+.auth-entry-feature-voice { --auth-entry-order: 5; --auth-entry-float-duration: 8s; }
+.auth-entry-monogram { --auth-entry-order: 6; }
+.auth-entry-caption { --auth-entry-order: 7; }
+@keyframes auth-entry-float {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 var(--auth-entry-float-distance); }
+}
+@media (min-width: 900px) and (prefers-reduced-motion: no-preference) {
+  .auth-entry-illustration.is-shown .auth-entry-floating {
+    animation: auth-entry-float var(--auth-entry-float-duration) ease-in-out infinite;
+    animation-delay: calc(var(--stagger-dur) + var(--auth-entry-order, 0) * var(--stagger-stagger));
+  }
+}
 .auth-entry-caption mark { background: var(--auth-art-highlight); color: var(--auth-art-highlight-text); font-style: italic; padding-inline: 3px; }
 .auth-entry-form [data-slot="input"] { height: 40px; padding: 8px 12px; font-size: 14px; background: var(--fill-neutral-weak); border-color: var(--stroke-neutral-weak); }
 .auth-entry-form [data-slot="input"][aria-invalid="true"] { border-color: var(--stroke-error-strong); }
@@ -1840,4 +1879,107 @@ body {
 
 .auth-entry-form .auth-recovery-code [data-slot="input"][aria-invalid="true"] {
   border-color: var(--stroke-error-strong);
+}
+
+/* Blur the scrolling surface, keeping the navigation and its controls crisp. */
+.dashboard-header-surface {
+  isolation: isolate;
+  flex-shrink: 0;
+}
+.dashboard-header-surface::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 -16px;
+  z-index: -1;
+  pointer-events: none;
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  mask-image: linear-gradient(to bottom, black calc(100% - 16px), transparent);
+}
+
+/* Original light appearance: quiet daylight through an off-screen window. */
+.daylight {
+  --background: transparent;
+  --color-background: transparent;
+  --v3-bg: transparent;
+  --daylight-shadow: color-mix(in srgb, var(--fill-neutral-strong) 16%, transparent);
+  background-color: var(--bg-neutral-solid);
+}
+.daylight body { isolation: isolate; }
+.daylight-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+  background-color: var(--bg-neutral-solid);
+}
+.daylight-backdrop::before {
+  content: "";
+  position: absolute;
+  inset: -8%;
+  background-image:
+    repeating-linear-gradient(118deg,
+      transparent 0 125px,
+      var(--daylight-shadow) 145px 180px,
+      transparent 200px 320px),
+    repeating-linear-gradient(28deg,
+      transparent 0 180px,
+      var(--daylight-shadow) 200px 230px,
+      transparent 250px 420px);
+  filter: blur(14px);
+  opacity: 0.6;
+  mask-image: linear-gradient(to right, transparent 28%, rgba(0,0,0,0.12) 48%, black 94%);
+}
+.daylight-backdrop::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='grain'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23grain)' opacity='.65'/%3E%3C/svg%3E");
+}
+@media (max-width: 640px) {
+  .daylight-backdrop::before {
+    opacity: 0.42;
+    mask-image: linear-gradient(to right, transparent 8%, black 100%);
+  }
+}
+
+/* Floating dialogs share the command-search surface radius. */
+[data-slot="dialog-content"],
+[data-slot="alert-dialog-content"],
+.modal-container {
+  border-radius: var(--radius-modal) !important;
+}
+
+/* Story links follow the paper's local text palette, including saved legacy links. */
+.tiptap-editor {
+  --tw-prose-links: var(--text-neutral-strong);
+}
+
+.tiptap-editor a {
+  color: var(--text-neutral-strong);
+}
+
+/* Story reader: keep the saved rich text in the same sans serif as the design. */
+.story-viewer-body :is(p, li, blockquote) {
+  font-family: var(--font-geist);
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--text-neutral-strong);
+}
+
+/* A narrow journal keeps the same controls and previews below the text. */
+@media (max-width: 859px) {
+  .story-viewer-layout {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) auto;
+    gap: 8px;
+  }
+  .story-viewer-media {
+    flex-direction: row;
+    align-items: flex-end;
+    padding-top: 0;
+  }
+  .story-viewer-media > div:first-child { padding-bottom: 0; }
 }

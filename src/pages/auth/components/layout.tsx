@@ -1,3 +1,4 @@
+import { AuthMotionHeading } from "./auth-motion";
 import type { PropsWithChildren, ReactElement } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
@@ -30,7 +31,7 @@ export function AuthFormPanel({
   className = "",
 }: AuthFormPanelProps) {
   return (
-    <div className={cn("group/auth-root box-content flex w-full flex-col gap-5 px-0.5 sm:gap-5", className)}>
+    <div className={cn("auth-motion-panel group/auth-root box-content flex w-full flex-col gap-5 px-0.5 sm:gap-5", className)}>
       {can_go_back ?
         <Link
           to="/login"
@@ -53,14 +54,14 @@ export function AuthFormPanel({
         </div>
       : null}
 
-      <header className="flex flex-col gap-1.5 sm:gap-2">
-        <h1 className="font-garamond text-[1.625rem] font-normal leading-[32px] text-v3-text-strong sm:text-[1.875rem] lg:text-[1.75rem]">
+      <AuthMotionHeading className="flex flex-col gap-1.5 sm:gap-2">
+        <h1 className="t-stagger-line font-garamond text-[1.625rem] font-normal leading-[32px] text-v3-text-strong sm:text-[1.875rem] lg:text-[1.75rem]">
           {title}
         </h1>
         {subtitle ?
-          <p className="font-inter text-xs leading-relaxed text-v3-text-weak">{subtitle}</p>
+          <p className="t-stagger-line t-stagger-line--2 font-inter text-xs leading-relaxed text-v3-text-weak">{subtitle}</p>
         : null}
-      </header>
+      </AuthMotionHeading>
 
       {include_auth_socials ?
         <AuthSocials showDivider={!hide_auth_socials_divider} />

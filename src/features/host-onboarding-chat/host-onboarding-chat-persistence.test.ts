@@ -173,3 +173,16 @@ describe("host-onboarding-chat-persistence", () => {
     expect(localStorage.getItem(storageKeys.hostOnboardingChat)).toBeNull();
   });
 });
+
+it("isolates account drafts and does not adopt an unowned legacy draft", () => {
+  const draft = { introAcknowledged: true, introDraft: "", messages: [], isComplete: false, draft: "Private answer", composerHints: defaultHints, progressStep: 1, progressTotal: 6, structuredOutcome: defaultOutcome };
+  saveHostOnboardingChatState(draft);
+  expect(loadHostOnboardingChatState("account-a")).toBeNull();
+  saveHostOnboardingChatState(draft, "account-a");
+  expect(loadHostOnboardingChatState("account-a")?.draft).toBe("Private answer");
+  expect(loadHostOnboardingChatState("account-b")).toBeNull();
+  clearHostOnboardingChatState("account-b");
+  expect(loadHostOnboardingChatState("account-a")?.draft).toBe("Private answer");
+  clearHostOnboardingChatState("account-a");
+  expect(loadHostOnboardingChatState("account-a")).toBeNull();
+});

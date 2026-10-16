@@ -1,9 +1,11 @@
+import { toast } from "sonner";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "@/test";
 import SummaryPage from "./summary";
 
+vi.mock("sonner", () => ({ toast: { error: vi.fn() } }));
 const navigate = vi.fn();
 const trigger = vi.fn();
 const setUser = vi.fn();
@@ -26,7 +28,7 @@ vi.mock("swr", async (importOriginal) => ({
 describe("onboarding summary", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    trigger.mockResolvedValue({});
+    trigger.mockResolvedValue({ success: true });
     sessionStorage.clear();
     sessionStorage.setItem(
       "memento:onboarding-flow:user-123",
@@ -70,15 +72,14 @@ describe("onboarding summary", () => {
     const user = userEvent.setup();
     renderWithProviders(<SummaryPage />, { auth: true });
     await user.click(screen.getByRole("button", { name: "Continue" }));
-    expect(await screen.findByRole("alert")).toHaveTextContent(
-      /couldn’t save/i,
-    );
+    await waitFor(() => expect(toast.error).toHaveBeenCalled());
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     expect(navigate).not.toHaveBeenCalled();
     expect(setUser).not.toHaveBeenCalled();
     expect(
       sessionStorage.getItem("memento:onboarding-flow:user-123"),
     ).not.toBeNull();
-    trigger.mockResolvedValue({});
+    trigger.mockResolvedValue({ success: true });
     await user.click(screen.getByRole("button", { name: "Continue" }));
     await waitFor(() => expect(navigate).toHaveBeenCalledWith("/overview"));
   });

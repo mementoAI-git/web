@@ -1,3 +1,5 @@
+import { http, HttpResponse } from "msw";
+import { server } from "@/test/mocks/server";
 import { describe, it, expect, vi } from "vitest";
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -24,6 +26,7 @@ describe("OnboardLayout", () => {
     ).not.toBeInTheDocument();
   });
   it("shows Skip on summary and sends the user to the dashboard", async () => {
+    server.use(http.post("*/users/onboarding/skip", () => HttpResponse.json({ success: true })));
     const user = userEvent.setup();
     renderWithProviders(
       <Routes>

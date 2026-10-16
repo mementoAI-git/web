@@ -1,3 +1,5 @@
+import { ABOUT_LIMIT } from "./limits";
+import { reportFetcherError } from "@/api/report-fetcher-error";
 import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { mutate } from "swr";
@@ -24,8 +26,7 @@ export default function OnboardingSummaryPage() {
   const { user, setUser } = useStore();
   const navigate = useNavigate();
   const userId = user?._id ?? "anonymous";
-  const [draft] = useOnboardingDraft(userId);
-  const [error, setError] = useState("");
+  const [draft, setDraft] = useOnboardingDraft(userId);
   const [saving, setSaving] = useState(false);
   const savingRef = useRef(false);
   const { trigger: completeOnboarding, isMutating } = useFetcher(
@@ -41,10 +42,14 @@ export default function OnboardingSummaryPage() {
       "."
     : "You’re exploring what Memento can offer, at your own pace.";
   const handleContinue = async () => {
+    if (draft.about.length > ABOUT_LIMIT) {
+      setDraft((value) => ({ ...value, step: 2 }));
+      navigate("/onboarding/misc");
+      return;
+    }
     if (savingRef.current || isMutating) return;
     savingRef.current = true;
     setSaving(true);
-    setError("");
     try {
       const result = await completeOnboarding({
         self_description: draft.about.trim() || undefined,
@@ -54,14 +59,14 @@ export default function OnboardingSummaryPage() {
         stepReached: 4,
         skippedDeepPersonalization: false,
       });
-      if (result?.success === false) throw new Error(result.message);
+      if (!result?.success) throw new Error(result?.message || "Couldn’t save onboarding");
       if (user)
         setUser?.({ ...user, onboarded: true, onboarding_status: "completed" });
       clearOnboardingDraft(userId);
       void mutate(endpoint.profile).catch(() => undefined);
       navigate("/overview");
-    } catch {
-      setError("We couldn’t save your onboarding. Please try again.");
+    } catch (error) {
+      reportFetcherError(error, "We couldn’t save your onboarding. Please try again.");
     } finally {
       savingRef.current = false;
       setSaving(false);
@@ -145,11 +150,7 @@ export default function OnboardingSummaryPage() {
             You can always edit or build on this later
           </p>
         </div>
-        {error && (
-          <p role="alert" className="text-sm text-text-error-strong">
-            {error}
-          </p>
-        )}
+
         <OnboardingActions>
           <OnboardingButton
             variant="outline"

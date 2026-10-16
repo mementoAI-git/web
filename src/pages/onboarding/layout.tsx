@@ -1,24 +1,19 @@
-import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { Link, Outlet, useLocation } from "react-router-dom";
 import AuthCheck from "@/components/layouts/auth-check";
-import { useStore } from "@/hooks/use-store";
+import { useSkipOnboarding } from "./use-skip-onboarding";
 import { cn } from "@/lib/utils";
 import { OnboardingButton } from "./components/onboarding-card";
 import { onboardingAssets as assets } from "./assets";
 
 export default function OnboardLayout() {
   const { pathname } = useLocation();
-  const navigate = useNavigate();
-  const { user, setUser } = useStore();
+  const { skip, busy } = useSkipOnboarding();
   const isWelcome =
     pathname === "/onboarding" ||
     pathname === "/onboarding/" ||
     pathname === "/onboarding/welcome";
   const isSummary = pathname === "/onboarding/summary";
   const isBeneficiary = pathname === "/onboarding/beneficiary";
-  const handleSkip = () => {
-    if (user) setUser?.({ ...user, onboarding_status: "skipped" });
-    navigate("/overview");
-  };
   return (
     <div
       className={cn(
@@ -42,7 +37,8 @@ export default function OnboardLayout() {
         {!isWelcome && (
           <OnboardingButton
             variant="outline"
-            onClick={handleSkip}
+            onClick={() => void skip()}
+            disabled={busy}
             className="w-[119px] gap-1 px-0"
           >
             Skip

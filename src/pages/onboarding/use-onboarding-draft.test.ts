@@ -29,13 +29,13 @@ describe("onboarding draft", () => {
     clearOnboardingDraft("one");
     expect(readOnboardingDraft("one").areas).toEqual([]);
   });
-  it("rejects stale keys, deduplicates selections and bounds saved text and areas", () => {
+  it("rejects stale keys, deduplicates selections and preserves excess text for editing and bounds areas", () => {
     sessionStorage.setItem(
       onboardingDraftKey("one"),
       JSON.stringify({
         step: 99,
         reasons: ["unknown", "explorer", "explorer"],
-        about: "a".repeat(600),
+        about: "a".repeat(2100),
         areas: [
           "identity_self",
           "identity_self",
@@ -48,7 +48,7 @@ describe("onboarding draft", () => {
     );
     const draft = readOnboardingDraft("one");
     expect(draft.step).toBe(1);
-    expect(draft.about).toHaveLength(500);
+    expect(draft.about).toHaveLength(2100);
     expect(draft.reasons).toEqual(["explorer"]);
     expect(draft.areas).toEqual([
       "identity_self",

@@ -1,0 +1,78 @@
+/* Shared feedback stays inside overlays, including dialogs rendered in portals. */
+:where(.modal-overlay, [role="dialog"], [role="alertdialog"]) {
+  --overlay-control-duration: 150ms;
+  --overlay-control-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --overlay-control-hover: color-mix(in srgb, var(--text-neutral-strong) 8%, transparent);
+  --overlay-control-pressed: color-mix(in srgb, var(--text-neutral-strong) 14%, transparent);
+  --overlay-control-focus: var(--text-neutral-strong);
+}
+
+:where(.modal-overlay, [role="dialog"], [role="alertdialog"]) button {
+  transition-property: background-color, color, border-color, box-shadow, opacity, filter, scale;
+  transition-duration: var(--overlay-control-duration);
+  transition-timing-function: var(--overlay-control-ease);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  :where(.modal-overlay, [role="dialog"], [role="alertdialog"]) button:not(:disabled):not([aria-disabled="true"]):hover {
+    filter: brightness(0.94);
+  }
+
+  :where(.modal-overlay, [role="dialog"], [role="alertdialog"]) :is(.overlay-control, .modal-close-btn, button[aria-label^="Close"], button[data-slot="dialog-close"]):not(:disabled):not([aria-disabled="true"]):hover {
+    background-color: var(--overlay-control-hover);
+    filter: none;
+  }
+}
+
+:where(.modal-overlay, [role="dialog"], [role="alertdialog"]) button:not(:disabled):not([aria-disabled="true"]):active {
+  scale: 0.97;
+}
+
+:where(.modal-overlay, [role="dialog"], [role="alertdialog"]) :is(.overlay-control, .modal-close-btn, button[aria-label^="Close"], button[data-slot="dialog-close"]):not(:disabled):not([aria-disabled="true"]):active {
+  background-color: var(--overlay-control-pressed);
+}
+
+:where(.modal-overlay, [role="dialog"], [role="alertdialog"]) button:focus-visible {
+  outline: 2px solid var(--overlay-control-focus);
+  outline-offset: 3px;
+}
+
+:where(.modal-overlay, [role="dialog"], [role="alertdialog"]) button:is(:disabled, [aria-disabled="true"]) {
+  cursor: not-allowed;
+  opacity: 0.5;
+  filter: none;
+  scale: 1;
+}
+
+.overlay-control-destructive {
+  --overlay-control-hover: color-mix(in srgb, var(--text-error-strong) 10%, transparent);
+  --overlay-control-pressed: color-mix(in srgb, var(--text-error-strong) 18%, transparent);
+}
+
+.overlay-control-on-media {
+  --overlay-control-focus: var(--text-inverse-strong);
+  --overlay-control-hover: color-mix(in srgb, var(--text-inverse-strong) 22%, transparent);
+  --overlay-control-pressed: color-mix(in srgb, var(--text-inverse-strong) 30%, transparent);
+}
+
+.overlay-control-position {
+  --overlay-control-focus: var(--text-inverse-strong);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  :where(.modal-overlay, [role="dialog"]) .overlay-control-position:hover {
+    border-color: var(--stroke-brand-strong);
+    filter: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :where(.modal-overlay, [role="dialog"], [role="alertdialog"]) button {
+    transition: none;
+    scale: 1;
+  }
+
+  :where(.modal-overlay, [role="dialog"], [role="alertdialog"]) button:not(:disabled):not([aria-disabled="true"]):active {
+    scale: 1;
+  }
+}
