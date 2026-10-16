@@ -110,8 +110,8 @@ describe("DashboardHeader", () => {
     );
 
     expect(screen.getByText("Explore topics")).toBeInTheDocument();
-    expect(container.firstElementChild).toHaveClass("sm:h-[76px]");
-    expect(container.firstElementChild).not.toHaveClass("border-b");
+    expect(container.querySelector("header")?.parentElement).toHaveClass("sm:h-[76px]");
+    expect(container.querySelector("header")?.parentElement).not.toHaveClass("border-b");
     expect(screen.getByRole("button", { name: "Open search" })).toHaveClass(
       "h-9",
       "bg-fill-neutral-weak",
@@ -144,8 +144,8 @@ describe("DashboardHeader", () => {
     });
 
     expect(screen.getByText("settings")).toBeInTheDocument();
-    expect(container.firstElementChild).toHaveClass("sm:h-[76px]");
-    expect(container.firstElementChild).not.toHaveClass("border-b");
+    expect(container.querySelector("header")?.parentElement).toHaveClass("sm:h-[76px]");
+    expect(container.querySelector("header")?.parentElement).not.toHaveClass("border-b");
     expect(screen.getByRole("button", { name: "Open search" })).toHaveClass(
       "h-9",
       "bg-fill-neutral-weak",
@@ -158,8 +158,8 @@ describe("DashboardHeader", () => {
     });
 
     expect(screen.getByText("chat with AI")).toBeInTheDocument();
-    expect(container.firstElementChild).toHaveClass("border-b");
-    expect(container.firstElementChild).not.toHaveClass("sm:h-[76px]");
+    expect(container.querySelector("header")?.parentElement).toHaveClass("border-b");
+    expect(container.querySelector("header")?.parentElement).not.toHaveClass("sm:h-[76px]");
     expect(screen.getByRole("button", { name: "Open search" })).toHaveClass(
       "h-10",
     );
@@ -180,7 +180,7 @@ describe("DashboardHeader", () => {
 
   it("uses semantic surfaces and foregrounds in the default header", () => {
     const { container } = renderDashboardHeader(<DashboardHeader />);
-    const shell = container.firstElementChild;
+    const shell = container.querySelector("header")?.parentElement;
     expect(shell).toHaveClass("bg-background", "sm:h-[76px]");
     expect(shell).not.toHaveClass("bg-card");
     expect(shell).not.toHaveClass("bg-white");
@@ -271,7 +271,7 @@ describe("DashboardHeader", () => {
       { route: "/chat/m1" },
     );
 
-    const shell = container.firstElementChild;
+    const shell = container.querySelector("header")?.parentElement;
     expect(shell).toHaveClass("bg-background", "sm:h-[76px]");
     expect(shell).not.toHaveClass("bg-card");
     expect(shell).not.toHaveClass("bg-white");
