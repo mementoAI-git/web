@@ -18,12 +18,13 @@ These are the current shipping PRs for customer Web and API work. They replace t
 | Web | [#78](https://github.com/mementoAI-git/web/pull/78) | `pr/web-stories-recovery-20261016` | `pr/web-chat-recovery-20261016` | Improve Stories, capture, uploads and deleted-memory recovery |
 | Web | [#79](https://github.com/mementoAI-git/web/pull/79) | `pr/web-dashboard-20261016` | `pr/web-stories-recovery-20261016` | Harden Overview, Explore, quick tools and public flows |
 | Web | [#80](https://github.com/mementoAI-git/web/pull/80) | `pr/web-local-preview-20261016` | `pr/web-dashboard-20261016` | Add development-only state preview tooling |
+| Web | [#81](https://github.com/mementoAI-git/web/pull/81) | `docs/web-shipping-handoff-20261016` | `pr/web-local-preview-20261016` | Document Web acceptance checks and staged shipping plan |
 
 The API customer-flag tests are independent and target `dev`. The other API feature PRs form a stack: About → spoken replies → memory recovery → documentation. Web forms a stack in the order shown, followed by documentation. Each later branch contains earlier commits; review its incremental diff against its listed base.
 
 ## Latest upstream reconciliation
 
-API was rebuilt on `origin/dev` `53e240c`; Web on `origin/dev` `7c75e134`. Origin was fetched before each push and local merge-tree checks passed. The customer flag provider is already upstream in Web PR #73, so no duplicate provider PR was created. Upstream removal of admin routes, exports, menu and provider is preserved. The spoken-reply test stabilization is retained alongside the new audio implementation. No staff/admin implementation is added by these customer diffs.
+API was rebuilt on `origin/dev` `53e240c`; Web on `origin/dev` `7c75e134`. Origin was fetched before each push and local merge-tree checks passed. The customer flag provider is already upstream in Web PR #73, so no duplicate provider PR was created. Upstream removal of admin routes, exports, menu and provider is preserved. The spoken-reply test stabilization is retained alongside the new audio implementation. The foundation PR also corrects backdrop-sensitive test targeting and increases the hosted test-step budget to 20 minutes after the full passing suite exceeded the prior ten-minute limit. No staff/admin implementation is added by these customer diffs.
 
 These Git refs do not establish the version currently deployed to production. Confirm deployed API, worker and Web SHAs before promotion.
 
