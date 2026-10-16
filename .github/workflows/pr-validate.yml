@@ -30,7 +30,8 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Run unit tests
-        timeout-minutes: 10
+        # The expanded suite takes about ten minutes on GitHub-hosted runners.
+        timeout-minutes: 20
         env:
           CI: true
         run: pnpm test --run
