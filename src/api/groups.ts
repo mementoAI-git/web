@@ -8,29 +8,12 @@ import { resolvePath } from "@/utility";
 
 const LIST_LIMIT = 25;
 
-const emptyPagination = (page: number): IPagination<IGroup> => ({
-  docs: [],
-  totalDocs: 0,
-  limit: LIST_LIMIT,
-  page,
-  totalPages: 1,
-  hasNextPage: false,
-  hasPrevPage: false,
-  nextPage: null,
-  prevPage: null,
-  pagingCounter: 0,
-});
-
-/** Fetcher for SWR: returns pagination from API response data. Handles errors by returning empty pagination. */
+/** Preserve failures so list consumers can distinguish recovery from an empty group list. */
 export async function groupsListFetcher(url: string): Promise<IPagination<IGroup>> {
-  try {
-    const res = await fetcher(url);
-    const payload = (res as IResponse)?.data;
-    if (!payload || !Array.isArray(payload.docs)) return emptyPagination(1);
-    return payload as IPagination<IGroup>;
-  } catch {
-    return emptyPagination(1);
-  }
+  const res = await fetcher(url);
+  const payload = (res as IResponse)?.data;
+  if (!payload || !Array.isArray(payload.docs)) throw new Error("Invalid groups response");
+  return payload as IPagination<IGroup>;
 }
 
 export function groupsListKey(page: number) {

@@ -24,6 +24,8 @@ interface RecorderModalProps {
   data: {
     onFinish: (file: File, duration?: number) => void;
     recordingNumber?: number;
+    embedded?: boolean;
+    onClose?: () => void;
   };
 }
 
@@ -101,7 +103,8 @@ export function AudioRecorderModal({ data }: RecorderModalProps) {
 
   const handleClose = () => {
     handleReset();
-    close("audio-recorder");
+    if (data.onClose) data.onClose();
+    else close("audio-recorder");
   };
 
   const isIdle = rec.timer === 0 && !rec.url;
@@ -117,11 +120,11 @@ export function AudioRecorderModal({ data }: RecorderModalProps) {
 
   return (
     <div
-      className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 px-4"
+      className={data.embedded ? "flex w-full justify-center" : "fixed inset-0 z-[200] flex items-center justify-center bg-black/60 px-4"}
       onClick={(e) => e.stopPropagation()}
     >
-      <div className="relative w-full max-w-[400px] overflow-hidden rounded-3xl border border-stroke-neutral-weak bg-v3-bg shadow-2xl" onClick={(e) => e.stopPropagation()}>
-        <div className="relative overflow-hidden rounded-3xl bg-v3-bg">
+      <div className="relative w-full max-w-[400px] overflow-hidden rounded-[var(--radius-modal)] border border-stroke-neutral-weak bg-v3-bg shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <div className="relative overflow-hidden rounded-[var(--radius-modal)] bg-v3-bg">
           <button
             type="button"
             onClick={handleClose}
@@ -288,13 +291,13 @@ export function VideoRecorderModal({ data }: VideoRecorderModalProps) {
   };
 
   return (
-    <div className="bg-white rounded-2xl w-full max-w-lg overflow-hidden shadow-xl">
-      <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-        <h3 className="font-garamond text-xl font-medium text-gray-900">Record Video</h3>
+    <div className="bg-bg-neutral rounded-2xl w-full max-w-lg overflow-hidden shadow-xl">
+      <div className="flex items-center justify-between px-5 py-4 border-b border-stroke-neutral-weak">
+        <h3 className="font-garamond text-xl font-medium text-text-neutral-strong">Record Video</h3>
         <button
           type="button"
           onClick={() => close("video-recorder")}
-          className="size-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
+          className="size-8 flex items-center justify-center rounded-full bg-bg-neutral-weaker hover:bg-fill-neutral-weak transition-colors"
         >
           <TimesIcon width={10} height={10} />
         </button>
@@ -304,7 +307,7 @@ export function VideoRecorderModal({ data }: VideoRecorderModalProps) {
         <VideoRecorder ref={videoRef} onStart={() => {}} onFinish={handleFinish} />
 
         {recordedFile && (
-          <div className="flex items-center justify-end gap-2 mt-4 pt-3 border-t border-gray-100">
+          <div className="flex items-center justify-end gap-2 mt-4 pt-3 border-t border-stroke-neutral-weak">
             <button
               type="button"
               onClick={handleReRecord}

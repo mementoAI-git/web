@@ -1,0 +1,61 @@
+/* Scoped Transitions.dev tab and control feedback; primitives own keyboard behavior. */
+.people-tabs {
+  --people-feedback-duration: 150ms;
+  --people-feedback-ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+.people-control {
+  transition:
+    background-color var(--people-feedback-duration, 150ms) ease-out,
+    color var(--people-feedback-duration, 150ms) ease-out,
+    transform var(--people-feedback-duration, 150ms)
+      var(--people-feedback-ease, ease-out);
+}
+/* Line tabs stay readable on every surface, including the dark sky theme. */
+.people-tabs [data-slot="tabs-trigger"][aria-selected="true"] {
+  color: var(--text-neutral-strong) !important;
+}
+.people-tabs [data-slot="tabs-trigger"]::after {
+  inset-inline: 12px;
+  bottom: -5px;
+  height: 2px;
+  background-color: var(--text-neutral-strong);
+
+  transition: opacity 250ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+@media (prefers-reduced-motion: reduce) {
+  .people-control,
+  .people-tabs [data-slot="tabs-trigger"]::after {
+    transition: none !important;
+  }
+  .people-control:active {
+    transform: none !important;
+  }
+}
+
+/* Match the local dialog recipe while Radix retains focus and dismissal. */
+.people-dialog[data-state="open"] {
+  animation-duration: 250ms;
+}
+.people-dialog[data-state="closed"] {
+  animation-duration: 150ms;
+}
+@media (prefers-reduced-motion: reduce) {
+  .people-dialog {
+    animation: none !important;
+  }
+}
+.people-menu[data-state="open"] {
+  animation-duration: 250ms;
+}
+.people-menu[data-state="closed"] {
+  animation-duration: 150ms;
+}
+.people-menu,
+.people-dialog {
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+@media (prefers-reduced-motion: reduce) {
+  .people-menu {
+    animation: none !important;
+  }
+}

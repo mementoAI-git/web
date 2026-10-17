@@ -6,7 +6,7 @@ import useForm from "@/hooks/use-form";
 import * as yup from "yup";
 import { useModal } from "@/hooks/use-modal";
 import Spinner from "@/components/spinner";
-import useFetcher from "@/hooks/use-fetcher";
+import { useGuardedModalFetcher } from "@/components/modal/use-guarded-modal-fetcher";
 import endpoint from "@/api/endpoint";
 import { toast } from "sonner";
 import { mutate } from "swr";
@@ -14,7 +14,11 @@ import { cn } from "@/utility";
 import { GROUP_COLORS } from "@/utility/constant";
 
 const schema = yup.object().shape({
-  name: yup.string().required("Name is required").max(120, "Max 120 characters").trim(),
+  name: yup
+    .string()
+    .required("Name is required")
+    .max(120, "Max 120 characters")
+    .trim(),
   description: yup.string().max(500, "Max 500 characters").trim(),
   color: yup.number().min(0).max(6).optional(),
 });
@@ -24,14 +28,20 @@ const fieldClass =
 
 export function AddGroup() {
   const { close } = useModal();
-  const { trigger, isMutating } = useFetcher(endpoint.groups, "post");
+  const { trigger, isMutating } = useGuardedModalFetcher(
+    "add-group",
+    endpoint.groups,
+    "post",
+  );
   const { handleSubmit, isValid, getField, values, handleValue } = useForm({
     initial: { name: "", description: "", color: 0 },
     schema,
     async onSubmit(payload) {
       const result = await trigger(payload);
       if (result?.success) {
-        await mutate((key) => typeof key === "string" && key.startsWith("/groups"));
+        void mutate(
+          (key) => typeof key === "string" && key.startsWith("/groups"),
+        ).catch(() => undefined);
         toast.success(result?.message ?? "Group created");
         close?.("add-group");
       }
@@ -45,11 +55,16 @@ export function AddGroup() {
     <div className="modal-container !p-5 !max-w-[440px]">
       <div className="mb-5 flex items-start justify-between gap-3">
         <div className="flex flex-col gap-0.5">
-          <h2 className="font-inter text-sm font-semibold text-v3-text-strong">Create group</h2>
-          <p className="font-inter text-sm text-v3-text-weak">Organize your beneficiaries into a group.</p>
+          <h2 className="font-inter text-sm font-semibold text-v3-text-strong">
+            Create group
+          </h2>
+          <p className="font-inter text-sm text-v3-text-weak">
+            Organize your beneficiaries into a group.
+          </p>
         </div>
         <button
           type="button"
+          disabled={isMutating}
           onClick={() => close?.("add-group")}
           className="flex size-8 shrink-0 items-center justify-center rounded-full text-v3-text-weak transition-colors hover:bg-v3-fill-weak hover:text-v3-text-strong focus-visible:outline-none"
           aria-label="Close"
@@ -60,40 +75,57 @@ export function AddGroup() {
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div className="flex flex-col gap-1.5">
-          <label className="font-inter text-xs text-v3-text-weak">Group name</label>
+          <label className="font-inter text-xs text-v3-text-weak">
+            Group name
+          </label>
           <input
+            disabled={isMutating}
             name={nameField.name}
             value={nameField.value}
             onChange={nameField.onChange}
             placeholder="e.g. Family"
             className={fieldClass}
           />
-          {nameField.error && <span className="font-inter text-xs text-danger">{nameField.error}</span>}
+          {nameField.error && (
+            <span className="font-inter text-xs text-danger">
+              {nameField.error}
+            </span>
+          )}
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <label className="font-inter text-xs text-v3-text-weak">Description <span className="text-v3-text-weaker">(optional)</span></label>
+          <label className="font-inter text-xs text-v3-text-weak">
+            Description <span className="text-v3-text-weaker">(optional)</span>
+          </label>
           <input
+            disabled={isMutating}
             name={descriptionField.name}
             value={descriptionField.value}
             onChange={descriptionField.onChange}
             placeholder="Short description"
             className={fieldClass}
           />
-          {descriptionField.error && <span className="font-inter text-xs text-danger">{descriptionField.error}</span>}
+          {descriptionField.error && (
+            <span className="font-inter text-xs text-danger">
+              {descriptionField.error}
+            </span>
+          )}
         </div>
 
         <div className="flex flex-col gap-2">
-          <span className="font-inter text-xs text-v3-text-weak">Group color</span>
+          <span className="font-inter text-xs text-v3-text-weak">
+            Group color
+          </span>
           <div className="flex flex-wrap gap-2">
             {GROUP_COLORS.map((colorClass, index) => (
               <button
                 key={index}
                 type="button"
+                disabled={isMutating}
                 onClick={() => handleValue("color", index)}
                 title={`Color ${index + 1}`}
                 className={cn(
-                  "flex size-8 items-center justify-center rounded-full border-2 transition-all",
+                  "flex size-8 items-center justify-center rounded-full border-2 transition-all motion-reduce:transition-none",
                   colorClass,
                   (values.color ?? 0) === index
                     ? "ring-2 ring-offset-2 ring-v3-stroke-strong scale-110"
@@ -114,6 +146,7 @@ export function AddGroup() {
             variant="outline"
             size="sm"
             className="h-9 rounded-full border-v3-stroke-weak font-inter text-sm font-medium text-v3-text-strong hover:bg-v3-fill-weak"
+            disabled={isMutating}
             onClick={() => close?.("add-group")}
           >
             Cancel
