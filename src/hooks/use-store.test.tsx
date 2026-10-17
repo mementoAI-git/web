@@ -2,6 +2,7 @@ import { renderHook, waitFor, act } from "@testing-library/react";
 import { StoreProvider, useStore, initialStates } from "@/hooks/use-store";
 import { storageKeys } from "@/utility/constant";
 import { mockAuth } from "@/test/fixtures";
+import { authService } from "@/utility/auth-service";
 import { clearAuth } from "@/test/auth-helpers";
 
 function wrapper({ children }: { children: React.ReactNode }) {
@@ -55,4 +56,13 @@ describe("StoreProvider / useStore", () => {
 
     expect(result.current.headerTitle).toBe("My Title");
   });
+  it("stops authenticated providers when the API invalidates the session", async () => {
+    localStorage.setItem(storageKeys.auth, JSON.stringify(mockAuth));
+    const { result } = renderHook(() => useStore(), { wrapper });
+    await waitFor(() => expect(result.current.auth).toEqual(mockAuth));
+    act(() => authService.clearAuth());
+    expect(result.current.auth).toBeNull();
+    expect(result.current.user).toBeNull();
+  });
+
 });

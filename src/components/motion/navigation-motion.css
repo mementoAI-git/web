@@ -1,0 +1,103 @@
+/* Transitions.dev resize and dropdown recipes, adapted to Radix presence. */
+.navigation-sidebar {
+  transition: width 300ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 300ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 150ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (min-width: 768px) {
+  .navigation-sidebar { overflow: hidden; }
+  .navigation-sidebar-content { width: 280px; min-width: 280px; }
+  .navigation-sidebar-content[data-compact="true"] { width: 72px; min-width: 72px; }
+  .navigation-sidebar-content[data-compact="true"] [data-slot="sidebar-header"] { justify-content: center; padding-left: 0; padding-right: 0; }
+  .navigation-sidebar-content[data-compact="true"] [data-slot="sidebar-group"] { padding-left: 12px; padding-right: 12px; }
+  .navigation-sidebar-content[data-compact="true"] [data-slot="sidebar-menu-button"] { justify-content: center; padding-left: 0; padding-right: 0; }
+  .navigation-sidebar-content[data-compact="true"] [data-sidebar-label] { display: none; }
+}
+
+.navigation-header button,
+.navigation-button {
+  transition: transform 150ms cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 150ms ease-out, color 150ms ease-out;
+}
+
+.navigation-header button:active:not(:disabled),
+.navigation-button:active:not(:disabled) { transform: scale(0.98); }
+
+/* Animation names let Radix retain the surface until its exit completes. */
+.navigation-menu[data-state] {
+  transform-origin: var(--radix-dropdown-menu-content-transform-origin,
+    var(--radix-popover-content-transform-origin, top right));
+}
+.navigation-menu[data-state="open"] {
+  animation: navigation-menu-in 250ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.navigation-menu[data-state="closed"] {
+  pointer-events: none;
+  animation: navigation-menu-out 150ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes navigation-menu-in {
+  from { opacity: 0; transform: scale(0.97); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes navigation-menu-out {
+  from { opacity: 1; transform: scale(1); }
+  to { opacity: 0; transform: scale(0.99); }
+}
+.navigation-sheet[data-state="open"] {
+  animation: navigation-sheet-in 250ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.navigation-sheet[data-state="closed"] {
+  pointer-events: none;
+  animation: navigation-sheet-out 150ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes navigation-sheet-in {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes navigation-sheet-out {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(12px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .navigation-sidebar,
+  .navigation-header button,
+  .navigation-button { transition: none !important; }
+  .navigation-header button:active,
+  .navigation-button:active { transform: none !important; }
+  .navigation-menu[data-state],
+  .navigation-sheet[data-state] { animation: none !important; }
+}
+
+/* The closed rail gets a high-contrast, elevated way back into navigation. */
+.navigation-header button.sidebar-reopen-button {
+  width: 40px;
+  height: 40px;
+  background-color: var(--fill-neutral-strong);
+  color: var(--icon-inverse-strong);
+  box-shadow: var(--shadow-btn);
+  --icon-swap-start-scale: 0.85;
+  --icon-swap-blur: 0px;
+}
+:is(.dark, .deep-sky) .navigation-header button.sidebar-reopen-button {
+  background-color: var(--fill-inverse-strong);
+  color: var(--fill-neutral-strong);
+}
+.navigation-header button.sidebar-reopen-button:focus-visible {
+  outline: 2px solid var(--stroke-neutral-strong);
+  outline-offset: 3px;
+}
+@media (hover: hover) {
+  .navigation-header button.sidebar-reopen-button:hover:not(:disabled) {
+    transform: translateY(-1px);
+  }
+}
+.navigation-header button.sidebar-reopen-button:active:not(:disabled) {
+  transform: scale(0.96);
+}
+@media (prefers-reduced-motion: reduce) {
+  .navigation-header button.sidebar-reopen-button:hover,
+  .navigation-header button.sidebar-reopen-button:active {
+    transform: none;
+  }
+}

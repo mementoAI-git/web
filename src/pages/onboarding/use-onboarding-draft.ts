@@ -34,7 +34,7 @@ export function readOnboardingDraft(userId: string): OnboardingDraft {
             ),
           ]
         : [],
-      about: typeof value.about === "string" ? value.about.slice(0, 500) : "",
+      about: typeof value.about === "string" ? value.about : "",
       areas: Array.isArray(value.areas)
         ? [
             ...new Set(

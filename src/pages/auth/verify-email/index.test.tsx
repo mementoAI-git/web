@@ -1,3 +1,4 @@
+import { toast } from "sonner";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -10,6 +11,7 @@ vi.mock("react-router-dom", async (importOriginal) => ({
   ...(await importOriginal<typeof import("react-router-dom")>()),
   useNavigate: () => mockNavigate,
 }));
+vi.mock("sonner", () => ({ toast: { error: vi.fn() } }));
 const API = "http://localhost:3000/api";
 const renderPage = () =>
   renderWithProviders(<VerifyEmailPage />, {
@@ -103,9 +105,22 @@ describe("VerifyEmailPage", () => {
     await user.click(screen.getByLabelText("Digit 1 of 6"));
     await user.paste("123456");
     await user.click(screen.getByRole("button", { name: "Verify code" }));
-    expect(await screen.findByRole("alert")).toHaveTextContent(
-      "Invalid or expired code",
-    );
+    await waitFor(() => expect(toast.error).toHaveBeenCalled());
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     expect(mockNavigate).not.toHaveBeenCalled();
   });
+});
+
+it("preserves the code and leaves resend enabled when the server rejects resend", async () => {
+  vi.mocked(toast.error).mockClear();
+  server.use(http.post(`${API}/auth/send-link`, () => HttpResponse.json({ success: false, message: "Try later" })));
+  const user = userEvent.setup();
+  renderPage();
+  await user.click(screen.getByLabelText("Digit 1 of 6"));
+  await user.paste("123456");
+  await user.click(screen.getByRole("button", { name: "Resend code" }));
+  await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Try later"));
+  expect(screen.getByLabelText("Digit 1 of 6")).toHaveValue("1");
+  expect(screen.getByRole("button", { name: "Resend code" })).toBeEnabled();
+  expect(screen.getByRole("status")).toBeEmptyDOMElement();
 });

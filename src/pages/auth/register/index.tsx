@@ -1,7 +1,8 @@
+import { AuthFieldMotion, PasswordVisibilityIcon } from "../components/auth-motion";
 import { clearReferral, getReferralCode } from "@/features/referrals/attribution";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import endpoint from "@/api/endpoint";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -101,7 +102,7 @@ export default function RegisterPage() {
             className="box-content flex flex-col gap-3"
           >
             <div className="grid gap-3 sm:grid-cols-2">
-              <div className="grid gap-1.5 box-content">
+              <AuthFieldMotion error={errors.first_name} className="grid gap-1.5 box-content">
                 <Label
                   htmlFor="register-first-name"
                   className="font-geist text-sm"
@@ -123,8 +124,8 @@ export default function RegisterPage() {
                     {errors.first_name}
                   </p>
                 ) : null}
-              </div>
-              <div className="grid gap-1.5 box-content">
+              </AuthFieldMotion>
+              <AuthFieldMotion error={errors.last_name} className="grid gap-1.5 box-content">
                 <Label
                   htmlFor="register-last-name"
                   className="font-geist text-sm"
@@ -146,10 +147,10 @@ export default function RegisterPage() {
                     {errors.last_name}
                   </p>
                 ) : null}
-              </div>
+              </AuthFieldMotion>
             </div>
 
-            <div className="grid gap-1.5 box-content">
+            <AuthFieldMotion error={errors.email} className="grid gap-1.5 box-content">
               <Label htmlFor="register-email" className="font-geist text-sm">
                 Email
               </Label>
@@ -169,9 +170,9 @@ export default function RegisterPage() {
                   {errors.email}
                 </p>
               ) : null}
-            </div>
+            </AuthFieldMotion>
 
-            <div className="grid gap-1.5 box-content">
+            <AuthFieldMotion error={errors.password} className="grid gap-1.5 box-content">
               <Label htmlFor="register-password" className="font-geist text-sm">
                 Password
               </Label>
@@ -194,19 +195,7 @@ export default function RegisterPage() {
                   className="absolute right-1 top-1/2 flex size-9 -translate-y-1/2 items-center justify-center rounded-full text-text-neutral-weak transition-colors hover:bg-fill-neutral-weaker hover:text-text-neutral-strong"
                   aria-label={showPassword ? "Hide password" : "Show password"}
                 >
-                  {showPassword ? (
-                    <EyeOff
-                      className="size-4 shrink-0"
-                      strokeWidth={2}
-                      aria-hidden
-                    />
-                  ) : (
-                    <Eye
-                      className="size-4 shrink-0"
-                      strokeWidth={2}
-                      aria-hidden
-                    />
-                  )}
+                  <PasswordVisibilityIcon visible={showPassword} />
                 </button>
               </div>
               <p
@@ -221,7 +210,7 @@ export default function RegisterPage() {
                   {errors.password}
                 </p>
               ) : null}
-            </div>
+            </AuthFieldMotion>
 
             <Button
               type="submit"

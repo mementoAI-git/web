@@ -12,7 +12,7 @@ describe("AuthFormPanel", () => {
       </AuthFormPanel>,
     );
 
-    expect(container.firstElementChild).toHaveClass("box-content", "group/auth-root", "w-full");
+    expect(container.querySelector(".auth-motion-panel")).toHaveClass("box-content", "group/auth-root", "w-full");
 
     const title = screen.getByRole("heading", { level: 1, name: "Test title" });
     expect(title).toHaveClass("font-garamond", "text-[1.625rem]", "font-normal");

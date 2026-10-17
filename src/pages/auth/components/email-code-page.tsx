@@ -1,6 +1,8 @@
+import { AuthFieldMotion } from "./auth-motion";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { Loader2 } from "lucide-react";
+import { reportFetcherError } from "@/api/report-fetcher-error";
 import endpoint from "@/api/endpoint";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,7 +13,12 @@ import { useStore } from "@/hooks/use-store";
 
 const emptyCode = () => Array<string>(6).fill("");
 
-export default function EmailCodePage({
+export default function EmailCodePage({ purpose }: { purpose: "recovery" | "verification" }) {
+  const [params] = useSearchParams();
+  return <EmailCodeForm key={`${purpose}:${params.get("email")}`} purpose={purpose} />;
+}
+
+function EmailCodeForm({
   purpose,
 }: {
   purpose: "recovery" | "verification";
@@ -23,7 +30,9 @@ export default function EmailCodePage({
   const location = useLocation();
   const email = searchParams.get("email") || "";
   const [code, setCode] = useState(emptyCode);
-  const [error, setError] = useState("");
+  const pending = useRef(false);
+  const active = useRef(true);
+  useEffect(() => { active.current = true; return () => { active.current = false; }; }, []);
   const [notice, setNotice] = useState("");
   const [resendAt, setResendAt] = useState(
     () =>
@@ -59,7 +68,6 @@ export default function EmailCodePage({
 
   function updateDigits(index: number, value: string) {
     const digits = value.replace(/\D/g, "").slice(0, 6);
-    setError("");
     if (!digits) {
       setCode((current) =>
         current.map((digit, i) => (i === index ? "" : digit)),
@@ -79,14 +87,16 @@ export default function EmailCodePage({
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    if (busy || !/^\d{6}$/.test(code.join(""))) return;
-    setError("");
+    if (pending.current || busy || !/^\d{6}$/.test(code.join(""))) return;
+    pending.current = true;
     try {
       const result = await verify.trigger(
         isVerification
           ? { email, token: code.join(""), type: "verify" }
           : { email, code: code.join("") },
       );
+      if (!active.current) return;
+      if (!result?.success) throw new Error(result?.message || "Unable to verify this code. Please try again.");
       if (isVerification) {
         const session = extractSession(result);
         if (session) {
@@ -110,33 +120,33 @@ export default function EmailCodePage({
         replace: true,
       });
     } catch (cause) {
-      setError(
-        cause && typeof cause === "object" && "message" in cause
-          ? String(cause.message)
-          : "Unable to verify this code. Please try again.",
-      );
+      if (!active.current) return;
+      reportFetcherError(cause, "Unable to verify this code. Please try again.");
       inputRefs.current[0]?.focus();
-    }
+    } finally { pending.current = false; }
   }
 
   async function handleResend() {
-    if (busy || remaining > 0) return;
-    setError("");
+    if (pending.current || busy || remaining > 0) return;
+    pending.current = true;
     try {
-      await resend.trigger(
+      const result = await resend.trigger(
         isVerification
           ? { email, type: "verify", delivery: "code" }
           : { email },
       );
+      if (!active.current) return;
+      if (!result?.success) throw new Error(result?.message || "Unable to resend the code. Please try again.");
       const sentAt = Date.now();
       setNow(sentAt);
       setResendAt(sentAt + 60000);
       setCode(emptyCode());
       setNotice("A new code has been requested. Please check your inbox.");
       inputRefs.current[0]?.focus();
-    } catch {
-      setError("Unable to resend the code. Please try again shortly.");
-    }
+    } catch (cause) {
+      if (!active.current) return;
+      reportFetcherError(cause, "Unable to resend the code. Please try again shortly.");
+    } finally { pending.current = false; }
   }
 
   return (
@@ -167,7 +177,7 @@ export default function EmailCodePage({
               ? "Six-digit email verification code"
               : "Six-digit password recovery code"}
           </legend>
-          <div className="auth-recovery-code flex gap-2 px-4">
+          <AuthFieldMotion className="auth-recovery-code flex gap-2 px-4">
             {code.map((digit, index) => (
               <Input
                 key={index}
@@ -180,8 +190,6 @@ export default function EmailCodePage({
                 maxLength={6}
                 value={digit}
                 aria-label={`Digit ${index + 1} of 6`}
-                aria-invalid={Boolean(error)}
-                aria-describedby={error ? "recovery-code-error" : undefined}
                 onChange={(event) => updateDigits(index, event.target.value)}
                 onFocus={(event) => event.target.select()}
                 onPaste={(event) => {
@@ -199,17 +207,8 @@ export default function EmailCodePage({
                 className="min-w-0 flex-1 rounded-[10px] text-center tabular-nums"
               />
             ))}
-          </div>
+          </AuthFieldMotion>
         </fieldset>
-        {error && (
-          <p
-            id="recovery-code-error"
-            role="alert"
-            className="text-xs text-text-error-strong"
-          >
-            {error}
-          </p>
-        )}
         <div className="text-center text-xs text-text-neutral-weak">
           Didn’t receive the code?{" "}
           <button

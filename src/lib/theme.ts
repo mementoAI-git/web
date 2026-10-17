@@ -30,6 +30,7 @@ export function resolveTheme(theme: ThemePreference): ResolvedTheme {
 }
 
 export function applyResolvedTheme(theme: ResolvedTheme, preference: ThemePreference = theme): void {
+  document.documentElement.classList.toggle("daylight", theme === "light" && preference !== "light-sky");
   document.documentElement.classList.toggle("dark", theme === "dark");
   document.documentElement.classList.toggle("deep-sky", preference === "deep-sky");
   document.documentElement.classList.toggle("light-sky", preference === "light-sky");

@@ -1,3 +1,5 @@
+import { authRedirect } from "@/utility/auth-redirect";
+import { AuthFieldMotion, PasswordVisibilityIcon } from "../components/auth-motion";
 import { useState } from "react";
 import {
   Link,
@@ -6,7 +8,7 @@ import {
   useSearchParams,
 } from "react-router-dom";
 import { startAuthentication } from "@simplewebauthn/browser";
-import { Eye, EyeOff, Fingerprint, Loader2 } from "lucide-react";
+import { Fingerprint, Loader2 } from "lucide-react";
 import endpoint from "@/api/endpoint";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -63,7 +65,8 @@ export default function LoginPage() {
         if (result?.data) {
           // 2FA required — redirect to code entry page
           if (result.data.requires_2fa) {
-            navigate(`/two-factor?token=${result.data.two_fa_token}`);
+            const params = new URLSearchParams({ token: result.data.two_fa_token, redirect: authRedirect(searchParams.get("redirect")) });
+            navigate(`/two-factor?${params.toString()}`);
             return;
           }
 
@@ -75,7 +78,7 @@ export default function LoginPage() {
 
           const redirectPath = searchParams.get("redirect");
           if (redirectPath && session.onboarded) {
-            navigate(decodeURIComponent(redirectPath));
+            navigate(authRedirect(redirectPath), { replace: true });
           } else {
             navigate(session.onboarded ? "/overview" : "/onboarding");
           }
@@ -135,7 +138,7 @@ export default function LoginPage() {
       toast.success(completeData?.message ?? "Logged in");
       setAuth?.(session);
       await clearCache();
-      navigate(session.onboarded ? "/overview" : "/onboarding", {
+      navigate(session.onboarded ? authRedirect(searchParams.get("redirect")) : "/onboarding", {
         replace: true,
       });
     } catch (err) {
@@ -197,7 +200,7 @@ export default function LoginPage() {
               onSubmit={handleSubmit}
               className="box-content flex flex-col gap-3"
             >
-              <div className="grid gap-1.5">
+              <AuthFieldMotion error={errors.email} className="grid gap-1.5">
                 <Label htmlFor="login-email" className="font-geist text-sm">
                   Email
                 </Label>
@@ -217,9 +220,9 @@ export default function LoginPage() {
                     {errors.email}
                   </p>
                 ) : null}
-              </div>
+              </AuthFieldMotion>
 
-              <div className="grid gap-1.5">
+              <AuthFieldMotion error={errors.password} className="grid gap-1.5">
                 <Label htmlFor="login-password" className="font-geist text-sm">
                   Password
                 </Label>
@@ -243,19 +246,7 @@ export default function LoginPage() {
                       showPassword ? "Hide password" : "Show password"
                     }
                   >
-                    {showPassword ? (
-                      <EyeOff
-                        className="size-4 shrink-0"
-                        strokeWidth={2}
-                        aria-hidden
-                      />
-                    ) : (
-                      <Eye
-                        className="size-4 shrink-0"
-                        strokeWidth={2}
-                        aria-hidden
-                      />
-                    )}
+                    <PasswordVisibilityIcon visible={showPassword} />
                   </button>
                 </div>
                 {errors.password ? (
@@ -263,7 +254,7 @@ export default function LoginPage() {
                     {errors.password}
                   </p>
                 ) : null}
-              </div>
+              </AuthFieldMotion>
 
               <div className="flex items-center justify-between gap-3">
                 <Label

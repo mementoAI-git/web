@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { screen } from "@testing-library/react";
+import { screen, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "@/test";
 import MiscPage from "./index";
@@ -52,7 +52,10 @@ describe("onboarding questions", () => {
     await user.click(screen.getByRole("button", { name: "Continue" }));
     const about = screen.getByRole("textbox", { name: "Enter About info" });
     await user.type(about, "I care about family.");
-    expect(screen.getByText("20/500")).toBeInTheDocument();
+    expect(document.querySelector("#about-counter")).toHaveTextContent("20/2000");
+    fireEvent.change(about, { target: { value: "a".repeat(2001) } });
+    expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
+    fireEvent.change(about, { target: { value: "I care about family." } });
     await user.click(screen.getByRole("button", { name: "Continue" }));
     await user.click(screen.getByRole("button", { name: "Identity and self" }));
     expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();

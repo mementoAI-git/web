@@ -2,7 +2,7 @@
 
 import { clearCache } from "@/utility";
 import type { IAuth, IUser } from "@/utility/interface";
-import { authService } from "@/utility/auth-service";
+import { AUTH_CLEARED_EVENT, authService } from "@/utility/auth-service";
 import {
   createContext,
   useCallback,
@@ -36,6 +36,11 @@ interface StoreContext extends IState {
 
 const store = createContext<StoreContext>(initialStates);
 
+/** Supply a scoped view of the store without mutating its owning provider. */
+export function StoreValueProvider({ children, value }: PropsWithChildren<{ value: StoreContext }>) {
+  return <store.Provider value={value}>{children}</store.Provider>;
+}
+
 export function StoreProvider({ children }: PropsWithChildren) {
   const [state, setState] = useState(initialStates);
 
@@ -62,12 +67,15 @@ export function StoreProvider({ children }: PropsWithChildren) {
   }, []);
 
   useEffect(() => {
+    const onAuthCleared = () => setState((p) => ({ ...p, auth: null, user: null }));
+    window.addEventListener(AUTH_CLEARED_EVENT, onAuthCleared);
     const auth = authService.getAuthData();
     if (auth) {
       setState((p) => ({ ...p, auth, hydrated: true }));
     } else {
       setState((p) => ({ ...p, hydrated: true }));
     }
+    return () => window.removeEventListener(AUTH_CLEARED_EVENT, onAuthCleared);
   }, []);
   return (
     <store.Provider

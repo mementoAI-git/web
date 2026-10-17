@@ -1,5 +1,5 @@
-import { Link, useNavigate } from "react-router-dom";
-import { useStore } from "@/hooks/use-store";
+import { Link } from "react-router-dom";
+import { useSkipOnboarding } from "./use-skip-onboarding";
 import { onboardingAssets as assets } from "./assets";
 import {
   OnboardingActions,
@@ -38,8 +38,7 @@ const features = [
 ];
 
 export default function WelcomePage() {
-  const { user, setUser } = useStore();
-  const navigate = useNavigate();
+  const { skip, busy } = useSkipOnboarding();
   return (
     <OnboardingCard>
       <div className="flex flex-col gap-3">
@@ -95,15 +94,13 @@ export default function WelcomePage() {
         <OnboardingButton
           variant="outline"
           className="min-w-[91px]"
-          onClick={() => {
-            if (user) setUser?.({ ...user, onboarding_status: "skipped" });
-            navigate("/overview");
-          }}
+          onClick={() => void skip()}
+          disabled={busy}
         >
           Skip
         </OnboardingButton>
-        <OnboardingButton asChild>
-          <Link to="/onboarding/nickname">Continue</Link>
+        <OnboardingButton asChild disabled={busy}>
+          <Link to="/onboarding/nickname" onClick={(event) => { if (busy) event.preventDefault(); }}>Continue</Link>
         </OnboardingButton>
       </OnboardingActions>
     </OnboardingCard>

@@ -46,13 +46,14 @@ export interface UseHostOnboardingChatOptions {
   assistantPreDelayMs?: number;
   /** When false, skip reading/writing localStorage (e.g. tests). */
   persist?: boolean;
+  userId?: string;
   /** Display name from profile (after /onboarding/nickname). Sent on every stream call. */
   nickname?: string;
 }
 
 const DEFAULT_PRE_DELAY_MS = 0;
 
-function readInitial(persist: boolean) {
+function readInitial(persist: boolean, userId?: string) {
   if (!persist) {
     return {
       messages: [] as HostOnboardingMessage[],
@@ -68,7 +69,7 @@ function readInitial(persist: boolean) {
       structuredOutcome: { ...DEFAULT_STRUCTURED_OUTCOME },
     };
   }
-  const p = loadHostOnboardingChatState();
+  const p = loadHostOnboardingChatState(userId);
   const restored = !!(p && (p.messages.length > 0 || p.isComplete));
   return {
     messages: p?.messages ?? [],
@@ -91,11 +92,12 @@ export function useHostOnboardingChat(
   const assistantPreDelayMs =
     options.assistantPreDelayMs ?? DEFAULT_PRE_DELAY_MS;
   const persist = options.persist !== false;
+  const userId = options.userId;
   const nickname = options.nickname ?? "";
   const nicknameRef = useRef(nickname);
   nicknameRef.current = nickname;
 
-  const initial = readInitial(persist);
+  const initial = readInitial(persist, userId);
 
   const [messages, setMessages] = useState<HostOnboardingMessage[]>(
     initial.messages,
@@ -290,8 +292,9 @@ export function useHostOnboardingChat(
       progressStep,
       progressTotal,
       structuredOutcome,
-    });
+    }, userId);
   }, [
+    userId,
     persist,
     isTyping,
     introAcknowledged,
@@ -360,7 +363,7 @@ export function useHostOnboardingChat(
   );
 
   const resetFlow = useCallback(() => {
-    clearHostOnboardingChatState();
+    clearHostOnboardingChatState(userId);
     turnAbortRef.current?.abort();
     turnAbortRef.current = null;
     bootstrapStartedRef.current = false;
@@ -378,7 +381,7 @@ export function useHostOnboardingChat(
     setIntroAcknowledged(!persist);
     setIntroDraft("");
     setIsTyping(!persist);
-  }, [persist]);
+  }, [persist, userId]);
 
   return {
     messages,

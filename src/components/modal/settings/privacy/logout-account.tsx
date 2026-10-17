@@ -1,61 +1,38 @@
-import { ModalCloseBtn } from "../../modalLayout";
-import Spinner from "@/components/spinner";
+import { useRef } from "react";
 import { useLogout } from "@/hooks/use-logout";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 
-interface LogoutAccountProps {
-  close: () => void;
-  open: boolean;
-}
-
-export default function LogoutAccount({ close, open }: LogoutAccountProps) {
-  const { logout, loading: logoutLoading } = useLogout();
-
-  const handleLogoutAllDevices = async () => {
+export default function LogoutAccount({ close, open }: { close: () => void; open: boolean }) {
+  const returnFocusRef = useRef(document.activeElement as HTMLElement | null);
+  const { logout, loading } = useLogout();
+  const pending = useRef(false);
+  const handleLogout = async () => {
+    if (pending.current) return;
+    pending.current = true;
     try {
-      await logout();
+      await logout({ allDevices: true });
       toast.success("Logged out of all devices");
     } catch {
-      toast.error("Failed to logout");
+      toast.error("Couldn’t finish logging out of all devices. Please retry.");
+    } finally {
+      pending.current = false;
     }
   };
-
-  return (
-    <div className={`modal-overlay !z-[200] bg-overlay-backdrop ${open ? "flex" : "hidden"}`}>
-      <div className="flex h-full w-full items-center justify-center p-4">
-        <div className="modal-container !max-w-120">
-          <ModalCloseBtn onClick={close} />
-          <div className="space-y-6">
-            <div className="space-y-4">
-              <h4 className="modal-title !font-garamond !font-medium text-v3-text-strong">
-                Logout from all devices?
-              </h4>
-              <span className="font-inter text-base text-v3-text-weak">
-                Are you sure you want to logout from all devices? You will need to log in again on all your devices.
-              </span>
-            </div>
-            <div className="flex items-center justify-end gap-4">
-              <button
-                type="button"
-                className="h-10 cursor-pointer rounded-full border border-stroke-neutral-weak bg-bg-neutral/1 px-4 py-2.5 font-inter text-sm font-semibold shadow"
-                onClick={close}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                disabled={logoutLoading}
-                onClick={handleLogoutAllDevices}
-                className="flex h-10 items-center justify-center gap-2 rounded-full bg-danger px-4 py-2.5 font-inter text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-70"
-              >
-                I understand, logout
-                <Spinner loading={logoutLoading} className="!size-4" />
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+  return <Dialog open={open} onOpenChange={next => { if (!next && !pending.current) close(); }}>
+    <DialogContent showCloseButton={!loading} onCloseAutoFocus={event => {
+      event.preventDefault();
+      if (returnFocusRef.current?.isConnected) returnFocusRef.current.focus();
+    }}>
+      <DialogHeader>
+        <DialogTitle>Log out of all devices?</DialogTitle>
+        <DialogDescription>You’ll need to sign in again on every device, including this one.</DialogDescription>
+      </DialogHeader>
+      <DialogFooter>
+        <Button variant="outline" disabled={loading} onClick={close}>Cancel</Button>
+        <Button disabled={loading} onClick={() => void handleLogout()}>{loading ? "Logging out…" : "Log out of all devices"}</Button>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>;
 }
-

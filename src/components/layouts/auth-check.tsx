@@ -1,9 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState, type PropsWithChildren } from "react";
-import useSWR, { mutate } from "swr";
+import { useCallback, useEffect, useRef, useState, type PropsWithChildren } from "react";
+import useSWR from "swr";
 import { useNavigate, useLocation } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { useRequestRecovery } from "@/hooks/use-request-recovery";
 import endpoint from "@/api/endpoint";
+import { shouldRetryApiError } from "@/api/retry-policy";
 import { fetcher } from "@/api/fetcher";
 import { useStore } from "@/hooks/use-store";
 import { isEmpty } from "@/utility";
@@ -29,11 +32,16 @@ export default function AuthCheck({ children }: PropsWithChildren) {
   const navigate = useNavigate();
   const location = useLocation();
   const { auth, hydrated, setUser, setAuth, user } = useStore();
-  const [loading, setLoading] = useState(true);
+  const [validatedToken, setValidatedToken] = useState<string | null>(null);
+  const [sessionError, setSessionError] = useState<unknown>(null);
+  const [attempt, setAttempt] = useState(0);
+  const retrySession = useCallback(async () => { setSessionError(null); setAttempt(value => value + 1); }, []);
+  const retry = useRequestRecovery("session-refresh", sessionError, retrySession, "Couldn’t restore your session. Check your connection and retry.");
   const userRef = useRef(user);
   userRef.current = user;
 
-  useSWR(endpoint.profile, fetcher<IUser>, {
+  const profile = useSWR(hydrated && auth?.access_token && validatedToken === auth.access_token ? endpoint.profile : null, fetcher<IUser>, {
+    shouldRetryOnError: shouldRetryApiError,
     onSuccess(data) {
       if (data?.data && setUser) {
         setUser(mergeProfileServerUpdate(userRef.current, data.data));
@@ -41,41 +49,50 @@ export default function AuthCheck({ children }: PropsWithChildren) {
     },
   });
 
+  const retryProfile = useRequestRecovery("session-profile", profile.error, profile.mutate, "Couldn’t load your profile. Please retry.");
+
   useEffect(() => {
     if (!hydrated) return;
-
+    let active = true;
+    setSessionError(null);
+    const redirect = () => navigate(`/login?redirect=${encodeURIComponent(location.pathname + location.search + location.hash)}`, { replace: true });
     if (isEmpty(auth?.access_token)) {
-      navigate("/login");
+      redirect();
       return;
     }
-
     const handleAuth = async () => {
-      if (authService.isAccessTokenExpired(auth!)) {
-        if (authService.isRefreshTokenExpired(auth!)) {
-          const redirectParam = encodeURIComponent(location.pathname + location.search);
-          navigate(`/login?redirect=${redirectParam}`);
-          return;
-        }
-        try {
-          const newAuth = await authService.refreshAccessToken();
-          setAuth?.(newAuth);
-          await mutate(endpoint.profile);
-          setLoading(false);
-        } catch {
-          const redirectParam = encodeURIComponent(location.pathname + location.search);
-          navigate(`/login?redirect=${redirectParam}`);
-        }
+      if (!authService.isAccessTokenExpired(auth!)) {
+        setValidatedToken(auth!.access_token);
         return;
       }
-      setLoading(false);
+      setValidatedToken(null);
+      if (authService.isRefreshTokenExpired(auth!)) {
+        authService.clearAuth();
+        redirect();
+        return;
+      }
+      try {
+        const newAuth = await authService.refreshAccessToken();
+        if (!active) return;
+        setAuth?.(newAuth);
+        setValidatedToken(newAuth.access_token);
+      } catch (error) {
+        if (!active) return;
+        if (!authService.getAuthData()) redirect();
+        else setSessionError(error);
+      }
     };
+    void handleAuth();
+    return () => { active = false; };
+  }, [auth, hydrated, navigate, location.pathname, location.search, location.hash, setAuth, attempt]);
 
-    handleAuth();
-  }, [auth, hydrated, navigate, location.pathname, location.search, setAuth]);
+  if (!hydrated || !auth?.access_token) return null;
+  if (sessionError) return <div className="flex min-h-[40vh] items-center justify-center"><Button variant="outline" onClick={retry}>Retry session</Button></div>;
+  if (validatedToken !== auth.access_token) return <div role="status" className="flex min-h-[40vh] items-center justify-center text-sm text-text-neutral-weak">Restoring session…</div>;
 
-  if (!hydrated || loading) {
-    return null;
+  if (!user) {
+    if (profile.error) return <div className="flex min-h-[40vh] items-center justify-center"><Button variant="outline" onClick={retryProfile} disabled={profile.isValidating}>Retry profile</Button></div>;
+    return <div role="status" className="flex min-h-[40vh] items-center justify-center text-sm text-text-neutral-weak">Loading your profile…</div>;
   }
-
   return <>{children}</>;
 }

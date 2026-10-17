@@ -20,7 +20,8 @@ export default function ModalLayout({
         <button
           type="button"
           onClick={onClose}
-          className="absolute right-10 top-10 flex aspect-square w-9 items-center justify-center rounded-full bg-grey-400"
+          aria-label="Close"
+          className="absolute right-10 top-10 flex aspect-square w-9 items-center justify-center rounded-full bg-fill-neutral-weak text-text-neutral-strong"
         >
           <TimesIcon width={8.33} height={8.33} />
         </button>
@@ -55,7 +56,8 @@ export function ModalWrapper({
                 <button
                   type="button"
                   onClick={onClose}
-                  className="flex size-8 shrink-0 items-center justify-center rounded-full bg-grey-400"
+                  aria-label="Close"
+                  className="flex size-8 shrink-0 items-center justify-center rounded-full bg-fill-neutral-weak text-text-neutral-strong"
                 >
                   <TimesIcon width={8.33} height={8.33} />
                 </button>
@@ -106,7 +108,8 @@ export function FullScreenModal({
               <button
                 type="button"
                 onClick={onClose}
-                className="flex size-8 items-center justify-center rounded-full bg-grey-400"
+                aria-label="Close"
+                className="flex size-8 items-center justify-center rounded-full bg-fill-neutral-weak text-text-neutral-strong"
               >
                 <TimesIcon width={8.33} height={8.33} />
               </button>
@@ -132,6 +135,7 @@ export function ModalCloseBtn({ onClick, className = "" }: ModalCloseBtnProps) {
     <button
       type="button"
       onClick={onClick}
+      aria-label="Close"
       className={cn("modal-close-btn", { [className]: !isEmpty(className) })}
     >
       <TimesIcon width={8.33} height={8.33} />
