@@ -442,3 +442,26 @@ describe("MemoryInsightsModal", () => {
     expect(href).toContain("starter=");
   });
 });
+
+it("offers independent retries for progress, summary and beneficiaries", async () => {
+  let fail = true;
+  server.use(
+    http.get(`${API_BASE}/users/stats`, () => HttpResponse.json(fail ? { message: "offline" } : { success: true, data: minimalUserStats }, { status: fail ? 503 : 200 })),
+    http.get(`${API_BASE}/beneficiaries`, () => HttpResponse.json(fail ? { message: "offline" } : { success: true, data: { docs: [] } }, { status: fail ? 503 : 200 })),
+    http.get(`${API_BASE}/users/persona/memory-insights-summary`, () => HttpResponse.json(fail ? { message: "offline" } : { success: true, data: { summary: "Recovered summary" } }, { status: fail ? 503 : 200 })),
+  );
+  const user = userEvent.setup();
+  renderWithProviders(<MemoryInsightsModal />, { route: "/overview", auth: true });
+  const progress = await screen.findByRole("button", { name: "Retry progress" });
+  const summary = await screen.findByRole("button", { name: "Retry summary" });
+  const beneficiaries = await screen.findByRole("button", { name: "Retry beneficiaries" });
+  expect(screen.queryByText("No beneficiaries yet")).not.toBeInTheDocument();
+  expect(screen.queryByText("About 0%")).not.toBeInTheDocument();
+  fail = false;
+  await user.click(progress);
+  await user.click(summary);
+  await user.click(beneficiaries);
+  expect(await screen.findByText("Recovered summary")).toBeVisible();
+  expect(await screen.findByText("No beneficiaries yet")).toBeVisible();
+  expect(await screen.findByText("About 10%")).toBeVisible();
+});

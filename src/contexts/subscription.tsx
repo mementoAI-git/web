@@ -63,7 +63,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       isLegacy,
       isProOrAbove,
       canAccess,
-      refresh: () => void mutate(),
+      refresh: () => { void mutate().catch(() => undefined); },
     }),
     [
       summary,

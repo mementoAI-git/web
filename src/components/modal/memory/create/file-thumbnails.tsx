@@ -340,12 +340,14 @@ function DocumentThumbnail({
 export interface FileThumbnailsProps {
   files: IOnUploadPayload[];
   onRemove: (id: string) => void;
+  onRetry?: (file: IOnUploadPayload) => void;
   variant?: "default" | "composer-rail" | "media-inline";
 }
 
 export function FileThumbnails({
   files,
   onRemove,
+  onRetry,
   variant = "default",
 }: FileThumbnailsProps) {
   if (files.length === 0) return null;
@@ -373,7 +375,7 @@ export function FileThumbnails({
           const imgSrc = isImage ? (file.base64 || file.uploadedFile?.url || "") : "";
           const sizeBytes = file.file?.size ?? (typeof file.uploadedFile?.size === "number" ? file.uploadedFile.size : 0);
           const sizeLabel = sizeBytes ? formatFileSize(sizeBytes) : "";
-          const isUploading = file.progress !== undefined && file.progress !== 100;
+          const isUploading = !file.uploadedFile?._id && !file.uploadFailed;
           const frameClassName =
             isMediaInline ?
               "relative size-[72px] overflow-hidden rounded-[14px] bg-[#f3eee6] shadow-[inset_0_0_0_1px_rgba(15,7,0,0.06)]"
@@ -424,12 +426,16 @@ export function FileThumbnails({
                   <FileInfoTile file={file} mimeType={mimeType} compact={compact} />
                 )}
 
-                {isUploading ? (
+                {file.uploadFailed && onRetry ? (
+                  <div className="absolute inset-0 flex items-end justify-center bg-overlay-backdrop p-1">
+                    <button type="button" aria-label={`Retry ${file.file?.name ?? file.uploadedFile?.name ?? "attachment"}`} onClick={() => onRetry(file)} className="min-h-8 rounded-full bg-bg-neutral-solid px-2 text-xs font-semibold text-text-neutral-strong focus-visible:outline-2 focus-visible:outline-stroke-neutral-strong">Retry</button>
+                  </div>
+                ) : isUploading ? (
                   <div className="absolute inset-0 flex flex-col justify-end bg-black/35">
                     <div className={isMediaInline ? "px-2 pb-2 pt-6" : "px-2 pb-2 pt-8"}>
                       <div className="mb-1 flex items-center justify-between">
                         <span className="font-inter text-[10px] font-semibold text-white">
-                          {file.progress}%
+                          {file.progress >= 80 ? "Processing" : `${file.progress}%`}
                         </span>
                       </div>
                       <div className="h-1.5 overflow-hidden rounded-full bg-white/30">
@@ -442,7 +448,7 @@ export function FileThumbnails({
                   </div>
                 ) : null}
 
-                {sizeLabel ? (
+                {sizeLabel && !isUploading && !file.uploadFailed ? (
                   <div
                     className={
                       isMediaInline ?

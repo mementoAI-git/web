@@ -88,7 +88,7 @@ it("collapses to the identicon, title and three actions, then restores the badge
   expect(toggleBookmark).toHaveBeenCalledOnce();
   await user.click(screen.getByRole("button", { name: "Expand topic card" }));
   expect(screen.getByText("People I Love")).toBeInTheDocument();
-  expect(card.querySelector("img")).toHaveAttribute("width", "68");
+  expect(card.querySelector("img")).toHaveAttribute("width", "56");
 });
 
 it("does not submit share or bookmark actions before the question has a saved conversation", () => {

@@ -51,6 +51,24 @@ vi.mock("@/hooks/use-file-upload", async (importOriginal) => {
 
 const aiTaskRunMock = vi.fn();
 
+describe("publish upload readiness", () => {
+  it("blocks publishing unconfirmed 100% attachments", () => {
+    uploadState.files = [{ id: "pending", file: new File(["image"], "photo.png"), progress: 100 }];
+    try {
+      renderWithProviders(<CreateMemory />);
+      expect(screen.getByRole("button", { name: /publish story/i })).toBeDisabled();
+    } finally { uploadState.files = null; }
+  });
+  it("keeps a failed attachment visible with a retry action and blocks publishing", () => {
+    uploadState.files = [{ id: "failed", file: new File(["image"], "photo.png", { type: "image/png" }), base64: "data:image/png;base64,a", progress: 80, uploadFailed: true }];
+    try {
+      renderWithProviders(<CreateMemory />);
+      expect(screen.getByTestId("file-thumbnails-mock")).toHaveAttribute("data-retry-enabled", "true");
+      expect(screen.getByRole("button", { name: /publish story/i })).toBeDisabled();
+    } finally { uploadState.files = null; }
+  });
+});
+
 vi.mock("@/features/ai/use-ai-task", async () => {
   const React = await import("react");
 
@@ -412,7 +430,7 @@ vi.mock("@emoji-mart/react", () => ({
 }));
 
 vi.mock("./file-thumbnails", () => ({
-  FileThumbnails: () => <div data-testid="file-thumbnails-mock" />,
+  FileThumbnails: ({ onRetry, onRemove, files }: { onRetry?: unknown; onRemove: (id: string) => void; files: IOnUploadPayload[] }) => <div data-testid="file-thumbnails-mock" data-retry-enabled={Boolean(onRetry)}>{files.map((file) => <button key={file.id} aria-label={`Remove test attachment ${file.id}`} onClick={() => onRemove(file.id)}>Remove</button>)}</div>,
 }));
 
 vi.mock("react-modal-sheet", () => {
@@ -872,6 +890,42 @@ describe("CreateMemory", () => {
     expect(screen.queryByTestId("desktop-journal-shell")).not.toBeInTheDocument();
   });
 
+  it("discards the active draft without deleting other drafts or recreating it through autosave", async () => {
+    const user = userEvent.setup();
+    localStorage.setItem("create-memory-drafts", JSON.stringify([
+      { id: "active-draft", title: "Attachment draft", body: "", tags: [], attachments: [{ _id: "restored-file", name: "photo.png", type: "image/png", url: "https://example.test/photo", size: 5 }], updatedAt: new Date().toISOString() },
+      { id: "other-draft", title: "Keep this draft", body: "", tags: [], attachments: [], updatedAt: new Date().toISOString() },
+    ]));
+    renderWithProviders(<ComposerModal />, { auth: true });
+    await user.click(screen.getByRole("button", { name: "Open composer" }));
+    await user.click(screen.getByRole("button", { name: "Drafts" }));
+    await user.click(screen.getByRole("button", { name: /Attachment draft/ }));
+    fireEvent.change(screen.getByPlaceholderText(/give this story a title/i), { target: { value: "Attachment draft edited" } });
+    fireEvent.click(screen.getByRole("button", { name: "Close" }));
+    fireEvent.click(screen.getByRole("button", { name: "Discard" }));
+    await act(async () => { await new Promise((resolve) => setTimeout(resolve, 1100)); });
+    const saved = JSON.parse(localStorage.getItem("create-memory-drafts") ?? "[]");
+    expect(saved.map((draft: { id: string }) => draft.id)).toEqual(["other-draft"]);
+    expect(screen.queryByTestId("desktop-journal-shell")).not.toBeInTheDocument();
+  });
+
+  it("detaches a restored attachment only from the active draft", async () => {
+    const user = userEvent.setup();
+    const attachment = { _id: "shared-file", name: "photo.png", type: "image/png", url: "https://example.test/photo", size: 5 };
+    localStorage.setItem("create-memory-drafts", JSON.stringify([
+      { id: "active-draft", title: "Attachment draft", body: "", tags: [], attachments: [attachment], updatedAt: new Date().toISOString() },
+      { id: "other-draft", title: "Keep this draft", body: "", tags: [], attachments: [attachment], updatedAt: new Date().toISOString() },
+    ]));
+    renderWithProviders(<ComposerModal />, { auth: true });
+    await user.click(screen.getByRole("button", { name: "Open composer" }));
+    await user.click(screen.getByRole("button", { name: "Drafts" }));
+    await user.click(screen.getByRole("button", { name: /Attachment draft/ }));
+    await user.click(screen.getByRole("button", { name: "Remove test attachment shared-file" }));
+    const saved = JSON.parse(localStorage.getItem("create-memory-drafts") ?? "[]");
+    expect(saved.find((draft: { id: string }) => draft.id === "active-draft").attachments).toEqual([]);
+    expect(saved.find((draft: { id: string }) => draft.id === "other-draft").attachments).toEqual([attachment]);
+  });
+
   it("closes an empty desktop story without prompting", async () => {
     const user = userEvent.setup();
     renderWithProviders(<ComposerModal />, { auth: true });
@@ -973,7 +1027,7 @@ describe("CreateMemory", () => {
     }
   });
 
-  it("keeps Clear all in the Story composer dropdown header", async () => {
+  it("keeps Clear all in the shared Drafts dropdown header", async () => {
     vi.useFakeTimers();
     renderWithProviders(<CreateMemory data={{}} isMobile={false} />, { auth: true });
     fireEvent.change(screen.getByPlaceholderText(/give this story a title/i), {
@@ -987,7 +1041,7 @@ describe("CreateMemory", () => {
 
     const clearAll = screen.getByRole("button", { name: "Clear all" });
     const header = clearAll.closest('[data-slot="dropdown-menu-label"]');
-    expect(header).toHaveTextContent("Story composer");
+    expect(header).toHaveTextContent("Drafts");
     expect(header).toHaveClass("flex", "justify-between");
   });
 
@@ -1119,6 +1173,115 @@ describe("CreateMemory", () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  it("renders the Figma draft rows and deletes only the selected draft", async () => {
+    const user = userEvent.setup();
+    localStorage.setItem("create-memory-drafts", JSON.stringify([
+      { id: "first", title: "First story", body: "<p>Body preview stays in the editor</p>", tags: [], attachments: [{ _id: "image", type: "image/png", url: "https://example.test/draft.png" }], updatedAt: "2026-10-14T13:01:00Z" },
+      { id: "second", title: "Second story", body: "", tags: [], attachments: [], updatedAt: "2026-10-14T13:01:00Z" },
+    ]));
+    renderWithProviders(<CreateMemory data={{}} isMobile={false} />);
+    await user.click(screen.getByRole("button", { name: "Drafts" }));
+    const firstRow = screen.getByRole("button", { name: /First story/ }).closest(".drafts-menu-row")!;
+    expect(firstRow.querySelector(".drafts-menu-thumbnail img")).toHaveAttribute("src", "https://api.dicebear.com/10.x/disco/svg?seed=first");
+    expect(firstRow.querySelector(".drafts-menu-date")).not.toHaveTextContent(/:00/);
+    expect(screen.queryByText("Body preview stays in the editor")).not.toBeInTheDocument();
+    await user.click(firstRow.querySelector<HTMLButtonElement>(".drafts-menu-delete")!);
+    expect(screen.queryByRole("button", { name: /First story/ })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Second story/ })).toBeInTheDocument();
+    expect(JSON.parse(localStorage.getItem("create-memory-drafts") ?? "[]").map((draft: { id: string }) => draft.id)).toEqual(["second"]);
+  });
+
+  it("uses the topic identicon style for quick captures and drafts without media", async () => {
+    const user = userEvent.setup();
+    const key = "quick-capture-draft:anon:dp:prompt with spaces";
+    localStorage.setItem(key, JSON.stringify({ note: "Quick note" }));
+    localStorage.setItem("create-memory-drafts", JSON.stringify([
+      { id: "draft with spaces", title: "Story draft", body: "", tags: [], attachments: [], updatedAt: "2026-10-14T13:01:00Z" },
+    ]));
+    renderWithProviders(<CreateMemory data={{}} isMobile={false} />);
+    await user.click(screen.getByRole("button", { name: "Drafts" }));
+    const quick = screen.getByRole("button", { name: /Quick note/ }).querySelector("img");
+    const story = screen.getByRole("button", { name: /Story draft/ }).querySelector("img");
+    expect(quick).toHaveAttribute("src", `https://api.dicebear.com/10.x/disco/svg?seed=${encodeURIComponent(key)}`);
+    expect(story).toHaveAttribute("src", "https://api.dicebear.com/10.x/disco/svg?seed=draft%20with%20spaces");
+    expect(quick).toHaveAttribute("referrerpolicy", "no-referrer");
+  });
+
+  it.each([0, 1, 3, 4, 5])("keeps %i drafts inside a scrolling region below the fixed header", async (count) => {
+    const user = userEvent.setup();
+    localStorage.setItem("create-memory-drafts", JSON.stringify(Array.from({ length: count }, (_, i) => ({
+      id: `draft-${i}`, title: `Story ${i + 1}`, body: "", tags: [], attachments: [], updatedAt: "2026-10-14T13:01:00Z",
+    }))));
+    renderWithProviders(<CreateMemory data={{}} isMobile={false} />);
+    await user.click(screen.getByRole("button", { name: "Drafts" }));
+    const region = screen.getByRole("region", { name: "Saved drafts" });
+    expect(region.querySelectorAll(".drafts-menu-row")).toHaveLength(count);
+    expect(region).toHaveAttribute("tabindex", count > 4 ? "0" : "-1");
+    const clear = screen.queryByRole("button", { name: "Clear all" });
+    if (count > 0) expect(region).not.toContainElement(clear);
+    else expect(region).toContainElement(screen.getByRole("heading", { name: "Draft is empty" }));
+  });
+
+  it("lets keyboard users tab through draft actions", async () => {
+    const user = userEvent.setup();
+    localStorage.setItem("create-memory-drafts", JSON.stringify([
+      { id: "keyboard", title: "Keyboard draft", body: "", tags: [], attachments: [], updatedAt: "2026-10-14T13:01:00Z" },
+    ]));
+    renderWithProviders(<CreateMemory data={{}} isMobile={false} />);
+    await user.click(screen.getByRole("button", { name: "Drafts" }));
+    screen.getByRole("button", { name: "Clear all" }).focus();
+    await user.tab();
+    expect(screen.getByRole("button", { name: /Keyboard draft/ })).toHaveFocus();
+    await user.tab();
+    expect(screen.getByRole("button", { name: "Delete" })).toHaveFocus();
+  });
+
+  it("opens an empty drafts panel and returns focus on Escape", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<CreateMemory data={{}} isMobile={false} />, { auth: true });
+    const trigger = screen.getByRole("button", { name: "Drafts" });
+    await user.click(trigger);
+    expect(screen.getByRole("heading", { name: "Draft is empty" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Clear all" })).not.toBeInTheDocument();
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("heading", { name: "Draft is empty" })).not.toBeInTheDocument();
+    expect(trigger).toHaveFocus();
+  });
+
+  it("clears quick capture drafts even when there are no story drafts", async () => {
+    const user = userEvent.setup();
+    localStorage.setItem("quick-capture-draft:anon", JSON.stringify({ note: "Quick note" }));
+    renderWithProviders(<CreateMemory data={{}} isMobile={false} />);
+    await user.click(screen.getByRole("button", { name: "Drafts" }));
+    await user.click(screen.getByRole("button", { name: "Clear all" }));
+    expect(localStorage.getItem("quick-capture-draft:anon")).toBeNull();
+    expect(screen.getByRole("heading", { name: "Draft is empty" })).toBeInTheDocument();
+  });
+
+  it("clears all displayed drafts without a pending autosave recreating them", async () => {
+    const user = userEvent.setup();
+    localStorage.setItem("create-memory-drafts", JSON.stringify([
+      { id: "saved", title: "Saved draft", body: "", tags: [], attachments: [], updatedAt: new Date().toISOString() },
+    ]));
+    localStorage.setItem("quick-capture-draft:anon", JSON.stringify({ note: "Quick note" }));
+    localStorage.setItem("quick-capture-draft:anon:dp:prompt", JSON.stringify({ note: "Daily note" }));
+    localStorage.setItem("quick-capture-draft:someone-else", JSON.stringify({ note: "Keep this" }));
+    renderWithProviders(<CreateMemory data={{}} isMobile={false} />);
+    fireEvent.change(screen.getByPlaceholderText(/give this story a title/i), { target: { value: "Pending edit" } });
+    await user.click(screen.getByRole("button", { name: "Drafts" }));
+    await user.click(screen.getByRole("button", { name: "Clear all" }));
+    await act(async () => { await new Promise((resolve) => setTimeout(resolve, 1100)); });
+    expect(JSON.parse(localStorage.getItem("create-memory-drafts") ?? "[]")).toEqual([]);
+    expect(localStorage.getItem("quick-capture-draft:anon")).toBeNull();
+    expect(localStorage.getItem("quick-capture-draft:anon:dp:prompt")).toBeNull();
+    expect(localStorage.getItem("quick-capture-draft:someone-else")).not.toBeNull();
+    expect(screen.getByRole("heading", { name: "Draft is empty" })).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/give this story a title/i)).toHaveValue("Pending edit");
+    fireEvent.change(screen.getByPlaceholderText(/give this story a title/i), { target: { value: "New edit" } });
+    await act(async () => { await new Promise((resolve) => setTimeout(resolve, 1100)); });
+    expect(JSON.parse(localStorage.getItem("create-memory-drafts") ?? "[]")[0].title).toBe("New edit");
   });
 
   it("invalidates saved status when all local drafts are cleared", async () => {

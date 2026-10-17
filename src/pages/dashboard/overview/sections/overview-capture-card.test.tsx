@@ -427,3 +427,42 @@ it("keeps a draft in the card and toasts when device storage fails", () => {
     storage.mockRestore();
   }
 });
+
+it("hides the placeholder on focus and restores it when an empty field loses focus", async () => {
+  const user = userEvent.setup();
+  renderWithProviders(
+    <OverviewCaptureCard userId="a" onVoiceConversation={vi.fn()} />,
+  );
+  const field = screen.getByRole("textbox", { name: "Your thoughts" });
+  expect(field).toHaveAttribute("placeholder", "What’s on your mind today?");
+  await user.click(field);
+  expect(field).toHaveAttribute("placeholder", "");
+  await user.tab();
+  expect(field).toHaveAttribute("placeholder", "What’s on your mind today?");
+});
+
+it("focuses the editor from the empty space above the controls", async () => {
+  const user = userEvent.setup();
+  renderWithProviders(
+    <OverviewCaptureCard userId="a" onVoiceConversation={vi.fn()} />,
+  );
+  await user.click(screen.getByTestId("capture-writing-area"));
+  const field = screen.getByRole("textbox", { name: "Your thoughts" });
+  expect(field).toHaveFocus();
+  await user.keyboard("A thought worth keeping");
+  expect(field).toHaveValue("A thought worth keeping");
+  await user.click(screen.getByRole("button", { name: "Use as story" }));
+  expect(field).not.toHaveFocus();
+});
+
+it("does not focus the draft by clicking recording space while recording", async () => {
+  phase = "recording";
+  localStorage.setItem("memento-overview-draft:a", "Existing draft");
+  const user = userEvent.setup();
+  renderWithProviders(
+    <OverviewCaptureCard userId="a" onVoiceConversation={vi.fn()} />,
+  );
+  await user.click(screen.getByTestId("overview-capture-card"));
+  expect(screen.getByRole("textbox")).not.toHaveFocus();
+  expect(screen.getByRole("textbox")).toHaveValue("Existing draft");
+});

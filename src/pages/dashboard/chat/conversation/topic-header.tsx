@@ -99,13 +99,13 @@ export default function TopicHeader({ memory }: { memory: IMemory }) {
     <img
       src={getQuestionIdenticonUrl(id || "")}
       alt=""
-      width={collapsed ? 40 : 68}
-      height={collapsed ? 40 : 68}
+      width={collapsed ? 40 : 56}
+      height={collapsed ? 40 : 56}
       decoding="async"
       referrerPolicy="no-referrer"
       className={cn(
         "shrink-0 bg-fill-neutral-weak object-cover",
-        collapsed ? "size-10 rounded-md" : "size-[68px] rounded-[10.625px]",
+        collapsed ? "size-10 rounded-md" : "size-14 rounded-lg",
       )}
     />
   );
@@ -149,7 +149,7 @@ export default function TopicHeader({ memory }: { memory: IMemory }) {
               {actions}
             </div>
             <div className="flex items-start justify-between gap-4 sm:gap-6">
-              <h1 className="min-w-0 max-w-[680px] flex-1 font-garamond text-2xl font-normal leading-7 text-text-neutral-strong sm:text-[30px] sm:leading-[34px]">
+              <h1 className="min-w-0 max-w-[680px] flex-1 font-garamond text-2xl font-normal leading-7 text-text-neutral-strong">
                 {memory?.title}
               </h1>
               {image}

@@ -1,0 +1,36 @@
+import { screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { http, HttpResponse } from "msw";
+import { toast } from "sonner";
+import { renderWithProviders, server, mockUser } from "@/test";
+import { StoreValueProvider, initialStates } from "@/hooks/use-store";
+import { BackgroundMusicProvider } from "@/hooks/use-background-music";
+import { QuickTools } from "./quick-tools";
+vi.mock("sonner", () => ({ toast: { error: vi.fn(), success: vi.fn() } }));
+it("retains quick actions and the selected track on failed preference save, then retries", async () => {
+  vi.stubGlobal("ResizeObserver", class { observe() {} unobserve() {} disconnect() {} });
+  const play = vi.fn(async () => undefined);
+  class AudioStub extends EventTarget { src = ""; loop = false; volume = 0.5; paused = true; load() {} pause() {} play = play; }
+  vi.stubGlobal("Audio", AudioStub);
+  let fail = true;
+  server.use(http.put("*/users/profile", () => HttpResponse.json({ success: !fail }, { status: fail ? 503 : 200 })));
+  const setUser = vi.fn();
+  const user = userEvent.setup();
+  const { unmount } = renderWithProviders(<StoreValueProvider value={{ ...initialStates, user: { ...mockUser, bg_music: "moonlight" }, setUser }}><BackgroundMusicProvider><QuickTools /></BackgroundMusicProvider></StoreValueProvider>, { auth: true, route: "/overview" });
+  await user.click(screen.getByRole("button", { name: "Quick tools" }));
+  await user.click(screen.getByRole("button", { name: "Next track" }));
+  await waitFor(() => expect(toast.error).toHaveBeenCalledTimes(1));
+  expect(screen.getByText("Moonlight")).toBeVisible();
+  expect(screen.getByRole("button", { name: "Quick note" })).toBeEnabled();
+  expect(play).not.toHaveBeenCalled();
+  expect(setUser).not.toHaveBeenCalled();
+  fail = false;
+  await user.click(screen.getByRole("button", { name: "Next track" }));
+  await waitFor(() => expect(play).toHaveBeenCalledTimes(1));
+  expect(screen.getByText("Sea Waves")).toBeVisible();
+  expect(screen.getByRole("status")).toHaveTextContent("Loading music");
+  await user.click(screen.getByRole("button", { name: "Stop music" }));
+  expect(screen.queryByText("Loading music…")).not.toBeInTheDocument();
+  unmount();
+  vi.unstubAllGlobals();
+});

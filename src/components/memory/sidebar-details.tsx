@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 
+import { ChatSettingsDrawer } from "./chat-settings-drawer";
 import PropsItem from "@/components/props-item";
 import type { IMemory } from "@/utility/interface";
 import { getPostTypeLabel, type PostTypeSource } from "@/utility/memory";
@@ -309,7 +310,7 @@ function Content({
       className={cn(
         "relative isolate flex w-full min-w-0 max-w-full flex-col gap-0",
         includeChatPreferences
-          ? "bg-background"
+          ? "bg-bg-neutral-solid"
           : "bg-v3-bg",
         isMobile
           ? "h-auto overflow-visible"
@@ -375,6 +376,17 @@ export default function SidebarDetails({
   const desktopWidthPx = useAnimatedSidebarWidthPx(isOpen, wideChatPanel);
   const isInlineDesktop = desktopLayout === "inline";
 
+  if (includeChatPreferences && !isInlineDesktop) {
+    return (
+      <ChatSettingsDrawer isOpen={isOpen} onClose={onClose}>
+        {(mobile) => <Content memory={memory} onClose={onClose} source={source}
+          isMobile={mobile} desktopLayout={desktopLayout}
+          includeChatPreferences enrichmentScore={enrichmentScore}
+          categoryScores={categoryScores} onOpenConversationFiles={onOpenConversationFiles} />}
+      </ChatSettingsDrawer>
+    );
+  }
+
   return (
     <>
       <Sheet
@@ -429,7 +441,7 @@ export default function SidebarDetails({
         <div
           className={cn(
             "box-border h-full min-h-0 min-w-0 w-full max-w-full p-0",
-            includeChatPreferences ? "bg-background" : "bg-transparent",
+            includeChatPreferences ? "bg-bg-neutral-solid" : "bg-transparent",
           )}
         >
           <Content

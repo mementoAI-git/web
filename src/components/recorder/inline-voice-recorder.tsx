@@ -75,7 +75,7 @@ export function InlineVoiceRecorder({
             size="sm"
             disabled={busy}
             onClick={onToggleRecording}
-            className={cn("h-9 rounded-full px-3 font-inter text-xs font-semibold")}
+            className={cn("h-9 rounded-full px-3 font-inter text-xs font-semibold", !recording && "bg-fill-neutral-weak text-text-neutral-strong hover:bg-fill-neutral-weak/80")}
             aria-label={recording ? "Stop recording" : "Start recording"}
           >
             {recording ? <Square className="mr-1.5 size-3.5 fill-current" /> : <Mic className="mr-1.5 size-3.5" />}
@@ -105,7 +105,7 @@ export function InlineVoiceRecorder({
         </div>
       ) : null}
 
-      {error ? <p className="mt-2 font-inter text-xs text-danger">{error}</p> : null}
+      {error ? <p className="mt-2 font-inter text-xs text-text-error-strong">{error}</p> : null}
     </div>
   );
 }

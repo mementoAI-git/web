@@ -1,3 +1,5 @@
+import { Tabs as BaseTabs } from "@base-ui/react/tabs";
+import "../stories-motion.css";
 import { SearchIcon } from "@/components/icons";
 import { useModal } from "@/hooks/use-modal";
 import { storageKeys } from "@/utility/constant";
@@ -38,17 +40,17 @@ export default function StoriesHeader({
   return (
     <div
       data-slot="stories-sticky-search"
-      className="sticky top-4 z-40 flex items-center gap-3 bg-background pb-3 before:absolute before:inset-x-0 before:-top-4 before:h-4 before:bg-background before:content-['']"
+      className="stories-search-surface sticky top-4 z-40 flex items-center gap-3 pb-3"
     >
       <Button
         type="button"
         variant="ghost"
         aria-label="Search memories"
         onClick={() => open("search-memory")}
-        className="h-12 min-w-0 flex-1 justify-start gap-3 rounded-xl border border-stroke-neutral-weak bg-fill-neutral-weak px-4 text-neutral-weak hover:bg-fill-neutral-weaker hover:text-neutral-strong"
+        className="h-12 min-w-0 flex-1 justify-start gap-3 rounded-xl border border-stroke-neutral-weak bg-fill-neutral-weak px-4 text-text-neutral-weak hover:bg-fill-neutral-weaker hover:text-text-neutral-strong"
       >
         <SearchIcon data-icon="inline-start" className="icon-neutral-weak" />
-        <TypographyMuted className="flex-1 text-left font-inter text-base text-neutral-weak">
+        <TypographyMuted className="flex-1 text-left font-inter text-base text-text-neutral-weak">
           Search
         </TypographyMuted>
         <SearchCommandShortcut className="hidden sm:inline-flex" />
@@ -60,7 +62,8 @@ export default function StoriesHeader({
         value={mode}
         onValueChange={handleChangeMode}
         aria-label="Memory view"
-        className="shrink-0 rounded-full bg-fill-neutral-weaker p-1"
+        data-mode={mode}
+        className="stories-view-toggle shrink-0 rounded-full bg-fill-neutral-weaker p-1"
       >
         <ToggleGroupItem
           value="grid"
@@ -109,8 +112,9 @@ export function StoriesFilters({
       <TabsList
         variant="line"
         aria-label="Filter memories"
-        className="hide-scrollbar h-11 w-full justify-start gap-7 overflow-x-auto p-0"
+        className="stories-filter-tabs relative hide-scrollbar h-11 w-full justify-start gap-7 overflow-x-auto p-0"
       >
+        <BaseTabs.Indicator aria-hidden="true" className="stories-filter-indicator" />
         {filters.map((item) => {
           const isActive = filter === item.value;
 
@@ -124,10 +128,10 @@ export function StoriesFilters({
                   ? "var(--text-neutral-strong)"
                   : "var(--text-neutral-weak)",
               }}
-              className="h-11 flex-none rounded-none border-0 px-0 font-inter text-sm font-medium transition-colors duration-150 after:bottom-0 after:left-1/2 after:right-auto after:w-6 after:-translate-x-1/2 after:rounded-full after:bg-neutral-strong hover:text-neutral-strong data-active:after:opacity-100 motion-reduce:transition-none sm:text-base"
+              className="h-11 flex-none rounded-none border-0 px-0 font-inter text-sm font-medium transition-colors duration-150 after:bottom-0 after:left-1/2 after:right-auto after:w-6 after:-translate-x-1/2 after:rounded-full after:bg-text-neutral-strong hover:text-text-neutral-strong data-active:after:opacity-100 motion-reduce:transition-none sm:text-base"
             >
               {item.label}
-              <span className="font-inter text-xs font-normal text-neutral-weaker">
+              <span className="font-inter text-xs font-normal text-text-neutral-weaker">
                 {item.count}
               </span>
             </TabsTrigger>

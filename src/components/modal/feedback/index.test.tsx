@@ -7,7 +7,7 @@ import {
   beforeAll,
   afterAll,
 } from "vitest";
-import { screen, within } from "@testing-library/react";
+import { act, screen, within, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "@/test";
 import { Feedback } from "./index";
@@ -241,4 +241,26 @@ describe("Feedback", () => {
       expect.objectContaining({ id: "thumb-1" }),
     );
   });
+});
+
+
+it("blocks dismissal and duplicate sends while pending, and retains text after rejection", async () => {
+  let finish!: (value: { success: boolean; message: string }) => void;
+  submitFeedback.mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
+  const user = userEvent.setup();
+  renderWithProviders(<FeedbackHost />, { auth: true });
+  await user.click(screen.getByRole("button", { name: "Open feedback" }));
+  const message = screen.getByRole("textbox", { name: /^message$/i });
+  await user.type(message, "Please keep this message");
+  const send = screen.getByRole("button", { name: /^send feedback$/i });
+  const callsBefore = submitFeedback.mock.calls.length;
+  await user.click(send);
+  await user.click(send);
+  expect(submitFeedback.mock.calls.length).toBe(callsBefore + 1);
+  await user.keyboard("{Escape}");
+  expect(message).toBeVisible();
+  await act(async () => finish({ success: false, message: "Please retry" }));
+  expect(message).toHaveValue("Please keep this message");
+  await user.keyboard("{Escape}");
+  await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
 });

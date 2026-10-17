@@ -1,3 +1,4 @@
+import { DeletedMemoryStatus } from "./deleted-memory-status";
 import ImageThumbnail from "@/components/image-thumbnail";
 import { QuickCaptureProcessingBadge } from "@/components/memory/quick-capture-processing-badge";
 import { Badge } from "@/components/ui/badge";
@@ -25,13 +26,13 @@ function MobileStoryCard({ memory }: { memory: IMemory }) {
   return (
     <article
       className="rounded-[22px] border border-v3-stroke-weak bg-white p-4 shadow-sm transition-colors active:bg-v3-fill-weaker/50"
-      onClick={() => navigate(`/stories/${memory._id}`)}
+      onClick={() => { if (memory.status !== "deleted") navigate(`/stories/${memory._id}`); }}
       role="button"
       tabIndex={0}
       onKeyDown={(event) => {
         if (event.key === "Enter" || event.key === " ") {
           event.preventDefault();
-          navigate(`/stories/${memory._id}`);
+          if (memory.status !== "deleted") navigate(`/stories/${memory._id}`);
         }
       }}
     >
@@ -55,9 +56,9 @@ function MobileStoryCard({ memory }: { memory: IMemory }) {
                 </h3>
                 <QuickCaptureProcessingBadge memory={memory} />
               </div>
-              <p className="mt-1 font-inter text-[11px] uppercase tracking-[0.12em] text-v3-text-weaker">
+              {memory.status === "deleted" ? <div className="mt-1"><DeletedMemoryStatus memory={memory} showDeletedAt /></div> : <p className="mt-1 font-inter text-[11px] uppercase tracking-[0.12em] text-v3-text-weaker">
                 {dayjs(memory.created_at).format("MMM DD, YYYY")}
-              </p>
+              </p>}
             </div>
 
             <div

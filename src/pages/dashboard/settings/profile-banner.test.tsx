@@ -9,6 +9,15 @@ vi.mock("@/api/mutations", () => api);
 describe("ProfileBanner", () => {
   beforeEach(() => vi.clearAllMocks());
 
+  it.each(["light", "dark", "light-sky", "deep-sky"])("keeps the image and controls visible in %s", (theme) => {
+    if (theme !== "light") document.documentElement.classList.add(theme);
+    renderWithProviders(<ProfileBanner />, { auth: true });
+    expect(screen.getByAltText("Profile banner")).toHaveClass("object-cover");
+    for (const name of ["Adjust banner", "Change banner"]) {
+      expect(screen.getByRole("button", { name })).toHaveClass("bg-bg-neutral", "text-text-neutral-strong", "border-stroke-neutral-weak");
+    }
+  });
+
   it("discards an adjustment when cancelled", async () => {
     renderWithProviders(<ProfileBanner />, {auth: true});
     fireEvent.click(screen.getByRole("button", {name: "Adjust banner"}));
@@ -68,4 +77,61 @@ describe("ProfileBanner", () => {
     await waitFor(() => expect(screen.getByRole("button", {name: "Upload image"})).not.toBeDisabled());
     expect(screen.getByAltText("Profile banner")).toHaveAttribute("src", expect.stringContaining("blue-clouds.webp"));
   });
+});
+
+it("blocks dismissal and duplicate selection while a banner save is pending", async () => {
+  let resolve!: (result: unknown) => void;
+  api.put.mockImplementation(() => new Promise((done) => { resolve = done; }));
+  renderWithProviders(<ProfileBanner />);
+  fireEvent.click(screen.getByRole("button", { name: "Change banner" }));
+  fireEvent.click(screen.getByRole("button", { name: "Orange sky" }));
+  fireEvent.click(screen.getByRole("button", { name: "Leaf shadows" }));
+  fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
+  expect(screen.getByRole("dialog")).toBeInTheDocument();
+  expect(api.put).toHaveBeenCalledTimes(1);
+  resolve({ success: true, data: { banner_url: null, banner_preset: 2 } });
+  await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+});
+it("falls back from a missing uploaded banner without saving over its position", async () => {
+  api.post.mockResolvedValue({ success: true, data: { banner_url: "/missing.webp", banner_preset: 0, banner_position: { x: 40, y: 30 } } });
+  renderWithProviders(<ProfileBanner />);
+  fireEvent.click(screen.getByRole("button", { name: "Change banner" }));
+  fireEvent.change(screen.getByLabelText("Upload banner image"), { target: { files: [new File(["image"], "banner.png", { type: "image/png" })] } });
+  await waitFor(() => expect(screen.getByAltText("Profile banner")).toHaveAttribute("src", "/missing.webp"));
+  fireEvent.error(screen.getByAltText("Profile banner"));
+  expect(screen.getByAltText("Profile banner")).toHaveAttribute("src", expect.stringContaining("blue-clouds.webp"));
+  expect(screen.getByAltText("Profile banner")).toHaveStyle({ objectPosition: "40% 30%" });
+  expect(screen.getByRole("button", { name: "Adjust banner" })).toBeDisabled();
+});
+it("keeps a failed crop draft and disables unchanged saves", async () => {
+  api.put.mockRejectedValue(new Error("offline"));
+  renderWithProviders(<ProfileBanner />);
+  fireEvent.click(screen.getByRole("button", { name: "Adjust banner" }));
+  expect(screen.getByRole("button", { name: "Save position" })).toBeDisabled();
+  fireEvent.change(screen.getByLabelText("Vertical position"), { target: { value: "20" } });
+  fireEvent.click(screen.getByRole("button", { name: "Save position" }));
+  await waitFor(() => expect(screen.getByRole("button", { name: "Save position" })).toBeEnabled());
+  expect(screen.getByLabelText("Vertical position")).toHaveValue("20");
+  expect(screen.getByAltText("Profile banner")).toHaveStyle({ objectPosition: "50% 100%" });
+});
+
+it("guards a pending crop save and restores the saved crop when reopened after Cancel", async () => {
+  let resolve!: (result: unknown) => void;
+  api.put.mockImplementation(() => new Promise((done) => { resolve = done; }));
+  renderWithProviders(<ProfileBanner />);
+  fireEvent.click(screen.getByRole("button", { name: "Adjust banner" }));
+  fireEvent.change(screen.getByLabelText("Vertical position"), { target: { value: "25" } });
+  fireEvent.click(screen.getByRole("button", { name: "Save position" }));
+  fireEvent.click(screen.getByRole("button", { name: "Saving…" }));
+  fireEvent.keyDown(screen.getByRole("dialog"), { key: "Escape" });
+  expect(screen.getByRole("dialog")).toBeInTheDocument();
+  expect(screen.getByLabelText("Vertical position")).toBeDisabled();
+  resolve({ success: true });
+  await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+  fireEvent.click(screen.getByRole("button", { name: "Adjust banner" }));
+  fireEvent.change(screen.getByLabelText("Vertical position"), { target: { value: "70" } });
+  fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+  await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+  fireEvent.click(screen.getByRole("button", { name: "Adjust banner" }));
+  expect(screen.getByLabelText("Vertical position")).toHaveValue("25");
 });

@@ -3,6 +3,8 @@
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import useSWR from "swr";
+import { Button } from "@/components/ui/button";
+import { useRequestRecovery } from "@/hooks/use-request-recovery";
 import { Spinner } from "@/components/ui/spinner";
 import {
   Pagination,
@@ -101,25 +103,36 @@ function RowMenu({ group: _group, onViewMembers, onEdit, onDelete }: RowMenuProp
 
 export default function GroupManagement() {
   const [page, setPage] = useState(1);
-  const { data, isLoading } = useSWR<IPagination<IGroup>>(groupsListKey(page), groupsListFetcher, {
+  const { data, isLoading, error, mutate, isValidating } = useSWR<IPagination<IGroup>>(groupsListKey(page), groupsListFetcher, {
     revalidateOnFocus: false,
+    shouldRetryOnError: false,
   });
   const { open } = useModal();
 
   const docs = data?.docs ?? [];
   const totalPages = data?.totalPages ?? 1;
 
-  if (isLoading) {
+  const retry = useRequestRecovery(`settings-groups:${page}`, error, mutate, "We couldn’t load your groups. Please try again.");
+  const retryControl = error ? <Button variant="outline" onClick={retry} disabled={isValidating}>Retry loading groups</Button> : null;
+  const recoverPage = Boolean(data && !error && !docs.length && page > 1);
+  useEffect(() => {
+    if (recoverPage) setPage((current) => Math.max(1, Math.min(current - 1, totalPages)));
+  }, [recoverPage, totalPages]);
+
+  if ((isLoading && !data) || recoverPage) {
     return (
-      <div className="flex items-center justify-center py-12">
+      <div role="status" aria-label="Loading groups" className="flex items-center justify-center py-12">
         <Spinner className="size-5" />
       </div>
     );
   }
 
+  if (error && !data) return retryControl;
+
   if (!docs.length) {
     return (
       <div className="rounded-3xl border border-dashed border-v3-stroke-weak bg-fill-neutral-weak px-4 py-10 text-center">
+        {retryControl}
         <p className="font-inter text-sm font-medium text-v3-text-strong">No groups yet</p>
         <p className="mt-1 font-inter text-sm text-v3-text-weak">
           Create a group to organize your beneficiaries.
@@ -130,6 +143,7 @@ export default function GroupManagement() {
 
   return (
     <div className="flex flex-col gap-3">
+      {retryControl}
       <div className="overflow-hidden rounded-3xl border border-v3-stroke-weak bg-fill-neutral-weak">
         <table className="w-full border-collapse">
           <thead>

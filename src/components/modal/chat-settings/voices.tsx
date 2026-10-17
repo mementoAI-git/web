@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { mutate } from "swr";
 import useSWR from "swr";
 import { CheckCircle2, Loader2 } from "lucide-react";
@@ -12,6 +12,7 @@ import endpoint from "@/api/endpoint";
 import { toast } from "sonner";
 import { previewGeminiChatVoice } from "@/lib/gemini-voice-preview";
 import { previewElevenLabsVoice } from "@/lib/elevenlabs-voice-preview";
+import { useRequestRecovery } from "@/hooks/use-request-recovery";
 import { cn } from "@/lib/utils";
 type VoiceEntry = {
   id: string;
@@ -54,13 +55,26 @@ export default function Voices() {
   const { isMutating, trigger } = useFetcher(endpoint.profile, "put");
   const { trigger: fetchEphemeralToken } = useFetcher(endpoint.ephemeralToken, "get");
   const [previewingVoice, setPreviewingVoice] = useState<string | null>(null);
+  const savingRef = useRef(false);
   const previewAbortRef = useRef<AbortController | null>(null);
-  const { data: geminiCatalog } = useSWR<{ data?: { voices?: VoiceEntry[]; configured?: boolean } }>(
+  useEffect(() => () => previewAbortRef.current?.abort(), []);
+  const { data: geminiCatalog, error: geminiError, isLoading: geminiLoading, isValidating: geminiValidating, mutate: refreshGemini } = useSWR<{ data?: { voices?: VoiceEntry[]; configured?: boolean } }>(
     `${endpoint.aiVoices}?provider=gemini`,
+    { shouldRetryOnError: false },
   );
-  const { data: elevenCatalog } = useSWR<{ data?: { voices?: VoiceEntry[]; configured?: boolean } }>(
+  const { data: elevenCatalog, error: elevenError, isLoading: elevenLoading, isValidating: elevenValidating, mutate: refreshEleven } = useSWR<{ data?: { voices?: VoiceEntry[]; configured?: boolean } }>(
     `${endpoint.aiVoices}?provider=elevenlabs`,
+    { shouldRetryOnError: false },
   );
+
+  const retryGemini = useRequestRecovery("voices-gemini", geminiError, refreshGemini, "Some voices couldn’t load. Please try again.");
+  const retryEleven = useRequestRecovery("voices-elevenlabs", elevenError, refreshEleven, "Some voices couldn’t load. Please try again.");
+  const catalogLoading = geminiLoading || elevenLoading;
+  const catalogError = geminiError || elevenError;
+  const retryCatalogs = () => {
+    if (geminiError) retryGemini();
+    if (elevenError) retryEleven();
+  };
 
   const dynamicVoices = useMemo<ProviderVoiceEntry[]>(() => {
     const geminiVoices = (geminiCatalog?.data?.voices || [])
@@ -100,6 +114,7 @@ export default function Voices() {
   const applyVoice = useCallback(
     async (voiceName: string, provider: VoiceProvider): Promise<boolean> => {
       if (selectedVoice === voiceName && (user?.chat_voice_provider || "gemini") === provider) return true;
+      savingRef.current = true;
       try {
         await trigger({ chat_voice: voiceName, chat_voice_provider: provider });
         if (user) {
@@ -108,12 +123,14 @@ export default function Voices() {
         toast.success(
           `Voice changed to ${dynamicVoices.find((v) => v.voiceName === voiceName)?.title} (${provider})`,
         );
-        void mutate(endpoint.profile);
+        void Promise.resolve(mutate(endpoint.profile)).catch(() => undefined);
         return true;
       } catch (error) {
         console.error(error);
         toast.error("Failed to update voice settings");
         return false;
+      } finally {
+        savingRef.current = false;
       }
     },
     [selectedVoice, trigger, setUser, user, dynamicVoices],
@@ -121,6 +138,7 @@ export default function Voices() {
 
   const handleVoiceClick = useCallback(
     async (voiceName: string) => {
+      if (savingRef.current) return;
       previewAbortRef.current?.abort();
       const ac = new AbortController();
       previewAbortRef.current = ac;
@@ -130,9 +148,7 @@ export default function Voices() {
         const provider = selected?.provider || "gemini";
         // Keep card behavior deterministic: select this voice first, then preview this exact voiceName.
         const saveOk = await applyVoice(voiceName, provider);
-        if (!saveOk) return;
-
-        await mutate(endpoint.profile);
+        if (!saveOk || ac.signal.aborted) return;
 
         if (provider === "elevenlabs") {
           if (voiceName.startsWith("agent_")) {
@@ -154,7 +170,7 @@ export default function Voices() {
           });
         }
       } catch (e: unknown) {
-        if (e instanceof DOMException && e.name === "AbortError") {
+        if (ac.signal.aborted || (e instanceof DOMException && e.name === "AbortError")) {
           return;
         }
         console.error(e);
@@ -162,8 +178,8 @@ export default function Voices() {
       } finally {
         if (previewAbortRef.current === ac) {
           previewAbortRef.current = null;
+          setPreviewingVoice(null);
         }
-        setPreviewingVoice((v) => (v === voiceName ? null : v));
       }
     },
     [applyVoice, fetchEphemeralToken, dynamicVoices],
@@ -172,10 +188,16 @@ export default function Voices() {
   return (
     <div className="flex flex-col gap-3">
       <h2 className="font-geist text-base font-semibold leading-6 text-text-neutral-strong">AI Voice (Voice Mode)</h2>
-      {dynamicVoices.length === 0 ? (
-        <p className="rounded-xl border border-stroke-neutral-weak bg-fill-neutral-weak px-3 py-2 text-xs text-text-neutral-weaker">
-          Voice catalog is unavailable right now. Please try again in a few seconds.
-        </p>
+      {catalogLoading ? (
+        <p role="status" className="text-sm text-text-neutral-weak">Loading voices…</p>
+      ) : null}
+      {!catalogLoading && !catalogError && dynamicVoices.length === 0 ? (
+        <p className="text-sm text-text-neutral-weak">No voices are available to choose right now.</p>
+      ) : null}
+      {catalogError ? (
+        <Button variant="outline" onClick={retryCatalogs} disabled={Boolean(geminiValidating || elevenValidating)}>
+          {geminiValidating || elevenValidating ? "Retrying…" : "Retry loading voices"}
+        </Button>
       ) : null}
       <div className="grid grid-cols-2 gap-2">
         {dynamicVoices.map(({ title, subtitle, imageUrl, voiceName, gender, style }) => (
@@ -184,12 +206,13 @@ export default function Voices() {
             type="button"
             variant="outline"
             className={cn(
-              "relative h-auto min-h-16 w-full justify-start gap-3 rounded-xl px-3 py-3.5 text-left transition-[transform,background-color,border-color] duration-150 active:scale-[0.98]",
+              "relative h-auto min-h-16 w-full justify-start gap-3 rounded-xl px-3 py-3.5 text-left transition-[transform,background-color,border-color] duration-150 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100",
               selectedVoice === voiceName
                 ? "border-stroke-brand-strong bg-background text-text-neutral-strong"
                 : "border-stroke-neutral-weak bg-background text-text-neutral-strong hover:bg-fill-neutral-weaker",
               isMutating && "opacity-85",
             )}
+            disabled={isMutating}
             aria-busy={previewingVoice === voiceName}
             aria-pressed={selectedVoice === voiceName}
             onClick={() => void handleVoiceClick(voiceName)}
@@ -206,7 +229,7 @@ export default function Voices() {
               <span className="flex min-w-0 items-center gap-2">
                 <span className="truncate font-inter text-sm font-semibold leading-tight">{title}</span>
                 {previewingVoice === voiceName ? (
-                  <Loader2 className="size-4 shrink-0 animate-spin stroke-[2] text-text-neutral-weaker" aria-hidden />
+                  <Loader2 className="size-4 shrink-0 animate-spin motion-reduce:animate-none stroke-[2] text-text-neutral-weaker" aria-hidden />
                 ) : null}
               </span>
               <span className="truncate font-geist text-xs leading-4 text-text-neutral-weak">

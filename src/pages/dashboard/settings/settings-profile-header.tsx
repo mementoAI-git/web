@@ -31,7 +31,7 @@ export function SettingsProfileHeader() {
     .filter(Boolean)
     .join(" ")
     .trim();
-  const displayName = rawDisplayName || "Your name";
+  const displayName = user?.nickname?.trim() || rawDisplayName || "Your name";
   const memberSince = useMemo(
     () => (user?.created_at ? dayjs(user.created_at).format("MMM YYYY") : null),
     [user?.created_at],
@@ -102,6 +102,8 @@ export function SettingsProfileHeader() {
             accept="image/*"
             name="file"
             className="sr-only"
+            disabled={isMutating}
+            aria-busy={isMutating}
             onChange={handleUpload}
           />
           {isMutating && (
@@ -117,7 +119,7 @@ export function SettingsProfileHeader() {
           {displayName}
         </h2>
         <div className="mt-3 flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-          <p className="flex flex-wrap items-center justify-start gap-y-1 font-inter text-sm text-v3-text-weak">
+          <p className="flex flex-wrap items-center justify-start gap-y-1 font-inter text-sm text-text-neutral-weak">
             {user?.email && <span className="break-all">{user.email}</span>}
             {memberSince && (
               <>

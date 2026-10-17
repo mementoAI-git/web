@@ -1,33 +1,34 @@
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import dayjs from "dayjs";
 import { useNavigate, useLocation } from "react-router-dom";
-import { CreditCard, FileText, Pencil } from "lucide-react";
+import { CircleArrowUp, CreditCard, FileText, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import useSWR from "swr";
 
 import endpoint from "@/api/endpoint";
 import { fetcher, postFetcher } from "@/api/fetcher";
 import { normalizeEntityResponse } from "@/api/domain-adapters";
-import upgradeIcon from "@/assets/billing/upgrade.svg";
 import statusDot from "@/assets/billing/status-dot.svg";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSubscription } from "@/contexts/subscription";
 import { useFeatureFlags } from "@/contexts/feature-flags";
+import { reportFetcherError } from "@/api/report-fetcher-error";
 import { openCustomerPortal } from "@/features/pricing/open-customer-portal";
 import { PricingOverlay } from "@/features/pricing/pricing-overlay";
 import { StorageUsageCard } from "@/features/pricing/storage-usage-card";
 import { normalizeInvoices } from "@/features/pricing/billing-adapters";
 import type { BillingAccount } from "@/features/pricing/types";
 import { cn } from "@/utility";
+import { useRequestRecovery } from "@/hooks/use-request-recovery";
 
 const sectionClass =
   "sky-card rounded-3xl border border-stroke-neutral-weak bg-fill-neutral-weak p-4 sm:p-5";
 const actionClass =
   "h-9 rounded-lg border-stroke-neutral-weak bg-fill-neutral-weaker px-3 font-geist text-sm text-text-neutral-strong";
 const planActionClass =
-  "h-auto rounded-full bg-[var(--fill-billing-action)] px-2.5 py-1.5 font-inter text-xs font-semibold leading-[18px] text-text-inverse-strong hover:bg-[var(--fill-billing-action)]/80";
+  "h-auto rounded-full bg-[var(--fill-billing-badge)] px-2.5 py-1.5 font-inter text-xs font-semibold leading-[18px] text-[var(--text-billing-badge)] [background-image:none] hover:bg-[var(--fill-billing-badge)]/90";
 
 export default function Billing() {
   const navigate = useNavigate();
@@ -67,33 +68,57 @@ export default function Billing() {
       return normalizeInvoices(response);
     },
   );
+  const retrySummary = useCallback(async () => { refresh(); }, [refresh]);
+  const retryPlan = useRequestRecovery("billing-plan", summaryError, retrySummary, "Could not load your subscription.");
+  const retryAccount = useRequestRecovery("billing-account", account.error, account.mutate, "Could not load billing details.");
+  const retryInvoices = useRequestRecovery("billing-invoices", tab === "invoices" && invoices.error, invoices.mutate, "Could not load invoices.");
+  const refreshAccount = account.mutate;
+  const returnHandled = useRef(false);
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const result = params.get("checkout");
+    if (returnHandled.current || !["success", "cancelled"].includes(result || "")) return;
+    returnHandled.current = true;
+    if (result === "success") {
+      refresh();
+      void refreshAccount().catch(() => undefined);
+      toast.info("Checkout returned. Your plan will update when payment is confirmed.", {
+        action: { label: "Refresh", onClick: refresh },
+      });
+    } else {
+      toast.info("Checkout cancelled. You can try again whenever you’re ready.");
+    }
+    params.delete("checkout");
+    navigate({ pathname: location.pathname, search: params.toString(), hash: location.hash }, { replace: true });
+  }, [location, navigate, refresh, refreshAccount]);
+  const promoPending = useRef(false);
+  const portalPending = useRef(false);
   const hasCustomer = account.data?.has_customer === true;
-  const portalDisabled = !canOpenPortal || !hasCustomer || portalBusy;
+  const portalDisabled = !canOpenPortal || !hasCustomer || Boolean(account.error) || account.isLoading || portalBusy;
   const handlePortal = async () => {
-    if (portalBusy) return;
+    if (portalPending.current || portalDisabled) return;
+    portalPending.current = true;
     setPortalBusy(true);
     try {
       window.location.assign(
         await openCustomerPortal(`${window.location.origin}/settings/billing`),
       );
     } catch (error) {
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Could not open billing portal",
-      );
+      reportFetcherError(error, "Could not open billing portal");
     } finally {
+      portalPending.current = false;
       setPortalBusy(false);
     }
   };
   const handlePromo = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (promoBusy) return;
+    if (promoPending.current) return;
     const code = promo.trim();
     if (!code) {
       toast.error("Enter a promo code");
       return;
     }
+    promoPending.current = true;
     setPromoBusy(true);
     try {
       const response = await postFetcher(endpoint.billingPromoRedeem, {
@@ -106,12 +131,11 @@ export default function Billing() {
       toast.success("Promo applied");
       setPromo("");
       refresh();
-      void account.mutate();
-    } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Could not redeem code",
-      );
+      void refreshAccount().catch(() => undefined);
+    } catch {
+      // The mutation transport already reports the failure as a toast.
     } finally {
+      promoPending.current = false;
       setPromoBusy(false);
     }
   };
@@ -186,20 +210,19 @@ export default function Billing() {
           {isLoading ? (
             <p role="status">Loading subscription…</p>
           ) : summaryError || !canViewSummary || !summary ? (
-            <p role="alert" className={sectionClass}>
-              Subscription information is unavailable.{" "}
-              <Button variant="link" onClick={refresh}>
-                Try again
+            <div className={sectionClass}>
+              <Button variant="link" onClick={retryPlan}>
+                Retry subscription
               </Button>
-            </p>
+            </div>
           ) : (
             <section
               aria-label="Current plan"
               className={cn(
-                "rounded-3xl bg-fill-neutral-weak text-text-neutral-strong",
+                "rounded-3xl p-4 text-text-inverse-strong sm:p-5",
                 isProOrAbove
-                  ? "min-h-[146px] px-3 py-4"
-                  : "min-h-24 px-4 py-[18px]",
+                  ? "min-h-[146px] [background-image:var(--gradient-billing-pro)]"
+                  : "min-h-24 [background-image:var(--gradient-billing-free)]",
               )}
             >
               {isProOrAbove ? (
@@ -241,11 +264,6 @@ export default function Billing() {
                       </span>
                     ) : null}
                   </div>
-                  {!hasCustomer && !account.isLoading && !account.error ? (
-                    <p className="text-xs">
-                      Your access does not have a paid billing account yet.
-                    </p>
-                  ) : null}
                 </div>
               ) : (
                 <div className="flex items-start justify-between gap-3">
@@ -270,10 +288,10 @@ export default function Billing() {
                     }
                     className={cn(
                       planActionClass,
-                      "shrink-0 bg-[var(--fill-billing-upgrade)] hover:bg-[var(--fill-billing-upgrade)]/80",
+                      "shrink-0",
                     )}
                   >
-                    <img src={upgradeIcon} alt="" width={16} height={16} />
+                    <CircleArrowUp className="size-4" aria-hidden />
                     Upgrade
                   </Button>
                 </div>
@@ -314,12 +332,9 @@ export default function Billing() {
                 Loading billing details…
               </p>
             ) : account.error ? (
-              <p role="alert" className="text-sm text-text-error-strong">
-                Could not load billing details.{" "}
-                <Button variant="link" onClick={() => void account.mutate()}>
-                  Try again
-                </Button>
-              </p>
+              <Button variant="link" onClick={retryAccount}>
+                Retry billing details
+              </Button>
             ) : (
               <dl className="grid gap-4 text-sm sm:grid-cols-[1fr_1fr_1.2fr] sm:divide-x sm:divide-stroke-neutral-weak">
                 {[
@@ -381,9 +396,7 @@ export default function Billing() {
                 Loading payment methods…
               </p>
             ) : account.error ? (
-              <p className="text-sm text-text-neutral-weak">
-                Payment methods are unavailable until billing details load.
-              </p>
+              null
             ) : account.data?.payment_methods.length ? (
               <ul className="divide-y divide-stroke-neutral-weak">
                 {account.data.payment_methods.map((method) => (
@@ -429,12 +442,9 @@ export default function Billing() {
             {invoices.isLoading ? (
               <p role="status">Loading invoices…</p>
             ) : invoices.error ? (
-              <p role="alert">
-                Could not load invoices.{" "}
-                <Button variant="link" onClick={() => void invoices.mutate()}>
-                  Try again
-                </Button>
-              </p>
+              <Button variant="link" onClick={retryInvoices}>
+                Retry invoices
+              </Button>
             ) : invoices.data?.length ? (
               <ul className="divide-y divide-stroke-neutral-weak">
                 {invoices.data.map((invoice, index) => (
@@ -506,6 +516,7 @@ export default function Billing() {
           <label className="flex min-w-0 flex-1 flex-col gap-2 text-xs text-text-neutral-weak">
             Code
             <Input
+              disabled={promoBusy}
               value={promo}
               onChange={(event) => setPromo(event.target.value)}
               placeholder="Enter code"

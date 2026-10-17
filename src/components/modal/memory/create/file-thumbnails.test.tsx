@@ -2,11 +2,27 @@ import { describe, expect, it, vi } from "vitest";
 import { renderWithProviders } from "@/test";
 import { FileThumbnails } from "./file-thumbnails";
 import type { IOnUploadPayload } from "@/utility/interface";
+import { fireEvent, screen } from "@testing-library/react";
 
 vi.mock("music-metadata", () => ({
   parseBlob: vi.fn(),
   selectCover: vi.fn(),
 }));
+
+describe("upload recovery", () => {
+  it("offers retry for a failed attachment without removing its tile", () => {
+    const file = { id: "failed", file: new File(["image"], "photo.png", { type: "image/png" }), base64: "data:image/png;base64,a", progress: 80, uploadFailed: true };
+    const retry = vi.fn();
+    renderWithProviders(<FileThumbnails files={[file]} onRemove={vi.fn()} onRetry={retry} />);
+    fireEvent.click(screen.getByRole("button", { name: "Retry photo.png" }));
+    expect(retry).toHaveBeenCalledWith(file);
+  });
+  it("shows processing for unconfirmed 100% progress", () => {
+    const file = { id: "pending", file: new File(["image"], "photo.png", { type: "image/png" }), base64: "data:image/png;base64,a", progress: 100 };
+    renderWithProviders(<FileThumbnails files={[file]} onRemove={vi.fn()} />);
+    expect(screen.getByText("Processing")).toBeInTheDocument();
+  });
+});
 
 vi.mock("pdfjs-dist", () => ({
   getDocument: vi.fn(),

@@ -1,10 +1,10 @@
+import { useRef, useState, type Ref } from "react";
+import { restoreMemory, memoryActionError } from "@/api/memory-lifecycle";
+import { canRestoreMemory } from "./memory-recovery";
+import "@/components/motion/navigation-motion.css";
 import { useModal } from "@/hooks/use-modal";
 import type { IMemory } from "@/utility/interface";
 import { useBookmark } from "@/hooks/use-bookmark";
-import useFetcher from "@/hooks/use-fetcher";
-import { resolvePath } from "@/utility";
-import endpoint from "@/api/endpoint";
-import { mutate } from "swr";
 import { toast } from "sonner";
 import {
   DropdownMenu,
@@ -22,6 +22,7 @@ import {
   BookmarkMinusIcon,
   EllipsisIcon,
   EllipsisVerticalIcon,
+  Info,
   PencilIcon,
   RotateCcwIcon,
   Share2Icon,
@@ -37,25 +38,48 @@ const FILTER_LABELS = {
 export function MemoryItemActions({
   memory,
   trigger = "vertical",
+  onEdit,
+  onShare,
+  onViewDetails,
+  onDelete,
+  triggerRef,
 }: {
   memory: IMemory;
   trigger?: "horizontal" | "vertical";
+  onEdit?: () => void;
+  onShare?: () => void;
+  onViewDetails?: () => void;
+  onDelete?: () => void;
+  triggerRef?: Ref<HTMLButtonElement>;
 }) {
+  const openingOverlayRef = useRef(false);
   const { open } = useModal();
-  const { trigger: restoreMemory } = useFetcher(
-    resolvePath(endpoint.restoreMemory, { id: memory._id }),
-  );
+  const [restoring, setRestoring] = useState(false);
+  const restoringRef = useRef(false);
   const { toggleBookmark } = useBookmark({
     memoryId: memory._id,
     isBookmarked: memory.bookmarked,
   });
 
   const handleRestore = async () => {
-    await restoreMemory();
-    await mutate(
-      (key) => typeof key === "string" && key.startsWith(`${endpoint.stories}`),
-    );
-    toast.success("Memory restored successfully");
+    if (restoringRef.current) return;
+    restoringRef.current = true;
+    setRestoring(true);
+    try {
+      await restoreMemory(memory._id);
+      toast.dismiss(`memory-deleted:${memory._id}`);
+      toast.success("Memory restored");
+    } catch (error) {
+      toast.error(
+        memoryActionError(
+          error,
+          "Couldn't restore this memory. Please try again.",
+        ),
+      );
+    } finally {
+      restoringRef.current = false;
+      setRestoring(false);
+    }
   };
 
   const isDeleted = memory.status === "deleted";
@@ -64,6 +88,7 @@ export function MemoryItemActions({
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
+          ref={triggerRef}
           variant={trigger === "horizontal" ? "ghost" : "outline"}
           size="icon-sm"
           aria-label="Story actions"
@@ -75,27 +100,57 @@ export function MemoryItemActions({
           )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
+      <DropdownMenuContent
+        align="end"
+        className="navigation-menu z-[250] border border-stroke-neutral-weak bg-popover text-text-neutral-strong"
+        onCloseAutoFocus={(event) => {
+          if (openingOverlayRef.current) {
+            event.preventDefault();
+            openingOverlayRef.current = false;
+          }
+        }}
+      >
         <DropdownMenuGroup>
           {isDeleted ? (
-            <DropdownMenuItem onSelect={() => void handleRestore()}>
+            <DropdownMenuItem
+              disabled={restoring || !canRestoreMemory(memory)}
+              onSelect={() => void handleRestore()}
+            >
               <RotateCcwIcon />
-              Restore
+              {restoring ? "Restoring…" : "Restore"}
             </DropdownMenuItem>
           ) : (
             <>
               <DropdownMenuItem
-                onSelect={() => open("edit-memory", { memory })}
+                onSelect={() =>
+                  onEdit ? onEdit() : open("edit-memory", { memory })
+                }
               >
                 <PencilIcon />
                 Edit story
               </DropdownMenuItem>
               <DropdownMenuItem
-                onSelect={() => open("share-memory", { memory })}
+                onSelect={() => {
+                  if (onShare) {
+                    openingOverlayRef.current = true;
+                    onShare();
+                  } else open("share-memory", { memory });
+                }}
               >
                 <Share2Icon />
                 Share story
               </DropdownMenuItem>
+              {onViewDetails ? (
+                <DropdownMenuItem
+                  onSelect={() => {
+                    openingOverlayRef.current = true;
+                    onViewDetails();
+                  }}
+                >
+                  <Info />
+                  Details
+                </DropdownMenuItem>
+              ) : null}
               <DropdownMenuItem onSelect={toggleBookmark}>
                 {memory.bookmarked ? <BookmarkMinusIcon /> : <BookmarkIcon />}
                 {memory.bookmarked ? "Remove bookmark" : "Add bookmark"}
@@ -107,10 +162,15 @@ export function MemoryItemActions({
         <DropdownMenuGroup>
           <DropdownMenuItem
             variant="destructive"
-            onSelect={() => open("delete-memory", { memory })}
+            onSelect={() => {
+              if (onDelete) {
+                openingOverlayRef.current = true;
+                onDelete();
+              } else open("delete-memory", { memory });
+            }}
           >
             <Trash2Icon />
-            Delete
+            {isDeleted ? "Delete permanently" : "Delete"}
           </DropdownMenuItem>
         </DropdownMenuGroup>
       </DropdownMenuContent>
@@ -141,7 +201,7 @@ export function MemoryListFilter({
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="start"
-        className="w-36 rounded-lg border border-v3-stroke-weak bg-popover p-0.5 text-popover-foreground shadow-md"
+        className="navigation-menu w-36 rounded-lg border border-v3-stroke-weak bg-popover p-0.5 text-popover-foreground shadow-md"
       >
         {(Object.keys(FILTER_LABELS) as Array<keyof typeof FILTER_LABELS>).map(
           (key) => (

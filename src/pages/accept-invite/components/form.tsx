@@ -31,6 +31,7 @@ export default function AcceptInviteForm({ data }: { data: IBeneficiary }) {
   const navigate = useNavigate();
   const { trigger, isMutating } = useFetcher(endpoint.acceptInvite);
   const { _id: inviteId, email, benefactor } = data;
+  const isConnection = data.access_scope === "shared_only";
   const name = benefactor?.first_name || benefactor?.last_name || benefactor?.email || "";
 
   const { getField, handleSubmit, handleChange, values, errors } = useForm({
@@ -76,10 +77,7 @@ export default function AcceptInviteForm({ data }: { data: IBeneficiary }) {
           Join <span className="capitalize">{name}</span> on Memento
         </h1>
         <p className="max-w-[490px] font-inter text-sm leading-relaxed text-v3-text-weak sm:text-base">
-          Your contact, <span className="capitalize">{name}</span>, invited you to join Memento as a beneficiary on their profile.{" "}
-          <span className="cursor-pointer font-medium text-primary underline underline-offset-4">
-            What does this mean?
-          </span>
+          {isConnection ? <>Your contact, <span className="capitalize">{name}</span>, invited you to keep memories together in a private shared space. You choose what to share, and your Memento stays private.</> : <>Your contact, <span className="capitalize">{name}</span>, invited you to join Memento as a beneficiary on their profile.{" "}<span className="cursor-pointer font-medium text-primary underline underline-offset-4">What does this mean?</span></>}
         </p>
       </div>
       <div className="flex flex-col items-center justify-center gap-2 sm:flex-row sm:gap-3">

@@ -1,4 +1,5 @@
 "use client";
+import { reportFetcherError } from "@/api/report-fetcher-error";
 
 import useForm from "@/hooks/use-form";
 import { useModal } from "@/hooks/use-modal";
@@ -87,7 +88,7 @@ interface IContentProps {
 }
 
 const Content = forwardRef<
-  { handleDeleteAllFiles: () => Promise<void>; hasFiles: boolean },
+  { handleDeleteAllFiles: () => Promise<void>; hasFiles: boolean; busy: boolean },
   IContentProps
 >(({ data, onClose }, ref) => {
   const fieldId = useId();
@@ -109,12 +110,14 @@ const Content = forwardRef<
   const activeToastId = useRef<string | number | undefined>(undefined);
   const isCheckingClipboard = useRef(false);
 
+  const pending = useRef(false);
   const { trigger, isMutating } = useFetcher(endpoint.feedback);
   const { files, handleUpload, handleDeleteFile, setFiles } = useFileUpload();
   const { values, errors, handleChange, handleSubmit, handleValue } = useForm({
     initial: { ...initial, ...payload },
     schema,
     async onSubmit(p) {
+      if (pending.current || files.some(file => !file.uploadedFile)) return;
       if (isEmpty(p.message)) return toast.error("Message is required");
 
       const uploadedScreenshots = files
@@ -128,21 +131,22 @@ const Content = forwardRef<
         screenshots: uploadedScreenshots,
       };
 
+      pending.current = true;
       try {
         const result = await trigger(payload);
+        if (!result?.success) throw new Error(result?.message || "Couldn’t send feedback. Please retry.");
         if (result?.success) {
           toast.success("Feedback sent successfully!");
-          mutate(
+          void mutate(
             (key) =>
               typeof key === "string" && key.startsWith(endpoint.feedback),
-          );
+          ).catch(() => undefined);
           setFiles([]);
           close("create-feedback", { force: true });
         }
       } catch (error) {
-        console.error("Failed to send feedback:", error);
-        toast.error("Failed to send feedback");
-      }
+        reportFetcherError(error, "Failed to send feedback");
+      } finally { pending.current = false; }
     },
   });
 
@@ -304,8 +308,8 @@ const Content = forwardRef<
 
   useImperativeHandle(
     ref,
-    () => ({ handleDeleteAllFiles, hasFiles: files.length > 0 }),
-    [handleDeleteAllFiles, files.length],
+    () => ({ handleDeleteAllFiles, hasFiles: files.length > 0, get busy() { return isMutating || pending.current; } }),
+    [handleDeleteAllFiles, files.length, isMutating],
   );
 
   const submitDisabled = isMutating || files.some((f) => !f.uploadedFile);
@@ -512,10 +516,11 @@ export function Feedback({ data }: { data: FeedbackModalData }) {
   const [isDiscarding, setIsDiscarding] = useState(false);
   const contentRef = useRef<{
     handleDeleteAllFiles: () => Promise<void>;
-    hasFiles: boolean;
+    hasFiles: boolean; busy: boolean;
   } | null>(null);
 
   const handleClose = useCallback(() => {
+    if (contentRef.current?.busy) return false;
     if (contentRef.current?.hasFiles) {
       setShowCloseConfirmation(true);
       return false;

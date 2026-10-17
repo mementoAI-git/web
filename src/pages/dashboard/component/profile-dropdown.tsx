@@ -1,3 +1,4 @@
+import { getProfileAvatarUrl } from "@/utility/profile-avatar";
 import { UserAvatar } from "@/components/user-avatar";
 import { useSubscription } from "@/contexts/subscription";
 import { useStore } from "@/hooks/use-store";
@@ -47,7 +48,7 @@ export function ProfileDropdown({
     .filter(Boolean)
     .join(" ")
     .trim();
-  const photo = user?.picture_url || user?.picture;
+  const photo = getProfileAvatarUrl(user);
 
   const planLabel = !subscriptionLoading
     ? tier === "pro" || tier === "legacy"
@@ -105,7 +106,7 @@ export function ProfileDropdown({
         sideOffset={8}
         aria-label="Account menu"
         className={cn(
-          "min-w-[260px] gap-0 rounded-xl border border-border bg-popover p-1",
+          "navigation-menu min-w-[260px] gap-0 rounded-xl border border-border bg-popover p-1",
           "shadow-xl",
         )}
       >

@@ -1,7 +1,8 @@
+import { reportFetcherError } from "@/api/report-fetcher-error";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import "./volume-slider.css";
-import { useCallback } from "react";
+import { useCallback, useRef } from "react";
 import { mutate } from "swr";
 import { toast } from "sonner";
 import { CheckCircle2, Disc3, Play, SkipBack, SkipForward, Square, VolumeX } from "lucide-react";
@@ -15,9 +16,10 @@ import { cn } from "@/utility";
 export default function BackgroundMusic({ compact = false }: { compact?: boolean } = {}) {
   const { user, setUser } = useStore();
   const { isMutating, trigger } = useFetcher(endpoint.profile, "put");
-  const { isPlaying, currentTrack, volume, setVolume, playTrack, pauseTrack, resumeTrack, stopTrack, audioFiles } =
+  const { isPlaying, isBuffering, currentTrack, volume, setVolume, playTrack, pauseTrack, resumeTrack, stopTrack, audioFiles } =
     useBackgroundMusic();
 
+  const savingRef = useRef(false);
   const currentTrackIndex = currentTrack ? audioFiles.findIndex((audio) => audio.key === currentTrack) : -1;
   const isEnabled = Boolean(user?.bg_music);
 
@@ -34,6 +36,7 @@ export default function BackgroundMusic({ compact = false }: { compact?: boolean
 
   const handleTrackSelect = useCallback(
     async (index: number) => {
+      if (savingRef.current) return;
       const selectedAudio = audioFiles[index];
       if (!selectedAudio) return;
 
@@ -46,15 +49,18 @@ export default function BackgroundMusic({ compact = false }: { compact?: boolean
         return;
       }
 
+      savingRef.current = true;
       try {
-        await trigger({ bg_music: selectedAudio.key });
+        const result = await trigger({ bg_music: selectedAudio.key });
+        if (!result?.success) throw new Error(result?.message || "Couldn’t update background music.");
         mergeBgMusic(selectedAudio.key);
         toast.success("Background music updated");
         playTrack(selectedAudio.key);
-        void mutate(endpoint.profile);
+        void Promise.resolve(mutate(endpoint.profile)).catch(() => undefined);
       } catch (error) {
-        console.error(error);
-        toast.error("Failed to update background music");
+        reportFetcherError(error, "Failed to update background music");
+      } finally {
+        savingRef.current = false;
       }
     },
     [
@@ -71,28 +77,33 @@ export default function BackgroundMusic({ compact = false }: { compact?: boolean
 
   const handleToggle = useCallback(
     async (enabled: boolean) => {
+      if (savingRef.current || (!enabled && !isEnabled)) return;
+      savingRef.current = true;
       try {
         if (enabled) {
           const trackToEnable = user?.bg_music || audioFiles[0]?.key;
           if (!trackToEnable) return;
-          await trigger({ bg_music: trackToEnable });
+          const result = await trigger({ bg_music: trackToEnable });
+          if (!result?.success) throw new Error(result?.message || "Couldn’t update background music.");
           mergeBgMusic(trackToEnable);
           toast.success("Background music enabled");
           playTrack(trackToEnable);
-          void mutate(endpoint.profile);
+          void Promise.resolve(mutate(endpoint.profile)).catch(() => undefined);
         } else {
-          await trigger({ bg_music: null });
+          const result = await trigger({ bg_music: null });
+          if (!result?.success) throw new Error(result?.message || "Couldn’t update background music.");
           mergeBgMusic(null);
           toast.success("Background music disabled");
           stopTrack();
-          void mutate(endpoint.profile);
+          void Promise.resolve(mutate(endpoint.profile)).catch(() => undefined);
         }
       } catch (error) {
-        console.error(error);
-        toast.error("Failed to update background music settings");
+        reportFetcherError(error, "Failed to update background music settings");
+      } finally {
+        savingRef.current = false;
       }
     },
-    [audioFiles, mergeBgMusic, playTrack, stopTrack, trigger, user?.bg_music],
+    [audioFiles, isEnabled, mergeBgMusic, playTrack, stopTrack, trigger, user?.bg_music],
   );
 
   if (compact) {
@@ -123,12 +134,12 @@ export default function BackgroundMusic({ compact = false }: { compact?: boolean
               <Button type="button" variant="ghost" size="icon-sm" aria-label="Previous track" disabled={isMutating || audioFiles.length < 2} onClick={() => skipTrack(-1)}>
                 <SkipBack aria-hidden />
               </Button>
-              <Button type="button" variant="outline" size="icon-sm" aria-label={isPlaying ? "Stop music" : "Play music"} disabled={isMutating || !selectedTrack} onClick={() => {
-                if (isPlaying) stopTrack();
+              <Button type="button" variant="outline" size="icon-sm" aria-label={isPlaying || isBuffering ? "Stop music" : "Play music"} disabled={isMutating || !selectedTrack} onClick={() => {
+                if (isPlaying || isBuffering) stopTrack();
                 else if (currentTrack) resumeTrack();
                 else void handleTrackSelect(selectedIndex);
               }}>
-                {isPlaying ? <Square aria-hidden /> : <Play aria-hidden />}
+                {isPlaying || isBuffering ? <Square aria-hidden /> : <Play aria-hidden />}
               </Button>
               <Button type="button" variant="ghost" size="icon-sm" aria-label="Next track" disabled={isMutating || audioFiles.length < 2} onClick={() => skipTrack(1)}>
                 <SkipForward aria-hidden />
@@ -136,6 +147,7 @@ export default function BackgroundMusic({ compact = false }: { compact?: boolean
             </div>
           </div>
         </div>
+        {isBuffering && <p role="status" className="text-xs text-text-neutral-weak">Loading music…</p>}
         <Slider className="ambience-volume-slider" label="Volume" size="compact" trackStyle={{ backgroundColor: "var(--stroke-neutral-weak)" }} fillStyle={{ backgroundColor: "var(--icon-neutral-weak)" }} thumbColor="var(--icon-neutral-strong)" thumbBorderColor="var(--bg-neutral-solid)" value={volume} onChange={(value) => { if (typeof value === "number") setVolume(value); }} min={0} max={100} formatValue={(value) => `${value}%`} />
       </section>
     );
@@ -146,6 +158,7 @@ export default function BackgroundMusic({ compact = false }: { compact?: boolean
       <h2 className="font-geist text-base font-semibold leading-6 text-text-neutral-strong">
         Background Ambience
       </h2>
+      {audioFiles.length === 0 ? <p className="text-sm text-text-neutral-weak">No background tracks are available.</p> : null}
       <Slider
         className="ambience-volume-slider"
         label="Volume"
@@ -160,7 +173,7 @@ export default function BackgroundMusic({ compact = false }: { compact?: boolean
         <button
           type="button"
           className={cn(
-            "relative flex min-h-[66px] items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition-[transform,background-color,border-color] duration-150 active:scale-[0.98]",
+            "relative flex min-h-[66px] items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition-[transform,background-color,border-color] duration-150 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100",
             !isEnabled ? "border-stroke-brand-strong bg-background" : "border-stroke-neutral-weak bg-background",
           )}
           onClick={() => void handleToggle(false)}
@@ -183,7 +196,7 @@ export default function BackgroundMusic({ compact = false }: { compact?: boolean
             type="button"
             key={audio.key}
             className={cn(
-              "relative flex min-h-[66px] max-w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition-[transform,background-color,border-color] duration-150 active:scale-[0.98]",
+              "relative flex min-h-[66px] max-w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition-[transform,background-color,border-color] duration-150 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100",
               currentTrackIndex === index && isEnabled
                 ? "border-stroke-brand-strong bg-background"
                 : "border-stroke-neutral-weak bg-background text-text-neutral-strong hover:bg-fill-neutral-weaker",
@@ -199,7 +212,7 @@ export default function BackgroundMusic({ compact = false }: { compact?: boolean
             </div>
             {currentTrackIndex === index && isPlaying && isEnabled && (
               <span className="relative flex size-2 shrink-0">
-                <span className="absolute size-full animate-ping rounded-full bg-fill-brand-strong" />
+                <span className="absolute size-full animate-ping motion-reduce:animate-none rounded-full bg-fill-brand-strong" />
                 <span className="relative inline-flex size-2 rounded-full bg-fill-brand-strong" />
               </span>
             )}

@@ -14,17 +14,7 @@ import { cn } from "@/lib/utils";
 import { UpgradePrompt } from "./upgrade-prompt";
 
 import type { SubscriptionUsage } from "./types";
-
-const FREE_LIMIT_BYTES = 200 * 1024 * 1024;
-const PRO_LIMIT_BYTES = 10 * 1024 * 1024 * 1024;
-
-function formatBytes(n: number) {
-  if (n >= 1024 * 1024 * 1024)
-    return `${(n / (1024 * 1024 * 1024)).toFixed(1)} GB`;
-  if (n >= 1024 * 1024) return `${Math.round(n / (1024 * 1024))} MB`;
-  if (n >= 1024) return `${Math.round(n / 1024)} KB`;
-  return `${n} B`;
-}
+import { formatBytes, FREE_LIMIT_BYTES, PRO_LIMIT_BYTES } from "./storage-display";
 
 type StorageUsageCardProps = {
   usage: SubscriptionUsage | undefined;
@@ -74,7 +64,7 @@ export function StorageUsageCard({
       <section
         aria-label="Storage"
         className={cn(
-          "flex flex-col gap-2 rounded-3xl bg-fill-neutral-weak p-4 font-geist",
+          "flex flex-col gap-2 rounded-3xl bg-fill-neutral-weak p-4 font-geist sm:p-5",
           className,
         )}
       >

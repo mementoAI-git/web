@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { screen } from "@testing-library/react";
+import { screen, fireEvent, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { toast } from "sonner";
@@ -142,7 +142,7 @@ describe("Billing", () => {
     );
     renderWithProviders(<Billing />, { auth: true });
     expect(
-      await screen.findByText(/Could not load billing details/),
+      await screen.findByRole("button", { name: "Retry billing details" }),
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Edit" })).toBeDisabled();
   });
@@ -194,4 +194,43 @@ describe("Billing", () => {
     );
     expect(screen.getByRole("button", { name: "Redeem" })).toBeEnabled();
   });
+});
+
+it("handles checkout return without claiming a completed payment", async () => {
+  const info = vi.spyOn(toast, "info");
+  const success = vi.spyOn(toast, "success");
+  renderWithProviders(<Billing />, { auth: true, route: "/settings/billing?checkout=success" });
+  await screen.findByText("Unlock more with Pro");
+  expect(info).toHaveBeenCalledWith(
+    "Checkout returned. Your plan will update when payment is confirmed.", expect.anything(),
+  );
+  expect(success).not.toHaveBeenCalled();
+});
+
+it("reports cancelled checkout without claiming plan changes", async () => {
+  const info = vi.spyOn(toast, "info");
+  renderWithProviders(<Billing />, { auth: true, route: "/settings/billing?checkout=cancelled" });
+  await screen.findByText("Unlock more with Pro");
+  expect(info).toHaveBeenCalledWith("Checkout cancelled. You can try again whenever you’re ready.");
+});
+
+
+it("prevents overlapping promo submissions and preserves failed input", async () => {
+  let finish!: () => void;
+  let requests = 0;
+  server.use(http.post(base + "/promo/redeem", async () => {
+    requests++;
+    await new Promise<void>(resolve => { finish = resolve; });
+    return HttpResponse.json({ success: false, message: "Try later" });
+  }));
+  renderWithProviders(<Billing />, { auth: true });
+  const input = screen.getByRole("textbox", { name: "Code" });
+  await userEvent.type(input, "PROMO");
+  fireEvent.submit(input.closest("form")!);
+  fireEvent.submit(input.closest("form")!);
+  await waitFor(() => expect(requests).toBe(1));
+  expect(input).toBeDisabled();
+  finish();
+  await waitFor(() => expect(input).toBeEnabled());
+  expect(input).toHaveValue("PROMO");
 });

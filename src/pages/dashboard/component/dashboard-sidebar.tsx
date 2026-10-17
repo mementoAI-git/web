@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import { useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { topNavigations, bottomNavigations } from "./navigation";
 import SideBarItem from "./sidebar-item";
 import { ProfileDropdown } from "./profile-dropdown";
@@ -23,9 +23,10 @@ import lightBulbIcon from "@/assets/icon/sidebar/light-bulb.svg";
 import upArrowIcon from "@/assets/icon/sidebar/up-arrow.svg";
 type DashboardSideBarProps = {
   onCollapse?: () => void;
+  compact?: boolean;
 };
 
-export function DashboardSideBar({ onCollapse }: DashboardSideBarProps) {
+export function DashboardSideBar({ onCollapse, compact = false }: DashboardSideBarProps) {
   const location = useLocation();
   const { open } = useModal();
 
@@ -33,7 +34,8 @@ export function DashboardSideBar({ onCollapse }: DashboardSideBarProps) {
 
   return (
     <SidebarProvider
-      className="h-full min-h-0"
+      className="navigation-sidebar-content h-full min-h-0"
+      data-compact={compact}
       style={{ "--sidebar-width": "100%" } as CSSProperties}
     >
       <Sidebar
@@ -41,21 +43,21 @@ export function DashboardSideBar({ onCollapse }: DashboardSideBarProps) {
         className="dynamic-height min-h-screen bg-bg-overview-sidebar"
       >
         <SidebarHeader className="flex-row items-center justify-between pb-3 pl-7 pr-4 pt-6">
-          <Logo className="text-[24px] font-normal leading-9 text-foreground" />
-          <Button
+          {compact ? <Link to="/overview" aria-label="Memento home" className="rounded-lg font-garamond text-3xl text-text-neutral-strong focus-visible:outline focus-visible:outline-2 focus-visible:outline-stroke-neutral-strong">M.</Link> : <Logo className="text-[24px] font-normal leading-9 text-foreground" />}
+          {!compact && <Button
             type="button"
             variant="ghost"
             size="icon-sm"
             aria-label="Collapse sidebar"
             onClick={onCollapse}
-            className="rounded-lg active:scale-[0.97]"
+            className="navigation-button rounded-lg"
           >
             <PanelLeftClose
               data-icon="inline-start"
               className="text-icon-neutral-weak"
               aria-hidden
             />
-          </Button>
+          </Button>}
         </SidebarHeader>
 
         <SidebarContent>
@@ -81,16 +83,15 @@ export function DashboardSideBar({ onCollapse }: DashboardSideBarProps) {
                 <SideBarItem
                   emoji="🫂"
                   title="People"
-                  link="/settings/beneficiary"
-                  active={pathname.startsWith("/settings/beneficiary")}
+                  link="/people"
+                  active={pathname === "/people" || pathname.startsWith("/people/")}
                 />
                 {bottomNavigations.map((navigation) => (
                   <SideBarItem
                     {...navigation}
                     active={
-                      (pathname === navigation.link ||
-                        pathname.startsWith(`${navigation.link}/`)) &&
-                      !pathname.startsWith("/settings/beneficiary")
+                      pathname === navigation.link ||
+                      pathname.startsWith(`${navigation.link}/`)
                     }
                     key={navigation.link}
                   />
@@ -128,7 +129,7 @@ export function DashboardSideBar({ onCollapse }: DashboardSideBarProps) {
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
-          <div className="px-4 pb-8">
+          <div className={compact ? "hidden" : "px-4 pb-8"}>
             <ProfileDropdown subtitle="Host user" />
           </div>
         </SidebarFooter>

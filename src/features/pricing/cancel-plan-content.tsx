@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
 import { Spinner } from "@/components/ui/spinner";
+import { reportFetcherError } from "@/api/report-fetcher-error";
 import { cancelSubscription } from "./subscription-actions";
 
 const reasons = [
@@ -30,18 +31,23 @@ const reasons = [
 export function CancelPlanContent({
   onBack,
   onComplete,
+  onBusyChange,
 }: {
   onBack: () => void;
   onComplete: () => void;
+  onBusyChange?: (busy: boolean) => void;
 }) {
   const [step, setStep] = useState<"confirm" | "reason">("confirm");
   const [reason, setReason] = useState("");
   const [comment, setComment] = useState("");
+  const pending = useRef(false);
   const [busy, setBusy] = useState(false);
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
     const selected = reasons.find(([id]) => id === reason);
-    if (!selected || busy) return;
+    if (!selected || pending.current) return;
+    pending.current = true;
+    onBusyChange?.(true);
     setBusy(true);
     try {
       const response = await cancelSubscription({
@@ -55,10 +61,10 @@ export function CancelPlanContent({
       );
       onComplete();
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Could not cancel your plan",
-      );
+      reportFetcherError(error, "Could not cancel your plan");
     } finally {
+      pending.current = false;
+      onBusyChange?.(false);
       setBusy(false);
     }
   };
