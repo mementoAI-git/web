@@ -1,147 +1,161 @@
-import type { ReactNode } from "react";
+import type { ComponentProps, ReactNode } from "react";
 import useSWR from "swr";
+import DOMPurify from "isomorphic-dompurify";
+import { Check, Circle } from "lucide-react";
 import { useModal } from "@/hooks/use-modal";
-import { ModalCloseBtn } from "../modalLayout";
-import PropsItem from "@/components/props-item";
 import endpoint from "@/api/endpoint";
-import type { IMemory, IMemoryAccessItem } from "@/utility/interface";
-import { GROUP_COLORS } from "@/utility/constant";
-import dayjs from "dayjs";
+import type { IMemory } from "@/utility/interface";
 import {
-  FolderIcon,
-  Calendar1Icon,
-  LockIcon,
-  ClipIcon,
-  TagIcon,
-} from "@/components/icons";
-import { TypographyH2, TypographyMuted } from "@/components/ui/typography";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
-interface ViewMemoryDetailsProps {
+export function StoryDetailsDialog({
+  memory,
+  open,
+  onOpenChange,
+  onCloseAutoFocus,
+  children,
+}: {
+  memory: IMemory;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onCloseAutoFocus?: ComponentProps<typeof DialogContent>["onCloseAutoFocus"];
+  children?: ReactNode;
+}) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent
+        overlayClassName="z-[200] bg-overlay-backdrop motion-reduce:animate-none"
+        className="z-[210] max-h-[calc(100dvh-48px)] overflow-y-auto rounded-3xl border border-stroke-neutral-weak bg-bg-neutral-solid p-7 text-text-neutral-strong motion-reduce:animate-none"
+        onEscapeKeyDown={(event) => event.stopPropagation()}
+        onCloseAutoFocus={onCloseAutoFocus}
+        onClick={(event) => event.stopPropagation()}
+      >
+        <DialogHeader>
+          <DialogTitle className="pr-8 font-geist text-2xl font-semibold">
+            Story Details
+          </DialogTitle>
+          <DialogDescription className="sr-only">
+            Visibility, tags, and an overview of this story.
+          </DialogDescription>
+        </DialogHeader>
+        {children ?? <StoryDetailsContent memory={memory} />}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/** All existing details entry points use the same dialog as the story viewer. */
+export function ViewMemoryDetails({
+  data: { memory: initialMemory },
+}: {
   data: { memory: IMemory };
-}
-
-function getGroupColorClass(item: IMemoryAccessItem): string {
-  const idx = item.color ?? 0;
-  return GROUP_COLORS[Math.min(idx, GROUP_COLORS.length - 1)];
-}
-
-function formatUserAccess(memory: IMemory | undefined): ReactNode {
-  const groups = memory?.groups ?? [];
-  const beneficiaries = memory?.beneficiaries ?? [];
-  const groupItems = groups.map((g) => ({ ...g, type: "group" as const }));
-  const beneficiaryItems = beneficiaries.map((b) => ({ ...b, type: "beneficiary" as const }));
-  const items = [...groupItems, ...beneficiaryItems];
-
-  if (items.length === 0) return "None";
-
-  return (
-    <div className="flex flex-wrap gap-1.5">
-      {items.map((item, i) => (
-        <span
-          key={`${item.type}-${i}`}
-          className={`flex items-center gap-1 px-2.5 py-1 rounded-full border font-inter text-xs font-medium ${item.type === "group" ? getGroupColorClass(item) : "bg-blue-50 text-blue-600 border-blue-100"}`}
-        >
-          @{item.name}
-          {item.type === "group" && (
-            <span className="ml-0.5 text-[10px] text-gray-400">(group)</span>
-          )}
-        </span>
-      ))}
-    </div>
-  );
-}
-
-function getStoryType(memory: IMemory | undefined): string {
-  const type = memory?.type?.toLowerCase();
-  if (type === "prompt") return "Daily prompt";
-  if (memory?.capture_source === "quick") return "Quick capture";
-  return "Journal";
-}
-
-export function ViewMemoryDetails({ data: { memory: initialMemory } }: ViewMemoryDetailsProps) {
+}) {
   const { close } = useModal();
-
   const { data: fetched } = useSWR(
-    initialMemory?._id ? `${endpoint.memories}/${initialMemory._id}` : null
+    initialMemory?._id ? `${endpoint.memories}/${initialMemory._id}` : null,
   );
-  const memory = (fetched?.data as IMemory) ?? initialMemory;
+  const memory = (fetched?.data as IMemory | undefined) ?? initialMemory;
+  return (
+    <StoryDetailsDialog
+      memory={memory}
+      open
+      onOpenChange={(open) => {
+        if (!open) close?.("view-memory-details");
+      }}
+    />
+  );
+}
+
+export function StoryDetailsContent({ memory }: { memory: IMemory }) {
+  const words = DOMPurify.sanitize(memory.body)
+    .replace(/<[^>]+>/g, " ")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean).length;
+  const audience = [...(memory.groups ?? []), ...(memory.beneficiaries ?? [])];
 
   return (
-    <div
-      className="modal-container !max-w-md !p-5 !h-fit"
-      onClick={(e) => e.stopPropagation()}
-    >
-      <ModalCloseBtn onClick={() => close("view-memory-details")} />
-      <div className="space-y-6">
-        <div className="space-y-1">
-          <TypographyH2 className="modal-title">Story Details</TypographyH2>
+    <div className="flex flex-col gap-7 font-geist">
+      <section>
+        <h3 className="text-base font-semibold text-text-neutral-strong">
+          Visibility
+        </h3>
+        <p className="mt-2 text-sm text-text-neutral-weak">
+          {memory.visibility === "everyone"
+            ? "Visible to everyone"
+            : audience.length > 0
+              ? `Shared with ${audience.map((item) => item.name).join(", ")}`
+              : "Private — only you"}
+        </p>
+      </section>
+      <section>
+        <h3 className="text-base font-semibold text-text-neutral-strong">
+          Tags
+        </h3>
+        <div className="mt-2 flex flex-wrap gap-2">
+          {memory.tags.length > 0 ? (
+            memory.tags.map((tag) => (
+              <span
+                key={tag}
+                className="rounded-full border border-stroke-neutral-weak bg-fill-neutral-weak px-2.5 py-1 text-xs text-text-neutral-strong"
+              >
+                {tag.startsWith("#") ? tag : `#${tag}`}
+              </span>
+            ))
+          ) : (
+            <span className="text-sm text-text-neutral-weaker">No tags</span>
+          )}
         </div>
-
-        <div className="space-y-3 border-b border-gray-100 pb-5">
-          <TypographyMuted className="block text-xs uppercase tracking-wide text-gray-400">
-            Properties
-          </TypographyMuted>
-          <ul>
-            <PropsItem
-              icon={<FolderIcon width={16} />}
-              title="Story type:"
-              subtitle={getStoryType(memory)}
-            />
-            <PropsItem
-              icon={<Calendar1Icon width={13} />}
-              title="Created:"
-              subtitle={dayjs(memory?.created_at).format("MMM DD, YYYY")}
-            />
-            <PropsItem
-              icon={<Calendar1Icon width={13} />}
-              title="Time:"
-              subtitle={dayjs(memory?.created_at).format("hh:mm A")}
-            />
-            <PropsItem
-              icon={<Calendar1Icon width={13} />}
-              title="Last updated:"
-              subtitle={dayjs(memory?.updated_at).format("MMM DD, YYYY")}
-            />
-            <PropsItem
-              icon={<LockIcon width={13} />}
-              title="User access:"
-              className="!items-start"
-              subtitle={formatUserAccess(memory)}
-            />
-          </ul>
+      </section>
+      <section>
+        <h3 className="text-base font-semibold text-text-neutral-strong">
+          Story Overview
+        </h3>
+        <div className="mt-2 space-y-2 text-sm text-text-neutral-weak">
+          <p>
+            {memory.attachments.length}{" "}
+            {memory.attachments.length === 1 ? "attachment" : "attachments"}
+          </p>
+          <p>
+            {words === 0 ? 0 : Math.max(1, Math.ceil(words / 200))} min read
+          </p>
         </div>
-
-        <div className="space-y-3">
-          <TypographyMuted className="block text-xs uppercase tracking-wide text-gray-400">
-            Stats
-          </TypographyMuted>
-          <ul>
-            <PropsItem
-              icon={<ClipIcon width={13} />}
-              title="Attachments:"
-              subtitle={String(memory?.attachments?.length || 0)}
+      </section>
+      <section className="rounded-2xl border border-stroke-neutral-weak bg-fill-neutral-weaker p-4">
+        <div className="flex items-center justify-between gap-3 py-1 text-sm text-text-neutral-strong">
+          <span>Title</span>
+          {memory.title.trim() ? (
+            <Check
+              aria-label="Title complete"
+              className="size-4 text-icon-success-strong"
             />
-            <PropsItem
-              icon={<TagIcon width={16} />}
-              title="Tags:"
-              className="!items-start"
-              subtitle={
-                memory?.tags?.length ? (
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    {memory.tags.map((t) => (
-                      <span key={t} className="mem-tags text-xs">
-                        {t}
-                      </span>
-                    ))}
-                  </div>
-                ) : (
-                  "None"
-                )
-              }
+          ) : (
+            <Circle
+              aria-label="Title incomplete"
+              className="size-4 text-icon-neutral-weaker"
             />
-          </ul>
+          )}
         </div>
-      </div>
+        <div className="flex items-center justify-between gap-3 py-1 text-sm text-text-neutral-strong">
+          <span>Story text</span>
+          {words > 0 ? (
+            <Check
+              aria-label="Story text complete"
+              className="size-4 text-icon-success-strong"
+            />
+          ) : (
+            <Circle
+              aria-label="Story text incomplete"
+              className="size-4 text-icon-neutral-weaker"
+            />
+          )}
+        </div>
+      </section>
     </div>
   );
 }

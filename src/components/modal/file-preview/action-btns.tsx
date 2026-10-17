@@ -70,7 +70,7 @@ export default function ActionBtn(props: FilePreviewItemBase) {
       {props._id && (
         <button
           type="button"
-          className="flex size-10 items-center justify-center rounded-full text-text-error-strong transition-colors hover:bg-fill-neutral-weaker focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stroke-neutral-weak"
+          className="overlay-control overlay-control-destructive flex size-10 items-center justify-center rounded-full text-text-error-strong"
           onClick={() => setShowDeleteConfirmation(true)}
           aria-label="Delete file"
         >
@@ -79,9 +79,10 @@ export default function ActionBtn(props: FilePreviewItemBase) {
       )}
       <button
         type="button"
-        className="flex size-10 items-center justify-center rounded-full text-text-neutral-strong transition-colors hover:bg-fill-neutral-weaker focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stroke-neutral-weak disabled:opacity-50"
+        className="overlay-control flex size-10 items-center justify-center rounded-full text-text-neutral-strong disabled:opacity-50"
         onClick={handleDownload}
         disabled={downloading}
+        aria-busy={downloading}
         aria-label="Download file"
       >
         {downloading ? <Spinner loading className="!m-0 !text-text-neutral-weaker" /> : <Download className="size-5" aria-hidden />}
@@ -89,7 +90,7 @@ export default function ActionBtn(props: FilePreviewItemBase) {
       <button
         type="button"
         onClick={() => close?.("file-preview")}
-        className="flex size-10 items-center justify-center rounded-full text-text-neutral-strong transition-colors hover:bg-fill-neutral-weaker focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stroke-neutral-weak"
+        className="overlay-control flex size-10 items-center justify-center rounded-full text-text-neutral-strong"
         aria-label="Close viewer"
         data-viewer-close
       >

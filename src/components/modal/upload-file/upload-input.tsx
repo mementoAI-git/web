@@ -19,6 +19,7 @@ export default function UploadInput({ onUpload }: UploadInputProps) {
       const file = event.target.files?.[0];
       if (!file) return;
       onUpload({ id: uuidv4(), file, progress: 0 });
+      event.target.value = "";
     },
     [onUpload],
   );

@@ -16,12 +16,15 @@ import { cn } from "@/lib/utils";
 interface UploadItemProps {
   file: FileState;
   onDelete: (file: FileState) => void;
+  onRetry?: (file: FileState) => void;
+  disabled?: boolean;
 }
 
-export default function UploadItem({ file, onDelete }: UploadItemProps) {
+export default function UploadItem({ file, onDelete, onRetry, disabled }: UploadItemProps) {
   const name = file.file?.name ?? file.result?.name ?? "unknown";
   const size = file.file?.size ?? file.result?.size ?? 0;
-  const isComplete = file.progress >= 100;
+  const isComplete = Boolean(file.result?._id) && !file.failed;
+  const status = file.failed ? "Needs retry" : isComplete ? "Ready" : file.progress >= 80 ? "Processing" : "Uploading";
 
   return (
     <Card size="sm" className="gap-0 border border-border/70 bg-background py-0 shadow-sm">
@@ -38,17 +41,19 @@ export default function UploadItem({ file, onDelete }: UploadItemProps) {
                   <p className="font-inter text-xs text-muted-foreground">
                     {formatFileSize(Number(size))}
                   </p>
-                  <Badge variant="outline" className={cn("shrink-0", isComplete && "border-transparent bg-secondary text-secondary-foreground")}>
-                    {isComplete ? "Ready" : "Uploading"}
+                  <Badge role="status" variant="outline" className={cn("shrink-0", isComplete && "border-transparent bg-secondary text-secondary-foreground")}>
+                    {status}
                   </Badge>
                 </div>
               </div>
+              {file.failed && onRetry && file.file && <Button type="button" variant="outline" size="sm" disabled={disabled} aria-label={`Retry ${name}`} onClick={() => onRetry(file)}>Retry</Button>}
               <Button
                 type="button"
                 variant="ghost"
                 size="icon-xs"
                 onClick={() => onDelete(file)}
                 aria-label={`Remove ${name}`}
+                disabled={disabled}
               >
                 <TrashIcon width={13} height={13} />
               </Button>

@@ -218,9 +218,10 @@ export default function VideoPlayer({
 
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-4">
-                <motion.div whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.95 }}>
+                <div>
                   <Button
                     type="button"
+                    aria-label={isPlaying ? "Pause video" : "Play video"}
                     onClick={(e) => {
                       e.stopPropagation();
                       togglePlay();
@@ -231,12 +232,13 @@ export default function VideoPlayer({
                   >
                     {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
                   </Button>
-                </motion.div>
+                </div>
 
                 <div className="flex items-center gap-x-1">
-                  <motion.div whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.95 }}>
+                  <div>
                     <Button
                       type="button"
+                      aria-label={isMuted ? "Unmute video" : "Mute video"}
                       onClick={(e) => {
                         e.stopPropagation();
                         toggleMute();
@@ -253,7 +255,7 @@ export default function VideoPlayer({
                         <Volume1 className="h-5 w-5" />
                       )}
                     </Button>
-                  </motion.div>
+                  </div>
 
                   <div className="w-24">
                     <CustomSlider
@@ -266,9 +268,11 @@ export default function VideoPlayer({
 
               <div className="flex items-center gap-2">
                 {[0.5, 1, 1.5, 2].map((speed) => (
-                  <motion.div whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.95 }} key={speed}>
+                  <div key={speed}>
                     <Button
                       type="button"
+                      aria-label={`Playback speed ${speed}x`}
+                      aria-pressed={playbackSpeed === speed}
                       onClick={(e) => {
                         e.stopPropagation();
                         applySpeed(speed);
@@ -282,7 +286,7 @@ export default function VideoPlayer({
                     >
                       {speed}x
                     </Button>
-                  </motion.div>
+                  </div>
                 ))}
               </div>
             </div>
