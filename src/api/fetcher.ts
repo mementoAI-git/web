@@ -28,6 +28,10 @@ const axios = Axios.create({
   },
 });
 
+if (import.meta.env.DEV) {
+  (await import("@/dev/preview-transport")).installPreviewAxios(axios);
+}
+
 function readAuthFromStorage(): { access_token?: string } | null {
   try {
     const raw = localStorage.getItem(storageKeys.auth);
