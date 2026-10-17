@@ -42,6 +42,17 @@ The overview uses these component tokens in addition to the V3 semantic families
 
 Sidebar navigation uses the exact Figma SVG assets and emoji, preserving their original illustrative colors. Insights and People use Lucide icons with `icon-neutral-strong`; the upgrade label uses `text-brand-strong`. Semantic colors inherit the system's light and dark theme values.
 
+## Drafts menu reference tokens
+
+The drafts dropdown uses scoped tokens to match the supplied Figma component in light mode. Dark mode maps them to the existing V3 semantic tokens.
+
+| Token | Light reference | Dark mapping |
+| --- | --- | --- |
+| `--drafts-text` | `rgba(5, 17, 34, 0.9)` | `--text-neutral-strong` |
+| `--drafts-error` | `#c73a3a` | `--text-error-strong` |
+| `--drafts-stroke` | `rgba(5, 17, 34, 0.1)` | `--stroke-neutral-weak` |
+| `--drafts-thumbnail` | `#d9d9d9` | `--fill-neutral-weak` |
+
 ## Deep sky theme foundations
 
 Deep sky is an explicit appearance choice alongside Dark. It inherits dark semantic text, icon, border, and intent colors.
@@ -385,6 +396,7 @@ Semantic color tokens organized by purpose and intent. Format: `type-intent-stre
 | -------------------------- | ----------------------- | ----------------------------------- |
 | `bg-overlay-backdrop`      | `rgba(94, 94, 94, 0.5)` | Modal/drawer backdrops (light mode) |
 | `bg-overlay-backdrop-dark` | `rgba(0, 0, 0, 0.6)`    | Modal/drawer backdrops (dark mode)  |
+| `bg-overlay-media-backdrop` | `rgba(0, 0, 0, 0.8)`   | Media viewer backdrop in all themes; dims the page without changing media or controls |
 
 
 ### Semantic to Primitive Mapping
@@ -517,7 +529,7 @@ Semantic tokens inherit from primitive tokens. Changing a primitive updates all 
   --brown-100: rgba(23, 11, 0, 0.1);
   --brown-50: rgba(23, 11, 0, 0.04);
   --brown-25: rgba(23, 11, 0, 0.02);
-  
+
   /* Brown Scale (Dark) */
   --brown-dark-1000: #FFFFFF;
   --brown-dark-700: rgba(255, 255, 255, 0.78);
@@ -525,7 +537,7 @@ Semantic tokens inherit from primitive tokens. Changing a primitive updates all 
   --brown-dark-100: rgba(255, 255, 255, 0.12);
   --brown-dark-50: rgba(255, 255, 255, 0.06);
   --brown-dark-25: rgba(255, 255, 255, 0.03);
-  
+
   /* Orange Scale */
   --orange-1000: #e98246;
   --orange-800: rgba(233, 130, 70, 0.8);
