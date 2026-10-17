@@ -88,7 +88,7 @@ export function buildConversationAssetIndex(
   const linkKeys = new Set<string>();
 
   for (const message of messages) {
-    for (const [attachmentIndex, file] of (message.attatchments ?? []).entries()) {
+    for (const [attachmentIndex, file] of (message.attachments ?? message.attatchments ?? []).entries()) {
       const key = file._id || `${file.url}|${file.name}`;
       if (fileKeys.has(key)) continue;
       fileKeys.add(key);
@@ -146,7 +146,7 @@ export function filterConversationAssets(
 
 export function messageIdentity(message: Partial<IMessage>) {
   if (message._id) return message._id;
-  const attachmentIds = (message.attatchments ?? [])
+  const attachmentIds = (message.attachments ?? message.attatchments ?? [])
     .map((file) => file._id || `${file.url}|${file.name}`)
     .join(",");
   return [message.role, message.created_at, message.text, attachmentIds].join("|");

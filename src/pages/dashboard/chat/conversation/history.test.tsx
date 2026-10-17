@@ -1,8 +1,12 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { useRef, useState } from "react";
 import { vi } from "vitest";
 import History from "./history";
-import type { IMemory } from "@/utility/interface";
+import type { IMemory, IMessage } from "@/utility/interface";
+
+const historyState = vi.hoisted(() => ({ fetch: vi.fn(), toastError: vi.fn(), intersecting: false }));
+vi.mock("sonner", () => ({ toast: { error: historyState.toastError, dismiss: vi.fn() } }));
 
 vi.mock("@/components/go-back", () => ({
   default: () => <div data-testid="go-back">Back</div>,
@@ -16,18 +20,18 @@ vi.mock("./topic-header", () => ({
 }));
 
 vi.mock("./bubble", () => ({
-  default: () => null,
+  default: ({ text }: { text: string }) => <span>{text}</span>,
 }));
 
 vi.mock("@/hooks/use-fetcher", () => ({
   default: () => ({
-    trigger: vi.fn().mockResolvedValue({ data: { messages: [], next: null } }),
+    trigger: historyState.fetch,
     isMutating: false,
   }),
 }));
 
 vi.mock("@/hooks/use-intersection-observer", () => ({
-  default: () => false,
+  default: () => historyState.intersecting,
 }));
 
 const memory: IMemory = {
@@ -58,9 +62,56 @@ function renderHistoryAt(path: string) {
 
 describe("History", () => {
   beforeEach(() => {
+    historyState.fetch.mockReset().mockResolvedValue({ data: { messages: [], next: null } });
+    historyState.toastError.mockClear();
+    historyState.intersecting = false;
     if (typeof HTMLElement.prototype.scrollTo !== "function") {
       HTMLElement.prototype.scrollTo = vi.fn();
     }
+  });
+
+  it("shows retry and a toast on history failure without retrying in a loop", async () => {
+    historyState.fetch.mockRejectedValueOnce(new Error("Internal server error"));
+    renderHistoryAt("/chat/m1");
+    const retry = await screen.findByRole("button", { name: "Retry loading messages" });
+    expect(screen.queryByText("Internal server error")).not.toBeInTheDocument();
+    expect(historyState.fetch).toHaveBeenCalledTimes(1);
+    expect(historyState.toastError).toHaveBeenCalledTimes(1);
+    fireEvent.click(retry);
+    await waitFor(() => expect(screen.queryByRole("button", { name: "Retry loading messages" })).not.toBeInTheDocument());
+    expect(historyState.fetch).toHaveBeenCalledTimes(2);
+  });
+
+  it("ignores a request that finishes after leaving a conversation", async () => {
+    let finish!: (value: unknown) => void;
+    historyState.fetch.mockReturnValueOnce(new Promise(resolve => { finish = resolve; }));
+    const setMessages = vi.fn();
+    const { unmount } = render(<MemoryRouter><History memory={memory} messages={[]} setMessages={setMessages} scrollContainerRef={{ current: null }} onViewDetails={() => {}} /></MemoryRouter>);
+    unmount();
+    finish({ data: { messages: [{ _id: "old", text: "Old conversation" }], next: null } });
+    await Promise.resolve();
+    expect(setMessages).not.toHaveBeenCalled();
+  });
+
+  it("preserves loaded messages when an older page fails and avoids duplicates on retry", async () => {
+    historyState.intersecting = true;
+    historyState.fetch
+      .mockResolvedValueOnce({ data: { messages: [{ _id: "latest", text: "Loaded message" }], next: "older" } })
+      .mockRejectedValueOnce(new Error("offline"))
+      .mockResolvedValueOnce({ data: { messages: [{ _id: "old", text: "Older message" }, { _id: "latest", text: "Loaded message" }], next: null } });
+    function StatefulHistory() {
+      const [messages, setMessages] = useState<Partial<IMessage>[]>([]);
+      const scrollContainerRef = useRef<HTMLDivElement>(null);
+      return <History memory={memory} messages={messages} setMessages={setMessages} scrollContainerRef={scrollContainerRef} onViewDetails={() => {}} />;
+    }
+    render(<MemoryRouter><StatefulHistory /></MemoryRouter>);
+    const retry = await screen.findByRole("button", { name: "Retry loading messages" });
+    expect(screen.getByText("Loaded message")).toBeVisible();
+    expect(historyState.fetch).toHaveBeenCalledTimes(2);
+    fireEvent.click(retry);
+    expect(await screen.findByText("Older message")).toBeVisible();
+    expect(screen.getAllByText("Loaded message")).toHaveLength(1);
+    expect(historyState.fetch).toHaveBeenCalledTimes(3);
   });
 
   it("hides inline go-back and conversation header on /chat/:id (top nav handles chrome)", async () => {

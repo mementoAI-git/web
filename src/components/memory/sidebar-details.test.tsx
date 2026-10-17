@@ -128,20 +128,20 @@ describe("SidebarDetails", () => {
   });
 
   it("renders the dedicated chat settings composition in a wide scrolling drawer", () => {
-    const { container } = renderSidebar({
+    renderSidebar({
       isOpen: true,
       includeChatPreferences: true,
     });
-    const desktopPanel = container.querySelector(
+    const desktopPanel = document.querySelector(
       '[data-testid="memory-sidebar-desktop"]',
     ) as HTMLElement | null;
     expect(desktopPanel).toBeTruthy();
     expect(desktopPanel).toHaveStyle({ width: "485px" });
-    expect(desktopPanel?.className).toContain("bg-background");
+    expect(desktopPanel?.className).toContain("bg-bg-neutral-solid");
     expect(desktopPanel?.style.opacity).toBe("");
 
-    const drawerSurface = desktopPanel?.querySelector(":scope > div");
-    expect(drawerSurface?.className).toContain("bg-background");
+    const drawerSurface = desktopPanel?.querySelector('[data-testid="sidebar-details-content"]');
+    expect(drawerSurface?.className).toContain("bg-bg-neutral-solid");
     expect(drawerSurface?.className).not.toContain("bg-transparent");
 
     const content = desktopPanel?.querySelector(
@@ -149,7 +149,7 @@ describe("SidebarDetails", () => {
     ) as HTMLElement | null;
     expect(content).toBeTruthy();
     expect(content?.className).toContain("overflow-y-auto");
-    expect(content?.className).toContain("bg-background");
+    expect(content?.className).toContain("bg-bg-neutral-solid");
     expect(content?.className).not.toContain("bg-gradient-to-b");
     const gradientArtwork = within(content!).getByTestId("chat-settings-gradient");
     expect(gradientArtwork).toBeInstanceOf(HTMLImageElement);
@@ -172,11 +172,11 @@ describe("SidebarDetails", () => {
       configurable: true,
       value: 780,
     });
-    const { container } = renderSidebar({
+    renderSidebar({
       isOpen: true,
       includeChatPreferences: true,
     });
-    const desktopPanel = container.querySelector(
+    const desktopPanel = document.querySelector(
       '[data-testid="memory-sidebar-desktop"]',
     ) as HTMLElement | null;
     expect(desktopPanel).toHaveStyle({ width: "360px" });
@@ -187,7 +187,10 @@ describe("SidebarDetails", () => {
   });
 
   it("keeps the mobile sheet as the sole scroll owner for gesture tracking", () => {
+    const original = window.innerWidth;
+    Object.defineProperty(window, "innerWidth", { configurable: true, value: 390 });
     renderSidebar({ includeChatPreferences: true });
+    Object.defineProperty(window, "innerWidth", { configurable: true, value: original });
 
     const sheetContent = screen.getByTestId("mock-sheet-content");
     expect(sheetContent).not.toHaveAttribute("data-disable-scroll");

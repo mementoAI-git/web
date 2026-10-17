@@ -6,7 +6,10 @@ import { ConversationChromeProvider, useConversationChrome } from "@/contexts/co
 import Conversation from "./index";
 
 const send = vi.hoisted(() => vi.fn());
-const speak = vi.fn();
+const speak = vi.hoisted(() => vi.fn());
+vi.mock("@/features/speech/spoken-audio", async importOriginal => ({
+  ...await importOriginal<typeof import("@/features/speech/spoken-audio")>(), requestSpokenAudio: speak,
+}));
 vi.mock("swr/mutation", () => ({ default: () => ({ trigger: send, isMutating: false }) }));
 vi.mock("@/hooks/use-fetcher", () => ({ default: () => ({ trigger: send, isMutating: false }) }));
 vi.mock("@/hooks/use-intersection-observer", () => ({ default: () => false }));
@@ -20,13 +23,16 @@ function AudioControl() {
 }
 beforeEach(() => {
   send.mockReset();
-  send.mockResolvedValue({ data: { response: "A completed AI reply.", memory_id: "test-memory" } });
-  speak.mockClear();
-  vi.stubGlobal("speechSynthesis", { speak, cancel: vi.fn() });
+  send.mockResolvedValue({ data: { response: "A completed AI reply.", memory_id: "host-chat" } });
+  speak.mockReset();
+  speak.mockResolvedValue({ audioBase64: "YXVkaW8=", mimeType: "audio/wav", voiceName: "Fenrir" });
+  vi.stubGlobal("Audio", class { play = vi.fn().mockResolvedValue(undefined); pause = vi.fn(); removeAttribute = vi.fn(); });
+  vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:spoken");
+  vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => {});
   vi.stubGlobal("SpeechSynthesisUtterance", class { constructor(public text: string) {} });
   Object.defineProperty(HTMLElement.prototype, "scrollTo", { value: vi.fn(), writable: true });
 });
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 
 it("reads the completed AI response when the conversation volume toggle is enabled", async () => {
   const user = userEvent.setup();
@@ -35,7 +41,7 @@ it("reads the completed AI response when the conversation volume toggle is enabl
   expect(screen.getByRole("button", { name: "Read aloud" })).toHaveAttribute("aria-pressed", "true");
   await user.click(screen.getByRole("button", { name: "Send test message" }));
   await waitFor(() => expect(speak).toHaveBeenCalledOnce());
-  expect(speak.mock.calls[0][0].text).toBe("A completed AI reply.");
+  expect(speak.mock.calls[0][0]).toBe("A completed AI reply.");
 });
 
 it("keeps text responses silent with the volume toggle off", async () => {
