@@ -61,7 +61,7 @@ export default function General() {
         <nav aria-label="Personal information">
           <TabsList
             aria-label="Personal information sections"
-            className="h-auto flex-wrap justify-start gap-3 rounded-none bg-transparent px-6 py-0 sm:px-8"
+            className="h-auto w-full flex-wrap justify-start gap-3 rounded-none bg-transparent p-0"
           >
             {[
               ["about", "About me"],

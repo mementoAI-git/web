@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useRef, useState } from "react";
+import { Component, lazy, Suspense, useEffect, useRef, useState, type PropsWithChildren } from "react";
 
 type OrangePalette = {
   colorA: string;
@@ -6,6 +6,19 @@ type OrangePalette = {
   colorC: string;
   colorD: string;
 };
+
+/** A decorative renderer must never take the billing dialog down with it. */
+class ShaderBoundary extends Component<PropsWithChildren, { failed: boolean }> {
+  state = { failed: false };
+
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+
+  render() {
+    return this.state.failed ? null : this.props.children;
+  }
+}
 
 // Load the GPU renderer only when this decorative background can animate.
 const FlowingOrange = lazy(async () => {
@@ -69,9 +82,11 @@ export function ProCardBackground() {
       className="pointer-events-none absolute inset-0 bg-fill-brand-strong"
     >
       {palette && (
-        <Suspense fallback={null}>
-          <FlowingOrange palette={palette} />
-        </Suspense>
+        <ShaderBoundary>
+          <Suspense fallback={null}>
+            <FlowingOrange palette={palette} />
+          </Suspense>
+        </ShaderBoundary>
       )}
     </div>
   );

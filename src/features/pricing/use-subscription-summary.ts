@@ -1,5 +1,6 @@
 import useSWR from "swr";
 
+import { shouldRetryApiError } from "@/api/retry-policy";
 import endpoint from "@/api/endpoint";
 import { fetcher } from "@/api/fetcher";
 import { useStore } from "@/hooks/use-store";
@@ -31,7 +32,7 @@ export function useSubscriptionSummary() {
     },
     {
       revalidateOnFocus: true,
-      shouldRetryOnError: (err) => !isNotFoundError(err),
+      shouldRetryOnError: (err) => !isNotFoundError(err) && shouldRetryApiError(err),
     },
   );
 

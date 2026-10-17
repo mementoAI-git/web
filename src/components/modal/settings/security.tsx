@@ -1,7 +1,6 @@
-import { useState } from "react";
-import { createPortal } from "react-dom";
+import { useRef, useState } from "react";
 import * as yup from "yup";
-import { X, Fingerprint, Trash2 } from "lucide-react";
+import { Fingerprint, Trash2 } from "lucide-react";
 import { startRegistration } from "@simplewebauthn/browser";
 import { getMementoClientHeaders } from "@/api/client-metadata";
 import { authService } from "@/utility/auth-service";
@@ -11,9 +10,12 @@ import useForm from "@/hooks/use-form";
 import endpoint from "@/api/endpoint";
 import { toast } from "sonner";
 import Spinner from "@/components/spinner";
-import useSWR, { mutate } from "swr";
+import useSWR from "swr";
+import { useRequestRecovery } from "@/hooks/use-request-recovery";
+import { Button } from "@/components/ui/button";
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel } from "@/components/ui/alert-dialog";
 import { deleteFetcher, fetcher } from "@/api/fetcher";
-import { cn } from "@/utility";
+import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import TwoFactorAuthenticator from "./two-fa";
 import { SettingsSectionCard } from "./settings-section-card";
 import { SettingsPillButton } from "./settings-action-row";
@@ -42,87 +44,102 @@ const schema = yup.object().shape({
 
 const inputLabelClass = "!text-v3-text-weak !font-normal";
 
-function ChangePasswordModal({ onClose }: { onClose: () => void }) {
+function ChangePasswordDialog() {
+  const [open, setOpen] = useState(false);
+  const [isMutating, setBusy] = useState(false);
+
+  return (
+    <Dialog open={open} onOpenChange={(next) => {
+      if (isMutating) return;
+      setOpen(next);
+    }}>
+      <SettingsSectionCard
+        title="Password"
+        description="Update the password you use to sign in to Memento."
+        className="sm:min-h-[97px]"
+        headerAction={<DialogTrigger asChild><SettingsPillButton variant="default">Change password</SettingsPillButton></DialogTrigger>}
+      />
+      <DialogContent
+        data-sky-card-page=""
+        showCloseButton={!isMutating}
+        className="sky-card max-h-[calc(100dvh-2rem)] overflow-y-auto border border-v3-stroke-weak sm:max-w-md motion-reduce:animate-none"
+        overlayClassName="bg-overlay-backdrop motion-reduce:animate-none"
+        onOpenAutoFocus={(event) => {
+          event.preventDefault();
+          document.getElementById("change-old-password")?.focus();
+        }}
+        onEscapeKeyDown={(event) => { if (isMutating) event.preventDefault(); }}
+        onInteractOutside={(event) => { if (isMutating) event.preventDefault(); }}
+      >
+        <DialogHeader className="pr-8">
+          <DialogTitle>Change password</DialogTitle>
+          <DialogDescription>Update the password you use to sign in.</DialogDescription>
+        </DialogHeader>
+        <ChangePasswordForm onBusyChange={setBusy} onSuccess={() => setOpen(false)} />
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function ChangePasswordForm({ onBusyChange, onSuccess }: { onBusyChange: (busy: boolean) => void; onSuccess: () => void }) {
   const { trigger, isMutating } = useFetcher(endpoint.changePassword);
   const { values, handleChange, handleSubmit, errors } = useForm({
     initial,
     schema,
     async onSubmit(payload) {
-      const result = await trigger(payload);
-      if (result.success) {
-        toast.success(result?.message);
-        onClose();
+      if (isMutating) return;
+      onBusyChange(true);
+      try {
+        const result = await trigger(payload);
+        if (result.success) {
+          toast.success(result?.message);
+          onSuccess();
+        }
+      } finally {
+        onBusyChange(false);
       }
     },
   });
 
-  return createPortal(
-    <div
-      data-sky-card-page=""
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
-    >
-      <div
-        className={cn(
-          "sky-card relative w-full max-w-md rounded-2xl border border-v3-stroke-weak bg-bg-neutral p-6 shadow-xl",
-          "motion-safe:animate-in motion-safe:fade-in motion-safe:zoom-in-95 motion-safe:duration-200",
-        )}
-      >
-        <div className="mb-5 flex items-start justify-between gap-3">
-          <div className="flex flex-col gap-0.5">
-            <h2 className="font-inter text-sm font-semibold text-v3-text-strong">Change password</h2>
-            <p className="font-inter text-sm text-v3-text-weak">Update the password you use to sign in.</p>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className={cn(
-              "flex size-8 shrink-0 items-center justify-center rounded-full",
-              "text-v3-text-weak hover:bg-v3-fill-weak hover:text-v3-text-strong",
-              "motion-safe:transition-colors motion-safe:duration-150",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-v3-stroke-strong focus-visible:ring-offset-2",
-            )}
-            aria-label="Close"
-          >
-            <X size={16} strokeWidth={1.5} />
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-          <Passwordinput
-            label="Old password"
-            name="old_password"
-            value={values.old_password}
-            error={errors.old_password}
-            onChange={handleChange}
-            labelClassName={inputLabelClass}
-          />
-          <Passwordinput
-            label="New password"
-            name="new_password"
-            value={values.new_password}
-            error={errors.new_password}
-            onChange={handleChange}
-            labelClassName={inputLabelClass}
-          />
-          <Passwordinput
-            label="Confirm password"
-            name="c_password"
-            value={values.c_password}
-            error={errors.c_password}
-            onChange={handleChange}
-            labelClassName={inputLabelClass}
-          />
-          <div className="flex justify-end border-t border-v3-stroke-weak pt-4">
-            <SettingsPillButton type="submit" variant="default" disabled={isMutating}>
-              <span>Save password</span>
-              {isMutating ? <Spinner loading className="!size-4 text-v3-text-strong" /> : null}
-            </SettingsPillButton>
-          </div>
-        </form>
+  return (
+    <form onSubmit={handleSubmit} aria-busy={isMutating} className="flex flex-col gap-5">
+      <Passwordinput
+        id="change-old-password"
+        disabled={isMutating}
+        label="Old password"
+        name="old_password"
+        value={values.old_password}
+        error={errors.old_password}
+        onChange={handleChange}
+        labelClassName={inputLabelClass}
+      />
+      <Passwordinput
+        disabled={isMutating}
+        autoComplete="new-password"
+        label="New password"
+        name="new_password"
+        value={values.new_password}
+        error={errors.new_password}
+        onChange={handleChange}
+        labelClassName={inputLabelClass}
+      />
+      <Passwordinput
+        disabled={isMutating}
+        autoComplete="new-password"
+        label="Confirm password"
+        name="c_password"
+        value={values.c_password}
+        error={errors.c_password}
+        onChange={handleChange}
+        labelClassName={inputLabelClass}
+      />
+      <div className="flex justify-end border-t border-v3-stroke-weak pt-4">
+        <SettingsPillButton type="submit" variant="default" aria-label="Save password" aria-busy={isMutating} disabled={isMutating}>
+          <span>Save password</span>
+          {isMutating ? <Spinner loading className="!size-4 text-v3-text-strong" /> : null}
+        </SettingsPillButton>
       </div>
-    </div>,
-    document.body,
+    </form>
   );
 }
 
@@ -135,13 +152,20 @@ interface PasskeyEntry {
 }
 
 function PasskeyManager() {
-  const { data, isLoading } = useSWR<{ data: PasskeyEntry[] }>(endpoint.listPasskeys, fetcher);
+  const { data, isLoading, error, mutate: refreshPasskeys } = useSWR<{ data: PasskeyEntry[] }>(endpoint.listPasskeys, fetcher, { shouldRetryOnError: false });
+  const retry = useRequestRecovery("passkeys", error, refreshPasskeys, "Passkeys couldn’t be loaded. Try again.");
+  const [selectedPasskey, setSelectedPasskey] = useState<PasskeyEntry | null>(null);
+  const addButtonRef = useRef<HTMLButtonElement>(null);
+  const removalTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const removedRef = useRef(false);
+  const removalPendingRef = useRef(false);
   const [adding, setAdding] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const passkeys = data?.data ?? [];
 
   async function handleAddPasskey() {
+    if (adding || deletingId) return;
     setAdding(true);
     try {
       // 1. Get registration options
@@ -181,7 +205,7 @@ function PasskeyManager() {
       }
 
       toast.success("Passkey added successfully");
-      mutate(endpoint.listPasskeys);
+      void refreshPasskeys().catch(() => undefined);
     } catch (err) {
       if (err instanceof Error && err.name === "NotAllowedError") return; // user cancelled
       toast.error("Could not add passkey. Try again.");
@@ -191,17 +215,22 @@ function PasskeyManager() {
   }
 
   async function handleDeletePasskey(credentialId: string) {
+    if (removalPendingRef.current) return;
+    removalPendingRef.current = true;
     setDeletingId(credentialId);
     try {
       const url = endpoint.deletePasskey.replace(":credential_id", encodeURIComponent(credentialId));
       const result = await deleteFetcher(url, { arg: {} });
       if (result?.success) {
         toast.success(result?.message ?? "Passkey removed");
-        mutate(endpoint.listPasskeys);
+        await refreshPasskeys(current => ({ data: (current?.data ?? []).filter(key => key.credential_id !== credentialId) }), { revalidate: false });
+        removedRef.current = true;
+        setSelectedPasskey(null);
       }
     } catch {
-      toast.error("Could not remove passkey");
+      // The shared mutation fetcher reports the error; keep confirmation open for retry.
     } finally {
+      removalPendingRef.current = false;
       setDeletingId(null);
     }
   }
@@ -212,18 +241,19 @@ function PasskeyManager() {
       description="Sign in with your fingerprint, face, or device PIN."
       className="[&>div:first-child]:gap-0"
       headerAction={
-<SettingsPillButton type="button" variant="default" className="sm:-translate-y-1.5" disabled={adding} onClick={handleAddPasskey}>
+<SettingsPillButton ref={addButtonRef} type="button" variant="default" className="sm:-translate-y-1.5" disabled={adding || Boolean(deletingId)} onClick={handleAddPasskey}>
           <Fingerprint size={14} strokeWidth={1.5} />
           <span>Add a passkey</span>
           {adding ? <Spinner loading className="!size-4 text-v3-text-strong" /> : null}
         </SettingsPillButton>
       }
     >
+      {error && <Button variant="outline" onClick={retry}>Retry loading passkeys</Button>}
       {isLoading ? (
         <div className="flex items-center gap-2 font-inter text-sm text-v3-text-weak">
           <Spinner loading className="!size-4" /> Loading passkeys…
         </div>
-      ) : passkeys.length === 0 ? (
+      ) : passkeys.length === 0 && !error ? (
         <p className="font-inter text-sm text-v3-text-weak">No passkeys registered yet.</p>
       ) : (
         <ul className="flex flex-col gap-2">
@@ -243,8 +273,8 @@ function PasskeyManager() {
               </div>
               <button
                 type="button"
-                onClick={() => handleDeletePasskey(pk.credential_id)}
-                disabled={deletingId === pk.credential_id}
+                onClick={(event) => { removalTriggerRef.current = event.currentTarget; removedRef.current = false; setSelectedPasskey(pk); }}
+                disabled={Boolean(deletingId) || adding}
                 className="flex shrink-0 items-center justify-center rounded-full p-2 text-danger transition-colors hover:bg-danger/10 disabled:opacity-50"
                 aria-label="Remove passkey"
               >
@@ -258,6 +288,27 @@ function PasskeyManager() {
           ))}
         </ul>
       )}
+      <AlertDialog open={Boolean(selectedPasskey)} onOpenChange={next => { if (!next && !removalPendingRef.current) setSelectedPasskey(null); }}>
+        <AlertDialogContent className="motion-reduce:animate-none" onEscapeKeyDown={event => { if (removalPendingRef.current) event.preventDefault(); }} onCloseAutoFocus={event => {
+          event.preventDefault();
+          const target = removedRef.current ? addButtonRef.current : removalTriggerRef.current;
+          if (target?.isConnected) target.focus(); else addButtonRef.current?.focus();
+        }}>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove passkey?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You won’t be able to sign in with the passkey for {selectedPasskey?.device_name || "this device"}. Make sure you can sign in with your password or another passkey.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={Boolean(deletingId)}>Cancel</AlertDialogCancel>
+            <Button variant="destructive" aria-busy={Boolean(deletingId)} disabled={Boolean(deletingId)} onClick={() => { if (selectedPasskey) void handleDeletePasskey(selectedPasskey.credential_id); }}>
+              {deletingId ? "Removing…" : "Remove passkey"}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
 
 
     </SettingsSectionCard>
@@ -265,7 +316,6 @@ function PasskeyManager() {
 }
 
 export default function Security() {
-  const [passwordModalOpen, setPasswordModalOpen] = useState(false);
 
   return (
     <div className="flex w-full flex-col gap-6">
@@ -274,22 +324,12 @@ export default function Security() {
         <span className="font-inter text-sm text-v3-text-weak text-pretty">Manage your Memento account security</span>
       </header>
 
-      <SettingsSectionCard
-        title="Password"
-        description="Update the password you use to sign in to Memento."
-        className="sm:min-h-[97px]"
-        headerAction={
-          <SettingsPillButton variant="default" onClick={() => setPasswordModalOpen(true)}>
-            Change password
-          </SettingsPillButton>
-        }
-      />
+      <ChangePasswordDialog />
 
       <PasskeyManager />
 
       <TwoFactorAuthenticator />
 
-      {passwordModalOpen && <ChangePasswordModal onClose={() => setPasswordModalOpen(false)} />}
     </div>
   );
 }

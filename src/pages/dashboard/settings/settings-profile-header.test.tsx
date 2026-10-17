@@ -6,6 +6,12 @@ import { http, HttpResponse } from "msw";
 import { server } from "@/test/mocks/server";
 import { SettingsProfileHeader } from "./settings-profile-header";
 
+const profile = vi.hoisted(() => ({ user: null as import("@/utility/interface").IUser | null }));
+vi.mock("@/hooks/use-store", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/hooks/use-store")>();
+  return { ...actual, useStore: () => ({ ...actual.useStore(), ...(profile.user ? { user: profile.user } : {}) }) };
+});
+
 vi.mock("@/hooks/use-modal", () => ({
   initialStates: { state: [] },
   ModalProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
@@ -19,6 +25,7 @@ vi.mock("@/hooks/use-modal", () => ({
 
 const token = "f880209e-7c70-4e99-9ddf-ff180f220f21";
 beforeEach(() => {
+  profile.user = null;
   server.use(
     http.post("http://localhost:3000/api/users/profile/share", () =>
       HttpResponse.json({ success: true, data: { token } }),
@@ -27,6 +34,20 @@ beforeEach(() => {
 });
 
 describe("SettingsProfileHeader", () => {
+  it("shows the preferred nickname and uses weak neutral text for membership details", () => {
+    profile.user = { _id: "u1", nickname: "  Wisdom  ", first_name: "Wisdom", last_name: "Augustine", email: "test@example.com", created_at: "2025-06-01T00:00:00Z" } as import("@/utility/interface").IUser;
+    renderWithProviders(<SettingsProfileHeader />, { route: "/settings/general", auth: true });
+    expect(screen.getByRole("heading", { name: "Wisdom" })).toBeInTheDocument();
+    expect(screen.getByText("test@example.com").closest("p")).toHaveClass("text-text-neutral-weak");
+    expect(screen.getByText("Member since Jun 2025")).toBeInTheDocument();
+  });
+
+  it("falls back to the full name when the nickname is empty", () => {
+    profile.user = { _id: "u1", nickname: "  ", first_name: "Wisdom", last_name: "Augustine" } as import("@/utility/interface").IUser;
+    renderWithProviders(<SettingsProfileHeader />, { auth: true });
+    expect(screen.getByRole("heading", { name: "Wisdom Augustine" })).toBeInTheDocument();
+  });
+
   it("renders the profile actions without duplicating the bio", () => {
     renderWithProviders(<SettingsProfileHeader />, {
       route: "/settings/general",
@@ -153,7 +174,7 @@ describe("SettingsProfileHeader", () => {
       auth: true,
     });
     const metaRow = container.querySelector(
-      "p.font-inter.text-sm.text-v3-text-weak",
+      "p.font-inter.text-sm.text-text-neutral-weak",
     );
     expect(metaRow).toBeTruthy();
     expect(metaRow).toHaveClass("flex", "items-center", "justify-start");

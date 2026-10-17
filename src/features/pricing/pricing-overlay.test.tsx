@@ -214,3 +214,18 @@ describe("PricingOverlay subscription states", () => {
     expect(screen.queryByText("$9.99")).not.toBeInTheDocument();
   });
 });
+
+it("keeps checkout open while pending and unlocks after failure", async () => {
+  let reject!: (error: Error) => void;
+  vi.mocked(startCheckout).mockImplementationOnce(() => new Promise((_, fail) => { reject = fail; }));
+  Object.assign(state, { paid: false, loading: false, error: null, checkout: true, pricing: true });
+  const close = show();
+  await userEvent.click(screen.getByRole("button", { name: "Start 14-day trial" }));
+  expect(screen.getByRole("button", { name: /Opening billing/ })).toBeDisabled();
+  await userEvent.keyboard("{Escape}");
+  expect(close).not.toHaveBeenCalled();
+  reject(new Error("Checkout unavailable"));
+  expect(await screen.findByRole("button", { name: "Start 14-day trial" })).toBeEnabled();
+  await userEvent.keyboard("{Escape}");
+  expect(close).toHaveBeenCalledWith(false);
+});
