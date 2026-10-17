@@ -127,7 +127,8 @@ describe("CategoryDetails", () => {
     );
     await user.click(screen.getByText("Answered"));
     expect(currentKey).toContain("answered=true");
-    expect(setSize).toHaveBeenCalledWith(1);
+    // SWR resets pagination when the filter key changes.
+    expect(currentKey).toContain("page=1");
     await user.click(screen.getByText("All topics"));
     expect(currentKey).not.toContain("answered=");
   });

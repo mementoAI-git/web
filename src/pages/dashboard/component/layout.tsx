@@ -1,5 +1,5 @@
 import { VoiceSessionProvider } from "@/contexts/voice-session";
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { cn } from "@/utility";
 import { Outlet, useLocation, useMatch, useNavigate } from "react-router-dom";
 import AuthCheck from "@/components/layouts/auth-check";
@@ -7,6 +7,8 @@ import OnboardingGuard from "@/components/layouts/onboarding-guard";
 import { OnboardingNudgeBanner } from "@/features/onboarding-groot";
 import { SecurityNudgeBanner } from "@/components/security-nudge-banner";
 import { TrialBanner } from "@/components/trial-banner";
+import { useIsMobile } from "@/hooks/use-mobile";
+import "@/components/motion/navigation-motion.css";
 import { useModal } from "@/hooks/use-modal";
 import { useChatSidebar } from "@/contexts/chat-sidebar";
 import { isSkyCardPage } from "./sky-card-page";
@@ -18,6 +20,9 @@ import { ConversationChromeProvider } from "@/contexts/conversation-chrome";
 import { DashboardHeaderActionsProvider } from "@/contexts/dashboard-header-actions";
 
 export default function DashboardLayout() {
+  const isMobile = useIsMobile();
+  const mainRef = useRef<HTMLElement>(null);
+  const restoreSidebarFocus = useRef(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [mainSidebarCollapsed, setMainSidebarCollapsed] = useState(false);
   const { chatOpen, setChatOpen } = useChatSidebar();
@@ -25,6 +30,7 @@ export default function DashboardLayout() {
   const navigate = useNavigate();
   /** Chat handles its own scroll column; outer overflow-y-auto breaks sticky composer on small viewports. */
   const isChatRoute = location.pathname.startsWith("/chat");
+  const isPeopleRoute = location.pathname === "/people" || location.pathname.startsWith("/people/");
   const { open } = useModal();
   const isVoiceChatRoute = Boolean(
     useMatch({ path: "/chat/:id/voice", end: true }),
@@ -40,6 +46,14 @@ export default function DashboardLayout() {
   }, [location.state, location.pathname, open, navigate]);
 
   useEffect(() => () => setChatOpen(false), [setChatOpen]);
+
+  useLayoutEffect(() => {
+    if (!restoreSidebarFocus.current) return;
+    restoreSidebarFocus.current = false;
+    const toggles = mainRef.current?.querySelectorAll<HTMLButtonElement>("[data-sidebar-toggle]");
+    const visibleToggle = Array.from(toggles ?? []).find((button) => getComputedStyle(button).display !== "none");
+    visibleToggle?.focus();
+  }, [sidebarOpen, mainSidebarCollapsed]);
 
   const handleMainSidebarToggle = () => {
     if (
@@ -66,27 +80,32 @@ export default function DashboardLayout() {
             />
           )}
           <div
+            inert={isMobile ? !sidebarOpen : !isPeopleRoute && mainSidebarCollapsed}
             className={cn(
               sidebarOpen
                 ? "translate-x-0"
                 : "-translate-x-full md:translate-x-0",
               "fixed md:relative inset-y-0 left-0 z-50 md:z-auto",
-              "transition-all duration-300 ease-in-out md:transition-all",
-              "w-full md:w-[280px] shrink-0",
-              mainSidebarCollapsed &&
+              "navigation-sidebar",
+              "w-full shrink-0",
+              isPeopleRoute ? "md:w-[72px]" : "md:w-[280px]",
+              !isPeopleRoute && mainSidebarCollapsed &&
                 "md:!w-0 md:!min-w-0 md:overflow-hidden md:opacity-0",
             )}
           >
-            <DashboardSideBar onCollapse={handleMainSidebarToggle} />
+            <DashboardSideBar compact={isPeopleRoute && !isMobile} onCollapse={() => {
+              restoreSidebarFocus.current = true;
+              handleMainSidebarToggle();
+            }} />
           </div>
-          <main className="flex min-w-0 flex-1 flex-col overflow-hidden dynamic-height-content">
+          <main ref={mainRef} className="flex min-w-0 flex-1 flex-col overflow-hidden dynamic-height-content">
             <DashboardHeaderActionsProvider>
               <ConversationChromeProvider>
                 {!isVoiceChatRoute ? (
                   <DashboardHeader
                     onMenuClick={() => setSidebarOpen(true)}
                     mobileSidebarOpen={sidebarOpen}
-                    mainSidebarCollapsed={mainSidebarCollapsed}
+                    mainSidebarCollapsed={isPeopleRoute ? false : mainSidebarCollapsed}
                     onMainSidebarToggle={handleMainSidebarToggle}
                   />
                 ) : null}
@@ -103,7 +122,7 @@ export default function DashboardLayout() {
                     <div
                       className={cn(
                         "hide-scrollbar h-full min-h-0 w-full flex-1",
-                        isChatRoute ? "overflow-hidden" : "overflow-y-auto",
+                        isChatRoute || isPeopleRoute ? "overflow-hidden" : "overflow-y-auto",
                       )}
                     >
                       <Outlet />

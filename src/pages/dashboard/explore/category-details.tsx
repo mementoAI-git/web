@@ -1,5 +1,7 @@
 "use client";
 
+import { useRequestRecovery } from "@/hooks/use-request-recovery";
+
 import { useCallback, useEffect, useRef, useState } from "react";
 import useSWRInfinite from "swr/infinite";
 import endpoint from "@/api/endpoint";
@@ -54,28 +56,31 @@ export default function CategoryDetails({ category }: CategoryDetailsProps) {
     [activeTab, category?.slug],
   );
 
-  const { data, size, setSize, isLoading, mutate } = useSWRInfinite(
+  const { data, size, setSize, isLoading, error, mutate } = useSWRInfinite(
     getKey,
     paginatedResponseFetcher<ExploreQuestion>,
     {
       revalidateOnFocus: false,
+      persistSize: false,
+      shouldRetryOnError: false,
     },
   );
 
+  const retry = useRequestRecovery(`category-topics:${category.slug}:${activeTab}`, error, mutate, "Topics couldn’t be loaded. Try again.");
   const prompts = data ? data.flatMap((page) => page.data.docs) : [];
   const isLoadingMore =
-    isLoading || (size > 0 && data && typeof data[size - 1] === "undefined");
-  const isEmptyData = prompts.length === 0 && !isLoading;
+    !error && (isLoading || (size > 0 && data && typeof data[size - 1] === "undefined"));
+  const isEmptyData = prompts.length === 0 && !isLoading && !error;
   const hasMore = data?.[data.length - 1]?.data?.hasNextPage || false;
 
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
   const isIntersecting = useIntersectionObserver(loadMoreRef);
 
   useEffect(() => {
-    if (isIntersecting && !isLoadingMore && hasMore) {
-      setSize(size + 1);
+    if (!error && isIntersecting && !isLoadingMore && hasMore) {
+      void setSize(size + 1).catch(() => undefined);
     }
-  }, [hasMore, isIntersecting, isLoadingMore, setSize, size]);
+  }, [error, hasMore, isIntersecting, isLoadingMore, setSize, size]);
 
   const totalDocs = data?.[0]?.data?.totalDocs || 0;
 
@@ -150,7 +155,7 @@ export default function CategoryDetails({ category }: CategoryDetailsProps) {
                   aria-hidden="true"
                   className="size-2.5 rounded-full bg-fill-info-strong"
                 />
-                {totalDocs} {totalDocs === 1 ? "topic" : "topics"}
+                {data ? `${totalDocs} ${totalDocs === 1 ? "topic" : "topics"}` : "Topics"}
               </Badge>
             </div>
           </header>
@@ -164,7 +169,6 @@ export default function CategoryDetails({ category }: CategoryDetailsProps) {
             onValueChange={(value) => {
               if (!value) return;
               setActiveTab(value);
-              setSize(1);
             }}
           >
             {[
@@ -180,6 +184,7 @@ export default function CategoryDetails({ category }: CategoryDetailsProps) {
               </ToggleGroupItem>
             ))}
           </ToggleGroup>
+          {error && <Button variant="outline" onClick={retry}>Retry loading category topics</Button>}
           {isEmptyData ? (
             <TypographyMuted className="py-8 text-center text-text-neutral-weak">
               {activeTab === "answered"

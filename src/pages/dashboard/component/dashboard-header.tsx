@@ -1,3 +1,5 @@
+import { Spinner } from "@/components/ui/spinner";
+import "@/components/motion/icon-swap.css";
 import { OverviewDesignIcon } from "@/components/overview-design-icon";
 import { QuickTools } from "@/components/quick-tools";
 import { ThemeSwitcher } from "@/components/theme-switcher";
@@ -5,6 +7,7 @@ import zapIcon from "@/assets/icon/zap.svg";
 import {
   ChevronLeft,
   PanelLeft,
+  House,
   VolumeX,
   Volume2,
   MoreHorizontal,
@@ -31,6 +34,7 @@ const defaultHeaderTitle: Record<string, string> = {
   explore: "explore",
   overview: "overview",
   settings: "settings",
+  people: "people",
   capsule: "time capsules",
   "time-capsule": "time capsules",
   "": "overview",
@@ -83,6 +87,7 @@ export function DashboardHeader({
   const mdUp = useMdViewport();
   const chatConversationMatch = useMatch({ path: "/chat/:id", end: true });
   const chatVoiceMatch = useMatch({ path: "/chat/:id/voice", end: true });
+  const topicConversationMatch = useMatch({ path: "/chat/reply/:id", end: true });
   const { chrome } = useConversationChrome();
 
   const path = location.pathname.replace("/", "");
@@ -113,7 +118,7 @@ export function DashboardHeader({
   }, [open]);
 
   const showConversationNav = Boolean(
-    (chatConversationMatch || chatVoiceMatch) && chrome,
+    (chatConversationMatch || chatVoiceMatch || topicConversationMatch) && chrome,
   );
 
   const host = showConversationNav ? chrome?.hostChat : undefined;
@@ -129,7 +134,7 @@ export function DashboardHeader({
   return (
     <div
       className={cn(
-        "z-[45] w-full h-[60px] fixed top-0 left-0 right-0 sm:relative flex items-center bg-background px-4 sm:px-8",
+        "navigation-header dashboard-header-surface z-[45] w-full h-[60px] fixed top-0 left-0 right-0 sm:relative flex items-center bg-background px-4 sm:px-8",
         usesOverviewNav
           ? "sm:h-[76px] sm:items-start sm:pb-4 sm:pt-6"
           : "border-b border-border",
@@ -146,9 +151,11 @@ export function DashboardHeader({
         <div className="col-start-1 row-start-1 flex min-w-0 items-center gap-2 sm:gap-3">
           <button
             type="button"
+            data-sidebar-toggle=""
             onClick={toggleMainSidebar}
             className={cn(
               convIconBtn,
+              !railExpanded && "sidebar-reopen-button",
               showConversationNav ? "flex md:hidden" : "hidden md:flex",
               usesOverviewNav && !mainSidebarCollapsed && "md:hidden",
               showConversationNav && mainSidebarCollapsed && "md:flex",
@@ -156,7 +163,10 @@ export function DashboardHeader({
             aria-expanded={railExpanded}
             aria-label={showConversationNav ? "Open sidebar" : railExpanded ? "Collapse sidebar" : "Expand sidebar"}
           >
-            <PanelLeft className="size-5" strokeWidth={1.75} aria-hidden />
+            <span className="t-icon-swap" data-state={railExpanded ? "b" : "a"} aria-hidden>
+              <span className="t-icon" data-icon="a"><House className="size-5" strokeWidth={1.75} /></span>
+              <span className="t-icon" data-icon="b"><PanelLeft className="size-5" strokeWidth={1.75} /></span>
+            </span>
           </button>
           {chatVoiceMatch?.params?.id ? (
             <Link to={`/chat/${chatVoiceMatch.params.id}`} replace className={cn(convIconBtn, "no-underline")} aria-label="Back to chat">
@@ -193,6 +203,7 @@ export function DashboardHeader({
                 usesOverviewNav ? "h-9 bg-fill-neutral-weak" : "h-10",
                 "focus-visible:ring-2 focus-visible:ring-v3-brand-strong focus-visible:ring-offset-2",
               )}
+              data-search-trigger
               aria-label={showConversationNav ? "Search memories" : "Open search"}
               aria-haspopup="dialog"
             >
@@ -222,6 +233,7 @@ export function DashboardHeader({
             lightIcon={usesOverviewNav ? <OverviewDesignIcon name="sun" /> : undefined}
             darkIcon={usesOverviewNav ? <OverviewDesignIcon name="sun" /> : undefined}
             className={overviewActionClass}
+            contentClassName="navigation-menu"
           />
           <QuickTools
             overview={usesOverviewNav}
@@ -237,11 +249,12 @@ export function DashboardHeader({
                 className={cn(overviewActionClass, chrome.spokenReplies.enabled ? "text-text-brand-strong" : "text-icon-neutral-weak")}
                 aria-label="Read AI replies aloud"
                 aria-pressed={chrome.spokenReplies.enabled}
+                aria-busy={chrome.spokenReplies.isLoading || undefined}
                 title={!chrome.spokenReplies.supported ? "Spoken replies are unavailable in this browser" : chrome.spokenReplies.enabled ? "Turn off spoken replies" : "Turn on spoken replies"}
                 disabled={!chrome.spokenReplies.supported}
                 onClick={chrome.spokenReplies.onToggle}
               >
-                {chrome.spokenReplies.enabled ? <Volume2 aria-hidden /> : <VolumeX aria-hidden />}
+                {chrome.spokenReplies.isLoading ? <Spinner aria-hidden className="motion-reduce:animate-none" /> : chrome.spokenReplies.enabled ? <Volume2 aria-hidden /> : <VolumeX aria-hidden />}
               </Button>
             ) : null}
             {chrome?.memory?._id && chrome.onOpenChatPreferences ? (
@@ -276,6 +289,7 @@ export function DashboardHeader({
           {!showConversationNav ? <button
             type="button"
             onClick={onMenuClick}
+            data-sidebar-toggle=""
             aria-label="Open sidebar"
             className="flex size-10 shrink-0 items-center justify-center rounded-full md:hidden text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
           >

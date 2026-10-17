@@ -41,7 +41,7 @@ describe("DashboardSideBar", () => {
     expect(screen.getByTestId("current-location")).toHaveTextContent(route);
   });
 
-  it("opens People settings and marks the People item active", async () => {
+  it("opens the reserved People page and marks the People item active", async () => {
     const user = userEvent.setup();
     renderWithProviders(
       <>
@@ -52,7 +52,7 @@ describe("DashboardSideBar", () => {
     );
     await user.click(screen.getByRole("button", { name: "People" }));
     expect(screen.getByTestId("current-location")).toHaveTextContent(
-      "/settings/beneficiary",
+      "/people",
     );
     expect(screen.getByRole("button", { name: "People" })).toHaveAttribute(
       "data-active",
@@ -61,6 +61,12 @@ describe("DashboardSideBar", () => {
     expect(
       screen.getByRole("button", { name: "Settings" }),
     ).not.toHaveAttribute("data-active");
+  });
+
+  it("keeps beneficiaries under Settings rather than People", () => {
+    renderWithProviders(<DashboardSideBar />, { route: "/settings/beneficiary", auth: true });
+    expect(screen.getByRole("button", { name: "Settings" })).toHaveAttribute("data-active", "true");
+    expect(screen.getByRole("button", { name: "People" })).not.toHaveAttribute("data-active");
   });
 
   it("opens the invite modal without navigating away", async () => {

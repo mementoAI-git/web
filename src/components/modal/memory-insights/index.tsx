@@ -1,3 +1,4 @@
+import { useRequestRecovery } from "@/hooks/use-request-recovery";
 import { MemoryStatistics } from "@/features/insights/memory-statistics";
 import RecentActivitiesSection from "@/pages/dashboard/overview/sections/recent-activities-section";
 import { useMemo, useState } from "react";
@@ -175,10 +176,15 @@ export default function MemoryInsightsModal() {
     data: summaryRes,
     isLoading: summaryLoading,
     error: summaryError,
+    mutate: refreshSummary,
   } = useApi<MemoryInsightsSummaryDto>(endpoint.personaMemoryInsightsSummary);
-  const { data: beneficiariesData } = useSWR(
+  const retrySummary = useRequestRecovery("insights-summary", summaryError, refreshSummary, "Couldn’t load your summary. Please retry.");
+  const { data: statsResponse, error: statsError, mutate: refreshStats } = useSWR(endpoint.userStats);
+  const retryStats = useRequestRecovery("insights-stats", statsError, refreshStats, "Couldn’t load your insight progress. Please retry.");
+  const { data: beneficiariesData, error: beneficiariesError, isLoading: beneficiariesLoading, mutate: refreshBeneficiaries } = useSWR(
     `${endpoint.beneficiaries}?page=1`,
   );
+  const retryBeneficiaries = useRequestRecovery("insights-beneficiaries", beneficiariesError, refreshBeneficiaries, "Couldn’t load your beneficiaries. Please retry.");
   const { data: contextData } = useSWR(endpoint.userContext, entityResponseFetcher);
   const { data: profileData } = useSWR(endpoint.profile);
 
@@ -212,7 +218,7 @@ export default function MemoryInsightsModal() {
   const jumpPills = enrichmentStats?.jump_pills ?? [];
   const spotlight = enrichmentStats?.spotlight ?? null;
   const narrativeLoading = summaryLoading && !aiSummary;
-  const enrichmentReady = !enrichmentLoading;
+  const enrichmentReady = !enrichmentLoading && Boolean(statsResponse) && !statsError;
 
   const [heroSnoozeUntil, setHeroSnoozeUntil] = useState<number | null>(() =>
     readHeroSnoozeUntilMs(),
@@ -261,7 +267,7 @@ export default function MemoryInsightsModal() {
       : allInsights.filter((i) => i.category === activeCategory);
 
   return (
-    <div data-slot="memory-insights-panel" className="flex max-h-[88vh] w-full max-w-3xl flex-col overflow-hidden rounded-[24px] bg-bg-neutral-solid shadow-xl">
+    <div data-slot="memory-insights-panel" className="flex max-h-[88vh] w-full max-w-3xl flex-col overflow-hidden rounded-[var(--radius-modal)] bg-bg-neutral-solid shadow-xl">
       <div className="flex items-start justify-between gap-3 border-b border-v3-stroke-weak px-6 py-5">
         <div className="min-w-0">
           <h2 className="font-garamond text-2xl font-medium text-v3-text-strong">
@@ -371,10 +377,7 @@ export default function MemoryInsightsModal() {
                       ) : null}
 
                       {summaryError ? (
-                        <p className="font-inter text-sm text-v3-text-weak">
-                          We couldn&apos;t load your summary right now. You can
-                          still browse observations below.
-                        </p>
+                        <Button variant="outline" onClick={retrySummary}>Retry summary</Button>
                       ) : null}
 
                       {!summaryError && aiSummary ? (
@@ -463,6 +466,7 @@ export default function MemoryInsightsModal() {
                         </div>
                       ) : null}
 
+                      {statsError && <Button variant="outline" onClick={retryStats}>Retry progress</Button>}
                       {enrichmentReady ? (
                         <div className="space-y-2 pt-1">
                           <div className="flex items-center justify-between gap-3">
@@ -551,7 +555,7 @@ export default function MemoryInsightsModal() {
                   >
                     Beneficiaries
                   </Label>
-                  {beneficiaries.length === 0 ? (
+                  {beneficiariesError ? <Button variant="outline" onClick={retryBeneficiaries}>Retry beneficiaries</Button> : beneficiariesLoading ? <p role="status">Loading beneficiaries…</p> : beneficiaries.length === 0 ? (
                     <div className="flex items-center gap-4">
                       <Button
                         onClick={() => open("add-beneficiary")}

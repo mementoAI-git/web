@@ -1,4 +1,7 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { useRequestRecovery } from "@/hooks/use-request-recovery";
+import { isUnavailablePublicLink } from "@/lib/public-link-status";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import Logo from "@/components/logo";
 import endpoint from "@/api/endpoint";
@@ -17,7 +20,7 @@ async function publicCapsuleRequest<T>(
     referrerPolicy: "no-referrer",
     headers: { "Content-Type": "application/json", ...init.headers },
   });
-  if (!response.ok) throw new Error("Capsule request failed");
+  if (!response.ok) throw Object.assign(new Error("Capsule request failed"), { httpStatus: response.status });
   const envelope = (await response.json()) as IResponse<T>;
   if (!envelope.data) throw new Error("Capsule response is empty");
   return envelope.data;
@@ -35,13 +38,24 @@ type ExternalCapsule = {
 
 export default function CapsuleViewPage() {
   const location = useLocation();
-  const tokenRef = useRef<string | null>(null);
-  if (tokenRef.current === null) {
-    tokenRef.current = new URLSearchParams(location.search).get("token");
-  }
-  const token = tokenRef.current;
+  const token = new URLSearchParams(location.search).get("token");
+  return <CapsuleSession key={token ?? "missing-token"} token={token} />;
+}
+
+function CapsuleSession({ token }: { token: string | null }) {
+  const location = useLocation();
   const [capsule, setCapsule] = useState<ExternalCapsule | null>(null);
-  const [failed, setFailed] = useState(!token);
+  const [error, setError] = useState<unknown>(null);
+  const [attempt, setAttempt] = useState(0);
+  const grantRef = useRef<string | null>(null);
+  const requestRef = useRef<Promise<ExternalCapsule> | null>(null);
+  const unavailable = !token || isUnavailablePublicLink(error);
+  const retryRequest = useCallback(async () => {
+    requestRef.current = null;
+    setError(null);
+    setAttempt(value => value + 1);
+  }, []);
+  const retry = useRequestRecovery("public-capsule", !unavailable && error, retryRequest, "Your capsule couldn’t be loaded. Try again.");
 
   useLayoutEffect(() => {
     if (location.search) {
@@ -52,34 +66,30 @@ export default function CapsuleViewPage() {
   useEffect(() => {
     if (!token) return;
     let active = true;
-    const load = async () => {
-      try {
-        const exchanged = await publicCapsuleRequest<{
-          grant: string;
-          expires_at: string;
-        }>(endpoint.capsuleViewExchange, {
-          method: "POST",
-          body: JSON.stringify({ token }),
-        });
-        const grant = exchanged.grant;
-        if (!grant) throw new Error("Missing capsule view grant");
-        const viewed = await publicCapsuleRequest<ExternalCapsule>(
-          endpoint.capsuleView,
-          {
+    if (!requestRef.current) {
+      requestRef.current = (async () => {
+        if (!grantRef.current) {
+          const exchanged = await publicCapsuleRequest<{ grant: string }>(endpoint.capsuleViewExchange, {
+            method: "POST",
+            body: JSON.stringify({ token }),
+          });
+          if (!exchanged.grant) throw new Error("Missing capsule view grant");
+          grantRef.current = exchanged.grant;
+        }
+        return publicCapsuleRequest<ExternalCapsule>(endpoint.capsuleView, {
           method: "GET",
-          headers: { "x-capsule-view-grant": grant },
-          },
-        );
-        if (active) setCapsule(viewed);
-      } catch {
-        if (active) setFailed(true);
-      }
-    };
-    void load();
+          headers: { "x-capsule-view-grant": grantRef.current },
+        });
+      })();
+    }
+    void requestRef.current.then(
+      viewed => { if (active) setCapsule(viewed); },
+      failure => { if (active) setError(failure); },
+    );
     return () => {
       active = false;
     };
-  }, [token]);
+  }, [token, attempt]);
 
   return (
     <div className="min-h-screen bg-background px-5 py-8 text-text-neutral-strong sm:px-8">
@@ -91,14 +101,14 @@ export default function CapsuleViewPage() {
         </span>
       </header>
       <main className="mx-auto flex w-full max-w-3xl justify-center py-12">
-        {!capsule && !failed ? (
-          <div aria-label="Opening capsule" className="w-full animate-pulse rounded-[32px] border border-stroke-neutral-weaker bg-white p-8">
+        {!capsule && !error && !unavailable ? (
+          <div aria-label="Opening capsule" className="w-full animate-pulse motion-reduce:animate-none rounded-[32px] border border-stroke-neutral-weaker bg-bg-neutral-solid p-8">
             <div className="h-8 w-2/3 rounded-full bg-fill-neutral-weak" />
             <div className="mt-8 h-4 w-full rounded-full bg-fill-neutral-weaker" />
             <div className="mt-3 h-4 w-4/5 rounded-full bg-fill-neutral-weaker" />
           </div>
         ) : capsule ? (
-          <article className="w-full rounded-[32px] border border-stroke-neutral-weaker bg-white p-7 shadow-sm sm:p-10">
+          <article className="w-full rounded-[32px] border border-stroke-neutral-weaker bg-bg-neutral-solid p-7 shadow-sm sm:p-10">
             <p className="font-inter text-xs font-bold uppercase tracking-widest text-text-neutral-weaker">
               A moment saved for you
             </p>
@@ -114,13 +124,15 @@ export default function CapsuleViewPage() {
               </p>
             )}
           </article>
+        ) : !unavailable ? (
+          <Button variant="outline" onClick={retry}>Retry opening capsule</Button>
         ) : (
-          <div className="w-full rounded-[32px] border border-stroke-neutral-weaker bg-white p-10 text-center">
+          <div className="w-full rounded-[32px] border border-stroke-neutral-weaker bg-bg-neutral-solid p-10 text-center">
             <h1 className="font-garamond text-4xl text-text-neutral-strong">
               This capsule can’t be opened
             </h1>
             <p className="mt-3 font-inter text-sm leading-6 text-text-neutral-weak">
-              The private link may have expired or already been used. Ask the sender to try delivery again.
+              {!token ? "Open the original link from your invitation. If you already opened it, ask the sender to send a new link." : "The private link may have expired or already been used. Ask the sender to try delivery again."}
             </p>
           </div>
         )}

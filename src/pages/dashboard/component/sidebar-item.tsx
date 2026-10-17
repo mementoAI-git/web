@@ -38,11 +38,13 @@ export default function SideBarItem({
     <SidebarMenuItem>
       <SidebarMenuButton
         type="button"
+        aria-label={title}
+        title={title}
         isActive={active}
         onClick={handleClick}
         className={cn(
           "[&_svg]:size-6 h-11 gap-3 px-3 py-2.5 font-inter text-sm font-normal",
-          "transition-[transform,background-color,color] duration-150 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-[0.98]",
+          "navigation-button",
           active && "font-semibold",
           tone === "brand" && "text-text-brand-strong",
         )}
@@ -76,6 +78,7 @@ export default function SideBarItem({
           ) : null}
         </span>
         <span
+          data-sidebar-label=""
           className={cn("truncate", active ? "font-semibold" : "font-normal")}
         >
           {title}
