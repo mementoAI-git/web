@@ -15,9 +15,9 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # ── 1. Lint & Test ─────────────────────────────────────────
-  quality:
-    name: Lint & Test
+  # ── 1. Lint, Test and Build run in parallel ────────────────
+  lint:
+    name: Lint
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -40,13 +40,37 @@ jobs:
       - name: Lint
         run: pnpm lint
 
-      - name: Run tests
-        run: pnpm test
+  test:
+    name: Test (${{ matrix.shard }}/4)
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # One runner takes 10+ minutes for the whole suite; four shards run it in parallel.
+        shard: [1, 2, 3, 4]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-  # ── 2. Build ───────────────────────────────────────────────
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run tests
+        run: pnpm test --shard=${{ matrix.shard }}/4
+
   build:
     name: Build
-    needs: quality
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -90,7 +114,7 @@ jobs:
   # ── 3. Deploy ──────────────────────────────────────────────
   deploy:
     name: Deploy
-    needs: build
+    needs: [lint, test, build]
     runs-on: ubuntu-latest
     environment: development
     steps:
@@ -170,14 +194,15 @@ jobs:
   # ── 4. Notify Discord of deploy outcome ────────────────────
   notify:
     name: Notify Discord
-    needs: [quality, build, deploy]
+    needs: [lint, test, build, deploy]
     if: always()
     runs-on: ubuntu-latest
     steps:
       - name: Post deploy outcome to Discord
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
-          QUALITY_RESULT: ${{ needs.quality.result }}
+          LINT_RESULT: ${{ needs.lint.result }}
+          TEST_RESULT: ${{ needs.test.result }}
           BUILD_RESULT: ${{ needs.build.result }}
           DEPLOY_RESULT: ${{ needs.deploy.result }}
           COMMIT_MSG: ${{ github.event.head_commit.message }}
@@ -202,10 +227,10 @@ jobs:
             color=15844367
             status="cancelled"
           else
-            # deploy skipped — quality or build failed upstream
+            # deploy skipped — lint, tests or build failed upstream
             title="Frontend ${ENV_LABEL} — Deploy skipped ⚠️"
             color=15844367
-            status="skipped (quality=${QUALITY_RESULT}, build=${BUILD_RESULT})"
+            status="skipped (lint=${LINT_RESULT}, test=${TEST_RESULT}, build=${BUILD_RESULT})"
           fi
 
           run_url="https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
