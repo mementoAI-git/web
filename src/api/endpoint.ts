@@ -55,6 +55,9 @@ export default {
   groupMembers: "/groups/:id/members",
   groupMember: "/groups/:id/members/:beneficiaryId",
 
+  // media
+  backgroundMusic: "/media/background-music",
+
   // files
   upload: "/files/upload",
   files: "/files",
