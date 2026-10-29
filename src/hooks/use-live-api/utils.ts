@@ -15,8 +15,8 @@ export function createBlob(data: Float32Array): Blob {
   const l = data.length;
   const int16 = new Int16Array(l);
   for (let i = 0; i < l; i++) {
-    // convert float32 -1 to 1 to int16 -32768 to 32767
-    int16[i] = data[i] * 32768;
+    // convert float32 -1 to 1 to int16 -32768 to 32767; Int16Array wraps out-of-range values, so cap them
+    int16[i] = Math.max(-32768, Math.min(32767, data[i] * 32768));
   }
 
   return {
