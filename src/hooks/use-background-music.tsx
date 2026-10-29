@@ -5,19 +5,42 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
 import type { PropsWithChildren } from "react";
+import useSWR from "swr";
+import endpoint from "@/api/endpoint";
+import type { IResponse } from "@/api/interface";
 import { useStore } from "./use-store";
 import { toast } from "sonner";
 
-const audioFiles = [
+interface BackgroundTrack {
+  title: string;
+  key: string;
+  file: string;
+}
+
+/** Used until the API catalog loads, or when the API predates it. */
+const bundledAudioFiles: BackgroundTrack[] = [
   { title: "Moonlight", key: "moonlight", file: "/audio/moonlight.mp3" },
   { title: "Sea Waves", key: "seawaves", file: "/audio/seawaves.mp3" },
   { title: "Arkansas", key: "arkansas", file: "/audio/arkansas.mp3" },
   { title: "A love for life", key: "love", file: "/audio/love.mp3" },
 ];
+
+type CatalogTrack = { key?: unknown; title?: unknown; url?: unknown };
+
+function catalogTracks(response?: IResponse<CatalogTrack[]>): BackgroundTrack[] | null {
+  if (!Array.isArray(response?.data)) return null;
+  const tracks = response.data.flatMap(({ key, title, url }) =>
+    typeof key === "string" && typeof title === "string" && typeof url === "string"
+      ? [{ key, title, file: url }]
+      : [],
+  );
+  return tracks.length ? tracks : null;
+}
 
 interface BackgroundMusicContextType {
   isPlaying: boolean;
@@ -29,7 +52,7 @@ interface BackgroundMusicContextType {
   pauseTrack: () => void;
   resumeTrack: () => void;
   stopTrack: () => void;
-  audioFiles: typeof audioFiles;
+  audioFiles: BackgroundTrack[];
 }
 
 const BackgroundMusicContext =
@@ -46,6 +69,11 @@ export function BackgroundMusicProvider({ children }: PropsWithChildren) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTrack, setCurrentTrack] = useState<string | null>(null);
   const [volume, setVolume] = useState(50);
+  const { data: catalog } = useSWR<IResponse<CatalogTrack[]>>(
+    user?._id ? endpoint.backgroundMusic : null,
+    { revalidateOnFocus: false },
+  );
+  const audioFiles = useMemo(() => catalogTracks(catalog) ?? bundledAudioFiles, [catalog]);
 
   const failPlayback = useCallback(() => {
     // Loading a saved preference or clearing the source is not a playback attempt.
@@ -121,6 +149,16 @@ export function BackgroundMusicProvider({ children }: PropsWithChildren) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?._id, user?.bg_music]);
 
+  // When the API catalog arrives, point an idle restored track at its server URL.
+  useEffect(() => {
+    const audio = audioRef.current;
+    const file = audioFiles.find((track) => track.key === currentTrack)?.file;
+    if (!audio || !file || !audio.paused || playbackRequested.current) return;
+    if (audio.src === file || audio.src.endsWith(file)) return;
+    audio.src = file;
+    audio.load();
+  }, [audioFiles, currentTrack]);
+
   const playTrack = useCallback((key: string) => {
     if (!audioRef.current) return;
 
@@ -134,7 +172,7 @@ export function BackgroundMusicProvider({ children }: PropsWithChildren) {
     audioRef.current.src = audioFile.file;
     audioRef.current.load();
     startPlayback();
-  }, [startPlayback]);
+  }, [audioFiles, startPlayback]);
 
   const pauseTrack = useCallback(() => {
     attempt.current++;

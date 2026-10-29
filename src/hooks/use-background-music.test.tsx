@@ -2,6 +2,7 @@ import { toast } from "sonner";
 import { act, waitFor } from "@testing-library/react";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { SWRConfig } from "swr";
 import { BackgroundMusicProvider, useBackgroundMusic } from "./use-background-music";
 
 vi.mock("sonner", () => ({ toast: { error: vi.fn() } }));
@@ -34,8 +35,9 @@ class MockAudio extends EventTarget {
 }
 
 function MusicControls() {
-  const { currentTrack, isPlaying, isBuffering, playTrack, pauseTrack, resumeTrack, stopTrack } = useBackgroundMusic();
+  const { currentTrack, isPlaying, isBuffering, playTrack, pauseTrack, resumeTrack, stopTrack, audioFiles } = useBackgroundMusic();
   return <>
+    <output aria-label="Track source">{audioFiles[0]?.file}</output>
     <output aria-label="Selected track">{currentTrack ?? "None"}</output>
     <output aria-label="Playback">{isPlaying ? "Playing" : "Stopped"}</output>
     <button onClick={() => playTrack("seawaves")}>Play track</button>
@@ -148,4 +150,43 @@ it("stops playback when the account changes, even with the same saved track", ()
   rerender(<BackgroundMusicProvider><MusicControls /></BackgroundMusicProvider>);
   expect(screen.getByLabelText("Playback")).toHaveTextContent("Stopped");
   expect(screen.getByLabelText("Selected track")).toHaveTextContent("moonlight");
+});
+
+describe("server background music catalog", () => {
+  const catalog = [
+    { key: "moonlight", title: "Moonlight", url: "https://api.test/assets/audio/moonlight.mp3?v=v1", version: "v1" },
+    { key: "seawaves", title: "Sea Waves", url: "https://api.test/assets/audio/seawaves.mp3?v=v1", version: "v1" },
+  ];
+  const withCatalog = (fetcher: () => Promise<unknown>) => (
+    <SWRConfig value={{ fetcher, provider: () => new Map(), dedupingInterval: 0, shouldRetryOnError: false }}>
+      <BackgroundMusicProvider><MusicControls /></BackgroundMusicProvider>
+    </SWRConfig>
+  );
+
+  beforeEach(() => {
+    savedMusic = "moonlight";
+    accountId = "first-account";
+    audioInstances.length = 0;
+    vi.stubGlobal("Audio", MockAudio);
+  });
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("plays tracks from the URLs the API returns", async () => {
+    render(withCatalog(async () => ({ success: true, data: catalog })));
+    await waitFor(() => expect(screen.getByLabelText("Track source")).toHaveTextContent(catalog[0].url));
+    fireEvent.click(screen.getByText("Play track"));
+    expect(audioInstances[0].src).toBe(catalog[1].url);
+  });
+
+  it("moves a restored track to its server URL without starting playback", async () => {
+    render(withCatalog(async () => ({ success: true, data: catalog })));
+    await waitFor(() => expect(audioInstances[0].src).toBe(catalog[0].url));
+    expect(audioInstances[0].play).not.toHaveBeenCalled();
+  });
+
+  it("keeps the bundled tracks when the catalog is unavailable", async () => {
+    render(withCatalog(async () => { throw new Error("offline"); }));
+    fireEvent.click(screen.getByText("Play track"));
+    expect(audioInstances[0].src).toBe("/audio/seawaves.mp3");
+  });
 });
