@@ -139,7 +139,7 @@ export function useLiveAPI({
 
         sessionPromiseRef.current?.then((session) => {
           session.sendRealtimeInput({
-            media: createBlob(pcmData)
+            audio: createBlob(pcmData)
           });
         });
       };
@@ -286,12 +286,15 @@ export function useLiveAPI({
     try {
       setError(null);
       await outputAudioContext.resume();
-      const result = await fetchEphemeralToken();
+      const result = await fetchEphemeralToken(
+        memoryIdRef.current ? { memory_id: memoryIdRef.current } : undefined,
+      );
       if (outputAudioContextRef.current !== outputAudioContext || connectionAttempt.current !== attempt) return false;
-      if (!result?.data?.token) {
+      const liveToken = result?.data as { token?: string; live?: { model?: string } } | undefined;
+      if (!liveToken?.token) {
         throw new Error("Failed to get a fresh Live API token");
       }
-      ephemeralTokenRef.current = result.data.token;
+      ephemeralTokenRef.current = liveToken.token;
 
       clientRef.current = new GoogleGenAI({
         apiKey: ephemeralTokenRef.current,
@@ -323,7 +326,8 @@ export function useLiveAPI({
       setupTimer = setTimeout(() => rejectSetup(new Error("Voice connection timed out. Please try again.")), 20000);
       const isCurrent = () => connectionAttempt.current === attempt;
       sessionPromiseRef.current = clientRef.current.live.connect({
-        model: GEMINI_CONFIG.MODEL,
+        // The token is constrained to the server's model; any other model is rejected.
+        model: liveToken.live?.model || GEMINI_CONFIG.MODEL,
         callbacks: {
           onmessage: async (message: LiveServerMessage) => {
             if (!isCurrent()) return;

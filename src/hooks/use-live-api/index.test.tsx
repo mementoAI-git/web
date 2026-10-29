@@ -116,6 +116,63 @@ describe("useLiveAPI", () => {
     );
   });
 
+  it("connects with the model the server locked into the token", async () => {
+    liveMocks.fetchToken.mockReset().mockResolvedValueOnce({
+      data: { token: "auth_tokens/1", live: { model: "gemini-3.8-live" } },
+    });
+    const { result } = renderHook(() => useLiveAPI({ autoConnect: false }));
+    await waitFor(() => expect(result.current.outputNode).not.toBeNull());
+
+    await act(async () => {
+      await result.current.connect();
+    });
+
+    expect(liveMocks.connect).toHaveBeenCalledWith(
+      expect.objectContaining({ model: "gemini-3.8-live" }),
+    );
+  });
+
+  it("requests the token for the current conversation", async () => {
+    const { result } = renderHook(() => useLiveAPI({ memoryId: "m1", autoConnect: false }));
+    await waitFor(() => expect(result.current.outputNode).not.toBeNull());
+
+    await act(async () => {
+      await result.current.connect();
+    });
+
+    expect(liveMocks.fetchToken).toHaveBeenCalledWith({ memory_id: "m1" });
+  });
+
+  it("streams microphone audio as realtime audio input", async () => {
+    const sendRealtimeInput = vi.fn();
+    liveMocks.connect.mockImplementation(async (options: { callbacks: { onmessage: (message: { setupComplete: object }) => void } }) => {
+      options.callbacks.onmessage({ setupComplete: {} });
+      return { close: liveMocks.close, sendRealtimeInput };
+    });
+    const processors: { onaudioprocess: ((event: unknown) => void) | null }[] = [];
+    const AudioContextStub = globalThis.AudioContext as unknown as { prototype: { createScriptProcessor: () => unknown } };
+    AudioContextStub.prototype.createScriptProcessor = () => {
+      const processor = { connect: vi.fn(), disconnect: vi.fn(), onaudioprocess: null };
+      processors.push(processor);
+      return processor;
+    };
+    const { result } = renderHook(() => useLiveAPI({ autoConnect: false }));
+    await waitFor(() => expect(result.current.outputNode).not.toBeNull());
+
+    await act(async () => {
+      await result.current.connect();
+      await result.current.startRecording();
+    });
+    await act(async () => {
+      processors[0].onaudioprocess?.({ inputBuffer: { getChannelData: () => new Float32Array([0, 0.5]) } });
+      await Promise.resolve();
+    });
+
+    expect(sendRealtimeInput).toHaveBeenCalledWith({
+      audio: expect.objectContaining({ mimeType: "audio/pcm;rate=16000" }),
+    });
+  });
+
   it("keeps the microphone stream alive while replacing the live session", async () => {
     const { result } = renderHook(() => useLiveAPI({ autoConnect: false }));
     await waitFor(() => expect(result.current.outputNode).not.toBeNull());
