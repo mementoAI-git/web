@@ -104,11 +104,11 @@ jobs:
           fi
           echo "Build output OK — $(find dist -type f | wc -l) files, $(du -sh dist | cut -f1) total"
 
-      - name: Upload build artifact
-        uses: actions/upload-artifact@v4
+      # Artifacts count against the account's storage quota; the Actions cache does not.
+      - name: Save build bundle
+        uses: actions/cache/save@v4
         with:
-          name: frontend-dev-${{ github.sha }}
-          retention-days: 1
+          key: frontend-dev-${{ github.sha }}-${{ github.run_id }}
           path: dist/
 
   # ── 3. Deploy ──────────────────────────────────────────────
@@ -118,11 +118,12 @@ jobs:
     runs-on: ubuntu-latest
     environment: development
     steps:
-      - name: Download build artifact
-        uses: actions/download-artifact@v4
+      - name: Restore build bundle
+        uses: actions/cache/restore@v4
         with:
-          name: frontend-dev-${{ github.sha }}
+          key: frontend-dev-${{ github.sha }}-${{ github.run_id }}
           path: dist/
+          fail-on-cache-miss: true
 
       - name: Setup SSH
         run: |
