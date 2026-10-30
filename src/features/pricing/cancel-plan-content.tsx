@@ -18,6 +18,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Spinner } from "@/components/ui/spinner";
 import { reportFetcherError } from "@/api/report-fetcher-error";
 import { cancelSubscription } from "./subscription-actions";
+import posthog from "@/lib/posthog";
 
 const reasons = [
   ["expensive", "It’s too expensive", "too_expensive"],
@@ -56,6 +57,11 @@ export function CancelPlanContent({
       });
       if (!response.success)
         throw new Error(response.message || "Could not cancel your plan");
+      if (posthog.__loaded) {
+        posthog.capture("subscription_cancelled", {
+          cancellation_reason: selected[2],
+        });
+      }
       toast.success(
         "Cancellation scheduled. Your Pro access continues until the end of your billing period.",
       );

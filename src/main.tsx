@@ -1,4 +1,6 @@
 import { captureReferral } from "@/features/referrals/attribution";
+import "@/lib/posthog";
+import { PostHogIdentity } from "@/components/posthog-identity";
 import "../instrument";
 import * as Sentry from "@sentry/react";
 import { StrictMode } from "react";
@@ -22,6 +24,7 @@ import { SubscriptionProvider } from "@/contexts/subscription";
 import { FeatureFlagsProvider } from "@/contexts/feature-flags";
 import { ThemeProvider } from "@/contexts/theme";
 import { initializeTheme } from "@/lib/theme";
+
 // Dev-only: admin tools for previewing empty states.
 // Gated behind import.meta.env.DEV — Vite tree-shakes this from production.
 // eslint-disable-next-line react-refresh/only-export-components
@@ -53,6 +56,7 @@ createRoot(document.getElementById("root")!, sentryHandler).render(
     <Sentry.ErrorBoundary fallback={<ErrorPage />}>
       <ThemeProvider>
         <StoreProvider>
+          <PostHogIdentity />
           <SWRConfig
             value={{
               fetcher,

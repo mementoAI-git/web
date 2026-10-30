@@ -17,6 +17,10 @@ import { createSystemContext, isEmpty } from "@/utility";
 import useFetcher from "../use-fetcher";
 import endpoint from "@/api/endpoint";
 import { useStore } from "@/hooks/use-store";
+import {
+  captureGeminiLiveGeneration,
+  createGeminiLiveSessionId,
+} from "@/lib/ai-observability";
 
 // Transcript entry type
 export type TranscriptEntry = {
@@ -71,6 +75,9 @@ export function useLiveAPI({
   const playbackStateRef = useRef<GeminiLivePlaybackState | null>(null);
   const isConnectingRef = useRef(false);
   const sessionIdRef = useRef<string | null>(null);
+  const aiSessionIdRef = useRef<string | null>(null);
+  const turnStartedAtRef = useRef<number | null>(null);
+  const firstResponseAtRef = useRef<number | null>(null);
   const ephemeralTokenRef = useRef<string | null>(null);
   const hasConnectedRef = useRef(false);
   const saveQueue = useRef<Promise<unknown>>(Promise.resolve());
@@ -202,20 +209,49 @@ export function useLiveAPI({
     });
   }, [persistMessages]);
 
+  const startAiTurn = useCallback(() => {
+    if (turnStartedAtRef.current !== null) return;
+    turnStartedAtRef.current = Date.now();
+    firstResponseAtRef.current = null;
+  }, []);
+
   const updateTranscriptText = useCallback((role: "user" | "ai", text?: string) => {
     if (!text) return;
+    startAiTurn();
+    if (role === "ai" && firstResponseAtRef.current === null) {
+      firstResponseAtRef.current = Date.now();
+    }
     transcriptText.current[role] += text;
     startTurnTimer();
-  }, [startTurnTimer]);
+  }, [startAiTurn, startTurnTimer]);
 
-  const flushTranscript = useCallback(() => {
+  const flushTranscript = useCallback((stopReason: "end_turn" | "interrupted" = "end_turn") => {
     const messages = Object.entries(transcriptText.current)
       .filter(([, text]) => text.trim() && !text.match(/<noise>/))
       .map(([role, text]) => ({ role, text, is_voice: true, duration: turnTimerRef.current.duration }));
+    const turnStartedAt = turnStartedAtRef.current;
+    const firstResponseAt = firstResponseAtRef.current;
     transcriptText.current = { user: "", ai: "" };
+    turnStartedAtRef.current = null;
+    firstResponseAtRef.current = null;
     stopTurnTimer();
     turnTimerRef.current.duration = 0;
     if (!messages.length) return;
+
+    if (aiSessionIdRef.current) {
+      const completedAt = Date.now();
+      captureGeminiLiveGeneration({
+        sessionId: aiSessionIdRef.current,
+        traceId: crypto.randomUUID(),
+        model: GEMINI_CONFIG.MODEL,
+        latencyMs: completedAt - (turnStartedAt ?? completedAt),
+        timeToFirstTokenMs: firstResponseAt === null || turnStartedAt === null
+          ? null
+          : firstResponseAt - turnStartedAt,
+        stopReason,
+      });
+    }
+
     recordMessages(messages);
   }, [recordMessages, stopTurnTimer]);
 
@@ -233,13 +269,14 @@ export function useLiveAPI({
       // Live image input is a video stream, with a maximum rate of one frame/second.
       if (index < images.length - 1) await new Promise(resolve => setTimeout(resolve, 1000));
     }
+    startAiTurn();
     session.sendRealtimeInput({ text: parts.find(part => part.text)?.text ?? input.text });
     // Persistence must never gate delivery to the live model.
     recordMessages([{
       role: "user", text: input.text.trim() || "Shared an image", is_voice: true,
       ...(input.attachments?.length ? { attachments: input.attachments.map(file => file._id) } : {}),
     }], input.attachments);
-  }, [recordMessages]);
+  }, [recordMessages, startAiTurn]);
 
   // Stop audio recording
   const stopRecording = useCallback(() => {
@@ -258,6 +295,8 @@ export function useLiveAPI({
     mediaStreamRef.current = undefined;
 
     stopTurnTimer(); // Stop timer on disconnect
+    turnStartedAtRef.current = null;
+    firstResponseAtRef.current = null;
     setConnected(false);
     isConnectingRef.current = false;
 
@@ -336,6 +375,10 @@ export function useLiveAPI({
               isConnectingRef.current = false;
               hasConnectedRef.current = true;
               if (!sessionIdRef.current) sessionIdRef.current = uuidv4();
+              const aiSessionScope = memoryIdRef.current ?? sessionIdRef.current;
+              if (!aiSessionIdRef.current && aiSessionScope) {
+                aiSessionIdRef.current = createGeminiLiveSessionId(aiSessionScope);
+              }
               turnTimerRef.current.duration = 0;
               acceptSetup();
             }
@@ -362,7 +405,9 @@ export function useLiveAPI({
 
             updateTranscriptText("user", message.serverContent?.inputTranscription?.text);
             updateTranscriptText("ai", message.serverContent?.outputTranscription?.text);
-            if (message.serverContent?.turnComplete || message.serverContent?.interrupted) flushTranscript();
+            if (message.serverContent?.turnComplete || message.serverContent?.interrupted) {
+              flushTranscript(message.serverContent.interrupted ? "interrupted" : "end_turn");
+            }
 
             // Handle interruption
             const interrupted = message.serverContent?.interrupted;
@@ -554,11 +599,12 @@ export function useLiveAPI({
   const greet = useCallback(async () => {
     const session = await sessionPromiseRef.current;
     if (!isRecordingRef.current) return;
+    startAiTurn();
     session?.sendClientContent({
       turns: [{ role: "user", parts: [{ text: "Begin our voice conversation with a brief warm greeting and one gentle question based on the context you have. Keep it short." }] }],
       turnComplete: true,
     });
-  }, []);
+  }, [startAiTurn]);
 
   return {
     sendChatInput,

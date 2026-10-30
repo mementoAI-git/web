@@ -33,6 +33,7 @@ import { cn } from "@/lib/utils";
 import { ProCardBackground } from "./pro-card-background";
 import { reportFetcherError } from "@/api/report-fetcher-error";
 import { startCheckout } from "./start-checkout";
+import posthog from "@/lib/posthog";
 import {
   FREE_FEATURES,
   PRO_FEATURES,
@@ -142,6 +143,12 @@ export function PricingOverlay({
         success_url: `${origin}/settings/billing?checkout=success`,
         cancel_url: `${origin}/settings/billing?checkout=cancelled`,
       });
+      if (posthog.__loaded) {
+        posthog.capture("checkout_started", {
+          plan_tier: "pro",
+          billing_interval: interval,
+        });
+      }
       window.location.href = url;
     } catch (error) {
       reportFetcherError(error, "Could not start checkout");

@@ -46,3 +46,7 @@ yarn.lock
 
 # Project-local Git worktrees
 /.worktrees/
+.env
+
+# PostHog wizard working files
+.posthog-wizard-cache/

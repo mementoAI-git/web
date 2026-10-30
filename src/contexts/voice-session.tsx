@@ -5,6 +5,8 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { InlineVoiceSession } from "@/components/Chatinput/inline-voice-session";
 import type { VoiceMessage, VoiceRuntime, VoiceTextInput, VoiceTimelineEntry } from "@/features/voice/types";
 import { useStore } from "@/hooks/use-store";
+import posthog from "@/lib/posthog";
+import { posthogLogger } from "@/lib/posthog-logger";
 
 type StartVoice = { memoryId?: string | null; history?: { role: "user" | "ai"; text: string }[] };
 interface VoiceSessionContextValue {
@@ -41,6 +43,20 @@ export function VoiceSessionProvider({ children }: { children: ReactNode }) {
   const onSessionChange = useCallback((active: boolean) => {
     if (live.current === active) return;
     live.current = active;
+    if (posthog.__loaded) {
+      if (active) {
+        const hasExistingConversation = Boolean(requestRef.current?.memoryId);
+        posthog.capture("voice_session_started", {
+          has_existing_conversation: hasExistingConversation,
+        });
+        posthogLogger.info("voice session started", {
+          has_existing_conversation: hasExistingConversation,
+        });
+      } else {
+        posthog.capture("voice_session_ended");
+        posthogLogger.info("voice session ended");
+      }
+    }
     append({ kind: active ? "started" : "ended" });
   }, [append]);
   const end = useCallback(() => {

@@ -1,3 +1,5 @@
+import posthog from "@/lib/posthog";
+vi.mock("@/lib/posthog", () => ({ default: { __loaded: true, capture: vi.fn(), logger: { info: vi.fn() } } }));
 import { useEffect, useState } from "react";
 import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -50,6 +52,8 @@ it("keeps the same session and mute state while docking on Overview and floating
   await user.click(screen.getByText("End"));
   await waitFor(() => expect(lifecycle.ends).toHaveBeenCalledOnce());
   expect(screen.getByText("started,ended")).toBeInTheDocument();
+  expect(posthog.capture).toHaveBeenCalledWith("voice_session_started", { has_existing_conversation: true });
+  expect(posthog.capture).toHaveBeenCalledWith("voice_session_ended");
 });
 
 it("ignores transcript saves arriving after their call has ended", async () => {

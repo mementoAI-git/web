@@ -21,6 +21,7 @@ import {
   OnboardingTitle,
 } from "./components/onboarding-card";
 import { LifeAreaChip } from "./components/life-area-chip";
+import posthog from "@/lib/posthog";
 
 export default function OnboardingSummaryPage() {
   const { user, setUser } = useStore();
@@ -60,6 +61,13 @@ export default function OnboardingSummaryPage() {
         skippedDeepPersonalization: false,
       });
       if (!result?.success) throw new Error(result?.message || "Couldn’t save onboarding");
+      if (posthog.__loaded) {
+        posthog.capture("onboarding_completed", {
+          life_area_count: draft.areas.length,
+          join_reason_count: draft.reasons.length,
+          motivation_type: selectedReasons[0]?.motivation ?? "explorer",
+        });
+      }
       if (user)
         setUser?.({ ...user, onboarded: true, onboarding_status: "completed" });
       clearOnboardingDraft(userId);
