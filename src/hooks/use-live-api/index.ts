@@ -13,6 +13,7 @@ import {
 } from "./playback";
 import { createBlob } from "./utils";
 import { GEMINI_CONFIG } from "./config";
+import { createSpeechEndDetector } from "./speech-end";
 import { createSystemContext, isEmpty } from "@/utility";
 import useFetcher from "../use-fetcher";
 import endpoint from "@/api/endpoint";
@@ -63,6 +64,8 @@ export function useLiveAPI({
   const clientRef = useRef<GoogleGenAI | null>(null);
   const sessionPromiseRef = useRef<Promise<Session> | null>(null);
   const isRecordingRef = useRef(false);
+  const inputMutedRef = useRef(false);
+  const speechEndDetectorRef = useRef<ReturnType<typeof createSpeechEndDetector> | null>(null);
   const inputAudioContextRef = useRef<AudioContext | null>(null);
   const outputAudioContextRef = useRef<AudioContext | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
@@ -108,7 +111,7 @@ export function useLiveAPI({
     try {
       await inputAudioContext.resume();
       const stream = await navigator.mediaDevices.getUserMedia({
-        audio: true,
+        audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true, autoGainControl: true },
         video: false,
       });
       if (inputAudioContextRef.current !== inputAudioContext || !hasConnectedRef.current) {
@@ -130,18 +133,23 @@ export function useLiveAPI({
         1,
       );
       scriptProcessorNodeRef.current = scriptProcessor;
+      inputMutedRef.current = false;
+      const speechEndDetector = createSpeechEndDetector(inputAudioContext.sampleRate || 16000);
+      speechEndDetectorRef.current = speechEndDetector;
 
       scriptProcessor.onaudioprocess = (audioProcessingEvent) => {
-        if (!isRecordingRef.current) return;
+        if (!isRecordingRef.current || inputMutedRef.current) return;
 
         const inputBuffer = audioProcessingEvent.inputBuffer;
         const pcmData = inputBuffer.getChannelData(0);
-
-        sessionPromiseRef.current?.then((session) => {
-          session.sendRealtimeInput({
-            audio: createBlob(pcmData)
-          });
-        });
+        const audio = createBlob(pcmData);
+        const endOfSpeech = speechEndDetector.push(pcmData);
+        const pendingSession = sessionPromiseRef.current;
+        pendingSession?.then((session) => {
+          if (sessionPromiseRef.current !== pendingSession || !isRecordingRef.current || inputMutedRef.current) return;
+          session.sendRealtimeInput({ audio });
+          if (endOfSpeech) session.sendRealtimeInput({ audioStreamEnd: true });
+        }).catch(() => setError("Microphone audio could not be sent. Please reconnect the voice call."));
       };
 
       source.connect(scriptProcessor);
@@ -233,7 +241,10 @@ export function useLiveAPI({
       // Live image input is a video stream, with a maximum rate of one frame/second.
       if (index < images.length - 1) await new Promise(resolve => setTimeout(resolve, 1000));
     }
-    session.sendRealtimeInput({ text: parts.find(part => part.text)?.text ?? input.text });
+    session.sendClientContent({
+      turns: [{ role: "user", parts: [{ text: parts.find(part => part.text)?.text ?? input.text }] }],
+      turnComplete: true,
+    });
     // Persistence must never gate delivery to the live model.
     recordMessages([{
       role: "user", text: input.text.trim() || "Shared an image", is_voice: true,
@@ -248,6 +259,8 @@ export function useLiveAPI({
     setStatus('Stopping recording...');
     isRecordingRef.current = false;
     setIsRecording(false);
+    inputMutedRef.current = false;
+    speechEndDetectorRef.current?.reset();
 
     scriptProcessorNodeRef.current?.disconnect();
     sourceNodeRef.current?.disconnect();
@@ -265,9 +278,18 @@ export function useLiveAPI({
   }, [stopTurnTimer]);
 
   const setInputMuted = useCallback((muted: boolean) => {
+    const changed = inputMutedRef.current !== muted;
+    inputMutedRef.current = muted;
+    speechEndDetectorRef.current?.reset();
     mediaStreamRef.current?.getAudioTracks().forEach((track) => {
       track.enabled = !muted;
     });
+    if (muted && changed && hasConnectedRef.current) {
+      const pendingSession = sessionPromiseRef.current;
+      void pendingSession?.then(session => {
+        if (sessionPromiseRef.current === pendingSession) session.sendRealtimeInput({ audioStreamEnd: true });
+      }).catch(() => setError("The microphone turn could not finish. Please reconnect the voice call."));
+    }
   }, []);
 
   // Connect to Live API
@@ -315,6 +337,7 @@ export function useLiveAPI({
         }
         sessionPromiseRef.current = null;
       }
+      speechEndDetectorRef.current?.reset();
 
       let acceptSetup!: () => void;
       let rejectSetup!: (error: Error) => void;

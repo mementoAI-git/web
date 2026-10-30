@@ -56,7 +56,7 @@ describe("inline voice lifecycle", () => {
     const { result } = renderHook(() => useLiveAPI({ memoryId: "m1", onMessages }));
     await act(async () => { await result.current.connect(); await result.current.startRecording(); });
     await act(async () => { await result.current.sendChatInput({ text: "Tell me more" }); });
-    expect(session.sendRealtimeInput).toHaveBeenCalledWith({ text: "Tell me more" });
+    expect(session.sendClientContent).toHaveBeenCalledWith({ turns: [{ role: "user", parts: [{ text: "Tell me more" }] }], turnComplete: true });
     expect(session.close).not.toHaveBeenCalled();
     expect(saveMessages).toHaveBeenCalledWith(expect.objectContaining({ memory_id: "m1", messages: [expect.objectContaining({ text: "Tell me more", role: "user" })] }));
     expect(onMessages).toHaveBeenCalledWith([expect.objectContaining({ _id: "saved-0", text: "Tell me more" })]);
@@ -68,7 +68,7 @@ describe("inline voice lifecycle", () => {
     const { result } = renderHook(() => useLiveAPI({ memoryId: "m1", onMessages }));
     await act(async () => { await result.current.connect(); await result.current.startRecording(); });
     await act(async () => { await result.current.sendChatInput({ text: "Please answer me" }); });
-    expect(session.sendRealtimeInput).toHaveBeenCalledWith({ text: "Please answer me" });
+    expect(session.sendClientContent).toHaveBeenCalledWith({ turns: [{ role: "user", parts: [{ text: "Please answer me" }] }], turnComplete: true });
     expect(onMessages).toHaveBeenCalledWith([expect.objectContaining({ text: "Please answer me" })]);
     expect(result.current.error).toMatch(/not be saved/);
   });
