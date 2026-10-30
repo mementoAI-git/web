@@ -5,7 +5,7 @@ import { renderWithProviders } from "@/test";
 import NicknamePage from "./index";
 
 const mockNavigate = vi.fn();
-const mockTrigger = vi.fn().mockResolvedValue({});
+const mockTrigger = vi.fn().mockResolvedValue({ success: true });
 
 vi.mock("react-router-dom", async (importOriginal) => {
   const actual = await importOriginal<typeof import("react-router-dom")>();

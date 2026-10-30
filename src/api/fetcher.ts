@@ -28,6 +28,10 @@ const axios = Axios.create({
   },
 });
 
+if (import.meta.env.DEV) {
+  (await import("@/dev/preview-transport")).installPreviewAxios(axios);
+}
+
 function readAuthFromStorage(): { access_token?: string } | null {
   try {
     const raw = localStorage.getItem(storageKeys.auth);
@@ -38,7 +42,15 @@ function readAuthFromStorage(): { access_token?: string } | null {
   }
 }
 
+function isPublicAuthRequest(url?: string): boolean {
+  const path = url?.split("?")[0] ?? "";
+  return path.startsWith("/auth/") &&
+    !path.startsWith("/auth/passkey/register/") &&
+    !path.startsWith("/auth/logout");
+}
+
 axios.interceptors.request.use((config) => {
+  if (isPublicAuthRequest(config.url)) return config;
   const auth = readAuthFromStorage();
   if (auth?.access_token) {
     const { access_token } = auth;
@@ -53,23 +65,26 @@ axios.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
-
-      try {
-        const authData = authService.getAuthData();
-
-        if (authData && !authService.isRefreshTokenExpired(authData)) {
-          const newAuthData = await authService.refreshAccessToken();
-
-          originalRequest.headers.Authorization = `Bearer ${newAuthData.access_token}`;
-
-          return axios(originalRequest);
-        } else {
-          authService.redirectToLoginWithPath();
-        }
-      } catch {
+    if (error.response?.status === 401 && originalRequest && !isPublicAuthRequest(originalRequest.url)) {
+      if (originalRequest._retry) {
+        authService.clearAuth();
         authService.redirectToLoginWithPath();
+        return Promise.reject(error);
+      }
+      originalRequest._retry = true;
+      const authData = authService.getAuthData();
+      if (!authData || authService.isRefreshTokenExpired(authData)) {
+        authService.clearAuth();
+        authService.redirectToLoginWithPath();
+        return Promise.reject(error);
+      }
+      try {
+        const newAuthData = await authService.refreshAccessToken();
+        originalRequest.headers.Authorization = `Bearer ${newAuthData.access_token}`;
+        return axios(originalRequest);
+      } catch (refreshError) {
+        // Preserve a 429/5xx refresh error so consumers do not retry the original 401.
+        return Promise.reject(refreshError);
       }
     }
 
@@ -214,25 +229,26 @@ export const streamlineFetcher = async (url: string, { arg }: { arg: Record<stri
     body: JSON.stringify(payload),
   });
 
+  if (!response.ok) {
+    const data = await response.json().catch(() => null);
+    throw new Error(data?.message || "Couldn’t load the response. Please try again.");
+  }
   const reader = response.body?.getReader();
+  if (!reader) throw new Error("No response received. Please try again.");
   const decoder = new TextDecoder("utf-8");
-  const modelFromHeader = response.headers.get("x-ai-model") || undefined;
-  onMeta?.({ model: modelFromHeader });
-
-  if (response.ok && reader) {
+  onMeta?.({ model: response.headers.get("x-ai-model") || undefined });
+  try {
     while (true) {
       const { value, done } = await reader.read();
-      if (value !== undefined && value.byteLength > 0) {
-        onChunk(decoder.decode(value, { stream: true }));
-      }
+      if (value !== undefined && value.byteLength > 0) onChunk(decoder.decode(value, { stream: true }));
       if (done) {
         onChunk(decoder.decode());
         break;
       }
     }
-  } else {
-    const data = await response.json().catch(() => null);
-    toast.error(data?.message || "Something went wrong, try again");
+  } finally {
+    await reader.cancel().catch(() => undefined);
+    reader.releaseLock();
   }
 };
 
@@ -256,11 +272,12 @@ export async function postJsonQuiet(url: string, body: unknown): Promise<boolean
 }
 
 /** Transcribe transient audio or an existing file, retaining errors for inline recovery. */
-export async function transcribeAudio(recording: string | File): Promise<{ full_text?: string }> {
+export async function transcribeAudio(recording: string | File, signal?: AbortSignal): Promise<{ full_text?: string }> {
   try {
     const body = typeof recording === "string" ? { file_id: recording } : new FormData();
     if (body instanceof FormData) body.append("file", recording as File, (recording as File).name);
     const res = await axios.post(endpoint.transcription, body, {
+      signal,
       headers: { "Content-Type": body instanceof FormData ? undefined : "application/json" },
     });
     const payload = res.data as { success?: boolean; message?: string; data?: { full_text?: string } } | undefined;

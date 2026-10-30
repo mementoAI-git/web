@@ -1,0 +1,29 @@
+/* Figma's decorative grid, colored with the current theme's text token. */
+.chat-empty-grid {
+  position: absolute;
+  pointer-events: none;
+  width: 555.434px;
+  height: 416.575px;
+  top: -51.5px;
+  left: calc(50% - 350px);
+  mask-image: url("../../../../assets/chat-empty/grid-mask.svg");
+  mask-size: 1440px 1440px;
+  mask-position: 240px 0;
+  mask-repeat: no-repeat;
+}
+
+.chat-empty-grid > span {
+  position: absolute;
+  inset: 0;
+  background-color: var(--text-neutral-strong);
+  mask-size: 555.434px 416.575px;
+  mask-repeat: no-repeat;
+}
+
+.chat-empty-grid > span:first-child {
+  mask-image: url("../../../../assets/chat-empty/grid-vertical.svg");
+}
+
+.chat-empty-grid > span:last-child {
+  mask-image: url("../../../../assets/chat-empty/grid-horizontal.svg");
+}

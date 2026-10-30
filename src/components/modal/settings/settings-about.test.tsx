@@ -1,17 +1,18 @@
 import { describe, it, expect, vi } from "vitest";
 import { screen, within, waitFor } from "@testing-library/react";
+import { useSWRConfig } from "swr";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { renderWithProviders } from "@/test";
 import { server } from "@/test/mocks/server";
 import { SettingsAbout } from "./settings-about";
 
-const toast = vi.hoisted(() => ({ success: vi.fn(), error: vi.fn() }));
+const toast = vi.hoisted(() => ({ success: vi.fn(), error: vi.fn(), dismiss: vi.fn() }));
 vi.mock("sonner", () => ({ toast }));
 
 const base = "http://localhost:3000/api";
-function setup() {
-  server.use(
+function setup(customPersona = false) {
+  if (!customPersona) server.use(
     http.get(`${base}/users/persona`, () =>
       HttpResponse.json({
         success: true,
@@ -25,7 +26,91 @@ function setup() {
   });
 }
 
+function RefreshableAbout() {
+  const { mutate } = useSWRConfig();
+  return <><button onClick={() => { void mutate("/users/persona").catch(() => undefined); }}>Refresh introduction</button><SettingsAbout /></>;
+}
+
 describe("SettingsAbout", () => {
+  it("blocks editing until the saved introduction has loaded", async () => {
+    let release!: () => void;
+    const pending = new Promise<void>((resolve) => { release = resolve; });
+    server.use(http.get(`${base}/users/persona`, async () => {
+      await pending;
+      return HttpResponse.json({ success: true, data: { self_description: "Arrived later." } });
+    }));
+    setup(true);
+    expect(screen.getByText("Loading your introduction…")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Edit" })).toBeDisabled();
+    expect(screen.queryByText("Write a little about yourself, in your own words.")).not.toBeInTheDocument();
+    release();
+    await screen.findByText("Arrived later.");
+    await userEvent.setup().click(screen.getByRole("button", { name: "Edit" }));
+    expect(screen.getByRole("textbox", { name: "Your introduction" })).toHaveValue("Arrived later.");
+  });
+
+  it("offers retry rather than an empty editable bio after a load failure", async () => {
+    server.use(http.get(`${base}/users/persona`, () => HttpResponse.json({}, { status: 500 })));
+    setup(true);
+    const retry = await screen.findByRole("button", { name: "Retry loading introduction" });
+    expect(screen.getByRole("button", { name: "Edit" })).toBeDisabled();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(toast.error).toHaveBeenCalledWith(
+      "We couldn’t load your introduction. Please try again.", expect.objectContaining({ action: expect.objectContaining({ label: "Retry" }) }),
+    );
+    server.use(http.get(`${base}/users/persona`, () => HttpResponse.json({ success: true, data: { self_description: "Recovered." } })));
+    await userEvent.setup().click(retry);
+    expect(await screen.findByText("Recovered.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Edit" })).toBeEnabled();
+  });
+
+  it("retains cached text during a failed background refresh", async () => {
+    server.use(http.get(`${base}/users/persona`, () => HttpResponse.json({ success: true, data: { self_description: "Keep this bio." } })));
+    renderWithProviders(<RefreshableAbout />, { auth: true, route: "/settings/general" });
+    await screen.findByText("Keep this bio.");
+    server.use(http.get(`${base}/users/persona`, () => HttpResponse.json({}, { status: 500 })));
+    await userEvent.setup().click(screen.getByRole("button", { name: "Refresh introduction" }));
+    await screen.findByRole("button", { name: "Retry loading introduction" });
+    expect(screen.getByText("Keep this bio.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Edit" })).toBeEnabled();
+  });
+
+  it("allows a genuinely empty introduction only after a successful load", async () => {
+    server.use(http.get(`${base}/users/persona`, () => HttpResponse.json({ success: true, data: null })));
+    setup(true);
+    await screen.findByText("Write a little about yourself, in your own words.");
+    expect(screen.getByRole("button", { name: "Edit" })).toBeEnabled();
+  });
+
+  it("keeps the dialog and draft during saving, and prevents duplicate submissions", async () => {
+    let release!: () => void;
+    let requests = 0;
+    const pending = new Promise<void>((resolve) => { release = resolve; });
+    server.use(http.put(`${base}/users/persona`, async () => {
+      requests += 1;
+      await pending;
+      return HttpResponse.json({ success: true });
+    }));
+    setup();
+    await screen.findByText("My own introduction.");
+    const user = userEvent.setup();
+    await user.click(screen.getByRole("button", { name: "Edit" }));
+    const field = screen.getByRole("textbox", { name: "Your introduction" });
+    await user.clear(field);
+    await user.type(field, "New introduction.");
+    await user.click(screen.getByRole("button", { name: "Save changes" }));
+    await waitFor(() => expect(requests).toBe(1));
+    await user.keyboard("{Escape}");
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    expect(field).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Cancel" })).toBeDisabled();
+    await user.click(screen.getByRole("button", { name: "Saving…" }));
+    expect(requests).toBe(1);
+    release();
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    expect(screen.getByText("New introduction.")).toBeInTheDocument();
+  });
+
   it("separates the original user bio from the short AI summary", async () => {
     server.use(
       http.get(`${base}/users/persona/memory-insights-summary`, () =>
@@ -104,6 +189,8 @@ describe("SettingsAbout", () => {
     expect(field).toHaveValue("Unsaved bio");
     await user.click(screen.getByRole("button", { name: "Cancel" }));
     expect(screen.getByText("My own introduction.")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Edit" }));
+    expect(screen.getByRole("textbox", { name: "Your introduction" })).toHaveValue("My own introduction.");
   });
   it("shows an honest empty state when no AI summary exists", async () => {
     setup();
@@ -118,9 +205,8 @@ describe("SettingsAbout", () => {
       ),
     );
     setup();
-    expect(
-      await screen.findByText("We couldn’t load your AI summary."),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: "Retry loading summary" })).toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     server.use(
       http.get(`${base}/users/persona/memory-insights-summary`, () =>
         HttpResponse.json({
@@ -131,7 +217,7 @@ describe("SettingsAbout", () => {
     );
     await userEvent
       .setup()
-      .click(screen.getByRole("button", { name: "Try again" }));
+      .click(screen.getByRole("button", { name: "Retry loading summary" }));
     expect(
       await screen.findByText("You cherish your friendships."),
     ).toBeInTheDocument();

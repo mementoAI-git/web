@@ -1,3 +1,4 @@
+import { useRequestRecovery } from "@/hooks/use-request-recovery";
 import { useEffect, useRef, useState } from "react";
 import useSWR from "swr";
 import { Check, Copy } from "lucide-react";
@@ -53,6 +54,7 @@ export function InviteFriends() {
     user?._id ? [endpoint.referrals, user._id] : null,
     fetchInviteDetails,
   );
+  const retry = useRequestRecovery(`invite:${user?._id}`, error, mutate, "Couldn’t load your invite details. Please retry.");
   const [copied, setCopied] = useState(false);
   const [copying, setCopying] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -163,13 +165,10 @@ export function InviteFriends() {
                 />
               ) : error ? (
                 <div className="flex flex-col items-center gap-2">
-                  <p role="alert" className="text-sm text-text-error-strong">
-                    We couldn’t load your invite details.
-                  </p>
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => void mutate()}
+                    onClick={retry}
                   >
                     Try again
                   </Button>

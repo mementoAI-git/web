@@ -5,6 +5,7 @@ import BackgroundMusic from "./background-music";
 const setVolume = vi.fn();
 const playTrack = vi.fn();
 const trigger = vi.fn();
+let emptyCatalog = false;
 let currentTrack: string | null = "moonlight";
 let mockBackgroundMusic: string | null = "moonlight";
 
@@ -23,7 +24,7 @@ vi.mock("@/hooks/use-background-music", () => ({
     pauseTrack: vi.fn(),
     resumeTrack: vi.fn(),
     stopTrack: vi.fn(),
-    audioFiles: [
+    audioFiles: emptyCatalog ? [] : [
       { title: "Moonlight", key: "moonlight", file: "/audio/moonlight.mp3" },
       { title: "Sea Waves", key: "seawaves", file: "/audio/seawaves.mp3" },
     ],
@@ -53,6 +54,33 @@ describe("BackgroundMusic", () => {
     expect(playTrack).toHaveBeenCalledWith("seawaves");
   });
 
+  it("explains an empty catalog and disables compact playback", () => {
+    emptyCatalog = true;
+    render(<BackgroundMusic compact />);
+    expect(screen.getByText("No music available")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Play music" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Next track" })).toBeDisabled();
+  });
+
+  it("explains an empty ambience list while keeping Off available", () => {
+    emptyCatalog = true;
+    render(<BackgroundMusic />);
+    expect(screen.getByText("No background tracks are available.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Off No tune" })).toBeEnabled();
+  });
+
+  it("prevents overlapping preference saves on rapid track clicks", async () => {
+    let release!: () => void;
+    trigger.mockImplementationOnce(() => new Promise<{ success: boolean }>((resolve) => { release = () => resolve({ success: true }); }));
+    const user = await import("@testing-library/user-event").then(({ default: userEvent }) => userEvent.setup());
+    render(<BackgroundMusic />);
+    const track = screen.getByRole("button", { name: /Sea Waves/ });
+    await user.click(track);
+    await user.click(track);
+    expect(trigger).toHaveBeenCalledTimes(1);
+    release();
+  });
+
   it("starts the saved track after stopping", async () => {
     currentTrack = null;
     mockBackgroundMusic = "seawaves";
@@ -74,6 +102,8 @@ describe("BackgroundMusic", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    trigger.mockResolvedValue({ success: true });
+    emptyCatalog = false;
     currentTrack = "moonlight";
     mockBackgroundMusic = "moonlight";
     vi.stubGlobal("ResizeObserver", class { observe() {} unobserve() {} disconnect() {} });

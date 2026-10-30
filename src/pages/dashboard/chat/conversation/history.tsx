@@ -1,3 +1,5 @@
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import { mergeVoiceTimeline } from "@/features/voice/timeline";
 import type { VoiceTimelineEntry } from "@/features/voice/types";
 import { VoiceSessionDivider, type VoiceSessionEvent } from "./voice-session-divider";
@@ -60,6 +62,19 @@ export default function History({
   const hideInlineConversationHeader = Boolean(chatDetailMatch || chatVoiceMatch);
 
   const isLoadingMoreRef = useRef(false);
+  const attemptedInitialRef = useRef(false);
+  const activeRef = useRef(true);
+  const scrollTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const toastId = `message-history:${memory?._id}`;
+  useEffect(() => {
+    activeRef.current = true;
+    return () => {
+      activeRef.current = false;
+      clearTimeout(scrollTimer.current);
+      toast.dismiss(toastId);
+    };
+  }, [toastId]);
+  const [loadFailed, setLoadFailed] = useState(false);
   const containerRef = scrollContainerRef;
   /** Refs are unset during the first render; bump after layout so IO + scroll use the real column. */
   const [scrollRootReady, setScrollRootReady] = useState(false);
@@ -83,26 +98,33 @@ export default function History({
   });
 
   const fetchMessage = useCallback(async () => {
-    if (isLoadingMoreRef.current || isEmpty(memory?._id)) return;
+    if (!activeRef.current || isLoadingMoreRef.current || isEmpty(memory?._id)) return;
+    attemptedInitialRef.current = true;
 
     isLoadingMoreRef.current = true;
     setIsLoadingMore(true);
 
     try {
       const { data } = await getMessages();
-      if (!data) return;
+      if (!activeRef.current) return;
+      if (!data) throw new Error("Missing message history");
+      setLoadFailed(false);
+      toast.dismiss(toastId);
 
       const container = containerRef.current;
       const oldScrollHeight = container?.scrollHeight || 0;
 
       const newMessages = data?.messages || [];
-      const hasMoreData = newMessages.length > 0;
 
-      setMessages(prev => [...newMessages, ...prev]);
+      setMessages(prev => {
+        const existing = new Set(prev.map(message => message._id).filter(Boolean));
+        return [...newMessages.filter((message: Partial<IMessage>) => !message._id || !existing.has(message._id)), ...prev];
+      });
       setNext(data?.next);
 
       // Re-adjust scroll position after new messages are loaded
-      setTimeout(() => {
+      clearTimeout(scrollTimer.current);
+      scrollTimer.current = setTimeout(() => {
         const el = containerRef.current;
         if (!el) return;
         if (oldScrollHeight > 0) {
@@ -112,35 +134,35 @@ export default function History({
         } else {
           el.scrollTo({
             top: el.scrollHeight,
-            behavior: "smooth",
+            behavior: window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
           });
         }
       }, 50);
 
-      // Check if the container is not full and there's more data to fetch
-      if (container && container.scrollHeight <= container.clientHeight && hasMoreData) {
-        fetchMessage(); // Recursively fetch more if the screen isn't full
-      }
-
-    } catch (error) {
-      console.error("Failed to fetch messages:", error);
+    } catch {
+      if (!activeRef.current) return;
+      setLoadFailed(true);
+      toast.error("Message history couldn’t be loaded. Try again.", {
+        id: toastId,
+        action: { label: "Retry", onClick: () => { void fetchMessage(); } },
+      });
     } finally {
       isLoadingMoreRef.current = false;
-      setIsLoadingMore(false);
+      if (activeRef.current) setIsLoadingMore(false);
     }
-  }, [getMessages, setMessages, containerRef, memory?._id]);
+  }, [getMessages, setMessages, containerRef, memory?._id, toastId]);
 
   // This effect now handles both the initial and subsequent infinite scroll fetches
   useEffect(() => {
     // We only fetch if the element is intersecting, there's a 'next' page, and we are not already loading
-    if (isIntersecting && next && !isLoadingMoreRef.current) {
+    if (!loadFailed && isIntersecting && next && !isLoadingMoreRef.current) {
       fetchMessage();
     }
     // Also, trigger an initial fetch on component mount, but only once
-    if (!messages.length && !isLoadingMoreRef.current) {
+    if (!messages.length && !attemptedInitialRef.current && !isLoadingMoreRef.current) {
       fetchMessage();
     }
-  }, [isIntersecting, next, fetchMessage, messages.length]);
+  }, [isIntersecting, next, fetchMessage, messages.length, loadFailed]);
 
 
   // Do not put `ref={scrollContainerRef}` here — the parent conversation column
@@ -166,6 +188,7 @@ export default function History({
             </div>
           </div>
         )}
+        {loadFailed && <div className="flex justify-center py-3"><Button variant="outline" disabled={isLoadingMore} onClick={() => { void fetchMessage(); }}>Retry loading messages</Button></div>}
         <div ref={loadMoreRef} className="w-full h-1" />
         {voiceEvents.filter(event => !event.afterMessage).map(event => <VoiceSessionDivider key={event.id} active={event.active} />)}
         {messages &&
@@ -176,7 +199,7 @@ export default function History({
               if (row.kind !== "message") return <VoiceSessionDivider key={row.id} active={row.kind === "started"} />;
               const m = row.message;
               const failed = Boolean((m as { sendFailed?: boolean }).sendFailed);
-              const attachments = m.attatchments;
+              const attachments = m.attachments ?? m.attatchments;
               const storedReply = (m as { replyTo?: ChatReplyQuote }).replyTo;
               const replyBody = replyQuoteBodyFromMessage(m.text, attachments);
               const iso = m.created_at;

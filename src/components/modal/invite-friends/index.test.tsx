@@ -68,7 +68,8 @@ describe("Invite friends", () => {
         data: { ...details, signup_count: 0 },
       });
     renderWithProviders(<InviteFriends />, { auth: true });
-    expect(await screen.findByRole("alert")).toHaveTextContent("couldn’t load");
+    expect(await screen.findByRole("button", { name: "Try again" })).toBeVisible();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     expect(screen.queryByLabelText(/friends joined/)).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Copy" })).toBeDisabled();
     await user.click(screen.getByRole("button", { name: "Try again" }));

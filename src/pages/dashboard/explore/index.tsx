@@ -1,3 +1,5 @@
+import { Button } from "@/components/ui/button";
+import { useRequestRecovery } from "@/hooks/use-request-recovery";
 import DailyPromptSection from "../overview/sections/daily-prompt-section";
 import { Link } from "react-router-dom";
 import useSWR from "swr";
@@ -10,10 +12,11 @@ import type { ExploreCategory } from "@/features/explore/explore-types";
 import { resolveExploreCatalog } from "@/features/explore/explore-catalog";
 
 export default function ExplorePage() {
-  const { data: categoryResponse, isLoading: categoriesLoading } = useSWR(
+  const { data: categoryResponse, isLoading: categoriesLoading, error, mutate } = useSWR(
     endpoint.exploreCategories,
     collectionResponseFetcher<ExploreCategory>,
   );
+  const retry = useRequestRecovery("explore-categories", error, mutate, "Categories couldn’t be loaded. Try again.");
   const { categories, usingBundledCatalog } = resolveExploreCatalog(
     categoryResponse?.data,
   );
@@ -38,7 +41,8 @@ export default function ExplorePage() {
             </Link>
           </div>
 
-          {!categoriesLoading && usingBundledCatalog && (
+          {error && <Button variant="outline" onClick={retry}>Retry loading categories</Button>}
+          {!error && !categoriesLoading && usingBundledCatalog && (
             <p role="status" className="text-sm text-text-neutral-weak">
               Questions are temporarily unavailable while Explore is being
               updated.

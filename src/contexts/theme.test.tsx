@@ -249,3 +249,28 @@ describe("application theme", () => {
     expect(() => render(<OutsideProvider />)).toThrow("ThemeProvider");
   });
 });
+
+it("shows the daylight backdrop only for the original light appearance", () => {
+  localStorage.setItem(THEME_STORAGE_KEY, "light");
+  installMatchMedia(false);
+  renderTheme();
+  expect(document.documentElement).toHaveClass("daylight");
+  expect(document.querySelector(".daylight-backdrop")).toHaveAttribute("aria-hidden", "true");
+  fireEvent.click(screen.getByRole("button", { name: "Use light sky" }));
+  expect(document.documentElement).not.toHaveClass("daylight");
+  expect(document.querySelector(".daylight-backdrop")).toBeNull();
+  fireEvent.click(screen.getByRole("button", { name: "Use dark" }));
+  expect(document.querySelector(".daylight-backdrop")).toBeNull();
+  fireEvent.click(screen.getByRole("button", { name: "Use deep sky" }));
+  expect(document.querySelector(".daylight-backdrop")).toBeNull();
+});
+
+it("follows the system's original light appearance without adding daylight to dark", () => {
+  localStorage.setItem(THEME_STORAGE_KEY, "system");
+  const media = installMatchMedia(false);
+  renderTheme();
+  expect(document.querySelector(".daylight-backdrop")).not.toBeNull();
+  act(() => media.setDark(true));
+  expect(document.documentElement).not.toHaveClass("daylight");
+  expect(document.querySelector(".daylight-backdrop")).toBeNull();
+});

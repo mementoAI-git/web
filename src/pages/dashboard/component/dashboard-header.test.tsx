@@ -61,6 +61,23 @@ function renderDashboardHeader(ui: ReactElement, options?: { route?: string }) {
 }
 
 describe("DashboardHeader", () => {
+  it("uses the chat navigation for topic replies", async () => {
+    const user = userEvent.setup();
+    const onOpenSettings = vi.fn();
+    renderDashboardHeader(
+      <DashboardHeaderWithConversationChrome memory={{ _id: "topic-conversation", title: "A topic reply" }} onOpenSettings={onOpenSettings} />,
+      { route: "/chat/reply/topic-1" },
+    );
+    expect(screen.getByRole("heading", { name: "Chat" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Search memories" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Streak:/ })).not.toBeInTheDocument();
+    const spokenReplies = screen.getByRole("button", { name: "Read AI replies aloud" });
+    await user.click(spokenReplies);
+    expect(spokenReplies).toHaveAttribute("aria-pressed", "true");
+    await user.click(screen.getByRole("button", { name: "Chat settings" }));
+    expect(onOpenSettings).toHaveBeenCalledOnce();
+  });
+
   it("exposes theme options in the top navigation", () => {
     renderDashboardHeader(<DashboardHeader />);
     expect(
@@ -110,8 +127,8 @@ describe("DashboardHeader", () => {
     );
 
     expect(screen.getByText("Explore topics")).toBeInTheDocument();
-    expect(container.firstElementChild).toHaveClass("sm:h-[76px]");
-    expect(container.firstElementChild).not.toHaveClass("border-b");
+    expect(container.querySelector(".dashboard-header-surface")).toHaveClass("sm:h-[76px]");
+    expect(container.querySelector(".dashboard-header-surface")).not.toHaveClass("border-b");
     expect(screen.getByRole("button", { name: "Open search" })).toHaveClass(
       "h-9",
       "bg-fill-neutral-weak",
@@ -144,8 +161,8 @@ describe("DashboardHeader", () => {
     });
 
     expect(screen.getByText("settings")).toBeInTheDocument();
-    expect(container.firstElementChild).toHaveClass("sm:h-[76px]");
-    expect(container.firstElementChild).not.toHaveClass("border-b");
+    expect(container.querySelector(".dashboard-header-surface")).toHaveClass("sm:h-[76px]");
+    expect(container.querySelector(".dashboard-header-surface")).not.toHaveClass("border-b");
     expect(screen.getByRole("button", { name: "Open search" })).toHaveClass(
       "h-9",
       "bg-fill-neutral-weak",
@@ -158,8 +175,8 @@ describe("DashboardHeader", () => {
     });
 
     expect(screen.getByText("chat with AI")).toBeInTheDocument();
-    expect(container.firstElementChild).toHaveClass("border-b");
-    expect(container.firstElementChild).not.toHaveClass("sm:h-[76px]");
+    expect(container.querySelector(".dashboard-header-surface")).toHaveClass("border-b");
+    expect(container.querySelector(".dashboard-header-surface")).not.toHaveClass("sm:h-[76px]");
     expect(screen.getByRole("button", { name: "Open search" })).toHaveClass(
       "h-10",
     );
@@ -180,7 +197,7 @@ describe("DashboardHeader", () => {
 
   it("uses semantic surfaces and foregrounds in the default header", () => {
     const { container } = renderDashboardHeader(<DashboardHeader />);
-    const shell = container.firstElementChild;
+    const shell = container.querySelector(".dashboard-header-surface");
     expect(shell).toHaveClass("bg-background", "sm:h-[76px]");
     expect(shell).not.toHaveClass("bg-card");
     expect(shell).not.toHaveClass("bg-white");
@@ -271,7 +288,7 @@ describe("DashboardHeader", () => {
       { route: "/chat/m1" },
     );
 
-    const shell = container.firstElementChild;
+    const shell = container.querySelector(".dashboard-header-surface");
     expect(shell).toHaveClass("bg-background", "sm:h-[76px]");
     expect(shell).not.toHaveClass("bg-card");
     expect(shell).not.toHaveClass("bg-white");
@@ -282,4 +299,17 @@ describe("DashboardHeader", () => {
       screen.queryByRole("button", { name: /(?:expand|collapse) sidebar/i }),
     ).not.toBeInTheDocument();
   });
+});
+
+it("uses a home icon for the collapsed sidebar and preserves its toggle action", async () => {
+  const toggle = vi.fn();
+  const user = userEvent.setup();
+  renderDashboardHeader(<DashboardHeader mainSidebarCollapsed onMainSidebarToggle={toggle} />);
+  const button = screen.getByRole("button", { name: "Expand sidebar" });
+  expect(button).toHaveAttribute("aria-expanded", "false");
+  expect(button).toHaveClass("sidebar-reopen-button");
+  expect(button.querySelector(".t-icon-swap")).toHaveAttribute("data-state", "a");
+  expect(button.querySelector('[data-icon="a"] svg')).toHaveClass("lucide-house");
+  await user.click(button);
+  expect(toggle).toHaveBeenCalledOnce();
 });

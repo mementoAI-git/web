@@ -59,3 +59,10 @@ These are the main reusable skills this repo expects agents to lean on without y
 - **Polish, refinement, and design taste** -> `emil-design-eng`
 - **Library/framework documentation lookups** -> `documentation-lookup`
 - **Browser or end-to-end UI verification** -> `webapp-testing`
+
+### Verify the current product flow
+
+- Before testing UI recovery, trace the current production route/export and the actual action or modal registration. Do not substitute a legacy screen or invent navigation controls.
+- Host Chat is one continuous chat. Verify leaving Chat and returning to the same primary thread, not switching through a nonexistent conversation list. `/chat/new` is first-thread initialization.
+- Use real routed components, shared composers, history, and modal shells for integration checks; mock external services at the HTTP boundary where practical. Isolated mocked tests do not establish route wiring, persistence, or transport error behavior.
+- Match manual test instructions to controls that exist today. Report component/HTTP-mocked verification separately from authenticated browser checks and real service verification.

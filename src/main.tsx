@@ -11,6 +11,7 @@ import { router } from "./router";
 import { ModalProvider } from "./hooks/use-modal";
 import { SWRConfig } from "swr";
 import { Toaster } from "sonner";
+import { shouldRetryApiError } from "@/api/retry-policy";
 import { fetcher } from "@/api/fetcher";
 import { StoreProvider } from "@/hooks/use-store";
 import { ChatProvider } from "@/hooks/use-chat";
@@ -19,15 +20,15 @@ import { ErrorPage } from "./pages";
 import { RootAppShell } from "@/components/layouts/root-app-shell";
 import { SubscriptionProvider } from "@/contexts/subscription";
 import { FeatureFlagsProvider } from "@/contexts/feature-flags";
-import { FeatureFlagsAdminProvider } from "@/contexts/feature-flags-admin";
 import { ThemeProvider } from "@/contexts/theme";
 import { initializeTheme } from "@/lib/theme";
 // Dev-only: admin tools for previewing empty states.
 // Gated behind import.meta.env.DEV — Vite tree-shakes this from production.
 // eslint-disable-next-line react-refresh/only-export-components
-let DevAdminProvider: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => <>{children}</>;
+let DevAdminProvider: React.FC<{
+  children: React.ReactNode;
+  router?: typeof router;
+}> = ({ children }) => <>{children}</>;
 if (import.meta.env.DEV) {
   DevAdminProvider = (await import("@/dev/admin-tools")).DevAdminProvider;
 }
@@ -52,35 +53,39 @@ createRoot(document.getElementById("root")!, sentryHandler).render(
     <Sentry.ErrorBoundary fallback={<ErrorPage />}>
       <ThemeProvider>
         <StoreProvider>
-          <BackgroundMusicProvider>
-            <ModalProvider>
-              <ChatProvider>
-                <SWRConfig value={{ fetcher }}>
-                  <SubscriptionProvider>
-                    <FeatureFlagsProvider>
-                      <FeatureFlagsAdminProvider>
-                        <DevAdminProvider>
-                          <RootAppShell>
-                            <RouterProvider router={router} />
-                          </RootAppShell>
-                        </DevAdminProvider>
-                      </FeatureFlagsAdminProvider>
-                    </FeatureFlagsProvider>
-                  </SubscriptionProvider>
-                  <Toaster
-                    position="top-center"
-                    closeButton
-                    toastOptions={{
-                      classNames: {
-                        success: "!text-success",
-                        error: "!text-danger",
-                      },
-                    }}
-                  />
-                </SWRConfig>
-              </ChatProvider>
-            </ModalProvider>
-          </BackgroundMusicProvider>
+          <SWRConfig
+            value={{
+              fetcher,
+              shouldRetryOnError: shouldRetryApiError,
+              errorRetryCount: 3,
+            }}
+          >
+            <DevAdminProvider router={router}>
+              <BackgroundMusicProvider>
+                <ModalProvider>
+                  <ChatProvider>
+                    <SubscriptionProvider>
+                      <FeatureFlagsProvider>
+                        <RootAppShell>
+                          <RouterProvider router={router} />
+                        </RootAppShell>
+                      </FeatureFlagsProvider>
+                    </SubscriptionProvider>
+                    <Toaster
+                      position="top-center"
+                      closeButton
+                      toastOptions={{
+                        classNames: {
+                          success: "!text-success",
+                          error: "!text-danger",
+                        },
+                      }}
+                    />
+                  </ChatProvider>
+                </ModalProvider>
+              </BackgroundMusicProvider>
+            </DevAdminProvider>
+          </SWRConfig>
         </StoreProvider>
       </ThemeProvider>
     </Sentry.ErrorBoundary>

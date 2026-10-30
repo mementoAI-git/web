@@ -1,11 +1,30 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
-import { beforeAll, describe, expect, it, vi } from "vitest";
+import { MemoryRouter, useLocation } from "react-router-dom";
+import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { Command, CommandList } from "@/components/ui/command";
 import type { IFile, IMemory } from "@/utility/interface";
 import SearchItem from "./search-item";
 
-function renderItem(attachments: Partial<IFile>[] = []) {
+const openModal = vi.fn();
+const closeModal = vi.fn();
+vi.mock("@/hooks/use-modal", () => ({
+  useModal: () => ({ open: openModal, close: closeModal }),
+}));
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  Object.defineProperty(window, "innerWidth", {
+    configurable: true,
+    writable: true,
+    value: 1024,
+  });
+});
+
+function CurrentPath() {
+  return <span data-testid="pathname">{useLocation().pathname}</span>;
+}
+
+function renderItem(attachments: Partial<IFile>[] = [], type = "story") {
   const memory = {
     _id: "memory-1",
     title: "A day at the beach",
@@ -13,9 +32,11 @@ function renderItem(attachments: Partial<IFile>[] = []) {
     category: "growing-up",
     created_at: "2026-08-18T12:00:00Z",
     attachments,
+    type,
   } as IMemory;
   render(
     <MemoryRouter>
+      <CurrentPath />
       <Command>
         <CommandList>
           <SearchItem memory={memory} />
@@ -41,6 +62,31 @@ beforeAll(() => {
 const fallback = "https://api.dicebear.com/10.x/disco/svg?seed=memory-1";
 
 describe("SearchItem thumbnails", () => {
+  it("opens desktop stories in the standard app viewer", () => {
+    renderItem([], "story");
+    fireEvent.click(screen.getByRole("option"));
+    expect(openModal).toHaveBeenCalledWith("view-memory", {
+      memoryId: "memory-1",
+    });
+    expect(screen.getByTestId("pathname").textContent).toBe("/");
+  });
+  it("keeps the standard mobile story page", () => {
+    window.innerWidth = 390;
+    renderItem([], "story");
+    fireEvent.click(screen.getByRole("option"));
+    expect(screen.getByTestId("pathname")).toHaveTextContent(
+      "/stories/memory-1",
+    );
+    expect(openModal).not.toHaveBeenCalled();
+    expect(closeModal).toHaveBeenCalledWith("search-memory");
+  });
+  it("opens chats in their conversation screen", () => {
+    renderItem([], "conversation");
+    fireEvent.click(screen.getByRole("option"));
+    expect(screen.getByTestId("pathname")).toHaveTextContent("/chat/memory-1");
+    expect(openModal).not.toHaveBeenCalled();
+    expect(closeModal).toHaveBeenCalledWith("search-memory");
+  });
   it("uses the first image, skipping earlier audio and video attachments", () => {
     const image = renderItem([
       { type: "audio/mpeg", url: "/voice.mp3" },

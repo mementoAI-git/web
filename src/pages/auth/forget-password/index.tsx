@@ -1,3 +1,4 @@
+import { AuthFieldMotion } from "../components/auth-motion";
 import { useNavigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import endpoint from "@/api/endpoint";
@@ -49,7 +50,7 @@ export default function ForgetPasswordPage() {
       <Card className="overflow-visible rounded-none border-0 bg-transparent py-0 shadow-none ring-0">
         <CardContent className="w-full p-0">
           <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-            <div className="grid gap-2 box-content">
+            <AuthFieldMotion error={errors.email} className="grid gap-2 box-content">
               <Label
                 htmlFor="forget-password-email"
                 className="font-geist text-sm"
@@ -72,7 +73,7 @@ export default function ForgetPasswordPage() {
                   {errors.email}
                 </p>
               ) : null}
-            </div>
+            </AuthFieldMotion>
 
             <Button
               type="submit"

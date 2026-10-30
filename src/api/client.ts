@@ -29,6 +29,10 @@ const client: AxiosInstance = axios.create({
   },
 });
 
+if (import.meta.env.DEV) {
+  (await import("@/dev/preview-transport")).installPreviewAxios(client);
+}
+
 client.interceptors.request.use(
   async (config: InternalAxiosRequestConfig) => {
     const requestConfig = config as InternalAxiosRequestConfig & { skipAuth?: boolean };

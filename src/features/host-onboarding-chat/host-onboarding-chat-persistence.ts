@@ -55,10 +55,10 @@ function isValidMessage(m: unknown): m is HostOnboardingMessage {
   );
 }
 
-export function loadHostOnboardingChatState(): PersistedHostOnboardingChat | null {
+export function loadHostOnboardingChatState(userId?: string): PersistedHostOnboardingChat | null {
   if (typeof localStorage === "undefined") return null;
   try {
-    const raw = localStorage.getItem(storageKeys.hostOnboardingChat);
+    const raw = localStorage.getItem(userId ? `${storageKeys.hostOnboardingChat}:${userId}` : storageKeys.hostOnboardingChat);
     if (!raw) return null;
     const p = JSON.parse(raw) as Partial<PersistedHostOnboardingChat> & {
       v?: number;
@@ -116,21 +116,22 @@ export function loadHostOnboardingChatState(): PersistedHostOnboardingChat | nul
 
 export function saveHostOnboardingChatState(
   data: Omit<PersistedHostOnboardingChat, "v">,
+  userId?: string,
 ): void {
   try {
     const payload: PersistedHostOnboardingChat = {
       v: HOST_ONBOARDING_CHAT_PERSIST_VERSION,
       ...data,
     };
-    localStorage.setItem(storageKeys.hostOnboardingChat, JSON.stringify(payload));
+    localStorage.setItem(userId ? `${storageKeys.hostOnboardingChat}:${userId}` : storageKeys.hostOnboardingChat, JSON.stringify(payload));
   } catch {
     /* quota / private mode */
   }
 }
 
-export function clearHostOnboardingChatState(): void {
+export function clearHostOnboardingChatState(userId?: string): void {
   try {
-    localStorage.removeItem(storageKeys.hostOnboardingChat);
+    localStorage.removeItem(userId ? `${storageKeys.hostOnboardingChat}:${userId}` : storageKeys.hostOnboardingChat);
   } catch {
     /* ignore */
   }

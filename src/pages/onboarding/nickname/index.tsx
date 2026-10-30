@@ -1,12 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import endpoint from "@/api/endpoint";
 import Spinner from "@/components/spinner";
 import useFetcher from "@/hooks/use-fetcher";
 import { useStore } from "@/hooks/use-store";
-import { isEmpty } from "@/utility";
+import { reportFetcherError } from "@/api/report-fetcher-error";
 import { mutate } from "swr";
 import { Input } from "@/components/ui/input";
 import { onboardingAssets as assets } from "../assets";
@@ -20,7 +20,7 @@ import {
 export default function NicknamePage() {
   const navigate = useNavigate();
   const { user, setUser } = useStore();
-  const [error, setError] = useState("");
+  const pending = useRef(false);
   const [name, setName] = useState(user?.nickname ?? "");
   const { isMutating, trigger: updateProfile } = useFetcher(
     endpoint.profile,
@@ -28,27 +28,24 @@ export default function NicknamePage() {
   );
 
   const handleSubmit = useCallback(async () => {
-    if (!name.trim() || isMutating) return;
+    if (!name.trim() || pending.current) return;
+    pending.current = true;
 
     try {
       const trimmed = name.trim();
-      await updateProfile({ nickname: trimmed });
-      await mutate(endpoint.profile);
+      const result = await updateProfile({ nickname: trimmed });
+      if (!result?.success) throw new Error(result?.message || "Couldn’t save your name.");
+      void mutate(endpoint.profile).catch(() => undefined);
       if (user && setUser) {
         setUser({ ...user, nickname: trimmed });
       }
       navigate("/onboarding/misc");
     } catch (error) {
-      console.error("Failed to update profile:", error);
-      setError("We couldn’t save your name. Please try again.");
+      reportFetcherError(error, "We couldn’t save your name. Please try again.");
+    } finally {
+      pending.current = false;
     }
-  }, [isMutating, name, updateProfile, navigate, user, setUser]);
-
-  useEffect(() => {
-    if (isEmpty(name) && !isEmpty(user?.nickname)) {
-      setName(user?.nickname as string);
-    }
-  }, [user?.nickname, name]);
+  }, [name, updateProfile, navigate, user, setUser]);
 
   return (
     <OnboardingCard>
@@ -82,18 +79,14 @@ export default function NicknamePage() {
             autoComplete="nickname"
             maxLength={100}
             value={name}
+            disabled={isMutating}
             onChange={(event) => {
               setName(event.target.value);
-              setError("");
             }}
             placeholder="Eg: Jane or a Nickname"
             className="h-14 rounded-lg border-stroke-neutral-weak bg-fill-neutral-weaker p-4 text-base leading-6 text-text-neutral-strong placeholder:text-text-neutral-weaker md:text-base"
           />
-          {error && (
-            <p role="alert" className="text-sm text-text-error-strong">
-              {error}
-            </p>
-          )}
+
         </div>
         <OnboardingActions>
           <OnboardingButton

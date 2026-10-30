@@ -1,4 +1,6 @@
-import type { PropsWithChildren, ReactNode } from "react";
+import { AuthMotionHeading } from "./auth-motion";
+import { useRef, type PropsWithChildren, type ReactNode } from "react";
+import { useTextReveal } from "@/components/motion/use-text-reveal";
 import { Link } from "react-router-dom";
 import { ArrowLeft, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -32,9 +34,12 @@ const features = [
 
 function EntryIllustration({ recovery }: { recovery: boolean }) {
   const { resolvedTheme } = useTheme();
+  const illustrationRef = useRef<HTMLElement>(null);
+  useTextReveal(illustrationRef);
   return (
     <aside
-      className="auth-entry-illustration"
+      ref={illustrationRef}
+      className="auth-entry-illustration t-stagger"
       aria-label="Capture the little things with Memento"
     >
       <img
@@ -54,8 +59,12 @@ function EntryIllustration({ recovery }: { recovery: boolean }) {
         alt=""
       />
       <div className="auth-entry-art" aria-hidden="true">
-        <img className="auth-entry-sparkle" src={sparkle} alt="" />
-        <div className="auth-entry-prompt">
+        <img
+          className="auth-entry-sparkle t-stagger-line auth-entry-floating"
+          src={sparkle}
+          alt=""
+        />
+        <div className="auth-entry-prompt t-stagger-line auth-entry-floating">
           <div className="flex items-center justify-between">
             <span className="auth-entry-prompt-tag">
               Relationships &amp; People
@@ -77,7 +86,7 @@ function EntryIllustration({ recovery }: { recovery: boolean }) {
         {features.map(({ image, label, slot }) => (
           <div
             key={slot}
-            className={`auth-entry-feature auth-entry-feature-${slot}`}
+            className={`auth-entry-feature auth-entry-feature-${slot} t-stagger-line auth-entry-floating`}
           >
             <div className="auth-entry-feature-image">
               <img src={image} alt="" />
@@ -85,9 +94,13 @@ function EntryIllustration({ recovery }: { recovery: boolean }) {
             <span>{label}</span>
           </div>
         ))}
-        <img className="auth-entry-monogram" src={monogram} alt="" />
+        <img
+          className="auth-entry-monogram t-stagger-line"
+          src={monogram}
+          alt=""
+        />
       </div>
-      <div className="auth-entry-caption">
+      <div className="auth-entry-caption t-stagger-line">
         <p className="font-garamond text-[24px] font-medium leading-8 text-text-neutral-strong">
           Don’t let the <mark>little</mark>
           <br />
@@ -152,17 +165,17 @@ export default function AuthEntryLayout({
               Back to login
             </Link>
           )}
-          <header className="auth-entry-heading flex flex-col gap-2">
+          <AuthMotionHeading className="auth-entry-heading flex flex-col gap-2">
             <h1
               id="auth-entry-title"
-              className="font-garamond text-[32px] font-medium leading-10"
+              className="t-stagger-line font-garamond text-[32px] font-medium leading-10"
             >
               {title}
             </h1>
             {subtitle && (
-              <p className="text-sm text-text-neutral-weak">{subtitle}</p>
+              <p className="t-stagger-line t-stagger-line--2 text-sm text-text-neutral-weak">{subtitle}</p>
             )}
-          </header>
+          </AuthMotionHeading>
           <div className="auth-entry-fields flex flex-col gap-5">
             {children}
           </div>

@@ -142,6 +142,8 @@ export interface IMemory {
   prompt_type?: "static" | "ai-generated";
   reflection_day_key?: string;
   last_opened: string;
+  deleted_at?: string | null;
+  delete_after?: string | null;
   created_at: string;
   updated_at: string;
   bookmarked?: boolean;
@@ -194,6 +196,7 @@ export interface IBeneficiary {
   email: string;
   relationship: string;
   level: number;
+  access_scope?: "shared_only" | "full_vault" | "memories_only" | "capsules_only" | "documents_only";
   /** Display color index 0–6 when set in API; otherwise UI may derive from id */
   color?: number;
   user: IBeneficiaryUser;
@@ -267,6 +270,7 @@ export interface IOnUploadPayload {
   id: string;
   progress: number;
   uploadedFile?: IFile | null;
+  uploadFailed?: boolean;
   duration?: number;
 }
 
@@ -314,6 +318,7 @@ export interface IMessage {
   role: string; // user, ai
   ai_model?: string;
   created_at: string;
+  attachments?: IFile[];
   attatchments?: IFile[];
   link_metadata?: ILinkMetadata[];
 }

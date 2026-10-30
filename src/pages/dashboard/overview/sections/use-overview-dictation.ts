@@ -16,6 +16,7 @@ export function useOverviewDictation(onTranscript: (text: string) => void) {
   const audio = useRef<AudioContext | null>(null);
   const timer = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
   const meter = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
+  const request = useRef<AbortController | null>(null);
   const generation = useRef(0);
   const pending = useRef<Blob | null>(null);
   const transcript = useRef(onTranscript);
@@ -32,6 +33,7 @@ export function useOverviewDictation(onTranscript: (text: string) => void) {
 
   function cancel() {
     generation.current++;
+    request.current?.abort();
     speech.current?.cancel();
     speech.current = null;
     const rec = recorder.current;
@@ -49,7 +51,10 @@ export function useOverviewDictation(onTranscript: (text: string) => void) {
 
   async function transcribe(attempt: number) {
     const recording = pending.current;
-    if (!recording) return;
+    if (!recording || request.current) return;
+    const controller = new AbortController();
+    request.current = controller;
+    let timeout: ReturnType<typeof setTimeout> | undefined;
     setPhase("transcribing");
     setError("");
     setCanRetry(false);
@@ -59,11 +64,17 @@ export function useOverviewDictation(onTranscript: (text: string) => void) {
         : recording.type.includes("ogg")
           ? "ogg"
           : "mp4";
-      const result = await transcribeAudio(
+      const result = await Promise.race([transcribeAudio(
         new File([recording], `reflection-${Date.now()}.${ext}`, {
           type: recording.type.split(";")[0].trim(),
         }),
-      );
+        controller.signal,
+      ), new Promise<never>((_, reject) => {
+        timeout = setTimeout(() => {
+          reject(new Error("Transcription is taking too long. Your recording is ready to retry."));
+          controller.abort();
+        }, 30000);
+      })]);
       if (attempt !== generation.current) return;
       if (!result)
         throw new Error("Your recording couldn’t be transcribed. Try again.");
@@ -79,6 +90,8 @@ export function useOverviewDictation(onTranscript: (text: string) => void) {
       );
       setCanRetry(true);
     } finally {
+      clearTimeout(timeout);
+      if (request.current === controller) request.current = null;
       if (attempt === generation.current) setPhase("idle");
     }
   }
@@ -220,6 +233,7 @@ export function useOverviewDictation(onTranscript: (text: string) => void) {
   useEffect(
     () => () => {
       generation.current++;
+      request.current?.abort();
       speech.current?.cancel();
       speech.current = null;
       const rec = recorder.current;

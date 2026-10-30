@@ -157,10 +157,20 @@ describe("TwoFactorPage", () => {
     expect(mockNavigate).not.toHaveBeenCalledWith("/overview", expect.anything());
   });
 
-  it("Back to login button navigates to /login", async () => {
-    const user = userEvent.setup();
+  it("uses the shared recovery layout and back-to-login link", () => {
     renderWithProviders(<TwoFactorPage />);
-    await user.click(screen.getByText(/back to login/i));
-    expect(mockNavigate).toHaveBeenCalledWith("/login");
+    expect(screen.getByRole("link", { name: /back to login/i })).toHaveAttribute("href", "/login");
+    expect(screen.getByRole("complementary", { name: /Capture the little things/ })).toBeInTheDocument();
+    expect(screen.getByRole("group", { name: "Six-digit authenticator code" })).toBeInTheDocument();
   });
+});
+
+it("keeps the entered code when verification is temporarily unavailable", async () => {
+  server.use(http.post("*/auth/2fa/verify", () => HttpResponse.json({ message: "Unavailable" }, { status: 503 })));
+  const user = userEvent.setup();
+  renderWithProviders(<TwoFactorPage />);
+  await fillCode(user, "123456");
+  await user.click(screen.getByRole("button", { name: /^verify$/i }));
+  await waitFor(() => expect(screen.getByRole("button", { name: /^verify$/i })).toBeEnabled());
+  expect(screen.getAllByRole("textbox").map(input => (input as HTMLInputElement).value).join("")).toBe("123456");
 });

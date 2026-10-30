@@ -1,6 +1,6 @@
+import { getProfileAvatarUrl } from "@/utility/profile-avatar";
 import { UserAvatar } from "@/components/user-avatar";
 import { useSubscription } from "@/contexts/subscription";
-import { isFeatureFlagAdminUser } from "@/contexts/feature-flags";
 import { useStore } from "@/hooks/use-store";
 import { isEmpty } from "@/utility";
 import { cn } from "@/utility";
@@ -17,7 +17,6 @@ import {
   ChevronsUpDown,
   ChevronRight,
   CircleHelp,
-  Flag,
   LogOut,
   Settings,
   Twitter,
@@ -49,8 +48,7 @@ export function ProfileDropdown({
     .filter(Boolean)
     .join(" ")
     .trim();
-  const photo = user?.picture_url || user?.picture;
-  const showAdminFlags = isFeatureFlagAdminUser(user?.email);
+  const photo = getProfileAvatarUrl(user);
 
   const planLabel = !subscriptionLoading
     ? tier === "pro" || tier === "legacy"
@@ -108,7 +106,7 @@ export function ProfileDropdown({
         sideOffset={8}
         aria-label="Account menu"
         className={cn(
-          "min-w-[260px] gap-0 rounded-xl border border-border bg-popover p-1",
+          "navigation-menu min-w-[260px] gap-0 rounded-xl border border-border bg-popover p-1",
           "shadow-xl",
         )}
       >
@@ -120,15 +118,6 @@ export function ProfileDropdown({
             <Settings className={lucideItemIcon} strokeWidth={2} />
             <span className={itemLabelClass}>Settings</span>
           </DropdownMenuItem>
-          {showAdminFlags ? (
-            <DropdownMenuItem
-              onClick={() => navigate("/admin/feature-flags")}
-              className={itemRowClass}
-            >
-              <Flag className={lucideItemIcon} strokeWidth={2} />
-              <span className={itemLabelClass}>Feature flags</span>
-            </DropdownMenuItem>
-          ) : null}
           <DropdownMenuItem onClick={handleLogout} className={itemRowClass}>
             <LogOut className={lucideItemIcon} strokeWidth={2} />
             <span className={itemLabelClass}>Log out</span>

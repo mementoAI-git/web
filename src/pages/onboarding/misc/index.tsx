@@ -1,9 +1,11 @@
+import { ABOUT_LIMIT } from "../limits";
 import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { fetchOnboardingDetails } from "@/api/onboarding";
 import { migrateLegacyPriorityList } from "@/features/enrichment/enrichment-categories";
 import { useStore } from "@/hooks/use-store";
-import { Textarea } from "@/components/ui/textarea";
+import { AboutInput } from "../components/about-input";
 import { cn } from "@/lib/utils";
 import { onboardingAssets as assets } from "../assets";
 import {
@@ -27,14 +29,27 @@ export default function MiscPage() {
   const [searchParams] = useSearchParams();
   const isRevisit = searchParams.get("mode") === "revisit";
   const [loadingSaved, setLoadingSaved] = useState(isRevisit);
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
+  const [dictating, setDictating] = useState(false);
+  const loadedFor = useRef<string | null>(null);
   const savedAbout = user?.context?.self_description ?? "";
   const nickname = user?.nickname || user?.first_name || "there";
   const [draft, setDraft] = useOnboardingDraft(user?._id ?? "anonymous");
   useEffect(() => {
-    if (!isRevisit || !user?._id) return;
+    if (!isRevisit || !user?._id || loadedFor.current === user._id) return;
+    setLoadingSaved(true);
+    setLoadFailed(false);
     let cancelled = false;
     fetchOnboardingDetails().then((details) => {
       if (cancelled) return;
+      if (!details) {
+        setLoadFailed(true);
+        setLoadingSaved(false);
+        toast.error("Couldn’t load your saved answers. Please retry.");
+        return;
+      }
+      loadedFor.current = user._id;
       if (details) {
         const knownReasons = reasonOptions
           .filter((option) =>
@@ -52,7 +67,7 @@ export default function MiscPage() {
             : fallbackReason
               ? [fallbackReason]
               : value.reasons,
-          about: savedAbout.slice(0, 500) || value.about,
+          about: savedAbout || value.about,
           areas: migrateLegacyPriorityList(
             details.persona.current_priority,
           ).slice(0, 3),
@@ -63,7 +78,7 @@ export default function MiscPage() {
     return () => {
       cancelled = true;
     };
-  }, [isRevisit, user?._id, savedAbout, setDraft]);
+  }, [isRevisit, user?._id, savedAbout, setDraft, attempt]);
   const headingRef = useRef<HTMLDivElement>(null);
   const previousStep = useRef(draft.step);
   useEffect(() => {
@@ -73,11 +88,11 @@ export default function MiscPage() {
     }
   }, [draft.step]);
   const canContinue =
-    !loadingSaved &&
+    !loadingSaved && !loadFailed && !dictating &&
     (draft.step === 1
       ? draft.reasons.length > 0
       : draft.step === 2
-        ? draft.about.trim().length > 0
+        ? draft.about.trim().length > 0 && draft.about.length <= ABOUT_LIMIT
         : draft.areas.length >= 2);
   const goBack = () => {
     if (draft.step === 1) navigate("/onboarding/nickname");
@@ -145,6 +160,7 @@ export default function MiscPage() {
               ? "Share anything you think would help Memento learn about you. Just something to give us a starting point."
               : "Pick 2 to 3 areas. We’ll prioritize prompts and suggestions around these to help you start."}
         </p>
+        <fieldset disabled={loadingSaved || loadFailed} className="flex min-w-0 flex-col gap-6">
         {draft.step === 1 && (
           <div
             role="group"
@@ -196,36 +212,7 @@ export default function MiscPage() {
         )}
         {draft.step === 2 && (
           <>
-            <div className="flex flex-col gap-1.5">
-              <label
-                htmlFor="onboarding-about"
-                className="text-sm font-medium leading-5"
-              >
-                Enter About info
-              </label>
-              <div className="relative">
-                <Textarea
-                  id="onboarding-about"
-                  value={draft.about}
-                  maxLength={500}
-                  aria-describedby="about-counter"
-                  onChange={(event) =>
-                    setDraft((value) => ({
-                      ...value,
-                      about: event.target.value.slice(0, 500),
-                    }))
-                  }
-                  placeholder="Eg: I am a software engineer and a father of 2 living in Dubln. I care about family, creativity and personal growth. Lately i’ve been focused on building the things i’m proud of..."
-                  className="h-[196px] rounded-2xl border-stroke-neutral-weak bg-fill-neutral-weaker px-3 py-2 pb-9 font-geist text-base leading-6 text-text-neutral-strong placeholder:text-text-neutral-weaker md:text-base"
-                />
-                <p
-                  id="about-counter"
-                  className="pointer-events-none absolute right-3 bottom-2 text-sm leading-5"
-                >
-                  {draft.about.length}/500
-                </p>
-              </div>
-            </div>
+            <AboutInput value={draft.about} onChange={(about) => setDraft((value) => ({ ...value, about }))} onBusyChange={setDictating} />
             <div className="flex flex-col gap-1.5">
               <p className="font-azeret text-sm leading-5 text-text-neutral-weak">
                 Need inspiration?
@@ -280,6 +267,9 @@ export default function MiscPage() {
             </div>
           </div>
         )}
+        </fieldset>
+        {loadingSaved && <p role="status">Loading your saved answers…</p>}
+        {loadFailed && <OnboardingButton variant="outline" onClick={() => setAttempt(value => value + 1)}>Retry</OnboardingButton>}
         <OnboardingActions>
           <OnboardingButton variant="outline" onClick={goBack}>
             Back

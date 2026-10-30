@@ -1,6 +1,6 @@
 import { useLocation } from "react-router-dom";
 import { isSkyCardPage } from "@/pages/dashboard/component/sky-card-page";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { Check } from "lucide-react";
 import { toast } from "sonner";
@@ -31,6 +31,7 @@ import { useFeatureFlags } from "@/contexts/feature-flags";
 import { useSubscription } from "@/contexts/subscription";
 import { cn } from "@/lib/utils";
 import { ProCardBackground } from "./pro-card-background";
+import { reportFetcherError } from "@/api/report-fetcher-error";
 import { startCheckout } from "./start-checkout";
 import {
   FREE_FEATURES,
@@ -101,6 +102,8 @@ export function PricingOverlay({
     selectedInterval ??
     (summary?.billing_interval === "annual" ? "annual" : "monthly");
   const current = isProOrAbove && summary?.billing_interval === interval;
+  const pending = useRef(false);
+  const [cancelBusy, setCancelBusy] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const canViewPricing = canUse("billing.pricing_page", true);
   const canStartCheckout = canUse("billing.checkout", true);
@@ -111,7 +114,7 @@ export function PricingOverlay({
   const checkout = async (interval: BillingInterval) => {
     if (
       !canChangePlan ||
-      checkoutLoading ||
+      pending.current ||
       subscriptionLoading ||
       subscriptionError
     )
@@ -120,6 +123,7 @@ export function PricingOverlay({
       onUpgrade();
       return;
     }
+    pending.current = true;
     setCheckoutLoading(true);
     try {
       if (isProOrAbove && summary?.can_manage_subscription) {
@@ -131,19 +135,18 @@ export function PricingOverlay({
         return;
       }
       const origin = window.location.origin;
-      const cancelPath = `${window.location.pathname}${window.location.search}`;
+
       const url = await startCheckout({
         tier: "pro",
         interval,
         success_url: `${origin}/settings/billing?checkout=success`,
-        cancel_url: `${origin}${cancelPath}`,
+        cancel_url: `${origin}/settings/billing?checkout=cancelled`,
       });
       window.location.href = url;
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Could not start checkout",
-      );
+      reportFetcherError(error, "Could not start checkout");
     } finally {
+      pending.current = false;
       setCheckoutLoading(false);
     }
   };
@@ -151,7 +154,8 @@ export function PricingOverlay({
   const canManage = summary?.can_manage_subscription === true;
   const scheduled = summary?.cancel_at_period_end === true;
   const resume = async () => {
-    if (checkoutLoading) return;
+    if (pending.current) return;
+    pending.current = true;
     setCheckoutLoading(true);
     try {
       const response = await resumeSubscription();
@@ -160,10 +164,9 @@ export function PricingOverlay({
       refresh();
       toast.success("Your subscription will continue renewing.");
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Could not keep your plan",
-      );
+      reportFetcherError(error, "Could not keep your plan");
     } finally {
+      pending.current = false;
       setCheckoutLoading(false);
     }
   };
@@ -172,6 +175,7 @@ export function PricingOverlay({
     <Dialog
       open={open}
       onOpenChange={(value) => {
+        if (pending.current || cancelBusy) return;
         if (!value) {
           setCancelling(false);
           setSelectedInterval(null);
@@ -193,6 +197,7 @@ export function PricingOverlay({
       >
         {cancelling ? (
           <CancelPlanContent
+            onBusyChange={setCancelBusy}
             onBack={() => setCancelling(false)}
             onComplete={() => {
               refresh();
@@ -224,7 +229,7 @@ export function PricingOverlay({
                   }}
                   aria-label="Billing period"
                   disabled={checkoutLoading}
-                  className="mx-auto grid w-full max-w-[280px] grid-cols-2 rounded-xl bg-muted p-1"
+                  className="pricing-billing-period mx-auto grid w-full max-w-[280px] grid-cols-2 rounded-xl bg-fill-neutral-weak p-1"
                 >
                   <ToggleGroupItem
                     value="monthly"
@@ -265,6 +270,7 @@ export function PricingOverlay({
                         className="w-full"
                         disabled={
                           !isProOrAbove ||
+                          checkoutLoading ||
                           subscriptionLoading ||
                           Boolean(subscriptionError) ||
                           !canManage ||
@@ -393,6 +399,7 @@ export function PricingOverlay({
                   <Button
                     variant="ghost"
                     className="justify-self-center"
+                    disabled={checkoutLoading}
                     onClick={() => onOpenChange(false)}
                   >
                     {dismissLabel}

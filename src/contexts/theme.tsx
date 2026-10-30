@@ -72,6 +72,7 @@ export function ThemeProvider({ children }: PropsWithChildren) {
   return (
     <ThemeContext.Provider value={value}>
       {(theme === "deep-sky" || theme === "light-sky") && <div className="deep-sky-backdrop" aria-hidden="true" />}
+      {resolvedTheme === "light" && theme !== "light-sky" && <div className="daylight-backdrop" aria-hidden="true" />}
       {children}
     </ThemeContext.Provider>
   );

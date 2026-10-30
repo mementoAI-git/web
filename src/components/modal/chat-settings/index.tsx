@@ -18,7 +18,7 @@ import { ChatPreferencesPanel } from "./chat-preferences-panel";
 
 function Content({ onClose }: { onClose: () => void }) {
   return (
-    <div className="flex min-h-0 w-full flex-1 flex-col bg-white">
+    <div className="flex min-h-0 w-full flex-1 flex-col bg-bg-neutral-solid">
       <div className="flex shrink-0 items-center justify-between border-b border-stroke-neutral-weaker px-5 py-4 sm:px-6 sm:py-5">
         <h2 className="font-garamond text-xl font-medium text-text-neutral-strong sm:text-2xl">
           Chat settings
@@ -88,9 +88,9 @@ export default function ChatSettings({ children, onOpenChange }: ChatSettingsPro
               snapPoints={[0, 0.8]}
               initialSnap={1}
             >
-              <Sheet.Container className="max-h-[80dvh] overflow-hidden bg-white">
-                <Sheet.Header className="rounded-3xl bg-white" />
-                <Sheet.Content className="flex max-h-[80dvh] min-h-0 flex-col overflow-y-auto overscroll-contain bg-white">
+              <Sheet.Container className="max-h-[80dvh] overflow-hidden bg-bg-neutral-solid">
+                <Sheet.Header className="rounded-3xl bg-bg-neutral-solid" />
+                <Sheet.Content className="flex max-h-[80dvh] min-h-0 flex-col overflow-y-auto overscroll-contain bg-bg-neutral-solid">
                   <Content onClose={() => updateOpen(false)} />
                 </Sheet.Content>
               </Sheet.Container>
@@ -105,7 +105,7 @@ export default function ChatSettings({ children, onOpenChange }: ChatSettingsPro
                 onClick={() => updateOpen(false)}
               />
               <div
-                className="fixed top-1.5 right-1.5 bottom-1.5 z-[220] hidden w-full max-w-[442px] min-h-0 flex-col overflow-hidden rounded-[24px] border border-stroke-neutral-weaker bg-white shadow-2xl sm:flex sm:max-h-[calc(100dvh-12px)]"
+                className="fixed top-1.5 right-1.5 bottom-1.5 z-[220] hidden w-full max-w-[442px] min-h-0 flex-col overflow-hidden rounded-[var(--radius-modal)] border border-stroke-neutral-weaker bg-bg-neutral-solid shadow-2xl sm:flex sm:max-h-[calc(100dvh-12px)]"
                 role="dialog"
                 aria-modal="true"
                 aria-label="Chat settings"

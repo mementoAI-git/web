@@ -15,6 +15,15 @@ export function useInlineAudioCapture({
   fileNamePrefix = "voice-note",
   startDelayMs = 200,
 }: UseInlineAudioCaptureOptions) {
+  const onReadyRef = useRef(onRecordingReady);
+  onReadyRef.current = onRecordingReady;
+  const mounted = useRef(true);
+  const acquiring = useRef(false);
+  const startTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  useEffect(() => {
+    mounted.current = true;
+    return () => { mounted.current = false; clearTimeout(startTimer.current); };
+  }, []);
   const [stream, setStream] = useState<MediaStream | null>(null);
   const rec = useRecorder(stream, mimeType);
   const recRef = useRef(rec);
@@ -28,7 +37,7 @@ export function useInlineAudioCapture({
   const [error, setError] = useState<string | null>(null);
 
   const toggleRecording = (blocked = false) => {
-    if (blocked || busy) return;
+    if (blocked || busy || acquiring.current) return;
     if (rec.recording) {
       setLastRecordedSeconds(recRef.current.timer);
       setPendingFinalize(true);
@@ -40,13 +49,21 @@ export function useInlineAudioCapture({
     setMicDenied(false);
     setError(null);
     if (!stream) {
+      if (!navigator.mediaDevices?.getUserMedia) { setError("Voice recording isn’t available in this browser."); return; }
+      acquiring.current = true;
+      setBusy(true);
       navigator.mediaDevices
         .getUserMedia({ audio: true })
         .then((media) => {
+          if (!mounted.current) { media.getTracks().forEach((track) => track.stop()); return; }
           setStream(media);
-          setTimeout(() => recRef.current.start(), startDelayMs);
+          startTimer.current = setTimeout(() => {
+            acquiring.current = false;
+            setBusy(false);
+            recRef.current.start();
+          }, startDelayMs);
         })
-        .catch(() => setMicDenied(true));
+        .catch(() => { acquiring.current = false; if (mounted.current) { setBusy(false); setMicDenied(true); } });
       return;
     }
     recRef.current.start();
@@ -65,7 +82,7 @@ export function useInlineAudioCapture({
         const file = new File([blob], `${fileNamePrefix}-${Date.now()}.webm`, {
           type: blob.type || mimeType,
         });
-        await onRecordingReady(file, lastRecordedSeconds);
+        await onReadyRef.current(file, lastRecordedSeconds);
       } catch {
         if (!cancelled) setError("Recording couldn't be saved. Try again.");
       } finally {
@@ -81,7 +98,7 @@ export function useInlineAudioCapture({
     return () => {
       cancelled = true;
     };
-  }, [pendingFinalize, rec.url, lastRecordedSeconds, onRecordingReady, fileNamePrefix, mimeType]);
+  }, [pendingFinalize, rec.url, lastRecordedSeconds, fileNamePrefix, mimeType]);
 
   return {
     recording: rec.recording,

@@ -66,7 +66,7 @@ it("records, pauses, resumes, releases the microphone and returns a transcript",
   act(() => result.current.stop());
   await waitFor(() => expect(append).toHaveBeenCalledWith("A warm memory."));
   expect(stopTrack).toHaveBeenCalled();
-  expect(transcribeAudio).toHaveBeenCalledWith(expect.any(File));
+  expect(transcribeAudio).toHaveBeenCalledWith(expect.any(File), expect.any(AbortSignal));
   expect(fileUploadFetcher).not.toHaveBeenCalled();
   expect(result.current.phase).toBe("idle");
 });
@@ -252,4 +252,24 @@ it("does not release a new recording or append stale text after cancelling final
   await waitFor(() => expect(append).toHaveBeenCalledWith("New memory."));
   expect(append).toHaveBeenCalledOnce();
   expect(transcribeAudio).not.toHaveBeenCalled();
+});
+
+it("times out stalled transcription, retains audio for retry and ignores the late response", async () => {
+  vi.useFakeTimers();
+  let resolve!: (value: { full_text: string }) => void;
+  vi.mocked(transcribeAudio).mockImplementationOnce(() => new Promise((done) => { resolve = done; }));
+  const append = vi.fn();
+  const { result } = renderHook(() => useOverviewDictation(append));
+  try {
+    await act(() => result.current.start());
+    await act(async () => { result.current.stop(); });
+    await act(() => vi.advanceTimersByTimeAsync(30000));
+    expect(result.current.canRetry).toBe(true);
+    expect(result.current.phase).toBe("idle");
+    expect(result.current.error).toMatch(/taking too long/);
+    await act(async () => { resolve({ full_text: "Late result" }); });
+    expect(append).not.toHaveBeenCalled();
+    await act(() => result.current.retry());
+    expect(append).toHaveBeenCalledOnce();
+  } finally { vi.useRealTimers(); }
 });

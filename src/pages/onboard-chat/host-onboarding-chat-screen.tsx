@@ -104,7 +104,12 @@ export interface HostOnboardingChatScreenProps {
   nickname?: string;
 }
 
-export default function HostOnboardingChatScreen({
+export default function HostOnboardingChatScreen(props: HostOnboardingChatScreenProps = {}) {
+  const { user } = useStore();
+  return <HostOnboardingChatContent key={user?._id ?? "anonymous"} {...props} />;
+}
+
+function HostOnboardingChatContent({
   assistantPreDelayMs,
   persist,
   nickname: nicknameProp,
@@ -155,6 +160,7 @@ export default function HostOnboardingChatScreen({
     assistantPreDelayMs,
     persist,
     nickname: displayNickname,
+    userId: user?._id,
   });
 
   const showMainComposer =
@@ -230,7 +236,7 @@ export default function HostOnboardingChatScreen({
   };
 
   const handleComplete = () => {
-    clearHostOnboardingChatState();
+    clearHostOnboardingChatState(user?._id);
     navigate("/overview");
   };
 

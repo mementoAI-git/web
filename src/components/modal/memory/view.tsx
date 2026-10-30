@@ -1,25 +1,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { EditorContent, useEditorState } from "@tiptap/react";
 import DOMPurify from "isomorphic-dompurify";
-import {
-  Bookmark,
-  Check,
-  ChevronsRight,
-  Circle,
-  Link as LinkIcon,
-  ListFilter,
-  ListTree,
-  Share2,
-  X,
-} from "lucide-react";
+import { Link as LinkIcon, ListFilter, ListTree, X } from "lucide-react";
 import useSWR, { mutate } from "swr";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
 import calendarIcon from "@/assets/icon/uim_calendar.svg";
 import endpoint from "@/api/endpoint";
 import { deleteFetcher } from "@/api/fetcher";
 import FileGallery from "@/components/file-gallery";
-import { BookmarkSolidIcon } from "@/components/icons";
 import { useMemoryEditor } from "@/components/memory/text-area/use-memory-editor";
 import { LinkInput } from "@/components/memory/text-area/link-input";
 import { Button } from "@/components/ui/button";
@@ -33,14 +23,19 @@ import {
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { Toggle } from "@/components/ui/toggle";
-import { useBookmark } from "@/hooks/use-bookmark";
 import useFetcher from "@/hooks/use-fetcher";
 import useFileUpload from "@/hooks/use-file-upload";
 import { useFeatureFlags } from "@/contexts/feature-flags";
-import { SUPPORTED_FILE_TYPES, inferMimeType, isSupportedFileMime, uploadMimeBaseType } from "@/utility/constant";
+import {
+  SUPPORTED_FILE_TYPES,
+  inferMimeType,
+  isSupportedFileMime,
+  uploadMimeBaseType,
+} from "@/utility/constant";
 import { useModal } from "@/hooks/use-modal";
 import { useStore } from "@/hooks/use-store";
-import { MemoryDropdown } from "@/pages/dashboard/chat/conversation/dropdown";
+import { MemoryItemActions } from "@/pages/dashboard/stories/components/dropdown";
+import { StoryDetailsDialog } from "./view-details";
 import { addToRecentMemories, ensureLinksOpenInNewTab } from "@/utility";
 import type { IMemory, IOnUploadPayload } from "@/utility/interface";
 import { AccessField } from "./create/access-field";
@@ -75,9 +70,15 @@ type PendingExit = "cancel" | "close" | null;
 
 export function ViewMemory({ data, isMobile }: ViewMemoryProps) {
   const { close, push, registerCloseGuard } = useModal();
+  const navigate = useNavigate();
   const { user } = useStore();
   const { canUse } = useFeatureFlags();
-  const { files: addedFiles, handleUpload, handleDeleteFile, setFiles } = useFileUpload();
+  const {
+    files: addedFiles,
+    handleUpload,
+    handleDeleteFile,
+    setFiles,
+  } = useFileUpload();
   const memoryId = data.memoryId || data.memory?._id;
   const [mode, setMode] = useState<StoryViewerMode>("view");
   const [localMemory, setLocalMemory] = useState<IMemory | undefined>(
@@ -92,8 +93,8 @@ export function ViewMemory({ data, isMobile }: ViewMemoryProps) {
   );
   const editButtonRef = useRef<HTMLButtonElement>(null);
   const detailsTriggerRef = useRef<HTMLButtonElement>(null);
-  const detailsHeadingRef = useRef<HTMLHeadingElement>(null);
-  const hasToggledDetailsRef = useRef(false);
+  const optionsButtonRef = useRef<HTMLButtonElement>(null);
+  const detailsReturnFocusRef = useRef<HTMLButtonElement | null>(null);
   const titleRef = useRef<HTMLTextAreaElement>(null);
   const hasLocalSaveRef = useRef(false);
 
@@ -103,7 +104,9 @@ export function ViewMemory({ data, isMobile }: ViewMemoryProps) {
     isLoading,
   } = useSWR(memoryId ? `${endpoint.memories}/${memoryId}` : null, {
     refreshInterval: (response) =>
-      (response?.data as IMemory | undefined)?.enrichment_status === "pending" ? 4000 : 0,
+      (response?.data as IMemory | undefined)?.enrichment_status === "pending"
+        ? 4000
+        : 0,
   });
   const remoteMemory = (fetched?.data as IMemory | undefined) ?? data.memory;
   const memory = localMemory ?? remoteMemory;
@@ -123,7 +126,14 @@ export function ViewMemory({ data, isMobile }: ViewMemoryProps) {
     setDraft((current) => (current ? { ...current, body } : current));
   }, []);
 
-  const { editor, showLinkInput, setShowLinkInput, linkPosition, openLinkInputAtSelection, submitLink } = useMemoryEditor({
+  const {
+    editor,
+    showLinkInput,
+    setShowLinkInput,
+    linkPosition,
+    openLinkInputAtSelection,
+    submitLink,
+  } = useMemoryEditor({
     initialContent: data.memory?.body ?? "",
     placeholder: "Write story here...",
     editorClassName:
@@ -146,13 +156,10 @@ export function ViewMemory({ data, isMobile }: ViewMemoryProps) {
   });
 
   useEffect(() => {
-    if (!isEditing && memory) editor?.commands.setContent(memory.body || "", { emitUpdate: false });
+    if (!isEditing && memory)
+      editor?.commands.setContent(memory.body || "", { emitUpdate: false });
   }, [editor, isEditing, memory]);
 
-  const { toggleBookmark } = useBookmark({
-    memoryId: memory?._id,
-    isBookmarked: memory?.bookmarked,
-  });
   const { trigger: updateStory, isMutating } = useFetcher(
     memory ? `${endpoint.memories}/${memory._id}` : "",
     "put",
@@ -161,25 +168,45 @@ export function ViewMemory({ data, isMobile }: ViewMemoryProps) {
   const pendingPayload = useMemo(
     () =>
       memory && draft
-        ? buildStoryUpdatePayload(memory, draft, addedFiles.flatMap((file) => file.uploadedFile?._id ? [file.uploadedFile._id] : []))
+        ? buildStoryUpdatePayload(
+            memory,
+            draft,
+            addedFiles.flatMap((file) =>
+              file.uploadedFile?._id ? [file.uploadedFile._id] : [],
+            ),
+          )
         : {},
     [draft, memory, addedFiles],
   );
   const uploadsPending = addedFiles.some((file) => !file.uploadedFile?._id);
-  const isDirty = Object.keys(pendingPayload).length > 0 || removedAttachmentIds.length > 0 || addedFiles.length > 0;
+  const isDirty =
+    Object.keys(pendingPayload).length > 0 ||
+    removedAttachmentIds.length > 0 ||
+    addedFiles.length > 0;
 
   const addFile = (file: File, duration?: number) => {
     const mime = file.type || inferMimeType(file.name);
     if (!isSupportedFileMime(mime, SUPPORTED_FILE_TYPES)) {
-      toast.error("This file type isn’t supported. Add images, video, audio, PDF, Word (.doc, .docx), or plain text.");
+      toast.error(
+        "This file type isn’t supported. Add images, video, audio, PDF, Word (.doc, .docx), or plain text.",
+      );
       return;
     }
     const category = uploadMimeBaseType(mime).split("/")[0];
-    if (!canUse("attachments.doc_upload") || (["image", "video", "audio"].includes(category) && !canUse(`attachments.${category}_upload`))) {
+    if (
+      !canUse("attachments.doc_upload") ||
+      (["image", "video", "audio"].includes(category) &&
+        !canUse(`attachments.${category}_upload`))
+    ) {
       toast.error("File uploads are currently disabled.");
       return;
     }
-    const payload: IOnUploadPayload = { id: uuidv4(), file, progress: 0, ...(duration !== undefined && { duration }) };
+    const payload: IOnUploadPayload = {
+      id: uuidv4(),
+      file,
+      progress: 0,
+      ...(duration !== undefined && { duration }),
+    };
     // Queue immediately so pending uploads participate in the close/save guard.
     void handleUpload(payload);
   };
@@ -207,12 +234,6 @@ export function ViewMemory({ data, isMobile }: ViewMemoryProps) {
     window.addEventListener("resize", resizeTitle);
     return () => window.removeEventListener("resize", resizeTitle);
   }, [draft?.title, isEditing, detailsOpen]);
-
-  useEffect(() => {
-    if (!hasToggledDetailsRef.current) return;
-    if (detailsOpen) detailsHeadingRef.current?.focus();
-    else detailsTriggerRef.current?.focus();
-  }, [detailsOpen]);
 
   const beginEditing = () => {
     if (!memory) return;
@@ -255,7 +276,15 @@ export function ViewMemory({ data, isMobile }: ViewMemoryProps) {
   };
 
   const saveChanges = async () => {
-    if (!memory || !draft || isMutating || isSaving || uploadsPending || !isDirty) return;
+    if (
+      !memory ||
+      !draft ||
+      isMutating ||
+      isSaving ||
+      uploadsPending ||
+      !isDirty
+    )
+      return;
     setIsSaving(true);
     try {
       if (Object.keys(pendingPayload).length > 0) {
@@ -265,8 +294,13 @@ export function ViewMemory({ data, isMobile }: ViewMemoryProps) {
         }
       }
       for (const attachmentId of removedAttachmentIds) {
-        const response = await deleteFetcher(`${endpoint.removeFileFromMemory}/${attachmentId}`);
-        if (!response?.success) throw new Error(response?.message || "Could not remove the attachment. Try again.");
+        const response = await deleteFetcher(
+          `${endpoint.removeFileFromMemory}/${attachmentId}`,
+        );
+        if (!response?.success)
+          throw new Error(
+            response?.message || "Could not remove the attachment. Try again.",
+          );
       }
       const nextMemory: IMemory = {
         ...memory,
@@ -284,7 +318,12 @@ export function ViewMemory({ data, isMobile }: ViewMemoryProps) {
         beneficiaries: draft.access
           .filter((item) => item.source === "beneficiary")
           .map((item) => ({ _id: item.id, name: item.name })),
-        attachments: [...draft.attachments, ...addedFiles.flatMap((file) => file.uploadedFile ? [file.uploadedFile] : [])],
+        attachments: [
+          ...draft.attachments,
+          ...addedFiles.flatMap((file) =>
+            file.uploadedFile ? [file.uploadedFile] : [],
+          ),
+        ],
       };
       hasLocalSaveRef.current = true;
       setLocalMemory(nextMemory);
@@ -316,7 +355,10 @@ export function ViewMemory({ data, isMobile }: ViewMemoryProps) {
     const addedFile = addedFiles.find((file) => file.id === attachmentId);
     if (addedFile) {
       if (addedFile.uploadedFile) void handleDeleteFile(addedFile);
-      else setFiles((current) => current.filter((file) => file.id !== attachmentId));
+      else
+        setFiles((current) =>
+          current.filter((file) => file.id !== attachmentId),
+        );
       return;
     }
     setDraft((current) =>
@@ -332,15 +374,16 @@ export function ViewMemory({ data, isMobile }: ViewMemoryProps) {
     setRemovedAttachmentIds((current) => [...current, attachmentId]);
   };
 
-  const draftFiles: IOnUploadPayload[] = [...(draft?.attachments ?? []).map(
-    (attachment) => ({
+  const draftFiles: IOnUploadPayload[] = [
+    ...(draft?.attachments ?? []).map((attachment) => ({
       id: attachment._id,
       uploadedFile: attachment,
       progress: 100,
       base64: attachment.url,
       file: null,
-    }),
-  ), ...addedFiles];
+    })),
+    ...addedFiles,
+  ];
 
   const dateLabel = useMemo(() => {
     const value = memory?.created_at ? new Date(memory.created_at) : new Date();
@@ -359,6 +402,44 @@ export function ViewMemory({ data, isMobile }: ViewMemoryProps) {
         DOMPurify.sanitize(ensureHtmlFormat(memory.body || "")),
       )
     : "";
+
+  const wordCount = DOMPurify.sanitize(memory?.body || "")
+    .replace(/<[^>]+>/g, " ")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean).length;
+  const readingMinutes =
+    wordCount === 0 ? 0 : Math.max(1, Math.ceil(wordCount / 200));
+  const readerActions = (
+    <div className="flex flex-wrap items-center gap-3">
+      <Button
+        ref={editButtonRef}
+        type="button"
+        variant="secondary"
+        size="lg"
+        className="bg-fill-neutral-weak text-text-neutral-strong hover:bg-fill-neutral-weak/80"
+        onClick={beginEditing}
+        disabled={!memory}
+      >
+        Edit story
+      </Button>
+      <Button
+        type="button"
+        size="lg"
+        disabled={!memory || !editor}
+        onClick={() => {
+          if (!memory || !editor) return;
+          const text = [memory.title?.trim(), editor.getText().trim()]
+            .filter(Boolean)
+            .join("\n\n");
+          handleClose();
+          navigate("/chat", { state: { overviewDiscussion: text } });
+        }}
+      >
+        Discuss
+      </Button>
+    </div>
+  );
 
   const headerActions = isEditing ? (
     <>
@@ -385,34 +466,21 @@ export function ViewMemory({ data, isMobile }: ViewMemoryProps) {
     </>
   ) : (
     <>
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon"
-        onClick={() => memory && push?.("share-memory", { memory })}
-        aria-label="Share story"
-      >
-        <Share2 aria-hidden />
-      </Button>
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon"
-        onClick={() => memory && toggleBookmark()}
-        aria-label={memory?.bookmarked ? "Remove bookmark" : "Bookmark story"}
-      >
-        {memory?.bookmarked ? <BookmarkSolidIcon /> : <Bookmark aria-hidden />}
-      </Button>
-      {memory ? <MemoryDropdown memory={memory} /> : null}
-      <Button
-        ref={editButtonRef}
-        type="button"
-        size="lg"
-        onClick={beginEditing}
-        disabled={!memory}
-      >
-        Edit story
-      </Button>
+      {readerActions}
+      {memory ? (
+        <MemoryItemActions
+          memory={memory}
+          trigger="horizontal"
+          triggerRef={optionsButtonRef}
+          onEdit={beginEditing}
+          onShare={() => push?.("share-memory", { memory })}
+          onDelete={() => push?.("delete-memory", { memory })}
+          onViewDetails={() => {
+            detailsReturnFocusRef.current = optionsButtonRef.current;
+            setDetailsOpen(true);
+          }}
+        />
+      ) : null}
       <Button
         type="button"
         variant="ghost"
@@ -455,7 +523,12 @@ export function ViewMemory({ data, isMobile }: ViewMemoryProps) {
                 }
                 rows={1}
                 onKeyDown={(event) => {
-                  if (event.key !== "Enter" || event.shiftKey || event.nativeEvent.isComposing) return;
+                  if (
+                    event.key !== "Enter" ||
+                    event.shiftKey ||
+                    event.nativeEvent.isComposing
+                  )
+                    return;
                   event.preventDefault();
                   editor?.commands.focus();
                 }}
@@ -471,9 +544,23 @@ export function ViewMemory({ data, isMobile }: ViewMemoryProps) {
                     show
                     position={linkPosition}
                     initialUrl={editor?.getAttributes("link").href ?? ""}
-                    initialText={editor ? editor.state.doc.textBetween(editor.state.selection.from, editor.state.selection.to) : ""}
+                    initialText={
+                      editor
+                        ? editor.state.doc.textBetween(
+                            editor.state.selection.from,
+                            editor.state.selection.to,
+                          )
+                        : ""
+                    }
                     onSubmit={submitLink}
-                    onRemove={() => editor?.chain().focus().extendMarkRange("link").unsetLink().run()}
+                    onRemove={() =>
+                      editor
+                        ?.chain()
+                        .focus()
+                        .extendMarkRange("link")
+                        .unsetLink()
+                        .run()
+                    }
                     onClose={() => setShowLinkInput(false)}
                   />
                 ) : null}
@@ -494,93 +581,99 @@ export function ViewMemory({ data, isMobile }: ViewMemoryProps) {
                 {memory.title || "Story"}
               </h1>
               <div
-                className="tiptap-editor tiptap-editor--memory-next prose prose-sm mt-6 min-h-[240px] max-w-none font-geist text-lg leading-[1.7] text-text-neutral-strong"
+                className="story-viewer-body tiptap-editor tiptap-editor--memory-next prose prose-sm mt-5 min-h-[240px] max-w-none font-geist text-base leading-[1.5] text-text-neutral-strong"
                 dangerouslySetInnerHTML={{ __html: sanitizedBody }}
               />
-              {memory.attachments.length > 0 ? (
-                <div className="mt-auto pt-6">
-                  <FileGallery files={memory.attachments} />
-                </div>
-              ) : null}
             </>
           ) : null}
         </div>
       </div>
       {isEditing ? (
-        <div data-testid="view-story-formatting-strip" className="mt-4 w-full max-w-[760px] shrink-0 px-3">
+        <div
+          data-testid="view-story-formatting-strip"
+          className="mt-4 w-full max-w-[760px] shrink-0 px-3"
+        >
           <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
-            <StoryMediaControls editor={editor} onUpload={addFile} disabled={isMutating || isSaving} />
-            <div className="flex min-h-9 min-w-0 flex-wrap items-center gap-1">
-            <Toggle
-              pressed={formatting?.bold ?? false}
-              onMouseDown={(event) => event.preventDefault()}
-              size="sm"
-              className="size-8 min-w-8 rounded-[8px] px-0 text-icon-neutral-strong hover:bg-fill-neutral-weak data-[state=on]:bg-fill-neutral-weak"
-              onPressedChange={() => editor?.chain().focus().toggleBold().run()}
-              aria-label="Bold"
-            >
-              <span className="font-bold">B</span>
-            </Toggle>
-            <Toggle
-              pressed={formatting?.italic ?? false}
-              onMouseDown={(event) => event.preventDefault()}
-              size="sm"
-              className="size-8 min-w-8 rounded-[8px] px-0 text-icon-neutral-strong hover:bg-fill-neutral-weak data-[state=on]:bg-fill-neutral-weak"
-              onPressedChange={() =>
-                editor?.chain().focus().toggleItalic().run()
-              }
-              aria-label="Italic"
-            >
-              <span className="italic">I</span>
-            </Toggle>
-            <Toggle
-              pressed={formatting?.strike ?? false}
-              onMouseDown={(event) => event.preventDefault()}
-              onPressedChange={() => editor?.chain().focus().toggleStrike().run()}
-              size="sm"
-              className="size-8 min-w-8 rounded-[8px] px-0 text-icon-neutral-strong hover:bg-fill-neutral-weak data-[state=on]:bg-fill-neutral-weak"
-              aria-label="Strikethrough"
-            >
-              <span className="line-through">S</span>
-            </Toggle>
-            <Toggle
-              pressed={formatting?.underline ?? false}
-              onMouseDown={(event) => event.preventDefault()}
-              size="sm"
-              className="size-8 min-w-8 rounded-[8px] px-0 text-icon-neutral-strong hover:bg-fill-neutral-weak data-[state=on]:bg-fill-neutral-weak"
-              onPressedChange={() =>
-                editor?.chain().focus().toggleUnderline().run()
-              }
-              aria-label="Underline"
-            >
-              <span className="underline">U</span>
-            </Toggle>
-            <Toggle
-              pressed={(formatting?.link ?? false) || showLinkInput}
-              onMouseDown={(event) => event.preventDefault()}
-              onPressedChange={openLinkInputAtSelection}
-              size="sm"
-              className="size-8 min-w-8 rounded-[8px] px-0 text-icon-neutral-strong hover:bg-fill-neutral-weak data-[state=on]:bg-fill-neutral-weak"
-              aria-label="Link"
-            >
-              <LinkIcon aria-hidden className="size-4" />
-            </Toggle>
-            <Separator
-              orientation="vertical"
-              className="mx-1 h-5 bg-stroke-neutral-weak"
+            <StoryMediaControls
+              editor={editor}
+              onUpload={addFile}
+              disabled={isMutating || isSaving}
             />
-            <Toggle
-              pressed={formatting?.bulletList ?? false}
-              onMouseDown={(event) => event.preventDefault()}
-              size="sm"
-              className="size-8 min-w-8 rounded-[8px] px-0 text-icon-neutral-strong hover:bg-fill-neutral-weak data-[state=on]:bg-fill-neutral-weak"
-              onPressedChange={() =>
-                editor?.chain().focus().toggleBulletList().run()
-              }
-              aria-label="Bullet list"
-            >
-              <ListTree aria-hidden className="size-4" />
-            </Toggle>
+            <div className="flex min-h-9 min-w-0 flex-wrap items-center gap-1">
+              <Toggle
+                pressed={formatting?.bold ?? false}
+                onMouseDown={(event) => event.preventDefault()}
+                size="sm"
+                className="size-8 min-w-8 rounded-[8px] px-0 text-icon-neutral-strong hover:bg-fill-neutral-weak data-[state=on]:bg-fill-neutral-weak"
+                onPressedChange={() =>
+                  editor?.chain().focus().toggleBold().run()
+                }
+                aria-label="Bold"
+              >
+                <span className="font-bold">B</span>
+              </Toggle>
+              <Toggle
+                pressed={formatting?.italic ?? false}
+                onMouseDown={(event) => event.preventDefault()}
+                size="sm"
+                className="size-8 min-w-8 rounded-[8px] px-0 text-icon-neutral-strong hover:bg-fill-neutral-weak data-[state=on]:bg-fill-neutral-weak"
+                onPressedChange={() =>
+                  editor?.chain().focus().toggleItalic().run()
+                }
+                aria-label="Italic"
+              >
+                <span className="italic">I</span>
+              </Toggle>
+              <Toggle
+                pressed={formatting?.strike ?? false}
+                onMouseDown={(event) => event.preventDefault()}
+                onPressedChange={() =>
+                  editor?.chain().focus().toggleStrike().run()
+                }
+                size="sm"
+                className="size-8 min-w-8 rounded-[8px] px-0 text-icon-neutral-strong hover:bg-fill-neutral-weak data-[state=on]:bg-fill-neutral-weak"
+                aria-label="Strikethrough"
+              >
+                <span className="line-through">S</span>
+              </Toggle>
+              <Toggle
+                pressed={formatting?.underline ?? false}
+                onMouseDown={(event) => event.preventDefault()}
+                size="sm"
+                className="size-8 min-w-8 rounded-[8px] px-0 text-icon-neutral-strong hover:bg-fill-neutral-weak data-[state=on]:bg-fill-neutral-weak"
+                onPressedChange={() =>
+                  editor?.chain().focus().toggleUnderline().run()
+                }
+                aria-label="Underline"
+              >
+                <span className="underline">U</span>
+              </Toggle>
+              <Toggle
+                pressed={(formatting?.link ?? false) || showLinkInput}
+                onMouseDown={(event) => event.preventDefault()}
+                onPressedChange={openLinkInputAtSelection}
+                size="sm"
+                className="size-8 min-w-8 rounded-[8px] px-0 text-icon-neutral-strong hover:bg-fill-neutral-weak data-[state=on]:bg-fill-neutral-weak"
+                aria-label="Link"
+              >
+                <LinkIcon aria-hidden className="size-4" />
+              </Toggle>
+              <Separator
+                orientation="vertical"
+                className="mx-1 h-5 bg-stroke-neutral-weak"
+              />
+              <Toggle
+                pressed={formatting?.bulletList ?? false}
+                onMouseDown={(event) => event.preventDefault()}
+                size="sm"
+                className="size-8 min-w-8 rounded-[8px] px-0 text-icon-neutral-strong hover:bg-fill-neutral-weak data-[state=on]:bg-fill-neutral-weak"
+                onPressedChange={() =>
+                  editor?.chain().focus().toggleBulletList().run()
+                }
+                aria-label="Bullet list"
+              >
+                <ListTree aria-hidden className="size-4" />
+              </Toggle>
             </div>
           </div>
         </div>
@@ -588,95 +681,86 @@ export function ViewMemory({ data, isMobile }: ViewMemoryProps) {
     </section>
   );
 
-  const detailsContent = (
-    <div className="relative min-h-0 min-w-0">
-      <div
-        className="story-details-trigger-rail absolute inset-0 flex items-end justify-end pb-0.5"
-        data-visible={!detailsOpen}
-        aria-hidden={detailsOpen}
-        inert={detailsOpen}
-      >
-        <Button
-          ref={detailsTriggerRef}
-          type="button"
-          variant="ghost"
-          size="sm"
-          aria-expanded={detailsOpen}
-          aria-controls="view-story-details-panel"
-          onClick={() => {
-            hasToggledDetailsRef.current = true;
-            setDetailsOpen(true);
-          }}
-          className="gap-2 px-2 font-geist font-semibold text-text-neutral-strong hover:bg-fill-neutral-weak"
-        >
-          <ListFilter aria-hidden className="size-4 text-icon-neutral-strong" />
-          Details
-        </Button>
-      </div>
-      <aside
-        id="view-story-details-panel"
-        className="story-details-panel absolute inset-0 flex min-h-0 min-w-0 flex-col overflow-hidden rounded-[18px] border border-stroke-neutral-weak bg-fill-neutral-weaker"
-        data-visible={detailsOpen}
-        aria-hidden={!detailsOpen}
-        inert={!detailsOpen}
-      >
-        <div className="flex items-center justify-between gap-3 px-4 pt-4">
-          <h2 ref={detailsHeadingRef} tabIndex={-1} className="font-geist text-base font-semibold text-text-neutral-strong outline-none">
-            Story Details
-          </h2>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            aria-label="Collapse story details"
-            title="Collapse story details"
-            className="absolute bottom-[10px] right-[14px] rounded-[8px] text-icon-neutral-weak hover:bg-fill-neutral-weak hover:text-icon-neutral-strong"
-            onClick={() => setDetailsOpen(false)}
-          >
-            <ChevronsRight aria-hidden className="size-4" />
-          </Button>
-        </div>
-        <div className="hide-scrollbar min-h-0 flex-1 overflow-y-auto px-4 pb-14 pt-5">
-          {isEditing && draft ? (
-            <div className="flex flex-col gap-6">
-              <AccessField
-                value={draft.access}
-                onChange={(access) =>
-                  setDraft((current) =>
-                    current ? { ...current, access } : current,
-                  )
-                }
-                shareAudience={draft.visibility}
-                onShareAudienceChange={(visibility) =>
-                  setDraft((current) =>
-                    current ? { ...current, visibility } : current,
-                  )
-                }
-                variant="panel"
-                dismissOnEscape
-              />
-              <TagsField
-                tags={draft.tags}
-                setTags={(next) =>
-                  setDraft((current) => {
-                    if (!current) return current;
-                    const tags =
-                      typeof next === "function" ? next(current.tags) : next;
-                    return { ...current, tags };
-                  })
-                }
-                title={draft.title}
-                body={editor?.getText() ?? ""}
-                variant="panel"
-              />
-            </div>
-          ) : memory ? (
-            <ReadOnlyDetails memory={memory} />
-          ) : null}
-        </div>
-      </aside>
-    </div>
+  const detailsButton = (
+    <Button
+      ref={detailsTriggerRef}
+      type="button"
+      variant="ghost"
+      size="sm"
+      disabled={!memory}
+      aria-haspopup="dialog"
+      aria-expanded={detailsOpen}
+      onClick={() => {
+        detailsReturnFocusRef.current = detailsTriggerRef.current;
+        setDetailsOpen(true);
+      }}
+      className="gap-2 font-geist font-semibold text-text-neutral-strong"
+    >
+      <ListFilter aria-hidden />
+      Details
+    </Button>
   );
+
+  const mediaContent = (
+    <aside
+      aria-label="Story attachments"
+      className="story-viewer-media flex min-h-0 min-w-0 flex-col items-center justify-between pt-16"
+    >
+      <div className="flex min-h-0 flex-1 flex-col items-center justify-center pb-12">
+        {!isEditing && memory && memory.attachments.length > 0 ? (
+          <FileGallery files={memory.attachments} variant="stacked" />
+        ) : null}
+      </div>
+      <div className="self-end pb-2">{detailsButton}</div>
+    </aside>
+  );
+
+  const detailsDialog = memory ? (
+    <StoryDetailsDialog
+      memory={memory}
+      open={detailsOpen}
+      onOpenChange={setDetailsOpen}
+      onCloseAutoFocus={(event) => {
+        event.preventDefault();
+        detailsReturnFocusRef.current?.focus();
+      }}
+    >
+      {isEditing && draft ? (
+        <div className="flex flex-col gap-6">
+          <AccessField
+            value={draft.access}
+            onChange={(access) =>
+              setDraft((current) =>
+                current ? { ...current, access } : current,
+              )
+            }
+            shareAudience={draft.visibility}
+            onShareAudienceChange={(visibility) =>
+              setDraft((current) =>
+                current ? { ...current, visibility } : current,
+              )
+            }
+            variant="panel"
+            dismissOnEscape
+          />
+          <TagsField
+            tags={draft.tags}
+            setTags={(next) =>
+              setDraft((current) => {
+                if (!current) return current;
+                const tags =
+                  typeof next === "function" ? next(current.tags) : next;
+                return { ...current, tags };
+              })
+            }
+            title={draft.title}
+            body={editor?.getText() ?? ""}
+            variant="panel"
+          />
+        </div>
+      ) : undefined}
+    </StoryDetailsDialog>
+  ) : null;
 
   return (
     <>
@@ -693,30 +777,47 @@ export function ViewMemory({ data, isMobile }: ViewMemoryProps) {
         }}
       >
         <div className="relative grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)] gap-5 py-6 pl-[max(225px,22%,min(254px,calc((100dvh-48px)*0.31)))] pr-6 xl:gap-8 xl:py-8 xl:pr-8">
-          <header className="flex min-w-0 items-center justify-between gap-3 pl-4">
-            <div className="flex items-center gap-2 font-geist text-sm text-text-neutral-weak">
-              <img src={calendarIcon} alt="" aria-hidden className="size-4 object-contain" />
-              <span>{dateLabel}</span>
-            </div>
-            <div className="flex min-w-0 items-center justify-end gap-2 xl:gap-3">
+          <header
+            aria-label="Story navigation"
+            className="flex min-w-0 flex-wrap items-center justify-between gap-3 pl-4"
+          >
+            {!isEditing ? (
+              <div className="flex items-center gap-2 whitespace-nowrap font-geist text-xs text-text-neutral-weak">
+                <img
+                  src={calendarIcon}
+                  alt=""
+                  aria-hidden
+                  className="size-4 object-contain"
+                />
+                <span>{dateLabel}</span>
+                <span aria-hidden>·</span>
+                <span>{readingMinutes} min read</span>
+              </div>
+            ) : null}
+            <div className="ml-auto flex min-w-0 flex-wrap items-center justify-end gap-2 xl:gap-3">
               {headerActions}
             </div>
           </header>
           <div
-            className="story-composer-layout grid min-h-0 gap-5 xl:gap-7"
-            data-details-open={detailsOpen}
+            className={`story-viewer-layout grid min-h-0 gap-5 xl:gap-7 ${isEditing ? "grid-cols-[minmax(0,1fr)_100px]" : "grid-cols-[minmax(0,1fr)_250px]"}`}
           >
             {storyContent}
-            {detailsContent}
+            {mediaContent}
           </div>
         </div>
       </StoryJournalShell>
+
+      {detailsDialog}
 
       <Dialog
         open={pendingExit !== null}
         onOpenChange={(open) => !open && setPendingExit(null)}
       >
-        <DialogContent overlayClassName="z-[300]" className="z-[310]" onEscapeKeyDown={(event) => event.stopPropagation()}>
+        <DialogContent
+          overlayClassName="z-[300]"
+          className="z-[310]"
+          onEscapeKeyDown={(event) => event.stopPropagation()}
+        >
           <DialogHeader>
             <DialogTitle>Discard story changes?</DialogTitle>
             <DialogDescription>
@@ -742,87 +843,6 @@ export function ViewMemory({ data, isMobile }: ViewMemoryProps) {
         </DialogContent>
       </Dialog>
     </>
-  );
-}
-
-function ReadOnlyDetails({ memory }: { memory: IMemory }) {
-  const words = DOMPurify.sanitize(memory.body)
-    .replace(/<[^>]+>/g, " ")
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean).length;
-
-  return (
-    <div className="space-y-6 font-geist">
-      <section>
-        <h3 className="text-sm font-semibold text-text-neutral-strong">
-          Visibility
-        </h3>
-        <p className="mt-2 text-sm text-text-neutral-weak">
-          {memory.visibility === "everyone"
-            ? "Visible to everyone"
-            : "Private — only you"}
-        </p>
-      </section>
-      <section>
-        <h3 className="text-sm font-semibold text-text-neutral-strong">Tags</h3>
-        <div className="mt-2 flex flex-wrap gap-2">
-          {memory.tags.length > 0 ? (
-            memory.tags.map((tag) => (
-              <span
-                key={tag}
-                className="rounded-full border border-stroke-neutral-weak bg-fill-neutral-weak px-2.5 py-1 text-xs text-text-neutral-strong"
-              >
-                {tag.startsWith("#") ? tag : `#${tag}`}
-              </span>
-            ))
-          ) : (
-            <span className="text-sm text-text-neutral-weaker">No tags</span>
-          )}
-        </div>
-      </section>
-      <section>
-        <h3 className="text-sm font-semibold text-text-neutral-strong">
-          Story Overview
-        </h3>
-        <div className="mt-2 space-y-2 text-sm text-text-neutral-weak">
-          <p>{memory.attachments.length} attachments</p>
-          <p>
-            {words === 0 ? 0 : Math.max(1, Math.ceil(words / 200))} min read
-          </p>
-        </div>
-      </section>
-      <section className="rounded-xl border border-stroke-neutral-weak bg-fill-neutral-weak p-3">
-        <div className="flex items-center justify-between gap-3 py-1 text-sm text-text-neutral-strong">
-          <span>Title</span>
-          {memory.title.trim() ? (
-            <Check
-              aria-label="Title complete"
-              className="size-4 text-icon-success-strong"
-            />
-          ) : (
-            <Circle
-              aria-label="Title incomplete"
-              className="size-4 text-icon-neutral-weaker"
-            />
-          )}
-        </div>
-        <div className="flex items-center justify-between gap-3 py-1 text-sm text-text-neutral-strong">
-          <span>Story text</span>
-          {memory.body.trim() ? (
-            <Check
-              aria-label="Story text complete"
-              className="size-4 text-icon-success-strong"
-            />
-          ) : (
-            <Circle
-              aria-label="Story text incomplete"
-              className="size-4 text-icon-neutral-weaker"
-            />
-          )}
-        </div>
-      </section>
-    </div>
   );
 }
 

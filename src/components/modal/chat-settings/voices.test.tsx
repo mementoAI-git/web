@@ -131,6 +131,36 @@ describe("Voices", () => {
     expect(previewElevenLabsVoice).not.toHaveBeenCalled();
   });
 
+  it("prevents overlapping voice preference saves", async () => {
+    profileTrigger.mockClear();
+    let release!: () => void;
+    profileTrigger.mockImplementationOnce(() => new Promise<void>((resolve) => { release = resolve; }));
+    const user = userEvent.setup();
+    renderWithProviders(<Voices />, { auth: true });
+    const leda = screen.getByRole("button", { name: /leda/i });
+    await user.click(leda);
+    await user.click(leda);
+    expect(profileTrigger).toHaveBeenCalledTimes(1);
+    release();
+    await waitFor(() => expect(leda).toHaveAttribute("aria-busy", "false"));
+  });
+
+  it("aborts an active voice sample when the preferences close", async () => {
+    previewGeminiChatVoice.mockClear();
+    const user = userEvent.setup();
+    const { unmount } = renderWithProviders(<Voices />, { auth: true });
+    await user.click(screen.getByRole("button", { name: /leda/i }));
+    await waitFor(() => expect(previewGeminiChatVoice).toHaveBeenCalled());
+    // A resolved sample has finished; keep this sample pending to exercise cleanup.
+    previewGeminiChatVoice.mockImplementationOnce(() => new Promise(() => {}));
+    await user.click(screen.getByRole("button", { name: /leda/i }));
+    await waitFor(() => expect(previewGeminiChatVoice).toHaveBeenCalledTimes(2));
+    const signal = previewGeminiChatVoice.mock.calls[1][0].signal as AbortSignal;
+    expect(signal.aborted).toBe(false);
+    unmount();
+    expect(signal.aborted).toBe(true);
+  });
+
   it("keeps the saved default when preview fails", async () => {
     toastError.mockClear();
     previewGeminiChatVoice.mockRejectedValueOnce(new Error("network"));

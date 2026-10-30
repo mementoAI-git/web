@@ -327,8 +327,8 @@ function ChatinputImpl({
   );
 
   const handleSend = async () => {
-    if (voiceSending) return;
-    if (!isEmpty(files) && files.every(f => f.progress < 100)) {
+    if (voiceSending || loading || typing) return;
+    if (files.some((file) => !file.uploadedFile?._id)) {
       return;
     }
     if (!text.trim() && files.length === 0) {
@@ -371,7 +371,7 @@ function ChatinputImpl({
     if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
       e.preventDefault();
       e.stopPropagation();
-      const uploadsPending = !isEmpty(files) && files.every((f) => f.progress < 100);
+      const uploadsPending = files.some((file) => !file.uploadedFile?._id);
       if (
         !loading &&
         !typing &&
@@ -402,7 +402,7 @@ function ChatinputImpl({
   }, [text, adjustHeight]);
 
   const uploadsPending =
-    !isEmpty(files) && files.every((f) => f.progress < 100);
+    files.some((file) => !file.uploadedFile?._id);
   const hasSendableContent = Boolean(text.trim()) || files.length > 0;
   const sendDisabled =
     typing ||

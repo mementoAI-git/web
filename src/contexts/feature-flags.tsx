@@ -1,10 +1,7 @@
 "use client";
 
 import endpoint from "@/api/endpoint";
-import {
-  entityResponseFetcher,
-  paginatedResponseFetcher,
-} from "@/api/domain-fetchers";
+import { entityResponseFetcher } from "@/api/domain-fetchers";
 import { useStore } from "@/hooks/use-store";
 import { createContext, useCallback, useContext, useMemo } from "react";
 import type { PropsWithChildren } from "react";
@@ -13,12 +10,6 @@ import useSWR from "swr";
 type FeatureState = {
   enabled: boolean;
   source?: string;
-};
-
-type FeatureFlagListItem = {
-  key: string;
-  effectiveValue?: boolean;
-  defaultValue?: boolean;
 };
 
 interface FeatureFlagsContextValue {
@@ -33,39 +24,30 @@ const featureFlagsContext = createContext<FeatureFlagsContextValue>({
   canUse: (_key: string, fallback = true) => fallback,
 });
 
-const parseAdminEmails = () =>
-  (import.meta.env.VITE_FEATURE_FLAGS_ADMIN_EMAILS as string | undefined)
-    ?.split(",")
-    .map((v) => v.trim().toLowerCase())
-    .filter(Boolean) || [];
-
-// eslint-disable-next-line react-refresh/only-export-components
-export const isFeatureFlagAdminUser = (email?: string | null) => {
-  if (!email) return false;
-  return parseAdminEmails().includes(email.toLowerCase());
-};
-
 export function FeatureFlagsProvider({ children }: PropsWithChildren) {
   const { auth } = useStore();
   const enabled = Boolean(auth?.access_token);
   const { data, isLoading } = useSWR(
-    enabled ? `${endpoint.featureFlags}?page=1&limit=200` : null,
-    paginatedResponseFetcher<FeatureFlagListItem>,
+    enabled ? [`${endpoint.featureFlags}/evaluated`, auth?.access_token] : null,
+    ([url]: [string, string]) =>
+      entityResponseFetcher<Record<string, FeatureState>>(url),
     { revalidateOnFocus: false },
   );
 
   const map = useMemo(() => {
     const source = new Map<string, boolean>();
-    const docs = Array.isArray(data?.data?.docs) ? data.data.docs : [];
-    docs.forEach((item) => {
-      source.set(item.key, item.effectiveValue ?? item.defaultValue ?? true);
+    Object.entries(data?.data || {}).forEach(([key, state]) => {
+      source.set(key, state.enabled);
     });
     return source;
   }, [data]);
 
   const evaluateFlag = useCallback(async (key: string) => {
     try {
-      const url = endpoint.featureFlagEvaluate.replace(":key", key);
+      const url = endpoint.featureFlagEvaluate.replace(
+        ":key",
+        encodeURIComponent(key),
+      );
       const result = await entityResponseFetcher<FeatureState>(url);
       return {
         enabled: Boolean(result?.data?.enabled ?? true),

@@ -50,7 +50,7 @@ import {
 } from "./memory/recorder-modal";
 import { UnpauseCapsule } from "./capsule";
 import { ExitConfirmation } from "./capsule/create/exit-confirmation";
-import ConversationFiles from "./conversation-files";
+import ConversationFiles, { type ConversationFilesModalData } from "./conversation-files";
 
 const RIGHT_PANEL_MODALS: string[] = [];
 const FULL_SCREEN_MODALS = ["create-memory", "view-memory", "file-preview"];
@@ -100,26 +100,34 @@ const MODAL_COMPONENTS = {
   "exit-confirmation": ExitConfirmation,
   "view-memory": ViewMemory,
   "view-memory-details": ViewMemoryDetails,
-  "conversation-files": ConversationFiles,
 };
 
 export default function Modal() {
-  const { state, close } = useModal();
+  const { state } = useModal();
+  const conversationFiles = state.find((modal) => modal.name === "conversation-files");
   const [isMobile, setIsMobile] = useState(false);
-
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 640);
     checkMobile();
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
+  return <>
+    <SearchMemoriesV2 open={state[0]?.name === "search-memory"} isMobile={isMobile} />
+    {conversationFiles && <ConversationFiles data={conversationFiles.props as ConversationFilesModalData} />}
+    <ModalStack isMobile={isMobile} />
+  </>;
+}
+
+function ModalStack({ isMobile }: { isMobile: boolean }) {
+  const { state, close } = useModal();
 
   // ESC key dismissal: always closes the topmost modal
   useEffect(() => {
     const modal = state?.[0];
     if (
       !modal ||
-      ["create-feedback", "invite-friends", "pricing", "setup2fa"].includes(modal.name)
+      ["search-memory", "create-feedback", "invite-friends", "pricing", "setup2fa", "conversation-files"].includes(modal.name)
     )
       return;
     const modalName = modal.name;
@@ -135,6 +143,8 @@ export default function Modal() {
   }
 
   const topModal = state[0];
+  if (topModal.name === "conversation-files") return null;
+  if (topModal.name === "search-memory") return null;
   // Feedback owns its shadcn portal, backdrop, focus trap, and dismissal.
   if (topModal.name === "create-feedback") {
     return <Feedback data={topModal.props || {}} />;

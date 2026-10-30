@@ -1,10 +1,14 @@
+import { MEMORY_CHANGED_EVENT } from "@/api/memory-lifecycle";
+import { MotionHeading } from "@/components/motion/text-reveal";
+import { useTextReveal } from "@/components/motion/use-text-reveal";
+import "./stories-motion.css";
 import endpoint from "@/api/endpoint";
 import { useModal } from "@/hooks/use-modal";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import useSWR from "swr";
+import { toast } from "sonner";
 import useSWRInfinite from "swr/infinite";
 import { StatCard } from "../component/stat-card";
-import { DoubleHeartIcon } from "@/components/icons";
 
 import totalMemoriesBg from "@/assets/icon/total-memories.svg";
 import mediaFilesBg from "@/assets/icon/media-files.svg";
@@ -21,13 +25,16 @@ import StoriesTableRow from "./components/row";
 import type { IMemory, IPagination } from "@/utility/interface";
 import {
   TypographyH1,
-  TypographyH2,
   TypographyLead,
-  TypographyMuted,
 } from "@/components/ui/typography";
 import { useDashboardHeaderActions } from "@/contexts/dashboard-header-actions";
 import { StoriesActionButtons } from "./components/stories-action-buttons";
 import { paginatedResponseFetcher } from "@/api/domain-fetchers";
+import { Button } from "@/components/ui/button";
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from "@/components/ui/empty";
+import { Bookmark, Plus, Trash2 } from "lucide-react";
+import { useSubscription } from "@/contexts/subscription";
+import { formatStorageSummary } from "@/features/pricing/storage-display";
 
 const columns = [
   { label: "topic" },
@@ -36,39 +43,26 @@ const columns = [
   { label: "" },
 ];
 
-const TableEmptyState = () => (
-  <tr>
-    <td colSpan={columns.length} className="py-12">
-      <div className="flex flex-col items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 mx-auto mb-4 bg-v3-fill-weaker rounded-full flex items-center justify-center">
-            <DoubleHeartIcon className="size-8 stroke-2 text-v3-text-weaker" />
-          </div>
-          <TypographyH2 className="mb-2 text-lg text-v3-text-strong">
-            No stories yet
-          </TypographyH2>
-          <TypographyMuted className="text-v3-text-weak">
-            Start creating your first story to see it here.
-          </TypographyMuted>
-        </div>
-      </div>
-    </td>
-  </tr>
-);
-
-const MobileListEmptyState = () => (
-  <div className="flex flex-col items-center justify-center rounded-[20px] border border-v3-stroke-weak bg-white px-6 py-12 text-center shadow-sm">
-    <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-v3-fill-weaker">
-      <DoubleHeartIcon className="size-8 stroke-2 text-v3-text-weaker" />
-    </div>
-    <TypographyH2 className="mb-2 text-lg text-v3-text-strong">
-      No stories yet
-    </TypographyH2>
-    <TypographyMuted className="text-v3-text-weak">
-      Start creating your first story to see it here.
-    </TypographyMuted>
-  </div>
-);
+const StoriesEmptyState = ({ filter, onViewAll }: { filter: string; onViewAll: () => void }) => {
+  const { open } = useModal();
+  const isAll = filter === "all";
+  const isBookmarked = filter === "bookmarked";
+  return (
+    <Empty className="stories-list-surface stories-empty-surface rounded-xl border border-stroke-neutral-weak p-6 sm:p-8">
+      <EmptyHeader>
+        <EmptyMedia>{isAll ? <span aria-hidden="true" className="text-4xl">🍄</span> : isBookmarked ? <Bookmark aria-hidden="true" className="size-8" /> : <Trash2 aria-hidden="true" className="size-8" />}</EmptyMedia>
+        <EmptyTitle>{isAll ? "No stories yet" : isBookmarked ? "No bookmarked stories" : "No deleted stories"}</EmptyTitle>
+        <EmptyDescription>{isAll ? "Start creating your first story to see it here." : isBookmarked ? "Bookmark stories to keep your favourites here." : "Deleted stories stay here for 30 days. Restore them before they are permanently removed."}</EmptyDescription>
+      </EmptyHeader>
+      <EmptyContent>
+        <Button size="lg" onClick={() => isAll ? open("create-memory") : onViewAll()}>
+          {isAll && <Plus data-icon="inline-start" aria-hidden="true" />}
+          {isAll ? "Add memory" : "View all stories"}
+        </Button>
+      </EmptyContent>
+    </Empty>
+  );
+};
 
 export default function StoriesPage() {
   const [page, setPage] = useState(1);
@@ -76,10 +70,16 @@ export default function StoriesPage() {
     localStorage.getItem(storageKeys.listmode) || "list",
   );
   const [filter, setFilter] = useState("all");
+  const changeFilter = useCallback((next: string) => {
+    if (next === filter) return;
+    setPage(1);
+    setFilter(next);
+  }, [filter]);
   const [canPromoteActionsToNav, setCanPromoteActionsToNav] = useState(() =>
     typeof window !== "undefined" ? window.innerWidth >= 1280 : true,
   );
   const { open } = useModal();
+  const { summary, usage, isProOrAbove } = useSubscription();
   const { setShowStoriesActions } = useDashboardHeaderActions();
 
   useEffect(() => {
@@ -107,7 +107,7 @@ export default function StoriesPage() {
     [userStatsData?.data?.quick_capture_pending_count],
   );
 
-  const { data, isLoading } = useSWR(
+  const { data, isLoading, error: listError, mutate: refreshList } = useSWR(
     mode === "list" ? `${endpoint.stories}?page=${page}${filterQuery}` : null,
     {
       refreshInterval: hasQuickPending ? 4000 : 0,
@@ -130,17 +130,26 @@ export default function StoriesPage() {
   const {
     data: gridPages,
     isLoading: isGridLoading,
+    error: gridError,
     size: gridPageCount,
     setSize: setGridPageCount,
+    mutate: refreshGrid,
   } = useSWRInfinite(
     getGridPageKey,
     paginatedResponseFetcher<IMemory>,
     {
       refreshInterval: hasQuickPending ? 4000 : 0,
-      revalidateFirstPage: hasQuickPending,
+      revalidateFirstPage: true,
       revalidateOnFocus: false,
+      persistSize: false,
     },
   );
+
+  useEffect(() => {
+    const refresh = () => { void refreshGrid?.().catch(() => undefined); };
+    window.addEventListener(MEMORY_CHANGED_EVENT, refresh);
+    return () => window.removeEventListener(MEMORY_CHANGED_EVENT, refresh);
+  }, [refreshGrid]);
 
   const gridData = useMemo(() => {
     const lastPage = gridPages?.[gridPages.length - 1]?.data;
@@ -157,9 +166,21 @@ export default function StoriesPage() {
   );
   const gridHasMore = Boolean(gridData?.hasNextPage);
   const loadMoreGridStories = useCallback(() => {
-    void setGridPageCount((currentSize) => currentSize + 1);
-  }, [setGridPageCount]);
+    if (gridError) return;
+    void setGridPageCount((currentSize) => currentSize + 1).catch(() => undefined);
+  }, [gridError, setGridPageCount]);
   const { data: stats } = useSWR(endpoint.memoriesStats);
+
+  const pagination = data?.data as IPagination<IMemory> | undefined;
+  const lastPage = typeof pagination?.totalPages === "number" && Number.isFinite(pagination.totalPages)
+    ? Math.max(1, pagination.totalPages) : page;
+  const recoveryPage = mode === "list" && !listError && !isLoading && pagination && page > 1
+    ? page > lastPage ? lastPage : pagination.docs?.length === 0 ? page - 1 : null
+    : null;
+  useEffect(() => {
+    if (recoveryPage !== null) setPage(recoveryPage);
+  }, [recoveryPage]);
+  const listLoading = isLoading || recoveryPage !== null;
 
   useEffect(() => {
     if (
@@ -189,22 +210,41 @@ export default function StoriesPage() {
 
   useEffect(() => () => setShowStoriesActions(false), [setShowStoriesActions]);
 
+  const resultsRef = useRef<HTMLDivElement>(null);
+  const requestFailed = Boolean(mode === "grid" ? gridError : listError);
+  const retryStories = useCallback(() => {
+    void (mode === "grid" ? refreshGrid() : refreshList()).catch(() => undefined);
+  }, [mode, refreshGrid, refreshList]);
+  const requestScope = `${mode}:${filter}:${mode === "list" ? page : "pages"}`;
+  useEffect(() => {
+    if (!requestFailed) return;
+    const id = toast.error("Stories couldn’t be loaded. Try again.", {
+      id: "stories-request-failure",
+      action: { label: "Retry", onClick: retryStories },
+    });
+    return () => { toast.dismiss(id); };
+  }, [requestFailed, requestScope, retryStories]);
+  const hasResults = mode === "grid" ? Boolean(gridData?.docs.length) : Boolean(pagination?.docs?.length);
+  const resultsLoading = !requestFailed && !hasResults && (mode === "grid" ? isGridLoading : listLoading);
+  const emptyState = <StoriesEmptyState filter={filter} onViewAll={() => changeFilter("all")} />;
+  useTextReveal(resultsRef, `${mode}:${filter}:${page}:${resultsLoading}`);
+
   return (
-    <div className="page-viewport hide-scrollbar mx-auto w-full max-w-[1900px]! overflow-hidden">
+    <div className="stories-motion page-viewport hide-scrollbar mx-auto w-full max-w-[1900px]! overflow-hidden">
       <div
         data-slot="stories-workspace"
         className="hide-scrollbar size-full min-h-0 w-full overflow-y-auto px-4"
       >
-        <div className="flex w-full max-w-none flex-col gap-6 py-4 lg:gap-8">
+        <div className="flex min-h-full w-full max-w-none flex-col gap-6 py-4 lg:gap-8">
           <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between xl:hidden">
-            <div>
-              <TypographyH1 className="font-garamond font-normal text-[32px] leading-tight text-v3-text-strong sm:leading-snug md:text-4xl md:leading-[48px] lg:text-[40px]">
+            <MotionHeading>
+              <TypographyH1 className="t-stagger-line font-garamond font-normal text-[32px] leading-tight text-v3-text-strong sm:leading-snug md:text-4xl md:leading-[48px] lg:text-[40px]">
                 My stories
               </TypographyH1>
-              <TypographyLead className="pt-2 font-inter font-normal text-v3-text-weak">
+              <TypographyLead className="t-stagger-line t-stagger-line--2 pt-2 font-inter font-normal text-v3-text-weak">
                 Add stories, images, audios - whatever, to your Memento
               </TypographyLead>
-            </div>
+            </MotionHeading>
 
             <div>
               <StoriesActionButtons
@@ -220,7 +260,7 @@ export default function StoriesPage() {
             onChangeMode={setMode}
           />
 
-          <div data-slot="stories-catalog" className="flex flex-col">
+          <div data-slot="stories-catalog" className="flex flex-1 flex-col">
             <section
               data-slot="memory-statistics"
               aria-label="Memory statistics"
@@ -254,7 +294,7 @@ export default function StoriesPage() {
                   compact
                   bgImage={storageCardBg as unknown as string}
                   subtitle="Storage"
-                  title={stats?.data?.storage || "0/0GB"}
+                  title={summary ? formatStorageSummary(usage, isProOrAbove, stats?.data?.storage) : "—"}
                   unit="used"
                   variant="green"
                 />
@@ -264,42 +304,53 @@ export default function StoriesPage() {
             <div data-slot="stories-filter-region" className="mt-6">
               <StoriesFilters
                 filter={filter}
-                onChangeFilter={setFilter}
+                onChangeFilter={changeFilter}
                 count={stats?.data?.stories_count || 0}
                 bookmarkedCount={stats?.data?.stories_bookmarked_count || 0}
                 deletedCount={stats?.data?.stories_deleted_count || 0}
               />
             </div>
 
-            <div data-slot="stories-results" className="mt-4">
-              {mode === "grid" ? (
-                <StoriesGrid
-                  data={gridData}
-                  hasMore={gridHasMore}
-                  isLoadingMore={isGridLoadingMore}
-                  onLoadMore={loadMoreGridStories}
-                />
+            <div ref={resultsRef} data-slot="stories-results" data-loading={resultsLoading} aria-busy={resultsLoading} className="stories-results-reveal mt-4 flex flex-1 flex-col">
+              {requestFailed && !hasResults ? (
+                <div className="stories-list-surface flex min-h-48 items-center justify-center rounded-xl border border-stroke-neutral-weak p-6">
+                  <Button variant="outline" onClick={retryStories}>Retry loading stories</Button>
+                </div>
+              ) : mode === "grid" ? (
+                !isGridLoading && gridData?.docs.length === 0 ? (
+                  emptyState
+                ) : (
+                  <StoriesGrid
+                    data={gridData}
+                    hasMore={gridHasMore && !requestFailed}
+                    isLoadingMore={isGridLoadingMore && !requestFailed}
+                    onLoadMore={loadMoreGridStories}
+                    onRetry={requestFailed ? retryStories : undefined}
+                  />
+                )
               ) : (
-                <>
+                !listLoading && data?.data?.docs?.length === 0 ? (
+                  emptyState
+                ) : <>
                   <div className="sm:hidden">
                     <StoriesMobileList
                       data={data?.data}
-                      loading={isLoading}
+                      loading={listLoading && !hasResults}
                       onChangePage={setPage}
-                      emptyState={<MobileListEmptyState />}
+                      emptyState={emptyState}
                     />
                   </div>
                   <div className="hidden sm:block w-full overflow-x-auto">
                     <Table
+                      className="stories-table"
                       data={data?.data}
-                      columns={columns}
-                      loading={isLoading}
+                      columns={columns.map((column, index) => index === 1 && filter === "deleted" ? { ...column, label: "Date deleted" } : column)}
+                      loading={listLoading && !hasResults}
                       loadingRow={<TableRowSekeleton />}
                       onChangePage={setPage}
                       renderRow={(r, i) => (
                         <StoriesTableRow key={i} memory={r as IMemory} />
                       )}
-                      emptyRow={<TableEmptyState />}
                     />
                   </div>
                 </>

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import UploadInput from "./upload-input";
 import UploadItem from "./upload-item";
@@ -25,10 +25,11 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 
 export interface FileState {
-  file: File;
+  file: File | null;
   result?: IFile;
   progress: number;
   id: string;
+  failed?: boolean;
 }
 
 interface UploadFilesProps {
@@ -36,15 +37,22 @@ interface UploadFilesProps {
 }
 
 export default function UploadFiles({ data: id }: UploadFilesProps) {
-  const { close } = useModal();
+  const { close, registerCloseGuard } = useModal();
   const [files, setFiles] = useState<FileState[]>([]);
+  const [attaching, setAttaching] = useState(false);
+  const attachingRef = useRef(false);
+  const mounted = useRef(true);
+  const inFlight = useRef(new Set<string>());
+  const removed = useRef(new Set<string>());
+  const filesRef = useRef(files);
+  filesRef.current = files;
   const { trigger: uploadFile } = useFileUploadFetcher();
   const { trigger: addToPost, isMutating: adding } = useFetcher(id ? `${endpoint.memories}/${id}` : null, "put");
 
   const persistAttachments = useCallback(
     (nextFiles: FileState[]) => {
       if (isEmpty(id)) {
-        localStorage.setItem(storageKeys.attachments, JSON.stringify({ files: nextFiles }));
+        localStorage.setItem(storageKeys.attachments, JSON.stringify({ files: nextFiles.filter((file) => file.result?._id && !file.failed).map((file) => ({ ...file, file: null })) }));
       }
     },
     [id],
@@ -52,77 +60,114 @@ export default function UploadFiles({ data: id }: UploadFilesProps) {
 
   const handleDeleteFile = useCallback(
     async (file: FileState) => {
-      if (file?.result?.name) {
-        await deleteFetcher(resolvePath(endpoint.files, { id: file.result.name }), { arg: {} });
-      }
-
-      setFiles((previous) => {
-        const next = previous.filter((item) => item.id !== file.id);
+      if (attachingRef.current) return;
+      try {
+        if (file?.result?.name) {
+          const result = await deleteFetcher(resolvePath(endpoint.files, { id: file.result.name }), { arg: {} });
+          if (result.success === false) return;
+        }
+        removed.current.add(file.id);
+        const next = filesRef.current.filter((item) => item.id !== file.id);
+        setFiles(next);
         persistAttachments(next);
-        return next;
-      });
+      } catch {
+        toast.error("Couldn’t remove the file. Please try again.");
+      }
     },
     [persistAttachments],
   );
 
   const handleAddToPost = useCallback(async () => {
-    if (adding) return;
+    if (attachingRef.current || adding || !files.length || files.some((file) => !file.result?._id || file.failed)) return;
+    attachingRef.current = true;
+    setAttaching(true);
     const attachments = files
       .map((file) => file.result?._id)
       .filter((value): value is string => Boolean(value));
 
-    if (isEmpty(id)) {
-      persistAttachments(files);
-    } else {
-      await addToPost({ attachments });
-      mutate(endpoint.memories);
+    try {
+      if (isEmpty(id)) {
+        persistAttachments(files);
+      } else {
+        const result = await addToPost({ attachments });
+        if (!result || result.success === false) {
+          toast.error(result?.message || "Couldn’t attach your files. Please try again.");
+          return;
+        }
+        void mutate(endpoint.memories);
+      }
+      setFiles([]);
+      attachingRef.current = false;
+      close?.("file-upload");
+    } catch {
+      toast.error("Couldn’t attach your files. Please try again.");
+    } finally {
+      attachingRef.current = false;
+      if (mounted.current) setAttaching(false);
     }
-
-    setFiles([]);
-    close?.("file-upload");
   }, [adding, addToPost, close, files, id, persistAttachments]);
 
-  const handleOnUpload = useCallback(
+  const upload = useCallback(
     async (file: FileState) => {
-      setFiles((previous) => [...previous, file]);
+      if (!file.file || inFlight.current.has(file.id)) return;
+      inFlight.current.add(file.id);
+      setFiles((previous) => previous.map((item) => item.id === file.id ? { ...item, failed: false, progress: 0 } : item));
 
       const payload = {
         file: file.file,
         onProgress: (progress: number) => {
+          if (!mounted.current || removed.current.has(file.id)) return;
           setFiles((previous) =>
             previous.map((item) => (item.id === file.id ? { ...item, progress } : item)),
           );
         },
       };
 
-      const result = await uploadFile(payload as Parameters<typeof uploadFile>[0]);
-
-      const uploadedFile = Array.isArray(result?.data) ? result?.data[0] : result?.data;
-      if (!uploadedFile) {
-        toast.error("Upload unsuccessful");
-        setFiles((previous) => previous.filter((item) => item.id !== file.id));
-        return;
+      try {
+        const result = await uploadFile(payload as Parameters<typeof uploadFile>[0]);
+        const uploadedFile = (Array.isArray(result?.data) ? result.data[0] : result?.data) as IFile | undefined;
+        if (!mounted.current || removed.current.has(file.id)) return;
+        if (result?.success === false || !uploadedFile?._id) {
+          // The shared uploader already toasts API failures and subscription gates.
+          if (result?.success !== false || !result?.message) toast.error("Upload unsuccessful. Retry or remove the file.");
+          setFiles((previous) => previous.map((item) => item.id === file.id ? { ...item, failed: true } : item));
+          return;
+        }
+        setFiles((previous) => previous.map((item) => item.id === file.id ? { ...item, result: uploadedFile, progress: 100, failed: false } : item));
+      } catch {
+        if (!mounted.current || removed.current.has(file.id)) return;
+        toast.error("Couldn’t upload the file. Retry when you’re connected.");
+        setFiles((previous) => previous.map((item) => item.id === file.id ? { ...item, failed: true } : item));
+      } finally {
+        inFlight.current.delete(file.id);
       }
-
-      toast.success(result?.message || "Success");
-      setFiles((previous) =>
-        previous.map((item) => (item.id === file.id ? { ...item, result: uploadedFile } : item)),
-      );
     },
     [uploadFile],
   );
 
+  const handleOnUpload = useCallback(async (file: FileState) => {
+    if (attachingRef.current) return;
+    setFiles((previous) => [...previous, file]);
+    await upload(file);
+  }, [upload]);
+
   useEffect(() => {
-    const attachments = localStorage.getItem(storageKeys.attachments);
-    if (attachments) {
+    mounted.current = true;
+    if (!id) {
       try {
-        const parsed = JSON.parse(attachments) as { files: FileState[] };
-        setFiles(parsed.files || []);
-      } catch (error) {
-        console.error("Failed to parse stored attachments", error);
+        const parsed = JSON.parse(localStorage.getItem(storageKeys.attachments) ?? "null") as { files?: FileState[] } | null;
+        if (Array.isArray(parsed?.files)) setFiles(parsed.files.filter((file) => file?.result?._id && !file.failed).map((file) => ({ ...file, file: null, progress: 100 })));
+      } catch {
+        // Old or unavailable storage must not prevent a fresh upload.
       }
     }
-  }, []);
+    return () => { mounted.current = false; };
+  }, [id]);
+
+  useEffect(() => registerCloseGuard?.("file-upload", () => !attachingRef.current), [registerCloseGuard]);
+
+  const busy = adding || attaching;
+  const canAttach = files.length > 0 && files.every((file) => Boolean(file.result?._id) && !file.failed);
 
   return (
     <div className="modal-container">
@@ -158,7 +203,7 @@ export default function UploadFiles({ data: id }: UploadFilesProps) {
             {files.length > 0 ? (
               <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto pr-1">
                 {files.map((file) => (
-                  <UploadItem onDelete={handleDeleteFile} file={file} key={file.id} />
+                  <UploadItem onDelete={handleDeleteFile} onRetry={upload} disabled={busy} file={file} key={file.id} />
                 ))}
               </div>
             ) : (
@@ -177,12 +222,12 @@ export default function UploadFiles({ data: id }: UploadFilesProps) {
         </CardContent>
         <Separator />
         <CardFooter className="justify-end gap-3 px-5 py-4 sm:px-6">
-          <Button type="button" variant="outline" onClick={() => close?.("file-upload")}>
+          <Button type="button" variant="outline" disabled={busy} onClick={() => close?.("file-upload")}>
             Cancel
           </Button>
-          <Button type="button" onClick={handleAddToPost} disabled={files.length === 0 || adding}>
+          <Button type="button" onClick={handleAddToPost} disabled={!canAttach || busy}>
             Add to post
-            <Spinner loading={adding} className="!size-3" />
+            <Spinner loading={busy} className="!size-3" />
           </Button>
         </CardFooter>
       </Card>
