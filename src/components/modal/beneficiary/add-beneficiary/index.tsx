@@ -15,6 +15,7 @@ import { SETTINGS_BENEFICIARIES_SWR_KEY } from "@/components/modal/settings/bene
 import { SelectGroup, type GroupSearchResultItem } from "./select-group";
 import { handleSubscriptionGateError } from "@/features/pricing/subscription-errors";
 import { isPeopleKey } from "@/api/people";
+import posthog from "@/lib/posthog";
 
 const initial = {
   email: "",
@@ -61,6 +62,12 @@ export function AddBeneficiary({
           ...(isConnection && { access_scope: "shared_only" }),
         });
         if (result?.success) {
+          if (posthog.__loaded) {
+            posthog.capture("beneficiary_invited", {
+              invitation_mode: isConnection ? "connection" : "beneficiary",
+              group_count: selectedGroups.length,
+            });
+          }
           void mutate(SETTINGS_BENEFICIARIES_SWR_KEY).catch(() => undefined);
           void mutate(isPeopleKey).catch(() => undefined);
           toast.success(result?.message);

@@ -7,6 +7,10 @@ import {
   waitGeminiLivePlaybackTail,
 } from "@/hooks/use-live-api/playback";
 import { pickRandomVoicePreviewPassage } from "@/lib/voice-preview-passages";
+import {
+  captureGeminiLiveGeneration,
+  createGeminiLiveSessionId,
+} from "@/lib/ai-observability";
 
 const VOICE_PREVIEW_SYSTEM_INSTRUCTION = `You are reading a short passage from classic literature aloud for a voice demonstration. Read naturally: varied pacing, light emotional colour where the text invites it, as if you are reading from a well-loved book—not robotic, not like a commercial. Do not greet anyone, do not mention apps, settings, or "samples", and do not add lines that are not in the user's text. Speak only the words the user sends.`;
 
@@ -76,6 +80,11 @@ export async function previewGeminiChatVoice(params: PreviewGeminiChatVoiceParam
 
   let timeoutId = 0;
   const startedAt = Date.now();
+  const aiSessionId = createGeminiLiveSessionId(crypto.randomUUID());
+  const aiTraceId = crypto.randomUUID();
+  let requestStartedAt: number | null = null;
+  let firstResponseAt: number | null = null;
+  let turnCompleted = false;
   let firstAudioEmitted = false;
 
   let rejectAbort!: (e: Error) => void;
@@ -113,11 +122,16 @@ export async function previewGeminiChatVoice(params: PreviewGeminiChatVoiceParam
       model: GEMINI_CONFIG.MODEL,
       callbacks: {
         onmessage: async (message: LiveServerMessage) => {
+          const transcript = message.serverContent?.outputTranscription?.text;
+          if (transcript) {
+            firstResponseAt ??= Date.now();
+          }
           const parts = message.serverContent?.modelTurn?.parts;
           if (parts) {
             for (const part of parts) {
               const data = part.inlineData?.data;
               if (data) {
+                firstResponseAt ??= Date.now();
                 try {
                   await scheduleGeminiLivePcmChunk(data, audioContext, gain, state);
                   if (!firstAudioEmitted) {
@@ -131,6 +145,7 @@ export async function previewGeminiChatVoice(params: PreviewGeminiChatVoiceParam
             }
           }
           if (message.serverContent?.turnComplete) {
+            turnCompleted = true;
             resolveTurn();
           }
         },
@@ -165,6 +180,7 @@ export async function previewGeminiChatVoice(params: PreviewGeminiChatVoiceParam
     }
 
     const previewPassage = pickRandomVoicePreviewPassage();
+    requestStartedAt = Date.now();
     session.sendClientContent({
       turns: [{ role: "user", parts: [{ text: previewPassage }] }],
       turnComplete: true,
@@ -187,6 +203,18 @@ export async function previewGeminiChatVoice(params: PreviewGeminiChatVoiceParam
     await Promise.race([...racers, playbackCapPromise]);
 
     await waitGeminiLivePlaybackTail(audioContext, state);
+
+    if (turnCompleted && requestStartedAt !== null) {
+      const completedAt = Date.now();
+      captureGeminiLiveGeneration({
+        sessionId: aiSessionId,
+        traceId: aiTraceId,
+        model: GEMINI_CONFIG.MODEL,
+        latencyMs: completedAt - requestStartedAt,
+        timeToFirstTokenMs: firstResponseAt === null ? null : firstResponseAt - requestStartedAt,
+        stopReason: "end_turn",
+      });
+    }
   } finally {
     if (params.signal) {
       params.signal.removeEventListener("abort", onExternalAbort);

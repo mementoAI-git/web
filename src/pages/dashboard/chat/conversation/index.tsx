@@ -40,6 +40,7 @@ import { useSubscription } from "@/contexts/subscription";
 import { VoiceModePaywall } from "@/features/pricing/voice-mode-paywall";
 import { ChatEmptyState } from "./chat-empty-state";
 import type { ConversationFilesRequest } from "./conversation-assets";
+import posthog from "@/lib/posthog";
 
 type StreamlinePayload = {
   text: string;
@@ -259,6 +260,14 @@ function ConversationSession({ id, type = "memory" }: { id: string; type?: "memo
             onChunk: (chunk) => { if (mounted.current && !controller.signal.aborted) handleChuckArrival(chunk); },
             onMeta: ({ model }) => { if (mounted.current && !controller.signal.aborted) setStreamModelLabel(model); },
           })
+          if (posthog.__loaded) {
+            posthog.capture("chat_message_sent", {
+              conversation_type: type,
+              is_new_conversation: false,
+              attachment_count: attachments.length,
+              has_reply_quote: Boolean(replyTo),
+            });
+          }
           if (mounted.current) setStreamDone(true);
           return;
         }
@@ -271,6 +280,14 @@ function ConversationSession({ id, type = "memory" }: { id: string; type?: "memo
         if (!mounted.current) return;
         if (!result?.data?.response || !result?.data?.memory_id) throw new Error("Your chat could not be opened. Please retry.");
         if (result?.data?.response) {
+          if (posthog.__loaded) {
+            posthog.capture("chat_message_sent", {
+              conversation_type: type,
+              is_new_conversation: true,
+              attachment_count: attachments.length,
+              has_reply_quote: Boolean(replyTo),
+            });
+          }
           handleOnFinishTyping(result?.data?.response)
           // Invalidate profile so primary_conversation_id is fresh
           void mutate(endpoint.profile).catch(() => undefined)
@@ -310,6 +327,7 @@ function ConversationSession({ id, type = "memory" }: { id: string; type?: "memo
       startConversation,
       handleOnFinishTyping,
       navigate,
+      type,
     ],
   );
 

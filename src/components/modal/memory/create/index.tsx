@@ -102,6 +102,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { IBeneficiary, IOnUploadPayload } from "@/utility/interface";
+import posthog from "@/lib/posthog";
 import {
   Check,
   ChevronsRight,
@@ -264,6 +265,14 @@ function CreateMemoryBase({
       try {
         const result = await trigger(payload as Parameters<typeof trigger>[0]);
         if (result?.success) {
+          if (posthog.__loaded) {
+            posthog.capture("story_created", {
+              attachment_count: uploadedFiles.length,
+              tag_count: tags.length,
+              share_audience: shareAudience,
+              selected_access_count: selectedAccess.length,
+            });
+          }
           mutate((key) => typeof key === "string" && key.startsWith(endpoint.stories));
           open("share-post", { id: result.data?._id || result.data?.id });
           setValues(initial);

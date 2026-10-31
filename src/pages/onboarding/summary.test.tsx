@@ -1,3 +1,5 @@
+import posthog from "@/lib/posthog";
+vi.mock("@/lib/posthog", () => ({ default: { __loaded: true, capture: vi.fn() } }));
 import { toast } from "sonner";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { screen, waitFor } from "@testing-library/react";
@@ -60,6 +62,7 @@ describe("onboarding summary", () => {
         stepReached: 4,
       }),
     );
+    expect(posthog.capture).toHaveBeenCalledWith("onboarding_completed", { life_area_count: 2, join_reason_count: 1, motivation_type: expect.any(String) });
     expect(setUser).toHaveBeenCalledWith(
       expect.objectContaining({ onboarding_status: "completed" }),
     );
@@ -76,6 +79,7 @@ describe("onboarding summary", () => {
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     expect(navigate).not.toHaveBeenCalled();
     expect(setUser).not.toHaveBeenCalled();
+    expect(posthog.capture).not.toHaveBeenCalled();
     expect(
       sessionStorage.getItem("memento:onboarding-flow:user-123"),
     ).not.toBeNull();

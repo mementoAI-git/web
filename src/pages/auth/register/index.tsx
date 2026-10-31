@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import * as yup from "yup";
 import AuthEntryLayout from "../components/entry-layout";
 import AuthSocials from "../components/auth-social";
+import posthog from "@/lib/posthog";
 
 const schema = yup.object().shape({
   first_name: yup.string().required("First name is required").trim(),
@@ -58,7 +59,10 @@ export default function RegisterPage() {
         referral_code: getReferralCode(),
       });
       if (result) {
-        if (result.success !== false) clearReferral();
+        if (result.success !== false) {
+          clearReferral();
+          if (posthog.__loaded) posthog.capture("account_registered");
+        }
         toast.success(result?.message);
       }
       navigate(`/verify-email?email=${encodeURIComponent(payload.email)}`, {

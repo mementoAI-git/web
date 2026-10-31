@@ -1,3 +1,5 @@
+import posthog from "@/lib/posthog";
+vi.mock("@/lib/posthog", () => ({ default: { __loaded: true, capture: vi.fn() } }));
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -41,6 +43,7 @@ describe("plan cancellation", () => {
       comment: "It’s too expensive\nMy budget changed",
     });
     expect(complete).toHaveBeenCalledOnce();
+    expect(posthog.capture).toHaveBeenCalledWith("subscription_cancelled", { cancellation_reason: "too_expensive" });
   });
   it("keeps feedback and allows retry when the provider rejects cancellation", async () => {
     vi.mocked(cancelSubscription).mockResolvedValue({
@@ -57,6 +60,7 @@ describe("plan cancellation", () => {
     await userEvent.click(screen.getByRole("button", { name: "Cancel plan" }));
     expect(error).toHaveBeenCalledWith("Provider unavailable");
     expect(complete).not.toHaveBeenCalled();
+    expect(posthog.capture).not.toHaveBeenCalled();
     expect(
       screen.getByRole("radio", { name: "I’m taking a break" }),
     ).toBeChecked();
