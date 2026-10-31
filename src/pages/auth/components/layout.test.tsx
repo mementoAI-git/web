@@ -42,7 +42,7 @@ describe("AuthLayout", () => {
     );
 
     expect(screen.getByRole("heading", { name: "Welcome" })).toBeInTheDocument();
-    expect(container.querySelector(".min-h-dvh")).toBeTruthy();
+    expect(container.querySelector(".h-dvh")).toBeTruthy();
     expect(container.querySelector("section.rounded-3xl")).toBeTruthy();
     const aside = container.querySelector("aside");
     expect(aside?.className).toMatch(/\bhidden\b/);

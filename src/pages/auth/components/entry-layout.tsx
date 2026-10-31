@@ -142,7 +142,7 @@ export default function AuthEntryLayout({
   legal?: ReactNode;
 }>) {
   return (
-    <div className="auth-entry flex min-h-dvh flex-col bg-bg-neutral font-geist text-text-neutral-strong">
+    <div className="auth-entry flex h-dvh flex-col overflow-y-auto bg-bg-neutral font-geist text-text-neutral-strong">
       <header className="auth-entry-header flex items-center justify-between">
         <Logo className="auth-entry-logo text-text-neutral-strong" />
         <ThemeSwitcher className="size-10 shrink-0 rounded-full bg-fill-neutral-weak hover:bg-fill-neutral-weaker" />

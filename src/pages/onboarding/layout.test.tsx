@@ -3,7 +3,7 @@ import { server } from "@/test/mocks/server";
 import { describe, it, expect, vi } from "vitest";
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { Routes, Route } from "react-router-dom";
+import { Link, Routes, Route } from "react-router-dom";
 import { renderWithProviders } from "@/test";
 import OnboardLayout from "./layout";
 vi.mock("@/components/layouts/auth-check", () => ({
@@ -40,4 +40,21 @@ describe("OnboardLayout", () => {
     await user.click(screen.getByRole("button", { name: "Skip" }));
     expect(await screen.findByText("Dashboard")).toBeInTheDocument();
   });
+});
+
+it("starts each route at the top instead of carrying over the previous screen's scroll", async () => {
+  renderWithProviders(
+    <Routes>
+      <Route path="/onboarding" element={<OnboardLayout />}>
+        <Route path="welcome" element={<Link to="/onboarding/nickname">Continue</Link>} />
+        <Route path="nickname" element={<h1>Your name</h1>} />
+      </Route>
+    </Routes>,
+    { route: "/onboarding/welcome", auth: true },
+  );
+  const shell = screen.getByRole("banner").parentElement!;
+  shell.scrollTop = 400;
+  await userEvent.click(screen.getByRole("link", { name: "Continue" }));
+  expect(await screen.findByRole("heading", { name: "Your name" })).toBeVisible();
+  expect(shell.scrollTop).toBe(0);
 });

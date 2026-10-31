@@ -37,7 +37,7 @@ describe("AuthCenteredSplitShell", () => {
     );
 
     const section = container.querySelector("section.rounded-3xl");
-    expect(section?.className).toMatch(/max-h-\[560px\]/);
+    expect(section?.className).not.toMatch(/max-h-/);
 
     const heroAside = container.querySelector("aside");
     expect(heroAside?.className).toMatch(/w-\[378px\]/);

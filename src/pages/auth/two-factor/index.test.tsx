@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { screen, waitFor } from "@testing-library/react";
+import { fireEvent, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { renderWithProviders } from "@/test";
@@ -174,3 +174,11 @@ it("keeps the entered code when verification is temporarily unavailable", async 
   await waitFor(() => expect(screen.getByRole("button", { name: /^verify$/i })).toBeEnabled());
   expect(screen.getAllByRole("textbox").map(input => (input as HTMLInputElement).value).join("")).toBe("123456");
 });
+
+ it("accepts a complete authenticator code supplied by mobile autofill", () => {
+   renderWithProviders(<TwoFactorPage />);
+   const inputs = screen.getAllByRole("textbox");
+   fireEvent.change(inputs[0], { target: { value: "123456" } });
+   inputs.forEach((input, index) => expect(input).toHaveValue(String(index + 1)));
+   expect(screen.getByRole("button", { name: /verify/i })).toBeEnabled();
+ });

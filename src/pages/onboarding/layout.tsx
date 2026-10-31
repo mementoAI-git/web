@@ -1,3 +1,4 @@
+import { useLayoutEffect, useRef } from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
 import AuthCheck from "@/components/layouts/auth-check";
 import { useSkipOnboarding } from "./use-skip-onboarding";
@@ -7,19 +8,22 @@ import { onboardingAssets as assets } from "./assets";
 
 export default function OnboardLayout() {
   const { pathname } = useLocation();
+  const scrollRef = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    if (scrollRef.current) scrollRef.current.scrollTop = 0;
+  }, [pathname]);
   const { skip, busy } = useSkipOnboarding();
   const isWelcome =
     pathname === "/onboarding" ||
     pathname === "/onboarding/" ||
     pathname === "/onboarding/welcome";
-  const isSummary = pathname === "/onboarding/summary";
   const isBeneficiary = pathname === "/onboarding/beneficiary";
   return (
     <div
+      ref={scrollRef}
       className={cn(
-        "flex min-h-dvh w-full flex-col bg-bg-neutral font-geist text-text-neutral-strong",
+        "flex h-dvh w-full flex-col overflow-y-auto bg-bg-neutral font-geist text-text-neutral-strong",
         !isBeneficiary && "onboarding-layout",
-        isSummary && "h-dvh overflow-x-hidden overflow-y-auto",
       )}
     >
       <header

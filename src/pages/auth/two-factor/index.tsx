@@ -33,11 +33,17 @@ export default function TwoFactorPage() {
   }, [twoFaToken, navigate]);
 
   function handleDigit(index: number, value: string) {
-    const digit = value.replace(/\D/g, "").slice(-1);
-    const next = [...code];
-    next[index] = digit;
-    setCode(next);
-    if (digit && index < 5) inputRefs.current[index + 1]?.focus();
+    const digits = value.replace(/\D/g, "").slice(0, 6);
+    const start = digits.length === 6 ? 0 : index;
+    setCode((current) => {
+      const next = [...current];
+      if (!digits) next[index] = "";
+      [...digits].forEach((digit, offset) => {
+        if (start + offset < 6) next[start + offset] = digit;
+      });
+      return next;
+    });
+    if (digits) inputRefs.current[Math.min(start + digits.length, 5)]?.focus();
   }
 
   function handleKeyDown(index: number, e: React.KeyboardEvent<HTMLInputElement>) {
@@ -116,7 +122,7 @@ export default function TwoFactorPage() {
                   type="text"
                   inputMode="numeric"
                   autoComplete={i === 0 ? "one-time-code" : "off"}
-                  maxLength={1}
+                  maxLength={6}
                   value={digit}
                   disabled={loading}
                   onChange={(e) => handleDigit(i, e.target.value)}
