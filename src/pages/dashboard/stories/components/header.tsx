@@ -112,7 +112,7 @@ export function StoriesFilters({
       <TabsList
         variant="line"
         aria-label="Filter memories"
-        className="stories-filter-tabs relative hide-scrollbar h-11 w-full justify-start gap-7 overflow-x-auto p-0"
+        className="stories-filter-tabs relative hide-scrollbar h-11 w-full justify-start gap-4 overflow-x-auto p-0"
       >
         <BaseTabs.Indicator aria-hidden="true" className="stories-filter-indicator" />
         {filters.map((item) => {
@@ -128,7 +128,7 @@ export function StoriesFilters({
                   ? "var(--text-neutral-strong)"
                   : "var(--text-neutral-weak)",
               }}
-              className="h-11 flex-none rounded-none border-0 px-0 font-inter text-sm font-medium transition-colors duration-150 after:bottom-0 after:left-1/2 after:right-auto after:w-6 after:-translate-x-1/2 after:rounded-full after:bg-text-neutral-strong hover:text-text-neutral-strong data-active:after:opacity-100 motion-reduce:transition-none sm:text-base"
+              className="h-11 flex-none rounded-none border-0 px-3 font-inter text-sm font-medium transition-colors duration-150 after:bottom-0 after:left-1/2 after:right-auto after:w-6 after:-translate-x-1/2 after:rounded-full after:bg-text-neutral-strong hover:text-text-neutral-strong data-active:after:opacity-100 motion-reduce:transition-none sm:text-base"
             >
               {item.label}
               <span className="font-inter text-xs font-normal text-text-neutral-weaker">
