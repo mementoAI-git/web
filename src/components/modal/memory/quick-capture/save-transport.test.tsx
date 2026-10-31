@@ -20,9 +20,9 @@ it.each(["overview", "quick-note"])("keeps the %s draft and reports one error us
   </StoreValueProvider>, { auth: true });
   const editor = kind === "overview" ? screen.getByRole("textbox") : screen.getByPlaceholderText("What's on your mind?");
   fireEvent.change(editor, { target: { value: "Preserve this draft" } });
-  fireEvent.click(screen.getByRole("button", { name: kind === "overview" ? "Save now" : "Save", exact: true }));
+  fireEvent.click(screen.getByRole("button", { name: kind === "overview" ? "Save now" : "Publish", exact: true }));
   await waitFor(() => expect(error).toHaveBeenCalled());
-  await waitFor(() => expect(screen.getByRole("button", { name: kind === "overview" ? "Save now" : "Save", exact: true })).toBeEnabled());
+  await waitFor(() => expect(screen.getByRole("button", { name: kind === "overview" ? "Save now" : "Publish", exact: true })).toBeEnabled());
   expect(error).toHaveBeenCalledTimes(1);
   expect(error).toHaveBeenCalledWith("Save service unavailable");
   expect(editor).toHaveValue("Preserve this draft");

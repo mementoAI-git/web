@@ -40,7 +40,11 @@ describe("QuickCaptureMediaStack", () => {
   it("renders a single image as a full-width item without overlay", () => {
     const files = [createImageFile("img-1", "one.png")];
     const { container } = renderWithProviders(
-      <QuickCaptureMediaStack files={files} voiceNoteIds={{}} onRemove={onRemove} />
+      <QuickCaptureMediaStack
+        files={files}
+        voiceNoteIds={{}}
+        onRemove={onRemove}
+      />,
     );
 
     const images = container.querySelectorAll("img");
@@ -52,28 +56,21 @@ describe("QuickCaptureMediaStack", () => {
     expect(gridContainer).toHaveClass("grid-cols-1");
   });
 
-  it("renders 3 images with the third stretching to full width (col-span-2)", () => {
+  it("renders three images without hiding attachments", () => {
     const files = [
-      createImageFile("img-1", "one.png"),
-      createImageFile("img-2", "two.png"),
-      createImageFile("img-3", "three.png"),
+      createImageFile("1", "one.png"),
+      createImageFile("2", "two.png"),
+      createImageFile("3", "three.png"),
     ];
-    const { container } = renderWithProviders(
-      <QuickCaptureMediaStack files={files} voiceNoteIds={{}} onRemove={onRemove} />
+    renderWithProviders(
+      <QuickCaptureMediaStack
+        files={files}
+        voiceNoteIds={{}}
+        onRemove={onRemove}
+      />,
     );
-
-    const images = container.querySelectorAll("img");
-    expect(images).toHaveLength(3);
-    expect(screen.queryByText(/\+.*more/)).toBeNull();
-
-    const gridContainer = container.querySelector(".grid");
-    expect(gridContainer).toHaveClass("grid-cols-2");
-
-    // The third image wrapper should have col-span-2 aspect-[2/1]
-    const thirdWrapper = images[2].closest(".col-span-2");
-    expect(thirdWrapper).toBeTruthy();
-    expect(thirdWrapper).toHaveClass("col-span-2");
-    expect(thirdWrapper).toHaveClass("aspect-[2/1]");
+    expect(screen.getAllByRole("img")).toHaveLength(3);
+    expect(screen.queryByText(/more/)).not.toBeInTheDocument();
   });
 
   it("renders 4 images in a 2x2 grid without any overlay", () => {
@@ -84,7 +81,11 @@ describe("QuickCaptureMediaStack", () => {
       createImageFile("img-4", "four.png"),
     ];
     const { container } = renderWithProviders(
-      <QuickCaptureMediaStack files={files} voiceNoteIds={{}} onRemove={onRemove} />
+      <QuickCaptureMediaStack
+        files={files}
+        voiceNoteIds={{}}
+        onRemove={onRemove}
+      />,
     );
 
     const images = container.querySelectorAll("img");
@@ -92,37 +93,42 @@ describe("QuickCaptureMediaStack", () => {
     expect(screen.queryByText(/\+.*more/)).toBeNull();
   });
 
-  it("renders only 4 images and shows +2 more overlay when 6 images are provided", () => {
-    const files = [
-      createImageFile("img-1", "one.png"),
-      createImageFile("img-2", "two.png"),
-      createImageFile("img-3", "three.png"),
-      createImageFile("img-4", "four.png"),
-      createImageFile("img-5", "five.png"),
-      createImageFile("img-6", "six.png"),
-    ];
-    const { container } = renderWithProviders(
-      <QuickCaptureMediaStack files={files} voiceNoteIds={{}} onRemove={onRemove} />
+  it("shows five collage tiles and lets users expand and remove hidden attachments", async () => {
+    const user = userEvent.setup();
+    const files = Array.from({ length: 10 }, (_, i) =>
+      createImageFile(`img-${i}`, `${i}.png`),
     );
-
-    // Only up to 4 images should be sliced and rendered
-    const images = container.querySelectorAll("img");
-    expect(images).toHaveLength(4);
-
-    // Should display '+2 more' text
-    const overlay = screen.getByText("+2 more");
-    expect(overlay).toBeInTheDocument();
-    expect(overlay.closest(".absolute")).toHaveClass("bg-black/60");
+    const { container } = renderWithProviders(
+      <QuickCaptureMediaStack
+        files={files}
+        voiceNoteIds={{}}
+        onRemove={onRemove}
+      />,
+    );
+    expect(screen.getAllByRole("img")).toHaveLength(5);
+    expect(container.querySelector(".row-span-2")).toBeTruthy();
+    await user.click(screen.getByRole("button", { name: "+5 more" }));
+    expect(screen.getAllByRole("img")).toHaveLength(10);
+    await user.click(
+      screen.getAllByRole("button", { name: "Remove attachment" })[9],
+    );
+    expect(onRemove).toHaveBeenCalledWith("img-9");
   });
 
   it("triggers onRemove when delete button is clicked on an image", async () => {
     const user = userEvent.setup();
     const files = [createImageFile("img-1", "one.png")];
     renderWithProviders(
-      <QuickCaptureMediaStack files={files} voiceNoteIds={{}} onRemove={onRemove} />
+      <QuickCaptureMediaStack
+        files={files}
+        voiceNoteIds={{}}
+        onRemove={onRemove}
+      />,
     );
 
-    const deleteBtn = screen.getByRole("button", { name: /remove attachment/i });
+    const deleteBtn = screen.getByRole("button", {
+      name: /remove attachment/i,
+    });
     expect(deleteBtn).toBeInTheDocument();
 
     await user.click(deleteBtn);
@@ -136,7 +142,11 @@ describe("QuickCaptureMediaStack", () => {
       createVideoFile("vid-1", "movie.mp4"),
     ];
     const { container } = renderWithProviders(
-      <QuickCaptureMediaStack files={files} voiceNoteIds={{}} onRemove={onRemove} />
+      <QuickCaptureMediaStack
+        files={files}
+        voiceNoteIds={{}}
+        onRemove={onRemove}
+      />,
     );
 
     // Verify image rendered in grid

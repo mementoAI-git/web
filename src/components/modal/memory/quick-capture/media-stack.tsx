@@ -18,7 +18,11 @@ function formatTimestamp(totalSec: number): string {
 }
 
 function mimeOf(f: IOnUploadPayload): string {
-  return f.file?.type || f.uploadedFile?.type || inferMimeType(f.file?.name ?? f.uploadedFile?.name ?? "");
+  return (
+    f.file?.type ||
+    f.uploadedFile?.type ||
+    inferMimeType(f.file?.name ?? f.uploadedFile?.name ?? "")
+  );
 }
 
 function durationOf(f: IOnUploadPayload): number {
@@ -33,8 +37,10 @@ function durationOf(f: IOnUploadPayload): number {
 }
 
 function mediaSrc(f: IOnUploadPayload): string {
-  if (f.base64 && String(f.base64).startsWith("data:")) return f.base64 as string;
-  if (typeof f.uploadedFile?.url === "string" && f.uploadedFile.url) return f.uploadedFile.url;
+  if (f.base64 && String(f.base64).startsWith("data:"))
+    return f.base64 as string;
+  if (typeof f.uploadedFile?.url === "string" && f.uploadedFile.url)
+    return f.uploadedFile.url;
   return "";
 }
 
@@ -104,6 +110,7 @@ export function QuickCaptureMediaStack({
   voiceNoteIds: Record<string, true>;
   onRemove: (id: string) => void;
 }) {
+  const [expanded, setExpanded] = useState(false);
   const [playingId, setPlayingId] = useState<string | null>(null);
   const [progressById, setProgressById] = useState<Record<string, number>>({});
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -141,7 +148,10 @@ export function QuickCaptureMediaStack({
     const el = new Audio(src);
     const onTime = () => {
       if (el.duration && Number.isFinite(el.duration)) {
-        setProgressById((m) => ({ ...m, [id]: Math.min(1, el.currentTime / el.duration) }));
+        setProgressById((m) => ({
+          ...m,
+          [id]: Math.min(1, el.currentTime / el.duration),
+        }));
       }
     };
     el.addEventListener("timeupdate", onTime);
@@ -178,75 +188,82 @@ export function QuickCaptureMediaStack({
     setPlayingId(id);
   };
 
-  // Separate images and other files
-  const imageFiles = files.filter(
+  const visualFiles = files.filter(
     (f) =>
-      mimeOf(f).startsWith("image/") &&
-      (mediaSrc(f) || f.base64) &&
-      !(f.progress !== undefined && f.progress < 100)
+      /^(image|video)\//.test(mimeOf(f)) && mediaSrc(f) && f.progress === 100,
   );
-
-  const nonImageFiles = files.filter(
-    (f) =>
-      !(
-        mimeOf(f).startsWith("image/") &&
-        (mediaSrc(f) || f.base64) &&
-        !(f.progress !== undefined && f.progress < 100)
-      )
-  );
+  const nonImageFiles = files.filter((f) => !visualFiles.includes(f));
+  const visibleFiles = expanded ? visualFiles : visualFiles.slice(0, 5);
 
   return (
     <div className="flex flex-col gap-3">
-      {/* Render images in grid */}
-      {imageFiles.length > 0 && (
+      {visualFiles.length > 0 && (
         <div
           className={cn(
-            "grid gap-2",
-            imageFiles.length === 1 ? "grid-cols-1" : "grid-cols-2"
+            "grid gap-1",
+            visualFiles.length === 1
+              ? "grid-cols-1"
+              : visualFiles.length < 4 || expanded
+                ? "grid-cols-2"
+                : "h-[175px] grid-cols-[1.6fr_1fr_1fr] grid-rows-2",
           )}
         >
-          {imageFiles.slice(0, 4).map((f, index) => {
-            const src = mediaSrc(f);
-            const isLastOfFour = index === 3;
-            const hasMore = imageFiles.length > 4;
-            const isColSpan = imageFiles.length === 3 && index === 2;
-
-            return (
-              <div
-                key={f.id}
-                className={cn(
-                  "relative group overflow-visible",
-                  imageFiles.length === 1 ? "w-full" : "aspect-square",
-                  isColSpan && "col-span-2 aspect-[2/1]"
-                )}
+          {visibleFiles.map((f, index) => (
+            <div
+              key={f.id}
+              className={cn(
+                "group relative min-h-0 min-w-0",
+                visualFiles.length >= 4 &&
+                  !expanded &&
+                  index === 0 &&
+                  "row-span-2",
+                (visualFiles.length < 4 || expanded) && "h-40",
+              )}
+            >
+              <button
+                type="button"
+                onClick={() => onRemove(f.id)}
+                className="absolute right-1 top-1 z-10 flex size-6 items-center justify-center rounded-full border border-stroke-neutral-weak bg-bg-neutral text-icon-neutral-strong opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 max-md:opacity-100"
+                aria-label="Remove attachment"
               >
+                <TimesIcon width={8} height={8} />
+              </button>
+              {mimeOf(f).startsWith("video/") ? (
+                <video
+                  src={mediaSrc(f)}
+                  controls
+                  playsInline
+                  preload="metadata"
+                  className="size-full rounded-xl bg-fill-neutral-strong object-cover"
+                />
+              ) : (
+                <img
+                  src={mediaSrc(f)}
+                  alt={f.file?.name || f.uploadedFile?.name || "Attached image"}
+                  className="size-full rounded-xl object-cover"
+                />
+              )}
+              {!expanded && index === 4 && visualFiles.length > 5 && (
                 <button
                   type="button"
-                  onClick={() => onRemove(f.id)}
-                  className="absolute -top-1.5 -right-1.5 z-25 flex size-7 items-center justify-center rounded-full border-2 border-background bg-fill-neutral-weaker text-icon-neutral-strong shadow-sm hover:bg-fill-neutral-weak"
-                  aria-label="Remove attachment"
+                  onClick={() => setExpanded(true)}
+                  className="absolute inset-0 flex items-center justify-center rounded-xl bg-overlay-backdrop text-base font-medium text-text-inverse-strong"
                 >
-                  <TimesIcon width={8} height={8} />
+                  +{visualFiles.length - 5} more
                 </button>
-                <img
-                  src={src || (f.base64 as string)}
-                  alt=""
-                  className={cn(
-                    "rounded-xl object-cover w-full h-full",
-                    imageFiles.length === 1 && "max-h-48"
-                  )}
-                />
-                {isLastOfFour && hasMore && (
-                  <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] rounded-xl flex items-center justify-center pointer-events-none">
-                    <span className="font-inter text-white text-base font-bold">
-                      +{imageFiles.length - 4} more
-                    </span>
-                  </div>
-                )}
-              </div>
-            );
-          })}
+              )}
+            </div>
+          ))}
         </div>
+      )}
+      {expanded && (
+        <button
+          type="button"
+          className="self-start text-xs text-text-neutral-weak underline"
+          onClick={() => setExpanded(false)}
+        >
+          Show fewer attachments
+        </button>
       )}
 
       {nonImageFiles.map((f) => {
@@ -263,7 +280,9 @@ export function QuickCaptureMediaStack({
               key={f.id}
               className="relative flex items-center justify-center rounded-xl border border-dashed border-stroke-neutral-weaker py-8"
             >
-              <span className="font-inter text-xs text-text-neutral-weaker">Uploading… {f.progress}%</span>
+              <span className="font-inter text-xs text-text-neutral-weaker">
+                Uploading… {f.progress}%
+              </span>
             </div>
           );
         }
@@ -279,7 +298,7 @@ export function QuickCaptureMediaStack({
               >
                 <TimesIcon width={8} height={8} />
               </button>
-              <div className="relative overflow-hidden rounded-xl bg-black">
+              <div className="relative overflow-hidden rounded-xl bg-fill-neutral-strong">
                 <VideoPlayer src={src} />
               </div>
             </div>
@@ -288,9 +307,9 @@ export function QuickCaptureMediaStack({
 
         if (isVoice) {
           const title =
-            f.file?.name || f.uploadedFile?.name ?
-              `Voice note · ${f.file?.name || f.uploadedFile?.name}`
-            : `Voice note · ${formatTimestamp(dur)}`;
+            f.file?.name || f.uploadedFile?.name
+              ? `Voice note · ${f.file?.name || f.uploadedFile?.name}`
+              : `Voice note · ${formatTimestamp(dur)}`;
           const progress = playingId === f.id ? (progressById[f.id] ?? 0) : 0;
           const bars = barHeightsForId(f.id);
 
@@ -308,20 +327,31 @@ export function QuickCaptureMediaStack({
                 <TimesIcon width={8} height={8} />
               </button>
               <div className="min-w-0 pr-9">
-                <p className="truncate font-inter text-[13px] leading-snug text-text-inverse-strong">{title}</p>
+                <p className="truncate font-inter text-[13px] leading-snug text-text-inverse-strong">
+                  {title}
+                </p>
                 <div className="mt-3 flex items-end gap-3">
                   <div className="min-w-0 flex-1 pt-0.5">
-                    <VoiceWaveformProgress progress={progress} barHeights={bars} />
+                    <VoiceWaveformProgress
+                      progress={progress}
+                      barHeights={bars}
+                    />
                   </div>
                   <button
                     type="button"
                     className="flex size-10 shrink-0 items-center justify-center rounded-full text-text-inverse-strong transition-opacity hover:opacity-90"
-                    aria-label={playingId === f.id ? "Pause voice note" : "Play voice note"}
+                    aria-label={
+                      playingId === f.id
+                        ? "Pause voice note"
+                        : "Play voice note"
+                    }
                     onClick={() => toggleVoicePlay(f.id, src)}
                   >
-                    {playingId === f.id ?
+                    {playingId === f.id ? (
                       <Pause className="size-5 fill-current" />
-                    : <Play className="size-5 fill-current pl-0.5" />}
+                    ) : (
+                      <Play className="size-5 fill-current pl-0.5" />
+                    )}
                   </button>
                 </div>
               </div>
@@ -349,7 +379,11 @@ export function QuickCaptureMediaStack({
                 aria-label={playingId === f.id ? "Pause audio" : "Play audio"}
                 onClick={() => toggleAudioPlay(f.id, src)}
               >
-                {playingId === f.id ? <Pause className="size-4" /> : <Play className="size-4 pl-0.5" />}
+                {playingId === f.id ? (
+                  <Pause className="size-4" />
+                ) : (
+                  <Play className="size-4 pl-0.5" />
+                )}
               </button>
               <div className="min-w-0 flex-1 pl-1">
                 <WaveformBars active={playingId === f.id} />
