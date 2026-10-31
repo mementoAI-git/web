@@ -1,3 +1,5 @@
+import posthog from "@/lib/posthog";
+vi.mock("@/lib/posthog", () => ({ default: { __loaded: true, capture: vi.fn() } }));
 import { screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import userEvent from "@testing-library/user-event";
@@ -32,6 +34,7 @@ describe("existing invitation flow", () => {
       await userEvent.click(
         screen.getByRole("button", { name: "Send invite" }),
       );
+      expect(posthog.capture).toHaveBeenCalledWith("beneficiary_invited", { invitation_mode: mode, group_count: 0 });
       const payload = trigger.mock.calls.at(-1)?.[0];
       expect(payload).toMatchObject({
         email: "ada@example.com",

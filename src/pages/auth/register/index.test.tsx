@@ -1,3 +1,5 @@
+import posthog from "@/lib/posthog";
+vi.mock("@/lib/posthog", () => ({ default: { __loaded: true, capture: vi.fn() } }));
 import { captureReferral, getReferralCode } from "@/features/referrals/attribution";
 import { describe, expect, it, vi } from "vitest";
 import { screen, waitFor } from "@testing-library/react";
@@ -122,6 +124,7 @@ describe("RegisterPage", () => {
 
     await waitFor(() => {
       expect(getReferralCode()).toBeUndefined();
+      expect(posthog.capture).toHaveBeenCalledWith("account_registered");
       expect(mockNavigate).toHaveBeenCalledWith(
         "/verify-email?email=test%40example.com",
         { state: { verificationSentAt: expect.any(Number) } },

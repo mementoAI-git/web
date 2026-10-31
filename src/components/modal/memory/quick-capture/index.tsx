@@ -63,6 +63,7 @@ import type {
   DailyPromptCapturePayload,
   QuickCaptureDraft,
 } from "@/lib/quick-capture-drafts";
+import posthog from "@/lib/posthog";
 import {
   htmlFromQuickCaptureNote,
   parseQuickCaptureDraftJson,
@@ -732,6 +733,13 @@ export function QuickCapture(props: { isMobile?: boolean; data?: unknown }) {
         ...reflectionExtra,
       });
       if (result?.success) {
+        if (posthog.__loaded) {
+          posthog.capture("quick_note_saved", {
+            attachment_count: attachmentIds.length,
+            beneficiary_count: selectedBeneficiaryIds.length,
+            from_daily_prompt: Boolean(dailyPrompt),
+          });
+        }
         completed.current = true;
         toast.success(
           "Note saved. Details will finish processing in the background.",
