@@ -495,7 +495,7 @@ export function ViewMemory({ data, isMobile }: ViewMemoryProps) {
 
   const storyContent = (
     <section className="flex min-h-0 min-w-0 flex-col pl-4 pr-1">
-      <div className="hide-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain px-1 pb-2 pt-8 xl:px-3 xl:pt-10">
+      <div className="hide-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain p-0 text-left">
         <div className="flex min-h-full min-w-0 max-w-[760px] flex-col">
           {loading ? (
             <ViewMemorySkeleton />

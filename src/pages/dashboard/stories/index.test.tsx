@@ -278,14 +278,14 @@ describe("StoriesPage", () => {
     expect(viewport).toHaveClass("max-w-[1900px]!");
   });
 
-  it("keeps memory statistics permanently visible without collapse controls", () => {
+  it("hides memory statistics without collapse controls", () => {
     const { container } = renderWithProviders(<StoriesPage />, {
       route: "/stories",
       auth: true,
     });
 
     expect(screen.queryByText("At a glance")).not.toBeInTheDocument();
-    expect(screen.getByText("Total Memories")).toBeVisible();
+    expect(screen.getByText("Total Memories")).not.toBeVisible();
     expect(
       container.querySelector('[data-slot="memory-statistics"]'),
     ).toHaveAttribute("aria-label", "Memory statistics");
@@ -294,7 +294,7 @@ describe("StoriesPage", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("uses 24px from statistics to filters and 16px from filters to results", () => {
+  it("removes the hidden statistics spacing and keeps 16px from filters to results", () => {
     const { container } = renderWithProviders(<StoriesPage />, {
       route: "/stories",
       auth: true,
@@ -302,17 +302,20 @@ describe("StoriesPage", () => {
 
     expect(
       container.querySelector('[data-slot="stories-filter-region"]'),
-    ).toHaveClass("mt-6");
+    ).not.toHaveClass("mt-6");
     expect(
       container.querySelector('[data-slot="stories-results"]'),
     ).toHaveClass("mt-4");
   });
 
-  it("places memory filters below the at-a-glance cards", () => {
+  it("keeps memory filters visible while statistics are hidden", () => {
     renderWithProviders(<StoriesPage />, { route: "/stories", auth: true });
 
     const finalStatCard = screen.getByText("Storage");
     const filters = screen.getByRole("tablist", { name: "Filter memories" });
+
+    expect(finalStatCard).not.toBeVisible();
+    expect(filters).toBeVisible();
 
     expect(
       finalStatCard.compareDocumentPosition(filters) &

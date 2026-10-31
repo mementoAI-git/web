@@ -262,6 +262,7 @@ export default function StoriesPage() {
 
           <div data-slot="stories-catalog" className="flex flex-1 flex-col">
             <section
+              hidden
               data-slot="memory-statistics"
               aria-label="Memory statistics"
             >
@@ -301,7 +302,7 @@ export default function StoriesPage() {
               </div>
             </section>
 
-            <div data-slot="stories-filter-region" className="mt-6">
+            <div data-slot="stories-filter-region">
               <StoriesFilters
                 filter={filter}
                 onChangeFilter={changeFilter}

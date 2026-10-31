@@ -14,7 +14,7 @@ vi.mock("@/api/fetcher", async (original) => ({
   postFetcher: vi.fn(),
 }));
 let append: (text: string) => void;
-let phase: "idle" | "starting" | "recording" | "transcribing" = "idle";
+let phase: "idle" | "starting" | "recording" | "paused" | "transcribing" = "idle";
 const cancel = vi.fn();
 const retry = vi.fn();
 let captureError = "";
@@ -57,6 +57,7 @@ beforeEach(() => {
   captureError = "";
   canRetry = false;
   vi.spyOn(toast, "error").mockClear();
+  vi.spyOn(toast, "success").mockClear();
   vi.mocked(postFetcher).mockReset();
 });
 it("uses the recording shell while the microphone starts and preserves the draft on cancel", async () => {
@@ -101,6 +102,14 @@ it("uses the recording shell while the microphone starts and preserves the draft
   expect(screen.getByRole("textbox")).toHaveValue("My draft");
   expect(stop).toBeEnabled();
   expect(pause).toBeEnabled();
+  expect(pause.querySelector("svg")).toHaveClass("lucide-pause");
+  act(() => {
+    phase = "paused";
+    refresh();
+  });
+  expect(screen.getByRole("button", { name: "Resume recording" })).toBe(pause);
+  expect(pause).toHaveAttribute("aria-pressed", "true");
+  expect(pause.querySelector("svg")).toHaveClass("lucide-play");
   await user.click(cancelButton);
   expect(cancel).toHaveBeenCalledOnce();
   act(() => {
@@ -224,6 +233,7 @@ it("saves the full transcript privately using quick capture", async () => {
       },
     }),
   );
+  expect(toast.success).toHaveBeenCalledWith("Quick note saved. Details will finish processing in the background.");
   expect(screen.getByRole("textbox")).toHaveValue("");
 });
 it("preserves the transcript if saving fails", async () => {

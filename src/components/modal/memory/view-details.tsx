@@ -1,7 +1,6 @@
 import type { ComponentProps, ReactNode } from "react";
 import useSWR from "swr";
 import DOMPurify from "isomorphic-dompurify";
-import { Check, Circle } from "lucide-react";
 import { useModal } from "@/hooks/use-modal";
 import endpoint from "@/api/endpoint";
 import type { IMemory } from "@/utility/interface";
@@ -95,6 +94,20 @@ export function StoryDetailsContent({ memory }: { memory: IMemory }) {
       </section>
       <section>
         <h3 className="text-base font-semibold text-text-neutral-strong">
+          Story Overview
+        </h3>
+        <div className="mt-2 space-y-2 text-sm text-text-neutral-weak">
+          <p>
+            {memory.attachments.length}{" "}
+            {memory.attachments.length === 1 ? "attachment" : "attachments"}
+          </p>
+          <p>
+            {words === 0 ? 0 : Math.max(1, Math.ceil(words / 200))} min read
+          </p>
+        </div>
+      </section>
+      <section>
+        <h3 className="text-base font-semibold text-text-neutral-strong">
           Tags
         </h3>
         <div className="mt-2 flex flex-wrap gap-2">
@@ -109,50 +122,6 @@ export function StoryDetailsContent({ memory }: { memory: IMemory }) {
             ))
           ) : (
             <span className="text-sm text-text-neutral-weaker">No tags</span>
-          )}
-        </div>
-      </section>
-      <section>
-        <h3 className="text-base font-semibold text-text-neutral-strong">
-          Story Overview
-        </h3>
-        <div className="mt-2 space-y-2 text-sm text-text-neutral-weak">
-          <p>
-            {memory.attachments.length}{" "}
-            {memory.attachments.length === 1 ? "attachment" : "attachments"}
-          </p>
-          <p>
-            {words === 0 ? 0 : Math.max(1, Math.ceil(words / 200))} min read
-          </p>
-        </div>
-      </section>
-      <section className="rounded-2xl border border-stroke-neutral-weak bg-fill-neutral-weaker p-4">
-        <div className="flex items-center justify-between gap-3 py-1 text-sm text-text-neutral-strong">
-          <span>Title</span>
-          {memory.title.trim() ? (
-            <Check
-              aria-label="Title complete"
-              className="size-4 text-icon-success-strong"
-            />
-          ) : (
-            <Circle
-              aria-label="Title incomplete"
-              className="size-4 text-icon-neutral-weaker"
-            />
-          )}
-        </div>
-        <div className="flex items-center justify-between gap-3 py-1 text-sm text-text-neutral-strong">
-          <span>Story text</span>
-          {words > 0 ? (
-            <Check
-              aria-label="Story text complete"
-              className="size-4 text-icon-success-strong"
-            />
-          ) : (
-            <Circle
-              aria-label="Story text incomplete"
-              className="size-4 text-icon-neutral-weaker"
-            />
           )}
         </div>
       </section>

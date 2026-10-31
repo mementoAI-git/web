@@ -23,6 +23,8 @@ export type QuickCaptureDraftAttachment = {
 export type QuickCaptureDraft = {
   note?: string;
   selectedBeneficiaryIds?: string[];
+  selectedGroupIds?: string[];
+  visibility?: "private" | "everyone";
   daily_prompt?: DailyPromptCapturePayload;
   attachments?: QuickCaptureDraftAttachment[];
 };

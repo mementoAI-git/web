@@ -18,8 +18,8 @@ describe("Story Details", () => {
     expect(screen.getByRole("heading", { name: "Visibility" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Story Overview" })).toBeInTheDocument();
     expect(screen.queryByText("Properties")).not.toBeInTheDocument();
-    expect(screen.getByLabelText("Title complete")).toBeInTheDocument();
-    expect(screen.getByLabelText("Story text complete")).toBeInTheDocument();
+    expect(screen.queryByText("Title")).not.toBeInTheDocument();
+    expect(screen.queryByText("Story text")).not.toBeInTheDocument();
   });
 
   it("shows who can access a shared story", () => {
@@ -27,9 +27,8 @@ describe("Story Details", () => {
     expect(screen.getByText("Shared with Alice")).toBeInTheDocument();
   });
 
-  it("treats an empty rich text body as incomplete", () => {
+  it("shows zero reading time for an empty rich text body", () => {
     renderWithProviders(<StoryDetailsContent memory={{ ...memory, body: "<p></p>" }} />);
-    expect(screen.getByLabelText("Story text incomplete")).toBeInTheDocument();
     expect(screen.getByText("0 min read")).toBeInTheDocument();
   });
 });

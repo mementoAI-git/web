@@ -32,16 +32,16 @@ function AuthCenteredHeroAside() {
  */
 export function AuthCenteredSplitShell({ children }: PropsWithChildren) {
   return (
-    <div className="flex min-h-dvh flex-col bg-bg-neutral px-4 py-6 sm:px-6 sm:py-8 lg:px-10 lg:py-10">
+    <div className="flex h-dvh flex-col overflow-y-auto bg-bg-neutral px-4 py-6 sm:px-6 sm:py-8 lg:px-10 lg:py-10">
       <header className="mx-auto flex w-full shrink-0 items-center justify-between gap-4">
         <Logo className="text-foreground" />
         <ThemeSwitcher className="size-10 shrink-0 rounded-full bg-fill-neutral-weak hover:bg-fill-neutral-weaker" />
       </header>
 
       <main className="mx-auto flex w-full flex-1 items-center justify-center py-6 sm:py-8 lg:py-12">
-        <section className="flex w-full max-h-[560px] max-w-4xl gap-6 overflow-hidden rounded-3xl">
+        <section className="flex w-full max-w-4xl gap-6 rounded-3xl">
           <AuthCenteredHeroAside />
-          <div className="flex min-h-0 max-h-full w-full flex-col items-start justify-center overflow-y-auto scrollbar-hide p-6 sm:p-8 md:w-[420px] md:p-10">
+          <div className="flex min-w-0 w-full flex-col items-start justify-center p-6 sm:p-8 md:w-[420px] md:p-10">
             {children}
           </div>
         </section>
@@ -98,7 +98,7 @@ function AuthMarketingPanel({ className }: { className?: string }) {
 /** Full-viewport auth shell: marketing panel + scrollable form column. Form column is first on mobile. */
 export function AuthSplitShell({ children }: PropsWithChildren) {
   return (
-    <div className="relative min-h-dvh bg-background">
+    <div className="relative h-dvh overflow-y-auto bg-background">
       <header className="absolute right-4 top-5 sm:right-6">
         <ThemeSwitcher className="size-10 shrink-0 rounded-full bg-fill-neutral-weak hover:bg-fill-neutral-weaker" />
       </header>
