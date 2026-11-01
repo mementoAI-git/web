@@ -11,7 +11,7 @@ import { useStore } from "@/hooks/use-store";
 import useFetcher from "@/hooks/use-fetcher";
 import endpoint from "@/api/endpoint";
 import { toast } from "sonner";
-import { previewGeminiChatVoice } from "@/lib/gemini-voice-preview";
+import { previewGeminiChatVoice, type VoicePreviewToken } from "@/lib/gemini-voice-preview";
 import { previewElevenLabsVoice } from "@/lib/elevenlabs-voice-preview";
 import { useRequestRecovery } from "@/hooks/use-request-recovery";
 import { cn } from "@/lib/utils";
@@ -135,7 +135,7 @@ export default function Voices() {
             voiceName,
             fetchToken: async () => {
               const res = await fetchEphemeralToken();
-              return (res?.data as { token?: string } | undefined)?.token;
+              return res?.data as VoicePreviewToken | undefined;
             },
             signal: ac.signal,
           });

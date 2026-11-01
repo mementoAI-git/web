@@ -23,9 +23,14 @@ function getAudioContextCtor(): (typeof AudioContext) | null {
   return window.AudioContext ?? w.webkitAudioContext ?? null;
 }
 
+export type VoicePreviewToken = {
+  token?: string | null;
+  live?: { model?: string; voice?: { name?: string } };
+};
+
 export type PreviewGeminiChatVoiceParams = {
   voiceName: string;
-  fetchToken: () => Promise<string | null | undefined>;
+  fetchToken: () => Promise<VoicePreviewToken | string | null | undefined>;
   /** Cancels an in-flight preview (e.g. user picked another voice). */
   signal?: AbortSignal;
   onFirstAudio?: (latencyMs: number) => void;
@@ -41,7 +46,14 @@ export async function previewGeminiChatVoice(params: PreviewGeminiChatVoiceParam
     throw new Error("Web Audio API is not available");
   }
 
-  const token = (await params.fetchToken())?.trim();
+  if (params.signal?.aborted) throw new DOMException("Aborted", "AbortError");
+  const descriptor = await params.fetchToken();
+  const token = (typeof descriptor === "string" ? descriptor : descriptor?.token)?.trim();
+  const live = typeof descriptor === "object" ? descriptor?.live : undefined;
+  const model = live?.model || GEMINI_CONFIG.MODEL;
+  if (live?.voice?.name && live.voice.name !== params.voiceName) {
+    throw new Error("Voice selection changed. Please select the voice again.");
+  }
   if (!token) {
     throw new Error("Missing voice preview token");
   }
@@ -74,9 +86,13 @@ export async function previewGeminiChatVoice(params: PreviewGeminiChatVoiceParam
   };
 
   let resolveTurn!: () => void;
-  const turnCompletePromise = new Promise<void>((resolve) => {
+  let rejectTurn!: (error: Error) => void;
+  const turnCompletePromise = new Promise<void>((resolve, reject) => {
     resolveTurn = resolve;
+    rejectTurn = reject;
   });
+  // The socket can report setup failure before connect() resolves.
+  void turnCompletePromise.catch(() => undefined);
 
   let timeoutId = 0;
   const startedAt = Date.now();
@@ -119,7 +135,7 @@ export async function previewGeminiChatVoice(params: PreviewGeminiChatVoiceParam
     await audioContext.resume();
 
     const sessionPromise = client.live.connect({
-      model: GEMINI_CONFIG.MODEL,
+      model,
       callbacks: {
         onmessage: async (message: LiveServerMessage) => {
           const transcript = message.serverContent?.outputTranscription?.text;
@@ -150,7 +166,7 @@ export async function previewGeminiChatVoice(params: PreviewGeminiChatVoiceParam
           }
         },
         onerror: () => {
-          resolveTurn();
+          rejectTurn(new Error("Could not connect to the selected Gemini Live voice."));
         },
         onclose: () => {
           resolveTurn();
@@ -160,7 +176,6 @@ export async function previewGeminiChatVoice(params: PreviewGeminiChatVoiceParam
         responseModalities: [Modality.AUDIO],
         systemInstruction: VOICE_PREVIEW_SYSTEM_INSTRUCTION,
         speechConfig: {
-          languageCode: "en-US",
           voiceConfig: {
             prebuiltVoiceConfig: {
               voiceName: params.voiceName,
@@ -168,7 +183,6 @@ export async function previewGeminiChatVoice(params: PreviewGeminiChatVoiceParam
           },
         },
         outputAudioTranscription: {
-          languageCode: "en-US",
         },
       },
     });
@@ -209,7 +223,7 @@ export async function previewGeminiChatVoice(params: PreviewGeminiChatVoiceParam
       captureGeminiLiveGeneration({
         sessionId: aiSessionId,
         traceId: aiTraceId,
-        model: GEMINI_CONFIG.MODEL,
+        model,
         latencyMs: completedAt - requestStartedAt,
         timeToFirstTokenMs: firstResponseAt === null ? null : firstResponseAt - requestStartedAt,
         stopReason: "end_turn",

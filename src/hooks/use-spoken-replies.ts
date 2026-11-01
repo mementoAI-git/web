@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { requestSpokenAudio, spokenReplyChunks } from "@/features/speech/spoken-audio";
+import { requestSpokenAudio, takeSpokenStream, type SpokenAudio } from "@/features/speech/spoken-audio";
 
 function speechErrorMessage(error: unknown, phase: "request" | "playback") {
   if (phase === "playback") {
@@ -22,14 +22,29 @@ function speechErrorMessage(error: unknown, phase: "request" | "playback") {
   return "Couldn’t generate this reply’s audio. Check your connection and try again.";
 }
 
-/** Narrate new completed replies using the saved Gemini voice; history stays silent. */
+type ClipResult = { data: SpokenAudio; error: null } | { data: null; error: unknown };
+type SpeechSession = {
+  controller: AbortController;
+  text: string;
+  remainder: string;
+  queue: string[];
+  first: boolean;
+  complete: boolean;
+  running: boolean;
+  pending?: Promise<ClipResult>;
+  audio?: HTMLAudioElement;
+  url?: string;
+  finish?: () => void;
+};
+
+/** Narrate new streamed sentences; historical replies stay silent. */
 export function useSpokenReplies(conversationId: string, voiceActive = false) {
   const supported = typeof window !== "undefined" && typeof Audio === "function" && typeof URL.createObjectURL === "function";
   const [enabled, setEnabled] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const enabledRef = useRef(false);
   const voiceActiveRef = useRef(voiceActive);
-  const current = useRef<{ controller: AbortController; audio?: HTMLAudioElement; url?: string; finish?: () => void } | null>(null);
+  const current = useRef<SpeechSession | null>(null);
 
   const stop = useCallback(() => {
     const session = current.current;
@@ -57,29 +72,36 @@ export function useSpokenReplies(conversationId: string, voiceActive = false) {
     if (!enabledRef.current) stop();
   }, [supported, stop]);
 
-  const speak = useCallback((text: string) => {
-    if (!supported || !enabledRef.current || voiceActiveRef.current) return;
-    const chunks = spokenReplyChunks(text);
-    if (!chunks.length) return;
-    stop();
-    const session: NonNullable<typeof current.current> = { controller: new AbortController() };
-    current.current = session;
+  const load = useCallback((session: SpeechSession, chunk: string): Promise<ClipResult> =>
+    requestSpokenAudio(chunk, session.controller.signal)
+      .then(data => ({data, error: null}), error => ({data: null, error})), []);
+
+  const prefetch = useCallback((session: SpeechSession) => {
+    // One clip ahead: keep requests bounded even when text arrives much faster than speech.
+    if (!session.pending && session.queue.length) session.pending = load(session, session.queue.shift()!);
+  }, [load]);
+
+  const pump = useCallback(function pumpSession(session: SpeechSession) {
+    if (session.running) { prefetch(session); return; }
+    if (!session.pending && !session.queue.length) return;
+    session.running = true;
     const active = () => current.current === session && !session.controller.signal.aborted;
-    // Attach both handlers immediately so a failed prefetched clip cannot reject unhandled.
-    const load = (chunk: string) => requestSpokenAudio(chunk, session.controller.signal)
-      .then(data => ({ data, error: null }), error => ({ data: null, error }));
+    let phase: "request" | "playback" = "request";
     const run = async () => {
-      setIsLoading(true);
-      let pending = load(chunks[0]);
-      for (let index = 0; index < chunks.length; index++) {
+      while (active() && (session.pending || session.queue.length)) {
+        setIsLoading(true);
+        prefetch(session);
+        const pending = session.pending!;
+        session.pending = undefined;
+        prefetch(session);
         const clip = await pending;
         if (!active()) return;
         if (!clip.data) throw clip.error;
         phase = "playback";
-        if (index + 1 < chunks.length) pending = load(chunks[index + 1]);
         const bytes = Uint8Array.from(atob(clip.data.audioBase64), c => c.charCodeAt(0));
-        session.url = URL.createObjectURL(new Blob([bytes], { type: clip.data.mimeType }));
+        session.url = URL.createObjectURL(new Blob([bytes], {type: clip.data.mimeType}));
         session.audio = new Audio(session.url);
+        prefetch(session);
         setIsLoading(false);
         try {
           await new Promise<void>((resolve, reject) => {
@@ -94,21 +116,49 @@ export function useSpokenReplies(conversationId: string, voiceActive = false) {
           session.finish = undefined;
           session.audio = undefined;
         }
-        if (!active()) return;
         phase = "request";
-        if (index + 1 < chunks.length) setIsLoading(true);
       }
-      if (active()) { current.current = null; setIsLoading(false); }
+      if (active()) setIsLoading(false);
     };
-    let phase: "request" | "playback" = "request";
     void run().catch((error: unknown) => {
       if (!active()) return;
       stop();
       enabledRef.current = false;
       setEnabled(false);
       toast.error(speechErrorMessage(error, phase));
+    }).finally(() => {
+      session.running = false;
+      if (active() && (session.pending || session.queue.length)) pumpSession(session);
     });
-  }, [supported, stop]);
+  }, [prefetch, stop]);
 
-  return { enabled, supported, isLoading, toggle, speak, stop };
+  const stream = useCallback((text: string, complete = false) => {
+    if (!supported || !enabledRef.current || voiceActiveRef.current || !text.trim()) return;
+    let session = current.current;
+    if (session && !text.startsWith(session.text) && text.trim() !== session.text.trim()) {
+      stop();
+      session = null;
+    }
+    if (!session) {
+      session = { controller: new AbortController(), text: "", remainder: "", queue: [], first: true, complete: false, running: false };
+      current.current = session;
+    }
+    if (session.complete) return;
+    const delta = text.startsWith(session.text) ? text.slice(session.text.length) : "";
+    session.text = text;
+    const next = takeSpokenStream(session.remainder + delta, complete, session.first);
+    session.remainder = next.remainder;
+    session.complete = complete;
+    if (next.chunks.length) session.first = false;
+    session.queue.push(...next.chunks);
+    pump(session);
+  }, [supported, stop, pump]);
+
+  const speak = useCallback((text: string) => {
+    if (!supported || !enabledRef.current || voiceActiveRef.current) return;
+    stop();
+    stream(text, true);
+  }, [supported, stop, stream]);
+
+  return { enabled, supported, isLoading, toggle, speak, stream, stop };
 }

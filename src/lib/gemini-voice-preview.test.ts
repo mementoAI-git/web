@@ -128,6 +128,33 @@ describe("previewGeminiChatVoice", () => {
     );
   });
 
+  it("uses the server's Gemini 3.8 Live model and exact offered voice", async () => {
+    await previewGeminiChatVoice({
+      voiceName: "Aoede",
+      fetchToken: async () => ({token: "preview-token", live: {model: "gemini-3.8-live", voice: {name: "Aoede"}}}),
+    });
+    const config = (mockConnect.mock.calls.at(-1)![0] as unknown as {model: string; config: {speechConfig: object; outputAudioTranscription: object}});
+    expect(config.model).toBe("gemini-3.8-live");
+    expect(config.config.speechConfig).toEqual({voiceConfig: {prebuiltVoiceConfig: {voiceName: "Aoede"}}});
+    expect(config.config.outputAudioTranscription).toEqual({});
+  });
+
+  it("does not preview a different voice when the server returns a stale selection", async () => {
+    await expect(previewGeminiChatVoice({voiceName: "Aoede", fetchToken: async () => ({token: "t", live: {model: "gemini-3.8-live", voice: {name: "Kore"}}})})).rejects.toThrow("Voice selection changed");
+    expect(mockConnect).not.toHaveBeenCalled();
+  });
+
+  it("reports a Gemini connection error instead of silently completing a preview", async () => {
+    mockSendClientContent.mockImplementationOnce(() => {
+      queueMicrotask(() => {
+        const options = mockConnect.mock.calls.at(-1)![0] as unknown as {callbacks: {onerror: () => void}};
+        options.callbacks.onerror();
+      });
+    });
+    await expect(previewGeminiChatVoice({voiceName: "Aoede", fetchToken: async () => ({token: "t", live: {model: "gemini-3.8-live", voice: {name: "Aoede"}}})})).rejects.toThrow("Could not connect to the selected Gemini Live voice");
+    expect(mockClose).toHaveBeenCalled();
+  });
+
   it("aborts when signal is already aborted", async () => {
     const ac = new AbortController();
     ac.abort();

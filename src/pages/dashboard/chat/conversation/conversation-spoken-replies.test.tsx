@@ -1,4 +1,6 @@
-import { screen, waitFor } from "@testing-library/react";
+import { act, screen, waitFor } from "@testing-library/react";
+import { http, HttpResponse } from "msw";
+import { server } from "@/test/mocks/server";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { renderWithProviders } from "@/test";
@@ -19,7 +21,7 @@ vi.mock("@/components/Chatinput", () => ({ ConversationChatinput: ({ onSend }: {
 
 function AudioControl() {
   const { chrome } = useConversationChrome();
-  return <button aria-pressed={chrome?.spokenReplies?.enabled ?? false} onClick={chrome?.spokenReplies?.onToggle}>Read aloud</button>;
+  return <button data-memory={chrome?.memory?._id} aria-pressed={chrome?.spokenReplies?.enabled ?? false} onClick={chrome?.spokenReplies?.onToggle}>Read aloud</button>;
 }
 beforeEach(() => {
   send.mockReset();
@@ -54,4 +56,31 @@ it("keeps text responses silent with the volume toggle off", async () => {
     expect(screen.getByText("A completed AI reply.")).toBeInTheDocument();
   });
   expect(speak).not.toHaveBeenCalled();
+});
+
+it("starts narration from the first streamed sentence before the response completes", async () => {
+  server.use(http.get("http://localhost:3000/api/memories/speech-chat", () => HttpResponse.json({data: {_id: "speech-chat", title: "Chat", tags: [], attachments: []}})));
+  let finish!: () => void;
+  let emit!: (text: string) => void;
+  send.mockImplementation((payload) => {
+    if (typeof payload?.onChunk !== "function") return Promise.resolve({data: {docs: [], hasNextPage: false}});
+    emit = payload.onChunk;
+    return new Promise<void>((resolve) => {finish = resolve;});
+  });
+  const user = userEvent.setup();
+  const {unmount} = renderWithProviders(<ConversationChromeProvider><AudioControl /><Conversation id="speech-chat" /></ConversationChromeProvider>, {route: "/chat/speech-chat", auth: true});
+  await waitFor(() => expect(screen.getByRole("button", {name: "Read aloud"})).toHaveAttribute("data-memory", "speech-chat"));
+  await user.click(screen.getByRole("button", {name: "Read aloud"}));
+  await user.click(await screen.findByRole("button", {name: "Send test message"}));
+  await waitFor(() => expect(emit).toBeTypeOf("function"));
+  await act(async () => emit("The first sentence is ready."));
+  expect(speak).not.toHaveBeenCalled();
+  await act(async () => emit(" "));
+  await act(async () => emit("An unfinished tail"));
+  await waitFor(() => expect(speak).toHaveBeenCalledOnce());
+  expect(speak.mock.calls[0][0]).toBe("The first sentence is ready.");
+  await act(async () => finish());
+  await waitFor(() => expect(speak).toHaveBeenCalledTimes(2));
+  expect(speak.mock.calls[1][0]).toBe("An unfinished tail");
+  unmount();
 });

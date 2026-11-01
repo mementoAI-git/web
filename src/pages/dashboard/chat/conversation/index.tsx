@@ -82,7 +82,7 @@ function ConversationSession({ id, type = "memory" }: { id: string; type?: "memo
   const { canAccess, isLoading: subscriptionLoading } = useSubscription();
   const [messages, setMessages] = useState<Partial<IMessage>[]>([])
   const voiceSession = useVoiceSession();
-  const { enabled: spokenRepliesEnabled, supported: spokenRepliesSupported, isLoading: spokenRepliesLoading, toggle: toggleSpokenReplies, speak: speakReply, stop: stopSpokenReply } = useSpokenReplies(id, isVoiceRoute || Boolean(voiceSession?.active));
+  const { enabled: spokenRepliesEnabled, supported: spokenRepliesSupported, isLoading: spokenRepliesLoading, toggle: toggleSpokenReplies, speak: speakReply, stream: streamReply, stop: stopSpokenReply } = useSpokenReplies(id, isVoiceRoute || Boolean(voiceSession?.active));
   const liveTimeline = useMemo(() => voiceSession?.timeline.filter(entry => entry.memoryId === id || (id === "new" && entry.memoryId === voiceSession.memoryId)) ?? [], [voiceSession?.timeline, voiceSession?.memoryId, id]);
   const [voiceEvents, setVoiceEvents] = useState<VoiceSessionEvent[]>([]);
   const handleVoiceSessionChange = useCallback((active: boolean) => {
@@ -95,6 +95,7 @@ function ConversationSession({ id, type = "memory" }: { id: string; type?: "memo
   const [isSidebarOpen, setIsSidebarOpen] = useState(false) // Sidebar closed by default
   const [replyQuote, setReplyQuote] = useState<ChatReplyQuote | null>(null)
   const [streamDone, setStreamDone] = useState(false);
+  const speechStreamText = useRef("");
 
   const {
     stats: enrichmentStats,
@@ -170,22 +171,21 @@ function ConversationSession({ id, type = "memory" }: { id: string; type?: "memo
       throw new Error("The response was interrupted. Please retry.");
     }
 
-    if (typeof chunk === 'string' && chunk.trim() !== '') {
-      setAiMessage((prev) => {
-        if (prev && chunk.length > prev.length && chunk.startsWith(prev)) {
-          return chunk;
-        } else {
-          return prev + chunk;
-        }
-      });
+    if (typeof chunk === 'string' && chunk !== '') {
+      const previous = speechStreamText.current;
+      const next = previous && chunk.length > previous.length && chunk.startsWith(previous) ? chunk : previous + chunk;
+      speechStreamText.current = next;
+      setAiMessage(next);
+      streamReply?.(next);
 
       scrollToBottom();
     }
-  }, [scrollToBottom]);
+  }, [scrollToBottom, streamReply]);
 
   const handleOnFinishTyping = useCallback((text: string) => {
     if (text && text.trim()) {
-      if (!interrupted.current) speakReply(text);
+      // Streamed speech is already queued and flushed at transport completion.
+      if (!interrupted.current && !speechStreamText.current) speakReply(text);
       setMessages((p) => ([
         ...p,
         {
@@ -211,6 +211,7 @@ function ConversationSession({ id, type = "memory" }: { id: string; type?: "memo
       sendingRef.current = true;
       interrupted.current = false;
       stopSpokenReply();
+      speechStreamText.current = "";
       const apiText = buildPromptWithReplyQuote(text, replyTo ?? null);
       try {
         if (aiMessage && aiMessage.trim()) {
@@ -268,7 +269,10 @@ function ConversationSession({ id, type = "memory" }: { id: string; type?: "memo
               has_reply_quote: Boolean(replyTo),
             });
           }
-          if (mounted.current) setStreamDone(true);
+          if (mounted.current) {
+            streamReply?.(speechStreamText.current, true);
+            setStreamDone(true);
+          }
           return;
         }
 
@@ -297,6 +301,7 @@ function ConversationSession({ id, type = "memory" }: { id: string; type?: "memo
       } catch (error: unknown) {
         if (!mounted.current) return;
         interrupted.current = true;
+        stopSpokenReply();
         const errName = error instanceof Error ? error.name : "";
         if (errName !== "AbortError") {
           reportFetcherError(error, "Failed to send message");
@@ -320,6 +325,7 @@ function ConversationSession({ id, type = "memory" }: { id: string; type?: "memo
     [
       aiMessage,
       stopSpokenReply,
+      streamReply,
       memory?._id,
       scrollToBottom,
       sendMessage,

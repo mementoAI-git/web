@@ -136,7 +136,9 @@ describe("Voices", () => {
     const previewArgs = previewGeminiChatVoice.mock.calls[0]?.[0] as {
       fetchToken: () => Promise<unknown>;
     };
-    await expect(previewArgs.fetchToken()).resolves.toBeDefined();
+    const descriptor = {token: "tok", live: {model: "gemini-3.8-live", voice: {name: "Leda"}}};
+    tokenTrigger.mockResolvedValueOnce({data: descriptor});
+    await expect(previewArgs.fetchToken()).resolves.toEqual(descriptor);
     expect(tokenTrigger).toHaveBeenCalled();
     expect(previewElevenLabsVoice).not.toHaveBeenCalled();
   });

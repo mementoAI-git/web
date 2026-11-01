@@ -4,7 +4,7 @@
 export const GEMINI_CONFIG = {
   MODEL:
     import.meta.env.VITE_GEMINI_LIVE_MODEL ||
-    "gemini-2.5-flash-native-audio-preview-09-2025",
+    "gemini-3.8-live",
   VOICE_CONFIG: {
     voiceName: "Fenrir",
   },
