@@ -143,6 +143,8 @@ describe("Voiceinput", () => {
     const { container } = renderWithProviders(<Voiceinput inline autoStart onCancel={vi.fn()} />, { auth: true });
     await waitFor(() => expect(liveApi.greet).toHaveBeenCalledOnce());
     expect(container.querySelector('[aria-label="Voice conversation"]')).toBeInTheDocument();
+    expect(container.querySelector('[data-slot="avatar"]')).toBeInTheDocument();
+    expect(container.querySelector('img[src*="dicebear.com"]')).toBeNull();
     expect(screen.queryByTestId("voice-mode-layer")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "End voice conversation" })).toBeInTheDocument();
   });

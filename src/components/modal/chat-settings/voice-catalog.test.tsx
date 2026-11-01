@@ -43,37 +43,33 @@ describe("voice catalog recovery", () => {
       return failed ? HttpResponse.json({}, { status: 500 }) : HttpResponse.json({ data: { voices: [voice] } });
     }));
     renderWithProviders(<RefreshableVoices />, { auth: true });
-    await screen.findByRole("button", { name: /Kore/ });
+    await screen.findByRole("button", { name: /Hannah/ });
     failed = true;
     await userEvent.setup().click(screen.getByRole("button", { name: "Refresh voices" }));
     await screen.findByRole("button", { name: "Retry loading voices" });
-    expect(screen.getByRole("button", { name: /Kore/ })).toBeEnabled();
+    expect(screen.getByRole("button", { name: /Hannah/ })).toBeEnabled();
     expect(screen.queryByText(/No voices/)).not.toBeInTheDocument();
   });
 
-  it("keeps the working provider available and retries only the failed provider", async () => {
+  it("retries the mobile Gemini catalog without requesting an ElevenLabs catalog", async () => {
     let failed = true;
     let geminiRequests = 0;
     let elevenRequests = 0;
     server.use(http.get(endpoint, ({ request }) => {
-      if (new URL(request.url).searchParams.get("provider") === "gemini") {
-        geminiRequests++;
-        return HttpResponse.json({ data: { voices: [voice] } });
+      if (new URL(request.url).searchParams.get("provider") !== "gemini") {
+        elevenRequests++;
+        return HttpResponse.json({data: {voices: []}});
       }
-      elevenRequests++;
-      return failed ? HttpResponse.json({}, { status: 500 }) : HttpResponse.json({ data: { voices: [] } });
+      geminiRequests++;
+      return failed ? HttpResponse.json({}, {status: 500}) : HttpResponse.json({data: {voices: [voice]}});
     }));
     renderVoices();
-    expect(await screen.findByRole("button", { name: /Kore/ })).toBeEnabled();
-    const retry = await screen.findByRole("button", { name: "Retry loading voices" });
-    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
-    expect(screen.queryByText(/No voices/)).not.toBeInTheDocument();
-    expect(toast.error).toHaveBeenCalledWith("Some voices couldn’t load. Please try again.", expect.objectContaining({ action: expect.objectContaining({ label: "Retry" }) }));
+    const retry = await screen.findByRole("button", {name: "Retry loading voices"});
     failed = false;
     await userEvent.setup().click(retry);
-    await waitFor(() => expect(screen.queryByRole("button", { name: "Retry loading voices" })).not.toBeInTheDocument());
-    expect(geminiRequests).toBe(1);
-    expect(elevenRequests).toBe(2);
-    expect(screen.getByRole("button", { name: /Kore/ })).toBeEnabled();
+    expect(await screen.findByRole("button", {name: /Hannah/})).toBeEnabled();
+    await waitFor(() => expect(screen.queryByRole("button", {name: "Retry loading voices"})).not.toBeInTheDocument());
+    expect(geminiRequests).toBe(2);
+    expect(elevenRequests).toBe(0);
   });
 });

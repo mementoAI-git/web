@@ -1,4 +1,5 @@
 "use client";
+import { VoiceAvatar } from "@/components/voice-avatar";
 import type { VoiceMessage, VoiceRuntime } from "@/features/voice/types";
 
 import voiceGridMask from "@/assets/icon/voice/grid-mask.svg";
@@ -94,7 +95,7 @@ type VoiceLanguageCode = (typeof VOICE_LANGUAGES)[number]["code"];
 
 function VoiceArtwork({ voice, className }: { voice: VoiceModeVoice | null; className?: string }) {
   return voice ? (
-    <img src={voice.artwork} alt="" className={cn("size-32 rounded-full object-cover", className)} />
+    <VoiceAvatar artwork={voice.artwork} title={voice.title} className={cn("size-32", className)} />
   ) : (
     <div className={cn("size-32 rounded-full bg-fill-neutral-weak", className)} aria-hidden />
   );
