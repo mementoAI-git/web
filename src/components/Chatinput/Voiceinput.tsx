@@ -310,6 +310,9 @@ export default function Voiceinput({ onCancel, memoryId, history = [], autoStart
     navigate: (href: string) => navigate(href),
     setMuted: (muted: boolean) => voiceToolHandlers.current.setMuted?.(muted),
     endCall: () => voiceToolHandlers.current.endCall?.(),
+    goBack: () => navigate(-1),
+    // React Router keeps the position in history in state.idx.
+    canGoBack: () => ((window.history.state as { idx?: number } | null)?.idx ?? 0) > 0,
   }), [navigate]);
   const {
     connected,

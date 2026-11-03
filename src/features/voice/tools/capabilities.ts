@@ -1,10 +1,10 @@
 /**
  * What this web build can do in a voice call. The API locks matching tools
  * into the Live session only when the token request lists them, so a build
- * that cannot carry out a tool never receives it. Screen control is not here
- * yet: web has no on-screen control registry.
+ * that cannot carry out a tool never receives it. Screen control reads the
+ * page itself (features/voice/screen).
  */
-export const WEB_VOICE_CAPABILITIES = ["search_memories", "call_actions", "server_tools"] as const;
+export const WEB_VOICE_CAPABILITIES = ["search_memories", "call_actions", "server_tools", "screen_control", "screen_fields"] as const;
 
 /** On by default; set VITE_VOICE_TOOLS=false at build time to turn voice tools off. */
 export function voiceToolsEnabled(flag: string | undefined = import.meta.env.VITE_VOICE_TOOLS): boolean {

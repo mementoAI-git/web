@@ -139,11 +139,14 @@ describe("Voiceinput", () => {
     const onCancel = vi.fn();
     render(<ThemeProvider><Voiceinput inline variant="overview" onCancel={onCancel} /></ThemeProvider>);
     const { toolControls } = useLiveAPIOptions.mock.calls.at(-1)?.[0] as {
-      toolControls: { navigate: (href: string) => void; setMuted: (muted: boolean) => void; endCall: () => void };
+      toolControls: { navigate: (href: string) => void; setMuted: (muted: boolean) => void; endCall: () => void; goBack: () => void; canGoBack: () => boolean };
     };
 
     act(() => toolControls.navigate("/stories"));
     expect(navigateTo).toHaveBeenCalledWith("/stories");
+    act(() => toolControls.goBack());
+    expect(navigateTo).toHaveBeenCalledWith(-1);
+    expect(typeof toolControls.canGoBack()).toBe("boolean");
 
     act(() => toolControls.setMuted(true));
     expect(screen.getByRole("button", { name: "Unmute microphone" })).toBeInTheDocument();
