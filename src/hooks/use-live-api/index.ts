@@ -35,6 +35,14 @@ import {
   type ReconnectResult,
 } from "@/features/voice/connection";
 import { withDeadline } from "@/features/voice/tools/relay";
+import { frameLevel, VOICE_THINKING_SPEECH_GAP_MS, VoiceThinkingTracker } from "@/features/voice/turns/thinking";
+import { parseHybridEndMs, VoiceHybridEnd } from "@/features/voice/turns/hybrid-end";
+import {
+  PlaybackEchoMeter,
+  shouldRestore,
+  VOICE_FALLBACK_RECHECK_MS,
+  VoiceSelfInterruptGuard,
+} from "@/features/voice/turns/self-interrupt-guard";
 import { createBlob } from "./utils";
 import { GEMINI_CONFIG } from "./config";
 import { createSystemContext, isEmpty } from "@/utility";
@@ -100,6 +108,12 @@ type LiveToken = { token?: string; live?: { model?: string }; tools?: unknown };
 
 const VOICE_CONNECTION_LOST = "The voice connection was lost. Please start the call again.";
 
+/** Off unless set, as on mobile; see features/voice/turns/hybrid-end. */
+const HYBRID_END_MS = parseHybridEndMs(import.meta.env.VITE_VOICE_HYBRID_END_MS);
+/** On unless VITE_VOICE_SELF_INTERRUPT_GUARD=false. */
+const SELF_INTERRUPT_GUARD = import.meta.env.VITE_VOICE_SELF_INTERRUPT_GUARD !== "false";
+const THINKING_CHECK_MS = 150;
+
 export function useLiveAPI({
   memoryId,
   turns = [],
@@ -160,6 +174,17 @@ export function useLiveAPI({
   const endIfReconnectFailedRef = useRef((result: ReconnectResult) => {
     if (result === "failed" && hasConnectedRef.current) endLostCallRef.current(VOICE_CONNECTION_LOST);
   });
+  // Turn-taking (features/voice/turns): Thinking, hybrid end of turn, and
+  // not listening while Memento talks when it keeps hearing itself.
+  const thinkingRef = useRef(new VoiceThinkingTracker());
+  const [thinking, setThinking] = useState(false);
+  const hybridEndRef = useRef(new VoiceHybridEnd(HYBRID_END_MS));
+  const selfInterruptRef = useRef<VoiceSelfInterruptGuard | null>(null);
+  const echoMeterRef = useRef(new PlaybackEchoMeter());
+  const notListeningWhileTalkingRef = useRef(false);
+  const selfInterruptTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /** When Memento's current reply became audible. */
+  const replyAudibleAtRef = useRef<number | null>(null);
   const saveQueue = useRef<Promise<unknown>>(Promise.resolve());
   const transcriptText = useRef({ user: "", ai: "" })
 
@@ -173,6 +198,62 @@ export function useLiveAPI({
 
   const { trigger: fetchEphemeralToken } = useFetcher(endpoint.ephemeralToken, "get")
   const { trigger: addMessageToMemory } = useFetcher(endpoint.addMessageToMemory, "post")
+
+  /** Memento's audio is playing (queued chunks have not all ended). */
+  const isAiSpeaking = useCallback(() => (playbackStateRef.current?.sources.size ?? 0) > 0, []);
+
+  /** The call ended: no pending check may restore listening into the next one. */
+  const stopTurnTaking = useCallback(() => {
+    if (selfInterruptTimerRef.current) clearTimeout(selfInterruptTimerRef.current);
+    selfInterruptTimerRef.current = null;
+    selfInterruptRef.current = null;
+    notListeningWhileTalkingRef.current = false;
+  }, []);
+
+  /** Fresh turn-taking state for a new call. */
+  const resetTurnTaking = useCallback(() => {
+    thinkingRef.current.reset();
+    hybridEndRef.current = new VoiceHybridEnd(HYBRID_END_MS);
+    echoMeterRef.current = new PlaybackEchoMeter();
+    notListeningWhileTalkingRef.current = false;
+    replyAudibleAtRef.current = null;
+    if (selfInterruptTimerRef.current) clearTimeout(selfInterruptTimerRef.current);
+    selfInterruptTimerRef.current = null;
+    if (!SELF_INTERRUPT_GUARD) {
+      selfInterruptRef.current = null;
+      return;
+    }
+    // Loud speakers can beat the browser's echo cancellation, and Memento
+    // keeps interrupting itself. When it does, stop listening while Memento
+    // talks for a while, then try again once the echo has dropped.
+    const guard = new VoiceSelfInterruptGuard({
+      now: Date.now,
+      onFallback: durationMs => {
+        const meter = echoMeterRef.current;
+        const echoAtFallback = meter.level;
+        meter.startMeasuring();
+        notListeningWhileTalkingRef.current = true;
+        console.info("[voice] Memento is hearing itself; not listening while it talks", { durationMs, echo: echoAtFallback });
+        const check = (afterMs: number) => {
+          if (selfInterruptTimerRef.current) clearTimeout(selfInterruptTimerRef.current);
+          selfInterruptTimerRef.current = setTimeout(() => {
+            selfInterruptTimerRef.current = null;
+            if (selfInterruptRef.current !== guard) return;
+            const current = echoMeterRef.current;
+            if (!shouldRestore(echoAtFallback, current.level, current.measuredSeconds)) {
+              check(VOICE_FALLBACK_RECHECK_MS);
+              return;
+            }
+            guard.restore();
+            notListeningWhileTalkingRef.current = false;
+            console.info("[voice] the echo dropped; listening while Memento talks again", { echo: current.level });
+          }, afterMs);
+        };
+        check(durationMs);
+      },
+    });
+    selfInterruptRef.current = guard;
+  }, []);
 
   /** The call is over: late tool results are dropped and no hang-up is pending. */
   const stopVoiceTools = useCallback(() => {
@@ -246,11 +327,20 @@ export function useLiveAPI({
 
         const inputBuffer = audioProcessingEvent.inputBuffer;
         const pcmData = inputBuffer.getChannelData(0);
+        const level = frameLevel(pcmData);
+        const frameMs = (inputBuffer.duration ?? pcmData.length / 16_000) * 1_000;
+        const aiSpeaking = isAiSpeaking();
+        echoMeterRef.current.observe(level, frameMs, aiSpeaking);
+        // Memento kept hearing itself: don't listen while it talks, for a while.
+        if (notListeningWhileTalkingRef.current && aiSpeaking) return;
+        thinkingRef.current.observeMic(level, frameMs);
+        const endTurn = hybridEndRef.current.check(thinkingRef.current.quietForMs(), aiSpeaking);
 
         sessionPromiseRef.current?.then((session) => {
           session.sendRealtimeInput({
             audio: createBlob(pcmData)
           });
+          if (endTurn) session.sendRealtimeInput({ audioStreamEnd: true });
         });
       };
 
@@ -266,7 +356,7 @@ export function useLiveAPI({
       setIsRecording(false);
       return false;
     }
-  }, [inputNode]);
+  }, [inputNode, isAiSpeaking]);
 
   // Start turn duration tracking
   const startTurnTimer = useCallback(() => {
@@ -471,11 +561,39 @@ export function useLiveAPI({
             pendingEndRef.current.heardGoodbye = true;
           }
           if (message.toolCall?.functionCalls?.length) {
+            thinkingRef.current.observeToolCall();
             void relayRef.current?.handle(message.toolCall.functionCalls);
           }
           if (message.toolCallCancellation?.ids?.length) {
             relayRef.current?.cancel(message.toolCallCancellation.ids);
           }
+          const interrupted = message.serverContent?.interrupted;
+          if (interrupted) {
+            const audibleAt = replyAudibleAtRef.current;
+            // The host was already talking as this reply started: an early
+            // interruption is them, so judge it by its words, not its timing.
+            const continued = audibleAt !== null && audibleAt - thinkingRef.current.lastSpokeAt() < VOICE_THINKING_SPEECH_GAP_MS;
+            selfInterruptRef.current?.observeInterrupted(
+              !notListeningWhileTalkingRef.current,
+              audibleAt === null || continued ? undefined : Date.now() - audibleAt,
+            );
+            thinkingRef.current.reset();
+            replyAudibleAtRef.current = null;
+          }
+          if (parts?.some(part => part.inlineData?.data)) {
+            if (!isAiSpeaking()) replyAudibleAtRef.current = Date.now();
+            thinkingRef.current.reset();
+            selfInterruptRef.current?.observeModelAudio();
+          }
+          const heard = message.serverContent?.inputTranscription?.text;
+          if (heard) {
+            thinkingRef.current.observeUserTranscript();
+            selfInterruptRef.current?.observeInputText(heard);
+          }
+          const said = message.serverContent?.outputTranscription?.text;
+          if (said) selfInterruptRef.current?.observeOutputText(said);
+          // A turn with no reply audio (tool only) still ends the wait.
+          if (message.serverContent?.turnComplete && !isAiSpeaking()) thinkingRef.current.reset();
 
           if (parts && playback) {
             for (const part of parts) {
@@ -505,7 +623,6 @@ export function useLiveAPI({
           }
 
           // Handle interruption
-          const interrupted = message.serverContent?.interrupted;
           if (interrupted && playbackStateRef.current) {
             stopAllGeminiLivePlayback(playbackStateRef.current);
           }
@@ -550,6 +667,7 @@ export function useLiveAPI({
     return { socketId, sessionPromise, setupReady, rejectSetup };
   }, [
     finishPendingEnd,
+    isAiSpeaking,
     updateTranscriptText,
     flushTranscript,
     user?.chat_voice,
@@ -658,6 +776,7 @@ export function useLiveAPI({
 
       callSetupRef.current = { overrides, wantsTools };
       resumeHandleRef.current = null;
+      resetTurnTaking();
       const isCurrent = () => connectionAttempt.current === attempt;
       const socket = openSocket(liveToken, overrides, attempt, true);
       cancelSetup.current = () => socket.rejectSetup(new Error("Voice connection cancelled"));
@@ -702,14 +821,28 @@ export function useLiveAPI({
     stopVoiceTools,
     finishPendingEnd,
     openSocket,
+    resetTurnTaking,
     fetchEphemeralToken,
     turns,
   ]);
+
+  // "Thinking…": checked a few times a second, since it turns on when the host goes quiet.
+  useEffect(() => {
+    if (!connected) return;
+    const tracker = thinkingRef.current;
+    const timer = setInterval(() => setThinking(tracker.isThinking(isAiSpeaking())), THINKING_CHECK_MS);
+    return () => {
+      clearInterval(timer);
+      tracker.reset();
+      setThinking(false);
+    };
+  }, [connected, isAiSpeaking]);
 
   /** The call is over because its connection is gone for good. */
   const endLostCall = useCallback((message: string | null) => {
     if (message) setError(message);
     stopVoiceTools();
+    stopTurnTaking();
     stopRecording();
     if (playbackStateRef.current) stopAllGeminiLivePlayback(playbackStateRef.current);
     setConnected(false);
@@ -717,7 +850,7 @@ export function useLiveAPI({
     hasConnectedRef.current = false;
     socketOpenRef.current = false;
     resumeHandleRef.current = null;
-  }, [stopRecording, stopVoiceTools]);
+  }, [stopRecording, stopTurnTaking, stopVoiceTools]);
   endLostCallRef.current = endLostCall;
 
   /** Carries the call over to a new connection with Gemini's resume handle; the host keeps talking. */
@@ -800,6 +933,7 @@ export function useLiveAPI({
   const disconnect = useCallback(() => {
     ++connectionAttempt.current;
     stopVoiceTools();
+    stopTurnTaking();
     cancelSetup.current?.();
     cancelSetup.current = null;
     isConnectingRef.current = false;
@@ -810,7 +944,7 @@ export function useLiveAPI({
     sessionPromiseRef.current?.then((session) => session.close()).catch(console.error);
     sessionPromiseRef.current = null;
     // Don't close audio contexts here - they're managed by the cleanup
-  }, [stopVoiceTools]);
+  }, [stopTurnTaking, stopVoiceTools]);
 
   const restartSession = useCallback(async (overrides: LiveSessionOverrides = {}) => {
     setInputMuted(true);
@@ -861,6 +995,8 @@ export function useLiveAPI({
       relayRef.current = null;
       if (pendingEndRef.current) clearTimeout(pendingEndRef.current.timer);
       pendingEndRef.current = null;
+      if (selfInterruptTimerRef.current) clearTimeout(selfInterruptTimerRef.current);
+      selfInterruptTimerRef.current = null;
       cancelSetup.current?.();
       cancelSetup.current = null;
       isRecordingRef.current = false;
@@ -912,6 +1048,8 @@ export function useLiveAPI({
     connected,
     /** The call is being carried over to a new connection; it continues on its own. */
     reconnecting,
+    /** Gemini heard the host and Memento is working on a reply. */
+    thinking,
     connect,
     disconnect,
     restartSession,

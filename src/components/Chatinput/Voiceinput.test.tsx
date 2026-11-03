@@ -15,6 +15,7 @@ const liveApi = vi.hoisted(() => ({
   error: null as string | null,
   isRecording: false,
   reconnecting: false,
+  thinking: false,
   connect: vi.fn().mockResolvedValue(undefined),
   startRecording: vi.fn().mockResolvedValue(undefined),
   stopRecording: vi.fn().mockResolvedValue(undefined),
@@ -100,6 +101,7 @@ describe("Voiceinput", () => {
     vi.spyOn(toast, "error").mockClear();
     liveApi.isRecording = false;
     liveApi.reconnecting = false;
+    liveApi.thinking = false;
     liveApi.connect.mockClear();
     liveApi.greet.mockClear();
     liveApi.startRecording.mockClear();
@@ -145,6 +147,14 @@ describe("Voiceinput", () => {
     expect(screen.getByRole("status")).toHaveTextContent("Reconnecting…");
     expect(onCancel).not.toHaveBeenCalled();
     expect(toast.error).not.toHaveBeenCalled();
+  });
+
+  it("says Thinking while Memento works on a reply the host is waiting for", () => {
+    liveApi.connected = true;
+    liveApi.isRecording = true;
+    liveApi.thinking = true;
+    render(<ThemeProvider><Voiceinput inline variant="overview" onCancel={vi.fn()} /></ThemeProvider>);
+    expect(screen.getByRole("status")).toHaveTextContent("Thinking…");
   });
 
   it("lets voice open the app's modals", () => {

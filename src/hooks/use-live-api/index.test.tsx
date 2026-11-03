@@ -524,5 +524,79 @@ describe("useLiveAPI", () => {
       });
       expect(sockets).toHaveLength(1);
     });
+
+    describe("turn-taking", () => {
+      const audio = { serverContent: { modelTurn: { parts: [{ inlineData: { data: "AAAA" } }] } } };
+      let playing: Set<unknown>;
+
+      beforeEach(async () => {
+        const { scheduleGeminiLivePcmChunk } = await import("./playback");
+        vi.mocked(scheduleGeminiLivePcmChunk).mockImplementation(async (_data, _context, _node, state) => {
+          playing = state.sources as Set<unknown>;
+          playing.add({});
+        });
+      });
+
+      afterEach(async () => {
+        const { scheduleGeminiLivePcmChunk } = await import("./playback");
+        vi.mocked(scheduleGeminiLivePcmChunk).mockReset();
+      });
+
+      const sentAudio = (socket: Socket) => socket.session.sendRealtimeInput.mock.calls.filter(([input]) => input.audio).length;
+
+      it("shows Thinking once Gemini has heard the host, until Memento's reply starts", async () => {
+        const hook = await inCall();
+        expect(hook.result.current.thinking).toBe(false);
+        await act(async () => {
+          await sockets[0].callbacks.onmessage({ serverContent: { inputTranscription: { text: "Tell me about Lagos" } } });
+        });
+        await waitFor(() => expect(hook.result.current.thinking).toBe(true));
+        await act(async () => {
+          await sockets[0].callbacks.onmessage(audio);
+        });
+        await waitFor(() => expect(hook.result.current.thinking).toBe(false));
+      });
+
+      it("never shows Thinking from mic sound alone", async () => {
+        const hook = await inCall();
+        await speak();
+        await new Promise(resolve => setTimeout(resolve, 600));
+        expect(hook.result.current.thinking).toBe(false);
+        // Hybrid end of turn is off unless configured.
+        expect(sockets[0].session.sendRealtimeInput).not.toHaveBeenCalledWith({ audioStreamEnd: true });
+      });
+
+      it("stops listening while Memento talks once it hears itself, and still listens when it is quiet", async () => {
+        await inCall();
+        await act(async () => {
+          await sockets[0].callbacks.onmessage({ serverContent: { outputTranscription: { text: "So tell me about your grandmother" } } });
+          await sockets[0].callbacks.onmessage(audio);
+          // Cut off by its own words coming back through the mic.
+          await sockets[0].callbacks.onmessage({ serverContent: { interrupted: true, inputTranscription: { text: "tell me about your" } } });
+          await sockets[0].callbacks.onmessage(audio);
+        });
+        await speak();
+        expect(sentAudio(sockets[0])).toBe(0);
+        playing.clear();
+        await speak();
+        expect(sentAudio(sockets[0])).toBe(1);
+      });
+
+      it("keeps listening while Memento talks after a real interruption", async () => {
+        await inCall();
+        await act(async () => {
+          await sockets[0].callbacks.onmessage({ serverContent: { outputTranscription: { text: "So tell me about your grandmother" } } });
+          await sockets[0].callbacks.onmessage(audio);
+        });
+        // The host reacts after a human delay, in their own words.
+        await new Promise(resolve => setTimeout(resolve, 450));
+        await act(async () => {
+          await sockets[0].callbacks.onmessage({ serverContent: { interrupted: true, inputTranscription: { text: "actually it was my aunt" } } });
+          await sockets[0].callbacks.onmessage(audio);
+        });
+        await speak();
+        expect(sentAudio(sockets[0])).toBe(1);
+      });
+    });
   });
 });

@@ -331,6 +331,7 @@ export default function Voiceinput({ onCancel, memoryId, history = [], autoStart
     setInputMuted,
     isRecording,
     reconnecting,
+    thinking,
     error,
     outputNode,
   } = useLiveAPI({ memoryId, turns: history, languageCode, autoConnect: false, onMessages, toolControls });
@@ -507,8 +508,9 @@ export default function Voiceinput({ onCancel, memoryId, history = [], autoStart
     if (!sessionActive) return "Ready when you are";
     if (isElevenLabsProvider) return "Live session";
     if (reconnecting) return "Reconnecting…";
-    return connected ? "Live session" : "Connecting…";
-  }, [connected, isElevenLabsProvider, reconnecting, sessionActive]);
+    if (!connected) return "Connecting…";
+    return thinking ? "Thinking…" : "Live session";
+  }, [connected, isElevenLabsProvider, reconnecting, sessionActive, thinking]);
 
   const endConfirmation = <EndSessionDialog open={endDialogOpen} onOpenChange={setEndDialogOpen} duration={formatVoiceSessionTime(recordingTime)} ending={isDisconnecting} onConfirm={() => void handleEndCall()} />;
 
@@ -571,7 +573,7 @@ export default function Voiceinput({ onCancel, memoryId, history = [], autoStart
     const overview = variant === "overview";
     const floating = variant === "floating";
     const callStatus = isStartingCall ? "Connecting…" : sessionActive
-      ? (reconnecting ? "Reconnecting…" : audioPaused ? "Audio paused" : muted ? "You’re muted" : "Listening") : "Ready to connect";
+      ? (reconnecting ? "Reconnecting…" : audioPaused ? "Audio paused" : muted ? "You’re muted" : thinking ? "Thinking…" : "Listening") : "Ready to connect";
     const settings = (
       <Popover open={settingsOpen} onOpenChange={setSettingsOpen}>
         <PopoverTrigger asChild>
