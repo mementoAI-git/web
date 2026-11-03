@@ -54,6 +54,9 @@ export function useMemoryEditor({
     editorProps: {
       attributes: {
         class: editorClassName,
+        // Its name for screen readers and voice ("type into the story");
+        // the placeholder disappears once there is text.
+        "aria-label": "Story",
       },
     },
     onUpdate: ({ editor }) => {
