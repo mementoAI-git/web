@@ -369,4 +369,160 @@ describe("useLiveAPI", () => {
       expect(secondCall).not.toHaveBeenCalled();
     });
   });
+
+  describe("keeping the call going across connections", () => {
+    type Callbacks = {
+      onmessage: (message: Record<string, unknown>) => Promise<void> | void;
+      onclose: (event: { code: number; reason: string }) => void;
+      onerror: () => void;
+    };
+    type Socket = { callbacks: Callbacks; session: Record<"close" | "sendRealtimeInput" | "sendToolResponse" | "sendClientContent", ReturnType<typeof vi.fn>> };
+    let sockets: Socket[];
+    let processors: { onaudioprocess: ((event: unknown) => void) | null }[];
+
+    beforeEach(() => {
+      sockets = [];
+      processors = [];
+      liveMocks.connect.mockImplementation(async (options: { callbacks: Callbacks }) => {
+        const session = { close: vi.fn(), sendRealtimeInput: vi.fn(), sendToolResponse: vi.fn(), sendClientContent: vi.fn() };
+        sockets.push({ callbacks: options.callbacks, session });
+        await options.callbacks.onmessage({ setupComplete: {} });
+        return session;
+      });
+      liveMocks.fetchToken.mockReset().mockResolvedValue({ data: { token: "token" } });
+      const AudioContextStub = globalThis.AudioContext as unknown as { prototype: { createScriptProcessor: () => unknown } };
+      AudioContextStub.prototype.createScriptProcessor = () => {
+        const processor = { connect: vi.fn(), disconnect: vi.fn(), onaudioprocess: null };
+        processors.push(processor);
+        return processor;
+      };
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    async function inCall() {
+      const hook = renderHook(() => useLiveAPI({ memoryId: "m1", autoConnect: false }));
+      await waitFor(() => expect(hook.result.current.outputNode).not.toBeNull());
+      await act(async () => {
+        await hook.result.current.connect();
+        await hook.result.current.startRecording();
+      });
+      await act(async () => {
+        await sockets[0].callbacks.onmessage({ sessionResumptionUpdate: { resumable: true, newHandle: "handle-1" } });
+      });
+      return hook;
+    }
+
+    async function speak() {
+      await act(async () => {
+        processors[0].onaudioprocess?.({ inputBuffer: { getChannelData: () => new Float32Array([0, 0.5]) } });
+        await Promise.resolve();
+      });
+    }
+
+    it("moves to a new connection when Gemini warns it will close this one, and keeps listening", async () => {
+      const hook = await inCall();
+      await act(async () => {
+        await sockets[0].callbacks.onmessage({ goAway: { timeLeft: "5s" } });
+      });
+      await waitFor(() => expect(sockets[0].session.close).toHaveBeenCalled());
+
+      expect(sockets).toHaveLength(2);
+      expect(liveMocks.fetchToken).toHaveBeenLastCalledWith(expect.objectContaining({ memory_id: "m1", resume_handle: "handle-1" }));
+      await speak();
+      expect(sockets[1].session.sendRealtimeInput).toHaveBeenCalled();
+      expect(sockets[0].session.sendRealtimeInput).not.toHaveBeenCalled();
+      // The old connection closing afterwards is expected, not a lost call.
+      act(() => sockets[0].callbacks.onclose({ code: 1000, reason: "" }));
+      expect(hook.result.current.connected).toBe(true);
+      expect(hook.result.current.isRecording).toBe(true);
+      expect(hook.result.current.error).toBeNull();
+      expect(hook.result.current.reconnecting).toBe(false);
+    });
+
+    it("ignores what the old connection sends after the swap", async () => {
+      const { scheduleGeminiLivePcmChunk } = await import("./playback");
+      await inCall();
+      await act(async () => {
+        await sockets[0].callbacks.onmessage({ goAway: {} });
+      });
+      await waitFor(() => expect(sockets).toHaveLength(2));
+      vi.mocked(scheduleGeminiLivePcmChunk).mockClear();
+      await act(async () => {
+        await sockets[0].callbacks.onmessage({ serverContent: { modelTurn: { parts: [{ inlineData: { data: "AAAA" } }] } } });
+      });
+      expect(scheduleGeminiLivePcmChunk).not.toHaveBeenCalled();
+      await act(async () => {
+        await sockets[1].callbacks.onmessage({ serverContent: { modelTurn: { parts: [{ inlineData: { data: "AAAA" } }] } } });
+      });
+      expect(scheduleGeminiLivePcmChunk).toHaveBeenCalledOnce();
+    });
+
+    it("reconnects when the connection drops, dropping the mic audio until it is back", async () => {
+      let tokenArrives!: (value: unknown) => void;
+      const hook = await inCall();
+      liveMocks.fetchToken.mockReturnValueOnce(new Promise(resolve => { tokenArrives = resolve; }));
+
+      act(() => sockets[0].callbacks.onclose({ code: 1006, reason: "" }));
+      await waitFor(() => expect(hook.result.current.reconnecting).toBe(true));
+      await speak();
+      expect(sockets[0].session.sendRealtimeInput).not.toHaveBeenCalled();
+
+      await act(async () => {
+        tokenArrives({ data: { token: "token-2" } });
+      });
+      await waitFor(() => expect(hook.result.current.reconnecting).toBe(false));
+      expect(hook.result.current.connected).toBe(true);
+      expect(hook.result.current.error).toBeNull();
+      await speak();
+      expect(sockets[1].session.sendRealtimeInput).toHaveBeenCalled();
+    });
+
+    it("ends the call and says so when there is no way to resume", async () => {
+      const hook = renderHook(() => useLiveAPI({ autoConnect: false }));
+      await waitFor(() => expect(hook.result.current.outputNode).not.toBeNull());
+      await act(async () => {
+        await hook.result.current.connect();
+        await hook.result.current.startRecording();
+      });
+      act(() => sockets[0].callbacks.onclose({ code: 1011, reason: "Internal error" }));
+      await waitFor(() => expect(hook.result.current.error).toMatch(/1011/));
+      expect(hook.result.current.isRecording).toBe(false);
+      expect(liveMocks.fetchToken).toHaveBeenCalledOnce();
+    });
+
+    it("gives up after its time budget and ends the call", async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      const hook = await inCall();
+      liveMocks.fetchToken.mockRejectedValue(new Error("offline"));
+      act(() => sockets[0].callbacks.onclose({ code: 1006, reason: "" }));
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(25_000);
+      });
+      expect(hook.result.current.error).toBe("The voice connection was lost. Please start the call again.");
+      expect(hook.result.current.isRecording).toBe(false);
+      expect(hook.result.current.reconnecting).toBe(false);
+    });
+
+    it("checks the connection when the browser comes back online", async () => {
+      await inCall();
+      await act(async () => {
+        window.dispatchEvent(new Event("online"));
+      });
+      await waitFor(() => expect(sockets).toHaveLength(2));
+      expect(liveMocks.fetchToken).toHaveBeenLastCalledWith(expect.objectContaining({ resume_handle: "handle-1" }));
+    });
+
+    it("does not reconnect a call the host ended", async () => {
+      const hook = await inCall();
+      act(() => hook.result.current.disconnect());
+      act(() => sockets[0].callbacks.onclose({ code: 1000, reason: "" }));
+      await act(async () => {
+        window.dispatchEvent(new Event("online"));
+      });
+      expect(sockets).toHaveLength(1);
+    });
+  });
 });

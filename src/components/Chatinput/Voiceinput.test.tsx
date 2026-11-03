@@ -6,6 +6,7 @@ import { act, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { renderWithProviders } from "@/test";
+import { useModal } from "@/hooks/use-modal";
 import Voiceinput from "./Voiceinput";
 
 const liveApi = vi.hoisted(() => ({
@@ -13,6 +14,7 @@ const liveApi = vi.hoisted(() => ({
   connected: false,
   error: null as string | null,
   isRecording: false,
+  reconnecting: false,
   connect: vi.fn().mockResolvedValue(undefined),
   startRecording: vi.fn().mockResolvedValue(undefined),
   stopRecording: vi.fn().mockResolvedValue(undefined),
@@ -97,6 +99,7 @@ describe("Voiceinput", () => {
     liveApi.error = null;
     vi.spyOn(toast, "error").mockClear();
     liveApi.isRecording = false;
+    liveApi.reconnecting = false;
     liveApi.connect.mockClear();
     liveApi.greet.mockClear();
     liveApi.startRecording.mockClear();
@@ -131,6 +134,30 @@ describe("Voiceinput", () => {
     expect(screen.queryByRole("button", { name: "Try again" })).not.toBeInTheDocument();
     expect(toast.error).toHaveBeenCalledOnce();
     expect(toast.error).toHaveBeenCalledWith("Voice conversation was interrupted. Please try again.");
+  });
+
+  it("says Reconnecting while the call moves to a new connection, without ending it", () => {
+    liveApi.connected = true;
+    liveApi.isRecording = true;
+    liveApi.reconnecting = true;
+    const onCancel = vi.fn();
+    render(<ThemeProvider><Voiceinput inline variant="overview" onCancel={onCancel} /></ThemeProvider>);
+    expect(screen.getByRole("status")).toHaveTextContent("Reconnecting…");
+    expect(onCancel).not.toHaveBeenCalled();
+    expect(toast.error).not.toHaveBeenCalled();
+  });
+
+  it("lets voice open the app's modals", () => {
+    liveApi.connected = true;
+    liveApi.isRecording = true;
+    const Probe = () => {
+      const { state } = useModal();
+      return <p data-testid="open-modal">{state[0]?.name ?? "none"}</p>;
+    };
+    renderWithProviders(<><Voiceinput inline variant="overview" onCancel={vi.fn()} /><Probe /></>);
+    const { toolControls } = useLiveAPIOptions.mock.calls.at(-1)?.[0] as { toolControls: { openModal: (name: string) => void } };
+    act(() => toolControls.openModal("create-memory"));
+    expect(screen.getByTestId("open-modal")).toHaveTextContent("create-memory");
   });
 
   it("gives voice tools the screen's controls: open a page, show a mute, hang up", async () => {
