@@ -24,14 +24,18 @@ export function voiceTokenParams({
   memoryId,
   tools,
   timeZone = browserTimeZone(),
+  resumeHandle,
 }: {
   memoryId?: string | null;
   tools: boolean;
   /** IANA zone; defaults to the browser's. Null leaves it out. */
   timeZone?: string | null;
+  /** Gemini's handle for the call, to carry on the same conversation on a new connection. */
+  resumeHandle?: string | null;
 }): Record<string, string> {
   const params: Record<string, string> = {};
   if (memoryId) params.memory_id = memoryId;
+  if (resumeHandle) params.resume_handle = resumeHandle;
   if (tools) params.capabilities = WEB_VOICE_CAPABILITIES.join(",");
   // The host's own date and weekday, for "next Friday" and "this morning".
   if (timeZone) params.timezone = timeZone;

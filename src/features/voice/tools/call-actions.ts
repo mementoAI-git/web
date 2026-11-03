@@ -15,15 +15,15 @@ export const VOICE_SCREEN_DESTINATIONS = [
 
 export type VoiceScreenDestination = (typeof VOICE_SCREEN_DESTINATIONS)[number];
 
-/** A null href is a screen mobile has but web does not, so Memento says so. */
-type WebDestination = { href: string | null; label: string };
+/** A page (href), or one of the app's modals (modal: a useModal name) where mobile has a screen. */
+export type WebDestination = { href: string; modal?: never; label: string } | { href?: never; modal: string; label: string };
 
 export const WEB_VOICE_DESTINATIONS: Record<VoiceScreenDestination, WebDestination> = {
   home: { href: "/overview", label: "home" },
   chat: { href: "/chat", label: "chat" },
   stories: { href: "/stories", label: "your stories" },
-  new_story: { href: null, label: "a new story" },
-  quick_note: { href: null, label: "a quick note" },
+  new_story: { modal: "create-memory", label: "a new story" },
+  quick_note: { modal: "quick-capture", label: "a quick note" },
   // Capsules live on the overview on web (/capsule redirects there).
   time_capsules: { href: "/overview", label: "your time capsules on the overview" },
   explore_prompts: { href: "/explore", label: "explore prompts" },
@@ -35,8 +35,8 @@ export const WEB_VOICE_DESTINATIONS: Record<VoiceScreenDestination, WebDestinati
   upgrade: { href: "/pricing", label: "plans" },
   privacy: { href: "/settings/privacy", label: "privacy settings" },
   beneficiaries: { href: "/settings/beneficiary", label: "beneficiaries" },
-  feedback: { href: null, label: "feedback" },
-  activity: { href: null, label: "your activity" },
+  feedback: { modal: "create-feedback", label: "feedback" },
+  activity: { modal: "recent-activities", label: "your activity" },
   two_factor: { href: "/settings/security", label: "two-factor settings" },
 };
 
@@ -52,6 +52,14 @@ export interface CallControls {
   setMuted(muted: boolean): void;
   /** Open a page while the call keeps going. */
   navigate(href: string): void;
+  /** Open one of the app's modals (new story, quick note, feedback, activity). */
+  openModal(name: string): void;
+}
+
+/** Shows a destination: a page or a modal. */
+export function showWebDestination(target: WebDestination, controls: Pick<CallControls, "navigate" | "openModal">): void {
+  if (target.modal) controls.openModal(target.modal);
+  else controls.navigate(target.href);
 }
 
 export function createCallActionHandlers(controls: CallControls): Record<string, VoiceToolHandler> {
@@ -68,13 +76,11 @@ export function createCallActionHandlers(controls: CallControls): Record<string,
     [OPEN_SCREEN_TOOL]: args => {
       const target = resolveWebDestination(args.destination);
       if (!target) return "That screen isn't available. Tell the host you can't open it.";
-      const { href } = target;
-      if (!href) return `${target.label} is not on the web yet. Tell the host it is in the Memento app.`;
       if (args.keep_talking === true) {
-        controls.navigate(href);
+        showWebDestination(target, controls);
         return `Opened ${target.label}. The call continues.`;
       }
-      controls.endAfterGoodbye(() => controls.navigate(href));
+      controls.endAfterGoodbye(() => showWebDestination(target, controls));
       return `Opening ${target.label} after your goodbye.`;
     },
   };
