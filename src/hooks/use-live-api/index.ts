@@ -15,7 +15,7 @@ import {
 import { mutate } from "swr";
 import { post } from "@/api/mutations";
 import { voiceToolsEnabled, voiceTokenParams } from "@/features/voice/tools/capabilities";
-import { createCallActionHandlers, resolveWebDestination, type CallControls } from "@/features/voice/tools/call-actions";
+import { createCallActionHandlers, resolveWebDestination, showWebDestination, type CallControls } from "@/features/voice/tools/call-actions";
 import { VoiceToolRelay } from "@/features/voice/tools/relay";
 import { DomScreen } from "@/features/voice/screen/dom-screen";
 import { webScreenName } from "@/features/voice/screen/screen-names";
@@ -60,6 +60,8 @@ interface UseLiveAPIProps {
 /** The voice screen's side of the call actions. */
 export type VoiceToolControls = {
   navigate: (href: string) => void;
+  /** Open one of the app's modals by its useModal name. */
+  openModal?: (name: string) => void;
   /** Reflect a mute Memento made (the hook already muted the microphone). */
   setMuted: (muted: boolean) => void;
   /** Hang up, as the End call button does. */
@@ -407,14 +409,15 @@ export function useLiveAPI({
       stopVoiceTools();
       if (wantsTools) {
         const navigate = (href: string) => toolControlsRef.current?.navigate(href);
+        const openModal = (name: string) => toolControlsRef.current?.openModal?.(name);
         const applyEffects = (effects: VoiceToolEffect[]) => {
           for (const effect of effects) {
             if (effect.type === "refresh") {
               const prefixes = REFRESH_PREFIXES[effect.what];
               void mutate(key => typeof key === "string" && prefixes.some(prefix => key.startsWith(prefix)));
             } else if (effect.type === "open") {
-              const href = resolveWebDestination(effect.destination)?.href;
-              if (href) navigate(href);
+              const target = resolveWebDestination(effect.destination);
+              if (target) showWebDestination(target, { navigate, openModal });
             } else {
               navigate(`/stories/${effect.id}`);
             }
@@ -422,6 +425,7 @@ export function useLiveAPI({
         };
         const callControls: CallControls = {
           navigate,
+          openModal,
           setMuted: muted => {
             mediaStreamRef.current?.getAudioTracks().forEach(track => { track.enabled = !muted; });
             toolControlsRef.current?.setMuted(muted);

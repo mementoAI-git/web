@@ -233,4 +233,16 @@ describe("DomScreen.describe", () => {
     expect(text).toContain('Buttons: "Save".');
     expect(text).not.toContain("Behind");
   });
+
+  it("treats the app's open modal and Radix dialogs as the screen", () => {
+    const quickNote = screen(`
+      <button>Behind</button>
+      <div class="modal-overlay"><div data-voice-dialog="Quick note"><textarea placeholder="Write a note"></textarea><button>Save note</button></div></div>`).describe();
+    expect(quickNote).toContain('A dialog is open: "Quick note".');
+    expect(quickNote).toContain('Buttons: "Save note".');
+    expect(quickNote).not.toContain("Behind");
+    const radix = screen(`<button>Behind</button><div role="dialog" data-state="open" aria-label="New story"><button>Publish story</button></div>`).describe();
+    expect(radix).toContain('A dialog is open: "New story".');
+    expect(radix).not.toContain("Behind");
+  });
 });

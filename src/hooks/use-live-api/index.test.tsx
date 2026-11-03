@@ -216,7 +216,7 @@ describe("useLiveAPI", () => {
       });
     });
 
-    const controls = () => ({ navigate: vi.fn(), setMuted: vi.fn(), endCall: vi.fn(), goBack: vi.fn(), canGoBack: vi.fn(() => true) });
+    const controls = () => ({ navigate: vi.fn(), openModal: vi.fn(), setMuted: vi.fn(), endCall: vi.fn(), goBack: vi.fn(), canGoBack: vi.fn(() => true) });
 
     async function connected(toolControls: ReturnType<typeof controls>) {
       const hook = renderHook(() => useLiveAPI({ memoryId: "m1", autoConnect: false, toolControls }));
@@ -286,6 +286,26 @@ describe("useLiveAPI", () => {
         await onmessage({ toolCall: { functionCalls: [{ id: "b", name: "go_back", args: {} }] } });
       });
       await waitFor(() => expect(c.goBack).toHaveBeenCalledOnce());
+    });
+
+    it("opens a new story in its modal while the call continues", async () => {
+      const c = controls();
+      await connected(c);
+      await act(async () => {
+        await onmessage({ toolCall: { functionCalls: [{ id: "o", name: "open_screen", args: { destination: "new_story", keep_talking: true } }] } });
+      });
+      expect(c.openModal).toHaveBeenCalledWith("create-memory");
+      expect(c.navigate).not.toHaveBeenCalled();
+    });
+
+    it("opens a modal a server tool asks for", async () => {
+      liveMocks.post.mockResolvedValue({ data: { result: "Done.", effects: [{ type: "open", destination: "quick_note" }] } });
+      const c = controls();
+      await connected(c);
+      await act(async () => {
+        await onmessage({ toolCall: { functionCalls: [{ id: "q", name: "rename_story", args: { title: "x" } }] } });
+      });
+      await waitFor(() => expect(c.openModal).toHaveBeenCalledWith("quick-capture"));
     });
 
     it("mutes the host when Memento is asked to", async () => {
