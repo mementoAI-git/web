@@ -26,6 +26,12 @@ vi.mock("@/hooks/use-ai-playback-level", () => ({ useAiPlaybackLevel: () => () =
 vi.mock("voice-glow", () => ({ VoiceBeam: ({ children, active, level }: { children: ReactNode; active: boolean; level: () => number }) => <div data-testid="voice-beam" data-active={active} data-level={level()}>{children}</div> }));
 
 const useLiveAPIOptions = vi.hoisted(() => vi.fn());
+const navigateTo = vi.hoisted(() => vi.fn());
+
+vi.mock("react-router-dom", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("react-router-dom")>()),
+  useNavigate: () => navigateTo,
+}));
 
 const voiceState = vi.hoisted(() => ({
   user: { chat_voice: "Kore", chat_voice_provider: "gemini" } as {
@@ -127,6 +133,29 @@ describe("Voiceinput", () => {
     expect(toast.error).toHaveBeenCalledWith("Voice conversation was interrupted. Please try again.");
   });
 
+  it("gives voice tools the screen's controls: open a page, show a mute, hang up", async () => {
+    liveApi.connected = true;
+    liveApi.isRecording = true;
+    const onCancel = vi.fn();
+    render(<ThemeProvider><Voiceinput inline variant="overview" onCancel={onCancel} /></ThemeProvider>);
+    const { toolControls } = useLiveAPIOptions.mock.calls.at(-1)?.[0] as {
+      toolControls: { navigate: (href: string) => void; setMuted: (muted: boolean) => void; endCall: () => void; goBack: () => void; canGoBack: () => boolean };
+    };
+
+    act(() => toolControls.navigate("/stories"));
+    expect(navigateTo).toHaveBeenCalledWith("/stories");
+    act(() => toolControls.goBack());
+    expect(navigateTo).toHaveBeenCalledWith(-1);
+    expect(typeof toolControls.canGoBack()).toBe("boolean");
+
+    act(() => toolControls.setMuted(true));
+    expect(screen.getByRole("button", { name: "Unmute microphone" })).toBeInTheDocument();
+
+    await act(async () => toolControls.endCall());
+    await waitFor(() => expect(onCancel).toHaveBeenCalled());
+    expect(liveApi.disconnect).toHaveBeenCalled();
+  });
+
   it("keeps a live session open when only message saving fails", () => {
     liveApi.connected = true;
     liveApi.isRecording = true;
@@ -143,6 +172,8 @@ describe("Voiceinput", () => {
     const { container } = renderWithProviders(<Voiceinput inline autoStart onCancel={vi.fn()} />, { auth: true });
     await waitFor(() => expect(liveApi.greet).toHaveBeenCalledOnce());
     expect(container.querySelector('[aria-label="Voice conversation"]')).toBeInTheDocument();
+    expect(container.querySelector('[data-slot="avatar"]')).toBeInTheDocument();
+    expect(container.querySelector('img[src*="dicebear.com"]')).toBeNull();
     expect(screen.queryByTestId("voice-mode-layer")).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "End voice conversation" })).toBeInTheDocument();
   });

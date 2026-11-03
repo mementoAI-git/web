@@ -10,6 +10,15 @@ function openInvite() {
 }
 
 describe("invitation loading", () => {
+  it("shows a public invitation in the centered onboarding card without the marketing image", async () => {
+    server.use(http.get("*/beneficiaries/invite/invite-1", () => HttpResponse.json({ data: { _id: "invite-1", email: "ada@example.com", benefactor: { first_name: "Wisdom" }, user: { email: "ada@example.com" }, access_scope: "shared_only" } })));
+    const { container } = openInvite();
+    expect(await screen.findByRole("heading", { name: "Join Wisdom on Memento" })).toBeVisible();
+    expect(screen.getByRole("link", { name: "Memento." })).toHaveAttribute("href", "/");
+    expect(screen.getByRole("main").querySelector("section")).toContainElement(screen.getByRole("button", { name: "Accept invite" }));
+    expect(container.querySelector("aside")).not.toBeInTheDocument();
+  });
+
   it("recovers a temporary failure without displaying the server error", async () => {
     let failed = true;
     server.use(http.get("*/beneficiaries/invite/invite-1", () => failed

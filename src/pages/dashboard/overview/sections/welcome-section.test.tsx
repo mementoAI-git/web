@@ -46,20 +46,20 @@ describe("WelcomeSection", () => {
   it("starts voice inside the banner and restores actions when the call ends", async () => {
     const user = userEvent.setup();
     const { container } = renderWithProviders(<WelcomeSection />, { route: "/overview", auth: true });
-    await user.click(screen.getByRole("button", { name: "Voice conversation" }));
+    await user.click(screen.getByRole("button", { name: "Talk" }));
     const voice = await screen.findByRole("region", { name: "Inline voice" });
     expect(container.contains(voice)).toBe(true);
     expect(screen.queryByPlaceholderText("What’s on your mind today?")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Add story" })).not.toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "End call" }));
-    expect(screen.getByRole("button", { name: "Voice conversation" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Talk" })).toBeInTheDocument();
     expect(screen.getByPlaceholderText("What’s on your mind today?")).toBeInTheDocument();
   });
 
   it("replaces the secondary actions with a voice-mode entry link", () => {
     renderWithProviders(<WelcomeSection />, { route: "/overview", auth: true });
     expect(
-      screen.getByRole("button", { name: "Voice conversation" }),
+      screen.getByRole("button", { name: "Talk" }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /^add story$/i }),

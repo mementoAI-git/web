@@ -116,6 +116,39 @@ describe("useSpokenReplies", () => {
     await waitFor(() => expect(clips).toHaveLength(2));
     expect(clips[1].play).toHaveBeenCalledOnce();
   });
+  it("requests and plays the first sentence while text is still streaming", async () => {
+    const {result} = renderHook(() => useSpokenReplies("stream"));
+    act(() => result.current.toggle());
+    act(() => result.current.stream("The first sentence is ready. The next"));
+    expect(requestSpokenAudio).toHaveBeenCalledWith("The first sentence is ready.", expect.any(AbortSignal));
+    await waitFor(() => expect(clips[0]?.play).toHaveBeenCalledOnce());
+    act(() => result.current.stream("The first sentence is ready. The next sentence is finished.", true));
+    await waitFor(() => expect(requestSpokenAudio).toHaveBeenCalledTimes(2));
+    expect(clips).toHaveLength(1);
+    await act(async () => clips[0].onended?.());
+    await waitFor(() => expect(clips[1]?.play).toHaveBeenCalledOnce());
+    act(() => result.current.stream("The first sentence is ready. The next sentence is finished.", true));
+    expect(requestSpokenAudio).toHaveBeenCalledTimes(2);
+  });
+  it("bounds synthesis to the playing clip and one prefetched clip", async () => {
+    const {result} = renderHook(() => useSpokenReplies("stream"));
+    act(() => result.current.toggle());
+    act(() => result.current.stream("A complete sentence. ".repeat(200), true));
+    await waitFor(() => expect(clips).toHaveLength(1));
+    expect(requestSpokenAudio).toHaveBeenCalledTimes(2);
+    await act(async () => clips[0].onended?.());
+    await waitFor(() => expect(clips).toHaveLength(2));
+    expect(requestSpokenAudio).toHaveBeenCalledTimes(3);
+  });
+  it("drops the unspoken streaming tail when interrupted", async () => {
+    const {result} = renderHook(() => useSpokenReplies("stream"));
+    act(() => result.current.toggle());
+    act(() => result.current.stream("The first sentence is ready. Unfinished tail"));
+    await waitFor(() => expect(clips).toHaveLength(1));
+    act(() => result.current.stop());
+    expect(clips[0].pause).toHaveBeenCalledOnce();
+    expect(requestSpokenAudio).toHaveBeenCalledOnce();
+  });
   it("ignores an old clip error after a new reply has started", async () => {
     const { result } = await speaking();
     const old = clips[0];

@@ -1,7 +1,7 @@
 import { reportFetcherError } from "@/api/report-fetcher-error";
 import "../overview-motion.css";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { LoaderIcon } from "lucide-react";
+import { LoaderIcon, Pause, Play } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import useSWRMutation from "swr/mutation";
@@ -169,7 +169,7 @@ export function OverviewCaptureCard({
       }
       if (textRef.current === submitted) updateText("");
       toast.success(
-        "Thoughts saved. Details will finish processing in the background.",
+        "Quick note saved. Details will finish processing in the background.",
       );
       void mutate(
         (key) => typeof key === "string" && key.startsWith(endpoint.stories),
@@ -383,7 +383,11 @@ export function OverviewCaptureCard({
                 onClick={recording.togglePause}
                 className={roundButton}
               >
-                <RecordingIcon src={dark ? microphoneDark : microphoneLight} />
+                {recording.phase === "paused" ? (
+                  <Play aria-hidden className="size-5" />
+                ) : (
+                  <Pause aria-hidden className="size-5" />
+                )}
               </Button>
             </div>
           </div>
@@ -469,7 +473,7 @@ export function OverviewCaptureCard({
                     onClick={onVoiceConversation}
                     className="h-10 gap-2 rounded-[64px] bg-fill-overview-voice px-4 font-geist text-sm font-semibold text-overview-voice [background-image:none] hover:bg-fill-overview-voice/90"
                   >
-                    <OverviewDesignIcon name="phone" /> Voice conversation
+                    <OverviewDesignIcon name="phone" /> Talk
                   </Button>
                 </>
               )}

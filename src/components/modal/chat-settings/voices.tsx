@@ -5,12 +5,13 @@ import { mutate } from "swr";
 import useSWR from "swr";
 import { CheckCircle2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { VoiceAvatar } from "@/components/voice-avatar";
+import { getMobileVoiceChoices, getMobileVoiceDefinition } from "@/features/voice/mobile-voice-catalog";
 import { useStore } from "@/hooks/use-store";
 import useFetcher from "@/hooks/use-fetcher";
 import endpoint from "@/api/endpoint";
 import { toast } from "sonner";
-import { previewGeminiChatVoice } from "@/lib/gemini-voice-preview";
+import { previewGeminiChatVoice, type VoicePreviewToken } from "@/lib/gemini-voice-preview";
 import { previewElevenLabsVoice } from "@/lib/elevenlabs-voice-preview";
 import { useRequestRecovery } from "@/hooks/use-request-recovery";
 import { cn } from "@/lib/utils";
@@ -28,12 +29,7 @@ type VoiceEntry = {
 };
 
 type VoiceProvider = "gemini" | "elevenlabs";
-type ProviderVoiceEntry = VoiceEntry & { provider: VoiceProvider };
-
-function formatVoiceAttribute(value: string | undefined, fallback: string) {
-  const text = (value || fallback).trim();
-  return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
-}
+type ProviderVoiceEntry = VoiceEntry & { provider: VoiceProvider; artwork: string };
 
 function isVoiceEntry(value: unknown): value is VoiceEntry {
   const v = value as Partial<VoiceEntry>;
@@ -62,39 +58,14 @@ export default function Voices() {
     `${endpoint.aiVoices}?provider=gemini`,
     { shouldRetryOnError: false },
   );
-  const { data: elevenCatalog, error: elevenError, isLoading: elevenLoading, isValidating: elevenValidating, mutate: refreshEleven } = useSWR<{ data?: { voices?: VoiceEntry[]; configured?: boolean } }>(
-    `${endpoint.aiVoices}?provider=elevenlabs`,
-    { shouldRetryOnError: false },
-  );
-
   const retryGemini = useRequestRecovery("voices-gemini", geminiError, refreshGemini, "Some voices couldn’t load. Please try again.");
-  const retryEleven = useRequestRecovery("voices-elevenlabs", elevenError, refreshEleven, "Some voices couldn’t load. Please try again.");
-  const catalogLoading = geminiLoading || elevenLoading;
-  const catalogError = geminiError || elevenError;
-  const retryCatalogs = () => {
-    if (geminiError) retryGemini();
-    if (elevenError) retryEleven();
-  };
-
-  const dynamicVoices = useMemo<ProviderVoiceEntry[]>(() => {
-    const geminiVoices = (geminiCatalog?.data?.voices || [])
-      .filter(isVoiceEntry)
-      .filter((v) => v.voiceName !== "Fenrir")
-      .map((v) => ({
-        ...v,
-        provider: "gemini" as const,
-      }));
-    const elevenVoices = (elevenCatalog?.data?.voices || []).filter(isVoiceEntry).map((v) => ({
-      ...v,
-      provider: "elevenlabs" as const,
-    }));
-
-    // Keep the UI simple: always present 6 choices in one list.
-    if (elevenVoices.length > 0) {
-      return [...elevenVoices.slice(0, 3), ...geminiVoices.slice(0, 3)];
-    }
-    return geminiVoices.slice(0, 6);
-  }, [geminiCatalog?.data?.voices, elevenCatalog?.data?.voices]);
+  const catalogLoading = geminiLoading;
+  const catalogError = geminiError;
+  const retryCatalogs = () => { if (geminiError) retryGemini(); };
+  const dynamicVoices = useMemo<ProviderVoiceEntry[]>(() =>
+    getMobileVoiceChoices((geminiCatalog?.data?.voices || []).filter(isVoiceEntry)),
+    [geminiCatalog?.data?.voices],
+  );
 
   const allowedVoiceNames = useMemo(
     () => new Set<string>(dynamicVoices.map((v) => v.voiceName)),
@@ -102,7 +73,7 @@ export default function Voices() {
   );
 
   const selectedVoice = useMemo(() => {
-    const saved = user?.chat_voice;
+    const saved = getMobileVoiceDefinition(user?.chat_voice)?.voiceName || user?.chat_voice;
     // Always trust the live catalog first; only apply legacy remap for unknown historic values.
     if (saved && allowedVoiceNames.has(saved)) return saved;
     const resolved = saved && LEGACY_VOICE_FALLBACK[saved] ? LEGACY_VOICE_FALLBACK[saved] : saved;
@@ -113,7 +84,7 @@ export default function Voices() {
 
   const applyVoice = useCallback(
     async (voiceName: string, provider: VoiceProvider): Promise<boolean> => {
-      if (selectedVoice === voiceName && (user?.chat_voice_provider || "gemini") === provider) return true;
+      if ((getMobileVoiceDefinition(user?.chat_voice)?.voiceName || user?.chat_voice) === voiceName && (user?.chat_voice_provider || "gemini") === provider) return true;
       savingRef.current = true;
       try {
         await trigger({ chat_voice: voiceName, chat_voice_provider: provider });
@@ -133,7 +104,7 @@ export default function Voices() {
         savingRef.current = false;
       }
     },
-    [selectedVoice, trigger, setUser, user, dynamicVoices],
+    [trigger, setUser, user, dynamicVoices],
   );
 
   const handleVoiceClick = useCallback(
@@ -164,7 +135,7 @@ export default function Voices() {
             voiceName,
             fetchToken: async () => {
               const res = await fetchEphemeralToken();
-              return (res?.data as { token?: string } | undefined)?.token;
+              return res?.data as VoicePreviewToken | undefined;
             },
             signal: ac.signal,
           });
@@ -195,12 +166,12 @@ export default function Voices() {
         <p className="text-sm text-text-neutral-weak">No voices are available to choose right now.</p>
       ) : null}
       {catalogError ? (
-        <Button variant="outline" onClick={retryCatalogs} disabled={Boolean(geminiValidating || elevenValidating)}>
-          {geminiValidating || elevenValidating ? "Retrying…" : "Retry loading voices"}
+        <Button variant="outline" onClick={retryCatalogs} disabled={Boolean(geminiValidating)}>
+          {geminiValidating ? "Retrying…" : "Retry loading voices"}
         </Button>
       ) : null}
       <div className="grid grid-cols-2 gap-2">
-        {dynamicVoices.map(({ title, subtitle, imageUrl, voiceName, gender, style }) => (
+        {dynamicVoices.map(({ title, subtitle, artwork, voiceName }) => (
           <Button
             key={voiceName}
             type="button"
@@ -217,14 +188,7 @@ export default function Voices() {
             aria-pressed={selectedVoice === voiceName}
             onClick={() => void handleVoiceClick(voiceName)}
           >
-            <Avatar>
-              {imageUrl ? (
-                <AvatarImage src={imageUrl} alt={`${title} voice avatar`} />
-              ) : null}
-              <AvatarFallback className="font-geist text-xs font-semibold">
-                {title.slice(0, 2).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
+            <VoiceAvatar artwork={artwork} title={title} />
             <span className="grid min-w-0 flex-1 text-left">
               <span className="flex min-w-0 items-center gap-2">
                 <span className="truncate font-inter text-sm font-semibold leading-tight">{title}</span>
@@ -233,8 +197,7 @@ export default function Voices() {
                 ) : null}
               </span>
               <span className="truncate font-geist text-xs leading-4 text-text-neutral-weak">
-                {formatVoiceAttribute(gender, "Unknown")} ·{" "}
-                {formatVoiceAttribute(style || subtitle, "Natural")}
+                {subtitle}
               </span>
             </span>
             {selectedVoice === voiceName ? (

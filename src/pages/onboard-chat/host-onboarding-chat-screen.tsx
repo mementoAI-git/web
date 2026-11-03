@@ -247,7 +247,7 @@ function HostOnboardingChatContent({
 
   return (
     <div
-      className="flex h-screen flex-col overflow-hidden bg-v3-bg"
+      className="flex h-dvh flex-col overflow-hidden bg-v3-bg"
       role="main"
       aria-label="Onboarding chat"
     >
@@ -288,7 +288,8 @@ function HostOnboardingChatContent({
           className={cn(
             "mx-auto flex h-[750px] max-h-full min-h-0 w-full max-w-[500px] shrink-0 flex-col",
             "rounded-[32px] border border-v3-stroke-weak bg-v3-bg p-4",
-            "shadow-[0_4px_28px_var(--brown-50)]"
+            "shadow-[0_4px_28px_var(--brown-50)]",
+            showIntro && "overflow-y-auto"
           )}
         >
           {showIntro ? (

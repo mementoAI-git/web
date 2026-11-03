@@ -1,4 +1,4 @@
-/* Transitions.dev sliding tabs: fixed-size view pill and measured filter marker. */
+/* Transitions.dev sliding tabs: fixed-size view pill and full-width filter marker. */
 .stories-view-toggle {
   position: relative;
   isolation: isolate;
@@ -26,13 +26,14 @@
   position: absolute;
   bottom: 0;
   left: 0;
-  width: 24px;
+  width: var(--active-tab-width);
   height: 2px;
   border-radius: 100px;
   background: var(--text-neutral-strong);
   pointer-events: none;
-  transform: translateX(calc(var(--active-tab-left) + var(--active-tab-width) / 2 - 12px));
-  transition: transform 250ms cubic-bezier(0.22, 1, 0.36, 1);
+  transform: translateX(var(--active-tab-left));
+  transition: transform 250ms cubic-bezier(0.22, 1, 0.36, 1),
+    width 250ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 /* Reveal loaded results as a single surface; pagination and refresh keep DOM identity. */
 .stories-results-reveal.is-shown[data-loading="false"] {

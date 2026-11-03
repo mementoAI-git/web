@@ -1,9 +1,6 @@
 import { useCallback, useMemo } from "react";
 import useSWR, { mutate } from "swr";
-import denverArtwork from "@/assets/image/voices/denver.jpg";
-import hannahArtwork from "@/assets/image/voices/hannah.jpg";
-import josefArtwork from "@/assets/image/voices/josef.jpg";
-import sueArtwork from "@/assets/image/voices/sue.jpg";
+import { getMobileVoiceChoices, getMobileVoiceDefinition } from "@/features/voice/mobile-voice-catalog";
 import endpoint from "@/api/endpoint";
 import useFetcher from "@/hooks/use-fetcher";
 import { useStore } from "@/hooks/use-store";
@@ -27,29 +24,9 @@ export type VoiceModeVoice = VoiceApiEntry & {
   metadata: string;
 };
 
-const artwork = [denverArtwork, sueArtwork, josefArtwork, hannahArtwork];
-
 function isVoiceEntry(value: unknown): value is VoiceApiEntry {
   const entry = value as Partial<VoiceApiEntry>;
   return Boolean(entry && typeof entry.title === "string" && typeof entry.voiceName === "string");
-}
-
-function formatAttribute(value: string | undefined, fallback: string) {
-  const text = (value || fallback).trim();
-  return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
-}
-
-function normalizeVoice(entry: VoiceApiEntry, provider: VoiceProvider, index: number): VoiceModeVoice {
-  const gender = formatAttribute(entry.gender, "Natural");
-  const style = formatAttribute(entry.style || entry.subtitle, provider === "gemini" ? "Gemini" : "ElevenLabs");
-
-  return {
-    ...entry,
-    id: entry.id || `${provider}-${entry.voiceName}`,
-    provider,
-    artwork: entry.imageUrl || artwork[index % artwork.length],
-    metadata: `${gender} · ${style}`,
-  };
 }
 
 export function formatVoiceSessionTime(totalSeconds: number) {
@@ -68,27 +45,17 @@ export function useVoiceModeVoices() {
   const { data: geminiCatalog } = useSWR<{ data?: { voices?: VoiceApiEntry[] } }>(
     `${endpoint.aiVoices}?provider=gemini`,
   );
-  const { data: elevenLabsCatalog } = useSWR<{ data?: { voices?: VoiceApiEntry[] } }>(
-    `${endpoint.aiVoices}?provider=elevenlabs`,
+  const voices = useMemo<VoiceModeVoice[]>(() =>
+    getMobileVoiceChoices((geminiCatalog?.data?.voices || []).filter(isVoiceEntry))
+      .map((voice) => ({ ...voice, metadata: voice.subtitle })),
+    [geminiCatalog?.data?.voices],
   );
-
-  const voices = useMemo(() => {
-    const gemini = (geminiCatalog?.data?.voices || [])
-      .filter(isVoiceEntry)
-      .filter((voice) => voice.voiceName !== "Fenrir")
-      .map((voice, index) => normalizeVoice(voice, "gemini", index));
-    const elevenLabs = (elevenLabsCatalog?.data?.voices || [])
-      .filter(isVoiceEntry)
-      .map((voice, index) => normalizeVoice(voice, "elevenlabs", index + gemini.length));
-
-    return elevenLabs.length > 0 ? [...elevenLabs.slice(0, 3), ...gemini.slice(0, 3)] : gemini.slice(0, 6);
-  }, [elevenLabsCatalog?.data?.voices, geminiCatalog?.data?.voices]);
 
   const selectedVoice = useMemo(() => {
     return (
       voices.find(
         (voice) =>
-          voice.voiceName === user?.chat_voice &&
+          voice.voiceName === (getMobileVoiceDefinition(user?.chat_voice)?.voiceName || user?.chat_voice) &&
           voice.provider === (user?.chat_voice_provider || "gemini"),
       ) || voices[0] || null
     );

@@ -1,16 +1,18 @@
 "use client";
 
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import useSWR from "swr";
 import endpoint from "@/api/endpoint";
 import { isEmpty } from "@/utility";
 import AddBeneficiaries from "../components/add-beneficiaries";
 import BeneficiaryItem from "../components/beneficiary-item";
+import { useSkipOnboarding } from "../use-skip-onboarding";
 
 export default function BeneficiaryPage() {
   const { data } = useSWR(endpoint.beneficiaries);
   const navigate = useNavigate();
+  const { skip, busy } = useSkipOnboarding();
   const invites = data?.data?.docs ?? [];
 
   return (
@@ -29,7 +31,7 @@ export default function BeneficiaryPage() {
 
       {!isEmpty(invites) && (
         <div className="space-y-3 rounded-2xl border border-stroke-neutral-weak bg-bg-neutral p-4">
-          <span className="font-inter text-sm font-semibold uppercase tracking-[2px] text-grey-300">
+          <span className="font-inter text-sm font-semibold uppercase tracking-[2px] text-text-neutral-weak">
             invites
           </span>
           <div className="mt-4 space-y-3">
@@ -49,17 +51,22 @@ export default function BeneficiaryPage() {
           Prev
         </button>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-stretch">
-          <Link
-            to="/overview"
-            className="cursor-pointer rounded-full bg-sand-2 px-8 py-[18px] text-center text-sm font-semibold leading-[20px] text-sand-10 transition-[transform,opacity] duration-150 ease-out hover:opacity-90 active:scale-[0.98]"
+          <Button
+            type="button"
+            variant="outline"
+            disabled={busy}
+            onClick={() => void skip()}
+            className="h-12 cursor-pointer rounded-full bg-fill-neutral-weak px-8 py-[18px] text-center text-sm font-semibold leading-[20px] text-text-neutral-strong transition-[transform,opacity] duration-150 ease-out hover:opacity-90 active:scale-[0.98]"
           >
             Skip for now
-          </Link>
+          </Button>
           <Button
-            asChild
-            className="rounded-full !bg-fill-brand-strong px-8 py-[18px] text-sm font-semibold leading-[20px] text-text-inverse-strong transition-[transform,opacity] duration-150 ease-out hover:!opacity-90 active:scale-[0.98]"
+            type="button"
+            disabled={busy}
+            onClick={() => void skip()}
+            className="h-12 rounded-full !bg-fill-brand-strong px-8 py-[18px] text-sm font-semibold leading-[20px] text-text-inverse-strong transition-[transform,opacity] duration-150 ease-out hover:!opacity-90 active:scale-[0.98]"
           >
-            <Link to="/overview">Continue</Link>
+            Continue
           </Button>
         </div>
       </div>

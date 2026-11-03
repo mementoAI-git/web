@@ -1,4 +1,5 @@
 "use client";
+import { VoiceAvatar } from "@/components/voice-avatar";
 import type { VoiceMessage, VoiceRuntime } from "@/features/voice/types";
 
 import voiceGridMask from "@/assets/icon/voice/grid-mask.svg";
@@ -26,6 +27,7 @@ import {
 } from "lucide-react";
 import { createPortal } from "react-dom";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { mutate } from "swr";
 import { toast } from "sonner";
 import phoneArtwork from "@/assets/image/onboarding/phon-call.png";
@@ -94,7 +96,7 @@ type VoiceLanguageCode = (typeof VOICE_LANGUAGES)[number]["code"];
 
 function VoiceArtwork({ voice, className }: { voice: VoiceModeVoice | null; className?: string }) {
   return voice ? (
-    <img src={voice.artwork} alt="" className={cn("size-32 rounded-full object-cover", className)} />
+    <VoiceAvatar artwork={voice.artwork} title={voice.title} className={cn("size-32", className)} />
   ) : (
     <div className={cn("size-32 rounded-full bg-fill-neutral-weak", className)} aria-hidden />
   );
@@ -300,6 +302,18 @@ function VoiceSettings({
 export default function Voiceinput({ onCancel, memoryId, history = [], autoStart = false, onAutoStartConsumed, inline = false, variant = "composer", onSessionChange, persistent = false, onRuntime, onMessages }: VoiceinputProps) {
   const { user } = useStore();
   const [languageCode, setLanguageCode] = useState<VoiceLanguageCode>("en-US");
+  const navigate = useNavigate();
+  // Voice tools act on this screen: open pages, show a mute Memento made, and
+  // hang up through the same path as the End call button.
+  const voiceToolHandlers = useRef<{ setMuted?: (muted: boolean) => void; endCall?: () => void }>({});
+  const toolControls = useMemo(() => ({
+    navigate: (href: string) => navigate(href),
+    setMuted: (muted: boolean) => voiceToolHandlers.current.setMuted?.(muted),
+    endCall: () => voiceToolHandlers.current.endCall?.(),
+    goBack: () => navigate(-1),
+    // React Router keeps the position in history in state.idx.
+    canGoBack: () => ((window.history.state as { idx?: number } | null)?.idx ?? 0) > 0,
+  }), [navigate]);
   const {
     connected,
     sendChatInput,
@@ -315,7 +329,7 @@ export default function Voiceinput({ onCancel, memoryId, history = [], autoStart
     isRecording,
     error,
     outputNode,
-  } = useLiveAPI({ memoryId, turns: history, languageCode, autoConnect: false, onMessages });
+  } = useLiveAPI({ memoryId, turns: history, languageCode, autoConnect: false, onMessages, toolControls });
   const aiLevel = useAiPlaybackLevel(outputNode);
   const { resolvedTheme } = useTheme();
   const autoStartAttempted = useRef(false);
@@ -451,6 +465,8 @@ export default function Voiceinput({ onCancel, memoryId, history = [], autoStart
       setIsDisconnecting(false);
     }
   };
+
+  voiceToolHandlers.current = { setMuted, endCall: () => void handleEndCall() };
 
   const handleVoiceSelection = async (voice: VoiceModeVoice, close: "picker" | "settings") => {
     const saved = await saveVoice(voice);

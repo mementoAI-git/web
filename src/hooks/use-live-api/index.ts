@@ -9,8 +9,23 @@ import {
   createPlaybackState,
   scheduleGeminiLivePcmChunk,
   stopAllGeminiLivePlayback,
+  waitGeminiLivePlaybackTail,
   type GeminiLivePlaybackState,
 } from "./playback";
+import { mutate } from "swr";
+import { post } from "@/api/mutations";
+import { voiceToolsEnabled, voiceTokenParams } from "@/features/voice/tools/capabilities";
+import { createCallActionHandlers, resolveWebDestination, type CallControls } from "@/features/voice/tools/call-actions";
+import { VoiceToolRelay } from "@/features/voice/tools/relay";
+import { DomScreen } from "@/features/voice/screen/dom-screen";
+import { webScreenName } from "@/features/voice/screen/screen-names";
+import { createScreenControlHandlers } from "@/features/voice/screen/tools";
+import {
+  createServerToolHandlers,
+  serverToolNames,
+  type VoiceRefreshable,
+  type VoiceToolEffect,
+} from "@/features/voice/tools/server-tools";
 import { createBlob } from "./utils";
 import { GEMINI_CONFIG } from "./config";
 import { createSystemContext, isEmpty } from "@/utility";
@@ -35,7 +50,35 @@ interface UseLiveAPIProps {
   /** When false (default), the session is not opened until `connect()` runs (e.g. user taps “Start call”). */
   autoConnect?: boolean;
   onMessages?: (messages: VoiceMessage[]) => void;
+  /**
+   * What voice tools may do on the screen. Without it, the session asks for
+   * no tools, so Memento only talks.
+   */
+  toolControls?: VoiceToolControls;
 }
+
+/** The voice screen's side of the call actions. */
+export type VoiceToolControls = {
+  navigate: (href: string) => void;
+  /** Reflect a mute Memento made (the hook already muted the microphone). */
+  setMuted: (muted: boolean) => void;
+  /** Hang up, as the End call button does. */
+  endCall: () => void;
+  /** Back to the previous page, for "go back". */
+  goBack?: () => void;
+  canGoBack?: () => boolean;
+};
+
+/** Longest Memento's goodbye may take before the call ends anyway. */
+const GOODBYE_LIMIT_MS = 10_000;
+
+/** SWR cache keys each refresh effect revalidates. */
+const REFRESH_PREFIXES: Record<VoiceRefreshable, string[]> = {
+  profile: [endpoint.profile, endpoint.userStats],
+  memories: [endpoint.memories],
+  capsules: [endpoint.capsule],
+  beneficiaries: [endpoint.beneficiaries],
+};
 
 export type LiveSessionOverrides = {
   languageCode?: string;
@@ -48,7 +91,12 @@ export function useLiveAPI({
   languageCode = "en-US",
   autoConnect = false,
   onMessages,
+  toolControls,
 }: UseLiveAPIProps) {
+  const toolControlsRef = useRef(toolControls);
+  toolControlsRef.current = toolControls;
+  const relayRef = useRef<VoiceToolRelay | null>(null);
+  const pendingEndRef = useRef<{ then?: () => void; heardGoodbye: boolean; timer: ReturnType<typeof setTimeout> } | null>(null);
   const { user } = useStore();
   const messageObserver = useRef(onMessages);
   messageObserver.current = onMessages;
@@ -93,6 +141,26 @@ export function useLiveAPI({
 
   const { trigger: fetchEphemeralToken } = useFetcher(endpoint.ephemeralToken, "get")
   const { trigger: addMessageToMemory } = useFetcher(endpoint.addMessageToMemory, "post")
+
+  /** The call is over: late tool results are dropped and no hang-up is pending. */
+  const stopVoiceTools = useCallback(() => {
+    relayRef.current?.dispose();
+    relayRef.current = null;
+    if (pendingEndRef.current) clearTimeout(pendingEndRef.current.timer);
+    pendingEndRef.current = null;
+  }, []);
+
+  /** Hangs up after Memento's goodbye has played. */
+  const finishPendingEnd = useCallback(async () => {
+    const pending = pendingEndRef.current;
+    if (!pending) return;
+    pendingEndRef.current = null;
+    clearTimeout(pending.timer);
+    const output = outputAudioContextRef.current;
+    if (output && playbackStateRef.current) await waitGeminiLivePlaybackTail(output, playbackStateRef.current);
+    toolControlsRef.current?.endCall();
+    pending.then?.();
+  }, []);
 
   // Start audio recording
   const startRecording = useCallback(async () => {
@@ -325,15 +393,73 @@ export function useLiveAPI({
     try {
       setError(null);
       await outputAudioContext.resume();
+      const wantsTools = Boolean(toolControlsRef.current) && voiceToolsEnabled();
       const result = await fetchEphemeralToken(
-        memoryIdRef.current ? { memory_id: memoryIdRef.current } : undefined,
+        voiceTokenParams({ memoryId: memoryIdRef.current, tools: wantsTools }),
       );
       if (outputAudioContextRef.current !== outputAudioContext || connectionAttempt.current !== attempt) return false;
-      const liveToken = result?.data as { token?: string; live?: { model?: string } } | undefined;
+      const liveToken = result?.data as { token?: string; live?: { model?: string }; tools?: unknown } | undefined;
       if (!liveToken?.token) {
         throw new Error("Failed to get a fresh Live API token");
       }
       ephemeralTokenRef.current = liveToken.token;
+
+      stopVoiceTools();
+      if (wantsTools) {
+        const navigate = (href: string) => toolControlsRef.current?.navigate(href);
+        const applyEffects = (effects: VoiceToolEffect[]) => {
+          for (const effect of effects) {
+            if (effect.type === "refresh") {
+              const prefixes = REFRESH_PREFIXES[effect.what];
+              void mutate(key => typeof key === "string" && prefixes.some(prefix => key.startsWith(prefix)));
+            } else if (effect.type === "open") {
+              const href = resolveWebDestination(effect.destination)?.href;
+              if (href) navigate(href);
+            } else {
+              navigate(`/stories/${effect.id}`);
+            }
+          }
+        };
+        const callControls: CallControls = {
+          navigate,
+          setMuted: muted => {
+            mediaStreamRef.current?.getAudioTracks().forEach(track => { track.enabled = !muted; });
+            toolControlsRef.current?.setMuted(muted);
+          },
+          endAfterGoodbye: then => {
+            if (pendingEndRef.current) clearTimeout(pendingEndRef.current.timer);
+            pendingEndRef.current = { then, heardGoodbye: false, timer: setTimeout(() => void finishPendingEnd(), GOODBYE_LIMIT_MS) };
+          },
+        };
+        relayRef.current = new VoiceToolRelay(
+          async (query, also) => {
+            const response = await post<{ result?: string }>(endpoint.voiceMemorySearch, { query, ...(also.length ? { also } : {}) });
+            return response?.data?.result ?? "";
+          },
+          responses => {
+            void sessionPromiseRef.current?.then(session => session.sendToolResponse({ functionResponses: responses }));
+          },
+          {
+            ...createCallActionHandlers(callControls),
+            ...createScreenControlHandlers({
+              screen: new DomScreen({
+                document,
+                screenName: () => webScreenName(window.location.pathname, window.location.search),
+              }),
+              canGoBack: () => toolControlsRef.current?.canGoBack?.() ?? false,
+              goBack: () => toolControlsRef.current?.goBack?.(),
+            }),
+            ...createServerToolHandlers(serverToolNames(liveToken.tools), {
+              run: (name, args, invocation) => post(`${endpoint.voiceTools}/${encodeURIComponent(name)}`, {
+                args,
+                call_id: invocation.callId,
+                session_id: sessionIdRef.current ?? undefined,
+              }),
+              applyEffects,
+            }),
+          },
+        );
+      }
 
       clientRef.current = new GoogleGenAI({
         apiKey: ephemeralTokenRef.current,
@@ -385,6 +511,16 @@ export function useLiveAPI({
             const parts = message.serverContent?.modelTurn?.parts;
             const playback = playbackStateRef.current;
 
+            if (pendingEndRef.current && parts?.some(part => part.inlineData?.data)) {
+              pendingEndRef.current.heardGoodbye = true;
+            }
+            if (message.toolCall?.functionCalls?.length) {
+              void relayRef.current?.handle(message.toolCall.functionCalls);
+            }
+            if (message.toolCallCancellation?.ids?.length) {
+              relayRef.current?.cancel(message.toolCallCancellation.ids);
+            }
+
             if (parts && playback) {
               for (const part of parts) {
                 const data = part.inlineData?.data;
@@ -408,6 +544,9 @@ export function useLiveAPI({
             if (message.serverContent?.turnComplete || message.serverContent?.interrupted) {
               flushTranscript(message.serverContent.interrupted ? "interrupted" : "end_turn");
             }
+            if (message.serverContent?.turnComplete && pendingEndRef.current?.heardGoodbye) {
+              void finishPendingEnd();
+            }
 
             // Handle interruption
             const interrupted = message.serverContent?.interrupted;
@@ -420,6 +559,7 @@ export function useLiveAPI({
             const failure = new Error("Voice connection failed. Please try again.");
             rejectSetup(failure);
             setError(failure.message);
+            stopVoiceTools();
             stopRecording();
             if (playbackStateRef.current) stopAllGeminiLivePlayback(playbackStateRef.current);
             setConnected(false);
@@ -431,6 +571,7 @@ export function useLiveAPI({
             const failure = new Error(`Voice connection closed (${event.code}): ${detail}`);
             rejectSetup(failure);
             if (event.code !== 1000 || !hasConnectedRef.current) setError(failure.message);
+            stopVoiceTools();
             stopRecording();
             if (playbackStateRef.current) stopAllGeminiLivePlayback(playbackStateRef.current);
             setConnected(false);
@@ -495,6 +636,8 @@ export function useLiveAPI({
     }
   }, [
     stopRecording,
+    stopVoiceTools,
+    finishPendingEnd,
     updateTranscriptText,
     flushTranscript,
     user?.chat_voice,
@@ -508,6 +651,7 @@ export function useLiveAPI({
 
   const disconnect = useCallback(() => {
     ++connectionAttempt.current;
+    stopVoiceTools();
     cancelSetup.current?.();
     cancelSetup.current = null;
     isConnectingRef.current = false;
@@ -516,7 +660,7 @@ export function useLiveAPI({
     sessionPromiseRef.current?.then((session) => session.close()).catch(console.error);
     sessionPromiseRef.current = null;
     // Don't close audio contexts here - they're managed by the cleanup
-  }, []);
+  }, [stopVoiceTools]);
 
   const restartSession = useCallback(async (overrides: LiveSessionOverrides = {}) => {
     setInputMuted(true);
@@ -563,6 +707,10 @@ export function useLiveAPI({
       // This is a cancellation counter, not a captured DOM node.
       // eslint-disable-next-line react-hooks/exhaustive-deps
       ++connectionAttempt.current;
+      relayRef.current?.dispose();
+      relayRef.current = null;
+      if (pendingEndRef.current) clearTimeout(pendingEndRef.current.timer);
+      pendingEndRef.current = null;
       cancelSetup.current?.();
       cancelSetup.current = null;
       isRecordingRef.current = false;

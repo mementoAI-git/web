@@ -30,7 +30,12 @@ export function VoiceSessionProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
   const [timeline, setTimeline] = useState<VoiceTimelineEntry[]>([]);
   const [dockTarget, dock] = useState<HTMLDivElement | null>(null);
-  const [host] = useState(() => document.createElement("div"));
+  const [host] = useState(() => {
+    const element = document.createElement("div");
+    // Voice screen control must never press or type into the call's own controls.
+    element.dataset.voiceIgnore = "";
+    return element;
+  });
   const fallback = useRef<HTMLDivElement>(null);
   const runtime = useRef<VoiceRuntime | null>(null);
   const live = useRef(false);

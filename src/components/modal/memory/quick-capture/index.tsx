@@ -4,21 +4,12 @@ import { reportFetcherError } from "@/api/report-fetcher-error";
 
 import { getProfileAvatarUrl } from "@/utility/profile-avatar";
 
-import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Sheet } from "react-modal-sheet";
 import useSWR from "swr";
 import useSWRMutation from "swr/mutation";
-import {
-  ChevronDown,
-  ChevronUp,
-  Globe,
-  Image as ImageIcon,
-  Mic,
-  Music,
-  Smile,
-  Video,
-} from "lucide-react";
+import { X, Square, Pause, Play } from "lucide-react";
 import { toast } from "sonner";
 import { mutate } from "swr";
 import { v4 as uuidv4 } from "uuid";
@@ -28,17 +19,12 @@ import emojiData from "@emoji-mart/data";
 import { useModal } from "@/hooks/use-modal";
 import { useDismissOnOutsidePress } from "@/hooks/use-dismiss-on-outside-press";
 import { useStore } from "@/hooks/use-store";
-import { useInlineAudioCapture } from "@/hooks/use-inline-audio-capture";
+import { useOverviewDictation } from "@/pages/dashboard/overview/sections/use-overview-dictation";
 import { useFeatureFlags } from "@/contexts/feature-flags";
 import { useTheme } from "@/contexts/theme";
 import useFileUpload from "@/hooks/use-file-upload";
 import endpoint from "@/api/endpoint";
-import {
-  fileUploadFetcher,
-  postFetcher,
-  postJsonQuiet,
-  postTranscribeQuiet,
-} from "@/api/fetcher";
+import { postFetcher, postJsonQuiet } from "@/api/fetcher";
 import { paginatedResponseFetcher } from "@/api/domain-fetchers";
 import { cn } from "@/utility";
 import { parseSubscriptionGateError } from "@/features/pricing/subscription-errors";
@@ -48,14 +34,24 @@ import {
   isSupportedFileMime,
   uploadMimeBaseType,
 } from "@/utility/constant";
-import { TimesIcon } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import Spinner from "@/components/spinner";
-import { InlineVoiceRecorder } from "@/components/recorder/inline-voice-recorder";
+import { AudiencePicker } from "./audience-picker";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import closeIcon from "@/assets/icon/quick-story/imgX.svg";
+import draftsChevron from "@/assets/icon/quick-story/imgIconRight.svg";
+import plusIcon from "@/assets/icon/quick-story/imgPlus.svg";
+import emojiIcon from "@/assets/icon/quick-story/imgNotoSlightlySmilingFace.svg";
+import micIcon from "@/assets/icon/quick-story/imgMicrophone01.svg";
+import videoIcon from "@/assets/icon/quick-story/imgVideoRecorder.svg";
 import type {
   IBeneficiary,
-  IFile,
+  IGroup,
   IOnUploadPayload,
 } from "@/utility/interface";
 import { QuickCaptureMediaStack } from "./media-stack";
@@ -85,40 +81,6 @@ const MAX_FILE_BYTES = QUICK_MAX_MB * 1024 * 1024;
 const NOTE_CHAR_MAX = 8000;
 const REFLECTION_DAY_KEY_RE = /^\d{4}-\d{2}-\d{2}$/;
 
-function CharRing({ value, max }: { value: number; max: number }) {
-  const pct = Math.min(1, value / max);
-  const c = 2 * Math.PI * 10;
-  return (
-    <svg
-      width="40"
-      height="40"
-      viewBox="0 0 40 40"
-      className="shrink-0 -rotate-90"
-      aria-hidden
-    >
-      <circle
-        cx="20"
-        cy="20"
-        r="10"
-        fill="none"
-        className="stroke-fill-neutral-weaker"
-        strokeWidth="3"
-      />
-      <circle
-        cx="20"
-        cy="20"
-        r="10"
-        fill="none"
-        className="stroke-fill-brand-strong"
-        strokeWidth="3"
-        strokeLinecap="round"
-        strokeDasharray={c}
-        strokeDashoffset={c * (1 - pct)}
-      />
-    </svg>
-  );
-}
-
 const AUDIO_INPUT_ACCEPT = [
   ".mp3",
   ".wav",
@@ -140,7 +102,12 @@ export function QuickCapture(props: { isMobile?: boolean; data?: unknown }) {
   const outboxKey = user?._id ? `quick-capture-outbox:${user._id}` : null;
   const syncOwner = useRef(outboxKey);
   syncOwner.current = outboxKey;
-  useEffect(() => { syncOwner.current = outboxKey; return () => { syncOwner.current = null; }; }, [outboxKey]);
+  useEffect(() => {
+    syncOwner.current = outboxKey;
+    return () => {
+      syncOwner.current = null;
+    };
+  }, [outboxKey]);
   const completed = useRef(false);
   const savingRef = useRef(false);
   useEffect(
@@ -149,7 +116,6 @@ export function QuickCapture(props: { isMobile?: boolean; data?: unknown }) {
   );
   const { canUse } = useFeatureFlags();
   const { resolvedTheme } = useTheme();
-  const whoId = useId();
 
   const [note, setNote] = useState("");
   const [voiceNoteIds, setVoiceNoteIds] = useState<Record<string, true>>({});
@@ -157,15 +123,16 @@ export function QuickCapture(props: { isMobile?: boolean; data?: unknown }) {
   const [selectedBeneficiaryIds, setSelectedBeneficiaryIds] = useState<
     string[]
   >([]);
-  const [whoOpen, setWhoOpen] = useState(false);
-  const [showInlineRecorder, setShowInlineRecorder] = useState(false);
+  const [selectedGroupIds, setSelectedGroupIds] = useState<string[]>([]);
+  const [visibility, setVisibility] = useState<"private" | "everyone">(
+    "private",
+  );
   const fileInputImageRef = useRef<HTMLInputElement>(null);
   const fileInputVideoRef = useRef<HTMLInputElement>(null);
   const fileInputAudioRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const actionBarRef = useRef<HTMLDivElement>(null);
   const draftsMenuRef = useRef<HTMLDivElement>(null);
-  const privacyMenuRef = useRef<HTMLDivElement>(null);
   const emojiAnchorRef = useRef<HTMLDivElement>(null);
   const emojiPickerPortalRef = useRef<HTMLDivElement>(null);
 
@@ -182,6 +149,7 @@ export function QuickCapture(props: { isMobile?: boolean; data?: unknown }) {
   const filesRef = useRef(files);
   const voiceIdsRef = useRef(voiceNoteIds);
   const beneficiariesRef = useRef(selectedBeneficiaryIds);
+  const audienceRef = useRef({ selectedGroupIds, visibility });
   const ctxRef = useRef({
     email: user?.email,
     daily: dailyPrompt,
@@ -192,6 +160,7 @@ export function QuickCapture(props: { isMobile?: boolean; data?: unknown }) {
     filesRef.current = files;
     voiceIdsRef.current = voiceNoteIds;
     beneficiariesRef.current = selectedBeneficiaryIds;
+    audienceRef.current = { selectedGroupIds, visibility };
     ctxRef.current = {
       email: user?.email,
       daily: dailyPrompt,
@@ -202,19 +171,38 @@ export function QuickCapture(props: { isMobile?: boolean; data?: unknown }) {
     files,
     voiceNoteIds,
     selectedBeneficiaryIds,
+    selectedGroupIds,
+    visibility,
     user?.email,
     dailyPrompt,
     effectiveStorageKey,
   ]);
 
-  const { data: beneficiariesRes } = useSWR(
-    whoOpen ? `${endpoint.beneficiaries}?page=1&limit=100` : null,
+  const {
+    data: beneficiariesRes,
+    error: beneficiariesError,
+    isLoading: beneficiariesLoading,
+  } = useSWR(
+    `${endpoint.beneficiaries}?page=1&limit=100`,
     paginatedResponseFetcher<IBeneficiary>,
   );
   const beneficiaries: IBeneficiary[] = beneficiariesRes?.data?.docs ?? [];
+  const {
+    data: groupsRes,
+    error: groupsError,
+    isLoading: groupsLoading,
+  } = useSWR(
+    `${endpoint.groups}?page=1&limit=100`,
+    paginatedResponseFetcher<IGroup>,
+  );
+  const groups = groupsRes?.data?.docs ?? [];
+  const saveEndpoint =
+    visibility === "everyone" || selectedGroupIds.length
+      ? endpoint.memories
+      : endpoint.memoriesQuickCapture;
 
   const { trigger: saveThought, isMutating } = useSWRMutation(
-    endpoint.memoriesQuickCapture,
+    saveEndpoint,
     postFetcher,
   );
 
@@ -229,65 +217,16 @@ export function QuickCapture(props: { isMobile?: boolean; data?: unknown }) {
     .map((f) => f.uploadedFile._id);
 
   const uploadsPending = files.some((f) => f.progress !== 100);
-  const inlineRecorder = useInlineAudioCapture({
-    onRecordingReady: async (file, durationSec) => {
-      const up = await fileUploadFetcher(endpoint.upload, { arg: { file } });
-      if (!up.success || !up.data) {
-        throw new Error("Upload failed");
-      }
-      const raw = Array.isArray(up.data) ? up.data[0] : up.data;
-      const row = raw as {
-        _id?: string;
-        id?: string;
-        url?: string;
-        backup_url?: string;
-        name?: string;
-        size?: string | number;
-      };
-      const fid = row?._id ?? row?.id;
-      if (!fid) {
-        throw new Error("Upload failed");
-      }
-
-      const nid = uuidv4();
-      const uploaded: IFile = {
-        _id: String(fid),
-        url:
-          typeof row.url === "string" && row.url
-            ? row.url
-            : typeof row.backup_url === "string"
-              ? row.backup_url
-              : "",
-        name: typeof row.name === "string" ? row.name : file.name,
-        size: row.size ?? file.size,
-        type: file.type,
-      };
-
-      setVoiceNoteIds((v) => ({ ...v, [nid]: true }));
-      setFiles((prev) => [
-        ...prev,
-        {
-          id: nid,
-          file,
-          progress: 100,
-          uploadedFile: uploaded,
-          duration: durationSec,
-        },
-      ]);
-
-      void postTranscribeQuiet(uploaded._id);
-      setShowInlineRecorder(false);
-    },
-    fileNamePrefix: "quick-voice",
-    startDelayMs: 300,
+  const recording = useOverviewDictation((text) => {
+    setNote((previous) =>
+      `${previous}${previous.trim() && !/\s$/.test(previous) ? " " : ""}${text}`.slice(
+        0,
+        NOTE_CHAR_MAX,
+      ),
+    );
+    requestAnimationFrame(() => textareaRef.current?.focus());
   });
-  useEffect(() => {
-    const message = inlineRecorder.micDenied
-      ? "Microphone access is needed to record."
-      : inlineRecorder.error;
-    if (message) toast.error(message, { id: "quick-capture-recording" });
-  }, [inlineRecorder.micDenied, inlineRecorder.error]);
-  const recordingUi = inlineRecorder.recording || inlineRecorder.busy;
+  const recordingUi = recording.phase !== "idle";
 
   const persistToKey = useCallback(
     (key: string) => {
@@ -295,6 +234,8 @@ export function QuickCapture(props: { isMobile?: boolean; data?: unknown }) {
       const payload: QuickCaptureDraft = {
         note,
         selectedBeneficiaryIds,
+        selectedGroupIds,
+        visibility,
         ...(dailyPrompt ? { daily_prompt: dailyPrompt } : {}),
         attachments: files
           .filter((f) => f.uploadedFile?._id)
@@ -318,7 +259,15 @@ export function QuickCapture(props: { isMobile?: boolean; data?: unknown }) {
         );
       }
     },
-    [note, selectedBeneficiaryIds, dailyPrompt, files, voiceNoteIds],
+    [
+      note,
+      selectedBeneficiaryIds,
+      selectedGroupIds,
+      visibility,
+      dailyPrompt,
+      files,
+      voiceNoteIds,
+    ],
   );
 
   const persistDraft = useCallback(
@@ -333,6 +282,8 @@ export function QuickCapture(props: { isMobile?: boolean; data?: unknown }) {
       setSelectedBeneficiaryIds(
         Array.isArray(d.selectedBeneficiaryIds) ? d.selectedBeneficiaryIds : [],
       );
+      setSelectedGroupIds(d.selectedGroupIds ?? []);
+      setVisibility(d.visibility ?? "private");
       const vm: Record<string, true> = {};
       const restored: IOnUploadPayload[] = (d.attachments || []).map((a) => {
         if (a.kind === "voice") vm[a.clientId] = true;
@@ -372,27 +323,22 @@ export function QuickCapture(props: { isMobile?: boolean; data?: unknown }) {
     rootRefs: [draftsMenuRef],
   });
   useDismissOnOutsidePress({
-    active: whoOpen,
-    onDismiss: () => setWhoOpen(false),
-    rootRefs: [privacyMenuRef],
-  });
-  useDismissOnOutsidePress({
     active: showEmoji,
     onDismiss: () => setShowEmoji(false),
     rootRefs: [emojiAnchorRef, emojiPickerPortalRef],
   });
 
   useEffect(() => {
-    if (!draftsOpen && !whoOpen && !showEmoji) return;
+    if (!draftsOpen && !showEmoji) return;
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key !== "Escape") return;
+      event.stopPropagation();
       if (draftsOpen) setDraftsOpen(false);
-      if (whoOpen) setWhoOpen(false);
       if (showEmoji) setShowEmoji(false);
     };
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
-  }, [draftsOpen, whoOpen, showEmoji]);
+  }, [draftsOpen, showEmoji]);
 
   useEffect(() => {
     return () => {
@@ -408,6 +354,7 @@ export function QuickCapture(props: { isMobile?: boolean; data?: unknown }) {
           const payload: QuickCaptureDraft = {
             note: noteRef.current,
             selectedBeneficiaryIds: beneficiariesRef.current,
+            ...audienceRef.current,
             ...(daily
               ? { daily_prompt: daily as DailyPromptCapturePayload }
               : {}),
@@ -552,8 +499,8 @@ export function QuickCapture(props: { isMobile?: boolean; data?: unknown }) {
   const canSave =
     (note.trim().length > 0 || attachmentIds.length > 0) &&
     !uploadsPending &&
-    !inlineRecorder.recording &&
-    !inlineRecorder.busy;
+    !recordingUi &&
+    !recording.canRetry;
 
   const flushOutbox = useCallback(async () => {
     if (!navigator.onLine || !outboxKey || syncingOutboxes.has(outboxKey))
@@ -569,7 +516,9 @@ export function QuickCapture(props: { isMobile?: boolean; data?: unknown }) {
     try {
       queue = JSON.parse(raw) as unknown[];
     } catch {
-      toast.error("Queued notes could not be read. They have been kept on this device.");
+      toast.error(
+        "Queued notes could not be read. They have been kept on this device.",
+      );
       return;
     }
     if (!Array.isArray(queue)) return;
@@ -582,6 +531,9 @@ export function QuickCapture(props: { isMobile?: boolean; data?: unknown }) {
         const entry = item as {
           _queue_id?: string;
           body?: string;
+          save_endpoint?: string;
+          visibility?: "private" | "everyone";
+          groups?: string[];
           attachments?: string[];
           beneficiaries?: string[];
           transcript_uncertain?: boolean;
@@ -590,16 +542,29 @@ export function QuickCapture(props: { isMobile?: boolean; data?: unknown }) {
           prompt_text?: string;
           reflection_day_key?: string;
         };
-        const ok = await postJsonQuiet(endpoint.memoriesQuickCapture, {
-          body: entry.body,
-          attachments: entry.attachments,
-          beneficiaries: entry.beneficiaries,
-          transcript_uncertain: entry.transcript_uncertain,
-          prompt_type: entry.prompt_type,
-          prompt_id: entry.prompt_id,
-          prompt_text: entry.prompt_text,
-          reflection_day_key: entry.reflection_day_key,
-        });
+        const ok = await postJsonQuiet(
+          entry.save_endpoint === endpoint.memories
+            ? endpoint.memories
+            : endpoint.memoriesQuickCapture,
+          {
+            ...(entry.save_endpoint === endpoint.memories
+              ? {
+                  visibility: entry.visibility,
+                  groups: entry.groups,
+                  status: "save",
+                  capture_source: "quick",
+                }
+              : {}),
+            body: entry.body,
+            attachments: entry.attachments,
+            beneficiaries: entry.beneficiaries,
+            transcript_uncertain: entry.transcript_uncertain,
+            prompt_type: entry.prompt_type,
+            prompt_id: entry.prompt_id,
+            prompt_text: entry.prompt_text,
+            reflection_day_key: entry.reflection_day_key,
+          },
+        );
         if (ok && entry._queue_id) synced.add(entry._queue_id);
         if (!ok) syncFailed = true;
       }
@@ -677,8 +642,8 @@ export function QuickCapture(props: { isMobile?: boolean; data?: unknown }) {
     const canSaveNow =
       (bodyForSave.length > 0 || attachmentIds.length > 0) &&
       !uploadsPending &&
-      !inlineRecorder.recording &&
-      !inlineRecorder.busy;
+      !recordingUi &&
+      !recording.canRetry;
     if (
       savingRef.current ||
       completed.current ||
@@ -697,6 +662,9 @@ export function QuickCapture(props: { isMobile?: boolean; data?: unknown }) {
         ) as unknown[];
         existing.push({
           _queue_id: uuidv4(),
+          save_endpoint: saveEndpoint,
+          visibility,
+          groups: selectedGroupIds,
           body: bodyForSave || undefined,
           attachments: attachmentIds.length ? attachmentIds : undefined,
           beneficiaries: !selectedBeneficiaryIds.length
@@ -725,6 +693,14 @@ export function QuickCapture(props: { isMobile?: boolean; data?: unknown }) {
     savingRef.current = true;
     try {
       const result = await saveThought({
+        ...(saveEndpoint === endpoint.memories
+          ? {
+              visibility,
+              groups: selectedGroupIds,
+              status: "save",
+              capture_source: "quick",
+            }
+          : {}),
         body: bodyForSave || undefined,
         attachments: attachmentIds.length ? attachmentIds : undefined,
         beneficiaries: !selectedBeneficiaryIds.length
@@ -848,175 +824,90 @@ export function QuickCapture(props: { isMobile?: boolean; data?: unknown }) {
   ) : null;
 
   const headerRow = (
-    <div className="relative flex shrink-0 items-center justify-between border-b border-stroke-neutral-weak px-3 py-2">
+    <div className="relative flex shrink-0 items-center justify-between">
       <Button
         type="button"
         variant="ghost"
         size="icon-sm"
         onClick={handleDismiss}
-        className="rounded-full text-icon-neutral-strong"
+        className="rounded-full bg-fill-neutral-weak text-icon-neutral-strong"
         aria-label="Close"
       >
-        <TimesIcon width={12} height={12} />
+        <img src={closeIcon} alt="" className="dark:invert" />
       </Button>
       <div ref={draftsMenuRef} className="relative">
         <button
           type="button"
-          className="font-inter text-sm font-medium text-text-brand-strong hover:underline"
+          aria-expanded={draftsOpen}
+          disabled={recordingUi || isMutating}
+          className="flex h-8 items-center gap-2 rounded-md border border-stroke-neutral-weak px-4 text-sm font-semibold shadow-sm focus-visible:outline-2 focus-visible:outline-stroke-brand-strong"
           onClick={() => setDraftsOpen((o) => !o)}
         >
-          Drafts
+          Drafts <img src={draftsChevron} alt="" className="dark:invert" />
         </button>
         {draftsPanel}
       </div>
     </div>
   );
 
-  const selectedBeneficiaryNames = beneficiaries
-    .filter((b) => b._id && selectedBeneficiaryIds.includes(b._id))
-    .map((b) => b.name)
-    .filter(Boolean);
-
-  const visibilityLabel =
-    selectedBeneficiaryNames.length === 0
-      ? "Everyone can see this"
-      : selectedBeneficiaryNames.length === 1
-        ? `Shared with ${selectedBeneficiaryNames[0]}`
-        : `Shared with ${selectedBeneficiaryNames.length} beneficiaries`;
-
   const privacyRow = (
-    <div
-      ref={privacyMenuRef}
-      className="relative shrink-0 border-t border-stroke-neutral-weak px-4 py-2.5"
-    >
-      <div className="flex items-center gap-2">
-        <Globe
-          className="size-4 shrink-0 text-text-neutral-weaker"
-          aria-hidden
-        />
-        <button
-          type="button"
-          id={whoId}
-          aria-expanded={whoOpen}
-          onClick={() => setWhoOpen((o) => !o)}
-          className="inline-flex items-center gap-1.5 font-inter text-xs text-text-neutral-weak hover:text-text-neutral-strong"
-        >
-          <span>{visibilityLabel}</span>
-          {whoOpen ? (
-            <ChevronUp className="size-3.5" />
-          ) : (
-            <ChevronDown className="size-3.5" />
-          )}
-        </button>
-      </div>
-      {whoOpen ? (
-        <div className="absolute bottom-full left-4 right-4 z-20 mb-2 rounded-xl border border-stroke-neutral-weaker bg-popover p-2 shadow-lg">
-          <button
-            type="button"
-            onClick={() => setSelectedBeneficiaryIds([])}
-            className={cn(
-              "mb-1 w-full rounded-lg px-2 py-1.5 text-left font-inter text-sm",
-              selectedBeneficiaryIds.length === 0
-                ? "bg-fill-brand-weak text-text-brand-strong"
-                : "hover:bg-fill-neutral-weaker",
-            )}
-          >
-            Everyone
-          </button>
-          {beneficiaries.length === 0 ? (
-            <p className="px-2 py-1.5 font-inter text-xs text-text-neutral-weaker">
-              No beneficiaries yet.
-            </p>
-          ) : (
-            <ul className="max-h-40 space-y-1 overflow-y-auto">
-              {beneficiaries.map((b) => {
-                const id = b._id;
-                if (!id) return null;
-                const on = selectedBeneficiaryIds.includes(id);
-                return (
-                  <li key={id}>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setSelectedBeneficiaryIds((prev) =>
-                          on ? prev.filter((x) => x !== id) : [...prev, id],
-                        )
-                      }
-                      className={cn(
-                        "w-full rounded-lg px-2 py-1.5 text-left font-inter text-sm",
-                        on
-                          ? "bg-fill-brand-weak text-text-brand-strong"
-                          : "hover:bg-fill-neutral-weaker",
-                      )}
-                    >
-                      {b.name}
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </div>
-      ) : null}
-    </div>
+    <AudiencePicker
+      value={{
+        visibility,
+        people: selectedBeneficiaryIds,
+        groups: selectedGroupIds,
+      }}
+      onChange={(audience) => {
+        setVisibility(audience.visibility);
+        setSelectedBeneficiaryIds(audience.people);
+        setSelectedGroupIds(audience.groups);
+      }}
+      people={beneficiaries}
+      groups={groups}
+      loading={groupsLoading || beneficiariesLoading}
+      error={Boolean(groupsError || beneficiariesError)}
+      disabled={isMutating}
+    />
   );
 
   const actionBar = (
     <div
       ref={actionBarRef}
-      className="flex shrink-0 items-center justify-between gap-2 border-t border-stroke-neutral-weak px-2 py-2"
+      className="flex shrink-0 items-center justify-between gap-2"
     >
-      <div className="flex items-center gap-0.5">
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          disabled={uploadsPending || recordingUi}
-          className="size-10 rounded-xl text-icon-neutral-strong"
-          aria-label="Add image"
-          onClick={() => fileInputImageRef.current?.click()}
-        >
-          <ImageIcon className="size-5" />
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          disabled={uploadsPending || recordingUi}
-          className="size-10 rounded-xl text-icon-neutral-strong"
-          aria-label="Add video"
-          onClick={() => fileInputVideoRef.current?.click()}
-        >
-          <Video className="size-5" />
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          disabled={uploadsPending || recordingUi}
-          className="size-10 rounded-xl text-icon-neutral-strong"
-          title="Supported: MP3, WAV, WebM, M4A, OGG, FLAC, AAC"
-          aria-label="Attach audio file"
-          onClick={() => fileInputAudioRef.current?.click()}
-        >
-          <Music className="size-5" />
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          disabled={uploadsPending || recordingUi}
-          className="size-10 rounded-xl text-icon-neutral-strong"
-          aria-label={
-            inlineRecorder.recording ? "Stop recording" : "Record voice"
-          }
-          onClick={() => {
-            setShowInlineRecorder(true);
-            inlineRecorder.toggleRecording(uploadsPending);
-          }}
-        >
-          <Mic className="size-5" />
-        </Button>
+      <div className="flex items-center gap-3 max-[400px]:gap-0">
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              disabled={uploadsPending || recordingUi || isMutating}
+              className="size-10 rounded-[10px] bg-fill-neutral-strong text-text-inverse-strong hover:bg-fill-neutral-strong/90"
+              aria-label="Add attachment"
+            >
+              <img src={plusIcon} alt="" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent
+            align="start"
+            className="navigation-menu z-[10001] w-44 gap-1 p-1"
+            onEscapeKeyDown={(event) => event.stopPropagation()}
+          >
+            <Button
+              variant="ghost"
+              onClick={() => fileInputImageRef.current?.click()}
+            >
+              Add image
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => fileInputAudioRef.current?.click()}
+            >
+              Attach audio file
+            </Button>
+          </PopoverContent>
+        </Popover>
         <div ref={emojiAnchorRef} className="relative">
           <Button
             type="button"
@@ -1027,7 +918,7 @@ export function QuickCapture(props: { isMobile?: boolean; data?: unknown }) {
             aria-label="Emoji"
             onClick={() => setShowEmoji((p) => !p)}
           >
-            <Smile className="size-5" />
+            <img src={emojiIcon} alt="" />
           </Button>
           {showEmoji &&
             createPortal(
@@ -1060,16 +951,42 @@ export function QuickCapture(props: { isMobile?: boolean; data?: unknown }) {
               document.body,
             )}
         </div>
+        <span aria-hidden className="h-6 border-l border-stroke-neutral-weak" />
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className={cn(
+            "size-10 rounded-[10px]",
+            recordingUi &&
+              "border border-stroke-neutral-weak bg-fill-neutral-weak",
+          )}
+          disabled={uploadsPending || recordingUi || isMutating}
+          aria-label="Record voice"
+          onClick={() => void recording.start()}
+        >
+          <img src={micIcon} alt="" className="dark:invert" />
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="size-10 rounded-[10px]"
+          disabled={uploadsPending || recordingUi || isMutating}
+          aria-label="Add video"
+          onClick={() => fileInputVideoRef.current?.click()}
+        >
+          <img src={videoIcon} alt="" className="dark:invert" />
+        </Button>
       </div>
       <div className="flex items-center gap-2">
-        <CharRing value={note.length} max={NOTE_CHAR_MAX} />
         <Button
           type="button"
           onClick={handleSave}
           disabled={!canSave || isMutating}
-          className="h-10 rounded-full bg-fill-brand-strong px-5 font-inter text-sm font-semibold text-primary-foreground disabled:opacity-50"
+          className="h-10 rounded-lg px-[18px] text-sm font-bold disabled:opacity-50"
         >
-          Save
+          Publish
           <Spinner loading={isMutating} className="size-4!" />
         </Button>
       </div>
@@ -1077,57 +994,116 @@ export function QuickCapture(props: { isMobile?: boolean; data?: unknown }) {
   );
 
   const scrollBody = (
-    <div className="hide-scrollbar min-h-0 flex-1 overflow-y-auto">
-      <div className="flex gap-3 px-4 pb-4 pt-3">
-        <div className="sticky top-0 shrink-0 self-start">
-          {avatarUrl ? (
-            <img
-              src={avatarUrl}
-              alt=""
-              className="size-9 rounded-full object-cover ring-1 ring-stroke-neutral-weaker"
-            />
-          ) : (
-            <div className="flex size-9 items-center justify-center rounded-full bg-fill-neutral-weaker font-inter text-xs font-semibold text-text-neutral-strong ring-1 ring-stroke-neutral-weaker">
-              {initials}
-            </div>
-          )}
-        </div>
-        <div className="min-w-0 flex-1 space-y-3">
+    <div className="hide-scrollbar min-h-0 overflow-y-auto">
+      <div
+        className={cn(
+          "flex items-start gap-2",
+          !files.length && "min-h-[122px]",
+        )}
+      >
+        {!note && (
+          <div data-testid="quick-story-avatar" className="shrink-0">
+            {avatarUrl ? (
+              <img
+                src={avatarUrl}
+                alt=""
+                className="size-10 rounded-full border-[3px] border-bg-neutral object-cover"
+              />
+            ) : (
+              <div className="flex size-10 items-center justify-center rounded-full bg-fill-neutral-weak text-xs font-semibold">
+                {initials}
+              </div>
+            )}
+          </div>
+        )}
+        <div className="min-w-0 flex-1">
           {pinnedPrompt}
           <textarea
             ref={textareaRef}
-            readOnly={isMutating}
+            readOnly={isMutating || recordingUi}
             id="qc-note"
+            aria-label="Story"
             value={plainTextFromQuickCaptureNote(note)}
-            onChange={(e) => {
-              const v = e.target.value;
-              setNote(v.length > NOTE_CHAR_MAX ? v.slice(0, NOTE_CHAR_MAX) : v);
-            }}
+            onChange={(e) => setNote(e.target.value.slice(0, NOTE_CHAR_MAX))}
             placeholder="What's on your mind?"
             rows={2}
-            className="w-full resize-none border-0 bg-transparent font-inter text-[15px] leading-relaxed text-text-neutral-strong outline-none placeholder:text-text-neutral-weaker focus:ring-0"
+            className="w-full resize-none border-0 bg-transparent text-base leading-6 text-text-neutral-strong outline-none placeholder:text-text-neutral-weaker focus:ring-0"
           />
-          {showInlineRecorder ? (
-            <InlineVoiceRecorder
-              recording={inlineRecorder.recording}
-              busy={inlineRecorder.busy}
-              timerSec={inlineRecorder.timerSec}
-              levels={inlineRecorder.levels}
-              onToggleRecording={() =>
-                inlineRecorder.toggleRecording(uploadsPending)
-              }
-              onDismiss={() => setShowInlineRecorder(false)}
-              title="Voice recorder"
-              idleLabel="Capture a quick voice thought"
-              recordingLabel="Listening..."
-            />
-          ) : null}
+        </div>
+      </div>
+      {files.length > 0 && (
+        <div className="mt-6">
           <QuickCaptureMediaStack
             files={files}
             voiceNoteIds={voiceNoteIds}
             onRemove={handleRemoveFile}
           />
         </div>
+      )}
+    </div>
+  );
+  const recorderRow = (
+    <div className="flex flex-col gap-2">
+      <div className="flex h-10 items-center gap-3">
+        <Button
+          variant="outline"
+          size="icon"
+          aria-label="Cancel recording"
+          onClick={recording.cancel}
+          className="size-10 rounded-full border-stroke-neutral-strong bg-transparent"
+        >
+          <X className="size-5" />
+        </Button>
+        <div
+          className="flex h-10 min-w-0 flex-1 items-center justify-end gap-1 overflow-hidden"
+          aria-hidden
+        >
+          {recording.levels.map((height, i) => (
+            <span
+              key={i}
+              className="w-1 shrink-0 rounded-full bg-icon-neutral-weak"
+              style={{ height }}
+            />
+          ))}
+        </div>
+        <Button
+          variant="outline"
+          size="icon"
+          disabled={
+            recording.phase === "starting" || recording.phase === "transcribing"
+          }
+          aria-label="Stop recording and transcribe"
+          onClick={recording.stop}
+          className="size-10 rounded-full border-stroke-neutral-strong bg-transparent"
+        >
+          <Square className="size-4 fill-current text-icon-brand-strong" />
+        </Button>
+      </div>
+      <div
+        role="status"
+        className="flex items-center justify-between text-xs text-text-neutral-weak"
+      >
+        <span>
+          {recording.phase === "transcribing"
+            ? "Transcribing…"
+            : recording.phase === "starting"
+              ? "Starting…"
+              : `${recording.phase === "paused" ? "Paused" : "Recording"} · ${Math.floor(recording.seconds / 60)}:${String(recording.seconds % 60).padStart(2, "0")}`}
+        </span>
+        {(recording.phase === "recording" || recording.phase === "paused") && (
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label={
+              recording.phase === "paused"
+                ? "Resume recording"
+                : "Pause recording"
+            }
+            onClick={recording.togglePause}
+          >
+            {recording.phase === "paused" ? <Play /> : <Pause />}
+          </Button>
+        )}
       </div>
     </div>
   );
@@ -1164,17 +1140,39 @@ export function QuickCapture(props: { isMobile?: boolean; data?: unknown }) {
   const shell = (
     <div
       className={cn(
-        "flex max-h-[90dvh] w-full flex-col overflow-hidden text-text-neutral-strong",
+        "flex max-h-[90dvh] w-full flex-col gap-6 overflow-y-auto bg-bg-neutral p-6 font-geist text-text-neutral-strong",
         isMobile
           ? "rounded-t-3xl"
-          : "max-w-lg rounded-2xl bg-bg-neutral shadow-2xl ring-1 ring-stroke-neutral-weak",
+          : "max-w-[456px] rounded-3xl shadow-2xl ring-1 ring-stroke-neutral-weak",
       )}
       onClick={(e) => e.stopPropagation()}
     >
       <h2 className="sr-only">Quick capture</h2>
       {headerRow}
       {scrollBody}
-      {privacyRow}
+      {recordingUi ? recorderRow : privacyRow}
+      {recording.error && (
+        <div
+          role="alert"
+          className="flex flex-wrap items-center gap-2 text-xs text-text-error-strong"
+        >
+          {recording.error}
+          {recording.canRetry && (
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => void recording.retry()}
+              >
+                Retry transcription
+              </Button>
+              <Button variant="ghost" size="sm" onClick={recording.cancel}>
+                Discard recording
+              </Button>
+            </>
+          )}
+        </div>
+      )}
       {actionBar}
       {hiddenInputs}
     </div>
@@ -1186,7 +1184,7 @@ export function QuickCapture(props: { isMobile?: boolean; data?: unknown }) {
         detent="content"
         isOpen
         onClose={handleDismiss}
-        snapPoints={[0, 0.8]}
+        snapPoints={[0, 1]}
         initialSnap={1}
       >
         <Sheet.Container

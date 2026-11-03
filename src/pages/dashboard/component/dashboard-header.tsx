@@ -134,7 +134,8 @@ export function DashboardHeader({
   return (
     <div
       className={cn(
-        "navigation-header dashboard-header-surface z-[45] w-full h-[60px] fixed top-0 left-0 right-0 sm:relative flex items-center bg-background px-4 sm:px-8",
+        "navigation-header dashboard-header-surface z-[45] w-full h-[60px] fixed top-0 left-0 right-0 sm:relative flex items-center bg-background px-4",
+        path === "stories" ? "sm:px-4" : "sm:px-8",
         usesOverviewNav
           ? "sm:h-[76px] sm:items-start sm:pb-4 sm:pt-6"
           : "border-b border-border",
