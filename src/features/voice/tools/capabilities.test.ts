@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import { voiceToolsEnabled, voiceTokenParams, WEB_VOICE_CAPABILITIES } from "./capabilities";
 
 describe("voice tool capabilities", () => {
-  it("asks for the abilities web can carry out, and not screen control yet", () => {
-    expect(WEB_VOICE_CAPABILITIES).toEqual(["search_memories", "call_actions", "server_tools"]);
+  it("asks for every ability web can carry out, screen control included", () => {
+    expect(WEB_VOICE_CAPABILITIES).toEqual(["search_memories", "call_actions", "server_tools", "screen_control", "screen_fields"]);
   });
 
   it("is on unless VITE_VOICE_TOOLS is false", () => {
@@ -15,7 +15,7 @@ describe("voice tool capabilities", () => {
   it("builds token params with the conversation, abilities and the host's time zone", () => {
     expect(voiceTokenParams({ memoryId: "m1", tools: true, timeZone: "Africa/Lagos" })).toEqual({
       memory_id: "m1",
-      capabilities: "search_memories,call_actions,server_tools",
+      capabilities: "search_memories,call_actions,server_tools,screen_control,screen_fields",
       timezone: "Africa/Lagos",
     });
   });

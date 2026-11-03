@@ -17,6 +17,9 @@ import { post } from "@/api/mutations";
 import { voiceToolsEnabled, voiceTokenParams } from "@/features/voice/tools/capabilities";
 import { createCallActionHandlers, resolveWebDestination, type CallControls } from "@/features/voice/tools/call-actions";
 import { VoiceToolRelay } from "@/features/voice/tools/relay";
+import { DomScreen } from "@/features/voice/screen/dom-screen";
+import { webScreenName } from "@/features/voice/screen/screen-names";
+import { createScreenControlHandlers } from "@/features/voice/screen/tools";
 import {
   createServerToolHandlers,
   serverToolNames,
@@ -61,6 +64,9 @@ export type VoiceToolControls = {
   setMuted: (muted: boolean) => void;
   /** Hang up, as the End call button does. */
   endCall: () => void;
+  /** Back to the previous page, for "go back". */
+  goBack?: () => void;
+  canGoBack?: () => boolean;
 };
 
 /** Longest Memento's goodbye may take before the call ends anyway. */
@@ -435,6 +441,14 @@ export function useLiveAPI({
           },
           {
             ...createCallActionHandlers(callControls),
+            ...createScreenControlHandlers({
+              screen: new DomScreen({
+                document,
+                screenName: () => webScreenName(window.location.pathname, window.location.search),
+              }),
+              canGoBack: () => toolControlsRef.current?.canGoBack?.() ?? false,
+              goBack: () => toolControlsRef.current?.goBack?.(),
+            }),
             ...createServerToolHandlers(serverToolNames(liveToken.tools), {
               run: (name, args, invocation) => post(`${endpoint.voiceTools}/${encodeURIComponent(name)}`, {
                 args,

@@ -76,3 +76,10 @@ it("reconciles local messages with saved messages without duplicating the timeli
   act(() => observer([{ _id: "saved", clientId: "local", text: "Hello", created_at: new Date().toISOString() }]));
   expect(screen.getByText("started,message")).toBeInTheDocument();
 });
+
+it("keeps voice from pressing or typing into the call's own controls", async () => {
+  const user = userEvent.setup();
+  render(<MemoryRouter initialEntries={["/chat/m1"]}><VoiceSessionProvider><Pages /></VoiceSessionProvider></MemoryRouter>);
+  await user.click(screen.getByText("Start"));
+  expect(screen.getByRole("region", { name: "Persistent call" }).closest("[data-voice-ignore]")).not.toBeNull();
+});

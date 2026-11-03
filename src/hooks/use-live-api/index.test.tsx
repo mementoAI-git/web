@@ -216,7 +216,7 @@ describe("useLiveAPI", () => {
       });
     });
 
-    const controls = () => ({ navigate: vi.fn(), setMuted: vi.fn(), endCall: vi.fn() });
+    const controls = () => ({ navigate: vi.fn(), setMuted: vi.fn(), endCall: vi.fn(), goBack: vi.fn(), canGoBack: vi.fn(() => true) });
 
     async function connected(toolControls: ReturnType<typeof controls>) {
       const hook = renderHook(() => useLiveAPI({ memoryId: "m1", autoConnect: false, toolControls }));
@@ -231,7 +231,7 @@ describe("useLiveAPI", () => {
       await connected(controls());
       expect(liveMocks.fetchToken).toHaveBeenCalledWith(expect.objectContaining({
         memory_id: "m1",
-        capabilities: "search_memories,call_actions,server_tools",
+        capabilities: "search_memories,call_actions,server_tools,screen_control,screen_fields",
       }));
     });
 
@@ -267,6 +267,25 @@ describe("useLiveAPI", () => {
       await waitFor(() => expect(sendToolResponse).toHaveBeenCalledWith({
         functionResponses: [{ id: "s1", name: "search_memories", response: { result: "Emeka is your brother." } }],
       }));
+    });
+
+    it("lets Memento look at the page", async () => {
+      await connected(controls());
+      await act(async () => {
+        await onmessage({ toolCall: { functionCalls: [{ id: "l", name: "look_at_screen", args: {} }] } });
+      });
+      await waitFor(() => expect(sendToolResponse).toHaveBeenCalledWith({
+        functionResponses: [{ id: "l", name: "look_at_screen", response: { result: expect.stringMatching(/^Screen: /) } }],
+      }));
+    });
+
+    it("goes back through the screen's history", async () => {
+      const c = controls();
+      await connected(c);
+      await act(async () => {
+        await onmessage({ toolCall: { functionCalls: [{ id: "b", name: "go_back", args: {} }] } });
+      });
+      await waitFor(() => expect(c.goBack).toHaveBeenCalledOnce());
     });
 
     it("mutes the host when Memento is asked to", async () => {
