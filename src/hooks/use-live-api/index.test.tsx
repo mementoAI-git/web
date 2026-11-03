@@ -9,7 +9,10 @@ const liveMocks = vi.hoisted(() => ({
   fetchToken: vi.fn(),
   getUserMedia: vi.fn(),
   stopTrack: vi.fn(),
+  post: vi.fn(),
 }));
+
+vi.mock("@/api/mutations", () => ({ post: liveMocks.post }));
 
 vi.mock("@google/genai", () => ({
   GoogleGenAI: class {
@@ -38,6 +41,7 @@ vi.mock("./playback", () => ({
   createPlaybackState: () => ({ nextStartTime: 0, sources: new Set() }),
   scheduleGeminiLivePcmChunk: vi.fn(),
   stopAllGeminiLivePlayback: vi.fn(),
+  waitGeminiLivePlaybackTail: vi.fn().mockResolvedValue(undefined),
 }));
 
 describe("useLiveAPI", () => {
@@ -140,7 +144,9 @@ describe("useLiveAPI", () => {
       await result.current.connect();
     });
 
-    expect(liveMocks.fetchToken).toHaveBeenCalledWith({ memory_id: "m1" });
+    expect(liveMocks.fetchToken).toHaveBeenCalledWith(expect.objectContaining({ memory_id: "m1" }));
+    // No tool controls from the screen: no tools asked for.
+    expect(liveMocks.fetchToken.mock.calls[0][0]).not.toHaveProperty("capabilities");
   });
 
   it("streams microphone audio as realtime audio input", async () => {
@@ -190,5 +196,138 @@ describe("useLiveAPI", () => {
     expect(result.current.isRecording).toBe(true);
     expect(liveMocks.getUserMedia).toHaveBeenCalledTimes(1);
     expect(liveMocks.stopTrack).not.toHaveBeenCalled();
+  });
+
+  describe("voice tools", () => {
+    type Message = Record<string, unknown>;
+    let onmessage: (message: Message) => Promise<void> | void;
+    let sendToolResponse: ReturnType<typeof vi.fn>;
+
+    beforeEach(() => {
+      sendToolResponse = vi.fn();
+      liveMocks.post.mockReset();
+      liveMocks.connect.mockImplementation(async (options: { callbacks: { onmessage: typeof onmessage } }) => {
+        onmessage = options.callbacks.onmessage;
+        await onmessage({ setupComplete: {} });
+        return { close: liveMocks.close, sendRealtimeInput: vi.fn(), sendToolResponse };
+      });
+      liveMocks.fetchToken.mockReset().mockResolvedValue({
+        data: { token: "token-1", tools: ["search_memories", "end_call", "set_microphone", "open_screen", "rename_story"] },
+      });
+    });
+
+    const controls = () => ({ navigate: vi.fn(), setMuted: vi.fn(), endCall: vi.fn() });
+
+    async function connected(toolControls: ReturnType<typeof controls>) {
+      const hook = renderHook(() => useLiveAPI({ memoryId: "m1", autoConnect: false, toolControls }));
+      await waitFor(() => expect(hook.result.current.outputNode).not.toBeNull());
+      await act(async () => {
+        await hook.result.current.connect();
+      });
+      return hook;
+    }
+
+    it("asks for the tools web can carry out when the screen provides controls", async () => {
+      await connected(controls());
+      expect(liveMocks.fetchToken).toHaveBeenCalledWith(expect.objectContaining({
+        memory_id: "m1",
+        capabilities: "search_memories,call_actions,server_tools",
+      }));
+    });
+
+    it("runs a server tool with its call id and the call's session id, and answers Gemini", async () => {
+      liveMocks.post.mockResolvedValue({ data: { result: "Renamed to Homecoming.", effects: [{ type: "open_story", id: "64b7f0c2a1b2c3d4e5f60718" }] } });
+      const c = controls();
+      await connected(c);
+
+      await act(async () => {
+        await onmessage({ toolCall: { functionCalls: [{ id: "call-9", name: "rename_story", args: { title: "Homecoming" } }] } });
+      });
+
+      expect(liveMocks.post).toHaveBeenCalledWith("/ai/voice/tools/rename_story", {
+        args: { title: "Homecoming" },
+        call_id: "call-9",
+        session_id: expect.any(String),
+      });
+      await waitFor(() => expect(sendToolResponse).toHaveBeenCalledWith({
+        functionResponses: [{ id: "call-9", name: "rename_story", response: { result: "Renamed to Homecoming." } }],
+      }));
+      expect(c.navigate).toHaveBeenCalledWith("/stories/64b7f0c2a1b2c3d4e5f60718");
+    });
+
+    it("searches memories through the API", async () => {
+      liveMocks.post.mockResolvedValue({ data: { result: "Emeka is your brother." } });
+      await connected(controls());
+
+      await act(async () => {
+        await onmessage({ toolCall: { functionCalls: [{ id: "s1", name: "search_memories", args: { query: "brother", also: ["Emeka"] } }] } });
+      });
+
+      expect(liveMocks.post).toHaveBeenCalledWith("/ai/voice/memory-search", { query: "brother", also: ["Emeka"] });
+      await waitFor(() => expect(sendToolResponse).toHaveBeenCalledWith({
+        functionResponses: [{ id: "s1", name: "search_memories", response: { result: "Emeka is your brother." } }],
+      }));
+    });
+
+    it("mutes the host when Memento is asked to", async () => {
+      const c = controls();
+      await connected(c);
+      await act(async () => {
+        await onmessage({ toolCall: { functionCalls: [{ id: "m", name: "set_microphone", args: { muted: true } }] } });
+      });
+      expect(c.setMuted).toHaveBeenCalledWith(true);
+    });
+
+    it("hangs up only after the goodbye has played", async () => {
+      const c = controls();
+      await connected(c);
+      await act(async () => {
+        await onmessage({ toolCall: { functionCalls: [{ id: "e", name: "end_call", args: {} }] } });
+      });
+      expect(c.endCall).not.toHaveBeenCalled();
+
+      await act(async () => {
+        await onmessage({ serverContent: { modelTurn: { parts: [{ inlineData: { data: "AAAA" } }] } } });
+        await onmessage({ serverContent: { turnComplete: true } });
+      });
+      await waitFor(() => expect(c.endCall).toHaveBeenCalledTimes(1));
+    });
+
+    it("sends nothing for a call Gemini cancelled", async () => {
+      let finish!: (value: unknown) => void;
+      liveMocks.post.mockReturnValue(new Promise(resolve => { finish = resolve; }));
+      await connected(controls());
+
+      await act(async () => {
+        void onmessage({ toolCall: { functionCalls: [{ id: "c1", name: "rename_story", args: {} }] } });
+        await onmessage({ toolCallCancellation: { ids: ["c1"] } });
+        finish({ data: { result: "Renamed." } });
+      });
+
+      expect(sendToolResponse).not.toHaveBeenCalled();
+    });
+
+    it("never sends an old call's late result into the next call", async () => {
+      let finish!: (value: unknown) => void;
+      liveMocks.post.mockReturnValue(new Promise(resolve => { finish = resolve; }));
+      const { result } = await connected(controls());
+      const firstCall = sendToolResponse;
+
+      await act(async () => {
+        void onmessage({ toolCall: { functionCalls: [{ id: "c2", name: "rename_story", args: {} }] } });
+      });
+      act(() => result.current.disconnect());
+      const secondCall = vi.fn();
+      sendToolResponse = secondCall;
+      await act(async () => {
+        await result.current.connect();
+      });
+      await act(async () => {
+        finish({ data: { result: "Renamed." } });
+      });
+
+      expect(firstCall).not.toHaveBeenCalled();
+      expect(secondCall).not.toHaveBeenCalled();
+    });
   });
 });

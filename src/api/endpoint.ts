@@ -97,6 +97,9 @@ export default {
   transcription: "/ai/transcribe-audio",
   startConversation: "/ai/conversation/new",
   ephemeralToken: "/ai/ephemeral-token",
+  /** POST /ai/voice/tools/:name runs a server-side voice tool. */
+  voiceTools: "/ai/voice/tools",
+  voiceMemorySearch: "/ai/voice/memory-search",
   generateTags: "/ai/generate-tags",
   generateStoryTitle: "/ai/generate-story-title",
   aiTasksRun: "/ai/tasks/run",
