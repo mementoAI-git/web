@@ -15,7 +15,7 @@ import {
 import { mutate } from "swr";
 import { post } from "@/api/mutations";
 import { voiceToolsEnabled, voiceTokenParams } from "@/features/voice/tools/capabilities";
-import { createCallActionHandlers, resolveWebDestination, type CallControls } from "@/features/voice/tools/call-actions";
+import { createCallActionHandlers, resolveWebDestination, showWebDestination, type CallControls } from "@/features/voice/tools/call-actions";
 import { VoiceToolRelay } from "@/features/voice/tools/relay";
 import { DomScreen } from "@/features/voice/screen/dom-screen";
 import { webScreenName } from "@/features/voice/screen/screen-names";
@@ -26,6 +26,23 @@ import {
   type VoiceRefreshable,
   type VoiceToolEffect,
 } from "@/features/voice/tools/server-tools";
+import {
+  nextReconnectDelay,
+  resumeHandleFrom,
+  VOICE_RESUME_SETUP_TIMEOUT_MS,
+  VOICE_SETUP_TIMEOUT_MS,
+  type ReconnectReason,
+  type ReconnectResult,
+} from "@/features/voice/connection";
+import { withDeadline } from "@/features/voice/tools/relay";
+import { frameLevel, VOICE_THINKING_SPEECH_GAP_MS, VoiceThinkingTracker } from "@/features/voice/turns/thinking";
+import { parseHybridEndMs, VoiceHybridEnd } from "@/features/voice/turns/hybrid-end";
+import {
+  PlaybackEchoMeter,
+  shouldRestore,
+  VOICE_FALLBACK_RECHECK_MS,
+  VoiceSelfInterruptGuard,
+} from "@/features/voice/turns/self-interrupt-guard";
 import { createBlob } from "./utils";
 import { GEMINI_CONFIG } from "./config";
 import { createSystemContext, isEmpty } from "@/utility";
@@ -60,6 +77,8 @@ interface UseLiveAPIProps {
 /** The voice screen's side of the call actions. */
 export type VoiceToolControls = {
   navigate: (href: string) => void;
+  /** Open one of the app's modals by its useModal name. */
+  openModal?: (name: string) => void;
   /** Reflect a mute Memento made (the hook already muted the microphone). */
   setMuted: (muted: boolean) => void;
   /** Hang up, as the End call button does. */
@@ -84,6 +103,16 @@ export type LiveSessionOverrides = {
   languageCode?: string;
   voiceName?: string;
 };
+
+type LiveToken = { token?: string; live?: { model?: string }; tools?: unknown };
+
+const VOICE_CONNECTION_LOST = "The voice connection was lost. Please start the call again.";
+
+/** Off unless set, as on mobile; see features/voice/turns/hybrid-end. */
+const HYBRID_END_MS = parseHybridEndMs(import.meta.env.VITE_VOICE_HYBRID_END_MS);
+/** On unless VITE_VOICE_SELF_INTERRUPT_GUARD=false. */
+const SELF_INTERRUPT_GUARD = import.meta.env.VITE_VOICE_SELF_INTERRUPT_GUARD !== "false";
+const THINKING_CHECK_MS = 150;
 
 export function useLiveAPI({
   memoryId,
@@ -128,6 +157,34 @@ export function useLiveAPI({
   const firstResponseAtRef = useRef<number | null>(null);
   const ephemeralTokenRef = useRef<string | null>(null);
   const hasConnectedRef = useRef(false);
+  // One call can span several Gemini connections (features/voice/connection):
+  // only the active one plays and hears; a replacement just completes setup.
+  const activeSocketRef = useRef(0);
+  const socketSeqRef = useRef(0);
+  const socketOpenRef = useRef(false);
+  const resumeHandleRef = useRef<string | null>(null);
+  const reconnectingRef = useRef(false);
+  const [reconnecting, setReconnecting] = useState(false);
+  const callSetupRef = useRef<{ overrides: LiveSessionOverrides; wantsTools: boolean }>({ overrides: {}, wantsTools: false });
+  const reconnectRef = useRef<(reason: ReconnectReason) => Promise<ReconnectResult>>(async () => "unavailable");
+  const connectionLostRef = useRef<(socketId: number, message: string | null) => Promise<void>>(async () => {});
+  const endLostCallRef = useRef<(message: string | null) => void>(() => {});
+  // A go-away or network change whose reconnect ran out of time leaves a call
+  // that looks connected but can't talk. End it and say so.
+  const endIfReconnectFailedRef = useRef((result: ReconnectResult) => {
+    if (result === "failed" && hasConnectedRef.current) endLostCallRef.current(VOICE_CONNECTION_LOST);
+  });
+  // Turn-taking (features/voice/turns): Thinking, hybrid end of turn, and
+  // not listening while Memento talks when it keeps hearing itself.
+  const thinkingRef = useRef(new VoiceThinkingTracker());
+  const [thinking, setThinking] = useState(false);
+  const hybridEndRef = useRef(new VoiceHybridEnd(HYBRID_END_MS));
+  const selfInterruptRef = useRef<VoiceSelfInterruptGuard | null>(null);
+  const echoMeterRef = useRef(new PlaybackEchoMeter());
+  const notListeningWhileTalkingRef = useRef(false);
+  const selfInterruptTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /** When Memento's current reply became audible. */
+  const replyAudibleAtRef = useRef<number | null>(null);
   const saveQueue = useRef<Promise<unknown>>(Promise.resolve());
   const transcriptText = useRef({ user: "", ai: "" })
 
@@ -141,6 +198,62 @@ export function useLiveAPI({
 
   const { trigger: fetchEphemeralToken } = useFetcher(endpoint.ephemeralToken, "get")
   const { trigger: addMessageToMemory } = useFetcher(endpoint.addMessageToMemory, "post")
+
+  /** Memento's audio is playing (queued chunks have not all ended). */
+  const isAiSpeaking = useCallback(() => (playbackStateRef.current?.sources.size ?? 0) > 0, []);
+
+  /** The call ended: no pending check may restore listening into the next one. */
+  const stopTurnTaking = useCallback(() => {
+    if (selfInterruptTimerRef.current) clearTimeout(selfInterruptTimerRef.current);
+    selfInterruptTimerRef.current = null;
+    selfInterruptRef.current = null;
+    notListeningWhileTalkingRef.current = false;
+  }, []);
+
+  /** Fresh turn-taking state for a new call. */
+  const resetTurnTaking = useCallback(() => {
+    thinkingRef.current.reset();
+    hybridEndRef.current = new VoiceHybridEnd(HYBRID_END_MS);
+    echoMeterRef.current = new PlaybackEchoMeter();
+    notListeningWhileTalkingRef.current = false;
+    replyAudibleAtRef.current = null;
+    if (selfInterruptTimerRef.current) clearTimeout(selfInterruptTimerRef.current);
+    selfInterruptTimerRef.current = null;
+    if (!SELF_INTERRUPT_GUARD) {
+      selfInterruptRef.current = null;
+      return;
+    }
+    // Loud speakers can beat the browser's echo cancellation, and Memento
+    // keeps interrupting itself. When it does, stop listening while Memento
+    // talks for a while, then try again once the echo has dropped.
+    const guard = new VoiceSelfInterruptGuard({
+      now: Date.now,
+      onFallback: durationMs => {
+        const meter = echoMeterRef.current;
+        const echoAtFallback = meter.level;
+        meter.startMeasuring();
+        notListeningWhileTalkingRef.current = true;
+        console.info("[voice] Memento is hearing itself; not listening while it talks", { durationMs, echo: echoAtFallback });
+        const check = (afterMs: number) => {
+          if (selfInterruptTimerRef.current) clearTimeout(selfInterruptTimerRef.current);
+          selfInterruptTimerRef.current = setTimeout(() => {
+            selfInterruptTimerRef.current = null;
+            if (selfInterruptRef.current !== guard) return;
+            const current = echoMeterRef.current;
+            if (!shouldRestore(echoAtFallback, current.level, current.measuredSeconds)) {
+              check(VOICE_FALLBACK_RECHECK_MS);
+              return;
+            }
+            guard.restore();
+            notListeningWhileTalkingRef.current = false;
+            console.info("[voice] the echo dropped; listening while Memento talks again", { echo: current.level });
+          }, afterMs);
+        };
+        check(durationMs);
+      },
+    });
+    selfInterruptRef.current = guard;
+  }, []);
 
   /** The call is over: late tool results are dropped and no hang-up is pending. */
   const stopVoiceTools = useCallback(() => {
@@ -208,14 +321,26 @@ export function useLiveAPI({
 
       scriptProcessor.onaudioprocess = (audioProcessingEvent) => {
         if (!isRecordingRef.current) return;
+        // Nowhere to send while the connection is down or the browser is
+        // offline; the browser would queue it all. The reconnect resumes the call.
+        if (!socketOpenRef.current || navigator.onLine === false) return;
 
         const inputBuffer = audioProcessingEvent.inputBuffer;
         const pcmData = inputBuffer.getChannelData(0);
+        const level = frameLevel(pcmData);
+        const frameMs = (inputBuffer.duration ?? pcmData.length / 16_000) * 1_000;
+        const aiSpeaking = isAiSpeaking();
+        echoMeterRef.current.observe(level, frameMs, aiSpeaking);
+        // Memento kept hearing itself: don't listen while it talks, for a while.
+        if (notListeningWhileTalkingRef.current && aiSpeaking) return;
+        thinkingRef.current.observeMic(level, frameMs);
+        const endTurn = hybridEndRef.current.check(thinkingRef.current.quietForMs(), aiSpeaking);
 
         sessionPromiseRef.current?.then((session) => {
           session.sendRealtimeInput({
             audio: createBlob(pcmData)
           });
+          if (endTurn) session.sendRealtimeInput({ audioStreamEnd: true });
         });
       };
 
@@ -231,7 +356,7 @@ export function useLiveAPI({
       setIsRecording(false);
       return false;
     }
-  }, [inputNode]);
+  }, [inputNode, isAiSpeaking]);
 
   // Start turn duration tracking
   const startTurnTimer = useCallback(() => {
@@ -377,6 +502,181 @@ export function useLiveAPI({
     });
   }, []);
 
+  /**
+   * Opens one Gemini connection for call `attempt`. `activate` makes it the
+   * call's connection now (the first one); a replacement only completes its
+   * setup until the reconnect swaps it in.
+   */
+  const openSocket = useCallback((liveToken: LiveToken, overrides: LiveSessionOverrides, attempt: number, activate: boolean) => {
+    const socketId = ++socketSeqRef.current;
+    if (activate) {
+      activeSocketRef.current = socketId;
+      socketOpenRef.current = false;
+    }
+    const outputAudioContext = outputAudioContextRef.current!;
+    let acceptSetup!: () => void;
+    let rejectSetup!: (error: Error) => void;
+    const setupReady = new Promise<void>((resolve, reject) => {
+      acceptSetup = resolve;
+      rejectSetup = reject;
+    });
+    const isCurrent = () => connectionAttempt.current === attempt;
+    const isActive = () => isCurrent() && activeSocketRef.current === socketId;
+    clientRef.current = new GoogleGenAI({
+      apiKey: liveToken.token,
+      httpOptions: { apiVersion: 'v1alpha' }
+    });
+    const sessionPromise = clientRef.current.live.connect({
+      // The token is constrained to the server's model; any other model is rejected.
+      model: liveToken.live?.model || GEMINI_CONFIG.MODEL,
+      callbacks: {
+        onmessage: async (message: LiveServerMessage) => {
+          if (!isCurrent()) return;
+          if (!isActive()) {
+            if (message.setupComplete) acceptSetup();
+            return;
+          }
+          if (message.setupComplete) {
+            socketOpenRef.current = true;
+            setConnected(true);
+            isConnectingRef.current = false;
+            hasConnectedRef.current = true;
+            if (!sessionIdRef.current) sessionIdRef.current = uuidv4();
+            const aiSessionScope = memoryIdRef.current ?? sessionIdRef.current;
+            if (!aiSessionIdRef.current && aiSessionScope) {
+              aiSessionIdRef.current = createGeminiLiveSessionId(aiSessionScope);
+            }
+            turnTimerRef.current.duration = 0;
+            acceptSetup();
+          }
+          const handle = resumeHandleFrom(message.sessionResumptionUpdate);
+          if (handle) resumeHandleRef.current = handle;
+          // Gemini is about to close this connection; carry the call over first.
+          if (message.goAway) void reconnectRef.current("go-away").then(endIfReconnectFailedRef.current);
+
+          const parts = message.serverContent?.modelTurn?.parts;
+          const playback = playbackStateRef.current;
+
+          if (pendingEndRef.current && parts?.some(part => part.inlineData?.data)) {
+            pendingEndRef.current.heardGoodbye = true;
+          }
+          if (message.toolCall?.functionCalls?.length) {
+            thinkingRef.current.observeToolCall();
+            void relayRef.current?.handle(message.toolCall.functionCalls);
+          }
+          if (message.toolCallCancellation?.ids?.length) {
+            relayRef.current?.cancel(message.toolCallCancellation.ids);
+          }
+          const interrupted = message.serverContent?.interrupted;
+          if (interrupted) {
+            const audibleAt = replyAudibleAtRef.current;
+            // The host was already talking as this reply started: an early
+            // interruption is them, so judge it by its words, not its timing.
+            const continued = audibleAt !== null && audibleAt - thinkingRef.current.lastSpokeAt() < VOICE_THINKING_SPEECH_GAP_MS;
+            selfInterruptRef.current?.observeInterrupted(
+              !notListeningWhileTalkingRef.current,
+              audibleAt === null || continued ? undefined : Date.now() - audibleAt,
+            );
+            thinkingRef.current.reset();
+            replyAudibleAtRef.current = null;
+          }
+          if (parts?.some(part => part.inlineData?.data)) {
+            if (!isAiSpeaking()) replyAudibleAtRef.current = Date.now();
+            thinkingRef.current.reset();
+            selfInterruptRef.current?.observeModelAudio();
+          }
+          const heard = message.serverContent?.inputTranscription?.text;
+          if (heard) {
+            thinkingRef.current.observeUserTranscript();
+            selfInterruptRef.current?.observeInputText(heard);
+          }
+          const said = message.serverContent?.outputTranscription?.text;
+          if (said) selfInterruptRef.current?.observeOutputText(said);
+          // A turn with no reply audio (tool only) still ends the wait.
+          if (message.serverContent?.turnComplete && !isAiSpeaking()) thinkingRef.current.reset();
+
+          if (parts && playback) {
+            for (const part of parts) {
+              const data = part.inlineData?.data;
+              if (data) {
+                try {
+                  await scheduleGeminiLivePcmChunk(
+                    data,
+                    outputAudioContext,
+                    outputNode!,
+                    playback,
+                  );
+                } catch (error) {
+                  setError(`Voice audio could not play: ${error instanceof Error ? error.message : String(error)}`);
+                }
+              }
+            }
+          }
+
+          updateTranscriptText("user", message.serverContent?.inputTranscription?.text);
+          updateTranscriptText("ai", message.serverContent?.outputTranscription?.text);
+          if (message.serverContent?.turnComplete || message.serverContent?.interrupted) {
+            flushTranscript(message.serverContent.interrupted ? "interrupted" : "end_turn");
+          }
+          if (message.serverContent?.turnComplete && pendingEndRef.current?.heardGoodbye) {
+            void finishPendingEnd();
+          }
+
+          // Handle interruption
+          if (interrupted && playbackStateRef.current) {
+            stopAllGeminiLivePlayback(playbackStateRef.current);
+          }
+        },
+        onerror: () => {
+          if (!isCurrent()) return;
+          const failure = new Error("Voice connection failed. Please try again.");
+          rejectSetup(failure);
+          if (!isActive()) return;
+          socketOpenRef.current = false;
+          void connectionLostRef.current(socketId, failure.message);
+        },
+        onclose: (event: CloseEvent) => {
+          if (!isCurrent()) return;
+          const detail = event.reason || "The voice connection closed. Please try again.";
+          const failure = new Error(`Voice connection closed (${event.code}): ${detail}`);
+          rejectSetup(failure);
+          if (!isActive()) return;
+          socketOpenRef.current = false;
+          void connectionLostRef.current(socketId, event.code !== 1000 || !hasConnectedRef.current ? failure.message : null);
+        },
+      },
+      config: {
+        responseModalities: [Modality.AUDIO],
+        systemInstruction: context,
+        speechConfig: {
+          languageCode: overrides.languageCode || languageCode,
+          voiceConfig: {
+            prebuiltVoiceConfig: {
+              voiceName: overrides.voiceName || (
+                user?.chat_voice_provider === "gemini"
+                  ? (user?.chat_voice || GEMINI_CONFIG.VOICE_CONFIG.voiceName)
+                  : GEMINI_CONFIG.VOICE_CONFIG.voiceName
+              )
+            }
+          }
+        },
+        inputAudioTranscription: {},
+        outputAudioTranscription: {}
+      }
+    });
+    return { socketId, sessionPromise, setupReady, rejectSetup };
+  }, [
+    finishPendingEnd,
+    isAiSpeaking,
+    updateTranscriptText,
+    flushTranscript,
+    user?.chat_voice,
+    user?.chat_voice_provider,
+    context,
+    outputNode,
+    languageCode,
+  ]);
+
   // Connect to Live API
   const connect = useCallback(async (overrides: LiveSessionOverrides = {}) => {
     if (!outputAudioContextRef.current) return false;
@@ -398,7 +698,7 @@ export function useLiveAPI({
         voiceTokenParams({ memoryId: memoryIdRef.current, tools: wantsTools }),
       );
       if (outputAudioContextRef.current !== outputAudioContext || connectionAttempt.current !== attempt) return false;
-      const liveToken = result?.data as { token?: string; live?: { model?: string }; tools?: unknown } | undefined;
+      const liveToken = result?.data as LiveToken | undefined;
       if (!liveToken?.token) {
         throw new Error("Failed to get a fresh Live API token");
       }
@@ -407,14 +707,15 @@ export function useLiveAPI({
       stopVoiceTools();
       if (wantsTools) {
         const navigate = (href: string) => toolControlsRef.current?.navigate(href);
+        const openModal = (name: string) => toolControlsRef.current?.openModal?.(name);
         const applyEffects = (effects: VoiceToolEffect[]) => {
           for (const effect of effects) {
             if (effect.type === "refresh") {
               const prefixes = REFRESH_PREFIXES[effect.what];
               void mutate(key => typeof key === "string" && prefixes.some(prefix => key.startsWith(prefix)));
             } else if (effect.type === "open") {
-              const href = resolveWebDestination(effect.destination)?.href;
-              if (href) navigate(href);
+              const target = resolveWebDestination(effect.destination);
+              if (target) showWebDestination(target, { navigate, openModal });
             } else {
               navigate(`/stories/${effect.id}`);
             }
@@ -422,6 +723,7 @@ export function useLiveAPI({
         };
         const callControls: CallControls = {
           navigate,
+          openModal,
           setMuted: muted => {
             mediaStreamRef.current?.getAudioTracks().forEach(track => { track.enabled = !muted; });
             toolControlsRef.current?.setMuted(muted);
@@ -461,15 +763,6 @@ export function useLiveAPI({
         );
       }
 
-      clientRef.current = new GoogleGenAI({
-        apiKey: ephemeralTokenRef.current,
-        httpOptions: { apiVersion: 'v1alpha' }
-      });
-
-      if (!clientRef.current) {
-        throw new Error("Failed to initialize Gemini client");
-      }
-
       // Close existing session if any before creating a new one
       if (sessionPromiseRef.current) {
         try {
@@ -481,130 +774,20 @@ export function useLiveAPI({
         sessionPromiseRef.current = null;
       }
 
-      let acceptSetup!: () => void;
-      let rejectSetup!: (error: Error) => void;
-      const setupReady = new Promise<void>((resolve, reject) => {
-        acceptSetup = resolve;
-        rejectSetup = reject;
-      });
-      cancelSetup.current = () => rejectSetup(new Error("Voice connection cancelled"));
-      setupTimer = setTimeout(() => rejectSetup(new Error("Voice connection timed out. Please try again.")), 20000);
+      callSetupRef.current = { overrides, wantsTools };
+      resumeHandleRef.current = null;
+      resetTurnTaking();
       const isCurrent = () => connectionAttempt.current === attempt;
-      sessionPromiseRef.current = clientRef.current.live.connect({
-        // The token is constrained to the server's model; any other model is rejected.
-        model: liveToken.live?.model || GEMINI_CONFIG.MODEL,
-        callbacks: {
-          onmessage: async (message: LiveServerMessage) => {
-            if (!isCurrent()) return;
-            if (message.setupComplete) {
-              setConnected(true);
-              isConnectingRef.current = false;
-              hasConnectedRef.current = true;
-              if (!sessionIdRef.current) sessionIdRef.current = uuidv4();
-              const aiSessionScope = memoryIdRef.current ?? sessionIdRef.current;
-              if (!aiSessionIdRef.current && aiSessionScope) {
-                aiSessionIdRef.current = createGeminiLiveSessionId(aiSessionScope);
-              }
-              turnTimerRef.current.duration = 0;
-              acceptSetup();
-            }
-            const parts = message.serverContent?.modelTurn?.parts;
-            const playback = playbackStateRef.current;
-
-            if (pendingEndRef.current && parts?.some(part => part.inlineData?.data)) {
-              pendingEndRef.current.heardGoodbye = true;
-            }
-            if (message.toolCall?.functionCalls?.length) {
-              void relayRef.current?.handle(message.toolCall.functionCalls);
-            }
-            if (message.toolCallCancellation?.ids?.length) {
-              relayRef.current?.cancel(message.toolCallCancellation.ids);
-            }
-
-            if (parts && playback) {
-              for (const part of parts) {
-                const data = part.inlineData?.data;
-                if (data) {
-                  try {
-                    await scheduleGeminiLivePcmChunk(
-                      data,
-                      outputAudioContext,
-                      outputNode!,
-                      playback,
-                    );
-                  } catch (error) {
-                    setError(`Voice audio could not play: ${error instanceof Error ? error.message : String(error)}`);
-                  }
-                }
-              }
-            }
-
-            updateTranscriptText("user", message.serverContent?.inputTranscription?.text);
-            updateTranscriptText("ai", message.serverContent?.outputTranscription?.text);
-            if (message.serverContent?.turnComplete || message.serverContent?.interrupted) {
-              flushTranscript(message.serverContent.interrupted ? "interrupted" : "end_turn");
-            }
-            if (message.serverContent?.turnComplete && pendingEndRef.current?.heardGoodbye) {
-              void finishPendingEnd();
-            }
-
-            // Handle interruption
-            const interrupted = message.serverContent?.interrupted;
-            if (interrupted && playbackStateRef.current) {
-              stopAllGeminiLivePlayback(playbackStateRef.current);
-            }
-          },
-          onerror: () => {
-            if (!isCurrent()) return;
-            const failure = new Error("Voice connection failed. Please try again.");
-            rejectSetup(failure);
-            setError(failure.message);
-            stopVoiceTools();
-            stopRecording();
-            if (playbackStateRef.current) stopAllGeminiLivePlayback(playbackStateRef.current);
-            setConnected(false);
-            hasConnectedRef.current = false;
-          },
-          onclose: (event: CloseEvent) => {
-            if (!isCurrent()) return;
-            const detail = event.reason || "The voice connection closed. Please try again.";
-            const failure = new Error(`Voice connection closed (${event.code}): ${detail}`);
-            rejectSetup(failure);
-            if (event.code !== 1000 || !hasConnectedRef.current) setError(failure.message);
-            stopVoiceTools();
-            stopRecording();
-            if (playbackStateRef.current) stopAllGeminiLivePlayback(playbackStateRef.current);
-            setConnected(false);
-            isConnectingRef.current = false;
-            hasConnectedRef.current = false;
-          },
-        },
-        config: {
-          responseModalities: [Modality.AUDIO],
-          systemInstruction: context,
-          speechConfig: {
-            languageCode: overrides.languageCode || languageCode,
-            voiceConfig: {
-              prebuiltVoiceConfig: {
-                voiceName: overrides.voiceName || (
-                  user?.chat_voice_provider === "gemini"
-                    ? (user?.chat_voice || GEMINI_CONFIG.VOICE_CONFIG.voiceName)
-                    : GEMINI_CONFIG.VOICE_CONFIG.voiceName
-                )
-              }
-            }
-          },
-          inputAudioTranscription: {},
-          outputAudioTranscription: {}
-        }
-      });
-
-      const pendingSession = sessionPromiseRef.current;
+      const socket = openSocket(liveToken, overrides, attempt, true);
+      cancelSetup.current = () => socket.rejectSetup(new Error("Voice connection cancelled"));
+      setupTimer = setTimeout(() => socket.rejectSetup(new Error("Voice connection timed out. Please try again.")), VOICE_SETUP_TIMEOUT_MS);
+      sessionPromiseRef.current = socket.sessionPromise;
+      const pendingSession = socket.sessionPromise;
       // The SDK resolves on socket open, before Gemini accepts the setup.
       void pendingSession.then(session => {
         if (!isCurrent()) session.close();
       }).catch(() => {});
-      const [session] = await Promise.all([pendingSession, setupReady]);
+      const [session] = await Promise.all([pendingSession, socket.setupReady]);
       if (!isCurrent() || !hasConnectedRef.current) return false;
       if (!isEmpty(turns)) {
         session.sendClientContent({
@@ -635,32 +818,133 @@ export function useLiveAPI({
       if (connectionAttempt.current === attempt) cancelSetup.current = null;
     }
   }, [
-    stopRecording,
     stopVoiceTools,
     finishPendingEnd,
-    updateTranscriptText,
-    flushTranscript,
-    user?.chat_voice,
-    user?.chat_voice_provider,
-    context,
-    outputNode,
+    openSocket,
+    resetTurnTaking,
     fetchEphemeralToken,
-    languageCode,
     turns,
   ]);
+
+  // "Thinking…": checked a few times a second, since it turns on when the host goes quiet.
+  useEffect(() => {
+    if (!connected) return;
+    const tracker = thinkingRef.current;
+    const timer = setInterval(() => setThinking(tracker.isThinking(isAiSpeaking())), THINKING_CHECK_MS);
+    return () => {
+      clearInterval(timer);
+      tracker.reset();
+      setThinking(false);
+    };
+  }, [connected, isAiSpeaking]);
+
+  /** The call is over because its connection is gone for good. */
+  const endLostCall = useCallback((message: string | null) => {
+    if (message) setError(message);
+    stopVoiceTools();
+    stopTurnTaking();
+    stopRecording();
+    if (playbackStateRef.current) stopAllGeminiLivePlayback(playbackStateRef.current);
+    setConnected(false);
+    isConnectingRef.current = false;
+    hasConnectedRef.current = false;
+    socketOpenRef.current = false;
+    resumeHandleRef.current = null;
+  }, [stopRecording, stopTurnTaking, stopVoiceTools]);
+  endLostCallRef.current = endLostCall;
+
+  /** Carries the call over to a new connection with Gemini's resume handle; the host keeps talking. */
+  const reconnect = useCallback(async (reason: ReconnectReason): Promise<ReconnectResult> => {
+    if (reconnectingRef.current) return "in-progress";
+    if (!resumeHandleRef.current || !hasConnectedRef.current) return "unavailable";
+    const attempt = connectionAttempt.current;
+    const isCurrent = () => connectionAttempt.current === attempt;
+    reconnectingRef.current = true;
+    setReconnecting(true);
+    const previous = sessionPromiseRef.current;
+    const startedAt = Date.now();
+    try {
+      for (let tries = 0; ; tries += 1) {
+        // Bounded by elapsed time, not just the schedule: each try can spend a
+        // token request and a setup wait.
+        const delay = nextReconnectDelay(tries, Date.now() - startedAt);
+        if (delay === null) return "failed";
+        await new Promise(resolve => setTimeout(resolve, delay));
+        if (!isCurrent()) return "ended";
+        let pending: Promise<Session> | undefined;
+        try {
+          const result = await fetchEphemeralToken(voiceTokenParams({
+            memoryId: memoryIdRef.current,
+            tools: callSetupRef.current.wantsTools,
+            resumeHandle: resumeHandleRef.current,
+          }));
+          if (!isCurrent()) return "ended";
+          const liveToken = result?.data as LiveToken | undefined;
+          if (!liveToken?.token) throw new Error("Failed to get a fresh Live API token");
+          const socket = openSocket(liveToken, callSetupRef.current.overrides, attempt, false);
+          pending = socket.sessionPromise;
+          await withDeadline(Promise.all([socket.sessionPromise, socket.setupReady]), VOICE_RESUME_SETUP_TIMEOUT_MS, "Voice reconnect timed out.");
+          if (!isCurrent()) {
+            void pending.then(session => session.close()).catch(() => {});
+            return "ended";
+          }
+          activeSocketRef.current = socket.socketId;
+          sessionPromiseRef.current = socket.sessionPromise;
+          socketOpenRef.current = true;
+          void previous?.then(session => session.close()).catch(() => {});
+          // A turn cut off by the swap may never complete; keep what was said.
+          flushTranscript("interrupted");
+          console.info("[voice] reconnected", { reason, tries });
+          return "reconnected";
+        } catch (error) {
+          void pending?.then(session => session.close()).catch(() => {});
+          console.warn("[voice] reconnect attempt failed", { reason, tries, error });
+        }
+      }
+    } finally {
+      reconnectingRef.current = false;
+      setReconnecting(false);
+    }
+  }, [fetchEphemeralToken, flushTranscript, openSocket]);
+  reconnectRef.current = reconnect;
+
+  /** The active connection closed: carry the call over if Gemini gave a handle, else end it. */
+  const handleConnectionLost = useCallback(async (socketId: number, message: string | null) => {
+    if (socketId !== activeSocketRef.current || reconnectingRef.current) return;
+    if (hasConnectedRef.current && resumeHandleRef.current) {
+      const result = await reconnect("connection-lost");
+      if (result === "reconnected" || result === "in-progress" || result === "ended") return;
+      message = VOICE_CONNECTION_LOST;
+    }
+    endLostCall(message);
+  }, [endLostCall, reconnect]);
+  connectionLostRef.current = handleConnectionLost;
+
+  // Back online: the old connection may be dead without saying so.
+  useEffect(() => {
+    const onOnline = () => {
+      if (!hasConnectedRef.current) return;
+      void reconnectRef.current("network-change").then(endIfReconnectFailedRef.current);
+    };
+    window.addEventListener("online", onOnline);
+    return () => window.removeEventListener("online", onOnline);
+  }, []);
 
   const disconnect = useCallback(() => {
     ++connectionAttempt.current;
     stopVoiceTools();
+    stopTurnTaking();
     cancelSetup.current?.();
     cancelSetup.current = null;
     isConnectingRef.current = false;
     setConnected(false);
     hasConnectedRef.current = false;
+    socketOpenRef.current = false;
+    resumeHandleRef.current = null;
     sessionPromiseRef.current?.then((session) => session.close()).catch(console.error);
     sessionPromiseRef.current = null;
     // Don't close audio contexts here - they're managed by the cleanup
-  }, [stopVoiceTools]);
+  }, [stopTurnTaking, stopVoiceTools]);
 
   const restartSession = useCallback(async (overrides: LiveSessionOverrides = {}) => {
     setInputMuted(true);
@@ -711,6 +995,8 @@ export function useLiveAPI({
       relayRef.current = null;
       if (pendingEndRef.current) clearTimeout(pendingEndRef.current.timer);
       pendingEndRef.current = null;
+      if (selfInterruptTimerRef.current) clearTimeout(selfInterruptTimerRef.current);
+      selfInterruptTimerRef.current = null;
       cancelSetup.current?.();
       cancelSetup.current = null;
       isRecordingRef.current = false;
@@ -760,6 +1046,10 @@ export function useLiveAPI({
     resumeAudio,
     greet,
     connected,
+    /** The call is being carried over to a new connection; it continues on its own. */
+    reconnecting,
+    /** Gemini heard the host and Memento is working on a reply. */
+    thinking,
     connect,
     disconnect,
     restartSession,

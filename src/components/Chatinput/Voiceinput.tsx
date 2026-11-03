@@ -51,6 +51,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useLiveAPI } from "@/hooks/use-live-api";
+import { useModal } from "@/hooks/use-modal";
 import { useStore } from "@/hooks/use-store";
 import { cn } from "@/lib/utils";
 import {
@@ -303,17 +304,19 @@ export default function Voiceinput({ onCancel, memoryId, history = [], autoStart
   const { user } = useStore();
   const [languageCode, setLanguageCode] = useState<VoiceLanguageCode>("en-US");
   const navigate = useNavigate();
-  // Voice tools act on this screen: open pages, show a mute Memento made, and
-  // hang up through the same path as the End call button.
+  const { open: openModal } = useModal();
+  // Voice tools act on this screen: open pages and modals, show a mute Memento
+  // made, and hang up through the same path as the End call button.
   const voiceToolHandlers = useRef<{ setMuted?: (muted: boolean) => void; endCall?: () => void }>({});
   const toolControls = useMemo(() => ({
     navigate: (href: string) => navigate(href),
+    openModal: (name: string) => openModal?.(name),
     setMuted: (muted: boolean) => voiceToolHandlers.current.setMuted?.(muted),
     endCall: () => voiceToolHandlers.current.endCall?.(),
     goBack: () => navigate(-1),
     // React Router keeps the position in history in state.idx.
     canGoBack: () => ((window.history.state as { idx?: number } | null)?.idx ?? 0) > 0,
-  }), [navigate]);
+  }), [navigate, openModal]);
   const {
     connected,
     sendChatInput,
@@ -327,6 +330,8 @@ export default function Voiceinput({ onCancel, memoryId, history = [], autoStart
     restartSession,
     setInputMuted,
     isRecording,
+    reconnecting,
+    thinking,
     error,
     outputNode,
   } = useLiveAPI({ memoryId, turns: history, languageCode, autoConnect: false, onMessages, toolControls });
@@ -502,8 +507,10 @@ export default function Voiceinput({ onCancel, memoryId, history = [], autoStart
   const statusText = useMemo(() => {
     if (!sessionActive) return "Ready when you are";
     if (isElevenLabsProvider) return "Live session";
-    return connected ? "Live session" : "Connecting…";
-  }, [connected, isElevenLabsProvider, sessionActive]);
+    if (reconnecting) return "Reconnecting…";
+    if (!connected) return "Connecting…";
+    return thinking ? "Thinking…" : "Live session";
+  }, [connected, isElevenLabsProvider, reconnecting, sessionActive, thinking]);
 
   const endConfirmation = <EndSessionDialog open={endDialogOpen} onOpenChange={setEndDialogOpen} duration={formatVoiceSessionTime(recordingTime)} ending={isDisconnecting} onConfirm={() => void handleEndCall()} />;
 
@@ -566,7 +573,7 @@ export default function Voiceinput({ onCancel, memoryId, history = [], autoStart
     const overview = variant === "overview";
     const floating = variant === "floating";
     const callStatus = isStartingCall ? "Connecting…" : sessionActive
-      ? (audioPaused ? "Audio paused" : muted ? "You’re muted" : "Listening") : "Ready to connect";
+      ? (reconnecting ? "Reconnecting…" : audioPaused ? "Audio paused" : muted ? "You’re muted" : thinking ? "Thinking…" : "Listening") : "Ready to connect";
     const settings = (
       <Popover open={settingsOpen} onOpenChange={setSettingsOpen}>
         <PopoverTrigger asChild>

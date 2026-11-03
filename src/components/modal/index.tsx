@@ -58,6 +58,16 @@ const FULL_SCREEN_MODALS = ["create-memory", "view-memory", "file-preview"];
 /** Centered horizontally, anchored to the top (tall content / readability). */
 const TOP_ALIGNED_MODALS = ["memory-insights"];
 
+/** What voice calls an open modal ("A dialog is open: New story."). Others use their name. */
+const VOICE_MODAL_NAMES: Record<string, string> = {
+  "create-memory": "New story",
+  "quick-capture": "Quick note",
+  "create-feedback": "Feedback",
+  "recent-activities": "Recent activity",
+  "view-memory": "Story",
+  "edit-memory": "Edit story",
+};
+
 const MODAL_COMPONENTS = {
   "share-post": SharePost,
   welcome: Welcome,
@@ -202,6 +212,8 @@ function ModalStack({ isMobile }: { isMobile: boolean }) {
                     : "flex-row justify-center items-center"
             }`}
             style={{ zIndex: isTop ? 10 : stackIndex + 1 }}
+            // Voice screen control reaches only the open modal, not the page behind it.
+            data-voice-dialog={isTop ? VOICE_MODAL_NAMES[modal.name] ?? modal.name.replace(/-/g, " ") : undefined}
             onClick={
               !isRightPanel && !isFullscreen
                 ? (e) => {

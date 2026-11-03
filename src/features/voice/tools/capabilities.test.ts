@@ -20,6 +20,10 @@ describe("voice tool capabilities", () => {
     });
   });
 
+  it("passes Gemini's resume handle when carrying a call over to a new connection", () => {
+    expect(voiceTokenParams({ memoryId: "m1", tools: false, timeZone: null, resumeHandle: "h1" })).toEqual({ memory_id: "m1", resume_handle: "h1" });
+  });
+
   it("leaves out what it does not have", () => {
     expect(voiceTokenParams({ memoryId: null, tools: false, timeZone: null })).toEqual({});
   });

@@ -33,7 +33,8 @@ const FIELD = [
   '[contenteditable=""]', '[role="textbox"]',
 ].join(",");
 
-const DIALOG = '[role="dialog"][aria-modal="true"], [role="alertdialog"], dialog[open]';
+/** Open dialogs: ARIA modals, Radix dialogs, native dialogs and the app's own modal stack. */
+const DIALOG = '[role="dialog"][aria-modal="true"], [role="dialog"][data-state="open"], [role="alertdialog"], dialog[open], [data-voice-dialog]';
 
 const MAX_LISTED = 8;
 const MAX_CONTENT = 1_200;
@@ -400,7 +401,7 @@ export class DomScreen {
     const root = this.root();
     const lines = [`Screen: ${this.screenName()}.`];
     if (root !== this.document.body) {
-      const name = this.nameOf(root);
+      const name = flat(root.dataset.voiceDialog) || this.nameOf(root);
       lines.push(name ? `A dialog is open: "${name}".` : "A dialog is open.");
     }
     const content = root === this.document.body ? (this.document.querySelector("main") ?? root) : root;
