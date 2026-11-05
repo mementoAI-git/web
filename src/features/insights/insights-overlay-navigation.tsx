@@ -2,21 +2,28 @@ import type { ReactNode } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const sections = [
-  { value: "all", label: "All" },
-  { value: "about", label: "About me" },
   { value: "observations", label: "Observations" },
+  { value: "insights", label: "Insights" },
   { value: "preferences", label: "Preferences" },
-  { value: "enrichment", label: "Enrichment score" },
+  { value: "enrichment", label: "Enrichment fields" },
 ] as const;
-type Section = (typeof sections)[number]["value"];
+export type InsightsSection = (typeof sections)[number]["value"];
 
 export function InsightsOverlayNavigation({
+  value,
+  onValueChange,
   content,
 }: {
-  content: Record<Section, ReactNode>;
+  value: InsightsSection;
+  onValueChange: (value: InsightsSection) => void;
+  content: Record<InsightsSection, ReactNode>;
 }) {
   return (
-    <Tabs defaultValue="observations" className="min-w-0 gap-7">
+    <Tabs
+      value={value}
+      onValueChange={(next) => onValueChange(next as InsightsSection)}
+      className="min-w-0 gap-6"
+    >
       <div className="overflow-x-auto pb-1">
         <TabsList
           aria-label="Insights sections"

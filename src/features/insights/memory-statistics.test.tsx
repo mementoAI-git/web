@@ -33,7 +33,7 @@ it("shows the four reference metrics from current account data", async () => {
     "Memories saved",
     "Reflections replied",
     "Current streak",
-    "Your enrichment score",
+    "Enrichment score",
   ])
     expect(metrics.getByText(label)).toBeVisible();
 });

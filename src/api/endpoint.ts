@@ -25,10 +25,15 @@ export default {
   deletePasskey: "/users/passkeys/:credential_id",
   userContext: "/users/context",
   persona: "/users/persona",
+  /** Saved and unreviewed observations as one list */
   personaObservations: "/persona/observations",
   personaObservation: "/persona/observations/:observationId",
   /** AI-written Memory Insights summary (persona + memories + session + pending insights) */
   personaMemoryInsightsSummary: "/users/persona/memory-insights-summary",
+  /** Current rotating batch of insights */
+  insights: "/users/insights",
+  /** Memories behind an insight (?insight=) or enrichment field (?category=) */
+  insightSources: "/users/insights/sources",
   completeOnboarding: "/users/complete-onboarding",
   uploadPicture: "/users/upload-picture",
   profileBanner: "/users/banner",

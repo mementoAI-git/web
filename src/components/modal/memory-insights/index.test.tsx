@@ -1,26 +1,93 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, useLocation } from "react-router-dom";
 import { SWRConfig } from "swr";
+import { SubscriptionProvider } from "@/contexts/subscription";
 import { ThemeProvider } from "@/contexts/theme";
 import { BackgroundMusicProvider } from "@/hooks/use-background-music";
 import endpoint from "@/api/endpoint";
 import MemoryInsightsModal from ".";
 
-beforeEach(() => vi.stubGlobal("ResizeObserver", class { observe() {} unobserve() {} disconnect() {} }));
+beforeEach(() => {
+  close.mockClear();
+  patch.mockClear();
+  del.mockClear();
+  vi.stubGlobal(
+    "ResizeObserver",
+    class {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    },
+  );
+});
 afterEach(() => vi.unstubAllGlobals());
 
 const close = vi.fn();
+const { patch, del } = vi.hoisted(() => ({
+  patch: vi.fn().mockResolvedValue({}),
+  del: vi.fn().mockResolvedValue({}),
+}));
+vi.mock("@/api/mutations", async (original) => ({
+  ...(await original<typeof import("@/api/mutations")>()),
+  patch,
+  del,
+}));
 vi.mock("@/hooks/use-modal", () => ({ useModal: () => ({ close }) }));
 vi.mock("@/hooks/use-store", () => ({ useStore: () => ({ user: null }) }));
 
-function setup(
-  persona = {
-    important_notes: ["You value independent thinking"],
-    key_preferences: ["You prefer quiet mornings"],
-  },
-) {
+const spanningInsight = {
+  id: "insight-1",
+  title: "You protect your Sundays",
+  body: "Rest with family returns across your stories.",
+  categories: ["everyday_life", "relationships_people"],
+  source_count: 2,
+};
+const singleInsight = {
+  id: "insight-2",
+  title: "Your values keep coming up",
+  body: "You often explore who you are.",
+  categories: ["identity_self"],
+  source_count: 2,
+};
+
+const observation = (
+  field: string,
+  content: string,
+  id = `${field}-${content.length}`,
+) => ({ id, field, content, reviewed: false, source_count: 1 });
+
+const defaultObservations = [
+  observation(
+    "important_notes",
+    "You value independent thinking. Autonomy shows up in your decisions.",
+    "note-1",
+  ),
+  observation("goals_and_aspirations", "You want to write a book"),
+  observation("emotional_state_trends", "You feel calm by the sea"),
+  observation("key_preferences", "You prefer quiet mornings"),
+];
+
+function Location() {
+  const location = useLocation();
+  return (
+    <output data-testid="location" data-state={JSON.stringify(location.state)}>
+      {location.pathname}
+      {location.search}
+    </output>
+  );
+}
+
+function setup({
+  observations = defaultObservations as object[],
+  insights = {
+    insights: [spanningInsight, singleInsight],
+    generated_at: "2026-11-05T00:00:00.000Z",
+    next_refresh_at: "2026-11-09T00:00:00.000Z",
+    generating: false,
+  } as object,
+} = {}) {
   return render(
     <MemoryRouter>
       <SWRConfig
@@ -28,20 +95,81 @@ function setup(
           provider: () => new Map(),
           revalidateOnMount: false,
           fallback: {
-            [endpoint.persona]: { data: persona },
-            [endpoint.personaMemoryInsightsSummary]: {
-              data: { summary: "Your story so far" },
+            [endpoint.personaObservations]: { data: { observations } },
+            [`${endpoint.personaObservations}/note-1/sources`]: {
+              data: {
+                sources: [
+                  {
+                    id: "story-1",
+                    title: "Why I changed careers",
+                    type: "story",
+                    created_at: "2026-05-18T12:00:00.000Z",
+                    thumbnail: null,
+                  },
+                ],
+              },
+            },
+            [`${endpoint.personaObservations}/key_preferences-25/sources`]: {
+              data: { sources: [] },
             },
             [endpoint.userStats]: {
-              data: { enrichment_score: 80, reflections_count: 12 },
+              data: {
+                enrichment_score: 80,
+                reflections_count: 12,
+                category_scores: [
+                  {
+                    key: "identity_self",
+                    label: "Identity & Self",
+                    score: 24,
+                    weight: 1,
+                    itemCount: 3,
+                    unlocked: true,
+                  },
+                  {
+                    key: "hopes_legacy",
+                    label: "Hopes & Legacy",
+                    score: 0,
+                    weight: 1,
+                    itemCount: 0,
+                    unlocked: false,
+                  },
+                ],
+              },
             },
             [endpoint.memoriesStats]: { data: { stories_count: 24 } },
+            [endpoint.insights]: { data: insights },
+            [`${endpoint.insightSources}?insight=insight-1`]: {
+              data: {
+                sources: [
+                  {
+                    id: "older",
+                    title: "Sunday at home",
+                    type: "story",
+                    created_at: "2026-01-01T00:00:00.000Z",
+                    thumbnail: null,
+                  },
+                  {
+                    id: "newer",
+                    title: "Talking about rest",
+                    type: "conversation",
+                    created_at: "2026-09-12T00:00:00.000Z",
+                    thumbnail: null,
+                  },
+                ],
+              },
+            },
+            [`${endpoint.insightSources}?category=everyday_life`]: {
+              data: { sources: [] },
+            },
           },
         }}
       >
         <ThemeProvider>
           <BackgroundMusicProvider>
-            <MemoryInsightsModal />
+            <SubscriptionProvider>
+              <MemoryInsightsModal />
+            </SubscriptionProvider>
+            <Location />
           </BackgroundMusicProvider>
         </ThemeProvider>
       </SWRConfig>
@@ -49,42 +177,302 @@ function setup(
   );
 }
 
-it("opens a named full-screen dialog and filters, searches, and reuses the dashboard tools", async () => {
-  const user = userEvent.setup();
+const tab = (name: string) => screen.getByRole("tab", { name });
+
+it("opens on observations without mixing in preferences", () => {
   setup();
   expect(screen.getByRole("dialog", { name: "My insights" })).toHaveClass(
     "insights-overlay",
   );
+  expect(tab("Observations")).toHaveAttribute("aria-selected", "true");
   expect(screen.getByText("You value independent thinking")).toBeVisible();
-  await user.click(screen.getByRole("tab", { name: "Preferences" }));
+  expect(
+    screen.getByText("Autonomy shows up in your decisions."),
+  ).toBeVisible();
+  expect(screen.getByText("You want to write a book")).toBeVisible();
+  expect(screen.getByText("You feel calm by the sea")).toBeVisible();
+  expect(
+    screen.queryByText("You prefer quiet mornings"),
+  ).not.toBeInTheDocument();
+});
+
+it("lists only preferences on the preferences tab", async () => {
+  const user = userEvent.setup();
+  setup();
+  await user.click(tab("Preferences"));
+  expect(screen.getByText("You prefer quiet mornings")).toBeVisible();
   expect(
     screen.queryByText("You value independent thinking"),
   ).not.toBeInTheDocument();
-  expect(screen.getByText("You prefer quiet mornings")).toBeVisible();
+});
+
+const openOption = async (
+  user: ReturnType<typeof userEvent.setup>,
+  title: string,
+  option: string,
+) => {
+  await user.click(
+    screen.getByRole("button", { name: `Options for ${title}` }),
+  );
+  await user.click(screen.getByRole("menuitem", { name: option }));
+};
+
+it("offers sources, edit, and forget for an observation", async () => {
+  const user = userEvent.setup();
+  setup();
+  await user.click(
+    screen.getByRole("button", {
+      name: "Options for You value independent thinking",
+    }),
+  );
+  expect(
+    screen.getAllByRole("menuitem").map((item) => item.textContent),
+  ).toEqual(["Sources", "Edit", "Forget"]);
+});
+
+it("lists the sources of an observation and opens one", async () => {
+  const user = userEvent.setup();
+  setup();
+  await openOption(user, "You value independent thinking", "Sources");
+  const source = await screen.findByRole("button", {
+    name: "View Why I changed careers",
+  });
+  expect(source).toHaveTextContent("May 18, 2026");
+  await user.click(source);
+  expect(close).toHaveBeenCalledWith("memory-insights");
+  expect(screen.getByTestId("location")).toHaveTextContent("/stories/story-1");
+});
+
+it("says when an observation has no linked sources", async () => {
+  const user = userEvent.setup();
+  setup();
+  await user.click(tab("Preferences"));
+  await openOption(user, "You prefer quiet mornings", "Sources");
+  expect(await screen.findByText(/No linked sources/)).toBeVisible();
+});
+
+it("edits the heading and note in a modal and saves them as one observation", async () => {
+  const user = userEvent.setup();
+  setup();
+  await openOption(user, "You value independent thinking", "Edit");
+  expect(screen.getByRole("dialog", { name: "Edit this note" })).toBeVisible();
+  const heading = screen.getByRole("textbox", { name: "Heading" });
+  const note = screen.getByRole("textbox", { name: "Note" });
+  expect(heading).toHaveValue("You value independent thinking");
+  expect(note).toHaveValue("Autonomy shows up in your decisions.");
+  expect(
+    screen.queryByRole("button", { name: "Dismiss" }),
+  ).not.toBeInTheDocument();
+  const save = screen.getByRole("button", { name: "Save changes" });
+  expect(save).toBeDisabled();
+  await user.clear(heading);
+  expect(save).toBeDisabled();
+  await user.type(heading, "You think for yourself");
+  await user.click(save);
+  expect(patch).toHaveBeenCalledWith(`${endpoint.personaObservations}/note-1`, {
+    content: "You think for yourself. Autonomy shows up in your decisions.",
+  });
+  expect(
+    screen.queryByRole("dialog", { name: "Edit this note" }),
+  ).not.toBeInTheDocument();
+});
+
+it("leaves the note empty rather than saving the generic fallback line", async () => {
+  const user = userEvent.setup();
+  setup();
+  await openOption(user, "You want to write a book", "Edit");
+  expect(screen.getByRole("textbox", { name: "Note" })).toHaveValue("");
+});
+
+it("keeps the edit open when saving fails", async () => {
+  const user = userEvent.setup();
+  patch.mockRejectedValueOnce(new Error("offline"));
+  setup();
+  await openOption(user, "You value independent thinking", "Edit");
+  await user.type(screen.getByRole("textbox", { name: "Note" }), "!");
+  await user.click(screen.getByRole("button", { name: "Save changes" }));
+  expect(screen.getByRole("dialog", { name: "Edit this note" })).toBeVisible();
+});
+
+it("shows what will be forgotten and only forgets after confirming", async () => {
+  const user = userEvent.setup();
+  setup();
+  await openOption(user, "You value independent thinking", "Forget");
+  const dialog = screen.getByRole("dialog", { name: "Forget this note" });
+  expect(
+    within(dialog).getByText("You value independent thinking"),
+  ).toBeVisible();
+  expect(
+    within(dialog).getByText("Autonomy shows up in your decisions."),
+  ).toBeVisible();
+  expect(del).not.toHaveBeenCalled();
+  await user.click(screen.getByRole("button", { name: "Keep" }));
+  expect(del).not.toHaveBeenCalled();
+  await openOption(user, "You value independent thinking", "Forget");
+  await user.click(screen.getByRole("button", { name: "Forget note" }));
+  expect(del).toHaveBeenCalledWith(`${endpoint.personaObservations}/note-1`);
+});
+
+it("searches the active list and offers a way to clear it", async () => {
+  const user = userEvent.setup();
+  setup();
   await user.click(screen.getByRole("button", { name: "Search insights" }));
   const search = screen.getByRole("textbox", { name: "Search your insights" });
   expect(search).toHaveFocus();
   await user.type(search, "unmatched");
-  expect(screen.getByText("No matching insights")).toBeVisible();
+  expect(screen.getByText("No matches")).toBeVisible();
   await user.click(screen.getByRole("button", { name: "Clear search" }));
-  expect(screen.getByRole("button", { name: "Quick tools" })).toBeVisible();
+  expect(screen.getByText("You value independent thinking")).toBeVisible();
+});
+
+it("shows honest empty states", async () => {
+  const user = userEvent.setup();
+  setup({
+    observations: [],
+    insights: {
+      insights: [],
+      generated_at: null,
+      next_refresh_at: null,
+      generating: false,
+    },
+  });
   expect(
-    document.querySelector('[data-slot="dashboard-overlay-header"]'),
-  ).not.toBeNull();
-  await user.click(screen.getByRole("button", { name: "Quick tools" }));
-  expect(screen.getByRole("button", { name: "Quick note" })).toBeVisible();
-  expect(screen.getByRole("button", { name: "Add people" })).toBeVisible();
-  await user.keyboard("{Escape}");
-  await user.click(screen.getByRole("tab", { name: "About me" }));
-  expect(screen.getByText("Your story so far")).toBeVisible();
-  await user.keyboard("{Escape}");
+    screen.getByText("Your observations are taking shape"),
+  ).toBeVisible();
+  await user.click(tab("Insights"));
+  expect(screen.getByText("Your insights are taking shape")).toBeVisible();
+});
+
+it("tells the member while the first insights are being prepared", async () => {
+  const user = userEvent.setup();
+  setup({
+    insights: {
+      insights: [],
+      generated_at: null,
+      next_refresh_at: null,
+      generating: true,
+    },
+  });
+  await user.click(tab("Insights"));
+  expect(screen.getByText("Connecting your memories…")).toBeVisible();
+});
+
+it("shows one icon for the strongest field, names them all, and says when the next batch arrives", async () => {
+  const user = userEvent.setup();
+  setup();
+  await user.click(tab("Insights"));
+  const card = screen.getByText("You protect your Sundays").closest("article")!;
+  const icons = card.querySelectorAll(".insights-field-icon");
+  expect(icons).toHaveLength(1);
+  expect(icons[0].getAttribute("style")).toContain(
+    "--enrichment-everyday-life",
+  );
+  expect(
+    screen.getByText("Everyday Life · Relationships & People"),
+  ).toBeVisible();
+  expect(screen.getByText(/Fresh insights around 9 Nov/)).toBeVisible();
+});
+
+it("opens insight details, sorts sources, and returns to the same tab", async () => {
+  const user = userEvent.setup();
+  setup();
+  await user.click(tab("Insights"));
+  await user.click(
+    screen.getByRole("button", {
+      name: "See related stories for You protect your Sundays",
+    }),
+  );
+  expect(
+    screen.getByText("Memories that helped shape this insight"),
+  ).toBeVisible();
+  expect(screen.getByText("2 Memory sources")).toBeVisible();
+  const titles = () =>
+    within(screen.getByRole("table", { name: "Memory sources" }))
+      .getAllByRole("button", { name: /^View / })
+      .map((button) => button.getAttribute("aria-label"));
+  expect(titles()).toEqual(["View Talking about rest", "View Sunday at home"]);
+  await user.click(screen.getByRole("button", { name: "Sort memory sources" }));
+  await user.click(screen.getByRole("menuitem", { name: "Oldest first" }));
+  expect(titles()).toEqual(["View Sunday at home", "View Talking about rest"]);
+  await user.click(screen.getByRole("button", { name: "Back to insights" }));
+  expect(tab("Insights")).toHaveAttribute("aria-selected", "true");
+});
+
+it("closes the overlay and opens the right page for a source", async () => {
+  const user = userEvent.setup();
+  setup();
+  await user.click(tab("Insights"));
+  await user.click(
+    screen.getByRole("button", {
+      name: "See related stories for You protect your Sundays",
+    }),
+  );
+  await user.click(screen.getByRole("button", { name: "View Sunday at home" }));
+  expect(close).toHaveBeenCalledWith("memory-insights");
+  expect(screen.getByTestId("location")).toHaveTextContent("/stories/older");
+});
+
+it("lists all ten enrichment fields with scores and locked state", async () => {
+  const user = userEvent.setup();
+  setup();
+  await user.click(tab("Enrichment fields"));
+  expect(
+    within(
+      screen.getByRole("table", { name: "Enrichment fields" }),
+    ).getAllByRole("button", { name: /^Explore / }),
+  ).toHaveLength(10);
+  expect(
+    screen.getByRole("progressbar", { name: "Identity & Self score" }),
+  ).toHaveAttribute("aria-valuenow", "24");
+  expect(screen.getByText("Unlocks soon")).toBeVisible();
+});
+
+it("surfaces a spanning insight under each related field and can start a reflection", async () => {
+  const user = userEvent.setup();
+  setup();
+  await user.click(tab("Enrichment fields"));
+  await user.click(
+    screen.getByRole("button", { name: "Explore Everyday Life" }),
+  );
+  expect(screen.getByText("You protect your Sundays")).toBeVisible();
+  expect(
+    screen.queryByText("Your values keep coming up"),
+  ).not.toBeInTheDocument();
+  await user.click(screen.getByRole("button", { name: "Reflect on this" }));
+  expect(close).toHaveBeenCalledWith("memory-insights");
+  const location = screen.getByTestId("location");
+  expect(location).toHaveTextContent("/chat");
+  expect(location.dataset.state).toContain("everyday life");
+});
+
+it("brings back the sidebar from Home without closing the overlay", async () => {
+  const user = userEvent.setup();
+  setup();
+  const home = screen.getByRole("button", { name: "Expand sidebar" });
+  expect(home).toHaveAttribute("aria-expanded", "false");
+  await user.click(home);
+  expect(close).not.toHaveBeenCalled();
+  expect(home).toHaveAttribute("aria-expanded", "true");
+  const collapse = screen.getByRole("button", { name: "Collapse sidebar" });
+  expect(collapse).toHaveFocus();
+  await user.click(collapse);
+  expect(home).toHaveAttribute("aria-expanded", "false");
+  expect(home).toHaveFocus();
+  expect(close).not.toHaveBeenCalled();
+});
+
+it("leaves Insights for the page chosen in the sidebar", async () => {
+  const user = userEvent.setup();
+  setup();
+  await user.click(screen.getByRole("button", { name: "Expand sidebar" }));
+  await user.click(screen.getByRole("button", { name: /Explore topics/ }));
+  expect(screen.getByTestId("location")).toHaveTextContent("/explore");
   expect(close).toHaveBeenCalledWith("memory-insights");
 });
 
-it("shows an honest empty state without sample observations", () => {
-  setup({ important_notes: [], key_preferences: [] });
-  expect(screen.getByText("Your insights are taking shape")).toBeVisible();
-  expect(
-    screen.queryByText("You value independent thinking"),
-  ).not.toBeInTheDocument();
+it("closes with Escape", async () => {
+  const user = userEvent.setup();
+  setup();
+  await user.keyboard("{Escape}");
+  expect(close).toHaveBeenCalledWith("memory-insights");
 });

@@ -28,6 +28,7 @@ import { useConversationChrome } from "@/contexts/conversation-chrome";
 import { useDashboardHeaderActions } from "@/contexts/dashboard-header-actions";
 import { StoriesActionButtons } from "@/pages/dashboard/stories/components/stories-action-buttons";
 import { Button } from "@/components/ui/button";
+import { useOverlaySidebar } from "./dashboard-overlay-frame";
 import { SearchCommandShortcut } from "@/components/search-command-shortcut";
 
 const defaultHeaderTitle: Record<string, string> = {
@@ -92,6 +93,27 @@ const convIconBtn =
 const overviewActionClass =
   "size-10 shrink-0 rounded-full bg-fill-neutral-weak p-0 [&_svg]:size-5";
 
+/** Matches the dashboard's reopen control; hidden while the sidebar is open. */
+function OverlaySidebarToggle() {
+  const sidebar = useOverlaySidebar();
+  return (
+    <button
+      type="button"
+      data-sidebar-toggle=""
+      onClick={sidebar?.expand}
+      aria-expanded={sidebar?.expanded ?? false}
+      aria-label="Expand sidebar"
+      className={cn(
+        convIconBtn,
+        "sidebar-reopen-button",
+        sidebar?.expanded && "md:hidden",
+      )}
+    >
+      <House className="size-5" strokeWidth={1.75} aria-hidden />
+    </button>
+  );
+}
+
 export function DashboardHeader(props: DashboardHeaderProps) {
   const overlay = props.overlay;
   useEffect(() => {
@@ -117,18 +139,7 @@ export function DashboardHeader(props: DashboardHeaderProps) {
       className="navigation-header flex shrink-0 items-center justify-between gap-3 px-4 py-5 sm:px-8 sm:py-6"
     >
       <div className="flex min-w-0 items-center gap-3 sm:gap-4">
-        <Button
-          variant="ghost"
-          size="icon-lg"
-          onClick={overlay.onClose}
-          aria-label="Back to dashboard"
-          className={cn(
-            overviewActionClass,
-            "bg-fill-tab-active text-text-tab-active",
-          )}
-        >
-          <House aria-hidden />
-        </Button>
+        <OverlaySidebarToggle />
         {overlay.title}
       </div>
       <div className="flex items-center gap-2 sm:gap-3">

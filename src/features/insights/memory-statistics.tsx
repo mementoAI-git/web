@@ -41,7 +41,7 @@ export function MemoryStatistics() {
             : score > 0
               ? "Building"
               : "Getting started",
-      label: "Your enrichment score",
+      label: "Enrichment score",
     },
   ];
   return (
@@ -51,7 +51,7 @@ export function MemoryStatistics() {
     >
       {metrics.map((metric) => (
         <div key={metric.label} className="insights-stat">
-          <span className="font-inter text-xl font-semibold text-text-neutral-strong tabular-nums sm:text-2xl">
+          <span className="font-inter text-xl font-medium text-text-neutral-strong tabular-nums">
             {error ? "—" : isLoading && !stats ? "…" : metric.value}
           </span>
           <span className="font-inter text-xs text-text-neutral-weak sm:text-sm">

@@ -1,30 +1,46 @@
+import { useState } from "react";
 import { expect, it } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { InsightsOverlayNavigation } from "./insights-overlay-navigation";
+import {
+  InsightsOverlayNavigation,
+  type InsightsSection,
+} from "./insights-overlay-navigation";
 
-it("starts on observations and supports horizontal keyboard navigation", async () => {
-  const user = userEvent.setup();
-  render(
+function Harness() {
+  const [value, setValue] = useState<InsightsSection>("observations");
+  return (
     <InsightsOverlayNavigation
+      value={value}
+      onValueChange={setValue}
       content={{
-        all: "All insights",
-        about: "My summary",
         observations: "Saved observations",
+        insights: "Fresh insights",
         preferences: "My preferences",
-        enrichment: "My progress",
+        enrichment: "My fields",
       }}
-    />,
+    />
   );
+}
+
+it("offers the four sections in order and supports keyboard navigation", async () => {
+  const user = userEvent.setup();
+  render(<Harness />);
   expect(screen.getByRole("tablist")).toHaveAttribute(
     "aria-orientation",
     "horizontal",
   );
+  expect(screen.getAllByRole("tab").map((tab) => tab.textContent)).toEqual([
+    "Observations",
+    "Insights",
+    "Preferences",
+    "Enrichment fields",
+  ]);
   const observations = screen.getByRole("tab", { name: "Observations" });
   expect(observations).toHaveAttribute("aria-selected", "true");
   expect(screen.getByText("Saved observations")).toBeVisible();
-  await user.click(screen.getByRole("tab", { name: "About me" }));
-  expect(screen.getByText("My summary")).toBeVisible();
-  await user.keyboard("{ArrowRight}");
+  await user.click(screen.getByRole("tab", { name: "Insights" }));
+  expect(screen.getByText("Fresh insights")).toBeVisible();
+  await user.keyboard("{ArrowLeft}");
   expect(observations).toHaveFocus();
 });

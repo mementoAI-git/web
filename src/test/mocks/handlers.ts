@@ -116,6 +116,35 @@ export const handlers = [
     });
   }),
 
+  http.get(`${BASE_URL}/persona/observations`, () => {
+    return HttpResponse.json({
+      status: 200,
+      message: "Observations retrieved successfully",
+      data: { observations: [] },
+    });
+  }),
+
+  http.get(`${BASE_URL}/users/insights`, () => {
+    return HttpResponse.json({
+      status: 200,
+      message: "Insights retrieved",
+      data: {
+        insights: [],
+        generated_at: null,
+        next_refresh_at: null,
+        generating: false,
+      },
+    });
+  }),
+
+  http.get(`${BASE_URL}/users/insights/sources`, () => {
+    return HttpResponse.json({
+      status: 200,
+      message: "Insight sources retrieved",
+      data: { sources: [] },
+    });
+  }),
+
   http.get(`${BASE_URL}/users/persona/memory-insights-summary`, () => {
     return HttpResponse.json({
       status: 200,

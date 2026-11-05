@@ -24,9 +24,15 @@ import upArrowIcon from "@/assets/icon/sidebar/up-arrow.svg";
 type DashboardSideBarProps = {
   onCollapse?: () => void;
   compact?: boolean;
+  /** Lifts the profile menu when the sidebar sits above an overlay. */
+  profileMenuClassName?: string;
 };
 
-export function DashboardSideBar({ onCollapse, compact = false }: DashboardSideBarProps) {
+export function DashboardSideBar({
+  onCollapse,
+  compact = false,
+  profileMenuClassName,
+}: DashboardSideBarProps) {
   const location = useLocation();
   const { open } = useModal();
 
@@ -124,7 +130,10 @@ export function DashboardSideBar({ onCollapse, compact = false }: DashboardSideB
             </SidebarGroupContent>
           </SidebarGroup>
           <div className={compact ? "hidden" : "px-4 pb-8"}>
-            <ProfileDropdown subtitle="Host user" />
+            <ProfileDropdown
+              subtitle="Host user"
+              contentClassName={profileMenuClassName}
+            />
           </div>
         </SidebarFooter>
       </Sidebar>

@@ -1,19 +1,43 @@
-import { useRef, useState } from "react";
-import { Archive, MoreHorizontal, Search } from "lucide-react";
-import useSWR from "swr";
-import { toast } from "sonner";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { Archive, Search, Settings } from "lucide-react";
+import { useLocation, useNavigate } from "react-router-dom";
 import endpoint from "@/api/endpoint";
-import { entityResponseFetcher } from "@/api/domain-fetchers";
 import { useApi } from "@/hooks/use-api";
 import { useModal } from "@/hooks/use-modal";
-import { useStore } from "@/hooks/use-store";
 import { useRequestRecovery } from "@/hooks/use-request-recovery";
-import type { IPersona, IUser } from "@/utility/interface";
 import { DashboardHeader } from "@/pages/dashboard/component/dashboard-header";
+import { DashboardOverlayFrame } from "@/pages/dashboard/component/dashboard-overlay-frame";
+import type { EnrichmentCategory } from "@/features/enrichment/enrichment-categories";
+import { EnrichmentFieldsTable } from "@/features/insights/enrichment-fields-table";
+import { getEnrichmentField } from "@/features/insights/enrichment-fields";
+import {
+  EnrichmentFieldDetail,
+  InsightDetail,
+} from "@/features/insights/insight-detail";
+import type {
+  Insight,
+  InsightSource,
+} from "@/features/insights/insights-api.types";
+import {
+  InsightsOverlayNavigation,
+  type InsightsSection,
+} from "@/features/insights/insights-overlay-navigation";
+import { InsightsPanel } from "@/features/insights/insights-panel";
 import { MemoryStatistics } from "@/features/insights/memory-statistics";
-import { InsightsOverlayNavigation } from "@/features/insights/insights-overlay-navigation";
-import { normalizeObservationForDisplay } from "@/features/insights/observation-display";
-import { useEnrichmentStats } from "@/features/enrichment/use-enrichment-stats";
+import {
+  normalizeObservationForDisplay,
+  splitObservation,
+} from "@/features/insights/observation-display";
+import {
+  ObservationList,
+  type ObservationItem,
+} from "@/features/insights/observation-list";
+import type {
+  ObservationField,
+  PersonaObservation,
+  PersonaObservationsResponse,
+} from "@/features/insights/observations-api.types";
+import { PlanSummaryCard } from "@/features/insights/plan-summary-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -22,156 +46,96 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-} from "@/components/ui/dropdown-menu";
 import { Spinner } from "@/components/ui/spinner";
-import { Progress } from "@/components/ui/progress";
-import { cn } from "@/lib/utils";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import "./insights.css";
 
-/** Fields for category lists (persona + legacy context) */
-type MemoryInsightSource = {
-  important_notes?: string[];
-  key_preferences?: string[];
-  conversation_history_summary?: string;
-  emotional_state_trends?: string[];
-  goals_and_aspirations?: string[];
-  self_description?: string;
-  join_reasons?: string[];
-  current_priority?: string | string[];
+/** Everything Memento has noticed about the member, except their preferences. */
+const OBSERVATION_DETAILS: Record<ObservationField, string> = {
+  important_notes: "Something you’ve shared",
+  goals_and_aspirations: "Something you’re working toward",
+  emotional_state_trends: "A pattern in how you feel",
+  key_preferences: "Something you prefer",
 };
 
-type MemoryInsightsSummaryDto = {
-  summary: string | null;
-  generated_at: string | null;
-  cached: boolean;
-};
-
-function personaToInsightSource(persona: IPersona): MemoryInsightSource {
+function toItem(observation: PersonaObservation): ObservationItem {
+  const { title, detail } = splitObservation(
+    normalizeObservationForDisplay(observation.content),
+  );
   return {
-    important_notes: persona.important_notes,
-    key_preferences: persona.key_preferences,
-    conversation_history_summary: persona.conversation_history_summary,
-    emotional_state_trends: persona.emotional_state_trends,
-    goals_and_aspirations: persona.goals_and_aspirations,
-    self_description: persona.self_description,
-    current_priority: persona.current_priority,
-    join_reasons: persona.join_reasons,
+    id: observation.id,
+    title,
+    detail: detail || OBSERVATION_DETAILS[observation.field],
+    note: detail,
   };
 }
 
-function userContextToInsightSource(
-  ctx: IUser["context"] | Record<string, unknown> | undefined,
-): MemoryInsightSource {
-  if (!ctx || typeof ctx !== "object") return {};
-  const c = ctx as IUser["context"] & { current_priority?: string | string[] };
-  return {
-    important_notes: c.important_notes,
-    key_preferences: c.key_preferences,
-    conversation_history_summary: c.conversation_history_summary,
-    emotional_state_trends: c.emotional_state_trends,
-    goals_and_aspirations: c.goals_and_aspirations,
-    self_description: c.self_description,
-    current_priority: c.current_priority,
-    join_reasons: c.join_reasons,
-  };
-}
-
-const categories = [
-  {
-    key: "important_notes",
-    label: "Observation",
-    color: "text-icon-success-strong",
-  },
-  {
-    key: "key_preferences",
-    label: "Preference",
-    color: "text-icon-warning-strong",
-  },
-  {
-    key: "goals_and_aspirations",
-    label: "Goal",
-    color: "text-icon-brand-strong",
-  },
-  {
-    key: "emotional_state_trends",
-    label: "Emotion",
-    color: "text-icon-info-strong",
-  },
-] as const;
+type View =
+  | { kind: "insight"; insight: Insight }
+  | { kind: "field"; field: EnrichmentCategory };
 
 export default function MemoryInsightsModal() {
   const { close } = useModal();
+  const navigate = useNavigate();
   const returnFocus = useRef(
     typeof document !== "undefined" &&
       document.activeElement instanceof HTMLElement
       ? document.activeElement
       : null,
   );
-  const { user } = useStore();
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const [expanded, setExpanded] = useState<string | null>(null);
+  const [section, setSection] = useState<InsightsSection>("observations");
+  const [history, setHistory] = useState<View[]>([]);
+  const view = history.at(-1);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const mainRef = useRef<HTMLElement>(null);
+  const isFirstView = useRef(true);
+  const { key: locationKey } = useLocation();
+  const openedAtLocation = useRef(locationKey);
+
+  // Any navigation leaves Insights, or the new page would stay hidden behind it.
+  useEffect(() => {
+    if (locationKey !== openedAtLocation.current) close("memory-insights");
+  }, [locationKey, close]);
+
+  useEffect(() => {
+    if (isFirstView.current) {
+      isFirstView.current = false;
+      return;
+    }
+    scrollRef.current?.scrollTo?.({ top: 0 });
+    mainRef.current?.focus({ preventScroll: true });
+  }, [history.length]);
+
   const {
-    data: personaRes,
+    data: observationsRes,
     isLoading,
     error,
     mutate,
-  } = useApi<IPersona | null>(endpoint.persona);
-  const { data: contextData } = useSWR(
-    endpoint.userContext,
-    entityResponseFetcher,
-  );
-  const {
-    data: summaryRes,
-    isLoading: summaryLoading,
-    error: summaryError,
-    mutate: refreshSummary,
-  } = useApi<MemoryInsightsSummaryDto>(endpoint.personaMemoryInsightsSummary);
+  } = useApi<PersonaObservationsResponse>(endpoint.personaObservations);
   const retry = useRequestRecovery(
     "insights-persona",
     error,
     mutate,
     "Couldn’t load your insights. Please retry.",
   );
-  const retrySummary = useRequestRecovery(
-    "insights-summary",
-    summaryError,
-    refreshSummary,
-    "Couldn’t load your summary. Please retry.",
-  );
-  const { stats, isLoading: enrichmentLoading } = useEnrichmentStats();
-  const source =
-    personaRes?.data != null
-      ? personaToInsightSource(personaRes.data)
-      : userContextToInsightSource(
-          (contextData?.data ?? user?.context) as IUser["context"] | undefined,
-        );
-  const insights = categories.flatMap((category) =>
-    (source[category.key] ?? []).map((text, index) => ({
-      ...category,
-      id: `${category.key}-${index}`,
-      text: normalizeObservationForDisplay(text),
-    })),
-  );
-  const filtered = insights.filter((item) =>
-    item.text.toLowerCase().includes(query.trim().toLowerCase()),
-  );
-  const summary = summaryRes?.data?.summary?.trim() || source.self_description;
-  const score = Math.min(
-    100,
-    Math.max(0, Number(stats?.enrichment_score) || 0),
-  );
+  const needle = query.trim().toLowerCase();
+  const matches = (item: ObservationItem) =>
+    `${item.title} ${item.detail}`.toLowerCase().includes(needle);
+  const all = observationsRes?.data?.observations ?? [];
+  const observations = all
+    .filter((item) => item.field !== "key_preferences")
+    .map(toItem);
+  const preferences = all
+    .filter((item) => item.field === "key_preferences")
+    .map(toItem);
 
-  function renderInsights(preferencesOnly = false) {
-    const items = preferencesOnly
-      ? filtered.filter((item) => item.key === "key_preferences")
-      : filtered;
+  function renderList(
+    items: ObservationItem[],
+    emptyTitle: string,
+    emptyBody: string,
+  ): ReactNode {
     if (error)
       return (
         <div className="insights-empty">
@@ -181,138 +145,75 @@ export default function MemoryInsightsModal() {
           </Button>
         </div>
       );
-    if (isLoading && !insights.length)
+    if (isLoading && !items.length)
       return (
         <div className="insights-empty" role="status">
           <Spinner />
           Loading your insights…
         </div>
       );
-    if (!items.length)
-      return (
-        <div className="insights-empty">
-          <Archive className="size-8 text-icon-neutral-weak" />
-          <p className="text-text-neutral-strong">
-            {query ? "No matching insights" : "Your insights are taking shape"}
-          </p>
-          <p>
-            {query
-              ? "Try another word or clear your search."
-              : "Keep saving memories and reflecting. Your patterns and preferences will appear here."}
-          </p>
-          {query && (
-            <Button variant="ghost" onClick={() => setQuery("")}>
-              Clear search
-            </Button>
-          )}
-        </div>
-      );
     return (
-      <div className="insights-collection">
-        {items.map((item) => (
-          <article
-            key={item.id}
-            className={cn(
-              "insights-row",
-              expanded === item.id && "insights-row-expanded",
+      <ObservationList
+        items={items.filter(matches)}
+        onViewSource={viewSource}
+        onChanged={() => mutate()}
+        empty={
+          <div className="insights-empty">
+            <Archive className="size-8 text-icon-neutral-weak" aria-hidden />
+            <p className="text-text-neutral-strong">
+              {query ? "No matches" : emptyTitle}
+            </p>
+            <p>{query ? "Try another word or clear your search." : emptyBody}</p>
+            {query && (
+              <Button variant="ghost" onClick={() => setQuery("")}>
+                Clear search
+              </Button>
             )}
-          >
-            <Archive
-              aria-hidden="true"
-              className={cn("mt-1 size-7 shrink-0", item.color)}
-              strokeWidth={1.8}
-            />
-            <div className="min-w-0 flex-1">
-              <h3
-                className={cn(
-                  "font-inter text-base font-medium text-text-neutral-strong",
-                  expanded !== item.id && "truncate",
-                )}
-              >
-                {item.text}
-              </h3>
-              <p className="mt-2 truncate font-inter text-sm text-text-neutral-weak">
-                {item.label} · From your memories and reflections
-              </p>
-            </div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="shrink-0 rounded-full"
-                  aria-label={`Options for ${item.text}`}
-                >
-                  <MoreHorizontal />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="z-[120]">
-                <DropdownMenuGroup>
-                  <DropdownMenuItem
-                    onSelect={() =>
-                      setExpanded(expanded === item.id ? null : item.id)
-                    }
-                  >
-                    {expanded === item.id ? "Collapse insight" : "Read insight"}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onSelect={async () => {
-                      try {
-                        await navigator.clipboard.writeText(item.text);
-                        toast.success("Insight copied");
-                      } catch {
-                        toast.error("Couldn’t copy this insight");
-                      }
-                    }}
-                  >
-                    Copy insight
-                  </DropdownMenuItem>
-                </DropdownMenuGroup>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </article>
-        ))}
-      </div>
+          </div>
+        }
+      />
     );
   }
 
-  const about = (
-    <section className="insights-detail">
-      <h3 className="font-garamond text-3xl text-text-neutral-strong">
-        About me
-      </h3>
-      {summaryError ? (
-        <Button variant="outline" onClick={retrySummary}>
-          Retry summary
-        </Button>
-      ) : summaryLoading ? (
-        <p role="status">Gathering your story…</p>
-      ) : (
-        <p className="whitespace-pre-line leading-relaxed text-text-neutral-weak">
-          {summary ||
-            "As you save memories and reflect, a portrait of who you are will take shape here."}
-        </p>
-      )}
-    </section>
-  );
-  const enrichment = (
-    <section className="insights-detail">
-      <h3 className="font-garamond text-3xl text-text-neutral-strong">
-        Your enrichment score
-      </h3>
-      {enrichmentLoading ? (
-        <p role="status">Loading your progress…</p>
-      ) : (
-        <>
-          <p className="text-3xl text-text-neutral-strong">{score}%</p>
-          <Progress value={score} aria-label="Enrichment score" />
-          <p className="text-text-neutral-weak">
-            A reflection of the breadth of your memories. Keep exploring the
-            moments, people, and experiences that make you who you are.
-          </p>
-        </>
-      )}
-    </section>
+  const leaveTo = (href: string, state?: unknown) => {
+    close("memory-insights");
+    navigate(href, { state });
+  };
+  const viewSource = (memory: InsightSource) =>
+    leaveTo(
+      memory.type === "conversation"
+        ? `/chat/${memory.id}`
+        : `/stories/${memory.id}`,
+    );
+  const reflectOn = (field: EnrichmentCategory) =>
+    leaveTo("/chat", {
+      overviewDiscussion: `I’d like to reflect on ${getEnrichmentField(field).label.toLowerCase()}.`,
+    });
+  const openView = (next: View) => {
+    setHistory((current) => [...current, next]);
+    setQuery("");
+    setSearchOpen(false);
+  };
+  const goBack = () => {
+    setHistory((current) => current.slice(0, -1));
+    setQuery("");
+    setSearchOpen(false);
+  };
+  const openInsight = (insight: Insight) =>
+    openView({ kind: "insight", insight });
+
+  const searchBox = searchOpen && (
+    <div className="relative">
+      <Search className="absolute left-4 top-3 size-5 text-icon-neutral-weak" />
+      <Input
+        autoFocus
+        aria-label="Search your insights"
+        placeholder="Search your insights…"
+        value={query}
+        onChange={(event) => setQuery(event.target.value)}
+        className="h-12 rounded-full pl-12"
+      />
+    </div>
   );
 
   return (
@@ -329,61 +230,108 @@ export default function MemoryInsightsModal() {
           if (returnFocus.current?.isConnected) returnFocus.current.focus();
         }}
         className="insights-overlay"
-        overlayClassName="z-[100] bg-bg-neutral-solid"
+        overlayClassName="insights-overlay-backdrop z-[100]"
       >
-        <DashboardHeader
-          overlay={{
-            title: (
-              <DialogTitle className="font-garamond text-3xl font-medium sm:text-4xl">
-                My <em>insights</em>
-              </DialogTitle>
-            ),
-            searchLabel: "Search insights",
-            closeLabel: "Close memory insights",
-            searchExpanded: searchOpen,
-            onSearch: () => {
-              setSearchOpen((value) => !value);
-              setQuery("");
-            },
-            onClose: () => close("memory-insights"),
-          }}
-        />
-        <DialogDescription className="sr-only">
-          Explore your memories, observations, preferences, and personal
-          progress.
-        </DialogDescription>
-        <div className="insights-scroll">
-          <main className="insights-main">
-            <MemoryStatistics />
-            {searchOpen && (
-              <div className="relative">
-                <Search className="absolute left-4 top-3 size-5 text-icon-neutral-weak" />
-                <Input
-                  autoFocus
-                  aria-label="Search your insights"
-                  placeholder="Search your insights…"
-                  value={query}
-                  onChange={(event) => setQuery(event.target.value)}
-                  className="h-12 rounded-full pl-12"
-                />
-              </div>
-            )}
-            <InsightsOverlayNavigation
-              content={{
-                all: (
-                  <div className="flex flex-col gap-6">
-                    {about}
-                    {renderInsights()}
+        <TooltipProvider>
+          <DashboardOverlayFrame>
+          <DashboardHeader
+            overlay={{
+              title: (
+                <DialogTitle className="font-garamond text-3xl font-medium sm:text-4xl">
+                  My <em>insights</em>
+                </DialogTitle>
+              ),
+              searchLabel: "Search insights",
+              closeLabel: "Close memory insights",
+              searchExpanded: searchOpen,
+              onSearch: () => {
+                setSearchOpen((value) => !value);
+                setQuery("");
+              },
+              onClose: () => close("memory-insights"),
+            }}
+          />
+          <DialogDescription className="sr-only">
+            Explore your observations, insights, preferences, and enrichment
+            fields.
+          </DialogDescription>
+          <div className="insights-scroll" ref={scrollRef}>
+            <main className="insights-main" ref={mainRef} tabIndex={-1}>
+              {view ? (
+                <>
+                  {searchBox}
+                  {view.kind === "insight" ? (
+                    <InsightDetail
+                      insight={view.insight}
+                      query={query}
+                      onBack={goBack}
+                      onView={viewSource}
+                    />
+                  ) : (
+                    <EnrichmentFieldDetail
+                      field={view.field}
+                      query={query}
+                      onBack={goBack}
+                      onView={viewSource}
+                      onOpenInsight={openInsight}
+                      onReflect={reflectOn}
+                    />
+                  )}
+                </>
+              ) : (
+                <>
+                  <div className="insights-page-heading justify-between">
+                    <h2 className="font-garamond text-4xl text-text-neutral-strong">
+                      Insights
+                    </h2>
+                    <Button
+                      variant="ghost"
+                      size="icon-lg"
+                      className="insights-round-button"
+                      aria-label="Insight settings"
+                      onClick={() => leaveTo("/settings/general?view=about")}
+                    >
+                      <Settings aria-hidden />
+                    </Button>
                   </div>
-                ),
-                about,
-                observations: renderInsights(),
-                preferences: renderInsights(true),
-                enrichment,
-              }}
-            />
-          </main>
-        </div>
+                  <div className="flex flex-col gap-4">
+                    <MemoryStatistics />
+                    <PlanSummaryCard onNavigate={(href) => leaveTo(href)} />
+                  </div>
+                  {searchBox}
+                  <InsightsOverlayNavigation
+                    value={section}
+                    onValueChange={setSection}
+                    content={{
+                      observations: renderList(
+                        observations,
+                        "Your observations are taking shape",
+                        "Keep saving memories and reflecting. What Memento notices about you will appear here.",
+                      ),
+                      insights: (
+                        <InsightsPanel query={query} onOpen={openInsight} />
+                      ),
+                      preferences: renderList(
+                        preferences,
+                        "No preferences yet",
+                        "As you share what you like and dislike, your preferences will appear here.",
+                      ),
+                      enrichment: (
+                        <EnrichmentFieldsTable
+                          query={query}
+                          onExplore={(field) =>
+                            openView({ kind: "field", field })
+                          }
+                        />
+                      ),
+                    }}
+                  />
+                </>
+              )}
+            </main>
+          </div>
+          </DashboardOverlayFrame>
+        </TooltipProvider>
       </DialogContent>
     </Dialog>
   );

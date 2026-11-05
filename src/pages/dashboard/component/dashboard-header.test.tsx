@@ -4,6 +4,7 @@ import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { renderWithProviders } from "@/test";
+import { DashboardOverlayFrame } from "./dashboard-overlay-frame";
 import {
   ConversationChromeProvider,
   useConversationChrome,
@@ -316,6 +317,32 @@ it("uses a home icon for the collapsed sidebar and preserves its toggle action",
   expect(toggle).toHaveBeenCalledOnce();
 });
 
+
+it("brings back the sidebar from Home on full-screen pages instead of leaving them", async () => {
+  const user = userEvent.setup();
+  const onClose = vi.fn();
+  renderDashboardHeader(
+    <DashboardOverlayFrame>
+      <DashboardHeader
+        overlay={{
+          title: <h1>Settings</h1>,
+          searchLabel: "Search",
+          closeLabel: "Close",
+          onSearch: vi.fn(),
+          onClose,
+        }}
+      />
+    </DashboardOverlayFrame>,
+  );
+  const home = screen.getByRole("button", { name: "Expand sidebar" });
+  await user.click(home);
+  expect(home).toHaveAttribute("aria-expanded", "true");
+  expect(onClose).not.toHaveBeenCalled();
+  await user.click(screen.getByRole("button", { name: "Collapse sidebar" }));
+  expect(home).toHaveAttribute("aria-expanded", "false");
+  expect(home).toHaveFocus();
+  expect(onClose).not.toHaveBeenCalled();
+});
 
 it("reuses dashboard controls in a full-screen overlay without page navigation", async () => {
   const user = userEvent.setup();

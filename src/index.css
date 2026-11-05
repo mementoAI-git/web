@@ -296,6 +296,7 @@
   --fill-warning-weak: var(--amber-50);
   --fill-error-strong: var(--red-1000);
   --fill-error-weak: var(--red-50);
+  --fill-error-solid: var(--red-1000);
 
   /* Background Colors */
   --bg-neutral-solid: #ffffff;
@@ -400,6 +401,8 @@
 .dark {
 
   /* Rebind intent aliases in this scope so they resolve dark primitives. */
+  /* --red-1000 is pale here, so solid red buttons need their own value. */
+  --fill-error-solid: #a33434;
   --text-info-strong: var(--blue-1000);
   --text-info-weak: var(--blue-800);
   --text-info-weaker: var(--blue-200);
