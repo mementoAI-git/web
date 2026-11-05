@@ -1,3 +1,6 @@
+import { CHAT_CONTENT_LAYOUT, CHAT_CONTENT_INSET, CHAT_COMPOSER_LAYOUT, CHAT_COMPOSER_FOOTER, CHAT_SCROLL_LAYOUT } from "./chat-layout";
+import ReflectionLoading from "../reflection-loading";
+import type {ReflectionEntry} from "@/lib/reflection-entry";
 import { reportFetcherError } from "@/api/report-fetcher-error";
 import { Button } from "@/components/ui/button";
 import { useRequestRecovery } from "@/hooks/use-request-recovery";
@@ -51,11 +54,11 @@ type StreamlinePayload = {
   onMeta?: (meta: { model?: string }) => void;
 };
 
-export default function Conversation(props: { id: string; type?: "memory" | "prompt" }) {
+export default function Conversation(props: { id: string; type?: "memory" | "prompt" | "reflection"; reflectionEntry?: ReflectionEntry }) {
   return <ConversationSession key={`${props.type ?? "memory"}:${props.id}`} {...props} />;
 }
 
-function ConversationSession({ id, type = "memory" }: { id: string; type?: "memory" | "prompt" }) {
+function ConversationSession({ id, type = "memory", reflectionEntry }: { id: string; type?: "memory" | "prompt" | "reflection"; reflectionEntry?: ReflectionEntry }) {
   const [aiMessage, setAiMessage] = useState("")
   const [streamModelLabel, setStreamModelLabel] = useState<string | undefined>(undefined);
   const abortCtrl = useRef<AbortController | null>(null);
@@ -69,7 +72,7 @@ function ConversationSession({ id, type = "memory" }: { id: string; type?: "memo
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const wasAtBottomRef = useRef(true);
   const isNew = id === "new";
-  const isTopic = type === "prompt";
+  const isTopic = type === "prompt" || type === "reflection";
   const isHostChat = type === "memory" && !isNew;
   const { setHeaderTitle } = useStore();
   const { setChrome } = useConversationChrome();
@@ -83,7 +86,7 @@ function ConversationSession({ id, type = "memory" }: { id: string; type?: "memo
   const [messages, setMessages] = useState<Partial<IMessage>[]>([])
   const voiceSession = useVoiceSession();
   const { enabled: spokenRepliesEnabled, supported: spokenRepliesSupported, isLoading: spokenRepliesLoading, toggle: toggleSpokenReplies, speak: speakReply, stream: streamReply, stop: stopSpokenReply } = useSpokenReplies(id, isVoiceRoute || Boolean(voiceSession?.active));
-  const liveTimeline = useMemo(() => voiceSession?.timeline.filter(entry => entry.memoryId === id || (id === "new" && entry.memoryId === voiceSession.memoryId)) ?? [], [voiceSession?.timeline, voiceSession?.memoryId, id]);
+  const liveTimeline = useMemo(() => voiceSession?.timeline.filter(entry => !entry.connectionPersonId && (entry.memoryId === id || (id === "new" && entry.memoryId === voiceSession.memoryId))) ?? [], [voiceSession?.timeline, voiceSession?.memoryId, id]);
   const [voiceEvents, setVoiceEvents] = useState<VoiceSessionEvent[]>([]);
   const handleVoiceSessionChange = useCallback((active: boolean) => {
     setVoiceEvents(previous => {
@@ -110,7 +113,7 @@ function ConversationSession({ id, type = "memory" }: { id: string; type?: "memo
   >(endpoint.aiPrompt, streamlineFetcher)
 
   const { data: memoryData, isLoading: loadingMemory, error: memoryError, mutate: refreshMemory } = useSWR(
-    id && type === "memory" && !isNew ? `${endpoint.memories}/${id}` : null
+    id && type !== "prompt" && !isNew ? `${endpoint.memories}/${id}` : null
   );
   const { data: promptData, isLoading: loadingPrompt, error: promptError, mutate: refreshPrompt } = useSWR(
     id && type === "prompt" && !isNew ?
@@ -500,7 +503,7 @@ function ConversationSession({ id, type = "memory" }: { id: string; type?: "memo
   useEffect(() => () => setChrome(null), [setChrome]);
 
   if (isVoiceRoute && subscriptionLoading) {
-    return <Loader />;
+    return type === "reflection" && reflectionEntry ? <ReflectionLoading entry={reflectionEntry} /> : <Loader />;
   }
 
   if (isVoiceRoute && !canAccess("voice_mode")) {
@@ -519,11 +522,11 @@ function ConversationSession({ id, type = "memory" }: { id: string; type?: "memo
     <div className="flex h-full min-h-0 min-w-0 flex-1 items-stretch overflow-hidden">
       <div className="flex min-h-0 min-w-0 flex-1 justify-center overflow-hidden">
         <div
-          className="chat-conversation-scroll hide-scrollbar flex h-full min-h-0 w-full min-w-0 flex-col overflow-y-auto overscroll-y-contain"
+          className={CHAT_SCROLL_LAYOUT}
           ref={scrollContainerRef}
           onScroll={handleScroll}
         >
-          <div className={cn("mx-auto flex w-full min-w-0 max-w-[810px] flex-1 flex-col", isTopic ? "px-3 pt-3 sm:px-0" : "px-3 pt-6 sm:px-4 sm:pt-12")}>
+          <div className={cn(CHAT_CONTENT_LAYOUT, isTopic ? "px-3 pt-3 sm:px-0" : CHAT_CONTENT_INSET)}>
           {isNew && messages.length === 0 && voiceEvents.length === 0 && liveTimeline.length === 0 && !isTyping ? (
             <ChatEmptyState
               onPrompt={(text) => handleSend({ text, attachments: [] })}
@@ -572,8 +575,8 @@ function ConversationSession({ id, type = "memory" }: { id: string; type?: "memo
           </History>
           )}
           </div>
-          <div className={cn("chat-composer-footer sticky bottom-0 z-[4] shrink-0 bg-background pb-[calc(max(0.5rem,env(safe-area-inset-bottom))_+_12px)]", isTopic ? "pt-2" : "pt-1")}>
-            <div className={cn("mx-auto w-full min-w-0 max-w-[810px] sm:px-4", isTopic ? "px-7" : "px-3")}>
+          <div className={cn(CHAT_COMPOSER_FOOTER, isTopic ? "pt-2" : "pt-1")}>
+            <div className={cn(CHAT_COMPOSER_LAYOUT, isTopic ? "px-7" : "px-3")}>
               <ConversationChatinput
                 key={`chat-draft-${memory?._id ?? id}`}
                 onVoiceSessionChange={handleVoiceSessionChange}

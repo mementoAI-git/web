@@ -61,6 +61,7 @@ import {
 } from "./voice-mode-voices";
 
 interface VoiceinputProps {
+  connectionPersonId?: string;
   onCancel: () => void;
   onSessionChange?: (active: boolean) => void;
   autoStart?: boolean;
@@ -300,7 +301,7 @@ function VoiceSettings({
   );
 }
 
-export default function Voiceinput({ onCancel, memoryId, history = [], autoStart = false, onAutoStartConsumed, inline = false, variant = "composer", onSessionChange, persistent = false, onRuntime, onMessages }: VoiceinputProps) {
+export default function Voiceinput({ onCancel, connectionPersonId, memoryId, history = [], autoStart = false, onAutoStartConsumed, inline = false, variant = "composer", onSessionChange, persistent = false, onRuntime, onMessages }: VoiceinputProps) {
   const { user } = useStore();
   const [languageCode, setLanguageCode] = useState<VoiceLanguageCode>("en-US");
   const navigate = useNavigate();
@@ -334,7 +335,7 @@ export default function Voiceinput({ onCancel, memoryId, history = [], autoStart
     thinking,
     error,
     outputNode,
-  } = useLiveAPI({ memoryId, turns: history, languageCode, autoConnect: false, onMessages, toolControls });
+  } = useLiveAPI({ connectionPersonId, memoryId, turns: history, languageCode, autoConnect: false, onMessages, toolControls });
   const aiLevel = useAiPlaybackLevel(outputNode);
   const { resolvedTheme } = useTheme();
   const autoStartAttempted = useRef(false);

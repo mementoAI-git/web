@@ -130,7 +130,7 @@ describe("DashboardHeader", () => {
     expect(container.querySelector(".dashboard-header-surface")).toHaveClass("sm:h-[76px]");
     expect(container.querySelector(".dashboard-header-surface")).not.toHaveClass("border-b");
     expect(screen.getByRole("button", { name: "Open search" })).toHaveClass(
-      "h-9",
+      "h-10",
       "bg-fill-neutral-weak",
     );
     expect(
@@ -164,18 +164,18 @@ describe("DashboardHeader", () => {
     expect(container.querySelector(".dashboard-header-surface")).toHaveClass("sm:h-[76px]");
     expect(container.querySelector(".dashboard-header-surface")).not.toHaveClass("border-b");
     expect(screen.getByRole("button", { name: "Open search" })).toHaveClass(
-      "h-9",
+      "h-10",
       "bg-fill-neutral-weak",
     );
   });
 
-  it("keeps the non-overview navigation on Chat routes", () => {
+  it("places the workspace switcher in the Chat header", () => {
     const { container } = renderDashboardHeader(<DashboardHeader />, {
       route: "/chat",
     });
 
-    expect(screen.getByText("chat with AI")).toBeInTheDocument();
-    expect(container.querySelector(".dashboard-header-surface")).toHaveClass("border-b");
+    expect(screen.getByRole("button", { name: "Change Memento" })).toBeInTheDocument();
+    expect(container.querySelector(".dashboard-header-surface")).toHaveClass("sm:h-[86px]");
     expect(container.querySelector(".dashboard-header-surface")).not.toHaveClass("sm:h-[76px]");
     expect(screen.getByRole("button", { name: "Open search" })).toHaveClass(
       "h-10",
@@ -184,7 +184,7 @@ describe("DashboardHeader", () => {
       screen
         .getByRole("button", { name: "Open search" })
         .querySelector('[data-slot="search-command-shortcut"]'),
-    ).toBeInTheDocument();
+    ).not.toBeInTheDocument();
   });
 
   it("removes the navigation search field on the stories page", () => {
@@ -198,7 +198,9 @@ describe("DashboardHeader", () => {
   it("uses semantic surfaces and foregrounds in the default header", () => {
     const { container } = renderDashboardHeader(<DashboardHeader />);
     const shell = container.querySelector(".dashboard-header-surface");
-    expect(shell).toHaveClass("bg-background", "sm:h-[76px]");
+    expect(shell).toHaveClass("sm:h-[76px]");
+    expect(shell).not.toHaveClass("bg-background");
+    expect(shell?.querySelector(".dashboard-header-blur")).toHaveAttribute("aria-hidden", "true");
     expect(shell).not.toHaveClass("bg-card");
     expect(shell).not.toHaveClass("bg-white");
     expect(screen.getByText("overview")).toHaveClass("text-foreground");
@@ -246,7 +248,7 @@ describe("DashboardHeader", () => {
     expect(
       screen.getByRole("button", { name: /search memories/i }),
     ).toBeInTheDocument();
-    expect(screen.getByText(/active since mar 29, 2026/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Change Memento" })).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /read ai replies aloud/i }),
     ).toBeInTheDocument();
@@ -289,12 +291,12 @@ describe("DashboardHeader", () => {
     );
 
     const shell = container.querySelector(".dashboard-header-surface");
-    expect(shell).toHaveClass("bg-background", "sm:h-[76px]");
+    expect(shell).toHaveClass("sm:h-[86px]");
+    expect(shell).not.toHaveClass("bg-background");
+    expect(shell?.querySelector(".dashboard-header-blur")).toHaveAttribute("aria-hidden", "true");
     expect(shell).not.toHaveClass("bg-card");
     expect(shell).not.toHaveClass("bg-white");
-    expect(screen.getByRole("heading", { name: "Chat" })).toHaveClass(
-      "text-foreground",
-    );
+    expect(screen.getByRole("button", { name: "Change Memento" })).toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: /(?:expand|collapse) sidebar/i }),
     ).not.toBeInTheDocument();
@@ -312,4 +314,21 @@ it("uses a home icon for the collapsed sidebar and preserves its toggle action",
   expect(button.querySelector('[data-icon="a"] svg')).toHaveClass("lucide-house");
   await user.click(button);
   expect(toggle).toHaveBeenCalledOnce();
+});
+
+
+it("reuses dashboard controls in a full-screen overlay without page navigation", async () => {
+  const user = userEvent.setup();
+  const onSearch = vi.fn();
+  const onClose = vi.fn();
+  renderDashboardHeader(<DashboardHeader overlay={{ title: <h2>My insights</h2>, searchLabel: "Search insights", closeLabel: "Close insights", onSearch, onClose }} />);
+  expect(screen.getByRole("heading", { name: "My insights" })).toBeVisible();
+  expect(screen.getByRole("button", { name: "Quick tools" })).toBeVisible();
+  expect(screen.queryByRole("button", { name: "Choose theme" })).not.toBeInTheDocument();
+  await user.click(screen.getByRole("button", { name: "Search insights" }));
+  expect(onSearch).toHaveBeenCalledOnce();
+  await user.keyboard("{Control>}k{/Control}");
+  expect(onSearch).toHaveBeenCalledTimes(2);
+  await user.click(screen.getByRole("button", { name: "Close insights" }));
+  expect(onClose).toHaveBeenCalledOnce();
 });

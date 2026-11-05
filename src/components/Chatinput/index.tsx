@@ -38,6 +38,9 @@ export interface IOnSendPayload {
 export type { ChatReplyQuote };
 
 export interface IChatinputProps {
+  connectionPersonId?: string;
+  voiceEnabled?: boolean;
+  placeholder?: string;
   className?: string
   inputClassName?: string
   topic?: boolean
@@ -63,6 +66,9 @@ type ChatinputImplProps = IChatinputProps & {
 
 function ChatinputImpl({
   wrapperClassName,
+  connectionPersonId,
+  voiceEnabled = true,
+  placeholder = "Type text here...",
   shellTestId,
   className = "",
   inputClassName = "",
@@ -117,13 +123,13 @@ function ChatinputImpl({
   const isVoiceMode = isVoiceCallRoute || new URLSearchParams(location.search).get("voice") === "1" || inlineVoiceOpen;
 
   useEffect(() => {
-    if (!voice || !isVoiceMode) return;
-    voice.start({ memoryId: voiceNavTargetId === "new" ? null : voiceNavTargetId, history });
+    if (!voice || !isVoiceMode || !voiceEnabled) return;
+    voice.start({ connectionPersonId, memoryId: voiceNavTargetId === "new" ? null : voiceNavTargetId, history });
     const params = new URLSearchParams(location.search);
     params.delete("voice");
     navigate(`${isVoiceCallRoute ? `/chat/${voiceRouteChatId}` : location.pathname}${params.size ? `?${params}` : ""}`, { replace: true });
     setInlineVoiceOpen(false);
-  }, [voice, isVoiceMode, voiceNavTargetId, history, location.pathname, location.search, navigate, isVoiceCallRoute, voiceRouteChatId]);
+  }, [voice, voiceEnabled, connectionPersonId, isVoiceMode, voiceNavTargetId, history, location.pathname, location.search, navigate, isVoiceCallRoute, voiceRouteChatId]);
 
   useLayoutEffect(() => {
     if (!draftStorageKey) {
@@ -344,7 +350,7 @@ function ChatinputImpl({
       attachments,
       replyTo: replyQuote ?? null,
     };
-    if (voice?.active) {
+    if (voice?.active && voice.connectionPersonId === connectionPersonId) {
       setVoiceSending(true);
       try {
         await voice.send({ text: buildPromptWithReplyQuote(text, replyQuote ?? null), attachments });
@@ -409,16 +415,17 @@ function ChatinputImpl({
     loading ||
     uploadsPending ||
     voiceSending ||
-    Boolean(voice?.active && !voice.ready) ||
+    Boolean(voice?.active && voice.connectionPersonId === connectionPersonId && !voice.ready) ||
     !hasSendableContent;
   const showSendControl = !typing && (hasSendableContent || loading);
 
   /** URL /chat/:id/voice supplies id before memory SWR resolves — Live API needs this for context + saving. */
   const voiceMemoryId = memoryId ?? (voiceRouteChatId === "new" ? null : voiceRouteChatId);
 
-  if (isVoiceMode && !voice) {
+  if (isVoiceMode && !voice && voiceEnabled) {
     return (
       <InlineVoiceSession
+        connectionPersonId={connectionPersonId}
         onSessionChange={onVoiceSessionChange}
         onEnd={() => {
           const params = new URLSearchParams(location.search);
@@ -481,7 +488,8 @@ function ChatinputImpl({
             ref={textareaRef}
             value={text}
             onChange={e => setText(e.target.value)}
-            placeholder="Type text here..."
+            placeholder={placeholder}
+            aria-label={connectionPersonId ? placeholder : undefined}
             className={cn(
               "min-h-12 w-full shrink-0 resize-none overflow-hidden bg-transparent font-geist text-sm leading-5 text-text-neutral-strong outline-none placeholder:text-text-neutral-weaker sm:text-base sm:leading-6",
               {
@@ -530,18 +538,18 @@ function ChatinputImpl({
                   <ChatDesignIcon name="microphone" />
                 </button>
               ) : null}
-              {!topic && !typing && !showSendControl && !isQuickRecording ? (
+              {voiceEnabled && !topic && !typing && !showSendControl && !isQuickRecording ? (
                 <button
                   type="button"
                   aria-label="Voice call"
                   aria-pressed={Boolean(voice?.active)}
                   disabled={Boolean(voice?.active)}
                   onClick={() => {
-                    if (voice) voice.start({ memoryId: voiceNavTargetId === "new" ? null : voiceNavTargetId ?? memoryId, history });
+                    if (voice) voice.start({ connectionPersonId, memoryId: voiceNavTargetId === "new" ? null : voiceNavTargetId ?? memoryId, history });
                     else if (voiceCallTo) navigate(voiceCallTo);
                     else setInlineVoiceOpen(true);
                   }}
-                  className="flex size-9 md:size-10 shrink-0 cursor-pointer items-center justify-center rounded-full border border-stroke-neutral-weak bg-fill-overview-voice text-icon-neutral-strong transition-[transform,opacity] hover:opacity-90 active:scale-[0.97] disabled:cursor-default disabled:opacity-50"
+                  className="flex size-9 md:size-10 shrink-0 cursor-pointer items-center justify-center rounded-full border border-stroke-neutral-weak bg-fill-overview-voice text-overview-voice transition-[transform,opacity] hover:opacity-90 active:scale-[0.97] disabled:cursor-default disabled:opacity-50"
                 >
                   <ChatDesignIcon name="phone" />
                 </button>
@@ -551,7 +559,7 @@ function ChatinputImpl({
                   type="button"
                   onClick={onStop}
                   aria-label="Stop"
-                  className="flex size-9 shrink-0 items-center justify-center rounded-full bg-fill-neutral-strong text-primary-foreground md:size-10"
+                  className="flex size-9 shrink-0 items-center justify-center rounded-full bg-fill-chat-send text-icon-chat-send md:size-10"
                 >
                   <Square className="size-4" fill="currentColor" aria-hidden />
                 </button>
@@ -562,7 +570,7 @@ function ChatinputImpl({
                   onClick={handleSend}
                   disabled={sendDisabled || (topic && !showSendControl)}
                   aria-label="Send"
-                  className="flex size-9 md:size-10 shrink-0 items-center justify-center rounded-full bg-fill-neutral-strong text-primary-foreground transition-[transform,opacity] duration-150 active:scale-[0.97] disabled:pointer-events-none disabled:opacity-50"
+                  className="flex size-9 md:size-10 shrink-0 items-center justify-center rounded-full bg-fill-chat-send text-icon-chat-send transition-[transform,opacity] duration-150 active:scale-[0.97] disabled:pointer-events-none disabled:opacity-50"
                 >
                   {loading ? (
                     <>

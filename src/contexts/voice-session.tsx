@@ -8,8 +8,9 @@ import { useStore } from "@/hooks/use-store";
 import posthog from "@/lib/posthog";
 import { posthogLogger } from "@/lib/posthog-logger";
 
-type StartVoice = { memoryId?: string | null; history?: { role: "user" | "ai"; text: string }[] };
+type StartVoice = { connectionPersonId?: string; memoryId?: string | null; history?: { role: "user" | "ai"; text: string }[] };
 interface VoiceSessionContextValue {
+  connectionPersonId?: string;
   active: boolean;
   ready: boolean;
   memoryId: string | null;
@@ -43,7 +44,7 @@ export function VoiceSessionProvider({ children }: { children: ReactNode }) {
   const docked = overview && Boolean(dockTarget);
   const floatingPosition = useFloatingVoicePosition(host, fallback, Boolean(request) && !docked);
   const append = useCallback((entry: { kind: "started" | "ended" } | { kind: "message"; message: VoiceMessage }) => {
-    setTimeline(previous => [...previous, { ...entry, id: crypto.randomUUID(), sessionId: requestRef.current?.sessionId, memoryId: requestRef.current?.memoryId ?? null, created_at: new Date().toISOString() }]);
+    setTimeline(previous => [...previous, { ...entry, id: crypto.randomUUID(), sessionId: requestRef.current?.sessionId, connectionPersonId: requestRef.current?.connectionPersonId, memoryId: requestRef.current?.connectionPersonId ? null : requestRef.current?.memoryId ?? null, created_at: new Date().toISOString() }]);
   }, []);
   const onSessionChange = useCallback((active: boolean) => {
     if (live.current === active) return;
@@ -86,7 +87,7 @@ export function VoiceSessionProvider({ children }: { children: ReactNode }) {
     // Ignore pending saves from a call that ended or belonged to another user.
     if (!sessionId || requestRef.current?.sessionId !== sessionId) return;
     const memory = (messages[0] as VoiceMessage & { memory?: string })?.memory;
-    if (memory && requestRef.current && !requestRef.current.memoryId) {
+    if (memory && requestRef.current && !requestRef.current.connectionPersonId && !requestRef.current.memoryId) {
       requestRef.current = { ...requestRef.current, memoryId: String(memory) };
       setRequest(requestRef.current);
       setTimeline(previous => previous.map(entry => entry.memoryId || entry.sessionId !== sessionId ? entry : { ...entry, memoryId: String(memory) }));
@@ -96,7 +97,7 @@ export function VoiceSessionProvider({ children }: { children: ReactNode }) {
       for (const message of messages) {
         const index = next.findIndex(entry => entry.kind === "message" && entry.sessionId === sessionId && (entry.message._id === message._id || entry.message._id === message.clientId));
         if (index >= 0) next[index] = { ...next[index], kind: "message", message };
-        else next.push({ kind: "message", message, id: crypto.randomUUID(), sessionId, memoryId: requestRef.current?.memoryId ?? null, created_at: message.created_at });
+        else next.push({ kind: "message", message, id: crypto.randomUUID(), sessionId, connectionPersonId: requestRef.current?.connectionPersonId, memoryId: requestRef.current?.connectionPersonId ? null : requestRef.current?.memoryId ?? null, created_at: message.created_at });
       }
       return next;
     });
@@ -105,7 +106,7 @@ export function VoiceSessionProvider({ children }: { children: ReactNode }) {
     if (!runtime.current?.ready) throw new Error("Voice is still connecting. Please try again when it is ready.");
     await runtime.current.send(input);
     const memoryId = requestRef.current?.memoryId;
-    if (memoryId && location.pathname.startsWith("/chat") && location.pathname !== `/chat/${memoryId}`) {
+    if (!requestRef.current?.connectionPersonId && memoryId && location.pathname.startsWith("/chat") && location.pathname !== `/chat/${memoryId}`) {
       navigate(`/chat/${memoryId}`);
     }
   }, [location.pathname, navigate]);
@@ -115,6 +116,9 @@ export function VoiceSessionProvider({ children }: { children: ReactNode }) {
     parent?.appendChild(host);
   }, [docked, dockTarget, host]);
   useEffect(() => () => host.remove(), [host]);
+  useEffect(() => {
+    if (request && (new URLSearchParams(location.search).get("person") || undefined) !== request.connectionPersonId) end();
+  }, [location.search, request, end]);
   const owner = useRef(user?._id);
   useEffect(() => {
     if (owner.current && owner.current !== user?._id) {
@@ -124,11 +128,12 @@ export function VoiceSessionProvider({ children }: { children: ReactNode }) {
     owner.current = user?._id;
   }, [user?._id, end]);
 
-  return <VoiceSessionContext.Provider value={{ active: Boolean(request), ready, memoryId: request?.memoryId ?? null, start, end, send, dock, timeline }}>
+  return <VoiceSessionContext.Provider value={{ connectionPersonId: request?.connectionPersonId, active: Boolean(request), ready, memoryId: request?.memoryId ?? null, start, end, send, dock, timeline }}>
     {children}
     <div ref={fallback} style={floatingPosition} data-testid="floating-voice-host" className={docked || !request ? "hidden" : "fixed right-4 top-[84px] z-40 w-[min(325px,calc(100vw-2rem))] sm:right-8"} />
     {request && createPortal(<InlineVoiceSession
       persistent
+      connectionPersonId={request.connectionPersonId}
       variant={docked ? "overview" : "floating"}
       memoryId={request.memoryId}
       history={request.history}

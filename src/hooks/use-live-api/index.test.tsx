@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useLiveAPI } from ".";
 
 const liveMocks = vi.hoisted(() => ({
+  validate: vi.fn(),
   apiKeys: [] as string[],
   close: vi.fn(),
   connect: vi.fn(),
@@ -12,7 +13,7 @@ const liveMocks = vi.hoisted(() => ({
   post: vi.fn(),
 }));
 
-vi.mock("@/api/mutations", () => ({ post: liveMocks.post }));
+vi.mock("@/api/mutations", () => ({ get: liveMocks.validate, post: liveMocks.post }));
 
 vi.mock("@google/genai", () => ({
   GoogleGenAI: class {
@@ -597,6 +598,43 @@ describe("useLiveAPI", () => {
         await speak();
         expect(sentAudio(sockets[0])).toBe(1);
       });
+    });
+  });
+
+  describe("connection calls", () => {
+    it("targets connection tokens, asks for no tools and closes when approved context is revoked", async () => {
+      liveMocks.fetchToken.mockReset().mockResolvedValue({ data: { token: "connection-token", connectionSessionId: "grant" } });
+      liveMocks.validate.mockReset().mockRejectedValue(new Error("Context revoked"));
+      const toolControls = { navigate: vi.fn(), setMuted: vi.fn(), endCall: vi.fn() };
+      const { result } = renderHook(() => useLiveAPI({ connectionPersonId: "sarah", memoryId: "personal", turns: [{ role: "user", text: "Private personal history" }], toolControls }));
+      await waitFor(() => expect(result.current.outputNode).not.toBeNull());
+      await act(async () => { await result.current.connect(); });
+      expect(liveMocks.fetchToken).toHaveBeenCalledWith({ person_id: "sarah", shared_space: "true", share_inputs: "true" });
+      expect(liveMocks.connect).toHaveBeenCalledWith(expect.objectContaining({ config: expect.objectContaining({ systemInstruction: "Use only the server-approved connection context." }) }));
+      await waitFor(() => expect(liveMocks.validate).toHaveBeenCalledWith("/people/sarah/voice/grant", { skipErrorHandling: true }), { timeout: 3500 });
+      await waitFor(() => expect(liveMocks.close).toHaveBeenCalled());
+      expect(result.current.error).toContain("shared context changed");
+      expect(result.current.connected).toBe(false);
+    });
+
+    it("ends a lost connection call instead of resuming it without its context", async () => {
+      type Callbacks = { onmessage: (message: Record<string, unknown>) => Promise<void> | void; onclose: (event: { code: number; reason: string }) => void };
+      let callbacks!: Callbacks;
+      liveMocks.fetchToken.mockReset().mockResolvedValue({ data: { token: "connection-token", connectionSessionId: "grant" } });
+      liveMocks.validate.mockReset().mockResolvedValue({});
+      liveMocks.connect.mockReset().mockImplementation(async (options: { callbacks: Callbacks }) => {
+        callbacks = options.callbacks;
+        await callbacks.onmessage({ setupComplete: {} });
+        return { close: liveMocks.close, sendRealtimeInput: vi.fn() };
+      });
+      const { result } = renderHook(() => useLiveAPI({ connectionPersonId: "sarah" }));
+      await waitFor(() => expect(result.current.outputNode).not.toBeNull());
+      await act(async () => { await result.current.connect(); });
+      await act(async () => { await callbacks.onmessage({ sessionResumptionUpdate: { resumable: true, newHandle: "handle-1" } }); });
+      await act(async () => { callbacks.onclose({ code: 1006, reason: "gone" }); });
+      expect(result.current.connected).toBe(false);
+      expect(liveMocks.fetchToken).toHaveBeenCalledTimes(1);
+      expect(liveMocks.connect).toHaveBeenCalledTimes(1);
     });
   });
 });
