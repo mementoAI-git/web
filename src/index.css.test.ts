@@ -74,15 +74,22 @@ describe("dark color token compatibility", () => {
     );
   });
 
-  it("uses the approved app canvas throughout dark mode", () => {
+  it("keeps the dark canvas distinct from raised floating surfaces", () => {
     expect(declaration(".dark", "--color-background")).toBe("#12131a");
     expect(declaration(".dark", "--bg-neutral")).toBe("var(--bg-neutral-solid)");
     expect(declaration(".dark", "--bg-neutral-solid")).toBe("#12131a");
     expect(declaration(".dark", "--v3-bg")).toBe("#12131a");
     expect(declaration(".dark", "--background")).toBe("#12131a");
     expect(declaration(".dark", "--card")).toBe("var(--background)");
-    expect(declaration(".dark", "--popover")).toBe("var(--background)");
+    expect(declaration(".dark", "--popover")).toBe("var(--bg-raised)");
   });
+
+  it.each([":root", ".dark", ".deep-sky", ".light-sky"])(
+    "uses the raised popover fill in %s",
+    (theme) => {
+      expect(declaration(theme, "--popover")).toBe("var(--bg-raised)");
+    },
+  );
 
   it("switches status intent primitives to their dark-mode palette", () => {
     expect(declaration(".dark", "--red-1000")).toBe("#ff9c9c");

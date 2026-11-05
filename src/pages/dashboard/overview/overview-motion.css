@@ -133,8 +133,8 @@
   background-color: color-mix(in srgb, var(--bg-neutral) 70%, transparent);
   transition: background-color 250ms var(--panel-ease);
 }
-/* Match the reflection cards' white tint, with one stronger fill step. */
-.deep-sky .overview-capture-card {
+/* Use a visible neutral surface in both Dark and Deep sky. */
+.dark .overview-capture-card {
   background-color: var(--fill-neutral-weak);
 }
 /* New state controls settle into their slot without delaying interaction. */

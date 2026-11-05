@@ -1,7 +1,7 @@
 import { reportFetcherError } from "@/api/report-fetcher-error";
 import "../overview-motion.css";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { LoaderIcon, Pause, Play } from "lucide-react";
+import { LoaderIcon, Pause, Play, Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import useSWRMutation from "swr/mutation";
@@ -398,7 +398,7 @@ export function OverviewCaptureCard({
             data-open="true"
             className="t-panel-slide relative flex flex-wrap items-start justify-between gap-4"
           >
-            <div className="flex flex-wrap items-center gap-4">
+            <div className="flex flex-wrap items-center gap-3">
               {hasText ? (
                 <>
                   <Button
@@ -465,7 +465,7 @@ export function OverviewCaptureCard({
                     onClick={() => open?.("create-memory")}
                     className="rounded-[64px]"
                   >
-                    <OverviewDesignIcon name="story" /> Add story
+                    <Plus className="size-5 shrink-0" aria-hidden /> Add story
                   </Button>
                   <Button
                     key="voice-conversation"

@@ -26,7 +26,7 @@ import { useRequestRecovery } from "@/hooks/use-request-recovery";
 const sectionClass =
   "sky-card rounded-3xl border border-stroke-neutral-weak bg-fill-neutral-weak p-4 sm:p-5";
 const actionClass =
-  "h-9 rounded-lg border-stroke-neutral-weak bg-fill-neutral-weaker px-3 font-geist text-sm text-text-neutral-strong";
+  "h-9 rounded-lg border-stroke-neutral-weak bg-transparent px-3 font-geist text-sm text-text-neutral-strong";
 const planActionClass =
   "h-auto rounded-full bg-[var(--fill-billing-badge)] px-2.5 py-1.5 font-inter text-xs font-semibold leading-[18px] text-[var(--text-billing-badge)] [background-image:none] hover:bg-[var(--fill-billing-badge)]/90";
 

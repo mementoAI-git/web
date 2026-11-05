@@ -26,6 +26,11 @@ This document catalogs all colors used in the Memento web application, organized
 
 ## Overview design tokens
 
+Floating surfaces use `--bg-raised` (`bg-bg-raised`): dialogs, alert dialogs,
+legacy modal containers, and sheets. Their nested page/card fills inherit the
+raised surface. Popovers, dropdowns, and select menus use `--popover`, which
+aliases `--bg-raised` in every theme. Backdrops retain `--overlay-backdrop`.
+
 The overview uses these component tokens in addition to the V3 semantic families:
 
 | Token | Purpose |

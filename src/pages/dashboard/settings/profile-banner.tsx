@@ -115,7 +115,7 @@ export function ProfileBanner() {
     >
       <div
         ref={bannerRef}
-        className="relative h-[148px] overflow-hidden rounded-3xl bg-fill-neutral-weak"
+        className="settings-profile-banner relative h-[148px] overflow-hidden rounded-3xl bg-fill-neutral-weak"
       >
         <img
           src={displayedImage}

@@ -112,6 +112,7 @@ function ChangePasswordForm({ onBusyChange, onSuccess }: { onBusyChange: (busy: 
         error={errors.old_password}
         onChange={handleChange}
         labelClassName={inputLabelClass}
+        inputClassName="!bg-transparent"
       />
       <Passwordinput
         disabled={isMutating}
@@ -122,6 +123,7 @@ function ChangePasswordForm({ onBusyChange, onSuccess }: { onBusyChange: (busy: 
         error={errors.new_password}
         onChange={handleChange}
         labelClassName={inputLabelClass}
+        inputClassName="!bg-transparent"
       />
       <Passwordinput
         disabled={isMutating}
@@ -132,6 +134,7 @@ function ChangePasswordForm({ onBusyChange, onSuccess }: { onBusyChange: (busy: 
         error={errors.c_password}
         onChange={handleChange}
         labelClassName={inputLabelClass}
+        inputClassName="!bg-transparent"
       />
       <div className="flex justify-end border-t border-v3-stroke-weak pt-4">
         <SettingsPillButton type="submit" variant="default" aria-label="Save password" aria-busy={isMutating} disabled={isMutating}>

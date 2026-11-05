@@ -1,11 +1,3 @@
-@font-face {
-  font-family: "Drafts DM Sans";
-  src: url("../../../../assets/drafts/dm-sans.ttf") format("truetype");
-  font-weight: 100 1000;
-  font-style: normal;
-  font-display: swap;
-}
-
 .drafts-menu {
   --drafts-text: rgba(5, 17, 34, 0.9);
   --drafts-error: #c73a3a;
@@ -34,7 +26,7 @@
   box-shadow: none;
   color: var(--drafts-text);
   background: var(--popover);
-  font-family: "Drafts DM Sans", sans-serif;
+  font-family: var(--font-rounded);
   font-optical-sizing: auto;
 }
 

@@ -4,6 +4,23 @@
 @config "../tailwind.config.ts";
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* Use installed SF Pro Rounded faces without bundling platform font files. */
+@font-face {
+  font-family: "SF Pro Rounded";
+  src: local("SFProRounded-Regular"), local("SF Pro Rounded Regular");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "SF Pro Rounded";
+  src: local("SFProRounded-Bold"), local("SF Pro Rounded Bold");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --color-primary: var(--v3-brand-strong);
   --color-secondary: rgba(0, 6, 38, 0.9);
@@ -110,7 +127,7 @@
   --fill-overview-voice: #20c660;
   --fill-voice-elevated: #1d1e26;
   --fill-chat-user: rgba(224, 148, 67, 0.14);
-  --text-overview-voice: var(--text-inverse-strong);
+  --text-overview-voice: var(--brown-1000);
   --text-overview-greeting: #e5c600;
   --gradient-overview-story: linear-gradient(#f3945c, #e97532);
   --fill-topic-badge: rgba(255, 255, 255, 0.9);
@@ -191,6 +208,8 @@
   --overlay-media-backdrop: rgba(0, 0, 0, 0.8);
 
   /* Selected tab controls retain the existing dark-on-light presentation. */
+  --fill-chat-send: var(--fill-neutral-strong);
+  --icon-chat-send: var(--text-inverse-strong);
   --fill-tab-active: var(--fill-neutral-strong);
   --text-tab-active: var(--text-inverse-strong);
 
@@ -280,6 +299,7 @@
 
   /* Background Colors */
   --bg-neutral-solid: #ffffff;
+  --bg-raised: #ffffff;
   --bg-neutral: var(--bg-neutral-solid);
   --bg-neutral-strong: var(--neutral-100);
   --bg-neutral-weak: var(--neutral-50);
@@ -334,12 +354,16 @@
   --rdp-day-selected-background: var(--v3-brand-strong);
 
   --font-garamond: "EB Garamond", serif;
+  --font-georgia: var(--font-garamond);
   --font-azeret: "Azeret Mono", monospace;
-  --font-bricolage: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-bricolage: var(--font-body);
   --font-averia: "Averia Serif Libre", serif;
-  --font-georgia: "Georgia", serif;
-  --font-inter: "Inter", sans-serif;
-  --font-geist: "Geist", sans-serif;
+  --font-body: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui,
+    "Segoe UI", sans-serif;
+  --font-rounded: "SF Pro Rounded", ui-rounded, var(--font-body);
+  /* Keep existing body-font utilities aligned with the shared system stack. */
+  --font-inter: var(--font-body);
+  --font-geist: var(--font-body);
 
   /* SHADCN — aligned to V3 semantic tokens (docs/COLOR_INVENTORY.md, .cursor/rules/v3-color-system-usage.mdc) */
   --radius: 0.5rem;
@@ -348,7 +372,7 @@
   --foreground: var(--text-neutral-strong);
   --card: #ffffff;
   --card-foreground: var(--text-neutral-strong);
-  --popover: #ffffff;
+  --popover: var(--bg-raised);
   --popover-foreground: var(--text-neutral-strong);
   --primary: var(--text-brand-strong);
   --primary-foreground: #ffffff;
@@ -374,6 +398,44 @@
 }
 
 .dark {
+
+  /* Rebind intent aliases in this scope so they resolve dark primitives. */
+  --text-info-strong: var(--blue-1000);
+  --text-info-weak: var(--blue-800);
+  --text-info-weaker: var(--blue-200);
+  --text-info-disabled: var(--blue-50);
+  --icon-info-strong: var(--blue-1000);
+  --stroke-info-strong: var(--blue-1000);
+  --stroke-info-weak: var(--blue-200);
+  --fill-info-strong: var(--blue-1000);
+  --fill-info-weak: var(--blue-50);
+  --text-warning-strong: var(--amber-1000);
+  --text-warning-weak: var(--amber-800);
+  --text-warning-weaker: var(--amber-200);
+  --text-warning-disabled: var(--amber-50);
+  --icon-warning-strong: var(--amber-1000);
+  --stroke-warning-strong: var(--amber-1000);
+  --stroke-warning-weak: var(--amber-200);
+  --fill-warning-strong: var(--amber-1000);
+  --fill-warning-weak: var(--amber-50);
+  --text-success-strong: var(--green-1000);
+  --text-success-weak: var(--green-800);
+  --text-success-weaker: var(--green-200);
+  --text-success-disabled: var(--green-50);
+  --icon-success-strong: var(--green-1000);
+  --stroke-success-strong: var(--green-1000);
+  --stroke-success-weak: var(--green-200);
+  --fill-success-strong: var(--green-1000);
+  --fill-success-weak: var(--green-50);
+  --text-error-strong: var(--red-1000);
+  --text-error-weak: var(--red-800);
+  --text-error-weaker: var(--red-200);
+  --text-error-disabled: var(--red-50);
+  --icon-error-strong: var(--red-1000);
+  --stroke-error-strong: var(--red-1000);
+  --stroke-error-weak: var(--red-200);
+  --fill-error-strong: var(--red-1000);
+  --fill-error-weak: var(--red-50);
   --text-overview-voice: var(--brown-1000);
   --gradient-overview-banner: linear-gradient(
     0deg,
@@ -384,6 +446,8 @@
   --color-secondary: var(--secondary);
   --color-background: #12131a;
 
+  --fill-chat-send: var(--fill-inverse-strong);
+  --icon-chat-send: var(--brown-1000);
   --fill-tab-active: var(--fill-inverse-strong);
   --text-tab-active: var(--brown-1000);
   --text-neutral-strong: var(--brown-dark-1000);
@@ -427,6 +491,7 @@
   --fill-neutral-disabled: var(--brown-dark-25);
 
   --bg-neutral-solid: #12131a;
+  --bg-raised: #1d1e26;
   --bg-neutral: var(--bg-neutral-solid);
   --bg-neutral-strong: var(--neutral-dark-100);
   --bg-neutral-weak: var(--neutral-dark-50);
@@ -439,7 +504,7 @@
   --foreground: var(--text-neutral-strong);
   --card: var(--background);
   --card-foreground: var(--text-neutral-strong);
-  --popover: var(--background);
+  --popover: var(--bg-raised);
   --popover-foreground: var(--text-neutral-strong);
   --secondary: var(--fill-neutral-weak);
   --secondary-foreground: var(--text-neutral-strong);
@@ -458,6 +523,7 @@
   --sky-midpoint: #191d31;
   --sky-horizon: #2c2d3c;
   --sky-surface: #191e2c;
+  --bg-raised: var(--sky-surface);
   --bg-neutral-solid: var(--sky-surface);
   --background: transparent;
   --color-background: transparent;
@@ -465,7 +531,7 @@
   --bg-neutral: var(--sky-surface);
   --bg-overview-sidebar: rgba(17, 23, 40, 0.72);
   --card: var(--sky-surface);
-  --popover: var(--sky-surface);
+  --popover: var(--bg-raised);
   background-color: var(--sky-canvas);
 }
 
@@ -483,6 +549,7 @@
   --bg-neutral-weak: rgba(255, 255, 255, 0.55);
   --bg-neutral-weaker: rgba(255, 255, 255, 0.32);
   --fill-neutral-strong: #1b1d23;
+  --fill-chat-send: var(--fill-neutral-strong);
   --fill-neutral-weak: rgba(255, 255, 255, 0.55);
   --fill-neutral-weaker: rgba(255, 255, 255, 0.32);
   --fill-chat-reply: rgba(255, 255, 255, 0.68);
@@ -498,7 +565,7 @@
   --stroke-neutral-weaker: rgba(27, 29, 35, 0.06);
   --fill-overview-banner: var(--sky-surface);
   --card: var(--sky-surface);
-  --popover: rgba(255, 255, 255, 0.96);
+  --popover: var(--bg-raised);
   --secondary: var(--fill-neutral-strong);
   --secondary-foreground: #ffffff;
   background-color: var(--sky-canvas);
@@ -626,6 +693,11 @@
     animation: none;
     will-change: auto;
   }
+}
+
+@theme inline {
+  --color-fill-chat-send: var(--fill-chat-send);
+  --color-icon-chat-send: var(--icon-chat-send);
 }
 
 @theme {
@@ -798,6 +870,7 @@
   --color-fill-error-weak: var(--fill-error-weak);
 
   /* Semantic Color Tokens - Background */
+  --color-bg-raised: var(--bg-raised);
   --color-bg-neutral: var(--bg-neutral);
   --color-bg-neutral-solid: var(--bg-neutral-solid);
   --color-bg-neutral-strong: var(--bg-neutral-strong);
@@ -818,12 +891,14 @@
 
   --radius-lg: 8px;
 
+  --font-sans: var(--font-body);
   --font-inter: var(--font-inter);
   --font-geist: var(--font-geist);
   --font-bricolage: var(--font-bricolage);
   --font-averia: var(--font-averia);
-  --font-georgia: var(--font-georgia);
   --font-garamond: var(--font-garamond);
+  --font-georgia: var(--font-georgia);
+  --font-rounded: var(--font-rounded);
   --font-azeret: var(--font-azeret);
 
   /* SHADCN */
@@ -866,11 +941,7 @@ body {
   font-weight: 400;
   font-size: 16px;
   overflow: hidden;
-  font-family:
-    var(--font-inter),
-    -apple-system,
-    BlinkMacSystemFont,
-    sans-serif;
+  font-family: var(--font-body);
 }
 
 /* Ensure all clickable links show pointer cursor on hover */
@@ -999,7 +1070,7 @@ body {
   }
 
   .modal-container {
-    @apply relative !w-[95%] sm:w-full max-w-[95vw] sm:max-w-[480px] md:max-w-[618px] rounded-[var(--radius-modal)] bg-bg-neutral-solid text-text-neutral-strong p-4 sm:p-8 md:p-10;
+    @apply relative !w-[95%] sm:w-full max-w-[95vw] sm:max-w-[480px] md:max-w-[618px] rounded-[var(--radius-modal)] bg-bg-raised text-text-neutral-strong p-4 sm:p-8 md:p-10;
   }
 
   .modal-overlay {
@@ -1881,20 +1952,61 @@ body {
   border-color: var(--stroke-error-strong);
 }
 
-/* Blur the scrolling surface, keeping the navigation and its controls crisp. */
+/* Progressively soften content below the nav without filtering its controls. */
 .dashboard-header-surface {
   isolation: isolate;
   flex-shrink: 0;
 }
-.dashboard-header-surface::before {
-  content: "";
+.dashboard-header-surface::before,
+.dashboard-header-blur {
   position: absolute;
-  inset: 0 0 -16px;
+  inset: 0 0 -48px;
   z-index: -1;
   pointer-events: none;
-  -webkit-backdrop-filter: blur(20px);
-  backdrop-filter: blur(20px);
-  mask-image: linear-gradient(to bottom, black calc(100% - 16px), transparent);
+}
+.dashboard-header-surface::before {
+  content: "";
+  background: var(--background);
+  -webkit-mask-image: linear-gradient(to bottom, black 0%, black 20%, rgba(0, 0, 0, 0.96) 35%, rgba(0, 0, 0, 0.8) 50%, rgba(0, 0, 0, 0.45) 65%, rgba(0, 0, 0, 0.12) 82%, transparent 100%);
+  mask-image: linear-gradient(to bottom, black 0%, black 20%, rgba(0, 0, 0, 0.96) 35%, rgba(0, 0, 0, 0.8) 50%, rgba(0, 0, 0, 0.45) 65%, rgba(0, 0, 0, 0.12) 82%, transparent 100%);
+}
+.dashboard-header-blur > span {
+  position: absolute;
+  inset: 0;
+  -webkit-backdrop-filter: blur(var(--nav-blur));
+  backdrop-filter: blur(var(--nav-blur));
+  -webkit-mask-image: linear-gradient(to bottom, black var(--nav-fade-start), rgba(0, 0, 0, 0.95) calc(var(--nav-fade-start) + (var(--nav-fade-end) - var(--nav-fade-start)) * 0.2), rgba(0, 0, 0, 0.5) calc(var(--nav-fade-start) + (var(--nav-fade-end) - var(--nav-fade-start)) * 0.5), rgba(0, 0, 0, 0.05) calc(var(--nav-fade-start) + (var(--nav-fade-end) - var(--nav-fade-start)) * 0.8), transparent var(--nav-fade-end));
+  mask-image: linear-gradient(to bottom, black var(--nav-fade-start), rgba(0, 0, 0, 0.95) calc(var(--nav-fade-start) + (var(--nav-fade-end) - var(--nav-fade-start)) * 0.2), rgba(0, 0, 0, 0.5) calc(var(--nav-fade-start) + (var(--nav-fade-end) - var(--nav-fade-start)) * 0.5), rgba(0, 0, 0, 0.05) calc(var(--nav-fade-start) + (var(--nav-fade-end) - var(--nav-fade-start)) * 0.8), transparent var(--nav-fade-end));
+}
+.dashboard-header-blur > span:nth-child(1) {
+  --nav-blur: 0.5px;
+  --nav-fade-start: calc(100% - 36px);
+  --nav-fade-end: calc(100% - 0px);
+}
+.dashboard-header-blur > span:nth-child(2) {
+  --nav-blur: 1px;
+  --nav-fade-start: calc(100% - 48px);
+  --nav-fade-end: calc(100% - 2px);
+}
+.dashboard-header-blur > span:nth-child(3) {
+  --nav-blur: 2px;
+  --nav-fade-start: calc(100% - 60px);
+  --nav-fade-end: calc(100% - 8px);
+}
+.dashboard-header-blur > span:nth-child(4) {
+  --nav-blur: 4px;
+  --nav-fade-start: calc(100% - 76px);
+  --nav-fade-end: calc(100% - 16px);
+}
+.dashboard-header-blur > span:nth-child(5) {
+  --nav-blur: 8px;
+  --nav-fade-start: calc(100% - 92px);
+  --nav-fade-end: calc(100% - 28px);
+}
+.dashboard-header-blur > span:nth-child(6) {
+  --nav-blur: 16px;
+  --nav-fade-start: calc(100% - 108px);
+  --nav-fade-end: calc(100% - 40px);
 }
 
 /* Original light appearance: quiet daylight through an off-screen window. */
@@ -1943,6 +2055,20 @@ body {
     opacity: 0.42;
     mask-image: linear-gradient(to right, transparent 8%, black 100%);
   }
+}
+
+/* Floating surfaces and their nested sections use the raised theme fill. */
+[role="dialog"],
+[role="alertdialog"],
+[data-slot="sheet-content"],
+.modal-container,
+.react-modal-sheet-container {
+  --background: var(--bg-raised);
+  --bg-neutral-solid: var(--bg-raised);
+  --bg-neutral: var(--bg-raised);
+  --card: var(--bg-raised);
+  --popover: var(--bg-raised);
+  background-color: var(--bg-raised);
 }
 
 /* Floating dialogs share the command-search surface radius. */

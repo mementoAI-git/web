@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { CloudMoon, CloudSun, Monitor, Moon, Sun } from "lucide-react";
+import { CloudMoon, Monitor, Moon, Sun } from "lucide-react";
 import { useTheme } from "@/contexts/theme";
 import type { ThemePreference } from "@/lib/theme";
 import { Button } from "@/components/ui/button";
@@ -13,8 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 const themes = [
-  { value: "light", label: "Light", Icon: Sun },
-  { value: "light-sky", label: "Light sky", Icon: CloudSun },
+  { value: "light-sky", label: "Light sky", Icon: Sun },
   { value: "dark", label: "Dark", Icon: Moon },
   { value: "deep-sky", label: "Deep sky", Icon: CloudMoon },
   { value: "system", label: "System", Icon: Monitor },
@@ -23,7 +22,6 @@ const themes = [
 export function ThemeSwitcher({ className, contentClassName, lightIcon, darkIcon }: { className?: string; contentClassName?: string; lightIcon?: ReactNode; darkIcon?: ReactNode } = {}) {
   const { theme, resolvedTheme, setTheme } = useTheme();
   const icon = theme === "deep-sky" ? <CloudMoon aria-hidden="true" />
-    : theme === "light-sky" ? <CloudSun aria-hidden="true" />
     : resolvedTheme === "dark" ? (darkIcon ?? <Moon aria-hidden="true" />)
     : (lightIcon ?? <Sun aria-hidden="true" />);
 

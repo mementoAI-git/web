@@ -158,7 +158,7 @@ export function SettingsAbout() {
               maxLength={500}
               disabled={saving}
               autoFocus
-              className="max-h-60 min-h-[188px] resize-none overflow-y-auto border-stroke-neutral-weak bg-fill-neutral-weaker text-text-neutral-strong placeholder:text-text-neutral-weaker focus-visible:border-stroke-neutral-weak focus-visible:ring-0"
+              className="max-h-60 min-h-[188px] resize-none overflow-y-auto border-stroke-neutral-weak bg-transparent text-text-neutral-strong placeholder:text-text-neutral-weaker focus-visible:border-stroke-neutral-weak focus-visible:ring-0"
               placeholder="Write a little about yourself…"
             />
             <div className="flex justify-end gap-2">

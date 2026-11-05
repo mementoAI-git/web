@@ -77,6 +77,21 @@ afterEach(() => {
 });
 
 describe("application theme", () => {
+  it.each([null, "light"])("uses light sky for a missing or hidden Light preference (%s)", (stored) => {
+    if (stored === null) localStorage.removeItem(THEME_STORAGE_KEY);
+    else localStorage.setItem(THEME_STORAGE_KEY, stored);
+    const media = installMatchMedia(true);
+    expect(initializeTheme()).toBe("light");
+    renderTheme();
+    expect(screen.getByTestId("theme")).toHaveTextContent("light-sky");
+    expect(document.documentElement).toHaveClass("light-sky");
+    expect(document.documentElement).not.toHaveClass("dark", "daylight");
+    act(() => media.setDark(false));
+    act(() => media.setDark(true));
+    expect(document.documentElement).toHaveClass("light-sky");
+    expect(document.documentElement).not.toHaveClass("dark");
+  });
+
   it("restores light sky before mount even when the OS is dark", () => {
     localStorage.setItem(THEME_STORAGE_KEY, "light-sky");
     const media = installMatchMedia(true);
@@ -122,7 +137,8 @@ describe("application theme", () => {
     expect(document.querySelector(".deep-sky-backdrop")).toBeNull();
   });
 
-  it("defaults to system and follows OS changes from light to dark", () => {
+  it("restores system and follows OS changes from light to dark", () => {
+    localStorage.setItem(THEME_STORAGE_KEY, "system");
     const media = installMatchMedia(false);
     renderTheme();
 
@@ -166,14 +182,14 @@ describe("application theme", () => {
     expect(document.documentElement.style.colorScheme).toBe("dark");
   });
 
-  it("uses system for an invalid stored preference", () => {
+  it("uses light sky for an invalid stored preference", () => {
     localStorage.setItem(THEME_STORAGE_KEY, "midnight");
     installMatchMedia(true);
     renderTheme();
 
-    expect(screen.getByTestId("theme")).toHaveTextContent("system");
-    expect(screen.getByTestId("resolved-theme")).toHaveTextContent("dark");
-    expect(document.documentElement).toHaveClass("dark");
+    expect(screen.getByTestId("theme")).toHaveTextContent("light-sky");
+    expect(screen.getByTestId("resolved-theme")).toHaveTextContent("light");
+    expect(document.documentElement).toHaveClass("light-sky");
   });
 
   it("falls back to light when matchMedia and storage are unavailable", () => {
@@ -182,7 +198,7 @@ describe("application theme", () => {
     });
     renderTheme();
 
-    expect(screen.getByTestId("theme")).toHaveTextContent("system");
+    expect(screen.getByTestId("theme")).toHaveTextContent("light-sky");
     expect(screen.getByTestId("resolved-theme")).toHaveTextContent("light");
     expect(document.documentElement).not.toHaveClass("dark");
   });
@@ -202,6 +218,7 @@ describe("application theme", () => {
   });
 
   it("stops following OS changes after a manual selection", () => {
+    localStorage.setItem(THEME_STORAGE_KEY, "system");
     const media = installMatchMedia(false);
     renderTheme();
     expect(media.listenerCount).toBe(1);
@@ -218,6 +235,7 @@ describe("application theme", () => {
   });
 
   it("removes the system listener on unmount under StrictMode", () => {
+    localStorage.setItem(THEME_STORAGE_KEY, "system");
     const media = installMatchMedia(false);
     const { unmount } = render(
       <StrictMode>
@@ -250,8 +268,8 @@ describe("application theme", () => {
   });
 });
 
-it("shows the daylight backdrop only for the original light appearance", () => {
-  localStorage.setItem(THEME_STORAGE_KEY, "light");
+it("shows the daylight backdrop for system light and removes it for sky themes", () => {
+  localStorage.setItem(THEME_STORAGE_KEY, "system");
   installMatchMedia(false);
   renderTheme();
   expect(document.documentElement).toHaveClass("daylight");

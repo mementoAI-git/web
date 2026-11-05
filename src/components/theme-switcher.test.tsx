@@ -11,7 +11,8 @@ it("offers deep sky alongside dark and restores the choice on remount", async ()
   const user = userEvent.setup();
   const { unmount } = render(<ThemeProvider><ThemeSwitcher /></ThemeProvider>);
   await user.click(screen.getByRole("button", { name: "Choose theme" }));
-  expect(screen.getAllByRole("menuitemradio").map((item) => item.textContent)).toEqual(["Light", "Light sky", "Dark", "Deep sky", "System"]);
+  expect(screen.getAllByRole("menuitemradio").map((item) => item.textContent)).toEqual(["Light sky", "Dark", "Deep sky", "System"]);
+  expect(screen.getByRole("menuitemradio", { name: "Light sky" }).querySelector("svg.lucide-sun")).toBeInTheDocument();
   await user.click(screen.getByRole("menuitemradio", { name: "Deep sky" }));
   expect(document.documentElement).toHaveClass("dark", "deep-sky");
   expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe("deep-sky");
@@ -19,7 +20,7 @@ it("offers deep sky alongside dark and restores the choice on remount", async ()
   render(<ThemeProvider><ThemeSwitcher /></ThemeProvider>);
   await user.click(screen.getByRole("button", { name: "Choose theme" }));
   expect(screen.getByRole("menuitemradio", { name: "Deep sky" })).toHaveAttribute("aria-checked", "true");
-  await user.click(screen.getByRole("menuitemradio", { name: "Light", exact: true }));
+  await user.click(screen.getByRole("menuitemradio", { name: "Light sky", exact: true }));
   expect(document.documentElement).not.toHaveClass("dark", "deep-sky");
 });
 
@@ -28,7 +29,7 @@ it("supports choosing dark with the keyboard and returning to system", async () 
   const user = userEvent.setup();
   render(<ThemeProvider><ThemeSwitcher /></ThemeProvider>);
   await user.tab();
-  await user.keyboard("{Enter}{ArrowDown}{ArrowDown}{Enter}");
+  await user.keyboard("{Enter}{ArrowDown}{Enter}");
   expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe("dark");
   await user.click(screen.getByRole("button", { name: "Choose theme" }));
   await user.click(screen.getByRole("menuitemradio", { name: "System" }));
