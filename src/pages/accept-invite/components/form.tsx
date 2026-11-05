@@ -1,3 +1,5 @@
+import { UserAvatar } from "@/components/user-avatar";
+import { getProfileAvatarUrl } from "@/utility/profile-avatar";
 import dayjs from "dayjs";
 import { useNavigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
@@ -13,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import useFetcher from "@/hooks/use-fetcher";
 import useForm from "@/hooks/use-form";
-import { cn, isEmpty } from "@/utility";
+import { isEmpty } from "@/utility";
 import type { IBeneficiary } from "@/utility/interface";
 import AcceptInviteButtons from "./buttons";
 
@@ -56,25 +58,14 @@ export default function AcceptInviteForm({ data }: { data: IBeneficiary }) {
 
   return (
     <div className="flex w-full flex-col gap-6 sm:gap-8">
-      <div
-        className={cn(
-          "mx-auto flex size-16 items-center justify-center rounded-full bg-v3-fill-weaker text-center sm:size-20",
-          { "ring-2 ring-v3-stroke-weak": !isEmpty(benefactor.picture_url) },
-        )}
-      >
-        {isEmpty(benefactor.picture_url) ?
-          <span className="font-geist text-2xl font-bold uppercase text-v3-text-strong sm:text-3xl">
-            {(isEmpty(name.trim()) ? email : name)[0]}
-          </span>
-        : <img
-            width={64}
-            height={64}
-            src={benefactor.picture_url}
-            alt={benefactor?.first_name || "Profile"}
-            className="size-full rounded-full object-cover"
-          />
-        }
-      </div>
+      <UserAvatar
+        alt={name || "Profile"}
+        src={getProfileAvatarUrl(benefactor)}
+        userId={benefactor?._id}
+        email={benefactor?.email}
+        name={name}
+        className="mx-auto size-16 sm:size-20"
+      />
       <div className="flex flex-col items-center gap-2 text-center">
         <OnboardingTitle className="text-center">
           Join <span className="capitalize">{name}</span> on Memento
