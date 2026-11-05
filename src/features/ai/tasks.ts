@@ -500,13 +500,11 @@ export const suggestStoryTitleTask: AiTaskDefinition<
   SuggestStoryTitleInput,
   SuggestStoryTitleResult
 > = {
-  ...createStructuredAiTaskDefinition<
-    SuggestStoryTitleInput,
-    SuggestStoryTitleResult
-  >("story.suggest_title", {
-    defaultMode: "suggest",
-    label: "title suggestion",
-  }),
+  task: "story.suggest_title",
+  endpoint: endpoint.generateStoryTitle,
+  method: "POST",
+  defaultMode: "suggest",
+  label: "title suggestion",
   parseResponse: extractTitle,
 };
 
@@ -514,13 +512,11 @@ export const suggestStoryTagsTask: AiTaskDefinition<
   SuggestStoryTagsInput,
   SuggestStoryTagsResult
 > = {
-  ...createStructuredAiTaskDefinition<SuggestStoryTagsInput, SuggestStoryTagsResult>(
-    "story.suggest_tags",
-    {
-      defaultMode: "suggest",
-      label: "tag suggestion",
-    },
-  ),
+  task: "story.suggest_tags",
+  endpoint: endpoint.generateTags,
+  method: "POST",
+  defaultMode: "suggest",
+  label: "tag suggestion",
   parseResponse: extractTags,
 };
 
