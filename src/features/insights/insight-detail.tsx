@@ -1,7 +1,8 @@
 import { useState, type CSSProperties } from "react";
 import dayjs from "dayjs";
-import { ChevronDown, CircleHelp, Sparkles, Undo2 } from "lucide-react";
+import { ChevronDown, CircleHelp, Undo2 } from "lucide-react";
 import useSWR from "swr";
+import aiFillIcon from "@/assets/icon/mingcute_ai-fill.svg";
 import endpoint from "@/api/endpoint";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,6 +19,7 @@ import {
 } from "@/components/ui/tooltip";
 import type { EnrichmentCategory } from "@/features/enrichment/enrichment-categories";
 import { EnrichmentFieldIcon } from "./enrichment-field-icon";
+import { getQuestionIdenticonUrl } from "@/features/explore/question-identicon";
 import { enrichmentFieldColor, getEnrichmentField } from "./enrichment-fields";
 import type {
   Insight,
@@ -132,7 +134,7 @@ function SourcesTable({
                   </button>
                 </TooltipTrigger>
                 <TooltipContent className="z-[120]">
-                  When this memory was first saved
+                  When this was saved or shared
                 </TooltipContent>
               </Tooltip>
             </span>
@@ -141,18 +143,21 @@ function SourcesTable({
             </span>
           </div>
           {sources.map((source) => (
-            <div key={source.id} className="insights-sources-row" role="row">
+            <div
+              // A chat appears once for each day that supports the insight.
+              key={`${source.id}-${source.created_at}`}
+              className="insights-sources-row"
+              role="row"
+            >
               <div className="flex min-w-0 items-center gap-3" role="cell">
-                {source.thumbnail ? (
-                  <img
-                    src={source.thumbnail}
-                    alt=""
-                    loading="lazy"
-                    className="insights-thumbnail object-cover"
-                  />
-                ) : (
-                  <span className="insights-thumbnail" aria-hidden />
-                )}
+                <img
+                  src={source.thumbnail || getQuestionIdenticonUrl(source.id)}
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                  referrerPolicy="no-referrer"
+                  className="insights-thumbnail object-cover"
+                />
                 <span className="truncate font-inter text-sm font-medium text-text-neutral-strong">
                   {source.title}
                 </span>
@@ -236,7 +241,12 @@ function DetailFrame({
         {action}
       </div>
       <div className="insights-note">
-        <Sparkles className="insights-note-icon size-6 shrink-0" aria-hidden />
+        <img
+          src={aiFillIcon}
+          alt=""
+          aria-hidden="true"
+          className="size-6 shrink-0 object-contain"
+        />
         <div className="min-w-0 font-inter text-sm text-text-neutral-strong">
           {note}
         </div>

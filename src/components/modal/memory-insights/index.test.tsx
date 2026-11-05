@@ -42,14 +42,16 @@ const spanningInsight = {
   title: "You protect your Sundays",
   body: "Rest with family returns across your stories.",
   categories: ["everyday_life", "relationships_people"],
-  source_count: 2,
+  source_count: 3,
+  status: "established",
 };
 const singleInsight = {
   id: "insight-2",
   title: "Your values keep coming up",
   body: "You often explore who you are.",
   categories: ["identity_self"],
-  source_count: 2,
+  source_count: 3,
+  status: "emerging",
 };
 
 const observation = (
@@ -358,6 +360,21 @@ it("shows honest empty states", async () => {
   expect(screen.getByText("Your insights are taking shape")).toBeVisible();
 });
 
+it("explains when the evidence was checked and nothing qualified", async () => {
+  const user = userEvent.setup();
+  setup({
+    insights: {
+      insights: [],
+      generated_at: "2026-11-05T00:00:00.000Z",
+      next_refresh_at: "2026-11-09T00:00:00.000Z",
+      generating: false,
+    },
+  });
+  await user.click(tab("Insights"));
+  expect(screen.getByText("Nothing stands out yet")).toBeVisible();
+  expect(screen.getByText(/It looks again around 9 Nov/)).toBeVisible();
+});
+
 it("tells the member while the first insights are being prepared", async () => {
   const user = userEvent.setup();
   setup({
@@ -369,7 +386,7 @@ it("tells the member while the first insights are being prepared", async () => {
     },
   });
   await user.click(tab("Insights"));
-  expect(screen.getByText("Connecting your memories…")).toBeVisible();
+  expect(screen.getByText("Looking across your memories…")).toBeVisible();
 });
 
 it("shows one icon for the strongest field, two lines of detail, and when the next batch arrives", async () => {
@@ -387,7 +404,7 @@ it("shows one icon for the strongest field, two lines of detail, and when the ne
     screen.getByText("Rest with family returns across your stories."),
   ).toHaveClass("line-clamp-2");
   expect(screen.queryByText("See related stories")).not.toBeInTheDocument();
-  expect(screen.getByText(/Fresh insights around 9 Nov/)).toBeVisible();
+  expect(screen.getByText(/Memento looks again around 9 Nov/)).toBeVisible();
 });
 
 it("opens insight details, sorts sources, and returns to the same tab", async () => {

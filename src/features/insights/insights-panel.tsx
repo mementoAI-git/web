@@ -35,9 +35,13 @@ export function InsightsPanel({
         Loading your insights…
       </div>
     );
-  if (!list?.insights.length)
+  if (!list?.insights.length) {
+    const checked = Boolean(list?.generated_at);
     return (
-      <div className="insights-empty" role={list?.generating ? "status" : undefined}>
+      <div
+        className="insights-empty"
+        role={list?.generating ? "status" : undefined}
+      >
         {list?.generating ? (
           <Spinner />
         ) : (
@@ -45,16 +49,21 @@ export function InsightsPanel({
         )}
         <p className="text-text-neutral-strong">
           {list?.generating
-            ? "Connecting your memories…"
-            : "Your insights are taking shape"}
+            ? "Looking across your memories…"
+            : checked
+              ? "Nothing stands out yet"
+              : "Your insights are taking shape"}
         </p>
         <p>
           {list?.generating
-            ? "Your first insights will appear here in a moment."
-            : "Save a few more memories and Memento will start finding connections between them."}
+            ? "This can take a moment."
+            : checked
+              ? `Memento shares a pattern once it shows up across several of your memories over time. It looks again around ${dayjs(list?.next_refresh_at).format("D MMM")}.`
+              : "Keep saving memories and reflecting. Memento shares a pattern once it shows up across several of them."}
         </p>
       </div>
     );
+  }
   if (!insights.length)
     return (
       <div className="insights-empty">
@@ -70,8 +79,8 @@ export function InsightsPanel({
       {list.next_refresh_at && (
         <p className="pt-2 text-center font-inter text-xs text-text-neutral-weaker">
           {list.generating
-            ? "Fresh insights are on the way."
-            : `Fresh insights around ${dayjs(list.next_refresh_at).format("D MMM")}, as Memento learns more connections.`}
+            ? "Looking for anything new."
+            : `Memento looks again around ${dayjs(list.next_refresh_at).format("D MMM")}.`}
         </p>
       )}
     </div>

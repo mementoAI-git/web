@@ -3,7 +3,6 @@
   --insights-card: var(--fill-neutral-weak);
   --insights-table-head: var(--fill-neutral-weak);
   --insights-note: color-mix(in srgb, #d99a1c 12%, transparent);
-  --insights-note-icon: #b97a0a;
   --enrichment-memories-experiences: #1f7fd1;
   --enrichment-heritage-roots: #3d8fc9;
   --enrichment-lessons-wisdom: #1f9e6e;
@@ -16,7 +15,6 @@
   --enrichment-identity-self: #c23aa0;
 }
 .dark {
-  --insights-note-icon: #f0b43c;
   --enrichment-memories-experiences: #2196f3;
   --enrichment-heritage-roots: #6dbcf5;
   --enrichment-lessons-wisdom: #6fdca6;
@@ -342,10 +340,6 @@
   border-radius: 10px;
   padding: 12px 14px;
   background: var(--insights-note);
-}
-.insights-note-icon {
-  color: var(--insights-note-icon);
-  fill: currentColor;
 }
 .insights-empty {
   display: flex;

@@ -7,6 +7,8 @@ export interface Insight {
   body: string;
   categories: EnrichmentCategory[];
   source_count: number;
+  /** Emerging until the evidence spans enough time to call it a pattern. */
+  status: "emerging" | "established";
 }
 
 /** Shape of GET /users/insights → data */
@@ -14,7 +16,7 @@ export interface InsightList {
   insights: Insight[];
   generated_at: string | null;
   next_refresh_at: string | null;
-  /** A new batch is being prepared, so clients should poll. */
+  /** The evidence is being re-evaluated, so clients should poll. */
   generating: boolean;
 }
 
