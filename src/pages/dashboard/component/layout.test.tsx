@@ -35,7 +35,7 @@ vi.mock("@/features/onboarding-groot", () => ({
 import DashboardLayout from "./layout";
 
 describe("DashboardLayout", () => {
-  it.each([["/people", true], ["/overview", false], ["/stories", false]])("uses a compact global rail only on %s", (route, compact) => {
+  it.each([["/chat/people", false], ["/overview", false], ["/stories", false]])("keeps the full sidebar on %s", (route, compact) => {
     renderWithProviders(<ChatSidebarProvider><DashboardLayout /></ChatSidebarProvider>, {route, auth: true});
     expect(screen.getByTestId("dashboard-sidebar")).toHaveAttribute("data-compact", String(compact));
   });

@@ -80,7 +80,7 @@ export default function DashboardLayout() {
             />
           )}
           <div
-            inert={isMobile ? !sidebarOpen : !isPeopleRoute && mainSidebarCollapsed}
+            inert={isMobile ? !sidebarOpen : mainSidebarCollapsed}
             className={cn(
               sidebarOpen
                 ? "translate-x-0"
@@ -88,12 +88,12 @@ export default function DashboardLayout() {
               "fixed md:relative inset-y-0 left-0 z-50 md:z-auto",
               "navigation-sidebar",
               "w-full shrink-0",
-              isPeopleRoute ? "md:w-[72px]" : "md:w-[280px]",
-              !isPeopleRoute && mainSidebarCollapsed &&
+              "md:w-[280px]",
+              mainSidebarCollapsed &&
                 "md:!w-0 md:!min-w-0 md:overflow-hidden md:opacity-0",
             )}
           >
-            <DashboardSideBar compact={isPeopleRoute && !isMobile} onCollapse={() => {
+            <DashboardSideBar compact={false} onCollapse={() => {
               restoreSidebarFocus.current = true;
               handleMainSidebarToggle();
             }} />
@@ -105,20 +105,19 @@ export default function DashboardLayout() {
                   <DashboardHeader
                     onMenuClick={() => setSidebarOpen(true)}
                     mobileSidebarOpen={sidebarOpen}
-                    mainSidebarCollapsed={isPeopleRoute ? false : mainSidebarCollapsed}
+                    mainSidebarCollapsed={mainSidebarCollapsed}
                     onMainSidebarToggle={handleMainSidebarToggle}
                   />
                 ) : null}
+                <div className={cn("shrink-0", !isVoiceChatRoute && "pt-[60px] sm:pt-0")}>
+                  <OnboardingNudgeBanner />
+                  <TrialBanner />
+                  <SecurityNudgeBanner />
+                </div>
                 <div
-                  className={cn(
-                    "flex flex-1 flex-col overflow-hidden md:flex-row",
-                    !isVoiceChatRoute && "pt-[60px] sm:pt-0",
-                  )}
+                  className="flex flex-1 flex-col overflow-hidden md:flex-row"
                 >
                   <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-                    <OnboardingNudgeBanner />
-                    <TrialBanner />
-                    <SecurityNudgeBanner />
                     <div
                       className={cn(
                         "hide-scrollbar h-full min-h-0 w-full flex-1",
