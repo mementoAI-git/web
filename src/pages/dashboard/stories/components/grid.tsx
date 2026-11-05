@@ -1,3 +1,4 @@
+import { storyDestination } from "@/lib/story-destination";
 import { Button } from "@/components/ui/button";
 import { DeletedMemoryStatus } from "./deleted-memory-status";
 import DOMPurify from "isomorphic-dompurify";
@@ -61,19 +62,6 @@ function getMasonryConfig(width: number) {
   return { columns: 1, gutter: 16 };
 }
 
-function getTopicColor(topic: string) {
-  let hash = 0;
-  for (let i = 0; i < topic.length; i++) {
-    hash = topic.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  const hue = Math.abs(hash) % 360;
-  return {
-    bg: `hsla(${hue}, 85%, 97%, 0.8)`,
-    border: `hsla(${hue}, 60%, 88%, 0.9)`,
-    text: `hsl(${hue}, 65%, 28%)`,
-  };
-}
-
 function getStoryCardTitle(memory: IMemory): string {
   if (memory.prompt_type && memory.prompt_text?.trim()) {
     return memory.prompt_text.trim();
@@ -97,12 +85,12 @@ function StoriesGridItem({
   const handleClick = useCallback(
     (e: React.MouseEvent) => {
       if (memory.status === "deleted") { e.preventDefault(); return; }
-      if (!isMobile) {
+      if (!isMobile && !memory.prompt_type) {
         e.preventDefault();
         open("view-memory", { memoryId: memory._id });
       }
     },
-    [isMobile, open, memory._id, memory.status],
+    [isMobile, open, memory._id, memory.status, memory.prompt_type],
   );
 
   const bannerMediaIndex = memory.attachments.findIndex(
@@ -208,8 +196,6 @@ function StoriesGridItem({
       );
     }
 
-    const hasTopics = Array.isArray(memory.topics) && memory.topics.length > 0;
-
     return (
       <div
         data-slot="story-text-card"
@@ -239,26 +225,7 @@ function StoriesGridItem({
           }}
         />
 
-        {hasTopics ? (
-          <div className="mt-0.5 flex flex-wrap gap-1">
-            {memory.topics?.map((topic) => {
-              const colors = getTopicColor(topic);
-              return (
-                <span
-                  key={topic}
-                  style={{
-                    backgroundColor: colors.bg,
-                    borderColor: colors.border,
-                    color: colors.text,
-                  }}
-                  className="inline-flex items-center rounded-full border px-2 py-0.5 font-inter text-[10px] font-medium transition-colors"
-                >
-                  #{topic}
-                </span>
-              );
-            })}
-          </div>
-        ) : null}
+
       </div>
     );
   };
@@ -272,7 +239,7 @@ function StoriesGridItem({
       )}
     >
       <Link
-        to={`/stories/${memory._id}`}
+        to={storyDestination(memory)}
         className="block rounded-[20px] outline-none"
         onClick={handleClick}
         aria-disabled={memory.status === "deleted" || undefined}

@@ -200,7 +200,7 @@ describe("StoriesGrid", () => {
     expect(menuTrigger.querySelector(".lucide-ellipsis")).toBeInTheDocument();
   });
 
-  it("shows text-only card body before tags without the AI summary", () => {
+  it("shows text-only card body without tags or the AI summary", () => {
     const textMemory: IMemory = {
       ...memory,
       summary: "An AI-generated summary that should stay out of the preview.",
@@ -215,15 +215,13 @@ describe("StoriesGrid", () => {
       auth: true,
     });
 
-    const body = screen.getByText("A memory preview");
-    const firstTag = screen.getByText("#Family");
+    expect(screen.getByText("A memory preview")).toBeInTheDocument();
+    expect(screen.queryByText("#Family")).not.toBeInTheDocument();
+    expect(screen.queryByText("#Tradition")).not.toBeInTheDocument();
 
     expect(
       screen.queryByText(/AI-generated summary that should stay out/),
     ).not.toBeInTheDocument();
-    expect(
-      body.compareDocumentPosition(firstTag) & Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
   });
 
   it("uses a 3:4 frame when the rendered body reaches five lines", () => {

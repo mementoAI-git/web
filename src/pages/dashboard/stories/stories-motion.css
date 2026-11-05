@@ -1,4 +1,4 @@
-/* Transitions.dev sliding tabs: fixed-size view pill and full-width filter marker. */
+/* Transitions.dev sliding marker for the grid/list view pill. */
 .stories-view-toggle {
   position: relative;
   isolation: isolate;
@@ -22,19 +22,6 @@
   background: transparent;
 }
 .stories-filter-tabs [data-slot="tabs-trigger"]::after { content: none; }
-.stories-filter-indicator {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: var(--active-tab-width);
-  height: 2px;
-  border-radius: 100px;
-  background: var(--text-neutral-strong);
-  pointer-events: none;
-  transform: translateX(var(--active-tab-left));
-  transition: transform 250ms cubic-bezier(0.22, 1, 0.36, 1),
-    width 250ms cubic-bezier(0.22, 1, 0.36, 1);
-}
 /* Reveal loaded results as a single surface; pagination and refresh keep DOM identity. */
 .stories-results-reveal.is-shown[data-loading="false"] {
   animation: stories-results-in 400ms ease-in-out;
@@ -51,7 +38,6 @@
 .stories-motion [role="button"] { transition: background-color 150ms ease-out; }
 @media (prefers-reduced-motion: reduce) {
   .stories-view-toggle::before,
-  .stories-filter-indicator,
   .stories-motion button,
   .stories-motion [role="button"] { transition: none !important; }
   .stories-motion button:active { transform: none !important; }
