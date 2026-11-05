@@ -42,12 +42,14 @@ export default function AuthCheck({ children }: PropsWithChildren) {
 
   const profile = useSWR(hydrated && auth?.access_token && validatedToken === auth.access_token ? endpoint.profile : null, fetcher<IUser>, {
     shouldRetryOnError: shouldRetryApiError,
-    onSuccess(data) {
-      if (data?.data && setUser) {
-        setUser(mergeProfileServerUpdate(userRef.current, data.data));
-      }
-    },
   });
+
+  // Cached and deduplicated SWR results do not necessarily fire onSuccess for
+  // this subscriber. Hydrate from the result itself after session validation.
+  useEffect(() => {
+    if (validatedToken !== auth?.access_token || !profile.data?.data) return;
+    setUser?.(mergeProfileServerUpdate(userRef.current, profile.data.data));
+  }, [profile.data, validatedToken, auth?.access_token, setUser]);
 
   const retryProfile = useRequestRecovery("session-profile", profile.error, profile.mutate, "Couldn’t load your profile. Please retry.");
 
