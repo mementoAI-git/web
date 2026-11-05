@@ -1,44 +1,38 @@
-import { useRequestRecovery } from "@/hooks/use-request-recovery";
-import { MemoryStatistics } from "@/features/insights/memory-statistics";
-import RecentActivitiesSection from "@/pages/dashboard/overview/sections/recent-activities-section";
-import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { useRef, useState } from "react";
+import { Archive, MoreHorizontal, Search } from "lucide-react";
 import useSWR from "swr";
+import { toast } from "sonner";
+import endpoint from "@/api/endpoint";
 import { entityResponseFetcher } from "@/api/domain-fetchers";
-import {
-  ChevronDown,
-  Heart,
-  ListChecks,
-  Sparkles,
-  Target,
-  UserRound,
-} from "lucide-react";
+import { useApi } from "@/hooks/use-api";
 import { useModal } from "@/hooks/use-modal";
 import { useStore } from "@/hooks/use-store";
-import { useApi } from "@/hooks/use-api";
-import { useEnrichmentStats } from "@/features/enrichment/use-enrichment-stats";
-import {
-  AtAGlanceCard,
-  useAtAGlanceCards,
-} from "@/features/enrichment/at-a-glance-cards";
-import {
-  NarrativeInsightsBlock,
-  useNarrativeInsights,
-} from "@/features/enrichment/narrative-insights";
+import { useRequestRecovery } from "@/hooks/use-request-recovery";
+import type { IPersona, IUser } from "@/utility/interface";
+import { DashboardHeader } from "@/pages/dashboard/component/dashboard-header";
+import { MemoryStatistics } from "@/features/insights/memory-statistics";
 import { InsightsOverlayNavigation } from "@/features/insights/insights-overlay-navigation";
 import { normalizeObservationForDisplay } from "@/features/insights/observation-display";
-import { TimesIcon, PlusIcon } from "@/components/icons";
-import endpoint from "@/api/endpoint";
-import type { IBeneficiary, IPersona, IUser } from "@/utility/interface";
-import { UserAvatar } from "@/components/user-avatar";
-import { Badge } from "@/components/ui/badge";
+import { useEnrichmentStats } from "@/features/enrichment/use-enrichment-stats";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Progress } from "@/components/ui/progress";
-import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
 import { Spinner } from "@/components/ui/spinner";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Progress } from "@/components/ui/progress";
+import { cn } from "@/lib/utils";
+import "./insights.css";
 
 /** Fields for category lists (persona + legacy context) */
 type MemoryInsightSource = {
@@ -88,679 +82,309 @@ function userContextToInsightSource(
   };
 }
 
-function formatSummaryGeneratedAt(
-  iso: string | null | undefined,
-): string | null {
-  if (!iso) return null;
-  const t = Date.parse(iso);
-  if (Number.isNaN(t)) return null;
-  return new Date(t).toLocaleString(undefined, {
-    dateStyle: "medium",
-    timeStyle: "short",
-  });
-}
-
-const MEMORY_INSIGHTS_HERO_SNOOZE_UNTIL_KEY =
-  "memento:memory-insights-hero-snooze-until";
-
-function readHeroSnoozeUntilMs(): number | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const raw = localStorage.getItem(MEMORY_INSIGHTS_HERO_SNOOZE_UNTIL_KEY);
-    if (!raw) return null;
-    const t = Date.parse(raw);
-    if (Number.isNaN(t) || t <= Date.now()) {
-      localStorage.removeItem(MEMORY_INSIGHTS_HERO_SNOOZE_UNTIL_KEY);
-      return null;
-    }
-    return t;
-  } catch {
-    return null;
-  }
-}
-
-function persistHeroSnoozeDays(days: number): number {
-  const until = Date.now() + days * 24 * 60 * 60 * 1000;
-  try {
-    localStorage.setItem(
-      MEMORY_INSIGHTS_HERO_SNOOZE_UNTIL_KEY,
-      new Date(until).toISOString(),
-    );
-  } catch {
-    /* ignore */
-  }
-  return until;
-}
-
-function clearHeroSnooze(): void {
-  try {
-    localStorage.removeItem(MEMORY_INSIGHTS_HERO_SNOOZE_UNTIL_KEY);
-  } catch {
-    /* ignore */
-  }
-}
-
-const DEFAULT_TAB = "all";
-
-const OBSERVATION_TABS = [
-  { label: "All", key: "all" },
-  { label: "Preferences", key: "key_preferences" },
-  { label: "Notes", key: "important_notes" },
-  { label: "Goals", key: "goals_and_aspirations" },
-  { label: "Emotions", key: "emotional_state_trends" },
-];
-
-const INSIGHT_ICONS: Record<string, typeof Target> = {
-  important_notes: ListChecks,
-  key_preferences: UserRound,
-  goals_and_aspirations: Target,
-  emotional_state_trends: Heart,
-};
+const categories = [
+  {
+    key: "important_notes",
+    label: "Observation",
+    color: "text-icon-success-strong",
+  },
+  {
+    key: "key_preferences",
+    label: "Preference",
+    color: "text-icon-warning-strong",
+  },
+  {
+    key: "goals_and_aspirations",
+    label: "Goal",
+    color: "text-icon-brand-strong",
+  },
+  {
+    key: "emotional_state_trends",
+    label: "Emotion",
+    color: "text-icon-info-strong",
+  },
+] as const;
 
 export default function MemoryInsightsModal() {
-  const { close, open } = useModal();
+  const { close } = useModal();
+  const returnFocus = useRef(
+    typeof document !== "undefined" &&
+      document.activeElement instanceof HTMLElement
+      ? document.activeElement
+      : null,
+  );
   const { user } = useStore();
-  const [activeCategory, setActiveCategory] = useState(DEFAULT_TAB);
-  const [observationsOpen, setObservationsOpen] = useState(false);
-
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const [expanded, setExpanded] = useState<string | null>(null);
   const {
-    stats: enrichmentStats,
-    isLoading: enrichmentLoading,
-    nudgeQuestion,
-  } = useEnrichmentStats();
-  const atAGlance = useAtAGlanceCards();
-  const narrativeInsights = useNarrativeInsights();
-
-  const { data: personaRes } = useApi<IPersona | null>(endpoint.persona);
+    data: personaRes,
+    isLoading,
+    error,
+    mutate,
+  } = useApi<IPersona | null>(endpoint.persona);
+  const { data: contextData } = useSWR(
+    endpoint.userContext,
+    entityResponseFetcher,
+  );
   const {
     data: summaryRes,
     isLoading: summaryLoading,
     error: summaryError,
     mutate: refreshSummary,
   } = useApi<MemoryInsightsSummaryDto>(endpoint.personaMemoryInsightsSummary);
-  const retrySummary = useRequestRecovery("insights-summary", summaryError, refreshSummary, "Couldn’t load your summary. Please retry.");
-  const { data: statsResponse, error: statsError, mutate: refreshStats } = useSWR(endpoint.userStats);
-  const retryStats = useRequestRecovery("insights-stats", statsError, refreshStats, "Couldn’t load your insight progress. Please retry.");
-  const { data: beneficiariesData, error: beneficiariesError, isLoading: beneficiariesLoading, mutate: refreshBeneficiaries } = useSWR(
-    `${endpoint.beneficiaries}?page=1`,
+  const retry = useRequestRecovery(
+    "insights-persona",
+    error,
+    mutate,
+    "Couldn’t load your insights. Please retry.",
   );
-  const retryBeneficiaries = useRequestRecovery("insights-beneficiaries", beneficiariesError, refreshBeneficiaries, "Couldn’t load your beneficiaries. Please retry.");
-  const { data: contextData } = useSWR(endpoint.userContext, entityResponseFetcher);
-  const { data: profileData } = useSWR(endpoint.profile);
+  const retrySummary = useRequestRecovery(
+    "insights-summary",
+    summaryError,
+    refreshSummary,
+    "Couldn’t load your summary. Please retry.",
+  );
+  const { stats, isLoading: enrichmentLoading } = useEnrichmentStats();
+  const source =
+    personaRes?.data != null
+      ? personaToInsightSource(personaRes.data)
+      : userContextToInsightSource(
+          (contextData?.data ?? user?.context) as IUser["context"] | undefined,
+        );
+  const insights = categories.flatMap((category) =>
+    (source[category.key] ?? []).map((text, index) => ({
+      ...category,
+      id: `${category.key}-${index}`,
+      text: normalizeObservationForDisplay(text),
+    })),
+  );
+  const filtered = insights.filter((item) =>
+    item.text.toLowerCase().includes(query.trim().toLowerCase()),
+  );
+  const summary = summaryRes?.data?.summary?.trim() || source.self_description;
+  const score = Math.min(
+    100,
+    Math.max(0, Number(stats?.enrichment_score) || 0),
+  );
 
-  const primaryConversationId =
-    (
-      profileData?.data as
-        | { primary_conversation_id?: string | null }
-        | undefined
-    )?.primary_conversation_id ?? undefined;
-
-  const insightSource = useMemo((): MemoryInsightSource => {
-    const personaPayload = personaRes?.data;
-    if (personaPayload != null) {
-      return personaToInsightSource(personaPayload);
-    }
-    const fromContext = contextData?.data ?? user?.context;
-    return userContextToInsightSource(
-      fromContext as Record<string, unknown> | undefined,
+  function renderInsights(preferencesOnly = false) {
+    const items = preferencesOnly
+      ? filtered.filter((item) => item.key === "key_preferences")
+      : filtered;
+    if (error)
+      return (
+        <div className="insights-empty">
+          <p>Couldn’t load your insights.</p>
+          <Button variant="outline" onClick={retry}>
+            Retry insights
+          </Button>
+        </div>
+      );
+    if (isLoading && !insights.length)
+      return (
+        <div className="insights-empty" role="status">
+          <Spinner />
+          Loading your insights…
+        </div>
+      );
+    if (!items.length)
+      return (
+        <div className="insights-empty">
+          <Archive className="size-8 text-icon-neutral-weak" />
+          <p className="text-text-neutral-strong">
+            {query ? "No matching insights" : "Your insights are taking shape"}
+          </p>
+          <p>
+            {query
+              ? "Try another word or clear your search."
+              : "Keep saving memories and reflecting. Your patterns and preferences will appear here."}
+          </p>
+          {query && (
+            <Button variant="ghost" onClick={() => setQuery("")}>
+              Clear search
+            </Button>
+          )}
+        </div>
+      );
+    return (
+      <div className="insights-collection">
+        {items.map((item) => (
+          <article
+            key={item.id}
+            className={cn(
+              "insights-row",
+              expanded === item.id && "insights-row-expanded",
+            )}
+          >
+            <Archive
+              aria-hidden="true"
+              className={cn("mt-1 size-7 shrink-0", item.color)}
+              strokeWidth={1.8}
+            />
+            <div className="min-w-0 flex-1">
+              <h3
+                className={cn(
+                  "font-inter text-base font-medium text-text-neutral-strong",
+                  expanded !== item.id && "truncate",
+                )}
+              >
+                {item.text}
+              </h3>
+              <p className="mt-2 truncate font-inter text-sm text-text-neutral-weak">
+                {item.label} · From your memories and reflections
+              </p>
+            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="shrink-0 rounded-full"
+                  aria-label={`Options for ${item.text}`}
+                >
+                  <MoreHorizontal />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="z-[120]">
+                <DropdownMenuGroup>
+                  <DropdownMenuItem
+                    onSelect={() =>
+                      setExpanded(expanded === item.id ? null : item.id)
+                    }
+                  >
+                    {expanded === item.id ? "Collapse insight" : "Read insight"}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onSelect={async () => {
+                      try {
+                        await navigator.clipboard.writeText(item.text);
+                        toast.success("Insight copied");
+                      } catch {
+                        toast.error("Couldn’t copy this insight");
+                      }
+                    }}
+                  >
+                    Copy insight
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </article>
+        ))}
+      </div>
     );
-  }, [personaRes?.data, contextData?.data, user?.context]);
+  }
 
-  const beneficiaries: IBeneficiary[] = beneficiariesData?.data?.docs || [];
-  const aiSummary = summaryRes?.data?.summary?.trim() ?? null;
-  const summaryUpdatedLabel = formatSummaryGeneratedAt(
-    summaryRes?.data?.generated_at,
+  const about = (
+    <section className="insights-detail">
+      <h3 className="font-garamond text-3xl text-text-neutral-strong">
+        About me
+      </h3>
+      {summaryError ? (
+        <Button variant="outline" onClick={retrySummary}>
+          Retry summary
+        </Button>
+      ) : summaryLoading ? (
+        <p role="status">Gathering your story…</p>
+      ) : (
+        <p className="whitespace-pre-line leading-relaxed text-text-neutral-weak">
+          {summary ||
+            "As you save memories and reflect, a portrait of who you are will take shape here."}
+        </p>
+      )}
+    </section>
   );
-
-  const enrichmentScore = Math.round(
-    Number(enrichmentStats?.enrichment_score) || 0,
+  const enrichment = (
+    <section className="insights-detail">
+      <h3 className="font-garamond text-3xl text-text-neutral-strong">
+        Your enrichment score
+      </h3>
+      {enrichmentLoading ? (
+        <p role="status">Loading your progress…</p>
+      ) : (
+        <>
+          <p className="text-3xl text-text-neutral-strong">{score}%</p>
+          <Progress value={score} aria-label="Enrichment score" />
+          <p className="text-text-neutral-weak">
+            A reflection of the breadth of your memories. Keep exploring the
+            moments, people, and experiences that make you who you are.
+          </p>
+        </>
+      )}
+    </section>
   );
-  const jumpPills = enrichmentStats?.jump_pills ?? [];
-  const spotlight = enrichmentStats?.spotlight ?? null;
-  const narrativeLoading = summaryLoading && !aiSummary;
-  const enrichmentReady = !enrichmentLoading && Boolean(statsResponse) && !statsError;
-
-  const [heroSnoozeUntil, setHeroSnoozeUntil] = useState<number | null>(() =>
-    readHeroSnoozeUntilMs(),
-  );
-  const heroSnoozed = heroSnoozeUntil != null && heroSnoozeUntil > Date.now();
-  const heroSnoozeDateLabel =
-    heroSnoozeUntil != null
-      ? new Date(heroSnoozeUntil).toLocaleDateString(undefined, {
-          month: "short",
-          day: "numeric",
-          year: "numeric",
-        })
-      : "";
-
-  const hostChatWithStarterHref = (starter: string) => {
-    const q = new URLSearchParams({ starter }).toString();
-    if (primaryConversationId) return `/chat/${primaryConversationId}?${q}`;
-    return `/chat?${q}`;
-  };
-
-  const openHostChatHref = primaryConversationId
-    ? `/chat/${primaryConversationId}`
-    : "/chat";
-  const allInsights = [
-    ...(insightSource.important_notes || []).map((text: string) => ({
-      text,
-      category: "important_notes",
-    })),
-    ...(insightSource.key_preferences || []).map((text: string) => ({
-      text,
-      category: "key_preferences",
-    })),
-    ...(insightSource.goals_and_aspirations || []).map((text: string) => ({
-      text,
-      category: "goals_and_aspirations",
-    })),
-    ...(insightSource.emotional_state_trends || []).map((text: string) => ({
-      text,
-      category: "emotional_state_trends",
-    })),
-  ];
-
-  const filtered =
-    activeCategory === "all"
-      ? allInsights
-      : allInsights.filter((i) => i.category === activeCategory);
 
   return (
-    <div data-slot="memory-insights-panel" className="flex max-h-[88vh] w-full max-w-3xl flex-col overflow-hidden rounded-[var(--radius-modal)] bg-bg-neutral-solid shadow-xl">
-      <div className="flex items-start justify-between gap-3 border-b border-v3-stroke-weak px-6 py-5">
-        <div className="min-w-0">
-          <h2 className="font-garamond text-2xl font-medium text-v3-text-strong">
-            Memory insights
-          </h2>
-          <p className="mt-1 font-inter text-sm text-v3-text-weak text-pretty">
-            A personal snapshot—not a scorecard.
-          </p>
-        </div>
-        <Button
-          onClick={() => close()}
-          aria-label="Close memory insights"
-          variant="ghost"
-          size="icon-xs"
-          className="size-8 shrink-0 rounded-full bg-v3-fill-weak text-v3-icon-neutral transition-transform duration-150 ease-out hover:bg-v3-fill-weak/80 active:scale-[0.97]"
-        >
-          <TimesIcon width={10} height={10} className="text-v3-icon-neutral" />
-        </Button>
-      </div>
-
-      <div className="hide-scrollbar min-h-0 flex-1 overflow-y-auto p-5">
-        <InsightsOverlayNavigation
-          content={{
-            general: (
-              <div className="space-y-6">
-                <MemoryStatistics />
-                {heroSnoozed ? (
-                  <div className="flex flex-col gap-3 rounded-2xl border border-v3-stroke-weak bg-v3-fill-weaker/50 p-4 sm:flex-row sm:items-center sm:justify-between">
-                    <p className="font-inter text-sm leading-relaxed text-v3-text-weak text-pretty">
-                      Snapshot hidden until {heroSnoozeDateLabel}. Insights and
-                      At a glance below are unchanged.
-                    </p>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="shrink-0 rounded-xl border-v3-stroke-weak font-inter text-xs font-semibold"
-                      onClick={() => {
-                        clearHeroSnooze();
-                        setHeroSnoozeUntil(null);
-                      }}
-                    >
-                      Show snapshot
-                    </Button>
-                  </div>
-                ) : (
-                  <Card className="overflow-hidden rounded-2xl border border-v3-stroke-weak bg-v3-fill-weaker/60 shadow-none">
-                    <div className="space-y-4 p-5">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <Badge
-                          variant="outline"
-                          className="border-v3-stroke-weak bg-bg-neutral/80 font-inter text-[10px] font-semibold uppercase tracking-widest text-v3-text-weak"
-                        >
-                          Snapshot
-                        </Badge>
-                        {narrativeLoading ? (
-                          <span className="inline-flex items-center gap-2 font-inter text-sm text-v3-text-weak">
-                            <Spinner className="size-4 text-v3-icon-neutral" />
-                            Crafting your summary…
-                          </span>
-                        ) : null}
-                      </div>
-
-                      {spotlight ? (
-                        <div className="space-y-3 rounded-xl border border-v3-stroke-weak bg-bg-neutral/90 p-4">
-                          <div className="flex flex-wrap items-center justify-between gap-2">
-                            <p className="font-inter text-xs font-medium text-v3-text-weak">
-                              A thread from your Memento
-                            </p>
-                            <Badge
-                              variant="outline"
-                              className="shrink-0 border-v3-stroke-weak bg-v3-fill-weaker font-inter text-[10px] font-medium uppercase tracking-wide text-v3-text-weak"
-                            >
-                              {spotlight.source === "conversation"
-                                ? "From conversation"
-                                : "Your story"}
-                            </Badge>
-                          </div>
-                          {spotlight.title ? (
-                            <p className="font-garamond text-lg font-medium leading-snug text-v3-text-strong text-pretty">
-                              {spotlight.title}
-                            </p>
-                          ) : null}
-                          <p className="font-inter text-sm leading-relaxed text-v3-text-strong text-pretty">
-                            {spotlight.excerpt}
-                          </p>
-                          <div className="flex flex-wrap gap-2 pt-1">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="rounded-xl border-v3-stroke-weak font-inter text-xs font-semibold transition-transform duration-150 ease-out active:scale-[0.98]"
-                              asChild
-                            >
-                              <Link
-                                to={
-                                  spotlight.source === "conversation"
-                                    ? `/chat/${spotlight.memory_id}`
-                                    : `/stories/${spotlight.memory_id}`
-                                }
-                                onClick={() => close()}
-                              >
-                                Open this memory
-                              </Link>
-                            </Button>
-                          </div>
-                        </div>
-                      ) : null}
-
-                      {summaryError ? (
-                        <Button variant="outline" onClick={retrySummary}>Retry summary</Button>
-                      ) : null}
-
-                      {!summaryError && aiSummary ? (
-                        <div className="font-inter text-sm leading-relaxed text-v3-text-strong">
-                          {aiSummary.split("\n\n").map((block, i) => (
-                            <p key={i} className="m-0 mb-3 last:mb-0">
-                              {block}
-                            </p>
-                          ))}
-                          {summaryUpdatedLabel ? (
-                            <p className="mt-1 font-inter text-xs text-v3-text-weaker">
-                              Updated {summaryUpdatedLabel}
-                            </p>
-                          ) : null}
-                        </div>
-                      ) : null}
-
-                      {!summaryError && !narrativeLoading && !aiSummary ? (
-                        <div className="flex flex-col items-center rounded-xl border border-dashed border-v3-stroke-weak bg-bg-neutral/50 py-10 text-center">
-                          <div className="mb-3 flex size-12 items-center justify-center rounded-full bg-v3-fill-weak">
-                            <Sparkles className="size-5 text-v3-icon-neutral" />
-                          </div>
-                          <p className="font-inter text-sm font-medium text-v3-text-strong">
-                            Your summary is being built
-                          </p>
-                          <p className="mt-1 max-w-[260px] font-inter text-xs text-v3-text-weak text-pretty">
-                            Add memories and chat so we can reflect who you are
-                            in your own words.
-                          </p>
-                        </div>
-                      ) : null}
-
-                      {enrichmentReady && nudgeQuestion ? (
-                        <>
-                          <Separator className="bg-v3-stroke-weak" />
-                          <div className="space-y-2">
-                            <p className="font-inter text-xs font-medium text-v3-text-weak">
-                              Something to explore
-                            </p>
-                            <p className="font-inter text-[15px] leading-snug text-v3-text-strong text-pretty">
-                              {nudgeQuestion}
-                            </p>
-                          </div>
-                        </>
-                      ) : null}
-
-                      {enrichmentReady && jumpPills.length > 0 ? (
-                        <div className="flex flex-col gap-2">
-                          <p className="font-inter text-xs font-medium text-v3-text-weak">
-                            Try in host chat
-                          </p>
-                          <div className="flex flex-wrap gap-2">
-                            {jumpPills.slice(0, 3).map((pill) => (
-                              <Button
-                                key={pill.category_key}
-                                variant="outline"
-                                size="sm"
-                                className="h-auto max-w-full rounded-xl border-v3-stroke-weak bg-bg-neutral/90 py-2 font-inter text-xs font-medium text-v3-text-strong transition-transform duration-150 ease-out hover:bg-v3-fill-weaker active:scale-[0.98]"
-                                asChild
-                              >
-                                <Link
-                                  to={hostChatWithStarterHref(pill.starter)}
-                                  onClick={() => close()}
-                                  className="inline-flex max-w-full"
-                                >
-                                  <span className="line-clamp-2 text-left">
-                                    {pill.starter}
-                                  </span>
-                                </Link>
-                              </Button>
-                            ))}
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="font-inter text-xs font-semibold text-v3-text-strong underline-offset-2 hover:underline"
-                              asChild
-                            >
-                              <Link
-                                to={openHostChatHref}
-                                onClick={() => close()}
-                              >
-                                Open host chat
-                              </Link>
-                            </Button>
-                          </div>
-                        </div>
-                      ) : null}
-
-                      {statsError && <Button variant="outline" onClick={retryStats}>Retry progress</Button>}
-                      {enrichmentReady ? (
-                        <div className="space-y-2 pt-1">
-                          <div className="flex items-center justify-between gap-3">
-                            <span className="font-inter text-[11px] font-medium uppercase tracking-widest text-v3-text-weaker">
-                              Breadth
-                            </span>
-                            <span className="font-inter text-xs tabular-nums text-v3-text-weak">
-                              About {enrichmentScore}%
-                            </span>
-                          </div>
-                          <Progress
-                            value={Math.min(100, Math.max(0, enrichmentScore))}
-                            className="h-1.5 bg-v3-fill-weaker [&_[data-slot=progress-indicator]]:bg-v3-brand-strong"
-                          />
-                          <p className="font-inter text-[11px] leading-relaxed text-v3-text-weaker text-pretty">
-                            This number is a gentle guide—not a grade.
-                          </p>
-                        </div>
-                      ) : null}
-                    </div>
-
-                    <div className="flex flex-wrap items-center justify-end gap-2 border-t border-v3-stroke-weak/80 bg-bg-neutral/40 px-5 py-3">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="font-inter text-xs font-medium text-v3-text-weak hover:text-v3-text-strong"
-                        onClick={() =>
-                          setHeroSnoozeUntil(persistHeroSnoozeDays(7))
-                        }
-                      >
-                        Hide snapshot for a week
-                      </Button>
-                    </div>
-                  </Card>
-                )}
-
-                <section
-                  aria-labelledby="memory-insights-narrative-heading"
-                  className="space-y-3"
-                >
-                  <p
-                    id="memory-insights-narrative-heading"
-                    className="font-inter text-[11px] font-semibold uppercase tracking-widest text-v3-text-weaker"
-                  >
-                    Insights
-                  </p>
-                  <NarrativeInsightsBlock insights={narrativeInsights} />
-                </section>
-
-                <section
-                  aria-labelledby="memory-insights-glance-heading"
-                  className="space-y-3"
-                >
-                  <p
-                    id="memory-insights-glance-heading"
-                    className="font-inter text-[11px] font-semibold uppercase tracking-widest text-v3-text-weaker"
-                  >
-                    At a glance
-                  </p>
-                  <p className="font-inter text-xs text-v3-text-weak text-pretty">
-                    Quick numbers—the stories and invitations above carry the
-                    human thread.
-                  </p>
-                  <div className="hide-scrollbar flex gap-3 overflow-x-auto pb-1">
-                    {atAGlance.map((card, i) => (
-                      <AtAGlanceCard key={i} {...card} />
-                    ))}
-                  </div>
-                </section>
-
-                {/* Beneficiaries */}
-                <section
-                  aria-labelledby="memory-insights-beneficiaries-label"
-                  className="space-y-3"
-                >
-                  {beneficiaries.length > 0 ? (
-                    <p className="font-inter text-xs leading-relaxed text-v3-text-weak text-pretty">
-                      You&apos;re shaping this for the people who matter to
-                      you—take your time.
-                    </p>
-                  ) : null}
-                  <Label
-                    id="memory-insights-beneficiaries-label"
-                    className="font-inter text-[11px] font-semibold uppercase tracking-widest text-v3-text-weak"
-                  >
-                    Beneficiaries
-                  </Label>
-                  {beneficiariesError ? <Button variant="outline" onClick={retryBeneficiaries}>Retry beneficiaries</Button> : beneficiariesLoading ? <p role="status">Loading beneficiaries…</p> : beneficiaries.length === 0 ? (
-                    <div className="flex items-center gap-4">
-                      <Button
-                        onClick={() => open("add-beneficiary")}
-                        variant="outline"
-                        size="icon"
-                        className="size-12 shrink-0 rounded-full border-2 border-dashed border-v3-stroke-weak transition-transform duration-150 ease-out hover:border-v3-brand-strong hover:bg-v3-brand-strong/10 active:scale-[0.97]"
-                      >
-                        <PlusIcon className="size-4 text-v3-icon-neutral" />
-                      </Button>
-                      <div>
-                        <p className="font-inter text-sm font-medium text-v3-text-strong">
-                          No beneficiaries yet
-                        </p>
-                        <p className="mt-0.5 font-inter text-xs text-v3-text-weak">
-                          Add people who can access your Memento.
-                        </p>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="flex flex-wrap items-start gap-4">
-                      {beneficiaries.slice(0, 5).map((b) => (
-                        <div
-                          key={b._id}
-                          className="flex w-14 flex-col items-center gap-1.5"
-                        >
-                          <UserAvatar src={b.user?.picture_url} name={b.name} alt={b.name} size="lg" className="size-12 bg-v3-fill-weak" />
-                          <span className="w-full truncate text-center font-inter text-xs font-medium leading-tight text-v3-text-strong">
-                            {b.name?.split(" ")[0]}
-                          </span>
-                          <span className="w-full text-center font-inter text-[10px] capitalize leading-tight text-v3-text-weak">
-                            {b.relationship}
-                          </span>
-                        </div>
-                      ))}
-
-                      <div className="flex w-14 flex-col items-center gap-1.5">
-                        <Button
-                          onClick={() => open("add-beneficiary")}
-                          variant="outline"
-                          size="icon"
-                          className="size-12 rounded-full border-2 border-dashed border-v3-stroke-weak transition-transform duration-150 ease-out hover:border-v3-brand-strong hover:bg-v3-brand-strong/10 active:scale-[0.97]"
-                        >
-                          <PlusIcon className="size-4 text-v3-icon-neutral" />
-                        </Button>
-                        <span className="text-center font-inter text-xs text-v3-text-weak">
-                          Add
-                        </span>
-                      </div>
-                    </div>
-                  )}
-                </section>
-
-                <Separator className="bg-v3-stroke-weak" />
-
-                {/* Power-user escape hatch */}
-                <details
-                  className="group rounded-2xl border border-v3-stroke-weak bg-bg-neutral transition-[box-shadow] duration-200 ease-out open:shadow-sm"
-                  onToggle={(e) =>
-                    setObservationsOpen((e.target as HTMLDetailsElement).open)
-                  }
-                >
-                  <summary
-                    data-testid="memory-insights-observations-toggle"
-                    className="flex cursor-pointer list-none items-center justify-between gap-3 rounded-2xl px-4 py-3 font-inter text-sm font-semibold text-v3-text-strong outline-none transition-colors duration-150 ease-out hover:bg-v3-fill-weaker [&::-webkit-details-marker]:hidden"
-                  >
-                    <span>All observations</span>
-                    <ChevronDown className="size-4 shrink-0 text-v3-icon-neutral transition-transform duration-200 ease-out group-open:rotate-180" />
-                  </summary>
-
-                  {observationsOpen ? (
-                    <div className="border-t border-v3-stroke-weak px-3 pb-4 pt-2">
-                      <p className="mb-3 px-1 font-inter text-xs leading-relaxed text-v3-text-weak text-pretty">
-                        These lines are raw building blocks—edit your story
-                        anytime so it sounds like you, not a report about you.
-                      </p>
-                      <Tabs
-                        value={activeCategory}
-                        onValueChange={setActiveCategory}
-                        className="w-full"
-                      >
-                        <div className="relative">
-                          <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-3 bg-gradient-to-r from-bg-neutral to-transparent" />
-                          <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-3 bg-gradient-to-l from-bg-neutral to-transparent" />
-                          <TabsList className="h-auto w-full justify-start gap-1 overflow-x-auto rounded-xl bg-v3-fill-weaker p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                            {OBSERVATION_TABS.map((cat) => (
-                              <TabsTrigger
-                                key={cat.key}
-                                value={cat.key}
-                                className="shrink-0 whitespace-nowrap rounded-lg px-3 py-1.5 font-inter text-xs font-medium text-v3-text-weak data-active:bg-bg-neutral data-active:text-v3-text-strong data-active:shadow-sm"
-                              >
-                                {cat.label}
-                              </TabsTrigger>
-                            ))}
-                          </TabsList>
-                        </div>
-                      </Tabs>
-
-                      <div className="mt-4 px-1">
-                        <p className="mb-3 font-inter text-[11px] font-semibold uppercase tracking-widest text-v3-text-weak">
-                          {
-                            OBSERVATION_TABS.find(
-                              (c) => c.key === activeCategory,
-                            )?.label
-                          }
-                        </p>
-
-                        {filtered.length === 0 ? (
-                          <div className="flex flex-col items-center justify-center py-12 text-center">
-                            <div className="mb-3 flex size-12 items-center justify-center rounded-full bg-v3-fill-weak">
-                              <Sparkles className="size-5 text-v3-icon-neutral" />
-                            </div>
-                            <p className="font-inter text-sm font-medium text-v3-text-strong">
-                              Nothing here yet
-                            </p>
-                            <p className="mt-1 max-w-[220px] font-inter text-xs text-v3-text-weak">
-                              As you chat and save memories, this list becomes a
-                              scrapbook—not a verdict.
-                            </p>
-                          </div>
-                        ) : (
-                          <div className="space-y-2">
-                            {filtered.map((insight, i) => {
-                              const InsightIcon =
-                                INSIGHT_ICONS[insight.category] ?? Sparkles;
-                              return (
-                                <Card
-                                  key={i}
-                                  size="sm"
-                                  className="rounded-xl border border-v3-stroke-weak bg-v3-fill-weaker/50 px-3.5 py-3 transition-colors duration-150 ease-out hover:border-v3-stroke-strong"
-                                >
-                                  <div className="flex items-start gap-2.5">
-                                    <div className="mt-0.5 rounded-md bg-bg-neutral/90 p-1.5">
-                                      <InsightIcon className="size-3.5 text-v3-icon-neutral" />
-                                    </div>
-                                    <p className="font-inter text-sm leading-relaxed text-v3-text-strong">
-                                      {normalizeObservationForDisplay(
-                                        insight.text,
-                                      )}
-                                    </p>
-                                  </div>
-                                </Card>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ) : null}
-                </details>
-                <RecentActivitiesSection onNavigate={() => close()} />
-              </div>
+    <Dialog
+      open
+      onOpenChange={(next) => {
+        if (!next) close("memory-insights");
+      }}
+    >
+      <DialogContent
+        showCloseButton={false}
+        onCloseAutoFocus={(event) => {
+          event.preventDefault();
+          if (returnFocus.current?.isConnected) returnFocus.current.focus();
+        }}
+        className="insights-overlay"
+        overlayClassName="z-[100] bg-bg-neutral-solid"
+      >
+        <DashboardHeader
+          overlay={{
+            title: (
+              <DialogTitle className="font-garamond text-3xl font-medium sm:text-4xl">
+                My <em>insights</em>
+              </DialogTitle>
             ),
-            observations: (
-              <section
-                aria-labelledby="insights-observations-heading"
-                className="space-y-2"
-              >
-                <h3
-                  id="insights-observations-heading"
-                  className="font-garamond text-xl font-medium text-v3-text-strong"
-                >
-                  Observations
-                </h3>
-                <p className="font-inter text-sm leading-relaxed text-v3-text-weak text-pretty">
-                  Your saved observations will appear here as the account
-                  reservoir is connected.
-                </p>
-              </section>
-            ),
-            explore_next: (
-              <section
-                aria-labelledby="insights-explore-next-heading"
-                className="space-y-2"
-              >
-                <h3
-                  id="insights-explore-next-heading"
-                  className="font-garamond text-xl font-medium text-v3-text-strong"
-                >
-                  Explore next
-                </h3>
-                <p className="font-inter text-sm leading-relaxed text-v3-text-weak text-pretty">
-                  Reflection prompts will appear here when there is a useful
-                  next thread to explore.
-                </p>
-              </section>
-            ),
-            people: (
-              <section
-                aria-labelledby="insights-people-heading"
-                className="space-y-2"
-              >
-                <h3
-                  id="insights-people-heading"
-                  className="font-garamond text-xl font-medium text-v3-text-strong"
-                >
-                  People
-                </h3>
-                <p className="font-inter text-sm leading-relaxed text-v3-text-weak text-pretty">
-                  The people connected to your Memento will appear here.
-                </p>
-              </section>
-            ),
+            searchLabel: "Search insights",
+            closeLabel: "Close memory insights",
+            searchExpanded: searchOpen,
+            onSearch: () => {
+              setSearchOpen((value) => !value);
+              setQuery("");
+            },
+            onClose: () => close("memory-insights"),
           }}
         />
-      </div>
-    </div>
+        <DialogDescription className="sr-only">
+          Explore your memories, observations, preferences, and personal
+          progress.
+        </DialogDescription>
+        <div className="insights-scroll">
+          <main className="insights-main">
+            <MemoryStatistics />
+            {searchOpen && (
+              <div className="relative">
+                <Search className="absolute left-4 top-3 size-5 text-icon-neutral-weak" />
+                <Input
+                  autoFocus
+                  aria-label="Search your insights"
+                  placeholder="Search your insights…"
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  className="h-12 rounded-full pl-12"
+                />
+              </div>
+            )}
+            <InsightsOverlayNavigation
+              content={{
+                all: (
+                  <div className="flex flex-col gap-6">
+                    {about}
+                    {renderInsights()}
+                  </div>
+                ),
+                about,
+                observations: renderInsights(),
+                preferences: renderInsights(true),
+                enrichment,
+              }}
+            />
+          </main>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }

@@ -1,0 +1,202 @@
+:root {
+  --insights-page-background: var(--bg-neutral-solid);
+}
+.insights-overlay[data-slot="dialog-content"] {
+  inset: 0;
+  z-index: 110;
+  display: flex;
+  width: 100%;
+  max-width: none;
+  height: 100dvh;
+  transform: none;
+  translate: none;
+  flex-direction: column;
+  gap: 0;
+  overflow: hidden;
+  border-radius: 0 !important;
+  padding: 0;
+  background: var(--insights-page-background);
+  color: var(--text-neutral-strong);
+  box-shadow: none;
+  --modal-open-dur: 250ms;
+  --modal-close-dur: 150ms;
+  --modal-ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+.insights-overlay[data-state="open"] {
+  animation: insights-appear var(--modal-open-dur) var(--modal-ease);
+}
+.insights-overlay[data-state="closed"] {
+  animation: insights-disappear var(--modal-close-dur) var(--modal-ease);
+}
+@keyframes insights-appear {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes insights-disappear {
+  to {
+    opacity: 0;
+  }
+}
+.insights-scroll {
+  min-height: 0;
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.insights-main {
+  display: flex;
+  width: min(100% - 64px, 1000px);
+  margin: 44px auto 0;
+  padding-bottom: 64px;
+  flex-direction: column;
+  gap: 64px;
+}
+.insights-stat {
+  position: relative;
+  display: flex;
+  min-height: 104px;
+  overflow: hidden;
+  flex-direction: column;
+  justify-content: center;
+  gap: 10px;
+  border: 1px solid var(--stroke-neutral-weak);
+  border-radius: 15px;
+  padding: 20px;
+}
+.insights-stat::before {
+  position: absolute;
+  inset: 0;
+  content: "";
+  pointer-events: none;
+  opacity: 0.3;
+  background-image:
+    linear-gradient(var(--stroke-neutral-weak) 1px, transparent 1px),
+    linear-gradient(90deg, var(--stroke-neutral-weak) 1px, transparent 1px);
+  background-size: 26px 26px;
+  mask-image: linear-gradient(110deg, black, transparent);
+}
+.insights-stat > * {
+  position: relative;
+}
+.insights-tabs {
+  height: auto !important;
+  justify-content: flex-start;
+  gap: 12px;
+  padding: 0;
+  background: transparent;
+}
+.insights-tab {
+  height: 44px;
+  flex: none;
+  border: 0;
+  border-radius: 999px;
+  padding: 0 26px;
+  color: var(--text-neutral-weak);
+  transition:
+    background-color 150ms ease-out,
+    color 150ms ease-out;
+}
+.insights-tab[data-active] {
+  background: var(--fill-tab-active);
+  color: var(--text-tab-active);
+}
+.insights-tab:hover:not([data-active]) {
+  background: var(--fill-neutral-weak);
+}
+.insights-collection {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border: 1px solid var(--stroke-neutral-weak);
+  border-radius: 20px;
+  padding: 24px;
+}
+.insights-row {
+  display: flex;
+  min-height: 94px;
+  align-items: flex-start;
+  gap: 18px;
+  border-radius: 14px;
+  padding: 22px 20px;
+  transition: background-color 150ms ease-out;
+}
+.insights-row:hover,
+.insights-row:focus-within {
+  background: var(--fill-neutral-weak);
+}
+.insights-row-expanded h3 {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.insights-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  border: 1px solid var(--stroke-neutral-weak);
+  border-radius: 20px;
+  padding: 32px;
+}
+.insights-empty {
+  display: flex;
+  min-height: 260px;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 14px;
+  border: 1px solid var(--stroke-neutral-weak);
+  border-radius: 20px;
+  padding: 32px;
+  text-align: center;
+  color: var(--text-neutral-weak);
+}
+@media (max-width: 640px) {
+  .insights-main {
+    width: calc(100% - 32px);
+    margin-top: 20px;
+    gap: 32px;
+  }
+  .insights-stat {
+    min-height: 98px;
+    padding: 16px;
+  }
+  .insights-tabs {
+    gap: 4px;
+  }
+  .insights-tab {
+    padding: 0 18px;
+  }
+  .insights-collection {
+    padding: 8px;
+  }
+  .insights-row {
+    min-height: 94px;
+    gap: 12px;
+    padding: 18px 10px;
+  }
+  .insights-detail {
+    padding: 24px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .insights-overlay[data-state],
+  .insights-overlay * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+.insights-overlay [data-slot="tabs"] {
+  flex-direction: column;
+}
+.insights-overlay .insights-tab[aria-selected="true"] {
+  background: var(--fill-tab-active);
+  color: var(--text-tab-active);
+}
+
+.insights-row > svg {
+  fill: color-mix(in srgb, currentColor 20%, transparent);
+}
