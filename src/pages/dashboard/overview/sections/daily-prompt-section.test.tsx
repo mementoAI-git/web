@@ -4,21 +4,31 @@ import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { renderWithProviders } from "@/test";
 import { server } from "@/test/mocks/server";
-import { useModal } from "@/hooks/use-modal";
+import { useLocation } from "react-router-dom";
 import { reflectionAvatars } from "./reflection-avatars";
 import DailyPromptSection from "./daily-prompt-section";
 
 function CaptureState() {
-  const { state } = useModal();
-  return <output data-testid="capture-state">{JSON.stringify(state)}</output>;
+  const location = useLocation();
+  return (
+    <output data-testid="capture-state">
+      {JSON.stringify({ path: location.pathname, payload: location.state?.reflectionEntry?.request })}
+    </output>
+  );
 }
 
 let shufflesUsed = 0;
 beforeEach(() => {
   shufflesUsed = 0;
-  const usage = () => ({ used: shufflesUsed, remaining: 2 - shufflesUsed, resets_at: new Date(Date.now() + 86400000).toISOString() });
+  const usage = () => ({
+    used: shufflesUsed,
+    remaining: 2 - shufflesUsed,
+    resets_at: new Date(Date.now() + 86400000).toISOString(),
+  });
   server.use(
-    http.get("http://localhost:3000/api/prompts/shuffle", () => HttpResponse.json({ data: usage() })),
+    http.get("http://localhost:3000/api/prompts/shuffle", () =>
+      HttpResponse.json({ data: usage() }),
+    ),
     http.post("http://localhost:3000/api/prompts/shuffle", () => {
       const allowed = shufflesUsed < 2;
       if (allowed) shufflesUsed++;
@@ -30,7 +40,10 @@ beforeEach(() => {
 describe("DailyPromptSection", () => {
   it("allows only two shuffles and keeps the allowance after remounting", async () => {
     const user = userEvent.setup();
-    const { unmount } = renderWithProviders(<DailyPromptSection />, { route: "/overview", auth: true });
+    const { unmount } = renderWithProviders(<DailyPromptSection />, {
+      route: "/overview",
+      auth: true,
+    });
     const shuffle = screen.getByRole("button", { name: "Shuffle reflections" });
     await waitFor(() => expect(shuffle).toBeEnabled());
     await user.click(shuffle);
@@ -42,14 +55,24 @@ describe("DailyPromptSection", () => {
     await user.click(shuffle);
     expect(shufflesUsed).toBe(2);
     unmount();
-    renderWithProviders(<DailyPromptSection />, { route: "/overview", auth: true });
-    await screen.findByText("Daily shuffle limit reached. Resets at midnight UTC.");
-    expect(screen.getByRole("button", { name: "Shuffle reflections" })).toBeDisabled();
+    renderWithProviders(<DailyPromptSection />, {
+      route: "/overview",
+      auth: true,
+    });
+    await screen.findByText(
+      "Daily shuffle limit reached. Resets at midnight UTC.",
+    );
+    expect(
+      screen.getByRole("button", { name: "Shuffle reflections" }),
+    ).toBeDisabled();
   });
 
   it("uses the server's exhausted allowance when another device used the last shuffle", async () => {
     const user = userEvent.setup();
-    renderWithProviders(<DailyPromptSection />, { route: "/overview", auth: true });
+    renderWithProviders(<DailyPromptSection />, {
+      route: "/overview",
+      auth: true,
+    });
     const shuffle = screen.getByRole("button", { name: "Shuffle reflections" });
     await waitFor(() => expect(shuffle).toBeEnabled());
     shufflesUsed = 2;
@@ -114,10 +137,12 @@ describe("DailyPromptSection", () => {
     expect(button.querySelector("i")).toHaveTextContent("appreciation");
     expect(button.querySelector("i")).toHaveClass("text-text-brand-strong");
     await user.click(button);
-    expect(screen.getByTestId("capture-state")).toHaveTextContent(text);
+    await waitFor(() =>
+      expect(screen.getByTestId("capture-state")).toHaveTextContent(text),
+    );
   });
 
-  it("opens capture with the prompt belonging to each card", async () => {
+  it("opens the conversation with the prompt belonging to each card", async () => {
     const user = userEvent.setup();
     renderWithProviders(
       <>
@@ -132,18 +157,24 @@ describe("DailyPromptSection", () => {
     await user.click(
       within(personalized).getByRole("button", { name: /reflect on/i }),
     );
-    expect(screen.getByTestId("capture-state")).toHaveTextContent(
-      '"prompt_type":"ai-generated"',
+    await waitFor(() =>
+      expect(screen.getByTestId("capture-state")).toHaveTextContent(
+        '"prompt_type":"ai-generated"',
+      ),
     );
     const family = screen.getByRole("article", { name: "Prompt 2" });
     await user.click(
       within(family).getByRole("button", { name: /reflect on/i }),
     );
-    expect(screen.getByTestId("capture-state")).toHaveTextContent(
-      '"prompt_id":"prompt-1"',
+    await waitFor(() =>
+      expect(screen.getByTestId("capture-state")).toHaveTextContent(
+        '"prompt_id":"prompt-1"',
+      ),
     );
-    expect(screen.getByTestId("capture-state")).toHaveTextContent(
-      '"prompt_type":"static"',
+    await waitFor(() =>
+      expect(screen.getByTestId("capture-state")).toHaveTextContent(
+        '"prompt_type":"static"',
+      ),
     );
   });
 
@@ -161,7 +192,9 @@ describe("DailyPromptSection", () => {
     const previous = labels.map((label) =>
       imagesForCard(label).map((image) => image.getAttribute("src")),
     );
-    expect(new Set(previous.flat()).size).toBe(Math.min(6, reflectionAvatars.length));
+    expect(new Set(previous.flat()).size).toBe(
+      Math.min(6, reflectionAvatars.length),
+    );
     for (const label of labels) {
       for (const image of imagesForCard(label)) {
         expect(image).toHaveAttribute("loading", "lazy");
@@ -174,13 +207,18 @@ describe("DailyPromptSection", () => {
       screen.getByRole("button", { name: "Shuffle reflections" }),
     );
     await waitFor(() => expect(shufflesUsed).toBe(1));
-    await waitFor(() => expect(screen.getByRole("button", { name: "Shuffle reflections" })).toBeEnabled());
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: "Shuffle reflections" }),
+      ).toBeEnabled(),
+    );
     labels.forEach((label, index) => {
       const next = imagesForCard(label).map((image) =>
         image.getAttribute("src"),
       );
       expect(next).toHaveLength(Math.min(3, reflectionAvatars.length));
-      if (reflectionAvatars.length >= 6) expect(next.every((src) => !previous[index].includes(src))).toBe(true);
+      if (reflectionAvatars.length >= 6)
+        expect(next.every((src) => !previous[index].includes(src))).toBe(true);
     });
   });
 
@@ -242,7 +280,7 @@ describe("DailyPromptSection", () => {
     expect(countText("Static 1")).toBe("12,345 people");
   });
 
-  it("keeps answered prompts visible without a capture action", async () => {
+  it("keeps answered prompts available to reopen their conversation", async () => {
     server.use(
       http.get("http://localhost:3000/api/prompts", () =>
         HttpResponse.json({
@@ -266,7 +304,9 @@ describe("DailyPromptSection", () => {
     expect(
       within(card).getByText(/already shared a reflection/i),
     ).toBeInTheDocument();
-    expect(within(card).queryByRole("button")).not.toBeInTheDocument();
+    expect(
+      within(card).getByRole("button", { name: "Reflect on Just for you" }),
+    ).toBeEnabled();
   });
   it("shuffles the cards while preserving their capture payloads", async () => {
     const user = userEvent.setup();
@@ -281,12 +321,18 @@ describe("DailyPromptSection", () => {
     await user.click(
       screen.getByRole("button", { name: "Shuffle reflections" }),
     );
-    await waitFor(() => expect(screen.getAllByRole("article")[0]).toHaveAccessibleName("Prompt 2"));
+    await waitFor(() =>
+      expect(screen.getAllByRole("article")[0]).toHaveAccessibleName(
+        "Prompt 2",
+      ),
+    );
     await user.click(
       within(screen.getAllByRole("article")[0]).getByRole("button"),
     );
-    expect(screen.getByTestId("capture-state")).toHaveTextContent(
-      '"prompt_id":"prompt-1"',
+    await waitFor(() =>
+      expect(screen.getByTestId("capture-state")).toHaveTextContent(
+        '"prompt_id":"prompt-1"',
+      ),
     );
   });
 

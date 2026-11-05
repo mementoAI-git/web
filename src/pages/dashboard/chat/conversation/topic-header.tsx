@@ -36,7 +36,13 @@ export default function TopicHeader({ memory }: { memory: IMemory }) {
   const navigate = useNavigate();
   const { id } = useParams();
   const { data: promptDetails } = useSWR(
-    id ? `${endpoint.promptDetails}${id}` : null,
+    memory?.prompt
+      ? `${endpoint.promptDetails}${memory.prompt}`
+      : memory?.prompt_type
+        ? null
+        : id
+          ? `${endpoint.promptDetails}${id}`
+          : null,
   );
   const { open } = useModal();
   const { toggleBookmark, isLoading } = useBookmark({
@@ -117,7 +123,7 @@ export default function TopicHeader({ memory }: { memory: IMemory }) {
       <Button
         variant="ghost"
         onClick={() => navigate(-1)}
-        className="h-9 self-start gap-1 rounded-lg px-2.5 py-1.5 text-sm font-medium text-text-neutral-strong"
+        className="relative z-[46] h-9 self-start gap-1 rounded-lg px-2.5 py-1.5 text-sm font-medium text-text-neutral-strong"
       >
         <TopicIcon src={back} />
         Back
@@ -136,7 +142,7 @@ export default function TopicHeader({ memory }: { memory: IMemory }) {
           <>
             {image}
             <h1 className="min-w-0 line-clamp-2 font-garamond text-xl font-normal leading-6 text-text-neutral-strong sm:text-2xl sm:leading-7">
-              {memory?.title}
+              {memory?.prompt_text || memory?.title}
             </h1>
             {actions}
           </>
@@ -144,13 +150,15 @@ export default function TopicHeader({ memory }: { memory: IMemory }) {
           <>
             <div className="flex items-start justify-between gap-3">
               <Badge className="h-auto min-w-0 whitespace-normal rounded-sm border-0 bg-fill-brand-weak px-2 py-1 text-sm font-medium leading-6 text-text-brand-strong sm:text-base">
-                {category?.title || categoryValue || "Explore topics"}
+                {category?.title ||
+                  categoryValue ||
+                  (memory?.prompt_type ? "Daily reflection" : "Explore topics")}
               </Badge>
               {actions}
             </div>
             <div className="flex items-start justify-between gap-4 sm:gap-6">
               <h1 className="min-w-0 max-w-[680px] flex-1 font-garamond text-2xl font-normal leading-7 text-text-neutral-strong">
-                {memory?.title}
+                {memory?.prompt_text || memory?.title}
               </h1>
               {image}
             </div>

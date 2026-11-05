@@ -17,7 +17,7 @@ import { Shuffle } from "lucide-react";
 import useFetcher from "@/hooks/use-fetcher";
 import { useEffect, useRef, useState } from "react";
 import { getCategory } from "@/utility";
-import { useModal } from "@/hooks/use-modal";
+import { useNavigate } from "react-router-dom";
 import type { DailyPromptCapturePayload } from "@/lib/quick-capture-drafts";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -81,7 +81,7 @@ function toCapturePayload(row: DashboardPromptSlot): DailyPromptCapturePayload {
 }
 
 export default function DailyPromptSection() {
-  const { open } = useModal();
+  const navigate = useNavigate();
   const shuffleUrl = `${endpoint.prompts}/shuffle`;
   const { data: shuffleData, error: shuffleError, mutate: refreshShuffle } = useSWR(shuffleUrl);
   const retryShuffle = useRequestRecovery("reflection-shuffle", shuffleError, refreshShuffle, "Shuffle availability couldn’t be loaded. Try again.");
@@ -102,13 +102,17 @@ export default function DailyPromptSection() {
   const rows = (data?.data ?? []) as DashboardPromptSlot[];
   const replyCounts = getPromptReplyCounts(rows);
   const openCapture = (row: DashboardPromptSlot) => {
-    if (row.answered) return;
-    try {
-      const daily_prompt = toCapturePayload(row);
-      open("quick-capture", { daily_prompt });
-    } catch {
-      /* ignore */
-    }
+    const payload = toCapturePayload(row);
+    navigate("/chat/reflection/new", {state: {reflectionEntry: {
+      question: payload.pinned_text,
+      category: row.slot_kind === "static" ? row.prompt.category : undefined,
+      request: {
+        prompt_type: payload.prompt_type,
+        prompt_id: payload.prompt_id,
+        prompt_text: payload.prompt_type === "ai-generated" ? payload.pinned_text : undefined,
+        reflection_day_key: payload.reflection_day_key,
+      },
+    }}});
   };
 
   const visibleRows = rows.map(
@@ -181,18 +185,14 @@ export default function DailyPromptSection() {
                   className="t-stagger-line relative sky-card flex min-h-[267px] min-w-0 flex-col justify-between gap-10 rounded-3xl border border-stroke-neutral-weak bg-fill-neutral-weaker p-[23px] transition-colors hover:bg-fill-neutral-weak"
                 >
                   <p className="font-garamond text-[24px] font-normal leading-[31px] text-text-neutral-strong">
-                    {row.answered ? (
+                    <button
+                      type="button"
+                      aria-label={`Reflect on ${promptLabel(row, index)}`}
+                      onClick={() => void openCapture(row)}
+                      className="cursor-pointer text-left outline-none before:absolute before:inset-0 before:rounded-3xl focus-visible:before:ring-2 focus-visible:before:ring-stroke-brand-strong"
+                    >
                       <PromptText text={promptBodyText(row)} />
-                    ) : (
-                      <button
-                        type="button"
-                        aria-label={`Reflect on ${promptLabel(row, index)}`}
-                        onClick={() => openCapture(row)}
-                        className="cursor-pointer text-left outline-none before:absolute before:inset-0 before:rounded-3xl focus-visible:before:ring-2 focus-visible:before:ring-stroke-brand-strong"
-                      >
-                        <PromptText text={promptBodyText(row)} />
-                      </button>
-                    )}
+                    </button>
                   </p>
                   {row.answered ? (
                     <TypographyMuted className="font-inter text-sm text-text-neutral-weak">

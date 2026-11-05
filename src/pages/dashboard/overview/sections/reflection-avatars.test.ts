@@ -7,9 +7,10 @@ import {
 } from "./reflection-avatars";
 
 describe("reflection avatars", () => {
-  it("loads twenty distinct WebP avatars", () => {
+  it("loads twenty distinct original WebP portraits", () => {
     expect(reflectionAvatars).toHaveLength(20);
     expect(new Set(reflectionAvatars).size).toBe(20);
+    expect(reflectionAvatars.every((url) => url.includes("/avatars/avatar-") && url.endsWith(".webp"))).toBe(true);
   });
 
   it("randomizes the pool without losing or duplicating portraits", () => {

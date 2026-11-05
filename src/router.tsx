@@ -1,3 +1,4 @@
+import ReflectionPage from "@/pages/dashboard/chat/reflection";
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import App from "@/App";
 import {
@@ -103,6 +104,7 @@ export const router = createBrowserRouter([
             path: "chat/conversations/suggested",
             element: <Navigate to="/chat" replace />,
           },
+          { path: "chat/reflection/:id", element: <ReflectionPage /> },
           { path: "chat/reply/:id", element: <ReplyPage /> },
           // Live voice (Gemini Live): ChatPage + Conversation; composer mounts Voiceinput fullscreen
           { path: "chat/:id/voice", element: <ChatPage /> },
