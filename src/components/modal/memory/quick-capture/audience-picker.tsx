@@ -1,3 +1,4 @@
+import { UserAvatar } from "@/components/user-avatar";
 import { Check, Search, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -239,12 +240,15 @@ export function AudiencePicker({
                     onChange={() => toggle(o.id, o.group)}
                     className="size-3.5 accent-[var(--fill-brand-strong)]"
                   />
-                  <span
-                    aria-hidden
-                    className="flex size-6 shrink-0 items-center justify-center rounded-full bg-fill-neutral-weak text-xs font-bold text-text-neutral-strong"
-                  >
-                    {o.group ? <Users className="size-3" /> : o.name[0]}
-                  </span>
+                  {o.group ? (
+                    <span aria-hidden className="flex size-6 shrink-0 items-center justify-center rounded-full bg-fill-neutral-weak">
+                      <Users className="size-3" />
+                    </span>
+                  ) : (
+                    <span aria-hidden>
+                      <UserAvatar alt="" name={o.name} userId={people.find((p) => p._id === o.id)?.user?._id} email={people.find((p) => p._id === o.id)?.email} size="sm" />
+                    </span>
+                  )}
                   {o.name}
                 </label>
               ))}

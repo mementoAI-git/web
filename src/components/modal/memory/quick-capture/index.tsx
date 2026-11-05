@@ -1,5 +1,6 @@
 "use client";
 
+import { UserAvatar } from "@/components/user-avatar";
 import { reportFetcherError } from "@/api/report-fetcher-error";
 
 import { getProfileAvatarUrl } from "@/utility/profile-avatar";
@@ -9,7 +10,7 @@ import { createPortal } from "react-dom";
 import { Sheet } from "react-modal-sheet";
 import useSWR from "swr";
 import useSWRMutation from "swr/mutation";
-import { X, Square, Pause, Play } from "lucide-react";
+import { X, Square, Plus, ImageIcon, Video, Music, Paperclip } from "lucide-react";
 import { toast } from "sonner";
 import { mutate } from "swr";
 import { v4 as uuidv4 } from "uuid";
@@ -29,6 +30,7 @@ import { paginatedResponseFetcher } from "@/api/domain-fetchers";
 import { cn } from "@/utility";
 import { parseSubscriptionGateError } from "@/features/pricing/subscription-errors";
 import {
+  MEMORY_ACCEPT_DOCUMENTS,
   SUPPORTED_FILE_TYPES,
   inferMimeType,
   isSupportedFileMime,
@@ -39,13 +41,16 @@ import { Card } from "@/components/ui/card";
 import Spinner from "@/components/spinner";
 import { AudiencePicker } from "./audience-picker";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import closeIcon from "@/assets/icon/quick-story/imgX.svg";
 import draftsChevron from "@/assets/icon/quick-story/imgIconRight.svg";
-import plusIcon from "@/assets/icon/quick-story/imgPlus.svg";
 import emojiIcon from "@/assets/icon/quick-story/imgNotoSlightlySmilingFace.svg";
 import micIcon from "@/assets/icon/quick-story/imgMicrophone01.svg";
 import videoIcon from "@/assets/icon/quick-story/imgVideoRecorder.svg";
@@ -130,6 +135,7 @@ export function QuickCapture(props: { isMobile?: boolean; data?: unknown }) {
   const fileInputImageRef = useRef<HTMLInputElement>(null);
   const fileInputVideoRef = useRef<HTMLInputElement>(null);
   const fileInputAudioRef = useRef<HTMLInputElement>(null);
+  const fileInputDocsRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const actionBarRef = useRef<HTMLDivElement>(null);
   const draftsMenuRef = useRef<HTMLDivElement>(null);
@@ -771,9 +777,7 @@ export function QuickCapture(props: { isMobile?: boolean; data?: unknown }) {
   };
 
   const avatarUrl = getProfileAvatarUrl(user);
-  const initials = user
-    ? `${user.first_name?.[0] ?? ""}${user.last_name?.[0] ?? ""}`.trim() || "?"
-    : "?";
+
 
   const draftKeys = scanQuickCaptureDraftKeys(user?.email);
 
@@ -876,38 +880,47 @@ export function QuickCapture(props: { isMobile?: boolean; data?: unknown }) {
       className="flex shrink-0 items-center justify-between gap-2"
     >
       <div className="flex items-center gap-3 max-[400px]:gap-0">
-        <Popover>
-          <PopoverTrigger asChild>
+        <DropdownMenu modal={false} onOpenChange={(open) => { if (open) setShowEmoji(false); }}>
+          <DropdownMenuTrigger asChild>
             <Button
               type="button"
               variant="ghost"
               size="icon"
               disabled={uploadsPending || recordingUi || isMutating}
-              className="size-10 rounded-[10px] bg-fill-neutral-strong text-text-inverse-strong hover:bg-fill-neutral-strong/90"
+              className="size-10 rounded-[10px] bg-fill-neutral-strong text-text-inverse-strong hover:bg-fill-neutral-strong/90 dark:bg-fill-neutral-weak dark:text-icon-neutral-strong dark:hover:bg-fill-neutral-weaker"
               aria-label="Add attachment"
             >
-              <img src={plusIcon} alt="" />
+              <Plus aria-hidden className="size-5" strokeWidth={1.66667} />
             </Button>
-          </PopoverTrigger>
-          <PopoverContent
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            side="top"
             align="start"
-            className="navigation-menu z-[10001] w-44 gap-1 p-1"
+            className="z-[10001]"
             onEscapeKeyDown={(event) => event.stopPropagation()}
           >
-            <Button
-              variant="ghost"
-              onClick={() => fileInputImageRef.current?.click()}
-            >
-              Add image
-            </Button>
-            <Button
-              variant="ghost"
-              onClick={() => fileInputAudioRef.current?.click()}
-            >
-              Attach audio file
-            </Button>
-          </PopoverContent>
-        </Popover>
+            <DropdownMenuGroup>
+              <DropdownMenuLabel>Choose upload type</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onSelect={() => fileInputImageRef.current?.click()}>
+                <ImageIcon />
+                Photos
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => fileInputVideoRef.current?.click()}>
+                <Video />
+                Videos
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => fileInputAudioRef.current?.click()}>
+                <Music />
+                Audio
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => fileInputDocsRef.current?.click()}>
+                <Paperclip />
+                Documents
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
         <div ref={emojiAnchorRef} className="relative">
           <Button
             type="button"
@@ -1003,17 +1016,7 @@ export function QuickCapture(props: { isMobile?: boolean; data?: unknown }) {
       >
         {!note && (
           <div data-testid="quick-story-avatar" className="shrink-0">
-            {avatarUrl ? (
-              <img
-                src={avatarUrl}
-                alt=""
-                className="size-10 rounded-full border-[3px] border-bg-neutral object-cover"
-              />
-            ) : (
-              <div className="flex size-10 items-center justify-center rounded-full bg-fill-neutral-weak text-xs font-semibold">
-                {initials}
-              </div>
-            )}
+            <UserAvatar alt="Your avatar" src={avatarUrl} userId={user?._id} email={user?.email} name={[user?.first_name, user?.last_name].filter(Boolean).join(" ")} size="lg" />
           </div>
         )}
         <div className="min-w-0 flex-1">
@@ -1090,20 +1093,7 @@ export function QuickCapture(props: { isMobile?: boolean; data?: unknown }) {
               ? "Starting…"
               : `${recording.phase === "paused" ? "Paused" : "Recording"} · ${Math.floor(recording.seconds / 60)}:${String(recording.seconds % 60).padStart(2, "0")}`}
         </span>
-        {(recording.phase === "recording" || recording.phase === "paused") && (
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            aria-label={
-              recording.phase === "paused"
-                ? "Resume recording"
-                : "Pause recording"
-            }
-            onClick={recording.togglePause}
-          >
-            {recording.phase === "paused" ? <Play /> : <Pause />}
-          </Button>
-        )}
+
       </div>
     </div>
   );
@@ -1134,13 +1124,22 @@ export function QuickCapture(props: { isMobile?: boolean; data?: unknown }) {
         onChange={handleFileSelect}
         multiple
       />
+      <input
+        ref={fileInputDocsRef}
+        type="file"
+        accept={MEMORY_ACCEPT_DOCUMENTS}
+        aria-label="Upload documents"
+        className="hidden"
+        onChange={handleFileSelect}
+        multiple
+      />
     </>
   );
 
   const shell = (
     <div
       className={cn(
-        "flex max-h-[90dvh] w-full flex-col gap-6 overflow-y-auto bg-bg-neutral p-6 font-geist text-text-neutral-strong",
+        "flex max-h-[90dvh] w-full flex-col gap-6 overflow-y-auto bg-bg-raised p-6 font-geist text-text-neutral-strong",
         isMobile
           ? "rounded-t-3xl"
           : "max-w-[456px] rounded-3xl shadow-2xl ring-1 ring-stroke-neutral-weak",
@@ -1189,7 +1188,7 @@ export function QuickCapture(props: { isMobile?: boolean; data?: unknown }) {
       >
         <Sheet.Container
           className="max-h-[80dvh] overflow-hidden"
-          style={{ backgroundColor: "var(--bg-neutral)" }}
+          style={{ backgroundColor: "var(--bg-raised)" }}
         >
           <Sheet.Header className="rounded-t-3xl" />
           <Sheet.Content className="flex max-h-[80dvh] min-h-0 flex-col overflow-hidden px-0 pb-0">

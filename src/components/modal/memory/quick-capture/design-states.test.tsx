@@ -62,6 +62,21 @@ beforeEach(() => {
     ),
   );
 });
+it("offers the Add Story upload options and opens the document picker", async () => {
+  const user = userEvent.setup();
+  renderWithProviders(<QuickCapture />);
+  const input = screen.getByLabelText("Upload documents");
+  const openPicker = vi.spyOn(input, "click");
+  await user.click(screen.getByRole("button", { name: "Add attachment" }));
+  expect(screen.getByText("Choose upload type")).toBeVisible();
+  expect(screen.getAllByRole("menuitem").map((item) => item.textContent)).toEqual([
+    "Photos", "Videos", "Audio", "Documents",
+  ]);
+  await user.click(screen.getByRole("menuitem", { name: "Documents" }));
+  expect(openPicker).toHaveBeenCalledOnce();
+  expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+});
+
 it("hides the avatar while typing and restores it when cleared", () => {
   renderWithProviders(<QuickCapture />);
   expect(screen.getByTestId("quick-story-avatar")).toBeInTheDocument();
@@ -125,8 +140,8 @@ it("uses shared dictation controls and appends the transcript to the existing st
     screen.queryByRole("button", { name: "Choose visibility" }),
   ).not.toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Publish" })).toBeDisabled();
-  fireEvent.click(screen.getByRole("button", { name: "Pause recording" }));
-  expect(voice.togglePause).toHaveBeenCalledOnce();
+  expect(screen.queryByRole("button", { name: /pause recording|resume recording/i })).not.toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Cancel recording" })).toBeEnabled();
   fireEvent.click(
     screen.getByRole("button", { name: "Stop recording and transcribe" }),
   );
