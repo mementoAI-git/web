@@ -444,16 +444,18 @@ it("lists all ten enrichment fields with scores and locked state", async () => {
   expect(screen.getByText("Unlocks soon")).toBeVisible();
 });
 
-it("surfaces a spanning insight under each related field and can start a reflection", async () => {
+it("shows only memory sources on an enrichment field and can start a reflection", async () => {
   const user = userEvent.setup();
   setup();
   await user.click(tab("Enrichment fields"));
   await user.click(
     screen.getByRole("button", { name: "Explore Everyday Life" }),
   );
-  expect(screen.getByText("You protect your Sundays")).toBeVisible();
   expect(
-    screen.queryByText("Your values keep coming up"),
+    await screen.findByRole("region", { name: "Memory sources" }),
+  ).toBeVisible();
+  expect(
+    screen.queryByText("You protect your Sundays"),
   ).not.toBeInTheDocument();
   await user.click(screen.getByRole("button", { name: "Reflect on this" }));
   expect(close).toHaveBeenCalledWith("memory-insights");

@@ -19,13 +19,11 @@ import {
 import type { EnrichmentCategory } from "@/features/enrichment/enrichment-categories";
 import { EnrichmentFieldIcon } from "./enrichment-field-icon";
 import { enrichmentFieldColor, getEnrichmentField } from "./enrichment-fields";
-import { InsightCard } from "./insight-card";
 import type {
   Insight,
   InsightSource,
   InsightSourceList,
 } from "./insights-api.types";
-import { useInsights } from "./use-insights";
 
 type SortOrder = "newest" | "oldest";
 const SORT_LABELS: Record<SortOrder, string> = {
@@ -281,26 +279,20 @@ export function InsightDetail({
   );
 }
 
-/** One enrichment field: its current insights and every memory tagged with it. */
+/** One enrichment field and every memory tagged with it. */
 export function EnrichmentFieldDetail({
   field,
   query,
   onBack,
   onView,
-  onOpenInsight,
   onReflect,
 }: {
   field: EnrichmentCategory;
   query: string;
   onBack: () => void;
   onView: (source: InsightSource) => void;
-  onOpenInsight: (insight: Insight) => void;
   onReflect: (field: EnrichmentCategory) => void;
 }) {
-  const { list } = useInsights();
-  const related = (list?.insights ?? []).filter((insight) =>
-    insight.categories.includes(field),
-  );
   return (
     <DetailFrame
       categories={[field]}
@@ -317,17 +309,6 @@ export function EnrichmentFieldDetail({
         </Button>
       }
     >
-      {related.length > 0 && (
-        <section aria-label="Related insights" className="insights-list">
-          {related.map((insight) => (
-            <InsightCard
-              key={insight.id}
-              insight={insight}
-              onOpen={onOpenInsight}
-            />
-          ))}
-        </section>
-      )}
       <SourcesTable
         sourcesKey={`${endpoint.insightSources}?category=${field}`}
         query={query}

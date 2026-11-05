@@ -273,7 +273,6 @@ export default function MemoryInsightsModal() {
                       query={query}
                       onBack={goBack}
                       onView={viewSource}
-                      onOpenInsight={openInsight}
                       onReflect={reflectOn}
                     />
                   )}
