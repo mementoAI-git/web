@@ -349,7 +349,7 @@ export function AccessField({
                         onCheckedChange={() => toggleAccess(beneficiary)}
                         aria-label={beneficiary.name}
                       />
-                      <UserAvatar name={beneficiary.name} alt={beneficiary.name} size="sm" />
+                      <UserAvatar userId={beneficiary.avatar?.userId} email={beneficiary.avatar?.email} src={beneficiary.avatar?.src} name={beneficiary.name} alt={beneficiary.name} size="sm" />
                       <span className="min-w-0 flex-1 truncate">{beneficiary.name}</span>
                     </label>
                   );

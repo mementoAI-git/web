@@ -1,6 +1,7 @@
+import { getAvatarSourceUrl, getGeneratedAvatarUrl } from "@/utility/avatar-identity";
 import { useState } from "react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { cn, isEmpty } from "@/utility";
+import { cn } from "@/utility";
 
 export type UserAvatarProps = {
   alt: string;
@@ -20,9 +21,12 @@ const userSizeToAvatarSize = {
   sm: "sm",
   md: "default",
   lg: "lg",
-} as const satisfies Record<NonNullable<UserAvatarProps["size"]>, "sm" | "default" | "lg">;
+} as const satisfies Record<
+  NonNullable<UserAvatarProps["size"]>,
+  "sm" | "default" | "lg"
+>;
 
-/** Uploaded photo or the same deterministic Critters avatar used on mobile. */
+/** Uploaded photo or a deterministic DiceBear Loops avatar. */
 export function UserAvatar({
   alt,
   className,
@@ -33,20 +37,31 @@ export function UserAvatar({
   src,
   userId,
 }: UserAvatarProps) {
-  const seed = (colorSeed || email || userId || name || "").trim().toLowerCase();
-  const [failedImage, setFailedImage] = useState<string>();
-  const photoSrc = !isEmpty(src) ? src! : undefined;
-  const generatedSrc = seed
-    ? `https://api.dicebear.com/10.x/critters/png?seed=${encodeURIComponent(seed)}`
-    : undefined;
-  const candidateSrc = photoSrc || generatedSrc;
-  const imageSrc = candidateSrc !== failedImage ? candidateSrc : undefined;
-  const initials = name?.trim().split(/\s+/).map((part) => part[0]).slice(0, 2).join("").toUpperCase() || "";
+  const [failedImages, setFailedImages] = useState<Set<string>>(
+    () => new Set(),
+  );
+  const photoSrc = getAvatarSourceUrl(src, { userId, email: email || colorSeed, name });
+  const generatedSrc = getGeneratedAvatarUrl({
+    userId,
+    email: email || colorSeed,
+    name,
+  });
+  const imageSrc = [photoSrc, generatedSrc].find(
+    (source) => source && !failedImages.has(source),
+  );
+  const initials =
+    name
+      ?.trim()
+      .split(/\s+/)
+      .map((part) => part[0])
+      .slice(0, 2)
+      .join("")
+      .toUpperCase() || "";
 
   return (
     <Avatar
       size={userSizeToAvatarSize[size]}
-      className={cn("user-avatar shrink-0", className)}
+      className={cn("user-avatar shrink-0 overflow-hidden p-0", className)}
       aria-label={alt || undefined}
     >
       {imageSrc ? (
@@ -55,7 +70,8 @@ export function UserAvatar({
           src={imageSrc}
           alt={alt}
           onLoadingStatusChange={(status) => {
-            if (status === "error") setFailedImage(imageSrc);
+            if (status === "error")
+              setFailedImages((previous) => new Set(previous).add(imageSrc));
           }}
         />
       ) : null}

@@ -22,6 +22,7 @@ function toSearchItemFromBeneficiary(b: IBeneficiary): SearchResultItem {
     name: b.name,
     source: "beneficiary",
     color: resolveBeneficiaryPaletteIndex(b),
+    avatar: { userId: b.user?._id, email: b.user?.email || b.email, src: b.user?.picture_url },
   };
 }
 

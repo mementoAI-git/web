@@ -25,6 +25,7 @@ export default function TimeCapsuleRow({ capsule }: { capsule: ICapsule }) {
             name={`${capsule.recipients[0]?.first_name || ""} ${capsule.recipients[0]?.last_name || ""}`}
             email={capsule.recipients[0]?.email}
             image={capsule.recipients[0]?.picture_url}
+            userId={capsule.recipients[0]?._id}
           />
         )}
       </td>

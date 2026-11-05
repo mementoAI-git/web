@@ -187,7 +187,7 @@ export interface IPagination<T> {
 
 type IBeneficiaryUser = Pick<
   IUser,
-  "email" | "first_name" | "last_name" | "picture_url"
+  "_id" | "email" | "first_name" | "last_name" | "picture_url"
 >;
 
 export interface IBeneficiary {
