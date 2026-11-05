@@ -206,6 +206,21 @@ it("lists only preferences on the preferences tab", async () => {
   ).not.toBeInTheDocument();
 });
 
+it("gives observations and preferences an identicon seeded by their id", async () => {
+  const user = userEvent.setup();
+  setup();
+  const identicon = (title: string) =>
+    screen.getByText(title).closest("article")?.querySelector("img");
+  expect(identicon("You value independent thinking")?.getAttribute("src")).toMatch(
+    /^https:\/\/api\.dicebear\.com\/10\.x\/disco\/svg\?seed=/,
+  );
+  await user.click(tab("Preferences"));
+  expect(identicon("You prefer quiet mornings")).toHaveAttribute(
+    "src",
+    "https://api.dicebear.com/10.x/disco/svg?seed=key_preferences-25",
+  );
+});
+
 const openOption = async (
   user: ReturnType<typeof userEvent.setup>,
   title: string,
@@ -357,7 +372,7 @@ it("tells the member while the first insights are being prepared", async () => {
   expect(screen.getByText("Connecting your memories…")).toBeVisible();
 });
 
-it("shows one icon for the strongest field, names them all, and says when the next batch arrives", async () => {
+it("shows one icon for the strongest field, two lines of detail, and when the next batch arrives", async () => {
   const user = userEvent.setup();
   setup();
   await user.click(tab("Insights"));
@@ -367,9 +382,11 @@ it("shows one icon for the strongest field, names them all, and says when the ne
   expect(icons[0].getAttribute("style")).toContain(
     "--enrichment-everyday-life",
   );
+  expect(screen.queryByText(/Relationships & People/)).not.toBeInTheDocument();
   expect(
-    screen.getByText("Everyday Life · Relationships & People"),
-  ).toBeVisible();
+    screen.getByText("Rest with family returns across your stories."),
+  ).toHaveClass("line-clamp-2");
+  expect(screen.queryByText("See related stories")).not.toBeInTheDocument();
   expect(screen.getByText(/Fresh insights around 9 Nov/)).toBeVisible();
 });
 
@@ -379,7 +396,7 @@ it("opens insight details, sorts sources, and returns to the same tab", async ()
   await user.click(tab("Insights"));
   await user.click(
     screen.getByRole("button", {
-      name: "See related stories for You protect your Sundays",
+      name: "You protect your Sundays",
     }),
   );
   expect(
@@ -404,7 +421,7 @@ it("closes the overlay and opens the right page for a source", async () => {
   await user.click(tab("Insights"));
   await user.click(
     screen.getByRole("button", {
-      name: "See related stories for You protect your Sundays",
+      name: "You protect your Sundays",
     }),
   );
   await user.click(screen.getByRole("button", { name: "View Sunday at home" }));

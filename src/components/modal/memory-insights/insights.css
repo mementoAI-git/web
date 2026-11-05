@@ -184,18 +184,6 @@
   gap: 16px;
   padding: 20px 16px;
 }
-.insights-folder {
-  width: 28px;
-  height: 28px;
-  flex: none;
-  margin-top: 2px;
-}
-.insights-folder rect {
-  fill: var(--field);
-}
-.insights-folder path {
-  fill: color-mix(in srgb, var(--field) 55%, transparent);
-}
 .insights-sources-popup[data-slot="popover-content"] {
   width: min(360px, calc(100vw - 32px));
   gap: 0;
@@ -240,22 +228,29 @@
   color: var(--text-neutral-weak);
 }
 .insights-insight {
+  cursor: pointer;
   align-items: flex-start;
   gap: 16px;
   padding: 20px 24px;
+  transition: background-color 150ms ease-out;
+}
+@media (hover: hover) {
+  .insights-insight:hover {
+    background: color-mix(in srgb, var(--text-neutral-strong) 6%, var(--insights-card));
+  }
+}
+.insights-insight:has(.insights-insight-open:focus-visible) {
+  outline: 2px solid var(--stroke-neutral-strong);
+  outline-offset: 2px;
+}
+.insights-insight-open {
+  cursor: pointer;
+  text-align: left;
+  outline: none;
 }
 .insights-field-icon {
   display: block;
   flex: none;
-}
-.insights-link {
-  display: block;
-  font-family: var(--font-inter, inherit);
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-neutral-strong);
-  text-decoration: underline;
-  text-underline-offset: 2px;
 }
 .insights-plan {
   align-items: flex-start;
