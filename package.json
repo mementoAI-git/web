@@ -81,6 +81,7 @@
     "tailwind-datepicker-react": "^1.4.3",
     "tailwind-merge": "^3.4.0",
     "tailwindcss-animate": "^1.0.7",
+    "thinking-orbs": "0.3.2",
     "three": "^0.180.0",
     "tippy.js": "^6.3.7",
     "uuid": "^11.1.0",

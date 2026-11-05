@@ -15,6 +15,18 @@ vi.mock("sonner", () => ({
 }));
 
 describe("Bubble", () => {
+  it.each(["", "   "])("hides empty assistant placeholders (%j) until reply text arrives", (text) => {
+    const { container, rerender } = render(<Bubble role="ai" text={text} />);
+    expect(container).toBeEmptyDOMElement();
+    rerender(<Bubble role="ai" text="A reply" />);
+    expect(screen.getByText("A reply")).toBeVisible();
+  });
+
+  it("keeps voice-only assistant messages", () => {
+    const { container } = render(<Bubble role="ai" text="" is_voice duration={12} />);
+    expect(container).not.toBeEmptyDOMElement();
+  });
+
   it.each([false, true])("gives assistant replies a themeable panel including topic=%s", (topic) => {
     const { rerender } = render(<Bubble role="ai" text="Assistant reply" topic={topic} />);
     expect(screen.getByText("Assistant reply").closest(".chat-reply-surface")).toBeInTheDocument();
