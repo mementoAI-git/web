@@ -42,6 +42,7 @@ import ShareMemory from "./memory/share-memory";
 import SelectBeneficiary from "./select-beneficiary";
 import { Feedback } from "./feedback";
 import MemoryInsights from "./memory-insights";
+import type { IGroup } from "@/utility/interface";
 import SettingsAboutMeModal from "./settings-about-me-modal";
 import RecentActivitiesModal from "./recent-activities-modal";
 import {
@@ -129,6 +130,13 @@ export default function Modal() {
   </>;
 }
 
+function isConnectionInvite(modal: { name: string; props?: unknown }) {
+  return (
+    modal.name === "add-beneficiary" &&
+    (modal.props as { mode?: string } | undefined)?.mode !== "beneficiary"
+  );
+}
+
 function ModalStack({ isMobile }: { isMobile: boolean }) {
   const { state, close } = useModal();
 
@@ -137,7 +145,8 @@ function ModalStack({ isMobile }: { isMobile: boolean }) {
     const modal = state?.[0];
     if (
       !modal ||
-      ["search-memory", "create-feedback", "invite-friends", "pricing", "setup2fa", "conversation-files", "memory-insights"].includes(modal.name)
+      ["search-memory", "create-feedback", "invite-friends", "pricing", "setup2fa", "conversation-files", "memory-insights", "add-group", "update-group", "add-group-members"].includes(modal.name) ||
+      isConnectionInvite(modal)
     )
       return;
     const modalName = modal.name;
@@ -170,7 +179,11 @@ function ModalStack({ isMobile }: { isMobile: boolean }) {
     );
   if (topModal.name === "invite-friends") return <InviteFriends />;
   if (topModal.name === "memory-insights") return <MemoryInsights />;
-  if (topModal.name === "add-beneficiary" && (topModal.props as { mode?: string } | undefined)?.mode === "connection") return <AddBeneficiary data={{ mode: "connection" }} />;
+  // Form dialogs own their portal, backdrop, focus trap, and dismissal.
+  if (isConnectionInvite(topModal)) return <AddBeneficiary data={{ mode: "connection" }} />;
+  if (topModal.name === "add-group") return <AddGroup />;
+  if (topModal.name === "update-group") return <UpdateGroup data={topModal.props as IGroup} />;
+  if (topModal.name === "add-group-members") return <AddGroupMembers data={topModal.props as string} />;
   // This dialog owns its portal, backdrop, focus trap, and dismissal.
   if (topModal.name === "setup2fa") return <Setup2FA data={topModal.props as { qrcode: string; secret: string }} />;
   const isTopFullscreenModal =

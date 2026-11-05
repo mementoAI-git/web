@@ -34,18 +34,18 @@ beforeEach(() => {
 });
 
 describe("SettingsProfileHeader", () => {
-  it("shows the preferred nickname and uses weak neutral text for membership details", () => {
+  it("shows the full name and uses weak neutral text for membership details", () => {
     profile.user = { _id: "u1", nickname: "  Wisdom  ", first_name: "Wisdom", last_name: "Augustine", email: "test@example.com", created_at: "2025-06-01T00:00:00Z" } as import("@/utility/interface").IUser;
     renderWithProviders(<SettingsProfileHeader />, { route: "/settings/general", auth: true });
-    expect(screen.getByRole("heading", { name: "Wisdom" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Wisdom Augustine" })).toBeInTheDocument();
     expect(screen.getByText("test@example.com").closest("p")).toHaveClass("text-text-neutral-weak");
-    expect(screen.getByText("Member since Jun 2025")).toBeInTheDocument();
+    expect(screen.getByText("Joined Jun 2025")).toBeInTheDocument();
   });
 
-  it("falls back to the full name when the nickname is empty", () => {
-    profile.user = { _id: "u1", nickname: "  ", first_name: "Wisdom", last_name: "Augustine" } as import("@/utility/interface").IUser;
+  it("falls back to the nickname when no name is set", () => {
+    profile.user = { _id: "u1", nickname: "  Wisdom  " } as import("@/utility/interface").IUser;
     renderWithProviders(<SettingsProfileHeader />, { auth: true });
-    expect(screen.getByRole("heading", { name: "Wisdom Augustine" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Wisdom" })).toBeInTheDocument();
   });
 
   it("renders the profile actions without duplicating the bio", () => {
@@ -177,7 +177,7 @@ describe("SettingsProfileHeader", () => {
       auth: true,
     });
     const metaRow = container.querySelector(
-      "p.font-inter.text-sm.text-text-neutral-weak",
+      "p.text-sm.text-text-neutral-weak",
     );
     expect(metaRow).toBeTruthy();
     expect(metaRow).toHaveClass("flex", "items-center", "justify-start");

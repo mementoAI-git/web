@@ -1,10 +1,9 @@
-import { StripBannerFrame } from "./strip-banner-frame";
+import { StripBanner } from "./strip-banner-frame";
 import { useCallback, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import dayjs from "dayjs";
 
 import { Button } from "@/components/ui/button";
-import { cn } from "@/utility";
 import { useSubscription } from "@/contexts/subscription";
 
 const DISMISS_KEY = "memento_trial_banner_dismissed";
@@ -50,38 +49,31 @@ export function TrialBanner() {
   if (!show) return null;
 
   return (
-    <StripBannerFrame>
-      <div
-        className={cn(
-          "flex flex-col gap-2 rounded-xl border border-stroke-warning-strong/20 bg-fill-warning-weak px-3 py-2 sm:flex-row sm:items-center sm:justify-between",
-        )}
-        role="status"
-      >
-        <p className="font-inter text-sm text-text-warning-strong">
-          {message}{" "}
-          <Link
-            to="/pricing"
-            state={{
-              returnTo: location.pathname + location.search + location.hash,
-            }}
-            className="font-semibold underline underline-offset-2 hover:opacity-90"
-          >
-            Upgrade now
-          </Link>
-          <span aria-hidden> →</span>
-        </p>
-        <div className="flex shrink-0 gap-2">
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="h-8 rounded-full text-text-warning-strong hover:bg-fill-warning-strong/10"
-            onClick={dismiss}
-          >
-            Dismiss
-          </Button>
-        </div>
+    <StripBanner className="flex flex-col gap-2 px-3 py-2 sm:flex-row sm:items-center sm:justify-between">
+      <p className="font-inter text-sm">
+        {message}{" "}
+        <Link
+          to="/pricing"
+          state={{
+            returnTo: location.pathname + location.search + location.hash,
+          }}
+          className="font-semibold underline underline-offset-2 hover:opacity-90"
+        >
+          Upgrade now
+        </Link>
+        <span aria-hidden> →</span>
+      </p>
+      <div className="flex shrink-0 gap-2">
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="h-8 rounded-full text-text-neutral-strong hover:bg-fill-neutral-weak"
+          onClick={dismiss}
+        >
+          Dismiss
+        </Button>
       </div>
-    </StripBannerFrame>
+    </StripBanner>
   );
 }

@@ -7,6 +7,7 @@ import voiceGridVertical from "@/assets/icon/voice/grid-vertical.svg";
 import voiceGridHorizontal from "@/assets/icon/voice/grid-horizontal.svg";
 import voiceSettingsIcon from "@/assets/icon/voice/settings.svg";
 import voiceMutedIcon from "@/assets/icon/voice/microphone-off.svg";
+import voiceMicIcon from "@/assets/icon/voice/microphone.svg";
 import voiceHangUpIcon from "@/assets/icon/voice/hang-up.svg";
 import { VoiceBeam } from "voice-glow";
 import { useAiPlaybackLevel } from "@/hooks/use-ai-playback-level";
@@ -23,6 +24,7 @@ import {
   MicOff,
   PhoneOff,
   Settings,
+  Settings2,
   UserRound,
 } from "lucide-react";
 import { createPortal } from "react-dom";
@@ -578,8 +580,8 @@ export default function Voiceinput({ onCancel, connectionPersonId, memoryId, his
     const settings = (
       <Popover open={settingsOpen} onOpenChange={setSettingsOpen}>
         <PopoverTrigger asChild>
-          <Button type="button" variant="ghost" size="icon-lg" aria-label="Voice settings" className={floating ? "absolute right-4 top-4 size-10 rounded-full text-icon-neutral-weaker" : overview ? "size-12 rounded-full bg-fill-neutral-weak" : undefined}>
-            {overview ? <img src={voiceSettingsIcon} alt="" className="dark:brightness-0 dark:invert dark:opacity-60" /> : <Settings />}
+          <Button type="button" variant="ghost" size="icon-lg" aria-label="Voice settings" className={floating ? "pointer-events-auto size-7 rounded-full text-icon-neutral-weak [&_svg]:size-4" : overview ? "size-12 rounded-full bg-fill-neutral-weak" : undefined}>
+            {overview ? <img src={voiceSettingsIcon} alt="" className="dark:brightness-0 dark:invert dark:opacity-60" /> : floating ? <Settings2 /> : <Settings />}
           </Button>
         </PopoverTrigger>
         <PopoverContent align="end" side="bottom" sideOffset={8} collisionPadding={16} aria-label="Voice settings" className="max-h-[min(35dvh,calc(100dvh-2rem))] w-[min(13rem,calc(100vw-2rem))] overflow-y-auto p-3">
@@ -588,12 +590,12 @@ export default function Voiceinput({ onCancel, connectionPersonId, memoryId, his
       </Popover>
     );
     const controls = (
-      <div className={cn("flex items-center", overview || floating ? "gap-4" : "gap-2")}>
-        <Button type="button" variant={overview ? "ghost" : "outline"} size="icon-lg" className={floating ? "size-16 rounded-full bg-fill-neutral-strong text-primary-foreground [&_svg]:size-6" : overview ? "size-16 rounded-full bg-fill-neutral-weak p-5 text-icon-neutral-weak" : undefined} disabled={!sessionActive || isElevenLabsProvider} onClick={toggleMute} aria-label={muted ? "Unmute microphone" : "Mute microphone"} aria-pressed={muted}>
-          {overview ? <img src={voiceMutedIcon} alt="" aria-hidden className="shrink-0 dark:brightness-0 dark:invert" /> : muted ? <MicOff /> : <Mic className="text-icon-neutral-weaker" />}
+      <div className={cn("flex items-center", floating ? "pointer-events-auto shrink-0 gap-3" : overview ? "gap-4" : "gap-2")}>
+        <Button type="button" variant={overview || floating ? "ghost" : "outline"} size="icon-lg" className={overview || floating ? cn("rounded-full", floating ? "size-12 p-3" : "size-16 p-5", muted ? "bg-fill-tab-active hover:bg-fill-tab-active dark:hover:bg-fill-tab-active" : cn("bg-fill-neutral-weak text-icon-neutral-weak", floating && "border-stroke-neutral-weak dark:border-transparent")) : undefined} disabled={!sessionActive || isElevenLabsProvider} onClick={toggleMute} aria-label={muted ? "Unmute microphone" : "Mute microphone"} aria-pressed={muted}>
+          {overview || floating ? <img src={muted ? voiceMutedIcon : voiceMicIcon} alt="" aria-hidden className={cn("shrink-0", muted ? "brightness-0 invert dark:invert-0" : "dark:brightness-0 dark:invert")} /> : muted ? <MicOff /> : <Mic className="text-icon-neutral-weaker" />}
         </Button>
         {!overview && !floating && settings}
-        <Button type="button" variant={overview ? "ghost" : "outline"} size="icon-lg" className={overview || floating ? "size-16 rounded-full bg-fill-error-weak text-icon-error-strong hover:bg-fill-error-weak/80" : undefined} aria-label="End voice conversation" disabled={isDisconnecting} onClick={() => setEndDialogOpen(true)}>
+        <Button type="button" variant={overview || floating ? "ghost" : "outline"} size="icon-lg" className={overview || floating ? cn("rounded-full bg-fill-error-weak text-icon-error-strong hover:bg-fill-error-weak/80 dark:hover:bg-fill-error-weak/80", floating ? "size-12 [&_svg]:size-5" : "size-16") : undefined} aria-label="End voice conversation" disabled={isDisconnecting} onClick={() => setEndDialogOpen(true)}>
           {overview ? <img src={voiceHangUpIcon} alt="" className="dark:brightness-150 dark:saturate-50" /> : <PhoneOff />}
         </Button>
       </div>
@@ -603,18 +605,23 @@ export default function Voiceinput({ onCancel, connectionPersonId, memoryId, his
       {onboardingModals}
       {endConfirmation}
       <VoiceBeam type="default" theme={resolvedTheme} colorVariant="sunset" level={aiLevel} idle={0} active={sessionActive && !isElevenLabsProvider} borderRadius={overview ? 24 : undefined} style={{ display: "block", width: "100%" }}>
-        <section aria-label="Voice conversation" className={cn("relative isolate flex flex-col text-text-neutral-strong", overview ? "min-h-[178px] justify-between gap-[18px] overflow-hidden rounded-3xl border border-stroke-neutral-weaker bg-fill-overview-banner p-6" : floating ? "dark min-h-[378px] max-h-[calc(100dvh-100px)] items-center justify-center gap-12 overflow-y-auto rounded-[32px] bg-fill-voice-elevated px-6 py-12 text-white shadow-[0_20px_60px_rgba(0,0,0,0.45),0_4px_16px_rgba(0,0,0,0.25)] ring-1 ring-white/10" : "min-h-[130px] justify-center gap-4 rounded-3xl border border-stroke-neutral-weak bg-fill-neutral-weak p-4")}>
+        <section aria-label="Voice conversation" className={cn("relative isolate flex flex-col text-text-neutral-strong", overview ? "min-h-[178px] justify-between gap-[18px] overflow-hidden rounded-3xl border border-stroke-neutral-weaker bg-fill-neutral-weak p-6" : floating ? "max-h-[calc(100dvh-100px)] gap-3 overflow-y-auto rounded-3xl bg-popover bg-[linear-gradient(var(--fill-neutral-weak),var(--fill-neutral-weak))] p-5 max-sm:px-3 shadow-[0_20px_60px_rgba(0,0,0,0.45),0_4px_16px_rgba(0,0,0,0.25)] ring-1 ring-stroke-neutral-weak" : "min-h-[130px] justify-center gap-4 rounded-3xl border border-stroke-neutral-weak bg-fill-neutral-weak p-4")}>
           {floating ? <>
-            <button type="button" data-voice-drag-handle aria-label="Move voice window" title="Drag to move. Use arrow keys when focused." className="absolute left-4 top-4 flex h-8 w-16 touch-none cursor-grab items-center justify-center rounded-full text-white/60 hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-white active:cursor-grabbing"><span aria-hidden className="h-1 w-8 rounded-full bg-current" /></button>
-            {settings}
-            <div className="flex flex-col items-center gap-4">
-              <VoiceArtwork voice={selectedVoice} className="size-[92px]" />
-              <div className="flex flex-col items-center gap-1">
-                <span aria-label="Call duration" className="font-geist text-xl font-bold tabular-nums">{formatVoiceSessionTime(recordingTime)}</span>
-                <p role="status" className="flex items-center gap-2 font-geist text-sm text-text-neutral-weak"><span aria-hidden className={cn("size-2 rounded-full", muted ? "bg-fill-error-strong" : "bg-fill-success-strong")} />{callStatus}</p>
+            <button type="button" data-voice-drag-handle aria-label="Move voice window" title="Drag to move. Use arrow keys when focused." className="absolute inset-0 -z-10 touch-none cursor-grab rounded-[inherit] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-stroke-neutral-strong active:cursor-grabbing" />
+            {/* Lets drags on the artwork, text, and gaps reach the handle behind this row. */}
+            <div className="pointer-events-none flex items-center justify-between gap-3">
+              <div className="flex min-w-0 items-center gap-3">
+                <VoiceArtwork voice={selectedVoice} className="size-12 shrink-0" />
+                <div className="flex min-w-0 flex-col">
+                  <div className="flex items-center gap-1">
+                    <span aria-label="Call duration" className="font-geist text-lg font-bold tabular-nums">{formatVoiceSessionTime(recordingTime)}</span>
+                    {settings}
+                  </div>
+                  <p role="status" className="flex items-center gap-2 font-geist text-sm text-text-neutral-weak"><span aria-hidden className={cn("size-2 shrink-0 rounded-full", muted ? "bg-fill-error-strong" : "bg-fill-success-strong")} />{callStatus}</p>
+                </div>
               </div>
+              {controls}
             </div>
-            {controls}
           </> : overview ? <>
             <div aria-hidden className="pointer-events-none absolute -top-[203px] left-1/2 -z-10 h-[573.383px] w-[764.51px] -translate-x-1/2 rotate-[6.45deg] opacity-20" style={{ maskImage: `url(${voiceGridMask})`, maskRepeat: "no-repeat", maskPosition: "240px 0" }}>
               <img src={voiceGridVertical} alt="" className="absolute left-0 top-0 max-w-none" />

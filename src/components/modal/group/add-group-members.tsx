@@ -1,19 +1,20 @@
 "use client";
 
 import { Checkbox } from "@/components/ui/checkbox";
-import { ModalCloseBtn } from "../modalLayout";
-import UserItem from "@/components/user-item";
+import { Button } from "@/components/ui/button";
+import { FormDialog, FormDialogFooter } from "@/components/modal/form-dialog";
+import { UserAvatar } from "@/components/user-avatar";
 import { useModal } from "@/hooks/use-modal";
-import Spinner from "@/components/spinner";
 import { useGuardedModalFetcher } from "@/components/modal/use-guarded-modal-fetcher";
 import { resolvePath } from "@/utility";
 import endpoint from "@/api/endpoint";
 import { toast } from "sonner";
 import { mutate } from "swr";
-import type { IBeneficiary } from "@/utility/interface";
+import type { IBeneficiary, IGroup } from "@/utility/interface";
 import { useState } from "react";
 import useSWR from "swr";
 import { fetcher } from "@/api/fetcher";
+import { groupDetailKey } from "@/api/groups";
 import { useRequestRecovery } from "@/hooks/use-request-recovery";
 
 interface AddGroupMembersProps {
@@ -35,16 +36,32 @@ export function AddGroupMembers({ data: groupId }: AddGroupMembersProps) {
     error,
     isLoading,
     mutate: refresh,
-  } = useSWR(`${endpoint.beneficiaries}?page=${page}`, fetcher, {
-    shouldRetryOnError: false,
-  });
+  } = useSWR<{ data?: { docs?: IBeneficiary[]; hasNextPage?: boolean } }>(
+    `${endpoint.beneficiaries}?page=${page}`,
+    fetcher,
+    { shouldRetryOnError: false },
+  );
+  const { data: groupData } = useSWR<{ data?: IGroup }>(
+    groupDetailKey(groupId),
+    fetcher,
+    { shouldRetryOnError: false },
+  );
   const retry = useRequestRecovery(
     `group-members:${groupId}:${page}`,
     error,
     refresh,
     "Couldn’t load people. Please try again.",
   );
-  const beneficiaries: IBeneficiary[] = beneficiariesData?.data?.docs ?? [];
+  const memberIds = new Set(
+    (groupData?.data?.members ?? []).map((member) =>
+      typeof member === "string" ? member : (member._id ?? ""),
+    ),
+  );
+  const people: IBeneficiary[] = (beneficiariesData?.data?.docs ?? []).filter(
+    (person: IBeneficiary) => !memberIds.has(person._id ?? ""),
+  );
+  const hasNextPage = Boolean(beneficiariesData?.data?.hasNextPage);
+  const dismiss = () => close?.("add-group-members");
 
   const toggle = (id: string) => {
     if (isMutating || error) return;
@@ -65,100 +82,98 @@ export function AddGroupMembers({ data: groupId }: AddGroupMembersProps) {
         (key) => typeof key === "string" && key.startsWith("/groups"),
       ).catch(() => undefined);
       toast.success(result?.message ?? "Members added");
-      close?.("add-group-members");
+      dismiss();
     }
   };
 
   if (!groupId) return null;
 
   return (
-    <div className="modal-container max-w-lg">
-      <ModalCloseBtn onClick={() => close?.("add-group-members")} />
-      <div className="space-y-6">
-        <h4 className="modal-title">Add members</h4>
-        <p className="font-inter text-sm text-v3-text-weak">
-          Select people to add to this group.
-        </p>
-        <ul className="max-h-64 space-y-2 overflow-y-auto">
+    <FormDialog
+      title="Add people"
+      description="Select people from your connections to add to this group."
+      onClose={dismiss}
+      busy={isMutating}
+    >
+      <div className="flex flex-col gap-5">
+        <ul className="flex max-h-80 flex-col gap-1 overflow-y-auto">
           {isLoading ? (
-            <li role="status">Loading people…</li>
-          ) : error ? (
-            <li>
-              <button type="button" className="btn-outline" onClick={retry}>
-                Retry loading beneficiaries
-              </button>
+            <li role="status" className="py-6 text-center text-sm text-text-neutral-weak">
+              Loading people…
             </li>
-          ) : beneficiaries.length === 0 ? (
-            <li className="font-inter text-sm text-v3-text-weaker">
-              {page > 1
-                ? "No people on this page."
-                : "No people to add."}
+          ) : error ? (
+            <li className="py-4 text-center">
+              <Button variant="outline" onClick={retry}>
+                Retry loading beneficiaries
+              </Button>
+            </li>
+          ) : people.length === 0 ? (
+            <li className="py-6 text-center text-sm text-text-neutral-weak">
+              {page > 1 ? "No people on this page." : "No people to add."}
             </li>
           ) : (
-            beneficiaries.map((b) => (
-              <li
-                key={b._id}
-                className="flex items-center justify-between rounded-lg border border-v3-stroke-weak py-2 px-3"
-              >
-                <UserItem {...b} avatarSize="sm" />
-                <Checkbox
-                  disabled={isMutating}
-                  aria-label={`Select ${b.name || b.email}`}
-                  checked={selectedIds.includes(b._id ?? "")}
-                  onCheckedChange={() => toggle(b._id ?? "")}
-                />
-              </li>
-            ))
+            people.map((person) => {
+              const id = person._id ?? "";
+              return (
+                <li key={id}>
+                  <label className="flex cursor-pointer items-center gap-3 rounded-xl p-2 hover:bg-fill-neutral-weak">
+                    <UserAvatar
+                      alt={person.name || person.email}
+                      src={person.user?.picture_url}
+                      name={person.name}
+                      email={person.email}
+                      userId={person.user?._id}
+                      size="md"
+                    />
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm font-semibold text-text-neutral-strong">
+                        {person.name || person.email}
+                      </span>
+                      <span className="block truncate text-xs capitalize text-text-neutral-weak">
+                        {person.relationship || person.email}
+                      </span>
+                    </span>
+                    <Checkbox
+                      disabled={isMutating}
+                      aria-label={`Select ${person.name || person.email}`}
+                      checked={selectedIds.includes(id)}
+                      onCheckedChange={() => toggle(id)}
+                    />
+                  </label>
+                </li>
+              );
+            })
           )}
         </ul>
-        <div className="flex justify-between gap-2">
-          <button
-            type="button"
-            className="btn-outline"
-            disabled={page === 1 || isMutating || isLoading}
-            onClick={() => setPage((current) => current - 1)}
-          >
-            Previous page
-          </button>
-          <button
-            type="button"
-            className="btn-outline"
-            disabled={
-              isMutating ||
-              isLoading ||
-              Boolean(error) ||
-              !beneficiariesData?.data?.hasNextPage
-            }
-            onClick={() => setPage((current) => current + 1)}
-          >
-            Next page
-          </button>
-        </div>
-        <div className="flex justify-end gap-2">
-          <button
-            type="button"
-            disabled={isMutating}
-            onClick={() => close?.("add-group-members")}
-            className="btn-outline"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            onClick={handleSubmit}
-            disabled={
-              isMutating ||
-              isLoading ||
-              Boolean(error) ||
-              selectedIds.length === 0
-            }
-            className="btn"
-          >
-            Add selected
-            <Spinner className="!size-4" loading={isMutating} />
-          </button>
-        </div>
+        {page > 1 || hasNextPage ? (
+          <div className="flex justify-between gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              disabled={page === 1 || isMutating || isLoading}
+              onClick={() => setPage((current) => current - 1)}
+            >
+              Previous page
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              disabled={isMutating || isLoading || Boolean(error) || !hasNextPage}
+              onClick={() => setPage((current) => current + 1)}
+            >
+              Next page
+            </Button>
+          </div>
+        ) : null}
+        <FormDialogFooter
+          submitLabel="Add to group"
+          busyLabel="Adding…"
+          busy={isMutating}
+          disabled={isLoading || Boolean(error) || selectedIds.length === 0}
+          onDismiss={dismiss}
+          onSubmit={() => void handleSubmit()}
+        />
       </div>
-    </div>
+    </FormDialog>
   );
 }

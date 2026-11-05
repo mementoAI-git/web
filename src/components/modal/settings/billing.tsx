@@ -176,14 +176,9 @@ export default function Billing() {
         title="Manage plan"
         description="Choose the plan that fits your memories."
       />
-      <header>
-        <h2 className="font-garamond text-[40px] font-medium leading-[48px]">
-          Billing
-        </h2>
-        <p className="mt-1 text-sm text-text-neutral-weak">
-          Manage your subscription, invoices, and payment methods.
-        </p>
-      </header>
+      <p className="text-sm text-text-neutral-weak">
+        Manage your subscription, invoices, and payment methods.
+      </p>
       <Tabs
         value={tab}
         onValueChange={(value) => setTab(String(value))}

@@ -5,7 +5,9 @@ vi.mock("@/lib/posthog", () => ({
 import { screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import userEvent from "@testing-library/user-event";
+import { http, HttpResponse } from "msw";
 import { renderWithProviders } from "@/test";
+import { server } from "@/test/mocks/server";
 import { AddBeneficiary } from "./index";
 
 const trigger = vi.fn().mockResolvedValue({ success: true });
@@ -21,10 +23,10 @@ describe("existing invitation flow", () => {
       renderWithProviders(<AddBeneficiary data={{ mode }} />, { auth: true });
       expect(
         screen.getByRole("heading", {
-          name: mode !== "beneficiary" ? "Invite people" : "Invite beneficiary",
+          name: mode !== "beneficiary" ? "Invite person" : "Invite beneficiary",
         }),
       ).toBeInTheDocument();
-      await userEvent.type(screen.getByLabelText("Email"), "ada@example.com");
+      await userEvent.type(screen.getByLabelText(mode !== "beneficiary" ? "Email address" : "Email"), "ada@example.com");
       await userEvent.type(screen.getByPlaceholderText("John Doe"), "Ada");
       await userEvent.type(
         screen.getByPlaceholderText("Brother, Friend, Spouse…"),
@@ -49,4 +51,31 @@ describe("existing invitation flow", () => {
       else expect(payload).not.toHaveProperty("access_scope");
     },
   );
+
+  it("adds a connection invite to the marked groups", async () => {
+    server.use(
+      http.get("http://localhost:3000/api/groups", () =>
+        HttpResponse.json({
+          success: true,
+          data: {
+            docs: [
+              { _id: "family", name: "Family", color: 0, members: [] },
+              { _id: "friends", name: "Friends", color: 3, members: [] },
+            ],
+            totalPages: 1,
+          },
+        }),
+      ),
+    );
+    renderWithProviders(<AddBeneficiary data={{ mode: "connection" }} />, { auth: true });
+    const family = await screen.findByRole("button", { name: "Family" });
+    expect(family).toHaveAttribute("aria-pressed", "false");
+    await userEvent.click(family);
+    expect(family).toHaveAttribute("aria-pressed", "true");
+    await userEvent.type(screen.getByLabelText("Email address"), "ada@example.com");
+    await userEvent.type(screen.getByLabelText("Name"), "Ada");
+    await userEvent.type(screen.getByLabelText("Relationship"), "Friend");
+    await userEvent.click(screen.getByRole("button", { name: "Send invite" }));
+    expect(trigger.mock.calls.at(-1)?.[0]).toMatchObject({ groups: ["family"] });
+  });
 });

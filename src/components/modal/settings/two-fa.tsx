@@ -1,12 +1,12 @@
 import Spinner from "@/components/spinner";
+import { Button } from "@/components/ui/button";
 import { useStore } from "@/hooks/use-store";
 import { useModal } from "@/hooks/use-modal";
 import { toast } from "sonner";
 import useFetcher from "@/hooks/use-fetcher";
 import endpoint from "@/api/endpoint";
 import { mutate } from "swr";
-import { SettingsPillButton } from "./settings-action-row";
-import { SettingsSectionCard } from "./settings-section-card";
+import { cn } from "@/utility";
 
 export default function TwoFactorAuthenticator() {
   const { push } = useModal();
@@ -29,39 +29,49 @@ export default function TwoFactorAuthenticator() {
     }
   };
 
+  const isReady = hydrated && Boolean(user);
   const isEnabled = user?.two_factor?.enabled;
 
-  const statusLabel = !hydrated || !user ? (
-    <span className="inline-block h-4 w-32 rounded-full bg-v3-fill-weaker" aria-hidden />
-  ) : isEnabled ? (
-    "Authenticator app is set up."
-  ) : (
-    "Authenticator app is not set up yet."
-  );
-
   return (
-    <SettingsSectionCard
-      title="Two-factor authentication"
-      description={statusLabel}
-      headerAction={
-        !hydrated || !user ? null : isEnabled ? (
-          <SettingsPillButton
-            type="button"
-            variant="default"
-            disabled={disabling}
-            onClick={handleDisable2FA}
-            className="border-danger/40 text-danger hover:bg-danger/5"
+    <div className="settings-row min-h-9 flex-wrap">
+      <div className="flex min-w-0 items-center gap-1.5 text-sm text-text-neutral-strong">
+        2-Factor Authentication
+        {isReady ? (
+          <span
+            className={cn(
+              "rounded-full px-2.5 py-0.5 text-xs font-semibold",
+              isEnabled
+                ? "bg-fill-success-weak text-text-success-strong"
+                : "bg-fill-error-weak text-text-error-strong",
+            )}
           >
-            <span>Turn off 2FA</span>
-            {disabling ? <Spinner loading className="!size-4 text-danger" /> : null}
-          </SettingsPillButton>
-        ) : (
-          <SettingsPillButton type="button" variant="default" disabled={enabling} onClick={handleSetup2FA}>
-            <span>Set up</span>
-            {enabling ? <Spinner loading className="!size-4 text-v3-text-strong" /> : null}
-          </SettingsPillButton>
-        )
-      }
-    />
+            {isEnabled ? "On" : "Off"}
+          </span>
+        ) : null}
+      </div>
+      {!isReady ? null : isEnabled ? (
+        <Button
+          type="button"
+          variant="ghost"
+          className="settings-pill h-9 px-4"
+          disabled={disabling}
+          onClick={handleDisable2FA}
+        >
+          Turn off 2FA
+          {disabling ? <Spinner loading className="!size-4" /> : null}
+        </Button>
+      ) : (
+        <Button
+          type="button"
+          variant="ghost"
+          className="settings-pill h-9 px-4"
+          disabled={enabling}
+          onClick={handleSetup2FA}
+        >
+          Setup 2FA
+          {enabling ? <Spinner loading className="!size-4" /> : null}
+        </Button>
+      )}
+    </div>
   );
 }

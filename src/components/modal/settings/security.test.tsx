@@ -68,7 +68,7 @@ describe("Security settings — PasskeyManager", () => {
     await user.click(within(dialog).getByRole("button", { name: "Remove passkey" }));
     await waitFor(() => expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument());
     expect(screen.queryByText("Test laptop")).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Add a passkey" })).toHaveFocus();
+    expect(screen.getByRole("button", { name: "Add passkey" })).toHaveFocus();
   });
 
   it("shows 'No passkeys registered yet' when list is empty", async () => {
@@ -77,6 +77,17 @@ describe("Security settings — PasskeyManager", () => {
     await waitFor(() => {
       expect(screen.getByText(/no passkeys registered yet/i)).toBeInTheDocument();
     });
+  });
+
+  it("counts registered passkeys and shows when each was added", async () => {
+    server.use(http.get("http://localhost:3000/api/users/passkeys", () => HttpResponse.json({ data: [
+      { credential_id: "one", device_name: "Laptop", created_at: "2026-09-18T12:00:00Z" },
+      { credential_id: "two", device_name: "Phone", created_at: "2026-07-20T12:00:00Z" },
+    ] })));
+    await renderSecurity();
+    expect(await screen.findByText("2 added")).toBeInTheDocument();
+    expect(screen.getByText("Added Sep 18, 2026")).toBeInTheDocument();
+    expect(screen.getByText("Added Jul 20, 2026")).toBeInTheDocument();
   });
 
   it("renders passkey list when API returns entries", async () => {
@@ -105,7 +116,7 @@ describe("Security settings — PasskeyManager", () => {
   it("shows 'Add a passkey' button", async () => {
     await renderSecurity();
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: /add a passkey/i })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /add passkey/i })).toBeInTheDocument();
     });
   });
 
@@ -115,11 +126,11 @@ describe("Security settings — PasskeyManager", () => {
 
     await renderSecurity();
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: /add a passkey/i })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /add passkey/i })).toBeInTheDocument();
     });
 
     const user = userEvent.setup();
-    await user.click(screen.getByRole("button", { name: /add a passkey/i }));
+    await user.click(screen.getByRole("button", { name: /add passkey/i }));
 
     await waitFor(() => {
       expect(mockStartRegistration).toHaveBeenCalledOnce();
@@ -133,12 +144,12 @@ describe("Security settings — PasskeyManager", () => {
 
     await renderSecurity();
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: /add a passkey/i })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /add passkey/i })).toBeInTheDocument();
     });
 
     const user = userEvent.setup();
     // Should not throw
-    await user.click(screen.getByRole("button", { name: /add a passkey/i }));
+    await user.click(screen.getByRole("button", { name: /add passkey/i }));
     await waitFor(() => {
       expect(mockStartRegistration).toHaveBeenCalledOnce();
     });
@@ -192,13 +203,13 @@ describe("Security settings — PasskeyManager", () => {
     // Clicking should not throw; button becomes disabled while deleting
     await user.click(deleteBtn);
     // Component remains mounted without errors
-    expect(screen.getByText(/passkeys/i)).toBeInTheDocument();
+    expect(screen.getByText("Passkeys")).toBeInTheDocument();
   });
 
   it("renders the Two-factor authentication section", async () => {
     await renderSecurity();
     await waitFor(() => {
-      expect(screen.getByText(/two-factor authentication/i)).toBeInTheDocument();
+      expect(screen.getByText(/2-factor authentication/i)).toBeInTheDocument();
     });
   });
 
@@ -227,7 +238,7 @@ describe("Change password dialog", () => {
     await user.type(screen.getByLabelText("New password"), "New-password1!");
     await user.type(screen.getByLabelText("Confirm password"), "New-password1!");
     await user.click(screen.getByRole("button", { name: "Save password" }));
-    expect(screen.getByRole("button", { name: "Save password" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /Saving/ })).toBeDisabled();
     await user.keyboard("{Escape}");
     expect(screen.getByRole("dialog", { name: "Change password" })).toBeVisible();
     release();

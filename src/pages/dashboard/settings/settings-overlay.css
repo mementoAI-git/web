@@ -1,0 +1,93 @@
+.settings-page {
+  --font-inter: var(--font-rounded);
+  --font-geist: var(--font-rounded);
+  display: flex;
+  height: 100%;
+  min-height: 0;
+  flex-direction: column;
+  background: var(--insights-page-background);
+  color: var(--text-neutral-strong);
+  font-family: var(--font-rounded);
+}
+.settings-card {
+  border-radius: 16px;
+  background: var(--insights-card);
+}
+.settings-row {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-radius: 12px;
+  transition: background-color 150ms ease-out;
+}
+a.settings-row:hover,
+button.settings-row:hover {
+  background: var(--fill-neutral-weak);
+}
+a.settings-row:focus-visible,
+button.settings-row:focus-visible {
+  outline: 2px solid var(--stroke-neutral-strong);
+  outline-offset: -2px;
+}
+.settings-pill {
+  flex: none;
+  border-radius: 999px !important;
+  background: color-mix(in srgb, var(--text-neutral-strong) 24%, transparent) !important;
+  color: var(--text-neutral-strong) !important;
+  font-weight: 600;
+}
+.settings-pill:hover {
+  background: color-mix(in srgb, var(--text-neutral-strong) 32%, transparent) !important;
+}
+/* Quiet inline fields read as values until they are focused. */
+.settings-value-input {
+  height: 32px !important;
+  border: 0 !important;
+  background: transparent !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+  color: var(--text-neutral-strong);
+  font-size: 16px !important;
+  text-align: right;
+  text-overflow: ellipsis;
+}
+.settings-value-input:focus-visible {
+  border-radius: 4px;
+  outline: 2px solid var(--stroke-neutral-strong);
+  outline-offset: 2px;
+}
+.settings-value-input::placeholder {
+  color: var(--text-neutral-weaker);
+}
+.settings-value-input[readonly]:focus-visible {
+  outline: none;
+}
+.settings-value-input::-webkit-calendar-picker-indicator {
+  display: none;
+}
+.settings-value-input::-webkit-date-and-time-value {
+  text-align: right;
+}
+.settings-value-input::-webkit-datetime-edit {
+  display: inline-flex;
+  width: 100%;
+  justify-content: flex-end;
+}
+.settings-value-input[data-empty]::-webkit-datetime-edit {
+  color: var(--text-neutral-weaker);
+}
+@media (max-width: 639px) {
+  .settings-value-input {
+    text-align: left;
+  }
+  .settings-value-input::-webkit-datetime-edit {
+    justify-content: flex-start;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .settings-row {
+    transition: none;
+  }
+}

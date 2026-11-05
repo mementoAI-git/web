@@ -1,4 +1,4 @@
-import { StripBannerFrame } from "@/components/strip-banner-frame";
+import { StripBanner } from "@/components/strip-banner-frame";
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useStore } from "@/hooks/use-store";
@@ -23,32 +23,30 @@ export function OnboardingNudgeBanner() {
   if (complete || !skipped) return null;
 
   return (
-    <StripBannerFrame>
-      <div
-        className="flex w-full max-w-full flex-wrap items-center justify-between gap-4 rounded border-l-4 border-l-stroke-info-strong bg-fill-info-weak px-4 py-1"
-        role="banner"
-      >
-        <p className="text-sm text-text-info-strong">
-          Finish setting up your Memento — it only takes a few minutes.
-        </p>
-        <div className="flex shrink-0 items-center gap-2">
-          <button
-            type="button"
-            onClick={() => navigate("/onboarding")}
-            className="rounded text-sm font-medium text-text-info-strong transition-colors hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-v3-brand-strong focus-visible:ring-offset-2"
-          >
-            Continue setup →
-          </button>
-          <button
-            type="button"
-            onClick={() => setDismissed(true)}
-            aria-label="Dismiss"
-            className="rounded p-1 text-icon-info-strong transition-colors hover:text-text-info-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-v3-brand-strong focus-visible:ring-offset-2"
-          >
-            ✕
-          </button>
-        </div>
+    <StripBanner
+      className="flex max-w-full flex-wrap items-center justify-between gap-4 px-4 py-1"
+      role="banner"
+    >
+      <p className="text-sm">
+        Finish setting up your Memento — it only takes a few minutes.
+      </p>
+      <div className="flex shrink-0 items-center gap-2">
+        <button
+          type="button"
+          onClick={() => navigate("/onboarding")}
+          className="rounded text-sm font-medium transition-colors hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stroke-neutral-strong focus-visible:ring-offset-2"
+        >
+          Continue setup →
+        </button>
+        <button
+          type="button"
+          onClick={() => setDismissed(true)}
+          aria-label="Dismiss"
+          className="rounded p-1 text-icon-neutral-weak transition-colors hover:text-icon-neutral-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stroke-neutral-strong focus-visible:ring-offset-2"
+        >
+          ✕
+        </button>
       </div>
-    </StripBannerFrame>
+    </StripBanner>
   );
 }

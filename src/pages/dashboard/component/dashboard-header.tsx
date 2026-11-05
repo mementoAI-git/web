@@ -75,6 +75,8 @@ interface DashboardHeaderProps {
     searchLabel: string;
     closeLabel: string;
     searchExpanded?: boolean;
+    /** Adds the theme switcher and streak to the overlay's controls. */
+    showAccountControls?: boolean;
     onSearch: () => void;
     onClose: () => void;
   };
@@ -92,6 +94,30 @@ const convIconBtn =
 
 const overviewActionClass =
   "size-10 shrink-0 rounded-full bg-fill-neutral-weak p-0 [&_svg]:size-5";
+
+function OverviewStreakButton() {
+  const { user } = useStore();
+  return (
+    <StreakTracker>
+      <button
+        type="button"
+        aria-label={`Streak: ${user?.streak || 0} days`}
+        className={cn(
+          overviewActionClass,
+          "relative flex cursor-pointer items-center justify-center transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stroke-neutral-strong",
+        )}
+      >
+        <OverviewDesignIcon name="streak" alt="Streak" />
+        <span
+          aria-hidden
+          className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-bg-neutral px-1 font-geist text-[10px] font-semibold leading-none text-text-neutral-strong ring-1 ring-stroke-neutral-weak"
+        >
+          {user?.streak || 0}
+        </span>
+      </button>
+    </StreakTracker>
+  );
+}
 
 /** Matches the dashboard's reopen control; hidden while the sidebar is open. */
 function OverlaySidebarToggle() {
@@ -153,12 +179,21 @@ export function DashboardHeader(props: DashboardHeaderProps) {
         >
           <IconSearch aria-hidden />
         </Button>
+        {overlay.showAccountControls ? (
+          <ThemeSwitcher
+            lightIcon={<OverviewDesignIcon name="sun" />}
+            darkIcon={<OverviewDesignIcon name="sun" />}
+            className={overviewActionClass}
+            contentClassName="navigation-menu"
+          />
+        ) : null}
         <QuickTools
           overview
           icon={<OverviewDesignIcon name="tools" />}
           className={overviewActionClass}
           contentClassName="z-[120]"
         />
+        {overlay.showAccountControls ? <OverviewStreakButton /> : null}
         <Button
           variant="ghost"
           size="icon-lg"

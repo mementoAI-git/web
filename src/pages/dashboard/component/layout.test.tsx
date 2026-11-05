@@ -35,6 +35,11 @@ vi.mock("@/features/onboarding-groot", () => ({
 import DashboardLayout from "./layout";
 
 describe("DashboardLayout", () => {
+  it("hides the dashboard chrome on settings routes", () => {
+    renderWithProviders(<ChatSidebarProvider><DashboardLayout /></ChatSidebarProvider>, {route: "/settings/security", auth: true});
+    expect(screen.queryByTestId("dashboard-sidebar")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("dashboard-header")).not.toBeInTheDocument();
+  });
   it.each([["/chat/people", false], ["/overview", false], ["/stories", false]])("keeps the full sidebar on %s", (route, compact) => {
     renderWithProviders(<ChatSidebarProvider><DashboardLayout /></ChatSidebarProvider>, {route, auth: true});
     expect(screen.getByTestId("dashboard-sidebar")).toHaveAttribute("data-compact", String(compact));

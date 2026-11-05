@@ -1,10 +1,4 @@
-import {
-  useId,
-  useRef,
-  useState,
-  type CSSProperties,
-  type ReactNode,
-} from "react";
+import { useId, useRef, useState, type ReactNode } from "react";
 import dayjs from "dayjs";
 import { ClockCheck, MoreHorizontal } from "lucide-react";
 import useSWR from "swr";
@@ -33,8 +27,7 @@ import {
   PopoverContent,
 } from "@/components/ui/popover";
 import { Spinner } from "@/components/ui/spinner";
-import type { EnrichmentCategory } from "@/features/enrichment/enrichment-categories";
-import { enrichmentFieldColor } from "./enrichment-fields";
+import { getQuestionIdenticonUrl } from "@/features/explore/question-identicon";
 import type { InsightSource } from "./insights-api.types";
 import { joinObservation } from "./observation-display";
 import type { PersonaObservationSourcesResponse } from "./observations-api.types";
@@ -53,30 +46,6 @@ const MAX_NOTE_LENGTH = 378;
 
 const observationUrl = (id: string) =>
   endpoint.personaObservation.replace(":observationId", id);
-
-/** The folder color carries no meaning, so it rotates through a fixed palette. */
-const FOLDER_COLORS: readonly EnrichmentCategory[] = [
-  "memories_experiences",
-  "lessons_wisdom",
-  "hopes_legacy",
-  "identity_self",
-  "passions_interests",
-];
-
-function ObservationFolder({ index }: { index: number }) {
-  const field = FOLDER_COLORS[index % FOLDER_COLORS.length];
-  return (
-    <svg
-      aria-hidden="true"
-      viewBox="0 0 28 28"
-      className="insights-folder"
-      style={{ "--field": enrichmentFieldColor(field) } as CSSProperties}
-    >
-      <rect x="5" y="2" width="18" height="2.5" rx="1.2" />
-      <path d="M2.5 7a1 1 0 0 1 1-1h21a1 1 0 0 1 1 1l-2 16.2a2 2 0 0 1-2 1.8h-15a2 2 0 0 1-2-1.8L2.5 7Z" />
-    </svg>
-  );
-}
 
 function ObservationSources({
   id,
@@ -283,12 +252,10 @@ type Action = "sources" | "edit" | "forget";
 
 function ObservationCard({
   item,
-  index,
   onViewSource,
   onChanged,
 }: {
   item: ObservationItem;
-  index: number;
   onViewSource: (source: InsightSource) => void;
   onChanged: () => Promise<unknown>;
 }) {
@@ -298,7 +265,16 @@ function ObservationCard({
   const optionsButton = useRef<HTMLButtonElement>(null);
   return (
     <article className="insights-card insights-observation">
-      <ObservationFolder index={index} />
+      <img
+        src={getQuestionIdenticonUrl(item.id)}
+        alt=""
+        width={40}
+        height={40}
+        loading="lazy"
+        decoding="async"
+        referrerPolicy="no-referrer"
+        className="size-10 shrink-0 rounded-md bg-fill-neutral-weak object-cover"
+      />
       <div className="min-w-0 flex-1">
         <h3 className="truncate font-inter text-base font-medium text-text-neutral-strong">
           {item.title}
@@ -400,11 +376,10 @@ export function ObservationList({
   if (!items.length) return empty;
   return (
     <div className="insights-list">
-      {items.map((item, index) => (
+      {items.map((item) => (
         <ObservationCard
           key={item.id}
           item={item}
-          index={index}
           onViewSource={onViewSource}
           onChanged={onChanged}
         />

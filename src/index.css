@@ -15,6 +15,22 @@
 
 @font-face {
   font-family: "SF Pro Rounded";
+  src: local("SFProRounded-Medium"), local("SF Pro Rounded Medium");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "SF Pro Rounded";
+  src: local("SFProRounded-Semibold"), local("SF Pro Rounded Semibold");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "SF Pro Rounded";
   src: local("SFProRounded-Bold"), local("SF Pro Rounded Bold");
   font-weight: 700;
   font-style: normal;
@@ -117,7 +133,6 @@
 
   /* Overview design surfaces and accents. */
   --fill-lime-weak: rgba(161, 177, 43, 0.11);
-  --fill-overview-banner: var(--fill-lime-weak);
   --gradient-overview-banner: linear-gradient(
     0deg,
     rgba(255, 223, 118, 0.15),
@@ -125,7 +140,15 @@
   );
   --gradient-overview-voice: linear-gradient(0deg, rgba(255, 223, 118, 0.08), rgba(255, 176, 41, 0.15));
   --fill-overview-voice: #20c660;
-  --fill-voice-elevated: #1d1e26;
+  /* Group identity colors, indexed by the color stored on each group. */
+  --group-color-0: #42a8f5;
+  --group-color-1: #22c55e;
+  --group-color-2: #ff7b72;
+  --group-color-3: #a78bfa;
+  --group-color-4: #f48fdc;
+  --group-color-5: #4dd0e1;
+  --group-color-6: #eab308;
+  --group-on-color: var(--brown-1000);
   --fill-chat-user: rgba(224, 148, 67, 0.14);
   --text-overview-voice: var(--brown-1000);
   --text-overview-greeting: #e5c600;
@@ -566,7 +589,6 @@
   --icon-neutral-weak: var(--text-neutral-weak);
   --stroke-neutral-weak: rgba(27, 29, 35, 0.12);
   --stroke-neutral-weaker: rgba(27, 29, 35, 0.06);
-  --fill-overview-banner: var(--sky-surface);
   --card: var(--sky-surface);
   --popover: var(--bg-raised);
   --secondary: var(--fill-neutral-strong);
@@ -709,10 +731,8 @@
   --color-bg-overview-sidebar: var(--bg-overview-sidebar);
   --color-fill-topic-badge: var(--fill-topic-badge);
   --color-topic-badge: var(--text-topic-badge);
-  --color-fill-voice-elevated: var(--fill-voice-elevated);
   --color-fill-chat-user: var(--fill-chat-user);
   --color-fill-lime-weak: var(--fill-lime-weak);
-  --color-fill-overview-banner: var(--fill-overview-banner);
   --color-fill-overview-voice: var(--fill-overview-voice);
   --color-overview-voice: var(--text-overview-voice);
   --color-overview-greeting: var(--text-overview-greeting);

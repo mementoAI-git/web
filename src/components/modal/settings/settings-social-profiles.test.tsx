@@ -29,31 +29,33 @@ describe("SettingsSocialProfiles", () => {
   it("shows common fields inline and adds remaining platforms once", async () => {
     setup();
     await waitFor(() =>
-      expect(screen.getByRole("textbox", { name: "Twitter / X" })).toHaveValue(
-        "https://x.com/memento",
+      expect(screen.getByRole("textbox", { name: "X / Twitter" })).toHaveValue(
+        "@memento",
       ),
     );
-    expect(screen.getAllByRole("textbox")).toHaveLength(4);
-    for (const name of ["Facebook", "LinkedIn", "Instagram"])
+    expect(screen.getAllByRole("textbox")).toHaveLength(3);
+    for (const name of ["LinkedIn", "Instagram"])
       expect(screen.getByRole("textbox", { name })).toBeVisible();
-    expect(screen.getByRole("button", { name: "Save changes" })).toBeDisabled();
+    expect(screen.queryByRole("button", { name: "Save changes" })).not.toBeInTheDocument();
     const user = userEvent.setup();
     await user.click(
-      screen.getByRole("button", { name: "Add social profile" }),
+      screen.getByRole("button", { name: "Add new" }),
     );
     await user.click(screen.getByRole("menuitem", { name: "Bluesky" }));
     await waitFor(() =>
       expect(screen.getByRole("textbox", { name: "Bluesky" })).toHaveFocus(),
     );
     await user.click(
-      screen.getByRole("button", { name: "Add social profile" }),
+      screen.getByRole("button", { name: "Add new" }),
     );
     expect(
       screen.queryByRole("menuitem", { name: "Bluesky" }),
     ).not.toBeInTheDocument();
     await user.click(screen.getByRole("menuitem", { name: "YouTube" }));
+    await user.click(screen.getByRole("button", { name: "Add new" }));
+    await user.click(screen.getByRole("menuitem", { name: "Facebook" }));
     expect(
-      screen.queryByRole("button", { name: "Add social profile" }),
+      screen.queryByRole("button", { name: "Add new" }),
     ).not.toBeInTheDocument();
   });
   it("saves manual links and removal markers without clearing untouched platforms", async () => {
@@ -66,12 +68,12 @@ describe("SettingsSocialProfiles", () => {
     );
     setup();
     await waitFor(() =>
-      expect(screen.getByRole("textbox", { name: "Twitter / X" })).toHaveValue(
-        "https://x.com/memento",
+      expect(screen.getByRole("textbox", { name: "X / Twitter" })).toHaveValue(
+        "@memento",
       ),
     );
     const user = userEvent.setup();
-    await user.clear(screen.getByRole("textbox", { name: "Twitter / X" }));
+    await user.clear(screen.getByRole("textbox", { name: "X / Twitter" }));
     await user.type(
       screen.getByRole("textbox", { name: "LinkedIn" }),
       "https://linkedin.com/in/my-profile",
@@ -95,13 +97,13 @@ describe("SettingsSocialProfiles", () => {
     await user.click(screen.getByRole("button", { name: "Save changes" }));
     await waitFor(() =>
       expect(
-        screen.getByRole("button", { name: "Save changes" }),
-      ).toBeDisabled(),
+        screen.queryByRole("button", { name: "Save changes" }),
+      ).not.toBeInTheDocument(),
     );
     expect(screen.getByRole("textbox", { name: "LinkedIn" })).toHaveValue(
       "https://www.linkedin.com/in/my-profile",
     );
-    expect(screen.getByRole("textbox", { name: "Twitter / X" })).toHaveValue(
+    expect(screen.getByRole("textbox", { name: "X / Twitter" })).toHaveValue(
       "",
     );
     expect(payload).toEqual({
@@ -111,16 +113,36 @@ describe("SettingsSocialProfiles", () => {
       },
     });
   });
+  it("accepts a typed handle and offers Paste on empty fields", async () => {
+    let payload: unknown;
+    server.use(
+      http.put(`${base}/users/persona`, async ({ request }) => {
+        payload = await request.json();
+        return HttpResponse.json({ success: true });
+      }),
+    );
+    setup();
+    const user = userEvent.setup();
+    const instagram = await screen.findByRole("textbox", { name: "Instagram" });
+    expect(screen.getByRole("button", { name: "Paste LinkedIn link" })).toBeInTheDocument();
+    await user.type(instagram, "@memento_app");
+    await user.click(screen.getByRole("button", { name: "Save changes" }));
+    await waitFor(() =>
+      expect(payload).toEqual({
+        social_accounts: { instagram: "https://www.instagram.com/memento_app" },
+      }),
+    );
+  });
   it("rejects a video URL in the YouTube profile field", async () => {
     setup();
     await waitFor(() =>
-      expect(screen.getByRole("textbox", { name: "Twitter / X" })).toHaveValue(
-        "https://x.com/memento",
+      expect(screen.getByRole("textbox", { name: "X / Twitter" })).toHaveValue(
+        "@memento",
       ),
     );
     const user = userEvent.setup();
     await user.click(
-      screen.getByRole("button", { name: "Add social profile" }),
+      screen.getByRole("button", { name: "Add new" }),
     );
     await user.click(screen.getByRole("menuitem", { name: "YouTube" }));
     await user.type(
@@ -140,22 +162,22 @@ describe("SettingsSocialProfiles", () => {
       ),
     );
     await waitFor(() =>
-      expect(screen.getByRole("textbox", { name: "Twitter / X" })).toHaveValue(
-        "https://x.com/memento",
+      expect(screen.getByRole("textbox", { name: "X / Twitter" })).toHaveValue(
+        "@memento",
       ),
     );
     const user = userEvent.setup();
-    await user.clear(screen.getByRole("textbox", { name: "Twitter / X" }));
+    await user.clear(screen.getByRole("textbox", { name: "X / Twitter" }));
     await user.type(
-      screen.getByRole("textbox", { name: "Twitter / X" }),
+      screen.getByRole("textbox", { name: "X / Twitter" }),
       "https://x.com/newhandle",
     );
     await user.click(screen.getByRole("button", { name: "Save changes" }));
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "We couldn’t save your social profiles.",
     );
-    expect(screen.getByRole("textbox", { name: "Twitter / X" })).toHaveValue(
-      "https://x.com/newhandle",
+    expect(screen.getByRole("textbox", { name: "X / Twitter" })).toHaveValue(
+      "@newhandle",
     );
   });
 });

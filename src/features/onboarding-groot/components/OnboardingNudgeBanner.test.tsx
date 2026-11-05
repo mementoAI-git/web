@@ -58,8 +58,9 @@ describe("OnboardingNudgeBanner", () => {
     expect(screen.getByText(/finish setting up your memento/i)).toBeInTheDocument();
     const banner = container.querySelector('[role="banner"]');
     expect(banner?.className).toMatch(/\bw-full\b/);
-    expect(banner?.className).toMatch(/\bbg-fill-info-weak\b/);
-    expect(banner?.className).toMatch(/\bborder-l-stroke-info-strong\b/);
+    expect(banner?.className).toMatch(/\bbg-fill-neutral-weak\b/);
+    expect(banner?.className).toMatch(/\bborder-stroke-neutral-weak\b/);
+    expect(banner?.className).not.toMatch(/-info-/);
   });
 
   it("navigates to /onboarding when Continue setup clicked and no nickname yet", async () => {
