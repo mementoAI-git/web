@@ -1,0 +1,6 @@
+/* The wrapper owns the responsive gutters, so the surface fills it exactly. */
+@layer utilities {
+  .share-post-container.modal-container {
+    width: 100% !important;
+  }
+}
