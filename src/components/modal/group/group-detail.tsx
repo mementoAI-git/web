@@ -174,7 +174,7 @@ export function GroupDetail({ data: groupId }: GroupDetailProps) {
                 No members yet.
               </p>
               <p className="mt-0.5 font-inter text-xs text-v3-text-weaker">
-                Add beneficiaries to this group.
+                Add people to this group.
               </p>
             </div>
           ) : (

@@ -35,7 +35,7 @@ const settings = {
     component: <Security />,
   },
   beneficiary: {
-    label: "Beneficiary & Group",
+    label: "People & Groups",
     shortLabel: "People",
     icon: <Users size={16} strokeWidth={1.5} />,
     component: <Beneficiary />,

@@ -44,3 +44,12 @@ it.each(["Continue", "Skip for now"])(
     ).toBeInTheDocument();
   },
 );
+
+it("creates onboarding invitations with People’s shared-only default", async () => {
+  let payload: unknown;
+  server.use(http.post("*/beneficiaries", async ({request}) => {payload = await request.json(); return HttpResponse.json({success: true});}));
+  renderWithProviders(<BeneficiaryPage />, {route: "/onboarding/beneficiary", auth: true});
+  await userEvent.type(screen.getByLabelText("Email"), "ada@example.com");
+  await userEvent.click(screen.getByRole("button", {name: "Send invite"}));
+  await waitFor(() => expect(payload).toMatchObject({email: "ada@example.com", access_scope: "shared_only"}));
+});

@@ -42,7 +42,7 @@ export function AddGroupMembers({ data: groupId }: AddGroupMembersProps) {
     `group-members:${groupId}:${page}`,
     error,
     refresh,
-    "Couldn’t load beneficiaries. Please try again.",
+    "Couldn’t load people. Please try again.",
   );
   const beneficiaries: IBeneficiary[] = beneficiariesData?.data?.docs ?? [];
 
@@ -56,7 +56,7 @@ export function AddGroupMembers({ data: groupId }: AddGroupMembersProps) {
   const handleSubmit = async () => {
     if (isLoading || error || isMutating) return;
     if (selectedIds.length === 0) {
-      toast.error("Select at least one beneficiary.");
+      toast.error("Select at least one person.");
       return;
     }
     const result = await trigger({ beneficiaryIds: selectedIds });
@@ -77,11 +77,11 @@ export function AddGroupMembers({ data: groupId }: AddGroupMembersProps) {
       <div className="space-y-6">
         <h4 className="modal-title">Add members</h4>
         <p className="font-inter text-sm text-v3-text-weak">
-          Select beneficiaries to add to this group.
+          Select people to add to this group.
         </p>
         <ul className="max-h-64 space-y-2 overflow-y-auto">
           {isLoading ? (
-            <li role="status">Loading beneficiaries…</li>
+            <li role="status">Loading people…</li>
           ) : error ? (
             <li>
               <button type="button" className="btn-outline" onClick={retry}>
@@ -91,8 +91,8 @@ export function AddGroupMembers({ data: groupId }: AddGroupMembersProps) {
           ) : beneficiaries.length === 0 ? (
             <li className="font-inter text-sm text-v3-text-weaker">
               {page > 1
-                ? "No beneficiaries on this page."
-                : "No beneficiaries to add."}
+                ? "No people on this page."
+                : "No people to add."}
             </li>
           ) : (
             beneficiaries.map((b) => (

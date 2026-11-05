@@ -224,7 +224,7 @@ export class PreviewPeople {
       return ok(item);
     }
     if (action === "talk") {
-      if (person.memento_state !== "active")
+      if (person.memento_state !== "active" && !(verb === "GET" ? url.searchParams.get("shared_space") === "true" : body.shared_space === true))
         return verb === "GET"
           ? ok({ available: false, turns: [] })
           : unavailable();
@@ -257,6 +257,7 @@ export class PreviewPeople {
           ...common,
           id: `preview:${body.request_id}:user`,
           role: "user",
+          shared_input_id: typeof body.shared_input_id === "string" ? body.shared_input_id : undefined,
           text: String(body.text),
         },
         answer,

@@ -73,7 +73,8 @@ describe("PeoplePage", () => {
       ? HttpResponse.json({}, { status: 503 })
       : HttpResponse.json({ success: true, data: [{ user_id: "ada", name: "Ada" }] })));
     renderWithProviders(<PeoplePage />, { auth: true });
-    await userEvent.click(screen.getByRole("button", { name: "Blocked people" }));
+    await userEvent.click(screen.getByRole("button", { name: "People options" }));
+    await userEvent.click(screen.getByRole("menuitem", { name: "Blocked people" }));
     expect(screen.getByRole("dialog", { name: "Blocked people" })).toBeInTheDocument();
     const retry = await screen.findByRole("button", { name: "Retry loading blocked people" });
     expect(screen.queryByText("You haven’t blocked anyone.")).not.toBeInTheDocument();
@@ -128,7 +129,7 @@ describe("PeoplePage", () => {
       await screen.findByRole("heading", { name: "No connections yet" }),
     ).toBeInTheDocument();
     await userEvent.click(
-      screen.getAllByRole("button", { name: "Invite someone" })[0],
+      screen.getAllByRole("button", { name: "Invite people" })[0],
     );
     expect(screen.getByTestId("modal")).toHaveTextContent(
       '"mode":"connection"',
@@ -172,21 +173,16 @@ describe("PeoplePage", () => {
     );
   });
 
-  it("searches connections without showing inbox mechanics", async () => {
+  it("shows connections with options in the header and no search field", async () => {
     setup([tunde, { ...tunde, user_id: "person-ada", name: "Ada" }]);
     renderWithProviders(<PeoplePage />, { auth: true });
     await screen.findByRole("button", { name: "Ada Friend" });
-    await userEvent.type(
-      screen.getByRole("searchbox", { name: "Search people" }),
-      "Tunde",
-    );
-    expect(
-      screen.queryByRole("button", { name: "Ada Friend" }),
-    ).not.toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: "Tunde Friend" }),
-    ).toBeInTheDocument();
-    expect(screen.queryByText(/online|unread/i)).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Tunde Friend" })).toBeInTheDocument();
+    expect(screen.queryByRole("searchbox")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Blocked people" })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "People options" }));
+    expect(screen.getByRole("menuitem", { name: "Blocked people" })).toBeInTheDocument();
+    expect(screen.getByRole("menuitem", { name: "Memento access" })).toBeInTheDocument();
   });
 
   it("shows pending invitations without opening a shared space", async () => {
@@ -335,7 +331,8 @@ it("unblocks from the live sidebar dialog without restoring a connection", async
     http.delete(base + "/blocked/person-tunde", () => { blocked = false; return HttpResponse.json({ success: true }); }),
   );
   renderWithProviders(<PeoplePage />, { auth: true });
-  await userEvent.click(screen.getByRole("button", { name: "Blocked people" }));
+  await userEvent.click(screen.getByRole("button", { name: "People options" }));
+    await userEvent.click(screen.getByRole("menuitem", { name: "Blocked people" }));
   await userEvent.click(await screen.findByRole("button", { name: "Unblock" }));
   await screen.findByText("You haven’t blocked anyone.");
   expect(screen.queryByRole("button", { name: "Tunde Friend" })).not.toBeInTheDocument();

@@ -1,3 +1,4 @@
+import Bubble from "../chat/conversation/bubble";
 import { ContributionDialog } from "./contribution-dialog";
 import { SharedItemDialog } from "./shared-item-dialog";
 import { SharedMedia } from "./shared-media";
@@ -16,6 +17,7 @@ import {
   spaceFilters,
   type Person,
   type SpaceFilter,
+  type TalkTurn,
 } from "@/api/people";
 import { Button } from "@/components/ui/button";
 import {
@@ -33,9 +35,13 @@ import { cn } from "@/utility";
 export function OurSpace({
   person,
   onTalk,
+  embedded = false,
+  chatTurns = [],
 }: {
   person: Person;
   onTalk?: (id: string, title: string) => void;
+  embedded?: boolean;
+  chatTurns?: TalkTurn[];
 }) {
   const { user } = useStore();
   const { open } = useModal();
@@ -46,8 +52,15 @@ export function OurSpace({
     () => getSpace(person.user_id, page, filter),
     { shouldRetryOnError: false, refreshInterval: 15000 },
   );
-  const retry = useRequestRecovery(`people-space:${person.user_id}:${page}:${filter}`, error, mutate, "Couldn’t load your shared memories. Please try again.");
-  const recoveringPage = Boolean(data && !error && !data.items.length && page > 1);
+  const retry = useRequestRecovery(
+    `people-space:${person.user_id}:${page}:${filter}`,
+    error,
+    mutate,
+    "Couldn’t load your shared memories. Please try again.",
+  );
+  const recoveringPage = Boolean(
+    data && !error && !data.items.length && page > 1,
+  );
   useEffect(() => {
     if (recoveringPage) setPage((current) => Math.max(1, current - 1));
   }, [recoveringPage, page]);
@@ -55,32 +68,64 @@ export function OurSpace({
   const [removing, setRemoving] = useState(false);
   const [detail, setDetail] = useState<string | null>(null);
   const add = () => setAdding(true);
+  const entries = [
+    ...(data?.items || []).map((item) => ({
+      kind: "memory" as const,
+      item,
+      date: item.shared_date || item.original_date,
+    })),
+    ...(embedded && filter === "All" && page === 1
+      ? chatTurns.filter(
+          (turn) => turn.role !== "user" || !turn.shared_input_id,
+        )
+      : []
+    ).map((turn) => ({ kind: "turn" as const, turn, date: turn.created_at })),
+  ];
+  if (embedded)
+    entries.sort(
+      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+    );
   return (
-    <div className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-5 py-7 sm:px-9">
+    <div
+      className={cn(
+        "mx-auto flex w-full max-w-4xl flex-1 flex-col",
+        embedded ? "py-4" : "px-5 py-7 sm:px-9",
+      )}
+    >
       {adding && (
         <ContributionDialog
           person={person}
           onClose={() => setAdding(false)}
-          onSaved={() => { void mutate().catch(() => undefined); }}
+          onSaved={() => {
+            void mutate().catch(() => undefined);
+          }}
         />
       )}
       {detail && (
         <SharedItemDialog
           person={person}
           sourceId={detail}
+          sharedChat={embedded}
           confirmRemoval={removing}
           onClose={() => {
             setDetail(null);
             setRemoving(false);
           }}
-          onRemoved={() => { void mutate().catch(() => undefined); }}
+          onRemoved={() => {
+            void mutate().catch(() => undefined);
+          }}
           onTalk={onTalk}
         />
       )}
       <div className="flex flex-wrap items-start justify-between gap-4 border-b border-stroke-neutral-weak pb-5">
         <div>
-          <h2 className="font-garamond text-3xl font-medium text-text-neutral-strong">
-            Our Space
+          <h2
+            className={cn(
+              "font-medium text-text-neutral-strong",
+              embedded ? "font-geist text-base" : "font-garamond text-3xl",
+            )}
+          >
+            {embedded ? "Shared memories" : "Our Space"}
           </h2>
           <p className="mt-1 text-sm leading-6 text-text-neutral-weak">
             Your shared memories.
@@ -122,10 +167,13 @@ export function OurSpace({
         ))}
       </div>
       {error ? (
-        <div
-          className="rounded-2xl border border-stroke-neutral-weak bg-bg-neutral px-6 py-10 text-center"
-        >
-          <Button size="form" variant="outline" onClick={retry} disabled={isValidating}>
+        <div className="rounded-2xl border border-stroke-neutral-weak bg-bg-neutral px-6 py-10 text-center">
+          <Button
+            size="form"
+            variant="outline"
+            onClick={retry}
+            disabled={isValidating}
+          >
             Retry loading shared memories
           </Button>
         </div>
@@ -142,7 +190,7 @@ export function OurSpace({
             />
           ))}
         </div>
-      ) : !data?.items.length ? (
+      ) : !entries.length ? (
         <Empty className="min-h-64 rounded-2xl border border-dashed border-stroke-neutral-weak bg-bg-neutral px-6 py-10">
           <BookOpen className="size-6 text-icon-neutral-weaker" aria-hidden />
           <EmptyHeader>
@@ -168,127 +216,205 @@ export function OurSpace({
         </Empty>
       ) : (
         <ol
-          aria-label="Shared memories"
-          className="overflow-hidden rounded-2xl border border-stroke-neutral-weak bg-bg-neutral"
+          aria-label={
+            embedded
+              ? "Connection conversation and shared memories"
+              : "Shared memories"
+          }
+          className={
+            embedded
+              ? "space-y-5"
+              : "overflow-hidden rounded-2xl border border-stroke-neutral-weak bg-bg-neutral"
+          }
         >
-          {data.items.map((item) => (
-            <li
-              key={item.source_id}
-              className="border-b border-stroke-neutral-weak px-5 py-6 last:border-b-0 sm:px-7"
-            >
-              <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-text-neutral-weaker">
-                <p>
-                  <span className="font-medium text-text-neutral-weak">
-                    {item.contributor.user_id === user?._id
-                      ? "You"
-                      : item.contributor.name}
-                  </span>{" "}
-                  {item.source_type === "story"
-                    ? "shared a story"
-                    : `added a ${item.source_type}`}
-                </p>
-                <div className="flex items-center gap-2">
-                  <time dateTime={item.shared_date || item.original_date}>
-                    {new Date(
-                      item.shared_date || item.original_date,
-                    ).toLocaleDateString(undefined, {
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
-                    })}
-                  </time>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="people-control size-8"
-                        aria-label={`Actions for ${item.title}`}
-                      >
-                        <MoreHorizontal aria-hidden />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent
-                      align="end"
-                      className="people-menu bg-bg-neutral text-text-neutral-strong"
-                    >
-                      <DropdownMenuItem
-                        onSelect={() => setDetail(item.source_id)}
-                      >
-                        Open shared memory
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onSelect={() =>
-                          open("view-memory", { memoryId: item.source_id })
-                        }
-                      >
-                        View original memory
-                      </DropdownMenuItem>
-                      {person.memento_state === "active" && onTalk && (
-                        <DropdownMenuItem
-                          onSelect={() => onTalk(item.source_id, item.title)}
+          {entries.map((entry) => {
+            if (entry.kind === "turn") {
+              const turn = entry.turn;
+              return (
+                <li key={`turn:${turn.id}`}>
+                  <Bubble
+                    role={turn.role}
+                    text={turn.text}
+                    createdAt={turn.created_at}
+                    is_voice={turn.is_voice}
+                    attatchments={turn.attachments?.map((file) => ({
+                      ...file,
+                      name: file.name || "Attachment",
+                    }))}
+                  />
+                  {!!turn.citations.length && (
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {turn.citations.map((citation) => (
+                        <Button
+                          key={citation.source_id}
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setDetail(citation.source_id)}
                         >
-                          Talk about this memory
-                        </DropdownMenuItem>
-                      )}
-                      {item.can_remove && (
-                        <DropdownMenuItem
-                          className="text-text-error-strong"
-                          onSelect={() => {
-                            setRemoving(true);
-                            setDetail(item.source_id);
-                          }}
-                        >
-                          Remove from Our Space
-                        </DropdownMenuItem>
-                      )}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-              </div>
-              <h3 className="mt-3 font-garamond text-2xl font-medium text-text-neutral-strong">
-                <button
-                  type="button"
-                  className="cursor-pointer text-left underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-stroke-brand-strong"
-                  aria-label={`Open shared item: ${item.title}`}
-                  onClick={() => setDetail(item.source_id)}
-                >
-                  {item.title}
-                </button>
-              </h3>
-              <p className="mt-2 line-clamp-3 whitespace-pre-line text-sm leading-6 text-text-neutral-weak">
-                {DOMPurify.sanitize(
-                  item.body.replace(/<\/(p|div|li|h[1-6])>|<br\s*\/?>/gi, "\n"),
-                  { ALLOWED_TAGS: [], ALLOWED_ATTR: [] },
+                          From Our Space · {citation.title}
+                        </Button>
+                      ))}
+                    </div>
+                  )}
+                </li>
+              );
+            }
+            const item = entry.item;
+            return (
+              <li
+                key={item.source_id}
+                className={cn(
+                  embedded
+                    ? "max-w-[90%] rounded-2xl border border-stroke-neutral-weak bg-fill-neutral-weak px-5 py-4"
+                    : "border-b border-stroke-neutral-weak px-5 py-6 last:border-b-0 sm:px-7",
+                  embedded &&
+                    item.contributor.user_id === user?._id &&
+                    "ml-auto",
                 )}
-              </p>
-              <SharedMedia attachments={item.attachments} title={item.title} />
-              <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
-                <p className="text-xs text-text-neutral-weaker">
-                  {item.shared_via === "direct"
-                    ? "Contributed from"
-                    : "Shared from"}{" "}
-                  {item.contributor.user_id === user?._id
-                    ? "your"
-                    : `${item.contributor.name}’s`}{" "}
-                  Memento
-                  {item.shared_via === "group_visibility"
-                    ? " · via a group"
-                    : ""}
-                </p>
-                <Button
-                  variant="link"
-                  size="sm"
-                  className="people-control"
-                  onClick={() =>
-                    open("view-memory", { memoryId: item.source_id })
-                  }
+              >
+                <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-text-neutral-weaker">
+                  <p>
+                    <span className="font-medium text-text-neutral-weak">
+                      {item.contributor.user_id === user?._id
+                        ? "You"
+                        : item.contributor.name}
+                    </span>{" "}
+                    {item.source_type === "story"
+                      ? "shared a story"
+                      : `added a ${item.source_type}`}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <time dateTime={item.shared_date || item.original_date}>
+                      {new Date(
+                        item.shared_date || item.original_date,
+                      ).toLocaleDateString(undefined, {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
+                    </time>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="people-control size-8"
+                          aria-label={`Actions for ${item.title}`}
+                        >
+                          <MoreHorizontal aria-hidden />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent
+                        align="end"
+                        className="people-menu bg-bg-neutral text-text-neutral-strong"
+                      >
+                        <DropdownMenuItem
+                          onSelect={() => setDetail(item.source_id)}
+                        >
+                          Open shared memory
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onSelect={() =>
+                            open("view-memory", { memoryId: item.source_id })
+                          }
+                        >
+                          View original memory
+                        </DropdownMenuItem>
+                        {(embedded || person.memento_state === "active") &&
+                          onTalk && (
+                            <DropdownMenuItem
+                              onSelect={() =>
+                                onTalk(item.source_id, item.title)
+                              }
+                            >
+                              Talk about this memory
+                            </DropdownMenuItem>
+                          )}
+                        {item.can_remove && (
+                          <DropdownMenuItem
+                            className="text-text-error-strong"
+                            onSelect={() => {
+                              setRemoving(true);
+                              setDetail(item.source_id);
+                            }}
+                          >
+                            Remove from Our Space
+                          </DropdownMenuItem>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </div>
+                {(!embedded ||
+                  item.source_type === "story" ||
+                  item.title !== item.body.trim().slice(0, 80)) && (
+                  <h3
+                    className={cn(
+                      "mt-3 font-medium text-text-neutral-strong",
+                      embedded
+                        ? "font-geist text-base"
+                        : "font-garamond text-2xl",
+                    )}
+                  >
+                    <button
+                      type="button"
+                      className="cursor-pointer text-left underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-stroke-brand-strong"
+                      aria-label={`Open shared item: ${item.title}`}
+                      onClick={() => setDetail(item.source_id)}
+                    >
+                      {item.title}
+                    </button>
+                  </h3>
+                )}
+                <p
+                  className={cn(
+                    "mt-2 whitespace-pre-line text-sm leading-6",
+                    embedded
+                      ? "text-text-neutral-strong"
+                      : "line-clamp-3 text-text-neutral-weak",
+                  )}
                 >
-                  View memory<span className="sr-only">: {item.title}</span>
-                </Button>
-              </div>
-            </li>
-          ))}
+                  {DOMPurify.sanitize(
+                    item.body.replace(
+                      /<\/(p|div|li|h[1-6])>|<br\s*\/?>/gi,
+                      "\n",
+                    ),
+                    { ALLOWED_TAGS: [], ALLOWED_ATTR: [] },
+                  )}
+                </p>
+                <SharedMedia
+                  attachments={item.attachments}
+                  title={item.title}
+                />
+                {!embedded && (
+                  <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-xs text-text-neutral-weaker">
+                      {item.shared_via === "direct"
+                        ? "Contributed from"
+                        : "Shared from"}{" "}
+                      {item.contributor.user_id === user?._id
+                        ? "your"
+                        : `${item.contributor.name}’s`}{" "}
+                      Memento
+                      {item.shared_via === "group_visibility"
+                        ? " · via a group"
+                        : ""}
+                    </p>
+                    <Button
+                      variant="link"
+                      size="sm"
+                      className="people-control"
+                      onClick={() =>
+                        open("view-memory", { memoryId: item.source_id })
+                      }
+                    >
+                      View memory<span className="sr-only">: {item.title}</span>
+                    </Button>
+                  </div>
+                )}
+              </li>
+            );
+          })}
         </ol>
       )}
       {data && !error && (page > 1 || data.has_next_page) && (

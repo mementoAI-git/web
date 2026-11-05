@@ -1,5 +1,7 @@
 import posthog from "@/lib/posthog";
-vi.mock("@/lib/posthog", () => ({ default: { __loaded: true, capture: vi.fn() } }));
+vi.mock("@/lib/posthog", () => ({
+  default: { __loaded: true, capture: vi.fn() },
+}));
 import { screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import userEvent from "@testing-library/user-event";
@@ -13,19 +15,16 @@ vi.mock("@/hooks/use-fetcher", () => ({
 vi.mock("./select-group", () => ({ SelectGroup: () => null }));
 
 describe("existing invitation flow", () => {
-  it.each(["connection", "beneficiary"] as const)(
+  it.each(["connection", "beneficiary", undefined] as const)(
     "sends %s invites with the correct scope",
     async (mode) => {
       renderWithProviders(<AddBeneficiary data={{ mode }} />, { auth: true });
       expect(
         screen.getByRole("heading", {
-          name: mode === "connection" ? "Invite someone" : "Invite beneficiary",
+          name: mode !== "beneficiary" ? "Invite people" : "Invite beneficiary",
         }),
       ).toBeInTheDocument();
-      await userEvent.type(
-        screen.getByLabelText("Email"),
-        "ada@example.com",
-      );
+      await userEvent.type(screen.getByLabelText("Email"), "ada@example.com");
       await userEvent.type(screen.getByPlaceholderText("John Doe"), "Ada");
       await userEvent.type(
         screen.getByPlaceholderText("Brother, Friend, Spouse…"),
@@ -34,7 +33,10 @@ describe("existing invitation flow", () => {
       await userEvent.click(
         screen.getByRole("button", { name: "Send invite" }),
       );
-      expect(posthog.capture).toHaveBeenCalledWith("beneficiary_invited", { invitation_mode: mode, group_count: 0 });
+      expect(posthog.capture).toHaveBeenCalledWith("beneficiary_invited", {
+        invitation_mode: mode ?? "connection",
+        group_count: 0,
+      });
       const payload = trigger.mock.calls.at(-1)?.[0];
       expect(payload).toMatchObject({
         email: "ada@example.com",
@@ -42,7 +44,7 @@ describe("existing invitation flow", () => {
         relationship: "Friend",
         groups: [],
       });
-      if (mode === "connection")
+      if (mode !== "beneficiary")
         expect(payload.access_scope).toBe("shared_only");
       else expect(payload).not.toHaveProperty("access_scope");
     },

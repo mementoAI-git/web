@@ -7,7 +7,7 @@ import { isSpaceKey } from "@/api/people";
 import { useState } from "react";
 import { ArrowLeft, BookOpen, LockKeyhole, MessageCircle } from "lucide-react";
 import type { Person } from "@/api/people";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { UserAvatar } from "@/components/user-avatar";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -38,7 +38,9 @@ export function RelationshipWorkspace({
         <ContributionDialog
           person={person}
           onClose={() => setAdding(false)}
-          onSaved={() => { void mutate(isSpaceKey).catch(() => undefined); }}
+          onSaved={() => {
+            void mutate(isSpaceKey).catch(() => undefined);
+          }}
         />
       )}
       {settings && (
@@ -51,16 +53,19 @@ export function RelationshipWorkspace({
         <Button
           variant="ghost"
           size="icon"
-          className="people-control md:hidden"
+          className="people-control"
           aria-label="Back to people"
           onClick={onBack}
         >
           <ArrowLeft aria-hidden />
         </Button>
-        <Avatar size="lg">
-          <AvatarImage src={person.avatar_url || undefined} alt="" />
-          <AvatarFallback>{person.name.slice(0, 1)}</AvatarFallback>
-        </Avatar>
+        <UserAvatar
+          alt=""
+          size="lg"
+          src={person.avatar_url}
+          userId={person.user_id}
+          name={person.name}
+        />
         <div className="min-w-0 flex-1">
           <h2 className="truncate font-garamond text-2xl font-medium text-text-neutral-strong">
             {person.name}

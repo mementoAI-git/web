@@ -1,193 +1,136 @@
-import { Search, UserPlus } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ConnectionCard, PendingConnectionCard } from "./person-card";
+import headerOptionsIcon from "@/assets/icon/people/header-options.svg";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { PeopleResponse } from "@/api/people";
-import { cn } from "@/utility";
+import type { PeopleResponse, Person, PendingConnection } from "@/api/people";
 
 interface Props {
   people?: PeopleResponse;
   loading: boolean;
   unavailable?: boolean;
-  search: string;
-  onSearch: (value: string) => void;
   selected: string | null;
   onSelect: (id: string) => void;
   onInvite: () => void;
   onBlocked: () => void;
   onActivation: () => void;
+  onSettings: (person: Person) => void;
+  onResend: (invite: PendingConnection) => void;
+  onCancel: (invite: PendingConnection) => void;
 }
 
 export function PeopleSidebar({
   people,
   loading,
   unavailable = false,
-  search,
-  onSearch,
   selected,
   onSelect,
   onInvite,
   onBlocked,
   onActivation,
+  onSettings,
+  onResend,
+  onCancel,
 }: Props) {
-  const query = search.trim().toLocaleLowerCase();
-  const connections =
-    people?.connections.filter((person) =>
-      `${person.name} ${person.relationship || ""}`
-        .toLocaleLowerCase()
-        .includes(query),
-    ) || [];
-  const pending =
-    people?.pending.filter((invite) =>
-      `${invite.name} ${invite.email}`.toLocaleLowerCase().includes(query),
-    ) || [];
+  const connections = people?.connections ?? [];
+  const pending = people?.pending ?? [];
   return (
     <aside
       aria-label="Your connections"
-      className="flex h-full min-h-0 w-full flex-col border-r border-stroke-neutral-weak bg-bg-neutral-weaker md:w-[264px] md:shrink-0"
+      className="mx-auto flex h-full min-h-0 w-full max-w-[964px] flex-col overflow-y-auto px-4 pb-6 sm:px-8"
     >
-      <div className="space-y-5 px-5 pb-5 pt-7">
-        <h1 className="font-garamond text-3xl font-medium text-text-neutral-strong">
-          People
+      <div className="flex min-h-12 flex-wrap items-center justify-between gap-4 pb-6 pt-8 sm:min-h-[90px] sm:pb-6 sm:pt-[18px]">
+        <h1 className="flex items-center gap-1 font-geist text-base font-semibold text-text-neutral-strong">
+          People{" "}
+          <span className="rounded-full bg-fill-neutral-weak px-2 py-0.5 text-xs font-medium leading-4 text-text-neutral-weak">
+            {connections.length + pending.length}
+          </span>
         </h1>
-        <div className="relative">
-          <Search
-            className="pointer-events-none absolute left-3 top-3.5 size-4 text-icon-neutral-weak"
-            aria-hidden
-          />
-          <Input
-            variant="form"
-            type="search"
-            aria-label="Search people"
-            placeholder="Search people"
-            value={search}
-            onChange={(event) => onSearch(event.target.value)}
-            className="pl-9"
-          />
+        <div className="flex items-center gap-2">
+          <Button
+            size="form"
+            className="people-control h-10 rounded-full px-5 font-geist font-bold"
+            onClick={onInvite}
+          >
+            Invite people
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label="People options"
+                className="people-control size-10 rounded-full bg-fill-neutral-weak"
+              >
+                <img
+                  src={headerOptionsIcon}
+                  alt=""
+                  aria-hidden
+                  className="brightness-0 dark:brightness-100"
+                />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="end"
+              className="navigation-menu motion-reduce:animate-none"
+            >
+              <DropdownMenuItem onSelect={onActivation}>
+                Memento access
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={onBlocked}>
+                Blocked people
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
-      <nav
-        aria-label="People"
-        className="min-h-0 flex-1 overflow-y-auto px-3 pb-4"
-      >
+      <nav aria-label="People" className="pb-4">
         {loading ? (
           <div
             role="status"
             aria-label="Loading people"
-            className="space-y-4 px-2"
+            className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3"
           >
-            {[0, 1, 2].map((index) => (
+            {[0, 1, 2, 3, 4, 5].map((index) => (
               <Skeleton
                 key={index}
-                className="h-14 rounded-xl motion-reduce:animate-none"
+                className="h-[264px] rounded-3xl motion-reduce:animate-none"
               />
             ))}
           </div>
-        ) : unavailable ? null : (
-          <>
-            <h2 className="mb-2 px-2 text-xs font-medium text-text-neutral-weaker">
-              Connections
-            </h2>
+        ) : unavailable ? null : connections.length || pending.length ? (
+          <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
             {connections.map((person) => (
-              <Button
-                size="form"
+              <ConnectionCard
                 key={person.user_id}
-                variant="ghost"
-                aria-label={`${person.name} ${person.relationship || "Connection"}`}
-                onClick={() => onSelect(person.user_id)}
-                aria-pressed={selected === person.user_id}
-                className={cn(
-                  "people-control mb-1 h-auto min-h-16 w-full justify-start gap-3 rounded-xl px-3 py-3 text-left",
-                  selected === person.user_id &&
-                    "bg-bg-neutral ring-1 ring-stroke-neutral-weak",
-                )}
-              >
-                <Avatar size="lg" aria-hidden="true">
-                  <AvatarImage src={person.avatar_url || undefined} alt="" />
-                  <AvatarFallback>{person.name.slice(0, 1)}</AvatarFallback>
-                </Avatar>
-                <span className="min-w-0">
-                  <span className="block truncate text-sm font-medium text-text-neutral-strong">
-                    {person.name}
-                  </span>
-                  <span className="block truncate text-xs font-normal text-text-neutral-weak">
-                    {person.relationship || "Connection"}
-                  </span>
-                </span>
-              </Button>
+                person={person}
+                selected={selected === person.user_id}
+                onOpen={() => onSelect(person.user_id)}
+                onSettings={() => onSettings(person)}
+              />
             ))}
-            {!connections.length && (
-              <p className="px-2 py-3 text-sm text-text-neutral-weak">
-                {query
-                  ? "No matching connections."
-                  : "Your connections will appear here."}
-              </p>
-            )}
-            {pending.length > 0 && (
-              <div className="mt-7">
-                <h2 className="mb-2 px-2 text-xs font-medium text-text-neutral-weaker">
-                  Pending invitations
-                </h2>
-                {pending.map((invite) => (
-                  <Button
-                    size="form"
-                    key={invite.invite_id}
-                    variant="ghost"
-                    aria-label={`${invite.name} Pending`}
-                    onClick={() => onSelect(`invite:${invite.invite_id}`)}
-                    aria-pressed={selected === `invite:${invite.invite_id}`}
-                    className={cn(
-                      "people-control mb-1 h-auto min-h-16 w-full justify-start gap-3 rounded-xl px-3 py-3 text-left",
-                      selected === `invite:${invite.invite_id}` &&
-                        "bg-bg-neutral ring-1 ring-stroke-neutral-weak",
-                    )}
-                  >
-                    <Avatar size="lg" aria-hidden="true">
-                      <AvatarFallback>{invite.name.slice(0, 1)}</AvatarFallback>
-                    </Avatar>
-                    <span className="min-w-0">
-                      <span className="block truncate text-sm font-medium text-text-neutral-strong">
-                        {invite.name}
-                      </span>
-                      <span className="block text-xs font-normal text-text-neutral-weaker">
-                        Pending
-                      </span>
-                    </span>
-                  </Button>
-                ))}
-              </div>
-            )}
-          </>
+            {pending.map((invite) => (
+              <PendingConnectionCard
+                key={invite.invite_id}
+                invite={invite}
+                selected={selected === `invite:${invite.invite_id}`}
+                onOpen={() => onSelect(`invite:${invite.invite_id}`)}
+                onResend={() => onResend(invite)}
+                onCancel={() => onCancel(invite)}
+              />
+            ))}
+          </div>
+        ) : (
+          <h2 className="px-2 py-3 text-sm text-text-neutral-weak">
+            No connections yet
+          </h2>
         )}
       </nav>
-      <div className="space-y-2 border-t border-stroke-neutral-weak p-4">
-        <Button
-          size="form"
-          variant="outline"
-          className="people-control w-full"
-          onClick={onInvite}
-        >
-          <UserPlus data-icon="inline-start" aria-hidden />
-          Invite someone
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="people-control w-full text-text-neutral-weak"
-          onClick={onActivation}
-        >
-          My Memento
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="people-control w-full text-text-neutral-weak"
-          onClick={onBlocked}
-        >
-          Blocked people
-        </Button>
-      </div>
     </aside>
   );
 }

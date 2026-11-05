@@ -1,3 +1,4 @@
+import { InviteDialog } from "../../invite-dialog";
 import { useId, useState } from "react";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -42,7 +43,7 @@ export function AddBeneficiary({
   data?: { mode?: "connection" | "beneficiary" };
 }) {
   const fieldId = useId();
-  const isConnection = data?.mode === "connection";
+  const isConnection = data?.mode !== "beneficiary";
   const { close } = useModal();
   const { trigger, isMutating } = useGuardedModalFetcher(
     "add-beneficiary",
@@ -83,6 +84,126 @@ export function AddBeneficiary({
   const nameField = getField("name");
   const relationshipField = getField("relationship");
 
+  const form = (
+    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      <div className="flex flex-col gap-1.5">
+        <Label
+          htmlFor={`${fieldId}-email`}
+          className="font-inter text-xs font-normal text-v3-text-weak"
+        >
+          Email
+        </Label>
+        <Input
+          disabled={isMutating}
+          type="email"
+          placeholder="example@gmail.com"
+          id={`${fieldId}-email`}
+          name={emailField.name}
+          value={emailField.value}
+          onChange={emailField.onChange}
+          aria-invalid={!!emailField.error}
+          className={inputClass}
+        />
+        {emailField.error && (
+          <span className="font-inter text-xs text-danger">
+            {emailField.error}
+          </span>
+        )}
+      </div>
+      <div className="flex flex-col gap-1.5">
+        <Label
+          htmlFor={`${fieldId}-name`}
+          className="font-inter text-xs font-normal text-v3-text-weak"
+        >
+          Name
+        </Label>
+        <Input
+          disabled={isMutating}
+          placeholder="John Doe"
+          id={`${fieldId}-name`}
+          name={nameField.name}
+          value={nameField.value}
+          onChange={nameField.onChange}
+          aria-invalid={!!nameField.error}
+          className={inputClass}
+        />
+        {nameField.error && (
+          <span className="font-inter text-xs text-danger">
+            {nameField.error}
+          </span>
+        )}
+      </div>
+      <div className="flex flex-col gap-1.5">
+        <Label
+          htmlFor={`${fieldId}-relationship`}
+          className="font-inter text-xs font-normal text-v3-text-weak"
+        >
+          Relationship
+        </Label>
+        <Input
+          disabled={isMutating}
+          placeholder="Brother, Friend, Spouse…"
+          id={`${fieldId}-relationship`}
+          name={relationshipField.name}
+          value={relationshipField.value}
+          onChange={relationshipField.onChange}
+          aria-invalid={!!relationshipField.error}
+          className={inputClass}
+        />
+        {relationshipField.error && (
+          <span className="font-inter text-xs text-danger">
+            {relationshipField.error}
+          </span>
+        )}
+      </div>
+      {!isConnection && (
+        <SelectGroup
+          value={selectedGroups}
+          onChange={(next) => {
+            if (!isMutating) setSelectedGroups(next);
+          }}
+          label="Group"
+          labelHint="(optional)"
+          placeholder="Search groups to add…"
+        />
+      )}
+
+      <div className="flex items-center justify-end gap-2 border-t border-v3-stroke-weak pt-4">
+        <Button
+          type="button"
+          variant="outline"
+          size="form"
+          className="border-v3-stroke-weak text-v3-text-strong"
+          disabled={isMutating}
+          onClick={() => close?.("add-beneficiary")}
+        >
+          Cancel
+        </Button>
+        <Button type="submit" size="form" disabled={isMutating || !isValid}>
+          {isMutating ? (
+            <span className="flex items-center gap-2">
+              Sending… <Spinner className="!size-4" loading />
+            </span>
+          ) : (
+            "Send invite"
+          )}
+        </Button>
+      </div>
+    </form>
+  );
+
+  if (isConnection)
+    return (
+      <InviteDialog
+        title="Invite people"
+        description="Share memories with someone you know."
+        onClose={() => close?.("add-beneficiary")}
+        busy={isMutating}
+      >
+        {form}
+      </InviteDialog>
+    );
+
   return (
     <div className="modal-container !max-w-[480px]">
       <div className="mb-5 flex items-start justify-between gap-3">
@@ -107,111 +228,7 @@ export function AddBeneficiary({
         </button>
       </div>
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <div className="flex flex-col gap-1.5">
-          <Label
-            htmlFor={`${fieldId}-email`}
-            className="font-inter text-xs font-normal text-v3-text-weak"
-          >
-            Email
-          </Label>
-          <Input
-            disabled={isMutating}
-            type="email"
-            placeholder="example@gmail.com"
-            id={`${fieldId}-email`}
-            name={emailField.name}
-            value={emailField.value}
-            onChange={emailField.onChange}
-            aria-invalid={!!emailField.error}
-            className={inputClass}
-          />
-          {emailField.error && (
-            <span className="font-inter text-xs text-danger">
-              {emailField.error}
-            </span>
-          )}
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <Label
-            htmlFor={`${fieldId}-name`}
-            className="font-inter text-xs font-normal text-v3-text-weak"
-          >
-            Name
-          </Label>
-          <Input
-            disabled={isMutating}
-            placeholder="John Doe"
-            id={`${fieldId}-name`}
-            name={nameField.name}
-            value={nameField.value}
-            onChange={nameField.onChange}
-            aria-invalid={!!nameField.error}
-            className={inputClass}
-          />
-          {nameField.error && (
-            <span className="font-inter text-xs text-danger">
-              {nameField.error}
-            </span>
-          )}
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <Label
-            htmlFor={`${fieldId}-relationship`}
-            className="font-inter text-xs font-normal text-v3-text-weak"
-          >
-            Relationship
-          </Label>
-          <Input
-            disabled={isMutating}
-            placeholder="Brother, Friend, Spouse…"
-            id={`${fieldId}-relationship`}
-            name={relationshipField.name}
-            value={relationshipField.value}
-            onChange={relationshipField.onChange}
-            aria-invalid={!!relationshipField.error}
-            className={inputClass}
-          />
-          {relationshipField.error && (
-            <span className="font-inter text-xs text-danger">
-              {relationshipField.error}
-            </span>
-          )}
-        </div>
-        {!isConnection && (
-          <SelectGroup
-            value={selectedGroups}
-            onChange={(next) => {
-              if (!isMutating) setSelectedGroups(next);
-            }}
-            label="Group"
-            labelHint="(optional)"
-            placeholder="Search groups to add…"
-          />
-        )}
-
-        <div className="flex items-center justify-end gap-2 border-t border-v3-stroke-weak pt-4">
-          <Button
-            type="button"
-            variant="outline"
-            size="form"
-            className="border-v3-stroke-weak text-v3-text-strong"
-            disabled={isMutating}
-            onClick={() => close?.("add-beneficiary")}
-          >
-            Cancel
-          </Button>
-          <Button type="submit" size="form" disabled={isMutating || !isValid}>
-            {isMutating ? (
-              <span className="flex items-center gap-2">
-                Sending… <Spinner className="!size-4" loading />
-              </span>
-            ) : (
-              "Send invite"
-            )}
-          </Button>
-        </div>
-      </form>
+      {form}
     </div>
   );
 }

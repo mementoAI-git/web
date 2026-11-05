@@ -4,6 +4,7 @@ import { Route, Routes } from "react-router-dom";
 import { http, HttpResponse } from "msw";
 import { renderWithProviders, server } from "@/test";
 import SettingsPage from "@/pages/dashboard/settings";
+import { ChatSwitcher } from "@/pages/dashboard/chat/chat-switcher";
 import Modal from "@/components/modal";
 
 vi.mock("pdfjs-dist", () => ({ getDocument: vi.fn(), GlobalWorkerOptions: {}, version: "test" }));
@@ -17,9 +18,9 @@ it("opens the registered group dialog from Settings and guards the real shell du
     await new Promise<void>(resolve => { finish = resolve; });
     return HttpResponse.json({ message: "Group service unavailable" }, { status: 503 });
   }));
-  renderWithProviders(<><Routes><Route path="/settings/:tab" element={<SettingsPage />} /></Routes><Modal /></>, { auth: true, route: "/settings/beneficiary" });
-  await userEvent.click(screen.getByRole("tab", { name: /Groups/ }));
-  await userEvent.click(screen.getByRole("button", { name: "Add group" }));
+  renderWithProviders(<><Routes><Route path="/settings/:tab" element={<SettingsPage />} /><Route path="/chat/:id" element={<ChatSwitcher />} /></Routes><Modal /></>, { auth: true, route: "/settings/beneficiary" });
+  await userEvent.click(await screen.findByRole("tab", { name: /Groups/ }));
+  await userEvent.click(screen.getByRole("button", { name: "Create group" }));
   const input = screen.getByPlaceholderText("e.g. Family");
   await userEvent.type(input, "My family");
   await userEvent.click(screen.getByRole("button", { name: "Create group", exact: true }));

@@ -7,6 +7,8 @@ export interface Person {
   avatar_url: string | null;
   relationship: string | null;
   memento_state: "private" | "ready" | "active";
+  /** Render an activity badge only when the service supplies a real count. */
+  unread_count?: number;
 }
 export interface PendingConnection {
   invite_id: string;
@@ -164,7 +166,26 @@ export function isSpaceKey(key: unknown) {
   return Array.isArray(key) && key[0] === "people-space";
 }
 
+export type ConnectionAccessScope =
+  | "shared_only"
+  | "full_vault"
+  | "memories_only"
+  | "capsules_only"
+  | "documents_only";
+export interface ConnectionMetadata {
+  about?: string;
+  group_ids?: string[];
+  access_scope?: ConnectionAccessScope;
+  avatar_file_id?: string | null;
+}
 export interface ConnectionSettings {
+  email?: string;
+  about?: string;
+  access_scope?: ConnectionAccessScope;
+  avatar_file_id?: string | null;
+  avatar_url?: string | null;
+  groups?: { id: string; name: string; color?: number; source: "group" }[];
+  display_name?: string | null;
   relationship: string | null;
   shared_item_count: number;
   privacy: string;
@@ -179,10 +200,19 @@ export async function getConnectionSettings(
   if (r.success === false) throw new Error("Connection unavailable");
   return r.data;
 }
-export async function setRelationshipLabel(personId: string, label: string) {
+export async function setRelationshipLabel(
+  personId: string,
+  label: string,
+  display_name?: string,
+  metadata: ConnectionMetadata = {},
+) {
   const r = await patch(
     `${PEOPLE_ENDPOINT}/${encodeURIComponent(personId)}/settings`,
-    { label },
+    {
+      label,
+      ...(display_name !== undefined ? { display_name } : {}),
+      ...metadata,
+    },
     { skipErrorHandling: true },
   );
   if (r.success === false) throw new Error("Couldn’t save relationship");
@@ -238,12 +268,14 @@ export async function updateActivation(
   return r.data;
 }
 export interface TalkTurn {
+  shared_input_id?: string;
   id: string;
   role: "user" | "ai";
   text: string;
   created_at: string;
   is_voice: boolean;
   available: boolean;
+  attachments?: { _id: string; url: string; name?: string }[];
   citations: { source_id: string; title: string }[];
 }
 export interface TalkHistory {
@@ -252,7 +284,7 @@ export interface TalkHistory {
 }
 export async function getTalk(personId: string): Promise<TalkHistory> {
   const r = await get<TalkHistory>(
-    `${PEOPLE_ENDPOINT}/${encodeURIComponent(personId)}/talk`,
+    `${PEOPLE_ENDPOINT}/${encodeURIComponent(personId)}/talk?shared_space=true`,
     { skipErrorHandling: true },
   );
   if (r.success === false) throw new Error("Talk unavailable");
@@ -263,8 +295,11 @@ export async function sendTalk(
   payload: {
     text: string;
     request_id: string;
+    attachments?: string[];
     is_voice?: boolean;
     source_id?: string;
+    shared_input_id?: string;
+    shared_space?: boolean;
   },
 ): Promise<TalkTurn> {
   const r = await post<TalkTurn>(
