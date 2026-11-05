@@ -30,7 +30,6 @@ import { ChatPreferencesPanel } from "@/components/modal/chat-settings/chat-pref
 import { HostChatEnrichmentBar } from "@/features/host-chat/components/host-chat-enrichment-bar";
 import { resolveSidebarDesktopWidthPx } from "@/components/memory/sidebar-desktop-width";
 import type { CategoryScore } from "@/features/enrichment";
-import chatSettingsGradient from "@/assets/image/chat settings gradient.png";
 import type { ConversationFilesRequest } from "@/pages/dashboard/chat/conversation/conversation-assets";
 
 function useAnimatedSidebarWidthPx(
@@ -324,13 +323,6 @@ function Content({
     >
       {includeChatPreferences ? (
         <>
-          <img
-            data-testid="chat-settings-gradient"
-            src={chatSettingsGradient}
-            alt=""
-            className="pointer-events-none absolute inset-x-0 top-0 h-[466px] w-full rounded-t-[24px] object-fill"
-            aria-hidden
-          />
           <div className="relative z-[1] flex flex-col">
             <h2 className="mb-6 font-garamond text-3xl font-normal text-text-neutral-strong">Chat settings</h2>
             <ChatPreferencesPanel

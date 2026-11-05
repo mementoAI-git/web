@@ -96,8 +96,8 @@ vi.mock("@/hooks/use-modal", async (importOriginal) => {
 });
 
 describe("resolveSidebarDesktopWidthPx", () => {
-  it("caps chat panel at the 485px design width on wide viewports", () => {
-    expect(resolveSidebarDesktopWidthPx(1440, { wideChatPanel: true })).toBe(485);
+  it("reduces the desktop chat panel design width by five percent", () => {
+    expect(resolveSidebarDesktopWidthPx(1440, { wideChatPanel: true })).toBe(460.75);
   });
 
   it("shrinks chat panel when the viewport leaves limited budget for the sidebar", () => {
@@ -136,7 +136,7 @@ describe("SidebarDetails", () => {
       '[data-testid="memory-sidebar-desktop"]',
     ) as HTMLElement | null;
     expect(desktopPanel).toBeTruthy();
-    expect(desktopPanel).toHaveStyle({ width: "485px" });
+    expect(desktopPanel).toHaveStyle({ width: "460.75px" });
     expect(desktopPanel?.className).toContain("bg-bg-neutral-solid");
     expect(desktopPanel?.style.opacity).toBe("");
 
@@ -151,11 +151,7 @@ describe("SidebarDetails", () => {
     expect(content?.className).toContain("overflow-y-auto");
     expect(content?.className).toContain("bg-bg-neutral-solid");
     expect(content?.className).not.toContain("bg-gradient-to-b");
-    const gradientArtwork = within(content!).getByTestId("chat-settings-gradient");
-    expect(gradientArtwork).toBeInstanceOf(HTMLImageElement);
-    expect(decodeURIComponent(gradientArtwork.getAttribute("src") ?? "")).toContain(
-      "chat settings gradient.png",
-    );
+    expect(within(content!).queryByTestId("chat-settings-gradient")).not.toBeInTheDocument();
 
     const title = within(content!).getByRole("heading", { name: /chat settings/i });
     const preferences = within(content!).getByTestId("mock-chat-preferences-panel");

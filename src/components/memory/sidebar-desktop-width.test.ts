@@ -5,7 +5,7 @@ describe("resolveSidebarDesktopWidthPx", () => {
   it("matches the wide chat settings drawer from the desktop design", () => {
     expect(
       resolveSidebarDesktopWidthPx(1440, { wideChatPanel: true }),
-    ).toBe(485);
+    ).toBe(460.75);
   });
 
   it("protects the main chat column on smaller screens", () => {

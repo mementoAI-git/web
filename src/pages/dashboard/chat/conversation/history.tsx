@@ -1,3 +1,4 @@
+import { plainTextFromQuickCaptureNote } from "@/lib/quick-capture-drafts";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { mergeVoiceTimeline } from "@/features/voice/timeline";
@@ -58,7 +59,8 @@ export default function History({
 }: IHistory) {
   const chatDetailMatch = useMatch({ path: "/chat/:id", end: true });
   const chatVoiceMatch = useMatch({ path: "/chat/:id/voice", end: true });
-  const isTopic = Boolean(useMatch({ path: "/chat/reply/:id", end: true }));
+  const isReflection = Boolean(useMatch({ path: "/chat/reflection/:id", end: true }));
+  const isTopic = Boolean(useMatch({ path: "/chat/reply/:id", end: true })) || isReflection;
   const hideInlineConversationHeader = Boolean(chatDetailMatch || chatVoiceMatch);
 
   const isLoadingMoreRef = useRef(false);
@@ -179,7 +181,10 @@ export default function History({
           <ConversationHeader {...{ onViewDetails, memory }} />
         </div>
       ) : null}
-      <div className={isTopic ? "min-w-0 space-y-2 px-4 pt-4" : "min-w-0 space-y-6 px-0"}>
+      <div className={isTopic ? "min-w-0 space-y-1 px-4 pt-4" : "min-w-0 space-y-1 px-0"}>
+        {memory?.prompt_type && (memory?.body?.trim() || memory?.attachments?.length > 0) && (
+          <Bubble role="user" text={plainTextFromQuickCaptureNote(memory.body || "")} attatchments={memory.attachments || []} createdAt={memory.created_at} topic />
+        )}
         {isLoadingMore && (
           <div className="py-3 flex justify-center items-center">
             <div className="flex gap-1.5 text-sm text-text-neutral-weaker">

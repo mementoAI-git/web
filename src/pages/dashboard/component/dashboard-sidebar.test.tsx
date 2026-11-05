@@ -41,32 +41,16 @@ describe("DashboardSideBar", () => {
     expect(screen.getByTestId("current-location")).toHaveTextContent(route);
   });
 
-  it("opens the reserved People page and marks the People item active", async () => {
-    const user = userEvent.setup();
-    renderWithProviders(
-      <>
-        <DashboardSideBar />
-        <CurrentLocation />
-      </>,
-      { route: "/overview", auth: true },
-    );
-    await user.click(screen.getByRole("button", { name: "People" }));
-    expect(screen.getByTestId("current-location")).toHaveTextContent(
-      "/people",
-    );
-    expect(screen.getByRole("button", { name: "People" })).toHaveAttribute(
-      "data-active",
-      "true",
-    );
-    expect(
-      screen.getByRole("button", { name: "Settings" }),
-    ).not.toHaveAttribute("data-active");
+  it("keeps People inside the active Chat destination", () => {
+    renderWithProviders(<DashboardSideBar />, { route: "/chat/people", auth: true });
+    expect(screen.queryByRole("button", { name: "People" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Chat" })).toHaveAttribute("data-active", "true");
   });
 
   it("keeps beneficiaries under Settings rather than People", () => {
     renderWithProviders(<DashboardSideBar />, { route: "/settings/beneficiary", auth: true });
     expect(screen.getByRole("button", { name: "Settings" })).toHaveAttribute("data-active", "true");
-    expect(screen.getByRole("button", { name: "People" })).not.toHaveAttribute("data-active");
+    expect(screen.queryByRole("button", { name: "People" })).not.toBeInTheDocument();
   });
 
   it("opens the invite modal without navigating away", async () => {
@@ -149,7 +133,7 @@ describe("DashboardSideBar", () => {
     }
     expect(screen.getByText("💬")).toBeInTheDocument();
     expect(screen.getByText("🧭")).toBeInTheDocument();
-    for (const [title, emoji] of [["People", "🫂"], ["Feedback", "📝"]]) {
+    for (const [title, emoji] of [["Feedback", "📝"]]) {
       expect(screen.getByRole("button", { name: title })).toHaveTextContent(emoji);
     }
     expect(screen.getByRole("button", { name: "Upgrade plan" })).toHaveClass(

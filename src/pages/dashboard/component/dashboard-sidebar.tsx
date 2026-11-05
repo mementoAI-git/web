@@ -40,7 +40,7 @@ export function DashboardSideBar({ onCollapse, compact = false }: DashboardSideB
     >
       <Sidebar
         collapsible="none"
-        className="dynamic-height min-h-screen bg-bg-overview-sidebar"
+        className="dynamic-height min-h-screen border-r border-stroke-neutral-weak bg-transparent"
       >
         <SidebarHeader className="flex-row items-center justify-between pb-3 pl-7 pr-4 pt-6">
           {compact ? <Link to="/overview" aria-label="Memento home" className="rounded-lg font-garamond text-3xl text-text-neutral-strong focus-visible:outline focus-visible:outline-2 focus-visible:outline-stroke-neutral-strong">M.</Link> : <Logo className="text-[24px] font-normal leading-9 text-foreground" />}
@@ -50,7 +50,7 @@ export function DashboardSideBar({ onCollapse, compact = false }: DashboardSideB
             size="icon-sm"
             aria-label="Collapse sidebar"
             onClick={onCollapse}
-            className="navigation-button rounded-lg"
+            className="navigation-button size-10 shrink-0 rounded-full bg-fill-neutral-weak p-0 [&_svg]:size-5"
           >
             <PanelLeftClose
               data-icon="inline-start"
@@ -79,12 +79,6 @@ export function DashboardSideBar({ onCollapse, compact = false }: DashboardSideB
                   icon={lightBulbIcon}
                   title="Insights"
                   onClick={() => open("memory-insights")}
-                />
-                <SideBarItem
-                  emoji="🫂"
-                  title="People"
-                  link="/people"
-                  active={pathname === "/people" || pathname.startsWith("/people/")}
                 />
                 {bottomNavigations.map((navigation) => (
                   <SideBarItem

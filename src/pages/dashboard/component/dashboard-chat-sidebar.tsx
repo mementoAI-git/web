@@ -136,7 +136,7 @@ export function DashboardChatSidebar({ onClose }: DashboardChatSidebarProps) {
         ref={scrollRef}
         className="flex min-h-0 flex-1 flex-col overflow-y-auto bg-v3-fill-weak px-2"
       >
-        <div className="space-y-4 py-4">
+        <div className="space-y-1 py-4">
           {messages.map((m, i) => (
             <Bubble key={i} text={m.text} role={m.role} compact />
           ))}
