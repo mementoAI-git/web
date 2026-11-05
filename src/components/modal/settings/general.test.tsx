@@ -18,50 +18,57 @@ vi.mock("@/hooks/use-store", async (importOriginal) => {
 
 describe("General", () => {
   it("aligns the section tabs with the left edge of their container", () => {
-    renderWithProviders(<General />, { route: "/settings/general", auth: true });
-    expect(screen.getByRole("tablist", { name: "Personal information sections" })).toHaveClass("w-full", "justify-start", "p-0");
+    renderWithProviders(<General />, {
+      route: "/settings/general",
+      auth: true,
+    });
+    expect(
+      screen.getByRole("tablist", { name: "Personal information sections" }),
+    ).toHaveClass("w-full", "justify-start", "p-0");
   });
 
-  it("renders profile grid including birthday and country", () => {
+  it("renders editable profile fields directly in the card", () => {
     renderWithProviders(<General />, {
       route: "/settings/general?view=profile",
       auth: true,
     });
 
     expect(screen.getByText("Display name")).toBeInTheDocument();
-    expect(screen.getAllByText("Tester")).toHaveLength(2);
+    expect(screen.getByLabelText("Display name")).toHaveValue("Tester");
     expect(screen.getByText("Email")).toBeInTheDocument();
     expect(screen.getByText("First name")).toBeInTheDocument();
-    expect(screen.getByText("Test")).toBeInTheDocument();
+    expect(screen.getByLabelText("First name")).toHaveValue("Test");
     expect(screen.getByText("Last name")).toBeInTheDocument();
-    expect(screen.getByText("User")).toBeInTheDocument();
+    expect(screen.getByLabelText("Last name")).toHaveValue("User");
     expect(screen.getByText("Phone")).toBeInTheDocument();
-    expect(screen.getByText("+1234567890")).toBeInTheDocument();
+    expect(screen.getByLabelText("Phone")).toHaveValue("+1234567890");
     expect(screen.getByText("Location")).toBeInTheDocument();
-    expect(screen.getByText("Add a location")).toBeInTheDocument();
+    expect(screen.getByLabelText("Location")).toHaveValue("");
     expect(screen.getByText("Birthday")).toBeInTheDocument();
-    expect(screen.getByText("January 1, 1990")).toBeInTheDocument();
+    expect(screen.getByLabelText("Birthday")).toHaveValue("1990-01-01");
     expect(screen.getByText("Country")).toBeInTheDocument();
-    expect(screen.getByText("US")).toBeInTheDocument();
+    expect(screen.getByLabelText("Country")).toHaveValue("US");
+    // Profile and social links are separate forms, each with its own save.
     expect(
-      screen.getByRole("button", { name: /edit profile/i }),
-    ).toBeInTheDocument();
+      screen.getAllByRole("button", { name: /save changes/i })[0],
+    ).toBeDisabled();
+    expect(
+      screen.queryByRole("button", { name: /edit profile/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("dialog", { name: /edit profile/i }),
+    ).not.toBeInTheDocument();
   });
 
-  it("opens edit profile modal with all fields", async () => {
+  it("enables saving when the inline form changes", async () => {
     const user = userEvent.setup();
     renderWithProviders(<General />, {
       route: "/settings/general?view=profile",
       auth: true,
     });
 
-    await user.click(screen.getByRole("button", { name: /edit profile/i }));
-    expect(
-      await screen.findByRole("dialog", { name: /edit profile/i }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("textbox", { name: /^first name$/i }),
-    ).toBeInTheDocument();
+    await user.type(screen.getByLabelText("First name"), " updated");
+    expect(screen.getAllByRole("button", { name: /save changes/i })[0]).toBeEnabled();
     expect(
       screen.getByRole("textbox", { name: /^display name$/i }),
     ).toHaveValue("Tester");
@@ -117,8 +124,8 @@ describe("General", () => {
     });
     await user.click(screen.getByRole("tab", { name: "Profile" }));
     expect(
-      screen.getByRole("button", { name: /edit profile/i }),
-    ).toBeInTheDocument();
+      screen.getAllByRole("button", { name: /save changes/i }),
+    ).toHaveLength(2);
     await user.click(screen.getByRole("tab", { name: "Activities" }));
     expect(
       await screen.findByRole("heading", { name: /recent activities/i }),
@@ -127,7 +134,7 @@ describe("General", () => {
       await screen.findByText("What are your thoughts on the..."),
     ).toBeInTheDocument();
     expect(
-      screen.queryByRole("button", { name: /edit profile/i }),
+      screen.queryByRole("button", { name: /save changes/i }),
     ).not.toBeInTheDocument();
     await user.click(screen.getByRole("tab", { name: "About me" }));
     expect(

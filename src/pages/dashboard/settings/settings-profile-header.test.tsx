@@ -58,7 +58,7 @@ describe("SettingsProfileHeader", () => {
     expect(
       screen.queryByRole("button", { name: "Edit Profile" }),
     ).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Share" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Share" })).not.toBeInTheDocument();
     expect(
       screen.queryByText(/add a short introduction/i),
     ).not.toBeInTheDocument();
@@ -78,7 +78,8 @@ describe("SettingsProfileHeader", () => {
       route: "/settings/general",
       auth: true,
     });
-    fireEvent.click(screen.getByRole("button", { name: "Share" }));
+    // Exercise retained sharing logic directly while its UI entry point is hidden.
+    fireEvent.click(screen.getByText("Share").closest("button")!);
     await waitFor(() =>
       expect(writeText).toHaveBeenCalledWith(
         `${window.location.origin}/profile/${token}`,
@@ -96,7 +97,8 @@ describe("SettingsProfileHeader", () => {
       route: "/settings/general",
       auth: true,
     });
-    fireEvent.click(screen.getByRole("button", { name: "Share" }));
+    // Exercise retained sharing logic directly while its UI entry point is hidden.
+    fireEvent.click(screen.getByText("Share").closest("button")!);
     await waitFor(() =>
       expect(share).toHaveBeenCalledWith({
         title: "Your name on Memento",
@@ -125,9 +127,10 @@ describe("SettingsProfileHeader", () => {
       route: "/settings/general",
       auth: true,
     });
-    fireEvent.click(screen.getByRole("button", { name: "Share" }));
+    // Exercise retained sharing logic directly while its UI entry point is hidden.
+    fireEvent.click(screen.getByText("Share").closest("button")!);
     await waitFor(() =>
-      expect(screen.getByRole("button", { name: "Share" })).toBeEnabled(),
+      expect(screen.getByText("Share").closest("button")).toBeEnabled(),
     );
     expect(writeText).not.toHaveBeenCalled();
   });
@@ -153,16 +156,16 @@ describe("SettingsProfileHeader", () => {
     expect(fileInput).toHaveAttribute("type", "file");
   });
 
-  it("offers a custom image upload without Disco choices", () => {
+  it("hides the banner and its editing controls while retaining avatar upload", () => {
     renderWithProviders(<SettingsProfileHeader />, {
       route: "/settings/general",
       auth: true,
     });
-    fireEvent.click(screen.getByRole("button", { name: "Change banner" }));
+    expect(screen.queryByAltText("Profile banner")).not.toBeInTheDocument();
     expect(
-      screen.queryByRole("button", { name: /Disco banner/ }),
+      screen.queryByRole("button", { name: "Change banner" }),
     ).not.toBeInTheDocument();
-    expect(screen.getByLabelText("Upload banner image")).toHaveAttribute(
+    expect(screen.getByLabelText(/change profile photo/i)).toHaveAttribute(
       "type",
       "file",
     );
