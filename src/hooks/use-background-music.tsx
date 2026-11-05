@@ -65,6 +65,7 @@ export function BackgroundMusicProvider({ children }: PropsWithChildren) {
   const attempt = useRef(0);
   const failed = useRef(false);
   const playbackRequested = useRef(false);
+  const fallbackSource = useRef<string | null>(null);
   const [isBuffering, setIsBuffering] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTrack, setCurrentTrack] = useState<string | null>(null);
@@ -75,7 +76,28 @@ export function BackgroundMusicProvider({ children }: PropsWithChildren) {
   );
   const audioFiles = useMemo(() => catalogTracks(catalog) ?? bundledAudioFiles, [catalog]);
 
-  const failPlayback = useCallback(() => {
+  const failPlayback = useCallback(function handleFailure(error?: unknown) {
+    const audio = audioRef.current;
+    const fallback = fallbackSource.current;
+    const blocked = error !== null && typeof error === "object" &&
+      "name" in error && error.name === "NotAllowedError";
+    const isFallback = fallback && audio &&
+      (audio.src === fallback || audio.src === new URL(fallback, window.location.href).href);
+    // A catalog may point at a missing or unavailable hosted file. The same
+    // tracks ship with the web app, so recover without changing the selection.
+    if (audio && audio.src && fallback && !isFallback && !blocked) {
+      const request = ++attempt.current;
+      audio.src = fallback;
+      audio.load();
+      if (playbackRequested.current) {
+        setIsBuffering(true);
+        setIsPlaying(false);
+        audio.play().catch((cause) => {
+          if (request === attempt.current) handleFailure(cause);
+        });
+      }
+      return;
+    }
     // Loading a saved preference or clearing the source is not a playback attempt.
     if (!playbackRequested.current) return;
     playbackRequested.current = false;
@@ -123,7 +145,7 @@ export function BackgroundMusicProvider({ children }: PropsWithChildren) {
     failed.current = false;
     setIsBuffering(true);
     setIsPlaying(false);
-    audio.play().catch(() => { if (request === attempt.current) failPlayback(); });
+    audio.play().catch((error) => { if (request === attempt.current) failPlayback(error); });
   }, [failPlayback]);
 
   useEffect(() => {
@@ -139,6 +161,7 @@ export function BackgroundMusicProvider({ children }: PropsWithChildren) {
     if (user?.bg_music && audioRef.current && (!currentTrack || changedAccount)) {
       const audioFile = audioFiles.find((audio) => audio.key === user.bg_music);
       if (audioFile) {
+        fallbackSource.current = bundledAudioFiles.find((track) => track.key === user.bg_music)?.file ?? null;
         setCurrentTrack(user.bg_music);
         audioRef.current.src = audioFile.file;
         audioRef.current.load();
@@ -168,6 +191,7 @@ export function BackgroundMusicProvider({ children }: PropsWithChildren) {
       return;
     }
 
+    fallbackSource.current = bundledAudioFiles.find((track) => track.key === key)?.file ?? null;
     setCurrentTrack(key);
     audioRef.current.src = audioFile.file;
     audioRef.current.load();
@@ -191,6 +215,7 @@ export function BackgroundMusicProvider({ children }: PropsWithChildren) {
   }, [startPlayback]);
 
   const stopTrack = useCallback(() => {
+    fallbackSource.current = null;
     attempt.current++;
     playbackRequested.current = false;
     setIsBuffering(false);
