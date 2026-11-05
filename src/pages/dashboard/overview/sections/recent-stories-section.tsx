@@ -1,3 +1,4 @@
+import { storyDestination } from "@/lib/story-destination";
 import { Link } from "react-router-dom";
 import useSWR from "swr";
 import dayjs from "dayjs";
@@ -81,7 +82,7 @@ export default function RecentStoriesSection() {
           {stories.map((story) => (
             <li key={story._id}>
               <Link
-                to={`/stories/${story._id}`}
+                to={storyDestination(story)}
                 className="flex min-h-11 items-center gap-3 rounded-xl py-3 outline-none transition-colors hover:bg-fill-neutral-weaker focus-visible:ring-2 focus-visible:ring-stroke-brand-strong motion-reduce:transition-none"
               >
                 <StoryListThumbnail memory={story} />

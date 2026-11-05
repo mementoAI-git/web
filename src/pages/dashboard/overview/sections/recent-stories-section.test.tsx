@@ -101,7 +101,7 @@ describe("Recent stories", () => {
     renderSection();
     expect(
       await screen.findByRole("link", { name: /^A childhood memory/ }),
-    ).toHaveAttribute("href", "/stories/story-0");
+    ).toHaveAttribute("href", "/chat/reflection/story-0");
   });
 
   it("shows a warm empty state", async () => {

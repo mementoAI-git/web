@@ -6,9 +6,10 @@ import StoriesDetails from "./details";
 vi.mock("@/hooks/use-store", () => ({
   useStore: () => ({ user: null, setHeaderTitle: vi.fn() }),
 }));
+const detail = vi.hoisted(() => ({prompt_type: undefined as string | undefined}));
 vi.mock("swr", async (importOriginal) => ({
   ...(await importOriginal<typeof import("swr")>()),
-  default: () => ({ data: undefined, isLoading: true }),
+  default: () => ({ data: { data: { _id: "story-1", prompt_type: detail.prompt_type } }, isLoading: false }),
 }));
 
 const openModal = vi.fn();
@@ -23,6 +24,7 @@ vi.mock("./mobile-details", () => ({
 
 beforeEach(() => {
   vi.clearAllMocks();
+  detail.prompt_type = undefined;
   Object.defineProperty(window, "innerWidth", {
     configurable: true,
     writable: true,
@@ -35,6 +37,7 @@ function renderStoryLink() {
     <MemoryRouter initialEntries={["/stories/story-1"]}>
       <Routes>
         <Route path="/stories/:id" element={<StoriesDetails />} />
+        <Route path="/chat/reflection/:id" element={<div>Reflection conversation</div>} />
       </Routes>
     </MemoryRouter>,
   );
@@ -62,4 +65,11 @@ describe("story links", () => {
     expect(screen.getByText("Mobile story page")).toBeInTheDocument();
     expect(closeModal).toHaveBeenCalledWith("view-memory");
   });
+});
+
+it("redirects an old reflection story link to its topic conversation", async () => {
+  detail.prompt_type = "static";
+  renderStoryLink();
+  expect(await screen.findByText("Reflection conversation")).toBeVisible();
+  expect(openModal).not.toHaveBeenCalled();
 });

@@ -1,3 +1,4 @@
+import { storyDestination } from "@/lib/story-destination";
 import { DeletedMemoryStatus } from "./deleted-memory-status";
 import ImageThumbnail from "@/components/image-thumbnail";
 import { QuickCaptureProcessingBadge } from "@/components/memory/quick-capture-processing-badge";
@@ -26,13 +27,13 @@ function MobileStoryCard({ memory }: { memory: IMemory }) {
   return (
     <article
       className="rounded-[22px] border border-v3-stroke-weak bg-white p-4 shadow-sm transition-colors active:bg-v3-fill-weaker/50"
-      onClick={() => { if (memory.status !== "deleted") navigate(`/stories/${memory._id}`); }}
+      onClick={() => { if (memory.status !== "deleted") navigate(storyDestination(memory)); }}
       role="button"
       tabIndex={0}
       onKeyDown={(event) => {
         if (event.key === "Enter" || event.key === " ") {
           event.preventDefault();
-          if (memory.status !== "deleted") navigate(`/stories/${memory._id}`);
+          if (memory.status !== "deleted") navigate(storyDestination(memory));
         }
       }}
     >

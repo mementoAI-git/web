@@ -1,3 +1,4 @@
+import { storyDestination } from "@/lib/story-destination";
 import { DeletedMemoryStatus } from "./deleted-memory-status";
 import { StoryListThumbnail } from "./list-thumbnail";
 import { MemoryItemActions } from "./dropdown";
@@ -22,8 +23,8 @@ export default function StoriesTableRow({ memory }: { memory: IMemory }) {
   const handleClick = () => {
     if (memory.status === "deleted") return;
     const isMobile = window.innerWidth < 640;
-    if (isMobile) {
-      navigate(`/stories/${memory?._id}`);
+    if (isMobile || memory.prompt_type) {
+      navigate(storyDestination(memory));
     } else {
       open("view-memory", { memoryId: memory._id });
     }
@@ -42,7 +43,11 @@ export default function StoriesTableRow({ memory }: { memory: IMemory }) {
         </div>
       </td>
       <td className="text-sm whitespace-nowrap text-v3-text-weak">
-        {memory.status === "deleted" ? <DeletedMemoryStatus memory={memory} showDeletedAt /> : dayjs(memory.created_at).format("MMM DD, YYYY")}
+        {memory.status === "deleted" ? (
+          <DeletedMemoryStatus memory={memory} showDeletedAt />
+        ) : (
+          dayjs(memory.created_at).format("MMM DD, YYYY")
+        )}
       </td>
       <td>
         <div className="flex items-center gap-1">
