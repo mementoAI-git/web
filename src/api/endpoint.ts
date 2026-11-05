@@ -124,8 +124,6 @@ export default {
   onboardingDetails: "/users/onboarding-details",
   onboarding: "/users/onboarding",
   onboardingSkip: "/users/onboarding/skip",
-  /** Host onboarding chat — streams like `/ai/prompt`; trailer JSON for chips / completion */
-  hostOnboardingChatPrompt: "/users/onboarding/chat/prompt",
 
   // billing (Polar)
   billingAccount: "/billing/account",

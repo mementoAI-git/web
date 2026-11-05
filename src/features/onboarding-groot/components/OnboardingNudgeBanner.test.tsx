@@ -70,12 +70,12 @@ describe("OnboardingNudgeBanner", () => {
     expect(mockNavigate).toHaveBeenCalledWith("/onboarding");
   });
 
-  it("navigates to /onboard/chat when skipped but nickname exists", async () => {
+  it("navigates to /onboarding when skipped and a nickname exists", async () => {
     const user = userEvent.setup();
     mockedUser = { onboarding_status: "skipped", nickname: "Alex" };
     renderWithProviders(<OnboardingNudgeBanner />, { route: "/overview", auth: true });
     await user.click(screen.getByText(/continue setup/i));
-    expect(mockNavigate).toHaveBeenCalledWith("/onboard/chat");
+    expect(mockNavigate).toHaveBeenCalledWith("/onboarding");
   });
 
   it("dismisses when X clicked", async () => {

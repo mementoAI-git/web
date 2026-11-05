@@ -10,8 +10,6 @@ export function OnboardingNudgeBanner() {
   const [dismissed, setDismissed] = useState(false);
 
   if (
-    location.pathname === "/onboard" ||
-    location.pathname.startsWith("/onboard") ||
     location.pathname === "/onboarding" ||
     location.pathname.startsWith("/onboarding")
   ) {
@@ -23,11 +21,6 @@ export function OnboardingNudgeBanner() {
     user?.onboarding_status === "completed" || user?.onboarded === true;
   const skipped = user?.onboarding_status === "skipped";
   if (complete || !skipped) return null;
-
-  /** New flow: /onboarding → welcome → nickname → /onboard/chat; resume chat if we already have a name. */
-  const continueSetupPath = user?.nickname?.trim()
-    ? "/onboard/chat"
-    : "/onboarding";
 
   return (
     <StripBannerFrame>
@@ -41,7 +34,7 @@ export function OnboardingNudgeBanner() {
         <div className="flex shrink-0 items-center gap-2">
           <button
             type="button"
-            onClick={() => navigate(continueSetupPath)}
+            onClick={() => navigate("/onboarding")}
             className="rounded text-sm font-medium text-text-info-strong transition-colors hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-v3-brand-strong focus-visible:ring-offset-2"
           >
             Continue setup →

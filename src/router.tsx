@@ -18,7 +18,6 @@ import {
   MiscPage,
   NicknamePage,
   OnboardLayout,
-  HostOnboardingChatPage,
   OnboardingSummaryPage,
   WelcomePage,
   OnboardPage,
@@ -67,19 +66,6 @@ export const router = createBrowserRouter([
           { path: "misc", element: <MiscPage /> },
           { path: "summary", element: <OnboardingSummaryPage /> },
           { path: "beneficiary", element: <BeneficiaryPage /> },
-          { path: "chat", element: <Navigate to="/onboard/chat" replace /> },
-        ],
-      },
-      {
-        path: "onboard",
-        children: [
-          { index: true, element: <Navigate to="/onboarding" replace /> },
-          { path: "welcome", element: <Navigate to="/onboarding/welcome" replace /> },
-          { path: "nickname", element: <Navigate to="/onboarding/nickname" replace /> },
-          { path: "misc", element: <Navigate to="/onboarding/misc" replace /> },
-          { path: "summary", element: <Navigate to="/onboarding/summary" replace /> },
-          { path: "beneficiary", element: <Navigate to="/onboarding/beneficiary" replace /> },
-          { path: "chat", element: <HostOnboardingChatPage /> },
         ],
       },
       {

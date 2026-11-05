@@ -39,7 +39,6 @@ vi.mock("@/pages", async () => {
     MiscPage: Placeholder,
     NicknamePage: Placeholder,
     OnboardLayout: Placeholder,
-    HostOnboardingChatPage: Placeholder,
     OnboardingSummaryPage: Placeholder,
     WelcomePage: Placeholder,
     OnboardPage: Placeholder,

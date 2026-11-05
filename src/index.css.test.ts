@@ -105,7 +105,6 @@ describe("dark color token compatibility", () => {
     const scopedPaths = [
       "src/pages/auth",
       "src/pages/onboarding",
-      "src/pages/onboard-chat",
       "src/features/onboarding-groot",
     ];
     const scopedFiles = scopedPaths.flatMap((path) =>

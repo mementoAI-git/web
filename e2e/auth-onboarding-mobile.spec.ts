@@ -153,23 +153,6 @@ for (const viewport of [
       await expect(page).toHaveURL(/\/overview/);
     });
 
-    test("chat intro keeps its start action reachable", async ({ page }) => {
-      await page.route("**/users/onboarding/chat/prompt", (route) =>
-        route.fulfill({
-          status: 503,
-          json: { success: false, message: "Offline for the layout test" },
-        }),
-      );
-      await page.goto("/onboard/chat");
-      const start = page.getByRole("button", {
-        name: "Alright, let's go",
-        exact: true,
-      });
-      await scrollToAction(page, start);
-      await start.click();
-      await expect(start).not.toBeVisible();
-    });
-
     test("welcome can be skipped", async ({ page }) => {
       await mockOnboarding(page);
       await page.goto("/onboarding");
