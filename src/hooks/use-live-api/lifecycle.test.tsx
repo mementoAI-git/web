@@ -53,13 +53,22 @@ afterEach(() => vi.unstubAllGlobals());
 describe("inline voice lifecycle", () => {
   it("sends typed turns over the same live session and saves their history", async () => {
     const onMessages = vi.fn();
-    const { result } = renderHook(() => useLiveAPI({ memoryId: "m1", onMessages }));
+    const { result } = renderHook(() => useLiveAPI({ memoryId: "64b7f0c2a1b2c3d4e5f60718", onMessages }));
     await act(async () => { await result.current.connect(); await result.current.startRecording(); });
     await act(async () => { await result.current.sendChatInput({ text: "Tell me more" }); });
     expect(session.sendRealtimeInput).toHaveBeenCalledWith({ text: "Tell me more" });
     expect(session.close).not.toHaveBeenCalled();
-    expect(saveMessages).toHaveBeenCalledWith(expect.objectContaining({ memory_id: "m1", messages: [expect.objectContaining({ text: "Tell me more", role: "user" })] }));
+    expect(saveMessages).toHaveBeenCalledWith(expect.objectContaining({ memory_id: "64b7f0c2a1b2c3d4e5f60718", messages: [expect.objectContaining({ text: "Tell me more", role: "user" })] }));
     expect(onMessages).toHaveBeenCalledWith([expect.objectContaining({ _id: "saved-0", text: "Tell me more" })]);
+  });
+
+  it.each([null, "new", "[object Object]"])("saves by session instead of sending the memory id %s, which the API rejects", async (memoryId) => {
+    const { result } = renderHook(() => useLiveAPI({ memoryId }));
+    await act(async () => { await result.current.connect(); await result.current.startRecording(); });
+    await act(async () => { await result.current.sendChatInput({ text: "Hello" }); });
+    const payload = saveMessages.mock.calls.at(-1)?.[0] as Record<string, unknown>;
+    expect(payload).not.toHaveProperty("memory_id");
+    expect(payload.session_id).toEqual(expect.any(String));
   });
 
   it("delivers typed input while history saving is unavailable", async () => {

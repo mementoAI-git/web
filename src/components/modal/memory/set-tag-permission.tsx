@@ -70,7 +70,7 @@ function Taginput({ values, setValue }: ITaginput) {
               <span
                 onClick={() => removeTag(v)}
                 key={i}
-                className="mem-tags !bg-transparent !font-normal !text-grey-600"
+                className="mem-tags !bg-transparent !font-normal !text-text-neutral-weak"
               >
                 {v}
               </span>
@@ -98,7 +98,7 @@ function Taginput({ values, setValue }: ITaginput) {
               key={i}
               className={`mem-tags cursor-pointer  transition-colors ${isSelected
                 ? "!bg-[#EBD2A9] text-black!"
-                : "!bg-transparent !text-grey-600 hover:!bg-red-50"
+                : "!bg-transparent !text-text-neutral-weak hover:!bg-red-50"
                 }`}
             >
               {tag}
@@ -155,7 +155,7 @@ function Content({ data }: ISetTagPermissionsProps) {
             "Edit tags and permissions"
         }
       </h4>
-      <small className="font-inter text-sm text-grey-600">
+      <small className="font-inter text-sm text-text-neutral-weak">
         Choose a title and a tag for this entry, this allows Memento correctly
         categorize your contents.
       </small>
@@ -207,9 +207,9 @@ export default function SetTagPermissions({ data }: ISetTagPermissionsProps) {
         snapPoints={[0, 1]}
         initialSnap={1}
       >
-        <Sheet.Container className="max-h-[80dvh] overflow-hidden bg-white" >
-          <Sheet.Header className="bg-white rounded-3xl" />
-          <Sheet.Content className="max-h-[80dvh] min-h-0 overflow-y-auto overscroll-contain bg-white px-4 pb-6">
+        <Sheet.Container className="max-h-[80dvh] overflow-hidden bg-bg-raised" >
+          <Sheet.Header className="bg-bg-raised rounded-3xl" />
+          <Sheet.Content className="max-h-[80dvh] min-h-0 overflow-y-auto overscroll-contain bg-bg-raised px-4 pb-6">
             <ModalCloseBtn className="relative! ml-auto mb-2 right-0! top-0!" onClick={() => close?.("set-tag-permission")} />
             <Content {...{ data }} />
           </Sheet.Content>

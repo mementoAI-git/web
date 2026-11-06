@@ -64,8 +64,18 @@ describe("QuickTools", () => {
     expect(screen.getByRole("button", { name: "Quick tools" })).toHaveFocus();
   });
 
+  it("lists quick actions as short rows on phones", async () => {
+    Object.defineProperty(window, "innerWidth", { configurable: true, value: 390 });
+    await openTools();
+    const button = within(screen.getByRole("region", { name: "Quick actions" })).getByRole("button", { name: "Quick note" });
+    expect(button).toHaveClass("flex-row", "items-center", "p-3");
+    expect(button).not.toHaveClass("h-[85px]");
+    expect(screen.getByRole("button", { name: /^Theme: / })).toBeInTheDocument();
+  });
+
   it("shows Quick note and Add people without story, voice mode or links", async () => {
     await openTools();
+    expect(screen.queryByRole("button", { name: /^Theme: / })).not.toBeInTheDocument();
     expect(screen.getByRole("dialog", { name: "Quick tools" })).toHaveClass("w-[315px]");
     const player = screen.getByRole("region", { name: "Music player" });
     expect(player).toHaveClass("bg-fill-neutral-weak");

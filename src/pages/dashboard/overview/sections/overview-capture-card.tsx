@@ -1,7 +1,7 @@
 import { reportFetcherError } from "@/api/report-fetcher-error";
 import "../overview-motion.css";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { LoaderIcon, Pause, Play, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import useSWRMutation from "swr/mutation";
@@ -22,37 +22,71 @@ import {
 import { OverviewDesignIcon } from "@/components/overview-design-icon";
 import { useTheme } from "@/contexts/theme";
 import { useModal } from "@/hooks/use-modal";
-import { useOverviewDictation } from "./use-overview-dictation";
-import cancelLight from "@/assets/icon/overview-recording/cancel-light.svg";
-import cancelDark from "@/assets/icon/overview-recording/cancel-dark.svg";
-import stopLight from "@/assets/icon/overview-recording/stop-light.svg";
-import stopDark from "@/assets/icon/overview-recording/stop-dark.svg";
+import useFileUpload from "@/hooks/use-file-upload";
+import { useVoiceCapture } from "@/hooks/use-voice-capture";
+import { useFeatureFlags } from "@/contexts/feature-flags";
+import { QuickCaptureMediaStack } from "@/components/modal/memory/quick-capture/media-stack";
+import type { IFile, IOnUploadPayload } from "@/utility/interface";
+import {
+  VoiceRecorderControls,
+  VoiceRecorderIcon as RecordingIcon,
+  VoiceRecorderStatus,
+} from "@/components/recorder/voice-recorder";
 import microphoneLight from "@/assets/icon/overview-recording/microphone-light.svg";
 import microphoneDark from "@/assets/icon/overview-recording/microphone-dark.svg";
-import dotLight from "@/assets/icon/overview-recording/dot-light.svg";
-import dotDark from "@/assets/icon/overview-recording/dot-dark.svg";
 import trash from "@/assets/icon/overview-recording/trash.svg";
 import transcriptMicrophone from "@/assets/icon/overview-recording/microphone-transcript.svg";
 
-function RecordingIcon({
-  src,
-  brand = false,
-}: {
-  src: string;
-  brand?: boolean;
-}) {
-  return (
-    <span
-      aria-hidden
-      className={`inline-block size-5 shrink-0 bg-current ${brand ? "text-icon-brand-strong" : ""}`}
-      style={{
-        maskImage: `url("${src}")`,
-        maskSize: "20px 20px",
-        maskRepeat: "no-repeat",
-        maskPosition: "center",
-      }}
-    />
+const MAX_VOICE_BYTES = 15 * 1024 * 1024;
+
+type SavedVoiceNote = { file: IFile; durationSec?: number };
+
+function readSavedVoiceNotes(key: string | null): IOnUploadPayload[] {
+  if (!key) return [];
+  try {
+    const saved = JSON.parse(localStorage.getItem(key) ?? "[]") as SavedVoiceNote[];
+    if (!Array.isArray(saved)) return [];
+    return saved
+      .filter((note) => note?.file?._id)
+      .map((note) => ({
+        id: note.file._id,
+        file: null,
+        progress: 100,
+        duration: note.durationSec,
+        uploadedFile: note.file,
+      }));
+  } catch {
+    return [];
+  }
+}
+
+const HANDED_OFF_EVENT = "memento:overview-draft-handed-off";
+
+/** Lets go of a draft that now lives in a story, even if this card has since unmounted. */
+function letGoOfHandedOffDraft(
+  userId: string | undefined,
+  text: string,
+  fileIds: string[],
+  outcome: "published" | "draft",
+) {
+  try {
+    if (userId) {
+      const textKey = `memento-overview-draft:${userId}`;
+      if (localStorage.getItem(textKey) === text) localStorage.removeItem(textKey);
+      const voiceKey = `memento-overview-voice:${userId}`;
+      const kept = readSavedVoiceNotes(voiceKey)
+        .filter((note) => !fileIds.includes(note.id))
+        .map((note) => ({ file: note.uploadedFile, durationSec: note.duration }));
+      if (kept.length) localStorage.setItem(voiceKey, JSON.stringify(kept));
+      else localStorage.removeItem(voiceKey);
+    }
+  } catch {
+    /* The live card below still clears itself. */
+  }
+  window.dispatchEvent(
+    new CustomEvent(HANDED_OFF_EVENT, { detail: { userId, text, fileIds } }),
   );
+  if (outcome === "draft") toast.success("Moved to your story drafts.");
 }
 
 function storyBodyFromText(text: string) {
@@ -109,14 +143,75 @@ export function OverviewCaptureCard({
     }
   }
 
-  const recording = useOverviewDictation((addition) => {
-    const next = addition.trim();
-    if (!next) return;
-    updateText((previous) =>
-      previous.trim()
-        ? `${previous}${/\s$/.test(previous) ? "" : " "}${next}`
-        : next,
+  const { canUse } = useFeatureFlags();
+  const { files, handleUpload, handleDeleteFile, setFiles } = useFileUpload();
+  const voiceStorageKey = userId ? `memento-overview-voice:${userId}` : null;
+  const voiceRestored = useRef(false);
+  useEffect(() => {
+    const saved = readSavedVoiceNotes(voiceStorageKey);
+    if (saved.length) setFiles(saved);
+    voiceRestored.current = true;
+    // The card remounts per user, so this only needs to run once.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  useEffect(() => {
+    if (!voiceStorageKey || !voiceRestored.current) return;
+    const uploaded: SavedVoiceNote[] = files.flatMap((file) =>
+      file.uploadedFile
+        ? [{ file: file.uploadedFile, durationSec: file.duration }]
+        : [],
     );
+    try {
+      if (uploaded.length)
+        localStorage.setItem(voiceStorageKey, JSON.stringify(uploaded));
+      else localStorage.removeItem(voiceStorageKey);
+    } catch {
+      setStorageError(true);
+    }
+  }, [files, voiceStorageKey]);
+  useEffect(() => {
+    const onHandedOff = (event: Event) => {
+      const detail = (event as CustomEvent<{
+        userId?: string;
+        text: string;
+        fileIds: string[];
+      }>).detail;
+      if (detail.userId !== userId) return;
+      if (textRef.current === detail.text) updateText("");
+      setFiles((current) =>
+        current.filter((file) => !file.uploadedFile || !detail.fileIds.includes(file.uploadedFile._id)),
+      );
+    };
+    window.addEventListener(HANDED_OFF_EVENT, onHandedOff);
+    return () => window.removeEventListener(HANDED_OFF_EVENT, onHandedOff);
+    // updateText only touches refs and this user's keys.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [setFiles, userId]);
+  const voiceNoteIds = Object.fromEntries(
+    files.map((file) => [file.id, true as const]),
+  );
+  const attachmentIds = files.flatMap((file) =>
+    file.uploadedFile ? [file.uploadedFile._id] : [],
+  );
+  const uploadsPending = files.some((file) => file.progress !== 100);
+  const recording = useVoiceCapture({
+    mode: "audio",
+    onAudio: (file, duration) => {
+      if (!canUse("attachments.audio_upload")) {
+        toast.error("Audio uploads are currently disabled.");
+        return;
+      }
+      if (file.size > MAX_VOICE_BYTES) {
+        toast.error("That recording is too large. The limit is 15MB.");
+        return;
+      }
+      void handleUpload({
+        id: crypto.randomUUID(),
+        file,
+        progress: 0,
+        duration,
+      });
+    },
   });
   const reportedRecordingError = useRef("");
   const recordingToastId = `overview-recording-error:${userId ?? "guest"}`;
@@ -127,18 +222,8 @@ export function OverviewCaptureCard({
     }
     if (reportedRecordingError.current === recording.error) return;
     reportedRecordingError.current = recording.error;
-    toast.error(recording.error, {
-      id: recordingToastId,
-      ...(recording.canRetry
-        ? {
-            duration: Infinity,
-            action: { label: "Retry", onClick: () => void recording.retry() },
-            cancel: { label: "Discard", onClick: recording.cancel },
-            onDismiss: recording.cancel,
-          }
-        : {}),
-    });
-  }, [recording, recordingToastId]);
+    toast.error(recording.error, { id: recordingToastId });
+  }, [recording.error, recordingToastId]);
   useEffect(() => {
     if (storageError)
       toast.error(
@@ -153,12 +238,22 @@ export function OverviewCaptureCard({
     [recordingToastId],
   );
   async function saveNow() {
-    if (savingRef.current || saving || !textRef.current.trim()) return;
+    const submittedAttachments = attachmentIds;
+    if (
+      savingRef.current ||
+      saving ||
+      uploadsPending ||
+      (!textRef.current.trim() && !submittedAttachments.length)
+    )
+      return;
     savingRef.current = true;
     const submitted = textRef.current;
     try {
       const result = await saveThought({
-        body: storyBodyFromText(submitted),
+        ...(submitted.trim() ? { body: storyBodyFromText(submitted) } : {}),
+        ...(submittedAttachments.length
+          ? { attachments: submittedAttachments }
+          : {}),
         visibility: "private",
       });
       if (!result?.success) {
@@ -168,6 +263,13 @@ export function OverviewCaptureCard({
         return;
       }
       if (textRef.current === submitted) updateText("");
+      setFiles((current) =>
+        current.filter(
+          (file) =>
+            !file.uploadedFile ||
+            !submittedAttachments.includes(file.uploadedFile._id),
+        ),
+      );
       toast.success(
         "Quick note saved. Details will finish processing in the background.",
       );
@@ -184,12 +286,11 @@ export function OverviewCaptureCard({
   const isRecording =
     recording.phase === "recording" || recording.phase === "paused";
   const isStarting = recording.phase === "starting";
-  const isTranscribing = recording.phase === "transcribing";
+  const isSavingRecording = recording.phase === "saving";
   const hasText = Boolean(text.trim());
-  const showRecording =
-    isStarting || isRecording || (isTranscribing && !hasText);
-  const busy =
-    recording.phase === "starting" || recording.phase === "transcribing";
+  const hasDraft = hasText || files.length > 0;
+  const showRecording = isStarting || isRecording || isSavingRecording;
+  const busy = isStarting || isSavingRecording;
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   useLayoutEffect(() => {
     const input = textareaRef.current;
@@ -211,7 +312,7 @@ export function OverviewCaptureCard({
     });
     observer.observe(input);
     return () => observer.disconnect();
-  }, [text, showRecording, isTranscribing]);
+  }, [text, showRecording]);
   useLayoutEffect(() => {
     const card = cardRef.current;
     if (!card || typeof ResizeObserver === "undefined") return;
@@ -223,22 +324,13 @@ export function OverviewCaptureCard({
     const observer = new ResizeObserver(measure);
     observer.observe(card);
     return () => observer.disconnect();
-  }, [text, showRecording, isTranscribing, recording.phase]);
+  }, [text, showRecording, files.length, recording.phase]);
   const canEdit = !showRecording && !busy && !saving;
   const cardState = showRecording
     ? recording.phase
-    : isTranscribing
-      ? "transcribing"
-      : hasText
-        ? "draft"
-        : "default";
-  const recordingLabel = isRecording
-    ? recording.phase === "paused"
-      ? "Paused…"
-      : "Recording…"
-    : recording.phase === "starting"
-      ? "Preparing microphone…"
-      : "Transcribing…";
+    : hasDraft
+      ? "draft"
+      : "default";
   const dark = resolvedTheme === "dark";
   const roundButton =
     "size-10 shrink-0 rounded-full border-stroke-neutral-strong bg-transparent p-[9px] text-icon-neutral-weak";
@@ -260,30 +352,14 @@ export function OverviewCaptureCard({
           textareaRef.current?.focus();
         }}
         data-state={cardState}
-        className={`overview-capture-card overview-motion sky-card relative isolate flex min-h-[178px] flex-col justify-between overflow-hidden rounded-3xl border border-stroke-neutral-weaker bg-bg-neutral ${hasText ? "p-[23px]" : "p-6"} gap-0`}
+        className={`overview-capture-card overview-motion sky-card relative isolate flex min-h-[178px] flex-col justify-between overflow-hidden rounded-3xl border border-stroke-neutral-weaker bg-bg-neutral ${hasDraft ? "p-[23px]" : "p-6"} gap-0`}
         data-testid="overview-capture-card"
       >
         <div
           data-testid="capture-writing-area"
-          className={`relative flex-1 ${canEdit ? "cursor-text" : ""} ${hasText && !showRecording ? "pb-[45px]" : "pb-8"}`}
+          className={`relative flex-1 ${canEdit ? "cursor-text" : ""} ${hasDraft && !showRecording ? "pb-[45px]" : "pb-8"}`}
         >
-          {isTranscribing && hasText ? (
-            <div
-              role="textbox"
-              aria-label="Your thoughts"
-              aria-readonly="true"
-              className="relative max-h-[306px] min-h-[34px] w-full overflow-y-auto whitespace-pre-wrap break-words font-garamond text-[24px] leading-[34px] text-text-neutral-strong"
-            >
-              <span>{text.trimEnd()}</span>
-              <LoaderIcon
-                role="status"
-                aria-label="Transcribing additional recording"
-                className="ml-2 inline-block size-4 animate-spin align-middle text-icon-neutral-weak"
-              />
-            </div>
-          ) : (
-            (hasText || !showRecording) &&
-            !isTranscribing && (
+          {(hasText || !showRecording) && (
               <textarea
                 ref={textareaRef}
                 aria-label="Your thoughts"
@@ -296,116 +372,56 @@ export function OverviewCaptureCard({
                 readOnly={showRecording || busy || saving}
                 className="relative min-h-[34px] w-full resize-none bg-transparent font-garamond text-[24px] leading-[34px] text-text-neutral-strong outline-none placeholder:text-text-neutral-strong"
               />
-            )
           )}
           {showRecording ? (
-            <div
-              className={`t-panel-slide flex flex-wrap items-center ${isTranscribing ? "gap-2" : "gap-4"}`}
+            <VoiceRecorderStatus
+              phase={recording.phase}
+              seconds={recording.seconds}
+              className="t-panel-slide"
               data-open="true"
-              role="status"
-              aria-label={isTranscribing ? "Transcribing" : undefined}
-            >
-              {isTranscribing && (
-                <LoaderIcon
-                  aria-hidden
-                  className="size-4 animate-spin text-icon-neutral-weak"
-                />
-              )}
-              <span className="font-garamond text-2xl italic leading-[34px] text-text-neutral-strong">
-                <span
-                  className={
-                    isTranscribing || isStarting ? "t-shimmer" : undefined
-                  }
-                  data-text={recordingLabel}
-                >
-                  {recordingLabel}
-                </span>
-              </span>
-              {isRecording && (
-                <span className="flex items-center gap-2 font-geist text-sm tabular-nums text-text-neutral-weak">
-                  <img src={dark ? dotDark : dotLight} alt="" />
-                  {String(Math.floor(recording.seconds / 60)).padStart(2, "0")}:
-                  {String(recording.seconds % 60).padStart(2, "0")}s
-                </span>
-              )}
-            </div>
+            />
           ) : null}
         </div>
+        {files.length > 0 && (
+          <div data-capture-actions className="pb-4">
+            <QuickCaptureMediaStack
+              files={files}
+              voiceNoteIds={voiceNoteIds}
+              onRemove={(id) => {
+                const file = files.find((item) => item.id === id);
+                if (file?.uploadedFile) void handleDeleteFile(file).catch(() => undefined);
+                else setFiles((current) => current.filter((item) => item.id !== id));
+              }}
+            />
+          </div>
+        )}
         {showRecording ? (
-          <div
+          <VoiceRecorderControls
             key="recording-controls"
             data-capture-actions
             data-open="true"
-            className="t-panel-slide flex h-10 items-center"
-          >
-            <Button
-              variant="outline"
-              size="icon"
-              aria-label="Cancel recording"
-              onClick={recording.cancel}
-              className={roundButton}
-            >
-              <RecordingIcon src={dark ? cancelDark : cancelLight} />
-            </Button>
-            <div
-              className="flex h-10 min-w-0 flex-1 items-center justify-end gap-1 overflow-hidden px-3"
-              aria-hidden
-            >
-              {recording.levels.map((height, index) => (
-                <span
-                  key={index}
-                  className="w-1 shrink-0 rounded-lg bg-icon-neutral-weak"
-                  style={{ height: isStarting ? 5 : height }}
-                />
-              ))}
-            </div>
-            <div className="flex gap-4">
-              <Button
-                variant="outline"
-                size="icon"
-                aria-label="Stop recording and transcribe"
-                disabled={isStarting || isTranscribing}
-                onClick={recording.stop}
-                className={roundButton}
-              >
-                <RecordingIcon src={dark ? stopDark : stopLight} brand />
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                aria-label={
-                  recording.phase === "paused"
-                    ? "Resume recording"
-                    : "Pause recording"
-                }
-                aria-pressed={recording.phase === "paused"}
-                disabled={isStarting || isTranscribing}
-                onClick={recording.togglePause}
-                className={roundButton}
-              >
-                {recording.phase === "paused" ? (
-                  <Play aria-hidden className="size-5" />
-                ) : (
-                  <Pause aria-hidden className="size-5" />
-                )}
-              </Button>
-            </div>
-          </div>
+            className="t-panel-slide"
+            phase={recording.phase}
+            levels={recording.levels}
+            onCancel={recording.cancel}
+            onStop={recording.stop}
+            onTogglePause={recording.togglePause}
+          />
         ) : (
           <div
-            key={hasText ? "draft-controls" : "default-controls"}
+            key={hasDraft ? "draft-controls" : "default-controls"}
             data-capture-actions
             data-open="true"
             className="t-panel-slide relative flex flex-wrap items-start justify-between gap-4"
           >
             <div className="flex flex-wrap items-center gap-3">
-              {hasText ? (
+              {hasDraft ? (
                 <>
                   <Button
                     key="save-transcript"
                     type="button"
                     size="lg"
-                    disabled={busy || saving}
+                    disabled={busy || saving || uploadsPending}
                     onClick={() => void saveNow()}
                     className="rounded-[64px]"
                   >
@@ -415,17 +431,33 @@ export function OverviewCaptureCard({
                     key="use-as-story"
                     variant="outline"
                     size="lg"
-                    disabled={busy || saving}
+                    disabled={busy || saving || uploadsPending}
                     onClick={() =>
                       open?.("create-memory", {
-                        payload: { body: storyBodyFromText(text) },
+                        payload: hasText ? { body: storyBodyFromText(text) } : {},
+                        onHandedOff: (outcome: "published" | "draft") =>
+                          letGoOfHandedOffDraft(userId, text, attachmentIds, outcome),
+                        ...(files.length
+                          ? {
+                              attachments: files.flatMap((file) =>
+                                file.uploadedFile
+                                  ? [
+                                      {
+                                        file: file.uploadedFile,
+                                        duration: file.duration,
+                                      },
+                                    ]
+                                  : [],
+                              ),
+                            }
+                          : {}),
                       })
                     }
                     className="rounded-[64px] border-stroke-neutral-weak bg-black/[0.04] text-text-neutral-strong shadow-none hover:bg-black/[0.06] dark:bg-white/[0.08] dark:hover:bg-white/[0.12]"
                   >
                     Use as story
                   </Button>
-                  <Button
+                  {hasText && <Button
                     key="discuss-transcript"
                     variant="ghost"
                     size="lg"
@@ -436,7 +468,7 @@ export function OverviewCaptureCard({
                     className="rounded-[64px] bg-transparent text-text-neutral-weak shadow-none hover:bg-fill-neutral-weak hover:text-text-neutral-strong dark:hover:bg-fill-neutral-weak"
                   >
                     Discuss
-                  </Button>
+                  </Button>}
                   <Button
                     variant="ghost"
                     size="icon"
@@ -480,20 +512,20 @@ export function OverviewCaptureCard({
             </div>
             <div className="ml-auto flex items-center gap-2">
               <Button
-                disabled={busy || saving || recording.canRetry}
+                disabled={busy || saving}
                 variant="outline"
                 size="icon"
-                aria-label={hasText ? "Record more" : "Record your thoughts"}
+                aria-label={hasDraft ? "Record more" : "Record your thoughts"}
                 onClick={() => void recording.start()}
                 className={
-                  hasText
+                  hasDraft
                     ? "size-[42px] shrink-0 rounded-full border-stroke-neutral-strong bg-transparent p-[10px] text-icon-neutral-weak backdrop-blur-[1px]"
                     : roundButton
                 }
               >
                 <RecordingIcon
                   src={
-                    hasText
+                    hasDraft
                       ? transcriptMicrophone
                       : dark
                         ? microphoneDark
@@ -501,7 +533,7 @@ export function OverviewCaptureCard({
                   }
                 />
               </Button>
-              {busy && !isTranscribing && (
+              {busy && (
                 <Button variant="ghost" onClick={recording.cancel}>
                   Cancel
                 </Button>
@@ -512,14 +544,25 @@ export function OverviewCaptureCard({
         <AlertDialog open={clearOpen} onOpenChange={setClearOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Clear your text?</AlertDialogTitle>
+              <AlertDialogTitle>{files.length ? "Clear this draft?" : "Clear your text?"}</AlertDialogTitle>
               <AlertDialogDescription>
-                This removes the draft from this card and this device.
+                {files.length
+                  ? "This deletes your recording and removes the draft from this card and this device."
+                  : "This removes the draft from this card and this device."}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Keep text</AlertDialogCancel>
-              <AlertDialogAction onClick={() => updateText("")}>
+              <AlertDialogAction
+                onClick={() => {
+                  updateText("");
+                  files.forEach((file) => {
+                    if (file.uploadedFile)
+                      void handleDeleteFile(file).catch(() => undefined);
+                  });
+                  setFiles([]);
+                }}
+              >
                 Clear text
               </AlertDialogAction>
             </AlertDialogFooter>

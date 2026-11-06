@@ -115,6 +115,14 @@ const HYBRID_END_MS = parseHybridEndMs(import.meta.env.VITE_VOICE_HYBRID_END_MS)
 const SELF_INTERRUPT_GUARD = import.meta.env.VITE_VOICE_SELF_INTERRUPT_GUARD !== "false";
 const THINKING_CHECK_MS = 150;
 
+/**
+ * The API rejects a missing or malformed memory_id, which would fail every save
+ * in the call. Without one, the session id keeps the call in its own conversation.
+ */
+function savedConversationId(memoryId: string | null | undefined) {
+  return memoryId && /^[a-f\d]{24}$/i.test(memoryId) ? { memory_id: memoryId } : {};
+}
+
 export function useLiveAPI({
   connectionPersonId,
   memoryId,
@@ -410,7 +418,7 @@ export function useLiveAPI({
     const job = saveQueue.current.catch(() => {}).then(async () => {
       const response = connectionPersonId
         ? await post<VoiceMessage[]>(`/people/${encodeURIComponent(connectionPersonId)}/voice`, {session_id: connectionSession.current, request_id: uuidv4(), messages})
-        : await addMessageToMemory({ memory_id: memoryIdRef.current, session_id: sessionIdRef.current, messages });
+        : await addMessageToMemory({ ...savedConversationId(memoryIdRef.current), session_id: sessionIdRef.current, messages });
       const saved = response?.data;
       if (!Array.isArray(saved)) throw new Error("Could not save the voice conversation.");
       if (saved[0]?.memory) memoryIdRef.current = String(saved[0].memory);

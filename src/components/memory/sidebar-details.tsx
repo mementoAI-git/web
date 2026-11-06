@@ -69,7 +69,8 @@ export type MemorySidebarQuickActions = {
 };
 
 interface SidebarDetailsProps {
-  memory: IMemory;
+  /** Only a new chat, which shows just its preferences, goes without one. */
+  memory?: IMemory;
   onClose: () => void;
   isOpen: boolean;
   source?: PostTypeSource;
@@ -103,6 +104,10 @@ interface ContentProps {
   categoryScores?: CategoryScore[] | null;
   desktopLayout?: "overlay" | "inline";
   onOpenConversationFiles?: (request: ConversationFilesRequest) => void;
+  /** The chat settings drawer supplies the fill at every width. */
+  inDrawer?: boolean;
+  /** The bottom sheet also supplies the title and margins. */
+  inBottomSheet?: boolean;
 }
 
 const sectionBadgeClass =
@@ -293,6 +298,8 @@ function Content({
   categoryScores,
   desktopLayout = "overlay",
   onOpenConversationFiles,
+  inDrawer = false,
+  inBottomSheet = false,
 }: ContentProps) {
   const { open } = useModal();
 
@@ -308,15 +315,15 @@ function Content({
       data-testid="sidebar-details-content"
       className={cn(
         "relative isolate flex w-full min-w-0 max-w-full flex-col gap-0",
-        includeChatPreferences
+        !inDrawer && (includeChatPreferences
           ? "bg-bg-neutral-solid"
-          : "bg-v3-bg",
+          : "bg-v3-bg"),
         isMobile
           ? "h-auto overflow-visible"
           : "h-full min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain",
-        includeChatPreferences
+        !inBottomSheet && (includeChatPreferences
           ? "p-2.5 sm:p-3 md:p-3 lg:p-6"
-          : "min-w-[min(100%,287px)] p-3 sm:p-4 lg:p-6",
+          : "min-w-[min(100%,287px)] p-3 sm:p-4 lg:p-6"),
         isDesktopOverlayCard &&
           "rounded-[24px] border border-stroke-neutral-weak shadow-xl",
       )}
@@ -324,7 +331,7 @@ function Content({
       {includeChatPreferences ? (
         <>
           <div className="relative z-[1] flex flex-col">
-            <h2 className="mb-6 font-garamond text-3xl font-normal text-text-neutral-strong">Chat settings</h2>
+            {inBottomSheet ? null : <h2 className="mb-6 font-garamond text-3xl font-normal text-text-neutral-strong">Chat settings</h2>}
             <ChatPreferencesPanel
               density="compact"
               enrichmentScore={enrichmentScore}
@@ -334,7 +341,7 @@ function Content({
             />
           </div>
         </>
-      ) : (
+      ) : memory ? (
       <MemorySections
         memory={memory}
         isMobile={isMobile}
@@ -346,7 +353,7 @@ function Content({
         deltaToday={deltaToday}
         categoryScores={categoryScores}
       />
-      )}
+      ) : null}
     </div>
   );
 }
@@ -372,7 +379,7 @@ export default function SidebarDetails({
     return (
       <ChatSettingsDrawer isOpen={isOpen} onClose={onClose}>
         {(mobile) => <Content memory={memory} onClose={onClose} source={source}
-          isMobile={mobile} desktopLayout={desktopLayout}
+          isMobile={mobile} inDrawer inBottomSheet={mobile} desktopLayout={desktopLayout}
           includeChatPreferences enrichmentScore={enrichmentScore}
           categoryScores={categoryScores} onOpenConversationFiles={onOpenConversationFiles} />}
       </ChatSettingsDrawer>
@@ -388,9 +395,9 @@ export default function SidebarDetails({
         onClose={onClose}
         snapPoints={[0, 1]}
       >
-        <Sheet.Container className="max-h-[80dvh] overflow-hidden bg-sand-1">
-          <Sheet.Header className="rounded-3xl bg-sand-1" />
-          <Sheet.Content className="max-h-[80dvh] min-h-0 overflow-hidden bg-sand-1">
+        <Sheet.Container className="max-h-[80dvh] overflow-hidden bg-bg-raised">
+          <Sheet.Header className="rounded-3xl bg-bg-raised" />
+          <Sheet.Content className="max-h-[80dvh] min-h-0 overflow-hidden bg-bg-raised">
             <Content
               memory={memory}
               onClose={onClose}

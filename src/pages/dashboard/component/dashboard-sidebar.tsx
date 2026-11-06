@@ -46,7 +46,7 @@ export function DashboardSideBar({
     >
       <Sidebar
         collapsible="none"
-        className="dynamic-height min-h-screen border-r border-stroke-neutral-weak bg-transparent"
+        className="dynamic-height border-r border-stroke-neutral-weak bg-transparent"
       >
         <SidebarHeader className="flex-row items-center justify-between pb-3 pl-7 pr-4 pt-6">
           {compact ? <Link to="/overview" aria-label="Memento home" className="rounded-lg font-garamond text-3xl text-text-neutral-strong focus-visible:outline focus-visible:outline-2 focus-visible:outline-stroke-neutral-strong">M.</Link> : <Logo className="text-[24px] font-normal leading-9 text-foreground" />}
@@ -84,7 +84,8 @@ export function DashboardSideBar({
                 <SideBarItem
                   icon={lightBulbIcon}
                   title="Insights"
-                  onClick={() => open("memory-insights")}
+                  link="/insights"
+                  active={pathname === "/insights"}
                 />
                 {bottomNavigations.map((navigation) => (
                   <SideBarItem

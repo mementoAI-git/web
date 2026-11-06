@@ -2,7 +2,8 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Maximize2, Minimize2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { useOverviewDictation } from "@/pages/dashboard/overview/sections/use-overview-dictation";
+import { VoiceRecorderCancelButton, VoiceRecorderWaveform } from "@/components/recorder/voice-recorder";
+import { useVoiceCapture } from "@/hooks/use-voice-capture";
 import { ABOUT_LIMIT } from "../limits";
 import "@/components/motion/icon-swap.css";
 import "./about-input.css";
@@ -21,10 +22,13 @@ export function AboutInput({ value, onChange, onBusyChange }: {
   const mirrorRef = useRef<HTMLDivElement>(null);
   const pendingTextRef = useRef<HTMLDivElement>(null);
   // Keep the recorder above both presentations so expanding never restarts it.
-  const recording = useOverviewDictation((text) => {
-    const next = text.trim();
-    if (!next) return;
-    onChange(value.trim() ? `${value}${/\s$/.test(value) ? "" : " "}${next}` : next);
+  const recording = useVoiceCapture({
+    mode: "text",
+    onTranscript: (text) => {
+      const next = text.trim();
+      if (!next) return;
+      onChange(value.trim() ? `${value}${/\s$/.test(value) ? "" : " "}${next}` : next);
+    },
   });
   const busy = recording.phase !== "idle";
   const capturing = recording.phase === "recording" || recording.phase === "paused";
@@ -71,10 +75,8 @@ export function AboutInput({ value, onChange, onBusyChange }: {
       </div>
       <div className="flex h-8 shrink-0 items-center gap-3">
         {capturing ? <>
-          <Button type="button" variant="outline" size="icon-sm" className="size-8 shrink-0 rounded-full border-stroke-neutral-strong bg-transparent text-text-neutral-weak" aria-label="Cancel recording" onClick={recording.cancel}><VoiceIcon name="cancel" /></Button>
-          <div className="flex h-8 min-w-0 flex-1 items-center gap-1 overflow-hidden" aria-hidden>
-            {recording.levels.map((height, i) => <span key={i} className="w-1 shrink-0 rounded-full bg-icon-neutral-weak" style={{ height: Math.min(24, Math.max(4, height)) }} />)}
-          </div>
+          <VoiceRecorderCancelButton onCancel={recording.cancel} className="size-8 p-1.5" />
+          <VoiceRecorderWaveform levels={recording.levels} maxHeight={24} className="h-8" />
         </> : <span id={inDialog ? "about-counter-expanded" : "about-counter"} className="flex-1 text-sm tabular-nums"><span className={excess ? "text-text-error-strong" : ""}>{value.length}</span>/{ABOUT_LIMIT}</span>}
         <Button type="button" variant="outline" size="icon-sm" className="size-8 shrink-0 rounded-full border-stroke-neutral-strong bg-transparent text-text-neutral-weak"
           aria-label={capturing ? "Stop and transcribe" : "Record about yourself"}

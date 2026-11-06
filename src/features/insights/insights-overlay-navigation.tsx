@@ -22,7 +22,7 @@ export function InsightsOverlayNavigation({
     <Tabs
       value={value}
       onValueChange={(next) => onValueChange(next as InsightsSection)}
-      className="min-w-0 gap-6"
+      className="min-w-0 flex-col gap-6"
     >
       <div className="overflow-x-auto pb-1">
         <TabsList

@@ -33,7 +33,7 @@ export default function SelectBeneficiary({ value = [], onAddRecipient, handleCl
       <ModalCloseBtn onClick={handleClose} />
       <div className="space-y-6">
         <h4 className="modal-title">Select beneficiaries</h4>
-        <small className="font-inter text-sm text-grey-600">
+        <small className="font-inter text-sm text-text-neutral-weak">
           You can select multiple beneficiaries to add as recipients.
         </small>
 

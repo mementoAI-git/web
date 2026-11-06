@@ -1,6 +1,8 @@
 import { getProfileAvatarUrl } from "@/utility/profile-avatar";
+import { ThemeMenuItems } from "@/components/theme-switcher";
 import { UserAvatar } from "@/components/user-avatar";
 import { useSubscription } from "@/contexts/subscription";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useStore } from "@/hooks/use-store";
 import { isEmpty } from "@/utility";
 import { cn } from "@/utility";
@@ -57,6 +59,8 @@ export function ProfileDropdown({
       ? "Pro"
       : "Free"
     : null;
+
+  const isMobile = useIsMobile();
 
   const handleLogout = () => {
     unsetAuth?.();
@@ -126,6 +130,15 @@ export function ProfileDropdown({
             <span className={itemLabelClass}>Log out</span>
           </DropdownMenuItem>
         </DropdownMenuGroup>
+        {/* Phones have no theme switcher in the header. */}
+        {isMobile && (
+          <>
+            <DropdownMenuSeparator className="my-1 bg-v3-stroke-weak" />
+            <DropdownMenuGroup>
+              <ThemeMenuItems keepOpen />
+            </DropdownMenuGroup>
+          </>
+        )}
         <DropdownMenuSeparator className="my-1 bg-v3-stroke-weak" />
         <DropdownMenuGroup>
           <DropdownMenuItem asChild className={itemRowClass}>

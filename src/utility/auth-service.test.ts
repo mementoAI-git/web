@@ -114,6 +114,14 @@ describe("AuthService", () => {
       expect(setHref).not.toHaveBeenCalled();
     });
 
+    it("leaves a reader on a shared story when their session ends", () => {
+      (window.location as { pathname: string }).pathname = "/post/story-1";
+      const setHref = vi.fn();
+      Object.defineProperty(window.location, "href", { set: setHref, configurable: true });
+      authService.redirectToLoginWithPath();
+      expect(setHref).not.toHaveBeenCalled();
+    });
+
     it("returns empty string when on /login page", () => {
       (window.location as { pathname: string; search: string }).pathname =
         "/login";

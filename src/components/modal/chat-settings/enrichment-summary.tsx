@@ -1,5 +1,5 @@
 import { CalendarDays, ChevronRight, FileText, Film, Image, Link2, Music2, Route, UsersRound } from "lucide-react";
-import { useModal } from "@/hooks/use-modal";
+import { useNavigate } from "react-router-dom";
 import type { CategoryScore } from "@/features/enrichment";
 import type { EnrichmentCategory } from "@/features/enrichment/enrichment-categories";
 import type { ConversationFilesRequest } from "@/pages/dashboard/chat/conversation/conversation-assets";
@@ -44,7 +44,7 @@ export function EnrichmentSummary({
   categoryScores?: CategoryScore[] | null;
   onOpenFiles?: (request: ConversationFilesRequest) => void;
 }) {
-  const { open } = useModal();
+  const navigate = useNavigate();
   const strength = enrichmentStrength(score);
   const scoreByCategory = new Map(
     (categoryScores ?? []).map((category) => [category.key, Math.max(0, category.score)]),
@@ -61,7 +61,7 @@ export function EnrichmentSummary({
 
   return (
     <div className="flex flex-col gap-6">
-      <section className="rounded-xl bg-background p-3">
+      <section>
         <div className="flex items-start gap-3">
           <div className="min-w-0 flex-1">
             <h2 className="font-geist text-base font-semibold text-text-neutral-strong">My Enrichment score</h2>
@@ -90,7 +90,7 @@ export function EnrichmentSummary({
             );
           })}
         </div>
-        <button type="button" onClick={() => open("memory-insights")} className="mt-4 flex w-full items-center gap-2 text-left font-geist text-sm text-text-neutral-strong no-underline">
+        <button type="button" onClick={() => navigate("/insights")} className="mt-4 flex w-full items-center gap-2 text-left font-geist text-sm text-text-neutral-strong no-underline">
           <span className="flex-1">Discover which areas need more context</span>
           <ChevronRight className="size-4" aria-hidden />
         </button>
@@ -107,9 +107,9 @@ export function EnrichmentSummary({
 
       <section>
         <h2 className="font-geist text-base font-semibold text-text-neutral-strong">Deep dive insights</h2>
-        <div className="-mx-1 mt-3 flex snap-x gap-3 overflow-x-auto px-1 pb-1 scrollbar-hide" tabIndex={0} aria-label="Deep dive insights">
+        <div className="-mx-1 mt-3 flex snap-x gap-3 overflow-x-auto scroll-px-1 px-1 pb-1 scrollbar-hide max-md:-mx-6 max-md:scroll-px-6 max-md:px-6" tabIndex={0} aria-label="Deep dive insights">
           {insights.map(({ title, body, icon: Icon }) => (
-            <article key={title} className="w-48 shrink-0 snap-start rounded-xl border border-stroke-neutral-weak bg-background p-3">
+            <article key={title} className="w-48 shrink-0 snap-start rounded-xl border border-stroke-neutral-weak p-3">
               <h3 className="flex items-center gap-2 font-geist text-sm font-semibold text-text-neutral-strong">
                 <Icon className="size-4 shrink-0" strokeWidth={1.75} aria-hidden />
                 <span className="min-w-0 flex-1 line-clamp-1">{title}</span>

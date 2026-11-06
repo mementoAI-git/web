@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { useFeatureFlags } from "@/contexts/feature-flags";
 import { PlanSummaryCard } from "@/features/insights/plan-summary-card";
 import { useLogout } from "@/hooks/use-logout";
+import { PageHeading } from "@/pages/dashboard/component/page-heading";
 import { SettingsProfileHeader } from "./settings-profile-header";
 
 const sections = [
@@ -31,6 +32,9 @@ export function SettingsHub() {
 
   return (
     <div className="flex flex-col gap-10">
+      <PageHeading>
+        Settings & <em>profile</em>
+      </PageHeading>
       <div className="flex flex-col gap-4">
         <SettingsProfileHeader />
         <PlanSummaryCard onNavigate={(href) => navigate(href)} />

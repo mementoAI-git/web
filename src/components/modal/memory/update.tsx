@@ -13,6 +13,7 @@ import { SLASH_COMMANDS } from "@/components/memory/text-area/slash-commands";
 import useFetcher from "@/hooks/use-fetcher";
 import useFileUpload from "@/hooks/use-file-upload";
 import { useModal } from "@/hooks/use-modal";
+import { AudioAttachmentRecorder } from "@/components/recorder/voice-recorder";
 import { mutate } from "swr";
 import { v4 as uuidv4 } from "uuid";
 import { deleteFetcher } from "@/api/fetcher";
@@ -94,7 +95,7 @@ function Content({ data }: ContentProps) {
 
   const [showEmoji, setShowEmoji] = useState(false);
   const [showPlusMenu, setShowPlusMenu] = useState(false);
-  const [audioRecordingCount, setAudioRecordingCount] = useState(1);
+  const [showAudioRecorder, setShowAudioRecorder] = useState(false);
   const plusMenuRef = useRef<HTMLDivElement>(null);
   const plusMenuPortalRef = useRef<HTMLDivElement>(null);
   const emojiPickerRef = useRef<HTMLDivElement>(null);
@@ -249,7 +250,6 @@ function Content({ data }: ContentProps) {
       handleUpload({ id: uuidv4(), file, base64: reader.result as string, progress: 0, ...(duration !== undefined && { duration }) });
     };
     reader.readAsDataURL(file);
-    setAudioRecordingCount((c) => c + 1);
   };
 
   const handleLinkClick = () => {
@@ -433,6 +433,12 @@ function Content({ data }: ContentProps) {
           )}
 
           <div className="mt-6 mx-4 mb-4" onClick={(e) => e.stopPropagation()}>
+            {showAudioRecorder && (
+              <AudioAttachmentRecorder
+                onFinish={handleAddAudioFile}
+                onClose={() => setShowAudioRecorder(false)}
+              />
+            )}
             <div className="bg-bg-neutral-weak rounded-2xl flex items-center justify-start gap-3 px-[12px] py-[9px]">
               <div ref={plusMenuRef} className="relative h-[40px]">
                 <button
@@ -527,7 +533,8 @@ function Content({ data }: ContentProps) {
 
               <button
                 type="button"
-                onClick={() => push("audio-recorder", { onFinish: handleAddAudioFile, recordingNumber: audioRecordingCount })}
+                disabled={showAudioRecorder}
+                onClick={() => setShowAudioRecorder(true)}
                 className="size-10 flex items-center justify-center rounded-xl hover:bg-fill-neutral-weaker transition-colors"
                 title="Record audio"
               >
@@ -571,7 +578,7 @@ function Content({ data }: ContentProps) {
       <FooterBtnGroup
         onDiscard={() => close("edit-memory")}
         onSave={handleContinueBtn}
-        disabled={!hasChanges || hasUploadingFiles}
+        disabled={!hasChanges || hasUploadingFiles || showAudioRecorder}
         saving={isMutating}
         cta="Save changes"
         discardLabel="Dismiss"
@@ -598,9 +605,9 @@ export function UpdateMemory({ data }: ContentProps) {
         snapPoints={[0, 1]}
         initialSnap={1}
       >
-        <Sheet.Container className="max-h-[80dvh] overflow-hidden bg-fill-neutral-weaker">
-          <Sheet.Header className="rounded-3xl bg-fill-neutral-weaker" />
-          <Sheet.Content className="max-h-[80dvh] min-h-0 overflow-y-auto overscroll-contain bg-fill-neutral-weaker px-4 pb-6">
+        <Sheet.Container className="max-h-[80dvh] overflow-hidden bg-bg-raised">
+          <Sheet.Header className="rounded-3xl bg-bg-raised" />
+          <Sheet.Content className="max-h-[80dvh] min-h-0 overflow-y-auto overscroll-contain bg-bg-raised px-4 pb-6">
             <ModalCloseBtn className="!relative ml-auto mb-2 !right-0 !top-0" onClick={() => close("edit-memory")} />
             <Content data={data} />
           </Sheet.Content>

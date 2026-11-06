@@ -21,7 +21,6 @@ type FieldKey =
 type Field = {
   key: FieldKey;
   label: string;
-  hint?: string;
   placeholder?: string;
   type?: string;
   autoComplete: string;
@@ -36,7 +35,6 @@ const sections: { label: string; fields: Field[] }[] = [
       {
         key: "nickname",
         label: "Display name",
-        hint: "(what Memento calls you)",
         placeholder: "How we greet you",
         autoComplete: "nickname",
       },
@@ -151,7 +149,6 @@ function ProfileSection({ label, fields }: { label: string; fields: Field[] }) {
               key={field.key}
               htmlFor={inputId}
               label={field.label}
-              hint={field.hint}
             >
               <Input
                 id={inputId}

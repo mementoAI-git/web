@@ -92,8 +92,23 @@ vi.mock("./voice-mode-voices", async (importOriginal) => {
   };
 });
 
+const clips = vi.hoisted(() => ({ pick: vi.fn((voiceId: string) => `/${voiceId}.mp3` as string | null) }));
+vi.mock("@/lib/voice-preview-clips", () => ({ pickVoicePreviewClip: clips.pick }));
+
 describe("Voiceinput", () => {
+  const played: string[] = [];
+  const playback = vi.fn<() => Promise<void>>();
+  const playedClips = () => played;
+
   beforeEach(() => {
+    playback.mockReset().mockResolvedValue(undefined);
+    played.length = 0;
+    vi.spyOn(window.HTMLMediaElement.prototype, "play").mockImplementation(function (this: HTMLMediaElement) {
+      played.push(new URL(this.src).pathname);
+      return playback();
+    });
+    vi.spyOn(window.HTMLMediaElement.prototype, "pause").mockImplementation(() => undefined);
+    window.history.replaceState({}, "", "/");
     window.HTMLElement.prototype.scrollIntoView = vi.fn();
     outputLevel.value = 0;
     liveApi.connected = false;
@@ -275,10 +290,10 @@ describe("Voiceinput", () => {
     voiceState.saveVoice.mockReturnValueOnce(new Promise<boolean>(resolve => { finishSaving = resolve; }));
     const user = userEvent.setup();
     renderWithProviders(<Voiceinput inline autoStart variant="overview" onCancel={vi.fn()} />, { auth: true });
-    expect(await screen.findByRole("dialog", { name: "Try Voicemode" })).toBeInTheDocument();
+    expect(await screen.findByRole("dialog", { name: "Give Voicemode a Spin" })).toBeInTheDocument();
     expect(liveApi.connect).not.toHaveBeenCalled();
     expect(liveApi.startRecording).not.toHaveBeenCalled();
-    await user.click(screen.getByRole("button", { name: "Continue" }));
+    await user.click(screen.getByRole("button", { name: "Choose a voice" }));
     expect(screen.getByRole("dialog", { name: "Choose a voice" })).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Next voice" }));
     await user.click(screen.getByRole("button", { name: "Select Voice" }));
@@ -289,6 +304,41 @@ describe("Voiceinput", () => {
     await waitFor(() => expect(liveApi.greet).toHaveBeenCalledOnce());
     expect(liveApi.startRecording).toHaveBeenCalledOnce();
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("plays each voice as the user moves through the picker, and stops when it closes", async () => {
+    voiceState.user = {};
+    const user = userEvent.setup();
+    renderWithProviders(<Voiceinput inline onCancel={vi.fn()} />, { auth: true });
+    await user.click(await screen.findByRole("button", { name: "Choose a voice" }));
+    expect(playedClips()).toEqual(["/kore.mp3"]);
+    await user.click(screen.getByRole("button", { name: "Next voice" }));
+    expect(playedClips()).toEqual(["/kore.mp3", "/aoede.mp3"]);
+    await user.click(screen.getByRole("button", { name: "Replay Sue preview" }));
+    expect(playedClips()).toEqual(["/kore.mp3", "/aoede.mp3", "/aoede.mp3"]);
+    const pause = vi.mocked(window.HTMLMediaElement.prototype.pause);
+    pause.mockClear();
+    await user.click(screen.getByRole("button", { name: "Select Voice" }));
+    await waitFor(() => expect(pause).toHaveBeenCalled());
+    expect(playback).toHaveBeenCalledTimes(3);
+  });
+
+  it("offers a retry when the browser refuses to play a sample", async () => {
+    voiceState.user = {};
+    playback.mockRejectedValueOnce(new DOMException("Blocked", "NotAllowedError"));
+    const user = userEvent.setup();
+    renderWithProviders(<Voiceinput inline onCancel={vi.fn()} />, { auth: true });
+    await user.click(await screen.findByRole("button", { name: "Choose a voice" }));
+    expect(await screen.findByText("Couldn’t play the sample. Tap the voice to try again.")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Replay Denver preview" }));
+    await waitFor(() => expect(screen.queryByText(/Couldn’t play the sample/)).not.toBeInTheDocument());
+  });
+
+  it("replays the first-time flow for a returning user with ?voiceIntro", async () => {
+    window.history.replaceState({}, "", "/overview?voiceIntro=1");
+    renderWithProviders(<Voiceinput inline autoStart onCancel={vi.fn()} />, { auth: true });
+    expect(await screen.findByRole("dialog", { name: "Give Voicemode a Spin" })).toBeInTheDocument();
+    expect(liveApi.connect).not.toHaveBeenCalled();
   });
 
   it("does not start a call if first-time setup is dismissed", async () => {
@@ -307,7 +357,7 @@ describe("Voiceinput", () => {
     voiceState.saveVoice.mockResolvedValueOnce(false);
     const user = userEvent.setup();
     renderWithProviders(<Voiceinput inline autoStart onCancel={vi.fn()} />, { auth: true });
-    await user.click(await screen.findByRole("button", { name: "Continue" }));
+    await user.click(await screen.findByRole("button", { name: "Choose a voice" }));
     await user.click(screen.getByRole("button", { name: "Select Voice" }));
     expect(screen.getByRole("dialog", { name: "Choose a voice" })).toBeInTheDocument();
     expect(liveApi.connect).not.toHaveBeenCalled();
@@ -389,8 +439,8 @@ describe("Voiceinput", () => {
     const user = userEvent.setup();
     renderWithProviders(<Voiceinput onCancel={vi.fn()} memoryId="m1" />, { auth: true });
 
-    expect(await screen.findByRole("heading", { name: "Try Voicemode" })).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Continue" }));
+    expect(await screen.findByRole("heading", { name: "Give Voicemode a Spin" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Choose a voice" }));
     expect(screen.getByRole("heading", { name: "Choose a voice" })).toBeInTheDocument();
     expect(screen.getByText("Denver")).toBeInTheDocument();
 
@@ -407,7 +457,7 @@ describe("Voiceinput", () => {
     renderWithProviders(<Voiceinput onCancel={vi.fn()} memoryId="m1" />, { auth: true });
 
     expect(await screen.findByText("Ready when you are")).toBeInTheDocument();
-    expect(screen.queryByRole("heading", { name: "Try Voicemode" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Give Voicemode a Spin" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "End voice conversation" })).not.toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Start conversation" }));
 
@@ -485,6 +535,35 @@ describe("Voiceinput", () => {
         expect.objectContaining({ languageCode: "es-ES" }),
       ),
     );
+  });
+
+  it("opens settings as a dialog on phones with Save outside the scrolling fields", async () => {
+    const originalWidth = window.innerWidth;
+    Object.defineProperty(window, "innerWidth", { configurable: true, value: 390 });
+    try {
+      const user = userEvent.setup();
+      renderWithProviders(<Voiceinput onCancel={vi.fn()} memoryId="m1" />, { auth: true });
+
+      await user.click(await screen.findByRole("button", { name: "Voice settings" }));
+      const sheet = screen.getByRole("dialog", { name: "Settings" });
+      expect(sheet).toHaveAttribute("data-slot", "dialog-content");
+      expect(document.querySelector('[data-slot="popover-content"]')).not.toBeInTheDocument();
+
+      const fields = sheet.querySelector("[data-voice-settings-fields]")!;
+      expect(fields).toContainElement(screen.getByRole("radio", { name: /sue/i }));
+      expect(fields).not.toContainElement(screen.getByRole("button", { name: "Save Changes" }));
+
+      await user.click(screen.getByRole("button", { name: "Dismiss" }));
+      expect(screen.queryByRole("dialog", { name: "Settings" })).not.toBeInTheDocument();
+
+      await user.click(screen.getByRole("button", { name: "Voice settings" }));
+      await user.click(screen.getByRole("radio", { name: /sue/i }));
+      await user.click(screen.getByRole("button", { name: "Save Changes" }));
+      await waitFor(() => expect(voiceState.saveVoice).toHaveBeenCalledWith(voices[1]));
+      await waitFor(() => expect(screen.queryByRole("dialog", { name: "Settings" })).not.toBeInTheDocument());
+    } finally {
+      Object.defineProperty(window, "innerWidth", { configurable: true, value: originalWidth });
+    }
   });
 
   it("uses quiet regular typography for voice settings secondary text", async () => {

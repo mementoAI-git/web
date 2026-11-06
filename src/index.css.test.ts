@@ -91,8 +91,55 @@ describe("dark color token compatibility", () => {
     },
   );
 
+  it("gives bottom sheets the Publish post surface in dark themes", () => {
+    expect(declaration(".dark", "--bg-sheet")).toBe("#12131a");
+    expect(declaration(".deep-sky", "--bg-sheet")).toBe("var(--sky-surface)");
+  });
+
   it("lets deep sky modals inherit the dark surfaces", () => {
     expect(declaration(".deep-sky", "--bg-raised")).toBeUndefined();
+  });
+
+  it("dims the page behind dark sheets instead of lifting it", () => {
+    expect(declaration(".dark", "--overlay-backdrop")).toBe("rgba(0, 0, 0, 0.72)");
+  });
+
+  it("keeps shared modal titles and tag chips readable in dark themes", () => {
+    const applied = (selector: string) => {
+      let value = "";
+      stylesheet.walkRules((rule) => {
+        if (rule.selector !== selector) return;
+        rule.walkAtRules("apply", (entry) => {
+          value = entry.params;
+        });
+      });
+      return value;
+    };
+
+    expect(applied(".modal-title")).toContain("text-text-neutral-strong");
+    expect(applied(".mem-tags")).toContain("dark:bg-fill-neutral-weak");
+  });
+
+  it("applies the sheet surface to every bottom sheet type, inner fills included", () => {
+    const selectors: string[] = [];
+    stylesheet.walkRules((rule) => {
+      if (rule.some((node) => node.type === "decl" && node.prop === "--bg-raised" && node.value === "var(--bg-sheet)")) {
+        selectors.push(rule.selector);
+        for (const token of ["bg-raised", "bg-neutral", "bg-neutral-solid", "card", "popover", "background", "v3-bg"]) {
+          const inner = rule.nodes.find((node) => node.type === "decl" && node.prop === `--color-${token}`);
+          expect(inner && "value" in inner ? inner.value : undefined).toBe("var(--bg-sheet)");
+        }
+        const weakest = rule.nodes.find((node) => node.type === "decl" && node.prop === "--color-text-neutral-weaker");
+        expect(weakest && "value" in weakest ? weakest.value : undefined).toBe("rgba(255, 255, 255, 0.68)");
+      }
+    });
+    const sheets = selectors.join(" ");
+
+    expect(sheets).toContain(".react-modal-sheet-container");
+    expect(sheets).toContain('[data-slot="sheet-content"][data-side="bottom"]');
+    expect(sheets).toContain('[data-slot="dialog-content"]:not(.insights-overlay, .add-story-journal)');
+    expect(sheets).toContain('[data-slot="alert-dialog-content"]');
+    expect(sheets).toContain(".modal-overlay .modal-container");
   });
 
   it("switches status intent primitives to their dark-mode palette", () => {

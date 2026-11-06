@@ -393,6 +393,7 @@
   /* SHADCN — aligned to V3 semantic tokens (docs/COLOR_INVENTORY.md, .cursor/rules/v3-color-system-usage.mdc) */
   --radius: 0.5rem;
   --radius-modal: 1rem;
+  --radius-sheet: 20px;
   --background: #ffffff;
   --foreground: var(--text-neutral-strong);
   --card: #ffffff;
@@ -519,6 +520,9 @@
 
   --bg-neutral-solid: #12131a;
   --bg-raised: #1d1e26;
+  --bg-sheet: #12131a;
+  /* Denser than the light themes' grey, so raised sheets read as the brightest surface. */
+  --overlay-backdrop: rgba(0, 0, 0, 0.72);
   --bg-neutral: var(--bg-neutral-solid);
   --bg-neutral-strong: var(--neutral-dark-100);
   --bg-neutral-weak: var(--neutral-dark-50);
@@ -550,6 +554,7 @@
   --sky-midpoint: #191d31;
   --sky-horizon: #2c2d3c;
   --sky-surface: #191e2c;
+  --bg-sheet: var(--sky-surface);
   --bg-neutral-solid: var(--sky-surface);
   --background: transparent;
   --color-background: transparent;
@@ -997,21 +1002,14 @@ a:focus,
   min-height: 100dvh;
 }
 
-.dynamic-height-content {
-  height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
-  height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
-  min-height: calc(
-    100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom)
-  );
-  min-height: calc(
-    100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom)
-  );
-}
-
 .chat-messages {
   flex: 1;
   overflow-y: auto;
   padding-bottom: env(safe-area-inset-bottom);
+}
+
+html {
+  overscroll-behavior: none;
 }
 
 body {
@@ -1082,7 +1080,7 @@ body {
   }
 
   .mem-tags {
-    @apply cursor-pointer rounded-full border bg-sand-1 border-sand-5 px-2 py-0.5 text-center font-inter text-xs font-medium capitalize;
+    @apply cursor-pointer rounded-full border bg-sand-1 border-sand-5 px-2 py-0.5 text-center font-inter text-xs font-medium capitalize dark:bg-fill-neutral-weak dark:border-stroke-neutral-weak;
   }
 
   .icon-container {
@@ -1154,7 +1152,7 @@ body {
   }
 
   .modal-title {
-    @apply font-garamond text-2xl md:text-3xl leading-7 sm:leading-8 md:leading-9 text-gray-900;
+    @apply font-garamond text-2xl md:text-3xl leading-7 sm:leading-8 md:leading-9 text-text-neutral-strong;
   }
 
   .btn {
@@ -2116,6 +2114,48 @@ body {
   --color-v3-bg: #12131a;
 }
 
+/* The sheet library paints its container white; left alone it shows around the rounded corners. */
+.react-modal-sheet-container:not(.sheet-see-through) {
+  background-color: var(--bg-raised) !important;
+}
+.react-modal-sheet-backdrop {
+  background-color: var(--overlay-backdrop) !important;
+}
+
+/*
+ * Bottom sheets in dark themes keep one fill from edge to edge. Color utilities
+ * resolve their tokens at the root, so inner panels need those rebound as well.
+ */
+:is(.dark, .deep-sky) :is(.react-modal-sheet-container, [data-slot="sheet-content"][data-side="bottom"]) {
+  --bg-raised: var(--bg-sheet);
+  --color-bg-raised: var(--bg-sheet);
+  --color-bg-neutral: var(--bg-sheet);
+  --color-bg-neutral-solid: var(--bg-sheet);
+  --color-card: var(--bg-sheet);
+  --color-popover: var(--bg-sheet);
+  --color-background: var(--bg-sheet);
+  --color-v3-bg: var(--bg-sheet);
+  --color-text-neutral-weaker: rgba(255, 255, 255, 0.68);
+}
+
+@media (max-width: 639.98px) {
+  :is(.dark, .deep-sky) :is(
+    [data-slot="dialog-content"]:not(.insights-overlay, .add-story-journal),
+    [data-slot="alert-dialog-content"],
+    .modal-overlay .modal-container
+  ) {
+    --bg-raised: var(--bg-sheet);
+    --color-bg-raised: var(--bg-sheet);
+    --color-bg-neutral: var(--bg-sheet);
+    --color-bg-neutral-solid: var(--bg-sheet);
+    --color-card: var(--bg-sheet);
+    --color-popover: var(--bg-sheet);
+    --color-background: var(--bg-sheet);
+    --color-v3-bg: var(--bg-sheet);
+    --color-text-neutral-weaker: rgba(255, 255, 255, 0.68);
+  }
+}
+
 /* Floating dialogs share the command-search surface radius. */
 [data-slot="dialog-content"],
 [data-slot="alert-dialog-content"],
@@ -2130,6 +2170,15 @@ body {
  * individual modals set for desktop.
  */
 @layer components {
+  /* These components are bottom sheets at every width. */
+  [data-slot="sheet-content"][data-side="bottom"],
+  .react-modal-sheet-container,
+  .react-modal-sheet-header-container,
+  .react-modal-sheet-header {
+    border-top-left-radius: var(--radius-sheet) !important;
+    border-top-right-radius: var(--radius-sheet) !important;
+  }
+
   /* The drag handle only exists on bottom sheets. */
   .sheet-grabber {
     display: none;
@@ -2149,13 +2198,14 @@ body {
       max-width: none !important;
       height: auto !important;
       min-height: 0 !important;
-      max-height: calc(100dvh - max(env(safe-area-inset-top), 1.5rem)) !important;
+      max-height: 92dvh !important;
       margin: 0 !important;
-      border-radius: var(--radius-modal) var(--radius-modal) 0 0 !important;
+      border-radius: var(--radius-sheet) var(--radius-sheet) 0 0 !important;
       border-width: 0 0 env(safe-area-inset-bottom) !important;
       border-style: solid !important;
       border-color: transparent !important;
       translate: 0 var(--sheet-drag, 0px) !important;
+      --tw-ring-color: transparent !important;
       transition: translate 200ms cubic-bezier(0.22, 1, 0.36, 1);
       overscroll-behavior: contain;
     }
@@ -2163,6 +2213,31 @@ body {
     [data-slot="dialog-content"]:not(.insights-overlay, .add-story-journal, .overflow-hidden),
     [data-slot="alert-dialog-content"]:not(.overflow-hidden) {
       overflow-y: auto;
+    }
+
+    /* Publish post sets the size of every bottom sheet; short confirmations stay compact. */
+    [data-slot="dialog-content"]:not(.insights-overlay, .add-story-journal),
+    .modal-overlay .modal-container,
+    [data-slot="sheet-content"][data-side="bottom"],
+    .react-modal-sheet-container:not(.sheet-see-through) {
+      min-height: min(524px, 92dvh) !important;
+      max-height: 92dvh !important;
+      /* Grid dialogs would otherwise stretch their rows to fill the spare height. */
+      align-content: start;
+    }
+
+    /* Spare height sits above the actions, so they stay at the bottom of the sheet. */
+    .form-dialog:not(.grid, .flex) {
+      display: flex !important;
+      flex-direction: column;
+    }
+    .form-dialog > form {
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+    }
+    .form-dialog .form-dialog-footer {
+      margin-top: auto !important;
     }
 
     .modal-overlay .modal-container {
@@ -2207,7 +2282,7 @@ body {
 
     /* iOS zooms the whole page when a smaller field takes focus. */
     input:not([type="checkbox"], [type="radio"], [type="range"]),
-    textarea,
+    textarea:not(.story-composer-title),
     select {
       font-size: 16px !important;
     }

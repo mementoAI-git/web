@@ -50,6 +50,12 @@ export function ConversationChromeProvider({ children }: { children: ReactNode }
   );
 }
 
+/** For panels that also open outside a conversation. */
+// eslint-disable-next-line react-refresh/only-export-components
+export function useOptionalConversationChrome() {
+  return useContext(ConversationChromeContext)?.chrome ?? null;
+}
+
 // eslint-disable-next-line react-refresh/only-export-components
 export function useConversationChrome() {
   const ctx = useContext(ConversationChromeContext);

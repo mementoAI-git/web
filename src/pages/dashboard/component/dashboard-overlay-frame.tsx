@@ -27,14 +27,17 @@ export function DashboardOverlayFrame({ children }: PropsWithChildren) {
   const [expanded, setExpanded] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
-  const isFirstRender = useRef(true);
+  const previousExpanded = useRef(expanded);
+
+  // Start on the page, or the dialog's focus trap lands on the first sidebar control.
+  useEffect(() => {
+    contentRef.current?.focus({ preventScroll: true });
+  }, []);
 
   // Each state hides the control that was just used, so focus has to move.
   useEffect(() => {
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
-      return;
-    }
+    if (previousExpanded.current === expanded) return;
+    previousExpanded.current = expanded;
     const next = expanded
       ? sidebarRef.current?.querySelector<HTMLElement>(
           '[aria-label="Collapse sidebar"]',
@@ -51,6 +54,7 @@ export function DashboardOverlayFrame({ children }: PropsWithChildren) {
         <div
           ref={sidebarRef}
           inert={!expanded}
+          data-open={expanded}
           className={cn(
             expanded ? "translate-x-0" : "-translate-x-full md:translate-x-0",
             "fixed inset-y-0 left-0 z-50 md:relative md:z-auto",
@@ -73,7 +77,8 @@ export function DashboardOverlayFrame({ children }: PropsWithChildren) {
         </div>
         <div
           ref={contentRef}
-          className="flex min-w-0 flex-1 flex-col overflow-hidden"
+          tabIndex={-1}
+          className="flex min-w-0 flex-1 flex-col overflow-hidden outline-none"
         >
           {children}
         </div>

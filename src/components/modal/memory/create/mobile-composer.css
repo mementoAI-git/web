@@ -1,0 +1,61 @@
+/* Resolved at the root, because dialogs rebind the surface tokens for themselves. */
+:root {
+  --story-composer-page: var(--bg-neutral-solid);
+}
+
+/* A full-screen page, so it keeps the page color instead of a floating surface. */
+.story-composer-mobile[role="dialog"] {
+  background-color: var(--story-composer-page);
+}
+
+.story-composer-mobile .tiptap-editor .ProseMirror,
+.story-composer-mobile .tiptap-editor .ProseMirror p,
+.story-composer-mobile .tiptap-editor .ProseMirror li,
+.story-composer-mobile .tiptap-editor .ProseMirror blockquote {
+  font-family: var(--font-geist);
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 400;
+  color: var(--text-neutral-strong);
+}
+
+.story-composer-mobile .tiptap-editor .ProseMirror p.is-editor-empty:first-child::before {
+  color: var(--text-neutral-weaker);
+}
+
+.story-composer-mobile textarea.story-composer-title {
+  font-size: 24px;
+  line-height: 32px;
+}
+
+/* A tint of the text color, because white fills vanish on the light themes' white surfaces. */
+.story-composer-tint {
+  background-color: color-mix(in srgb, var(--text-neutral-strong) 7%, transparent);
+}
+
+/*
+ * The album's blank paper, cropped clear of the leather, rings and rounded corners
+ * (source x 310-1480 of 1536). Sized from the screen so the keyboard doesn't rescale it.
+ */
+.story-composer-paper {
+  --paper-width: max(131.3vw, 150dvh);
+  position: absolute;
+  top: 0;
+  right: calc(var(--paper-width) * -0.0365);
+  z-index: -1;
+  width: var(--paper-width);
+  max-width: none;
+  height: calc(var(--paper-width) / 1.5);
+  pointer-events: none;
+}
+
+/* The writer scrolls as one page, so the editor grows with its text. */
+.story-composer-mobile .tiptap-editor .ProseMirror {
+  height: auto;
+  min-height: 120px;
+  overflow: visible;
+}
+
+.story-composer-mobile .tiptap-editor .ProseMirror p:first-child {
+  margin-top: 0;
+}

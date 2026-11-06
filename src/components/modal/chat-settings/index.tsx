@@ -88,9 +88,9 @@ export default function ChatSettings({ children, onOpenChange }: ChatSettingsPro
               snapPoints={[0, 1]}
               initialSnap={1}
             >
-              <Sheet.Container className="max-h-[80dvh] overflow-hidden bg-bg-neutral-solid">
-                <Sheet.Header className="rounded-3xl bg-bg-neutral-solid" />
-                <Sheet.Content className="flex max-h-[80dvh] min-h-0 flex-col overflow-y-auto overscroll-contain bg-bg-neutral-solid">
+              <Sheet.Container className="max-h-[80dvh] overflow-hidden bg-bg-raised">
+                <Sheet.Header className="rounded-3xl bg-bg-raised" />
+                <Sheet.Content className="flex max-h-[80dvh] min-h-0 flex-col overflow-y-auto overscroll-contain bg-bg-raised">
                   <Content onClose={() => updateOpen(false)} />
                 </Sheet.Content>
               </Sheet.Container>

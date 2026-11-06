@@ -1,6 +1,5 @@
 import { dashboardInset } from "./dashboard-inset";
 import { ChatSwitcher } from "../chat/chat-switcher";
-import { Spinner } from "@/components/ui/spinner";
 import "@/components/motion/icon-swap.css";
 import { OverviewDesignIcon } from "@/components/overview-design-icon";
 import { QuickTools } from "@/components/quick-tools";
@@ -10,8 +9,6 @@ import {
   ChevronLeft,
   PanelLeft,
   House,
-  VolumeX,
-  Volume2,
   MoreHorizontal,
   X,
 } from "lucide-react";
@@ -20,16 +17,14 @@ import { useEffect, useState, type ReactNode } from "react";
 import { useModal } from "@/hooks/use-modal";
 import { useStore } from "@/hooks/use-store";
 import StreakTracker from "@/components/streak-tracker";
-import { Link, useLocation, useMatch } from "react-router-dom";
+import { Link, useLocation, useMatch, useNavigate } from "react-router-dom";
 import { cn } from "@/utility";
-import { MenuIcon } from "@/components/icons";
 import { SearchIcon as IconSearch } from "@/components/icons";
 import { useConversationChrome } from "@/contexts/conversation-chrome";
 import { useDashboardHeaderActions } from "@/contexts/dashboard-header-actions";
 import { StoriesActionButtons } from "@/pages/dashboard/stories/components/stories-action-buttons";
 import { Button } from "@/components/ui/button";
 import { useOverlaySidebar } from "./dashboard-overlay-frame";
-import { SearchCommandShortcut } from "@/components/search-command-shortcut";
 
 const defaultHeaderTitle: Record<string, string> = {
   memories: "my memories",
@@ -37,6 +32,7 @@ const defaultHeaderTitle: Record<string, string> = {
   chat: "Chat",
   explore: "explore",
   overview: "overview",
+  insights: "insights",
   settings: "settings",
   people: "people",
   capsule: "time capsules",
@@ -162,13 +158,13 @@ export function DashboardHeader(props: DashboardHeaderProps) {
   return (
     <header
       data-slot="dashboard-overlay-header"
-      className="navigation-header grid shrink-0 grid-cols-[auto_minmax(0,1fr)] items-center gap-x-3 gap-y-2 px-4 py-3 sm:flex sm:justify-between sm:px-8 sm:py-6"
+      className="navigation-header grid shrink-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 px-4 py-2.5 sm:flex sm:justify-between sm:px-8 sm:py-6"
     >
       <div className="contents sm:flex sm:min-w-0 sm:items-center sm:gap-4">
         <OverlaySidebarToggle />
-        <div className="col-span-2 row-start-2 min-w-0">{overlay.title}</div>
+        <div className="min-w-0">{overlay.title}</div>
       </div>
-      <div className="col-start-2 row-start-1 flex items-center justify-end gap-2 sm:gap-3">
+      <div className="flex items-center justify-end gap-2 sm:gap-3">
         <Button
           variant="ghost"
           size="icon-lg"
@@ -183,7 +179,7 @@ export function DashboardHeader(props: DashboardHeaderProps) {
           <ThemeSwitcher
             lightIcon={<OverviewDesignIcon name="sun" />}
             darkIcon={<OverviewDesignIcon name="sun" />}
-            className={overviewActionClass}
+            className={cn(overviewActionClass, "max-md:hidden")}
             contentClassName="navigation-menu"
           />
         ) : null}
@@ -215,6 +211,7 @@ function DashboardPageHeader({
   onMainSidebarToggle,
 }: DashboardHeaderProps) {
   const location = useLocation();
+  const navigate = useNavigate();
   const mdUp = useMdViewport();
   const chatConversationMatch = useMatch({ path: "/chat/:id", end: true });
   const chatVoiceMatch = useMatch({ path: "/chat/:id/voice", end: true });
@@ -283,7 +280,7 @@ function DashboardPageHeader({
   return (
     <div
       className={cn(
-        "navigation-header dashboard-header-surface z-[45] w-full h-[60px] fixed top-0 left-0 right-0 sm:relative flex items-center",
+        "navigation-header dashboard-header-surface relative z-[45] w-full h-[60px] flex items-center",
         dashboardInset(location.pathname),
         showChatWorkspace
           ? "sm:h-[86px] sm:items-center"
@@ -303,9 +300,6 @@ function DashboardPageHeader({
       <header
         className={cn(
           "grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-3 lg:gap-x-4",
-          usesOverviewNav
-            ? "lg:grid-cols-[minmax(0,1fr)_272px_auto]"
-            : "lg:grid-cols-[minmax(220px,1fr)_minmax(280px,560px)_auto] xl:grid-cols-[minmax(240px,1fr)_minmax(320px,620px)_auto]",
         )}
       >
         <div className="col-start-1 row-start-1 flex min-w-0 items-center gap-2 sm:gap-3">
@@ -316,9 +310,7 @@ function DashboardPageHeader({
             className={cn(
               convIconBtn,
               !railExpanded && "sidebar-reopen-button",
-              showConversationNav ? "flex md:hidden" : "hidden md:flex",
               usesOverviewNav && !mainSidebarCollapsed && "md:hidden",
-              showConversationNav && mainSidebarCollapsed && "md:flex",
             )}
             aria-expanded={railExpanded}
             aria-label={
@@ -389,51 +381,31 @@ function DashboardPageHeader({
           )}
         </div>
 
-        {pathForTitle !== "stories" ? (
-          <div
-            className={cn(
-              "col-start-2 row-start-1 hidden w-full min-w-0 justify-self-center lg:col-start-2 lg:block",
-              "h-10",
-            )}
-          >
-            <button
+
+        <div
+          className={cn(
+            "col-start-2 flex items-center justify-end",
+            usesOverviewNav ? "gap-2 sm:gap-3" : "gap-2",
+          )}
+        >
+          {pathForTitle !== "stories" ? (
+            <Button
               type="button"
+              variant="ghost"
+              size="icon-lg"
+              className={overviewActionClass}
               onClick={() =>
                 host?.onSearch ? host.onSearch() : open("search-memory")
               }
-              className={cn(
-                "flex w-full cursor-pointer items-center rounded-lg border border-border bg-background",
-                usesOverviewNav ? "h-10 bg-fill-neutral-weak" : "h-10",
-                "focus-visible:ring-2 focus-visible:ring-v3-brand-strong focus-visible:ring-offset-2",
-              )}
               data-search-trigger
               aria-label={
                 showConversationNav ? "Search memories" : "Open search"
               }
               aria-haspopup="dialog"
             >
-              <span className="pl-3.5">
-                <IconSearch
-                  width={usesOverviewNav ? 20 : 16}
-                  height={usesOverviewNav ? 20 : 16}
-                  className="text-muted-foreground"
-                  aria-hidden
-                />
-              </span>
-              <span className="flex-1 px-2 text-left font-inter text-sm text-muted-foreground">
-                Search
-              </span>
-              {!usesOverviewNav && <SearchCommandShortcut className="pr-2.5" />}
-            </button>
-          </div>
-        ) : null}
-
-        <div
-          className={cn(
-            "col-start-2 flex items-center justify-end lg:col-start-3",
-            usesOverviewNav ? "gap-2 sm:gap-3" : "gap-2",
-          )}
-        >
+              <IconSearch aria-hidden />
+            </Button>
+          ) : null}
           <ThemeSwitcher
             lightIcon={
               usesOverviewNav ? <OverviewDesignIcon name="sun" /> : undefined
@@ -443,7 +415,8 @@ function DashboardPageHeader({
             }
             className={cn(
               overviewActionClass,
-              (showChatWorkspace || showConversationNav) && "max-sm:hidden",
+              // Phones reach it from the side menu.
+              "max-md:hidden",
             )}
             contentClassName="navigation-menu"
           />
@@ -456,43 +429,7 @@ function DashboardPageHeader({
           />
           {showConversationNav ? (
             <>
-              {chrome?.spokenReplies ? (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-lg"
-                  className={cn(
-                    overviewActionClass,
-                    chrome.spokenReplies.enabled
-                      ? "text-text-brand-strong"
-                      : "text-icon-neutral-weak",
-                  )}
-                  aria-label="Read AI replies aloud"
-                  aria-pressed={chrome.spokenReplies.enabled}
-                  aria-busy={chrome.spokenReplies.isLoading || undefined}
-                  title={
-                    !chrome.spokenReplies.supported
-                      ? "Spoken replies are unavailable in this browser"
-                      : chrome.spokenReplies.enabled
-                        ? "Turn off spoken replies"
-                        : "Turn on spoken replies"
-                  }
-                  disabled={!chrome.spokenReplies.supported}
-                  onClick={chrome.spokenReplies.onToggle}
-                >
-                  {chrome.spokenReplies.isLoading ? (
-                    <Spinner
-                      aria-hidden
-                      className="motion-reduce:animate-none"
-                    />
-                  ) : chrome.spokenReplies.enabled ? (
-                    <Volume2 aria-hidden />
-                  ) : (
-                    <VolumeX aria-hidden />
-                  )}
-                </Button>
-              ) : null}
-              {chrome?.memory?._id && chrome.onOpenChatPreferences ? (
+              {chrome?.onOpenChatPreferences ? (
                 <Button
                   type="button"
                   variant="ghost"
@@ -537,22 +474,11 @@ function DashboardPageHeader({
             <div className="hidden h-10 items-stretch xl:flex">
               <StoriesActionButtons
                 compactInNav
-                onViewInsights={() => open("memory-insights")}
+                onViewInsights={() => navigate("/insights")}
                 onCreateMemory={() => open("create-memory")}
                 onQuickCapture={() => open("quick-capture")}
               />
             </div>
-          ) : null}
-          {!showConversationNav ? (
-            <button
-              type="button"
-              onClick={onMenuClick}
-              data-sidebar-toggle=""
-              aria-label="Open sidebar"
-              className="flex size-10 shrink-0 items-center justify-center rounded-full md:hidden text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-            >
-              <MenuIcon width={20} height={20} />
-            </button>
           ) : null}
         </div>
       </header>

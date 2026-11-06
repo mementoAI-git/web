@@ -10,6 +10,10 @@ import {
 const live = { callId: "call-1", isLive: () => true };
 
 describe("serverToolNames", () => {
+  it("leaves out the hidden time capsule tools, so a call can't start one", () => {
+    expect(serverToolNames(["save_story", "draft_capsule", "schedule_capsule"])).toEqual(["save_story"]);
+  });
+
   it("keeps only the tools the server runs, out of the token's tool list", () => {
     expect(serverToolNames(["search_memories", "end_call", "set_microphone", "open_screen", "rename_story", "undo_last_action", "scroll"]))
       .toEqual(["rename_story", "undo_last_action"]);

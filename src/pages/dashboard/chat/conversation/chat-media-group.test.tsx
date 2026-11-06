@@ -54,12 +54,13 @@ describe("ChatMediaGroup", () => {
     });
   });
 
-  it("renders audio and documents as compact rows", () => {
+  it("renders audio as a playable voice tile and documents as compact rows", () => {
     render(<ChatMediaGroup attachments={[
       { _id: "a1", name: "voice.m4a", type: "audio/mp4", url: "/voice.m4a", size: 1 },
       { _id: "d1", name: "notes.pdf", type: "application/pdf", url: "/notes.pdf", size: 1 },
     ]} />);
-    expect(screen.getByText("Audio")).toBeInTheDocument();
+    expect(screen.getByTestId("voice-note-tile")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Play voice note" })).toBeInTheDocument();
     expect(screen.getByText("application/pdf")).toBeInTheDocument();
   });
 });

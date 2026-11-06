@@ -23,6 +23,15 @@ describe("shared Chat starter cards", () => {
     );
     expect(screen.getAllByRole("button")).toHaveLength(2);
   });
+  it("pads each card by 12px vertically and 16px horizontally", () => {
+    render(
+      <ChatStarterCards
+        prompts={[{ label: "Values", prompt: "Values" }]}
+        onPrompt={vi.fn()}
+      />,
+    );
+    expect(screen.getByRole("button", { name: "Values" })).toHaveClass("px-4", "py-3");
+  });
   it("prevents starter submission while the conversation is busy", async () => {
     const onPrompt = vi.fn();
     render(

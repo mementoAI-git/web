@@ -67,7 +67,7 @@ export default function ActionBtn(props: FilePreviewItemBase) {
           />,
           document.body,
         )}
-      {props._id && (
+      {props._id && !props.readOnly && (
         <button
           type="button"
           className="overlay-control overlay-control-destructive flex size-10 items-center justify-center rounded-full text-text-error-strong"

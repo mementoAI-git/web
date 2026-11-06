@@ -72,9 +72,7 @@ describe("DashboardHeader", () => {
     expect(screen.getByRole("heading", { name: "Chat" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Search memories" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /Streak:/ })).not.toBeInTheDocument();
-    const spokenReplies = screen.getByRole("button", { name: "Read AI replies aloud" });
-    await user.click(spokenReplies);
-    expect(spokenReplies).toHaveAttribute("aria-pressed", "true");
+    expect(screen.queryByRole("button", { name: "Read AI replies aloud" })).not.toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Chat settings" }));
     expect(onOpenSettings).toHaveBeenCalledOnce();
   });
@@ -112,13 +110,8 @@ describe("DashboardHeader", () => {
 
     const searchTrigger = container.querySelector('[aria-label="Open search"]');
     expect(searchTrigger).not.toBeNull();
-    expect(searchTrigger?.className).toMatch(/rounded-lg/);
-    const searchColumn = searchTrigger?.parentElement;
-    expect(searchColumn?.className).toMatch(/min-w-0/);
-    expect(searchColumn?.className).toMatch(/justify-self-center/);
-    expect(
-      searchTrigger?.querySelector('[data-slot="search-command-shortcut"]'),
-    ).not.toBeInTheDocument();
+    expect(searchTrigger).toHaveClass("size-10", "rounded-full");
+    expect(searchTrigger?.querySelector("svg")).not.toBeNull();
   });
 
   it("uses the overview navigation on nested Explore routes and keeps the page title", () => {
@@ -130,10 +123,7 @@ describe("DashboardHeader", () => {
     expect(screen.getByText("Explore topics")).toBeInTheDocument();
     expect(container.querySelector(".dashboard-header-surface")).toHaveClass("sm:h-[76px]");
     expect(container.querySelector(".dashboard-header-surface")).not.toHaveClass("border-b");
-    expect(screen.getByRole("button", { name: "Open search" })).toHaveClass(
-      "h-10",
-      "bg-fill-neutral-weak",
-    );
+    expect(screen.getByRole("button", { name: "Open search" })).toHaveClass("size-10", "rounded-full");
     expect(
       screen
         .getByRole("button", { name: "Open search" })
@@ -164,10 +154,7 @@ describe("DashboardHeader", () => {
     expect(screen.getByText("settings")).toBeInTheDocument();
     expect(container.querySelector(".dashboard-header-surface")).toHaveClass("sm:h-[76px]");
     expect(container.querySelector(".dashboard-header-surface")).not.toHaveClass("border-b");
-    expect(screen.getByRole("button", { name: "Open search" })).toHaveClass(
-      "h-10",
-      "bg-fill-neutral-weak",
-    );
+    expect(screen.getByRole("button", { name: "Open search" })).toHaveClass("size-10", "rounded-full");
   });
 
   it("places the workspace switcher in the Chat header", () => {
@@ -178,9 +165,7 @@ describe("DashboardHeader", () => {
     expect(screen.getByRole("button", { name: "Change Memento" })).toBeInTheDocument();
     expect(container.querySelector(".dashboard-header-surface")).toHaveClass("sm:h-[86px]");
     expect(container.querySelector(".dashboard-header-surface")).not.toHaveClass("sm:h-[76px]");
-    expect(screen.getByRole("button", { name: "Open search" })).toHaveClass(
-      "h-10",
-    );
+    expect(screen.getByRole("button", { name: "Open search" })).toHaveClass("size-10", "rounded-full");
     expect(
       screen
         .getByRole("button", { name: "Open search" })
@@ -205,19 +190,19 @@ describe("DashboardHeader", () => {
     expect(shell).not.toHaveClass("bg-card");
     expect(shell).not.toHaveClass("bg-white");
     expect(screen.getByText("overview")).toHaveClass("text-foreground");
-    expect(screen.getByRole("button", { name: "Open search" })).toHaveClass(
-      "bg-fill-neutral-weak",
-      "border-border",
-    );
+    expect(screen.getByRole("button", { name: "Open search" })).toHaveClass("bg-fill-neutral-weak");
   });
 
-  it("keeps the mobile menu control readable", () => {
-    renderDashboardHeader(<DashboardHeader />);
+  it("opens the side menu from the home button on phones", async () => {
+    const onMainSidebarToggle = vi.fn();
+    renderDashboardHeader(<DashboardHeader onMainSidebarToggle={onMainSidebarToggle} />);
 
-    expect(screen.getByRole("button", { name: "Open sidebar" })).toHaveClass(
-      "text-muted-foreground",
-      "hover:bg-muted",
-    );
+    const home = screen.getByRole("button", { name: "Expand sidebar" });
+    expect(home).toHaveClass("sidebar-reopen-button", "md:hidden");
+    expect(home).not.toHaveClass("hidden");
+    expect(screen.queryByRole("button", { name: "Open sidebar" })).not.toBeInTheDocument();
+    await userEvent.setup().click(home);
+    expect(onMainSidebarToggle).toHaveBeenCalledOnce();
   });
 
   it("resolves the dashboard title for /capsule like other sections", () => {
@@ -244,15 +229,11 @@ describe("DashboardHeader", () => {
     expect(screen.getByRole("button", { name: "Choose theme" })).toHaveClass("size-10", "rounded-full", "bg-fill-neutral-weak");
     expect(screen.getByRole("button", { name: "Choose theme" }).querySelector("svg path")).not.toBeNull();
     expect(screen.getByRole("button", { name: "Chat settings" })).toHaveClass("size-10", "rounded-full", "bg-fill-neutral-weak");
-    expect(screen.getByRole("button", { name: "Read AI replies aloud" })).toHaveClass("size-10", "rounded-full", "bg-fill-neutral-weak");
     expect(screen.queryByRole("img", { name: "Streak" })).not.toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /search memories/i }),
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Change Memento" })).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: /read ai replies aloud/i }),
-    ).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /voice mode/i })).not.toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /chat settings/i }),
@@ -265,18 +246,11 @@ describe("DashboardHeader", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("toggles spoken replies independently of the far-right settings button", async () => {
+  it("opens chat settings from the header, where narration now lives", async () => {
     const user = userEvent.setup();
     const onOpenSettings = vi.fn();
-    renderDashboardHeader(<DashboardHeaderWithConversationChrome memory={{ _id: "m1", title: "Test" }} onOpenSettings={onOpenSettings} />, { route: "/chat/m1" });
-    const audio = screen.getByRole("button", { name: "Read AI replies aloud" });
-    expect(audio).toHaveAttribute("aria-pressed", "false");
-    await user.click(audio);
-    expect(audio).toHaveAttribute("aria-pressed", "true");
-    expect(audio).toHaveClass("bg-fill-neutral-weak", "text-text-brand-strong");
-    expect(onOpenSettings).not.toHaveBeenCalled();
-    await user.click(audio);
-    expect(audio).toHaveAttribute("aria-pressed", "false");
+    renderDashboardHeader(<DashboardHeaderWithConversationChrome memory={null} onOpenSettings={onOpenSettings} />, { route: "/chat/new" });
+    expect(screen.queryByRole("button", { name: "Read AI replies aloud" })).not.toBeInTheDocument();
     const settings = screen.getByRole("button", { name: "Chat settings" });
     expect(settings.parentElement?.lastElementChild).toBe(settings);
     await user.click(settings);

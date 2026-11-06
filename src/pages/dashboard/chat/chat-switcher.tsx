@@ -15,9 +15,9 @@ import { Button } from "@/components/ui/button";
 import { UserAvatar } from "@/components/user-avatar";
 import { ChatDesignIcon } from "@/components/chat-design-icon";
 import { getProfileAvatarUrl } from "@/utility/profile-avatar";
+import { FormDialogContent } from "@/components/modal/form-dialog";
 import {
   Dialog,
-  DialogContent,
   DialogHeader,
   DialogTitle,
   DialogDescription,
@@ -190,10 +190,7 @@ export function ChatSwitcher({ children }: { children?: ReactNode }) {
             </DialogTrigger>
           </div>
         )}
-        <DialogContent
-          showCloseButton={false}
-          className="people-dialog max-h-[85dvh] gap-6 overflow-y-auto rounded-3xl bg-bg-raised p-6 sm:max-w-[456px]"
-        >
+        <FormDialogContent className="people-dialog grid max-h-[85dvh] gap-6 bg-bg-raised">
           <DialogHeader className="flex-row items-center justify-between gap-4">
             <DialogTitle className="font-sans text-2xl font-bold leading-8">
               Chat spaces
@@ -446,7 +443,7 @@ export function ChatSwitcher({ children }: { children?: ReactNode }) {
               Close Chat spaces
             </button>
           </DialogClose>
-        </DialogContent>
+        </FormDialogContent>
       </Dialog>
       <UpgradePrompt
         feature="beneficiaries"

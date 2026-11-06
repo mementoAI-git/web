@@ -1,5 +1,6 @@
 import { toast } from "sonner";
 import { useRequestRecovery } from "@/hooks/use-request-recovery";
+import { FormDialogContent } from "@/components/modal/form-dialog";
 import { useDialogFocus } from "./use-dialog-focus";
 import { useState, useRef, useEffect } from "react";
 import useSWR, { mutate as mutateCache } from "swr";
@@ -175,7 +176,11 @@ export function ConnectionSettingsDialog({
         if (!value && !busyRef.current) onClose();
       }}
     >
-      <DialogContent
+      <FormDialogContent
+        title={confirm ? "Remove connection" : "Connection settings"}
+        description="Edit how you’ve saved this connection."
+        onClose={onClose}
+        busy={busy}
         onCloseAutoFocus={restoreFocus}
         onEscapeKeyDown={(event) => {
           if (busyRef.current) event.preventDefault();
@@ -183,17 +188,9 @@ export function ConnectionSettingsDialog({
         onInteractOutside={(event) => {
           if (busyRef.current) event.preventDefault();
         }}
-        className="people-dialog flex max-h-[90dvh] flex-col gap-6 overflow-hidden rounded-3xl bg-bg-raised p-6 font-geist text-text-neutral-strong shadow-2xl ring-1 ring-stroke-neutral-weak sm:max-w-[456px]"
+        className="people-dialog flex max-h-[90dvh] flex-col gap-6 overflow-hidden bg-bg-raised shadow-2xl ring-1 ring-stroke-neutral-weak"
         overlayClassName="bg-overlay-backdrop dark:bg-overlay-backdrop-dark"
       >
-        <DialogHeader className="shrink-0 gap-1 pr-10">
-          <DialogTitle className="font-geist text-xl font-semibold leading-7">
-            {confirm ? "Remove connection" : "Connection settings"}
-          </DialogTitle>
-          <DialogDescription className="sr-only">
-            Edit how you’ve saved this connection.
-          </DialogDescription>
-        </DialogHeader>
         {confirm ? (
           <>
             <p className="text-sm leading-6 text-text-neutral-weak">
@@ -310,7 +307,10 @@ export function ConnectionSettingsDialog({
                       setScope(event.target.value as ConnectionAccessScope)
                     }
                   >
-                    {accessOptions.map((option) => (
+                    {accessOptions.filter((option) =>
+                      // Time capsules are hidden for now; someone already on this access keeps seeing it.
+                      option.value !== "capsules_only" || data.access_scope === "capsules_only",
+                    ).map((option) => (
                       <option key={option.value} value={option.value}>
                         {option.label}
                       </option>
@@ -342,7 +342,7 @@ export function ConnectionSettingsDialog({
             </>
           )
         )}
-      </DialogContent>
+      </FormDialogContent>
     </Dialog>
   );
 }

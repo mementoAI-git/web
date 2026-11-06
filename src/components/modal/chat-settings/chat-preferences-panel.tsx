@@ -1,6 +1,8 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { Switch } from "@/components/ui/switch";
+import { useOptionalConversationChrome } from "@/contexts/conversation-chrome";
 import BackgroundMusic from "./background-music";
 import Voices from "./voices";
 import { EnrichmentSummary } from "./enrichment-summary";
@@ -15,6 +17,31 @@ type ChatPreferencesPanelProps = {
   categoryScores?: CategoryScore[] | null;
   onOpenConversationFiles?: (request: ConversationFilesRequest) => void;
 };
+
+function SpokenRepliesSetting() {
+  const spokenReplies = useOptionalConversationChrome()?.spokenReplies;
+  if (!spokenReplies) return null;
+  return (
+    <div className="flex items-center justify-between gap-4">
+      <div className="min-w-0">
+        <h2 id="spoken-replies-label" className="font-geist text-base font-semibold leading-6 text-text-neutral-strong">
+          Voice narration
+        </h2>
+        <p id="spoken-replies-help" className="font-geist text-sm leading-5 text-text-neutral-weak">
+          {spokenReplies.supported ? "Read new replies aloud." : "Not available in this browser."}
+        </p>
+      </div>
+      <Switch
+        aria-labelledby="spoken-replies-label"
+        aria-describedby="spoken-replies-help"
+        aria-busy={spokenReplies.isLoading || undefined}
+        checked={spokenReplies.enabled}
+        disabled={!spokenReplies.supported}
+        onCheckedChange={spokenReplies.onToggle}
+      />
+    </div>
+  );
+}
 
 export function ChatPreferencesPanel({
   className,
@@ -33,6 +60,7 @@ export function ChatPreferencesPanel({
       )}
     >
       <EnrichmentSummary score={enrichmentScore} categoryScores={categoryScores} onOpenFiles={onOpenConversationFiles} />
+      <SpokenRepliesSetting />
       <Voices />
       <BackgroundMusic />
     </div>

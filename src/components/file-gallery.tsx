@@ -1,30 +1,13 @@
-import wave from "@/assets/image/wave.png";
 import { useModal } from "@/hooks/use-modal";
 import { getDuration } from "@/utility";
+import { displayFileName } from "@/utility/file-label";
+import { SavedVoiceNoteTile } from "@/components/recorder/voice-note-tile";
 import type { IFile } from "@/utility/interface";
 import { useSignedMediaAccess } from "@/features/media/signed-media-access";
 import { Play } from "lucide-react";
 import { classifyConversationFile } from "@/pages/dashboard/chat/conversation/conversation-assets";
 import DocumentThumbnail from "./document-thumbnail";
 import VideoThumbnail from "./video-thumbnail";
-
-function AudioFile({ file }: { file: IFile }) {
-  const { mins, secs, hrs } = getDuration(file.duration || 0);
-  return (
-    <div className="flex h-full w-full flex-col justify-between overflow-hidden rounded-lg bg-fill-neutral-weak">
-      <div className="flex flex-col p-3 font-inter">
-        <span className="text-sm font-medium text-text-neutral-strong text-ellipsis whitespace-nowrap overflow-hidden">
-          {file.name}
-        </span>
-        <span className="text-xs text-text-neutral-weak">
-          {hrs !== "00" && `${hrs}:`}
-          {mins}:{secs}
-        </span>
-      </div>
-      <img src={wave} alt="wave" />
-    </div>
-  );
-}
 
 function VideoFile({ file }: { file: IFile }) {
   const { mins, secs, hrs } = getDuration(file.duration || 0);
@@ -49,13 +32,22 @@ function VideoFile({ file }: { file: IFile }) {
   );
 }
 
-function FileGalleryItem({ file }: { file: IFile }) {
+function FileGalleryItem({ file, nested = false }: { file: IFile; nested?: boolean }) {
   const kind = classifyConversationFile(file);
   if (kind === "video") {
     return <VideoFile file={file} />;
   }
   if (kind === "audio") {
-    return <AudioFile file={file} />;
+    return (
+      <SavedVoiceNoteTile
+        file={file}
+        label={displayFileName(file.name) || "Voice note"}
+        compact
+        // A stacked card is already a button that opens the viewer.
+        interactive={!nested}
+        className="size-full rounded-lg border-0"
+      />
+    );
   }
   if (kind === "document") return <DocumentThumbnail file={file} />;
   return <ImageFile file={file} />;
@@ -77,9 +69,12 @@ function ImageFile({ file }: { file: IFile }) {
 export default function FileGallery({
   files,
   variant = "grid",
+  readOnly,
 }: {
   files: IFile[];
   variant?: "grid" | "stacked";
+  /** Readers of a shared story can view and download, but not change, attachments. */
+  readOnly?: boolean;
 }) {
   const { push } = useModal();
 
@@ -98,12 +93,12 @@ export default function FileGallery({
           <button
             key={file._id || index}
             type="button"
-            aria-label={`Open attachment ${index + 1}: ${file.name}`}
+            aria-label={`Open attachment ${index + 1}: ${displayFileName(file.name)}`}
             className={`absolute h-[116px] w-[148px] rounded-[20px] border border-stroke-neutral-weak bg-bg-neutral-solid p-[3px] shadow-sm outline-none focus-visible:z-40 focus-visible:ring-2 focus-visible:ring-stroke-brand-strong ${positions[index]}`}
-            onClick={() => push?.("file-preview", { files, startIndex: index })}
+            onClick={() => push?.("file-preview", { files, startIndex: index, readOnly })}
           >
             <div className="size-full overflow-hidden rounded-2xl">
-              <FileGalleryItem file={file} />
+              <FileGalleryItem file={file} nested />
             </div>
           </button>
         ))}
@@ -122,7 +117,7 @@ export default function FileGallery({
 
     if (fileElement) {
       const clickedIndex = parseInt(fileElement.dataset.fileIndex || "0", 10);
-      push?.("file-preview", { files, startIndex: clickedIndex });
+      push?.("file-preview", { files, startIndex: clickedIndex, readOnly });
     }
   };
 

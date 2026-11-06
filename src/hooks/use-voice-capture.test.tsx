@@ -1,6 +1,6 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, afterEach, expect, it, vi } from "vitest";
-import { useOverviewDictation } from "./use-overview-dictation";
+import { meterHeight, useVoiceCapture } from "./use-voice-capture";
 import { fileUploadFetcher, transcribeAudio } from "@/api/fetcher";
 vi.mock("@/api/fetcher", () => ({
   fileUploadFetcher: vi.fn(),
@@ -56,7 +56,7 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllGlobals());
 it("records, pauses, resumes, releases the microphone and returns a transcript", async () => {
   const append = vi.fn();
-  const { result } = renderHook(() => useOverviewDictation(append));
+  const { result } = renderHook(() => useVoiceCapture({ mode: "text", onTranscript: append }));
   await act(() => result.current.start());
   expect(result.current.phase).toBe("recording");
   act(() => result.current.togglePause());
@@ -75,7 +75,7 @@ it("retains recorded audio for retry without using file storage", async () => {
     new Error("Transcription service unavailable"),
   );
   const append = vi.fn();
-  const { result } = renderHook(() => useOverviewDictation(append));
+  const { result } = renderHook(() => useVoiceCapture({ mode: "text", onTranscript: append }));
   await act(() => result.current.start());
   act(() => result.current.stop());
   await waitFor(() => expect(result.current.canRetry).toBe(true));
@@ -87,7 +87,7 @@ it("retains recorded audio for retry without using file storage", async () => {
 });
 it("cancels without uploading or modifying text", async () => {
   const append = vi.fn();
-  const { result } = renderHook(() => useOverviewDictation(append));
+  const { result } = renderHook(() => useVoiceCapture({ mode: "text", onTranscript: append }));
   await act(() => result.current.start());
   act(() => result.current.cancel());
   expect(stopTrack).toHaveBeenCalled();
@@ -102,7 +102,7 @@ it("releases a late permission grant after unmount", async () => {
         grant = resolve;
       }),
   );
-  const { result, unmount } = renderHook(() => useOverviewDictation(vi.fn()));
+  const { result, unmount } = renderHook(() => useVoiceCapture({ mode: "text", onTranscript: vi.fn() }));
   let start!: Promise<void>;
   act(() => {
     start = result.current.start();
@@ -119,7 +119,7 @@ it("explains microphone denial and does not upload", async () => {
   vi.mocked(navigator.mediaDevices.getUserMedia).mockRejectedValue(
     new DOMException("denied", "NotAllowedError"),
   );
-  const { result } = renderHook(() => useOverviewDictation(vi.fn()));
+  const { result } = renderHook(() => useVoiceCapture({ mode: "text", onTranscript: vi.fn() }));
   await act(() => result.current.start());
   expect(result.current.error).toMatch(/Allow microphone access/);
   expect(result.current.phase).toBe("idle");
@@ -152,7 +152,7 @@ it("uses installed on-device dictation and returns live text without an API requ
   vi.stubGlobal("SpeechRecognition", Speech);
   Speech.available.mockResolvedValue("available");
   const append = vi.fn();
-  const { result } = renderHook(() => useOverviewDictation(append));
+  const { result } = renderHook(() => useVoiceCapture({ mode: "text", onTranscript: append }));
   await act(() => result.current.start());
   expect(Speech.latest.processLocally).toBe(true);
   Speech.latest.emit("A warm", false);
@@ -166,7 +166,7 @@ it("uses installed on-device dictation and returns live text without an API requ
 it("keeps every speech segment through pauses and recognition restarts", async () => {
   vi.stubGlobal("SpeechRecognition", Speech);
   const append = vi.fn();
-  const { result } = renderHook(() => useOverviewDictation(append));
+  const { result } = renderHook(() => useVoiceCapture({ mode: "text", onTranscript: append }));
   await act(() => result.current.start());
   Speech.latest.emit("First memory.");
   act(() => result.current.togglePause());
@@ -185,7 +185,7 @@ it("keeps every speech segment through pauses and recognition restarts", async (
 it("falls back to the full audio if browser recognition fails after partial speech", async () => {
   vi.stubGlobal("SpeechRecognition", Speech);
   const append = vi.fn();
-  const { result } = renderHook(() => useOverviewDictation(append));
+  const { result } = renderHook(() => useVoiceCapture({ mode: "text", onTranscript: append }));
   await act(() => result.current.start());
   Speech.latest.emit("Partial speech");
   Speech.latest.onerror?.({ error: "network" });
@@ -197,7 +197,7 @@ it("falls back to the full audio if browser recognition fails after partial spee
 it("uses browser recognition without waiting for a language pack download", async () => {
   vi.stubGlobal("SpeechRecognition", Speech);
   Speech.available.mockResolvedValueOnce("downloadable");
-  const { result } = renderHook(() => useOverviewDictation(vi.fn()));
+  const { result } = renderHook(() => useVoiceCapture({ mode: "text", onTranscript: vi.fn() }));
   await act(() => result.current.start());
   expect(Speech.latest.processLocally).toBe(false);
   expect(result.current.phase).toBe("recording");
@@ -206,7 +206,7 @@ it("uses browser recognition without waiting for a language pack download", asyn
 it("aborts recognition on cancel and ignores late results", async () => {
   vi.stubGlobal("SpeechRecognition", Speech);
   const append = vi.fn();
-  const { result } = renderHook(() => useOverviewDictation(append));
+  const { result } = renderHook(() => useVoiceCapture({ mode: "text", onTranscript: append }));
   await act(() => result.current.start());
   const speech = Speech.latest;
   act(() => result.current.cancel());
@@ -219,7 +219,7 @@ it("falls back without hanging when recognition does not finish", async () => {
   vi.stubGlobal("SpeechRecognition", Speech);
   vi.useFakeTimers();
   const append = vi.fn();
-  const { result } = renderHook(() => useOverviewDictation(append));
+  const { result } = renderHook(() => useVoiceCapture({ mode: "text", onTranscript: append }));
   try {
     await act(() => result.current.start());
     Speech.latest.emit("Unfinished fragment", false);
@@ -237,7 +237,7 @@ it("falls back without hanging when recognition does not finish", async () => {
 it("does not release a new recording or append stale text after cancelling finalization", async () => {
   vi.stubGlobal("SpeechRecognition", Speech);
   const append = vi.fn();
-  const { result } = renderHook(() => useOverviewDictation(append));
+  const { result } = renderHook(() => useVoiceCapture({ mode: "text", onTranscript: append }));
   await act(() => result.current.start());
   const first = Speech.latest;
   first.emit("Cancelled memory");
@@ -259,7 +259,7 @@ it("times out stalled transcription, retains audio for retry and ignores the lat
   let resolve!: (value: { full_text: string }) => void;
   vi.mocked(transcribeAudio).mockImplementationOnce(() => new Promise((done) => { resolve = done; }));
   const append = vi.fn();
-  const { result } = renderHook(() => useOverviewDictation(append));
+  const { result } = renderHook(() => useVoiceCapture({ mode: "text", onTranscript: append }));
   try {
     await act(() => result.current.start());
     await act(async () => { result.current.stop(); });
@@ -272,4 +272,42 @@ it("times out stalled transcription, retains audio for retry and ignores the lat
     await act(() => result.current.retry());
     expect(append).toHaveBeenCalledOnce();
   } finally { vi.useRealTimers(); }
+});
+it("hands back the audio file with its duration in audio mode, without transcribing", async () => {
+  vi.useFakeTimers({ shouldAdvanceTime: true });
+  const onAudio = vi.fn();
+  const { result } = renderHook(() => useVoiceCapture({ mode: "audio", onAudio }));
+  await act(() => result.current.start());
+  await act(() => vi.advanceTimersByTimeAsync(2000));
+  act(() => result.current.togglePause());
+  await act(() => vi.advanceTimersByTimeAsync(3000));
+  act(() => result.current.togglePause());
+  act(() => result.current.stop());
+  vi.useRealTimers();
+  await waitFor(() => expect(onAudio).toHaveBeenCalledTimes(1));
+  const [file, duration] = onAudio.mock.calls[0] as [File, number];
+  expect(file.name).toMatch(/^recording-\d+\.webm$/);
+  expect(file.type).toBe("audio/webm");
+  expect(duration).toBe(2);
+  expect(transcribeAudio).not.toHaveBeenCalled();
+  expect(stopTrack).toHaveBeenCalled();
+  expect(result.current.phase).toBe("idle");
+});
+it("does not start live speech recognition in audio mode", async () => {
+  const Recognition = vi.fn();
+  vi.stubGlobal("SpeechRecognition", Recognition);
+  const { result } = renderHook(() =>
+    useVoiceCapture({ mode: "audio", onAudio: vi.fn() }),
+  );
+  await act(() => result.current.start());
+  expect(Recognition).not.toHaveBeenCalled();
+  act(() => result.current.cancel());
+});
+it("moves the meter for ordinary speech levels instead of flattening them", () => {
+  expect(meterHeight(0)).toBe(5);
+  expect(meterHeight(0.0005)).toBe(5);
+  // Typical speech has an RMS of roughly 0.01–0.1.
+  expect(meterHeight(0.01)).toBeGreaterThan(10);
+  expect(meterHeight(0.1)).toBeGreaterThan(meterHeight(0.01) + 8);
+  expect(meterHeight(1)).toBe(32);
 });

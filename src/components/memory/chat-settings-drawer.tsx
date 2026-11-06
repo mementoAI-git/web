@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Dialog as DialogPrimitive } from "radix-ui";
-import { useReducedMotion } from "motion/react";
-import { Sheet } from "react-modal-sheet";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { bottomSheetClass } from "@/components/ui/bottom-sheet-class";
 import { Dialog } from "@/components/ui/dialog";
+import { SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useModal } from "@/hooks/use-modal";
 import { resolveSidebarDesktopWidthPx } from "./sidebar-desktop-width";
 
@@ -17,7 +17,6 @@ export function ChatSettingsDrawer({ isOpen, onClose, children }: {
   const [width, setWidth] = useState(() => window.innerWidth);
   const closeRef = useRef<HTMLButtonElement | null>(null);
   const triggerRef = useRef<HTMLElement | null>(null);
-  const reducedMotion = useReducedMotion();
   const { state: modalStack } = useModal();
   const coveredByModal = modalStack.length > 0;
   const coveredRef = useRef(coveredByModal);
@@ -36,21 +35,16 @@ export function ChatSettingsDrawer({ isOpen, onClose, children }: {
     }
     event.preventDefault();
     closeRef.current?.focus();
-    if (mobile) requestAnimationFrame(() => closeRef.current?.focus());
   };
 
-  const content = (
-    <>
-      <div className="absolute right-3 top-3 z-10">
-        <DialogPrimitive.Close asChild>
-          <Button ref={closeRef} variant="ghost" size="icon-sm" aria-label="Close chat settings" className="rounded-full text-text-neutral-strong">
-            <X aria-hidden />
-          </Button>
-        </DialogPrimitive.Close>
-      </div>
-      <DialogPrimitive.Title className="sr-only">Chat settings</DialogPrimitive.Title>
-      {children(mobile)}
-    </>
+  const closeButton = (
+    <div className="absolute right-4 top-4 z-10 md:right-3 md:top-3">
+      <DialogPrimitive.Close asChild>
+        <Button ref={closeRef} variant="ghost" size="icon-sm" aria-label="Close chat settings" className="rounded-full text-text-neutral-strong">
+          <X aria-hidden />
+        </Button>
+      </DialogPrimitive.Close>
+    </div>
   );
   const restoreFocus = (event: Event) => {
     event.preventDefault();
@@ -65,18 +59,20 @@ export function ChatSettingsDrawer({ isOpen, onClose, children }: {
   return (
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
       {mobile ? (
-        <Sheet isOpen={isOpen} onClose={onClose} detent="content" snapPoints={[0, 1]} initialSnap={1}
-          prefersReducedMotion={Boolean(reducedMotion)}>
-          <DialogPrimitive.Content asChild aria-describedby={undefined} onOpenAutoFocus={captureFocus} onCloseAutoFocus={restoreFocus}>
-            <Sheet.Container className="max-h-[80dvh]! overflow-hidden bg-bg-neutral-solid outline-none">
-              <Sheet.Header className="bg-bg-neutral-solid" />
-              <Sheet.Content className="min-h-0 overflow-hidden bg-bg-neutral-solid">
-                {content}
-              </Sheet.Content>
-            </Sheet.Container>
-          </DialogPrimitive.Content>
-          <Sheet.Backdrop onTap={onClose} />
-        </Sheet>
+        <SheetContent
+          side="bottom"
+          showCloseButton={false}
+          aria-describedby={undefined}
+          className={bottomSheetClass}
+          onOpenAutoFocus={captureFocus}
+          onCloseAutoFocus={restoreFocus}
+        >
+          {closeButton}
+          <SheetHeader>
+            <SheetTitle>Chat settings</SheetTitle>
+          </SheetHeader>
+          <div className="px-6">{children(true)}</div>
+        </SheetContent>
       ) : (
         <DialogPrimitive.Portal>
           <DialogPrimitive.Overlay className="fixed inset-0 z-[45] bg-overlay-backdrop backdrop-blur-[2px] data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0 motion-reduce:animate-none" />
@@ -87,7 +83,9 @@ export function ChatSettingsDrawer({ isOpen, onClose, children }: {
             style={{ width: resolveSidebarDesktopWidthPx(width, { wideChatPanel: true }) }}
             className="fixed top-[6px] right-[6px] bottom-[6px] z-50 flex min-h-0 min-w-0 flex-col items-stretch justify-start overflow-hidden rounded-[24px] bg-bg-neutral-solid shadow-xl outline-none duration-200 data-open:animate-in data-open:fade-in-0 data-open:slide-in-from-right-10 data-closed:animate-out data-closed:fade-out-0 data-closed:slide-out-to-right-10 motion-reduce:animate-none"
           >
-            {content}
+            {closeButton}
+            <DialogPrimitive.Title className="sr-only">Chat settings</DialogPrimitive.Title>
+            {children(false)}
           </DialogPrimitive.Content>
         </DialogPrimitive.Portal>
       )}

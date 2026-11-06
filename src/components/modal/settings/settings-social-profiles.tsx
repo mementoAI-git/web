@@ -158,23 +158,43 @@ export function SettingsSocialProfiles() {
             (platform) => platform.key === key,
           )!;
           const value = valueFor(key);
+          const displayValue = toDisplayValue(key, value);
+          const profileUrl =
+            focused === key
+              ? null
+              : normalizeSocialProfileUrl(key, toProfileUrlInput(key, value.trim()));
           return (
             <SettingsFieldRow
               key={key}
               htmlFor={`${id}-${key}`}
               label={labelFor(key, label)}
             >
-              <Input
-                id={`${id}-${key}`}
-                maxLength={500}
-                inputMode="url"
-                className="settings-value-input"
-                placeholder={`Paste ${label} link`}
-                value={focused === key ? value : toDisplayValue(key, value)}
-                onFocus={() => setFocused(key)}
-                onBlur={() => setFocused(null)}
-                onChange={(event) => setValue(key, event.target.value)}
-              />
+              <div className="relative min-w-0 flex-1">
+                {/* Before the input so Tab still reaches it: the link unmounts while the input has focus. */}
+                {profileUrl ? (
+                  <a
+                    href={profileUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={`Open ${label} profile ${displayValue}`}
+                    className="settings-value-link"
+                  >
+                    {displayValue}
+                  </a>
+                ) : null}
+                <Input
+                  id={`${id}-${key}`}
+                  maxLength={500}
+                  inputMode="url"
+                  className="settings-value-input"
+                  data-linked={profileUrl ? "" : undefined}
+                  placeholder={`Paste ${label} link`}
+                  value={focused === key ? value : displayValue}
+                  onFocus={() => setFocused(key)}
+                  onBlur={() => setFocused(null)}
+                  onChange={(event) => setValue(key, event.target.value)}
+                />
+              </div>
               {!value ? (
                 <Button
                   type="button"
@@ -191,9 +211,6 @@ export function SettingsSocialProfiles() {
           );
         })}
       </fieldset>
-      <p className="pt-2 text-xs text-text-neutral-weaker">
-        Clear a link to remove it. Removed links won’t be added again by AI.
-      </p>
       <div className="flex flex-wrap items-center justify-end gap-3 pt-3.5">
         {error && (
           <p role="alert" className="mr-auto text-sm text-text-error-strong">

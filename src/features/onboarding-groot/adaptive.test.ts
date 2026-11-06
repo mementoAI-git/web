@@ -92,10 +92,9 @@ describe("getStep5Body", () => {
 });
 
 describe("getPrimaryCTA", () => {
-  it("returns time_capsule for practical motivation", () => {
+  it("no longer suggests a time capsule for practical motivation", () => {
     const result = getPrimaryCTA("practical", ["voice", "writing"]);
-    expect(result.action).toBe("time_capsule");
-    expect(result.label).toBe("Create your first time capsule");
+    expect(result.action).toBe("voice_recorder");
   });
 
   it("returns dashboard for explorer motivation", () => {
@@ -143,10 +142,9 @@ describe("getPrimaryCTA", () => {
     expect(result.label).toBe("Upload something precious");
   });
 
-  it("returns time_capsule for practical + empty modes (misc / no expression)", () => {
+  it("goes to the dashboard for practical + empty modes (misc / no expression)", () => {
     const result = getPrimaryCTA("practical", [] as ExpressionMode[]);
-    expect(result.action).toBe("time_capsule");
-    expect(result.label).toBe("Create your first time capsule");
+    expect(result.action).toBe("dashboard");
   });
 
   it("returns voice_recorder for emotional_depth + empty modes (misc / no expression)", () => {

@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { Undo2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { PageHeading } from "@/pages/dashboard/component/page-heading";
 
 export function SettingsSubpage({
   title,
@@ -27,9 +28,7 @@ export function SettingsSubpage({
             <Undo2 aria-hidden />
           </Link>
         </Button>
-        <h2 className="min-w-0 break-words font-garamond text-4xl text-text-neutral-strong">
-          {title}
-        </h2>
+        <PageHeading className="break-words">{title}</PageHeading>
       </div>
       {children}
     </div>

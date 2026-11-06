@@ -7,13 +7,10 @@ import { SubscriptionProvider } from "@/contexts/subscription";
 import { ThemeProvider } from "@/contexts/theme";
 import { BackgroundMusicProvider } from "@/hooks/use-background-music";
 import endpoint from "@/api/endpoint";
-import MemoryInsightsModal from ".";
+import InsightsPage from ".";
 
 beforeEach(() => {
-  close.mockClear();
-  openModal.mockClear();
   pushModal.mockClear();
-  modalState = [];
   patch.mockClear();
   del.mockClear();
   vi.stubGlobal(
@@ -27,7 +24,6 @@ beforeEach(() => {
 });
 afterEach(() => vi.unstubAllGlobals());
 
-const close = vi.fn();
 const { patch, del } = vi.hoisted(() => ({
   patch: vi.fn().mockResolvedValue({}),
   del: vi.fn().mockResolvedValue({}),
@@ -37,15 +33,10 @@ vi.mock("@/api/mutations", async (original) => ({
   patch,
   del,
 }));
-const openModal = vi.fn();
 const pushModal = vi.fn();
-let modalState: { name: string; props?: unknown }[] = [];
 vi.mock("@/hooks/use-modal", () => ({
   useModal: () => ({
-    close,
-    open: openModal,
     push: pushModal,
-    state: modalState,
   }),
 }));
 vi.mock("@/hooks/use-store", () => ({ useStore: () => ({ user: null }) }));
@@ -104,6 +95,7 @@ function Location() {
 }
 
 function setup({
+  route = { pathname: "/insights" } as object,
   observations = defaultObservations as object[],
   generating = false,
   insights = {
@@ -114,7 +106,7 @@ function setup({
   } as object,
 } = {}) {
   return render(
-    <MemoryRouter>
+    <MemoryRouter initialEntries={[route]}>
       <SWRConfig
         value={{
           provider: () => new Map(),
@@ -192,7 +184,7 @@ function setup({
         <ThemeProvider>
           <BackgroundMusicProvider>
             <SubscriptionProvider>
-              <MemoryInsightsModal />
+              <InsightsPage />
             </SubscriptionProvider>
             <Location />
           </BackgroundMusicProvider>
@@ -209,9 +201,8 @@ it("opens on observations without mixing in preferences", () => {
   expect(
     screen.queryByRole("button", { name: "Insight settings" }),
   ).not.toBeInTheDocument();
-  expect(screen.getByRole("dialog", { name: "My insights" })).toHaveClass(
-    "insights-overlay",
-  );
+  expect(screen.getByRole("heading", { name: "My insights" })).toBeVisible();
+  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   expect(tab("Observations")).toHaveAttribute("aria-selected", "true");
   expect(screen.getByText("You value independent thinking")).toBeVisible();
   expect(
@@ -373,18 +364,6 @@ it("shows what will be forgotten and only forgets after confirming", async () =>
   expect(del).toHaveBeenCalledWith(`${endpoint.personaObservations}/note-1`);
 });
 
-it("searches the active list and offers a way to clear it", async () => {
-  const user = userEvent.setup();
-  setup();
-  await user.click(screen.getByRole("button", { name: "Search insights" }));
-  const search = screen.getByRole("textbox", { name: "Search your insights" });
-  expect(search).toHaveFocus();
-  await user.type(search, "unmatched");
-  expect(screen.getByText("No matches")).toBeVisible();
-  await user.click(screen.getByRole("button", { name: "Clear search" }));
-  expect(screen.getByText("You value independent thinking")).toBeVisible();
-});
-
 it("shows honest empty states", async () => {
   const user = userEvent.setup();
   setup({
@@ -475,7 +454,7 @@ it("opens insight details, sorts sources, and returns to the same tab", async ()
   expect(tab("Insights")).toHaveAttribute("aria-selected", "true");
 });
 
-it("stacks a story above Insights and remembers where you were", async () => {
+it("opens a story above the page without leaving it", async () => {
   const user = userEvent.setup();
   setup();
   await user.click(tab("Insights"));
@@ -483,23 +462,13 @@ it("stacks a story above Insights and remembers where you were", async () => {
     screen.getByRole("button", { name: "You protect your Sundays" }),
   );
   await user.click(screen.getByRole("button", { name: "View Sunday at home" }));
-  expect(close).not.toHaveBeenCalled();
-  expect(screen.getByTestId("location")).not.toHaveTextContent("/stories");
-  expect(openModal).toHaveBeenCalledWith(
-    "memory-insights",
-    expect.objectContaining({
-      section: "insights",
-      history: [
-        { kind: "insight", insight: expect.objectContaining({ id: "insight-1" }) },
-      ],
-    }),
-  );
+  expect(screen.getByTestId("location")).toHaveTextContent("/insights");
   expect(pushModal).toHaveBeenCalledWith("view-memory", { memoryId: "older" });
+  expect(screen.getByText("Memories that helped shape this insight")).toBeVisible();
 });
 
 it("opens a chat as a page and saves the way back in history", async () => {
   const user = userEvent.setup();
-  const replaceState = vi.spyOn(window.history, "replaceState");
   setup();
   await user.click(tab("Insights"));
   await user.click(
@@ -508,28 +477,19 @@ it("opens a chat as a page and saves the way back in history", async () => {
   await user.click(
     screen.getByRole("button", { name: "View Talking about rest" }),
   );
-  expect(replaceState.mock.lastCall?.[0]).toMatchObject({
-    usr: {
-      openModal: "memory-insights",
-      openModalProps: { section: "insights" },
-    },
-  });
-  expect(close).toHaveBeenCalledWith("memory-insights");
   expect(screen.getByTestId("location")).toHaveTextContent("/chat/newer");
-  replaceState.mockRestore();
 });
 
-it("reopens on the saved tab and details screen", () => {
-  modalState = [
-    {
-      name: "memory-insights",
-      props: {
+it("comes back to the saved tab and details screen", () => {
+  setup({
+    route: {
+      pathname: "/insights",
+      state: {
         section: "insights",
         history: [{ kind: "insight", insight: spanningInsight }],
       },
     },
-  ];
-  setup();
+  });
   expect(
     screen.getByText("Memories that helped shape this insight"),
   ).toBeVisible();
@@ -575,40 +535,8 @@ it("shows only memory sources on an enrichment field and can start a reflection"
     screen.queryByText("You protect your Sundays"),
   ).not.toBeInTheDocument();
   await user.click(screen.getByRole("button", { name: "Reflect on this" }));
-  expect(close).toHaveBeenCalledWith("memory-insights");
   const location = screen.getByTestId("location");
   expect(location).toHaveTextContent("/chat");
   expect(location.dataset.state).toContain("everyday life");
 });
 
-it("brings back the sidebar from Home without closing the overlay", async () => {
-  const user = userEvent.setup();
-  setup();
-  const home = screen.getByRole("button", { name: "Expand sidebar" });
-  expect(home).toHaveAttribute("aria-expanded", "false");
-  await user.click(home);
-  expect(close).not.toHaveBeenCalled();
-  expect(home).toHaveAttribute("aria-expanded", "true");
-  const collapse = screen.getByRole("button", { name: "Collapse sidebar" });
-  expect(collapse).toHaveFocus();
-  await user.click(collapse);
-  expect(home).toHaveAttribute("aria-expanded", "false");
-  expect(home).toHaveFocus();
-  expect(close).not.toHaveBeenCalled();
-});
-
-it("leaves Insights for the page chosen in the sidebar", async () => {
-  const user = userEvent.setup();
-  setup();
-  await user.click(screen.getByRole("button", { name: "Expand sidebar" }));
-  await user.click(screen.getByRole("button", { name: /Explore topics/ }));
-  expect(screen.getByTestId("location")).toHaveTextContent("/explore");
-  expect(close).toHaveBeenCalledWith("memory-insights");
-});
-
-it("closes with Escape", async () => {
-  const user = userEvent.setup();
-  setup();
-  await user.keyboard("{Escape}");
-  expect(close).toHaveBeenCalledWith("memory-insights");
-});

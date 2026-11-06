@@ -39,7 +39,7 @@ export function IdentityStep1({
             type="text"
             value={fullName}
             onChange={(e) => onFullNameChange(e.target.value)}
-            placeholder="Used for documents, time capsules..."
+            placeholder="Used for documents..."
             maxLength={80}
             className={cn(
               "w-full rounded-xl border-[1.5px] bg-v3-fill-weaker px-4 py-3 text-v3-text-strong placeholder:text-v3-text-weaker transition-colors",

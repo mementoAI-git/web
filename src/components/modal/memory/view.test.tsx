@@ -12,27 +12,27 @@ import { useModal } from "@/hooks/use-modal";
 import { ViewMemory } from "./view";
 import calendarIcon from "@/assets/icon/uim_calendar.svg";
 
-vi.mock("./recorder-modal", () => ({
-  AudioRecorderModal: ({
-    data,
+vi.mock("@/hooks/use-voice-capture", () => ({
+  useVoiceCapture: ({
+    onAudio,
   }: {
-    data: { onFinish: (file: File, duration: number) => void };
-  }) => {
-    const { close } = useModal();
-    return (
-      <button
-        onClick={() => {
-          data.onFinish(
-            new File(["voice"], "voice.webm", { type: "audio/webm" }),
-            12,
-          );
-          close?.("audio-recorder");
-        }}
-      >
-        Finish voice recording
-      </button>
-    );
-  },
+    onAudio: (file: File, durationSeconds: number) => void;
+  }) => ({
+    phase: "recording",
+    seconds: 12,
+    levels: [],
+    error: "",
+    canRetry: false,
+    start: vi.fn(),
+    cancel: vi.fn(),
+    togglePause: vi.fn(),
+    retry: vi.fn(),
+    stop: () =>
+      onAudio(new File(["voice"], "voice.webm", { type: "audio/webm" }), 12),
+  }),
+}));
+
+vi.mock("./recorder-modal", () => ({
   VideoRecorderModal: ({
     data,
   }: {
@@ -250,7 +250,7 @@ describe("ViewMemory", () => {
   it.each([
     [
       "Record audio",
-      "Finish voice recording",
+      "Stop recording",
       "voice.webm",
       "audio/webm",
       "12",
@@ -362,11 +362,11 @@ describe("ViewMemory", () => {
     );
     await user.click(screen.getByRole("button", { name: "Record audio" }));
     expect(
-      screen.getByRole("button", { name: "Finish voice recording" }),
+      screen.getByRole("button", { name: "Stop recording" }),
     ).toBeInTheDocument();
     await user.keyboard("{Escape}");
     expect(
-      screen.queryByRole("button", { name: "Finish voice recording" }),
+      screen.queryByRole("button", { name: "Stop recording" }),
     ).not.toBeInTheDocument();
     expect(screen.getByRole("textbox", { name: "Story title" })).toHaveValue(
       "Sunday dinner together",

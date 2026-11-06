@@ -8,27 +8,14 @@ import { EnrichmentFieldIcon } from "./enrichment-field-icon";
 import { ENRICHMENT_FIELDS, enrichmentFieldColor } from "./enrichment-fields";
 
 export function EnrichmentFieldsTable({
-  query,
   onExplore,
 }: {
-  query: string;
   onExplore: (field: EnrichmentCategory) => void;
 }) {
   const { data } = useSWR<{ data: UserStatsData }>(endpoint.userStats);
   const scores = new Map(
     data?.data?.category_scores?.map((score) => [score.key, score]),
   );
-  const needle = query.trim().toLowerCase();
-  const fields = ENRICHMENT_FIELDS.filter((field) =>
-    `${field.label} ${field.description}`.toLowerCase().includes(needle),
-  );
-  if (!fields.length)
-    return (
-      <div className="insights-empty">
-        <p className="text-text-neutral-strong">No matching fields</p>
-        <p>Try another word or clear your search.</p>
-      </div>
-    );
   return (
     <div className="insights-table" role="table" aria-label="Enrichment fields">
       <div className="insights-table-head insights-fields-row" role="row">
@@ -36,7 +23,7 @@ export function EnrichmentFieldsTable({
         <span role="columnheader">Score</span>
         <span role="columnheader">Action</span>
       </div>
-      {fields.map((field) => {
+      {ENRICHMENT_FIELDS.map((field) => {
         const score = scores.get(field.key);
         const value = Math.round(
           Math.min(100, Math.max(0, Number(score?.score) || 0)),

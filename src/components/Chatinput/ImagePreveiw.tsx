@@ -1,6 +1,8 @@
 import { type IOnUploadPayload, type IFile } from "@/utility/interface";
 import ImageThumbnail from "@/components/image-thumbnail";
 import CirclarProgress from "../circlar-progress";
+import { VoiceNoteTile } from "@/components/recorder/voice-note-tile";
+import { displayFileName } from "@/utility/file-label";
 
 interface IImagePreviewProps {
   files: IOnUploadPayload[]
@@ -18,6 +20,28 @@ export default function ImagePreview({ files, handleRemoveFile }: IImagePreviewP
           size: file.file?.size || 0,
           type: file.file?.type || "",
         };
+
+        if (mappedFile.type.startsWith("audio/")) {
+          const localSrc = file.base64 || mappedFile.url;
+          return (
+            <div key={file.id} className="relative">
+              <VoiceNoteTile
+                id={file.id}
+                src={localSrc}
+                duration={file.duration}
+                label={displayFileName(mappedFile.name) || "Voice note"}
+                compact
+                className="size-[112px]"
+                onRemove={() => handleRemoveFile(file.id)}
+              />
+              {file.progress !== 100 && (
+                <div className="absolute inset-0 flex items-center justify-center rounded-2xl bg-black/20">
+                  <CirclarProgress progress={file.progress} className="size-7" />
+                </div>
+              )}
+            </div>
+          );
+        }
 
         return (
           <div key={file.id} className="relative group">

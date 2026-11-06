@@ -18,6 +18,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import type { EnrichmentCategory } from "@/features/enrichment/enrichment-categories";
+import { PageHeading } from "@/pages/dashboard/component/page-heading";
 import { EnrichmentFieldIcon } from "./enrichment-field-icon";
 import { getQuestionIdenticonUrl } from "@/features/explore/question-identicon";
 import { enrichmentFieldColor, getEnrichmentField } from "./enrichment-fields";
@@ -55,12 +56,10 @@ function FieldHeading({ label }: { label: string }) {
 
 function SourcesTable({
   sourcesKey,
-  query,
   empty,
   onView,
 }: {
   sourcesKey: string;
-  query: string;
   empty: string;
   onView: (source: InsightSource) => void;
 }) {
@@ -69,11 +68,7 @@ function SourcesTable({
     data: InsightSourceList;
   }>(sourcesKey);
   const all = data?.data?.sources ?? [];
-  const needle = query.trim().toLowerCase();
-  const sources = sortSources(
-    all.filter((source) => source.title.toLowerCase().includes(needle)),
-    order,
-  );
+  const sources = sortSources(all, order);
 
   if (error && !data)
     return (
@@ -119,7 +114,7 @@ function SourcesTable({
       </div>
       {!sources.length ? (
         <div className="insights-empty">
-          <p>{all.length ? "No matching memories." : empty}</p>
+          <p>{empty}</p>
         </div>
       ) : (
         <div className="insights-table" role="table" aria-label="Memory sources">
@@ -216,9 +211,9 @@ function DetailFrame({
         >
           <Undo2 aria-hidden />
         </Button>
-        <h2 className="min-w-0 font-garamond text-4xl text-text-neutral-strong">
+        <PageHeading>
           <FieldHeading label={fields[0]?.label ?? "Insight"} />
-        </h2>
+        </PageHeading>
       </div>
       <div
         className="insights-hero"
@@ -257,12 +252,10 @@ function DetailFrame({
 
 export function InsightDetail({
   insight,
-  query,
   onBack,
   onView,
 }: {
   insight: Insight;
-  query: string;
   onBack: () => void;
   onView: (source: InsightSource) => void;
 }) {
@@ -280,7 +273,6 @@ export function InsightDetail({
     >
       <SourcesTable
         sourcesKey={`${endpoint.insightSources}?insight=${encodeURIComponent(insight.id)}`}
-        query={query}
         empty="The memories behind this insight are no longer available."
         onView={onView}
       />
@@ -291,13 +283,11 @@ export function InsightDetail({
 /** One enrichment field and every memory tagged with it. */
 export function EnrichmentFieldDetail({
   field,
-  query,
   onBack,
   onView,
   onReflect,
 }: {
   field: EnrichmentCategory;
-  query: string;
   onBack: () => void;
   onView: (source: InsightSource) => void;
   onReflect: (field: EnrichmentCategory) => void;
@@ -320,7 +310,6 @@ export function EnrichmentFieldDetail({
     >
       <SourcesTable
         sourcesKey={`${endpoint.insightSources}?category=${field}`}
-        query={query}
         empty="No memories here yet. Reflect on this field to start filling it in."
         onView={onView}
       />

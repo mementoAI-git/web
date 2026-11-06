@@ -49,7 +49,7 @@ export default function Taginput({
               <span
                 key={value}
                 onClick={() => removeTag(value)}
-                className="mem-tags flex items-center gap-2 !lowercase !bg-transparent !font-normal !text-grey-600"
+                className="mem-tags flex items-center gap-2 !lowercase !bg-transparent !font-normal !text-text-neutral-weak"
               >
                 <span className="block max-w-40 truncate whitespace-nowrap">
                   {value}

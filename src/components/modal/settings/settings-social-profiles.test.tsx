@@ -133,6 +133,52 @@ describe("SettingsSocialProfiles", () => {
       }),
     );
   });
+  it("links a saved profile and swaps to the full URL while editing", async () => {
+    setup();
+    const link = await screen.findByRole("link", { name: "Open X profile @memento" });
+    expect(link).toHaveTextContent("@memento");
+    expect(link).toHaveAttribute("href", "https://x.com/memento");
+    expect(link).toHaveAttribute("target", "_blank");
+    expect(link).toHaveAttribute("rel", "noopener noreferrer");
+    const user = userEvent.setup();
+    await user.click(screen.getByRole("textbox", { name: "X / Twitter" }));
+    expect(screen.queryByRole("link")).not.toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "X / Twitter" })).toHaveValue(
+      "https://x.com/memento",
+    );
+  });
+  it("links a typed handle after the field loses focus", async () => {
+    setup();
+    const user = userEvent.setup();
+    await user.type(
+      await screen.findByRole("textbox", { name: "Instagram" }),
+      "@memento_app",
+    );
+    await user.tab();
+    expect(
+      screen.getByRole("link", { name: "Open Instagram profile @memento_app" }),
+    ).toHaveAttribute("href", "https://www.instagram.com/memento_app");
+  });
+  it.each([
+    ["an invalid value", "not a profile"],
+    ["a lookalike domain", "https://linkedin.com.evil.test/in/me"],
+    ["an executable scheme", "javascript:alert(1)"],
+  ])("does not link %s", async (_case, value) => {
+    setup();
+    const user = userEvent.setup();
+    await user.type(await screen.findByRole("textbox", { name: "LinkedIn" }), value);
+    await user.tab();
+    expect(screen.queryByRole("link", { name: /LinkedIn/ })).not.toBeInTheDocument();
+  });
+  it("reaches the link and then the input with Tab", async () => {
+    setup();
+    const link = await screen.findByRole("link", { name: "Open X profile @memento" });
+    const user = userEvent.setup();
+    await user.tab();
+    expect(link).toHaveFocus();
+    await user.tab();
+    expect(screen.getByRole("textbox", { name: "X / Twitter" })).toHaveFocus();
+  });
   it("rejects a video URL in the YouTube profile field", async () => {
     setup();
     await waitFor(() =>

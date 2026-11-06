@@ -18,7 +18,7 @@ function renderSettings(route: string) {
   return renderWithProviders(
     <>
       <Routes>
-        <Route element={<Outlet context={{ settingsReturnTo: "/stories" }} />}>
+        <Route element={<Outlet />}>
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/settings/:tab" element={<SettingsPage />} />
         </Route>
@@ -73,9 +73,4 @@ describe("SettingsPage", () => {
     expect(screen.getByRole("link", { name: "Security" })).toBeInTheDocument();
   });
 
-  it("closes back to the page the member came from", async () => {
-    renderSettings("/settings/security");
-    await userEvent.click(screen.getByRole("button", { name: "Close settings" }));
-    expect(screen.getByTestId("location")).toHaveTextContent("/stories");
-  });
 });

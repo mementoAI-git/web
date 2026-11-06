@@ -7,17 +7,15 @@ import {
 import { useBookmark } from "@/hooks/use-bookmark";
 import { useModal } from "@/hooks/use-modal";
 import { useStore } from "@/hooks/use-store";
-import { addToRecentMemories, ensureLinksOpenInNewTab, isEmpty } from "@/utility";
+import { addToRecentMemories, isEmpty } from "@/utility";
 import type { IMemory } from "@/utility/interface";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import useSWR from "swr";
 import { MemoryDropdown } from "@/pages/dashboard/chat/conversation/dropdown";
 import SidebarDetails from "@/components/memory/sidebar-details";
-import FileGallery from "@/components/file-gallery";
-import DOMPurify from "isomorphic-dompurify";
 import { DetailsSkeleton } from "./components/skeleton";
-import { TypographyH1, TypographyMuted } from "@/components/ui/typography";
+import { StoryMobileContent, StoryMobileTitle } from "@/components/modal/memory/story-reader";
 
 function getTopicColor(topic: string) {
   let hash = 0;
@@ -96,9 +94,7 @@ export default function MobileStoryDetails() {
               />
             </div>
 
-            <TypographyH1 className="font-garamond text-xl font-medium leading-tight text-text-neutral-strong sm:text-2xl md:text-3xl lg:text-[40px] lg:leading-[48px]">
-              {memory?.title}
-            </TypographyH1>
+            <StoryMobileTitle title={memory?.title} />
           </div>
           <div className="flex-1 h-full pb-4 sm:pb-6">
             {memory.summary?.trim() || (Array.isArray(memory.topics) && memory.topics.length > 0) ? (
@@ -134,17 +130,7 @@ export default function MobileStoryDetails() {
               </div>
             ) : null}
 
-            {!isEmpty(memory?.attachments) && (
-              <FileGallery files={memory?.attachments || []} />
-            )}
-            <div className="tiptap-editor">
-              <TypographyMuted
-                className="tiptap-editor mt-4 font-inter text-sm leading-relaxed text-text-neutral-weak sm:mt-6 sm:text-base"
-                dangerouslySetInnerHTML={{
-                  __html: ensureLinksOpenInNewTab(DOMPurify.sanitize(memory?.body || "")),
-                }}
-              />
-            </div>
+            <StoryMobileContent files={memory?.attachments} body={memory?.body} />
           </div>
         </div>
         <div className="h-110" />

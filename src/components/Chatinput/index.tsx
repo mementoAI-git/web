@@ -1,3 +1,4 @@
+import { AudioAttachmentRecorder } from "@/components/recorder/voice-recorder";
 import { ChatDesignIcon } from "@/components/chat-design-icon";
 import { useVoiceSession } from "@/contexts/voice-session";
 import { buildPromptWithReplyQuote } from "@/utility/chat-reply-prompt";
@@ -110,9 +111,6 @@ function ChatinputImpl({
   const [inlineVoiceOpen, setInlineVoiceOpen] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const inputWrapperRef = useRef<HTMLDivElement>(null)
-  const quickRecRef = useRef<MediaRecorder | null>(null)
-  const quickChunksRef = useRef<Blob[]>([])
-  const quickStreamRef = useRef<MediaStream | null>(null)
   /** Prevents double-applying `?starter=` when layout re-runs before navigation replaces the URL. */
   const starterAppliedPathKeyRef = useRef<string | null>(null)
 
@@ -244,61 +242,6 @@ function ChatinputImpl({
     },
     [processFileForUpload],
   );
-
-  const finishQuickRecorderBlob = useCallback(
-    async (mimeType: string) => {
-      quickStreamRef.current?.getTracks().forEach((t) => t.stop());
-      quickStreamRef.current = null;
-      quickRecRef.current = null;
-      setIsQuickRecording(false);
-      const blob = new Blob(quickChunksRef.current, { type: mimeType });
-      quickChunksRef.current = [];
-      if (blob.size === 0) return;
-      const ext = mimeType.startsWith("audio/webm") ? "webm" : "mp4";
-      const file = new File([blob], `voice-clip-${Date.now()}.${ext}`, {
-        type: mimeType.split(";")[0]?.trim() || mimeType,
-      });
-      await processFileForUpload(file);
-    },
-    [processFileForUpload],
-  );
-
-  const toggleQuickRecording = useCallback(async () => {
-    const existing = quickRecRef.current;
-    if (existing && existing.state === "recording") {
-      existing.stop();
-      return;
-    }
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      quickStreamRef.current = stream;
-      quickChunksRef.current = [];
-      const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
-        ? "audio/webm;codecs=opus"
-        : MediaRecorder.isTypeSupported("audio/webm")
-          ? "audio/webm"
-          : "audio/mp4";
-      const rec = new MediaRecorder(stream, { mimeType });
-      quickRecRef.current = rec;
-      rec.ondataavailable = (e) => {
-        if (e.data.size > 0) quickChunksRef.current.push(e.data);
-      };
-      rec.onstop = () => {
-        void finishQuickRecorderBlob(mimeType);
-      };
-      rec.start();
-      setIsQuickRecording(true);
-    } catch {
-      alert("Microphone access is needed to record a voice clip.");
-    }
-  }, [finishQuickRecorderBlob]);
-
-  useEffect(() => {
-    return () => {
-      quickStreamRef.current?.getTracks().forEach((t) => t.stop());
-      quickStreamRef.current = null;
-    };
-  }, []);
 
   const handlePaste = useCallback(
     async (e: ClipboardEvent<HTMLTextAreaElement>) => {
@@ -500,6 +443,13 @@ function ChatinputImpl({
             onKeyDown={handleKeyDown}
             onPaste={handlePaste}
           />
+          {isQuickRecording ? (
+            <AudioAttachmentRecorder
+              className="mb-0"
+              onFinish={(file) => void processFileForUpload(file)}
+              onClose={() => setIsQuickRecording(false)}
+            />
+          ) : null}
           <div className="mt-auto flex justify-between gap-3">
             <div className="flex items-center gap-2">
               {/* File Upload Button */}
@@ -526,14 +476,13 @@ function ChatinputImpl({
               {!typing && (!showSendControl || topic) ? (
                 <button
                   type="button"
-                  onClick={() => void toggleQuickRecording()}
+                  disabled={isQuickRecording}
+                  onClick={() => setIsQuickRecording(true)}
                   className={cn(
                     "flex size-9 md:size-10 shrink-0 cursor-pointer items-center justify-center rounded-full border border-stroke-neutral-weak bg-fill-neutral-weak text-icon-neutral-strong transition-[transform,background-color,color] duration-150 hover:bg-fill-neutral-weak hover:text-text-neutral-strong active:scale-[0.97]",
                     topic && "bg-transparent",
-                    isQuickRecording &&
-                      "border-stroke-error-strong bg-fill-error-weak text-text-error-strong hover:bg-fill-error-weak",
                   )}
-                  aria-label={isQuickRecording ? "Stop recording" : "Record voice clip"}
+                  aria-label="Record voice clip"
                 >
                   <ChatDesignIcon name="microphone" />
                 </button>

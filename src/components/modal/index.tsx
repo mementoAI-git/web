@@ -41,12 +41,10 @@ import { useState, useEffect } from "react";
 import ShareMemory from "./memory/share-memory";
 import SelectBeneficiary from "./select-beneficiary";
 import { Feedback } from "./feedback";
-import MemoryInsights from "./memory-insights";
-import type { IGroup } from "@/utility/interface";
+import type { IGroup, IMemory } from "@/utility/interface";
 import SettingsAboutMeModal from "./settings-about-me-modal";
 import RecentActivitiesModal from "./recent-activities-modal";
 import {
-  AudioRecorderModal,
   VideoRecorderModal,
 } from "./memory/recorder-modal";
 import { UnpauseCapsule } from "./capsule";
@@ -57,7 +55,7 @@ const RIGHT_PANEL_MODALS: string[] = [];
 const FULL_SCREEN_MODALS = ["create-memory", "view-memory", "file-preview"];
 
 /** Centered horizontally, anchored to the top (tall content / readability). */
-const TOP_ALIGNED_MODALS = ["memory-insights"];
+const TOP_ALIGNED_MODALS: string[] = [];
 
 /** What voice calls an open modal ("A dialog is open: New story."). Others use their name. */
 const VOICE_MODAL_NAMES: Record<string, string> = {
@@ -101,12 +99,9 @@ const MODAL_COMPONENTS = {
   "edit-capsule": CreateCapsule,
   "view-capsule": (props) => <CreateCapsule {...props} mode="view" />,
   // "date-picker-filter": DatePickerFilter,
-  "share-memory": ShareMemory,
   "create-feedback": Feedback,
-  "memory-insights": MemoryInsights,
   "settings-about-me": SettingsAboutMeModal,
   "recent-activities": RecentActivitiesModal,
-  "audio-recorder": AudioRecorderModal,
   "video-recorder": VideoRecorderModal,
   "exit-confirmation": ExitConfirmation,
   "view-memory": ViewMemory,
@@ -145,13 +140,16 @@ function ModalStack({ isMobile }: { isMobile: boolean }) {
     const modal = state?.[0];
     if (
       !modal ||
-      ["search-memory", "create-feedback", "invite-friends", "pricing", "setup2fa", "conversation-files", "memory-insights", "add-group", "update-group", "add-group-members"].includes(modal.name) ||
+      ["search-memory", "create-feedback", "invite-friends", "pricing", "setup2fa", "conversation-files", "add-group", "update-group", "add-group-members", "share-memory"].includes(modal.name) ||
       isConnectionInvite(modal)
     )
       return;
     const modalName = modal.name;
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") close(modalName);
+      if (e.key !== "Escape") return;
+      // Closing Share re-registers this listener mid-press, so the same press must not close the story too.
+      if (e.defaultPrevented && modalName === "view-memory") return;
+      close(modalName);
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
@@ -178,7 +176,6 @@ function ModalStack({ isMobile }: { isMobile: boolean }) {
       />
     );
   if (topModal.name === "invite-friends") return <InviteFriends />;
-  if (topModal.name === "memory-insights") return <MemoryInsights />;
   // Form dialogs own their portal, backdrop, focus trap, and dismissal.
   if (isConnectionInvite(topModal)) return <AddBeneficiary data={{ mode: "connection" }} />;
   if (topModal.name === "add-group") return <AddGroup />;
@@ -186,21 +183,23 @@ function ModalStack({ isMobile }: { isMobile: boolean }) {
   if (topModal.name === "add-group-members") return <AddGroupMembers data={topModal.props as string} />;
   // This dialog owns its portal, backdrop, focus trap, and dismissal.
   if (topModal.name === "setup2fa") return <Setup2FA data={topModal.props as { qrcode: string; secret: string }} />;
+  // Share opens from inside a story, so it floats beside the stack and the story stays mounted beneath it.
+  const shareOnTop = topModal.name === "share-memory";
+  const layers = shareOnTop ? state.slice(1) : state;
   const isTopFullscreenModal =
     FULL_SCREEN_MODALS.includes(topModal.name) && !isMobile;
 
   return (
-    <div
+    <>
+    {!isEmpty(layers) && <div
       className={`modal-overlay relative z-100 h-full w-full flex-col justify-center items-center ${
-        isTopFullscreenModal ? "bg-transparent" : "bg-overlay-backdrop"
+        isTopFullscreenModal || shareOnTop ? "bg-transparent" : "bg-overlay-backdrop"
       } ${state ? "flex" : "hidden"}`}
       onClick={isTopFullscreenModal ? undefined : () => close(topModal.name)}
     >
-      {[...state].reverse().map((modal, i) => {
+      {[...layers].reverse().map((modal, i) => {
         const ModalComponent = MODAL_COMPONENTS[modal.name];
         if (!ModalComponent) return null;
-        // Insights fills the screen, so it waits unmounted until it is on top again.
-        if (modal.name === "memory-insights") return null;
 
         const isRightPanel =
           RIGHT_PANEL_MODALS.includes(modal.name) && !isMobile;
@@ -250,8 +249,7 @@ function ModalStack({ isMobile }: { isMobile: boolean }) {
               topModal.name !== "quick-capture" &&
               topModal.name !== "share-post" &&
               topModal.name !== "file-preview" &&
-              topModal.name !== "conversation-files" &&
-              topModal.name !== "memory-insights" && (
+              topModal.name !== "conversation-files" && (
                 <button
                   type="button"
                   onClick={(e) => {
@@ -270,6 +268,8 @@ function ModalStack({ isMobile }: { isMobile: boolean }) {
           </div>
         );
       })}
-    </div>
+    </div>}
+    {shareOnTop && <ShareMemory data={topModal.props as { memory: IMemory }} />}
+    </>
   );
 }

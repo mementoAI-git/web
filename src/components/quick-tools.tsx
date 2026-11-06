@@ -19,13 +19,22 @@ import {
   SheetDescription,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { ThemeSwitcher } from "@/components/theme-switcher";
 import BackgroundMusic from "@/components/modal/chat-settings/background-music";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { bottomSheetClass } from "@/components/ui/bottom-sheet-class";
 import { useModal } from "@/hooks/use-modal";
 import quickNoteIcon from "@/assets/icon/emojione_memo.svg";
 import addPeopleIcon from "@/assets/icon/fluent-emoji-flat_person-medium.svg";
 
-function ToolsContent({ run }: { run: (action: () => void) => void }) {
+function ToolsContent({
+  run,
+  stacked = false,
+}: {
+  run: (action: () => void) => void;
+  /** Phones list the actions as short rows instead of two tall tiles. */
+  stacked?: boolean;
+}) {
   const { open } = useModal();
   return (
     <div className="flex flex-col gap-4">
@@ -34,7 +43,7 @@ function ToolsContent({ run }: { run: (action: () => void) => void }) {
         <h3 className="text-xs font-medium text-muted-foreground">
           Quick actions
         </h3>
-        <div className="grid grid-cols-2 gap-3">
+        <div className={cn("grid gap-3", stacked ? "grid-cols-1" : "grid-cols-2")}>
           {[
             {
               label: "Quick note",
@@ -51,7 +60,12 @@ function ToolsContent({ run }: { run: (action: () => void) => void }) {
               key={label}
               type="button"
               variant="ghost"
-              className="sky-card relative h-[85px] w-full min-w-0 flex-col items-start justify-between gap-3 overflow-hidden rounded-xl border border-stroke-neutral-weak bg-fill-neutral-weak p-3 text-text-neutral-strong hover:bg-fill-neutral-weak"
+              className={cn(
+                "sky-card relative w-full min-w-0 gap-3 overflow-hidden rounded-xl border border-stroke-neutral-weak bg-fill-neutral-weak p-3 text-text-neutral-strong hover:bg-fill-neutral-weak",
+                stacked
+                  ? "h-auto flex-row items-center justify-start"
+                  : "h-[85px] flex-col items-start justify-between",
+              )}
               title={label}
               onClick={() => run(action)}
             >
@@ -75,6 +89,26 @@ function ToolsContent({ run }: { run: (action: () => void) => void }) {
               </span>
             </Button>
           ))}
+          {/* Phones have no theme switcher in the header. */}
+          {stacked && (
+            <ThemeSwitcher
+              contentClassName="navigation-menu z-[60]"
+              renderTrigger={(currentLabel) => (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  aria-label={`Theme: ${currentLabel}`}
+                  className="sky-card relative h-auto w-full min-w-0 flex-row items-center justify-start gap-3 overflow-hidden rounded-xl border border-stroke-neutral-weak bg-fill-neutral-weak p-3 text-text-neutral-strong hover:bg-fill-neutral-weak"
+                >
+                  <span aria-hidden="true" className="relative flex size-6 shrink-0 items-center justify-center text-xl leading-none">
+                    🌗
+                  </span>
+                  <span className="relative text-sm font-medium leading-5">Theme</span>
+                  <span className="relative ml-auto truncate text-sm font-normal text-text-neutral-weak">{currentLabel}</span>
+                </Button>
+              )}
+            />
+          )}
         </div>
       </section>
     </div>
@@ -134,7 +168,7 @@ export function QuickTools({
           side="bottom"
           data-sky-card-page={cardScope}
           className={cn(
-            "sky-card quick-tools-panel navigation-sheet max-h-[85dvh] overflow-y-auto rounded-t-3xl pb-[max(1.5rem,env(safe-area-inset-bottom))]",
+            bottomSheetClass,
             contentClassName,
           )}
           onCloseAutoFocus={onCloseAutoFocus}
@@ -146,7 +180,7 @@ export function QuickTools({
             </SheetDescription>
           </SheetHeader>
           <div className="px-6">
-            <ToolsContent run={run} />
+            <ToolsContent run={run} stacked />
           </div>
         </SheetContent>
       </Sheet>

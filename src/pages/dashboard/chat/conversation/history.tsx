@@ -200,8 +200,29 @@ export default function History({
           (() => {
             let lastDayKey: string | null = null;
             let lastMonthKey: string | null = null;
+            const dayLabel = (iso: string) => (
+                    <div
+                      className={isTopic ? "flex justify-center" : "flex justify-center py-2"}
+                      role="separator"
+                      aria-label={dayDividerLabel(iso)}
+                    >
+                      <span className={isTopic ? "font-geist text-xs leading-4 text-text-neutral-weaker opacity-70" : "px-3 py-1 font-inter text-xs font-normal text-text-neutral-weaker"}>
+                        {isTopic ? dayjs(iso).format("MMMM D, YYYY") : dayDividerLabel(iso)}
+                      </span>
+                    </div>
+            );
             return mergeVoiceTimeline(messages, liveTimeline).map((row, i) => {
-              if (row.kind !== "message") return <VoiceSessionDivider key={row.id} active={row.kind === "started"} />;
+              if (row.kind !== "message") {
+                const dividerDay = dayjs(row.created_at);
+                const opensDay = dividerDay.isValid() && dividerDay.format("YYYY-MM-DD") !== lastDayKey;
+                if (opensDay) lastDayKey = dividerDay.format("YYYY-MM-DD");
+                return (
+                  <Fragment key={row.id}>
+                    {opensDay ? dayLabel(row.created_at) : null}
+                    <VoiceSessionDivider active={row.kind === "started"} />
+                  </Fragment>
+                );
+              }
               const m = row.message;
               const failed = Boolean((m as { sendFailed?: boolean }).sendFailed);
               const attachments = m.attachments ?? m.attatchments;
@@ -219,17 +240,7 @@ export default function History({
 
               return (
                 <Fragment key={`${m._id ?? "msg"}-${i}`}>
-                  {showDayDivider && validIso && iso ? (
-                    <div
-                      className={isTopic ? "flex justify-center" : "flex justify-center py-2"}
-                      role="separator"
-                      aria-label={dayDividerLabel(iso)}
-                    >
-                      <span className={isTopic ? "font-geist text-xs leading-4 text-text-neutral-weaker opacity-70" : "px-3 py-1 font-inter text-xs font-normal text-text-neutral-weaker"}>
-                        {isTopic ? dayjs(iso).format("MMMM D, YYYY") : dayDividerLabel(iso)}
-                      </span>
-                    </div>
-                  ) : null}
+                  {showDayDivider && validIso && iso ? dayLabel(iso) : null}
                   <div id={showMonthAnchor && monthK ? `host-chat-anchor-${monthK}` : undefined}>
                     <Bubble
                       topic={isTopic}

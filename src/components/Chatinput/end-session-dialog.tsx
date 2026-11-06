@@ -1,8 +1,8 @@
 import endSessionArtwork from "@/assets/icon/voice-end-session.svg";
 import { Button } from "@/components/ui/button";
+import { FormDialogContent } from "@/components/modal/form-dialog";
 import {
   Dialog,
-  DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
@@ -28,10 +28,9 @@ export function EndSessionDialog({
       open={open}
       onOpenChange={(nextOpen) => !ending && onOpenChange(nextOpen)}
     >
-      <DialogContent
-        showCloseButton={false}
-        overlayClassName="z-[210] bg-overlay-backdrop backdrop-blur-none"
-        className="z-[220] flex h-[346px] max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-[456px] flex-col gap-6 overflow-y-auto rounded-3xl border border-stroke-neutral-weak bg-bg-raised p-6 shadow-2xl ring-0 sm:max-w-[456px] motion-reduce:animate-none"
+      <FormDialogContent
+        overlayClassName="z-[210] backdrop-blur-none"
+        className="z-[220] flex h-[346px] flex-col gap-6 border border-stroke-neutral-weak bg-bg-raised shadow-2xl ring-0"
       >
         <DialogHeader className="flex-1 items-center justify-center gap-6 py-0 text-center">
           <div
@@ -68,7 +67,7 @@ export function EndSessionDialog({
             {ending ? "Ending…" : "End Session"}
           </Button>
         </div>
-      </DialogContent>
+      </FormDialogContent>
     </Dialog>
   );
 }

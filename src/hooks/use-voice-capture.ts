@@ -1,11 +1,39 @@
 import { useEffect, useRef, useState } from "react";
 import { transcribeAudio } from "@/api/fetcher";
-import { createLiveDictation } from "./live-dictation";
+import { createLiveDictation } from "@/lib/live-dictation";
 
-export function useOverviewDictation(onTranscript: (text: string) => void) {
-  const [phase, setPhase] = useState<
-    "idle" | "starting" | "recording" | "paused" | "transcribing"
-  >("idle");
+export type VoiceCapturePhase =
+  | "idle"
+  | "starting"
+  | "recording"
+  | "paused"
+  | "transcribing"
+  | "saving";
+
+export type VoiceCaptureOptions =
+  /** Speech becomes text; the audio itself is discarded. */
+  | { mode: "text"; onTranscript: (text: string) => void }
+  /** The audio is kept and handed back as a file. */
+  | { mode: "audio"; onAudio: (file: File, durationSeconds: number) => void };
+
+/**
+ * Maps loudness to a bar height the way the mobile recorder does. Speech is quiet in
+ * linear terms (RMS around 0.01–0.1), so scaling in decibels is what makes bars move.
+ */
+export function meterHeight(rms: number) {
+  const decibels = rms > 0 ? 20 * Math.log10(rms) : -Infinity;
+  const amplitude = Math.max(0, Math.min(1, (decibels + 60) / 60));
+  return Math.max(5, 3 + amplitude * 29);
+}
+
+function audioExtension(mimeType: string) {
+  if (mimeType.includes("webm")) return "webm";
+  if (mimeType.includes("ogg")) return "ogg";
+  return "mp4";
+}
+
+export function useVoiceCapture(options: VoiceCaptureOptions) {
+  const [phase, setPhase] = useState<VoiceCapturePhase>("idle");
   const [seconds, setSeconds] = useState(0);
   const [levels, setLevels] = useState<number[]>(Array(87).fill(5));
   const [error, setError] = useState("");
@@ -19,8 +47,9 @@ export function useOverviewDictation(onTranscript: (text: string) => void) {
   const request = useRef<AbortController | null>(null);
   const generation = useRef(0);
   const pending = useRef<Blob | null>(null);
-  const transcript = useRef(onTranscript);
-  transcript.current = onTranscript;
+  const elapsed = useRef(0);
+  const latest = useRef(options);
+  latest.current = options;
 
   function release() {
     clearInterval(timer.current);
@@ -51,7 +80,8 @@ export function useOverviewDictation(onTranscript: (text: string) => void) {
 
   async function transcribe(attempt: number) {
     const recording = pending.current;
-    if (!recording || request.current) return;
+    const current = latest.current;
+    if (!recording || request.current || current.mode !== "text") return;
     const controller = new AbortController();
     request.current = controller;
     let timeout: ReturnType<typeof setTimeout> | undefined;
@@ -59,13 +89,8 @@ export function useOverviewDictation(onTranscript: (text: string) => void) {
     setError("");
     setCanRetry(false);
     try {
-      const ext = recording.type.includes("webm")
-        ? "webm"
-        : recording.type.includes("ogg")
-          ? "ogg"
-          : "mp4";
       const result = await Promise.race([transcribeAudio(
-        new File([recording], `reflection-${Date.now()}.${ext}`, {
+        new File([recording], `reflection-${Date.now()}.${audioExtension(recording.type)}`, {
           type: recording.type.split(";")[0].trim(),
         }),
         controller.signal,
@@ -78,8 +103,10 @@ export function useOverviewDictation(onTranscript: (text: string) => void) {
       if (attempt !== generation.current) return;
       if (!result)
         throw new Error("Your recording couldn’t be transcribed. Try again.");
-      if (result.full_text?.trim()) transcript.current(result.full_text.trim());
-      else setError("No speech was detected. Try recording again.");
+      if (result.full_text?.trim()) {
+        const receiver = latest.current;
+        if (receiver.mode === "text") receiver.onTranscript(result.full_text.trim());
+      } else setError("No speech was detected. Try recording again.");
       pending.current = null;
     } catch (cause) {
       if (attempt !== generation.current) return;
@@ -97,7 +124,7 @@ export function useOverviewDictation(onTranscript: (text: string) => void) {
   }
 
   async function start() {
-    if (recorder.current || phase === "starting" || phase === "transcribing")
+    if (recorder.current || phase === "starting" || phase === "transcribing" || phase === "saving")
       return;
     const attempt = ++generation.current;
     setPhase("starting");
@@ -108,7 +135,9 @@ export function useOverviewDictation(onTranscript: (text: string) => void) {
         typeof MediaRecorder === "undefined"
       )
         throw new Error(
-          "Voice recording isn’t available in this browser. You can type your thoughts instead.",
+          latest.current.mode === "text"
+            ? "Voice recording isn’t available in this browser. You can type your thoughts instead."
+            : "Voice recording isn’t available in this browser.",
         );
       const input = await navigator.mediaDevices.getUserMedia({ audio: true });
       if (attempt !== generation.current) {
@@ -122,9 +151,11 @@ export function useOverviewDictation(onTranscript: (text: string) => void) {
         "audio/mp4",
         "audio/ogg",
       ].find((type) => MediaRecorder.isTypeSupported(type));
-      speech.current = createLiveDictation();
-      await speech.current?.start();
-      if (attempt !== generation.current) return;
+      if (latest.current.mode === "text") {
+        speech.current = createLiveDictation();
+        await speech.current?.start();
+        if (attempt !== generation.current) return;
+      }
       const rec = new MediaRecorder(input, mimeType ? { mimeType } : undefined);
       recorder.current = rec;
       const chunks: Blob[] = [];
@@ -141,7 +172,8 @@ export function useOverviewDictation(onTranscript: (text: string) => void) {
         recorder.current = null;
         if (attempt !== generation.current) return;
         if (recognized?.trim()) {
-          transcript.current(recognized.trim());
+          const receiver = latest.current;
+          if (receiver.mode === "text") receiver.onTranscript(recognized.trim());
           pending.current = null;
           setCanRetry(false);
           setPhase("idle");
@@ -155,6 +187,17 @@ export function useOverviewDictation(onTranscript: (text: string) => void) {
           setError("No audio was recorded. Try again.");
           return;
         }
+        const current = latest.current;
+        if (current.mode === "audio") {
+          setPhase("idle");
+          current.onAudio(
+            new File([blob], `recording-${Date.now()}.${audioExtension(blob.type)}`, {
+              type: blob.type.split(";")[0].trim(),
+            }),
+            elapsed.current,
+          );
+          return;
+        }
         pending.current = blob;
         void transcribe(attempt);
       };
@@ -163,34 +206,35 @@ export function useOverviewDictation(onTranscript: (text: string) => void) {
         setError("Recording stopped unexpectedly. Please try again.");
       };
       rec.start(1000);
+      elapsed.current = 0;
       setSeconds(0);
       setLevels(Array(87).fill(5));
       setPhase("recording");
       timer.current = setInterval(() => {
-        if (rec.state === "recording") setSeconds((value) => value + 1);
+        if (rec.state === "recording") {
+          elapsed.current += 1;
+          setSeconds(elapsed.current);
+        }
       }, 1000);
       // A real microphone meter; recording remains available without Web Audio.
       try {
         const context = new AudioContext();
         audio.current = context;
+        // Recording can start outside a tap, which leaves the context suspended and silent.
+        void context.resume().catch(() => {});
         const analyser = context.createAnalyser();
-        analyser.fftSize = 256;
+        analyser.fftSize = 1024;
         context.createMediaStreamSource(input).connect(analyser);
-        const samples = new Uint8Array(analyser.fftSize);
+        const samples = new Float32Array(analyser.fftSize);
         meter.current = setInterval(() => {
           if (rec.state !== "recording") return;
-          analyser.getByteTimeDomainData(samples);
+          analyser.getFloatTimeDomainData(samples);
           const rms = Math.sqrt(
-            samples.reduce(
-              (sum, value) => sum + ((value - 128) / 128) ** 2,
-              0,
-            ) / samples.length,
+            samples.reduce((sum, value) => sum + value * value, 0) /
+              samples.length,
           );
-          setLevels((previous) => [
-            ...previous.slice(1),
-            Math.min(32, Math.max(5, rms * 160)),
-          ]);
-        }, 80);
+          setLevels((previous) => [...previous.slice(1), meterHeight(rms)]);
+        }, 100);
       } catch {
         /* Audio recording does not depend on waveform support. */
       }
@@ -203,7 +247,9 @@ export function useOverviewDictation(onTranscript: (text: string) => void) {
       setPhase("idle");
       setError(
         cause instanceof DOMException && cause.name === "NotAllowedError"
-          ? "Allow microphone access to record. You can also type your thoughts below."
+          ? latest.current.mode === "text"
+            ? "Allow microphone access to record. You can also type your thoughts below."
+            : "Allow microphone access to record."
           : cause instanceof Error
             ? cause.message
             : "Couldn’t start recording. Please try again.",
@@ -214,7 +260,7 @@ export function useOverviewDictation(onTranscript: (text: string) => void) {
   function stop() {
     const rec = recorder.current;
     if (rec && rec.state !== "inactive") {
-      setPhase("transcribing");
+      setPhase(latest.current.mode === "text" ? "transcribing" : "saving");
       rec.stop();
     }
   }
@@ -241,6 +287,7 @@ export function useOverviewDictation(onTranscript: (text: string) => void) {
         rec.onstop = null;
         if (rec.state !== "inactive") rec.stop();
       }
+      recorder.current = null;
       release();
     },
     [],

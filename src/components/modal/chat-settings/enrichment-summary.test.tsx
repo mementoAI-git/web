@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, useLocation } from "react-router-dom";
 import { EnrichmentSummary } from "./enrichment-summary";
 import type { CategoryScore } from "@/features/enrichment";
 
@@ -94,9 +94,10 @@ describe("EnrichmentSummary", () => {
   });
   it("opens Insights instead of the removed Stats tab", async () => {
     const user = userEvent.setup();
-    render(<MemoryRouter><EnrichmentSummary /></MemoryRouter>);
+    const Location = () => <output data-testid="location">{useLocation().pathname}</output>;
+    render(<MemoryRouter><EnrichmentSummary /><Location /></MemoryRouter>);
     await user.click(screen.getByRole("button", {name:"Discover which areas need more context"}));
-    expect(openInsights).toHaveBeenCalledWith("memory-insights");
+    expect(screen.getByTestId("location")).toHaveTextContent("/insights");
   });
 
 });

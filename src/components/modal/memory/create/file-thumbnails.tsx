@@ -7,6 +7,9 @@ import { TimesIcon } from "@/components/icons";
 import type { IOnUploadPayload } from "@/utility/interface";
 import { cn } from "@/lib/utils";
 import { extractDocxPreview, extractPlainTextPreview } from "./document-preview";
+import { displayFileName, voiceNoteLabel } from "@/utility/file-label";
+import { VoiceNoteTile } from "@/components/recorder/voice-note-tile";
+import { useModal } from "@/hooks/use-modal";
 import { getUploadDisplayKind, resolveUploadMimeType } from "./upload-display";
 
 GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsVersion}/pdf.worker.min.mjs`;
@@ -226,9 +229,10 @@ function FileInfoTile({
   textPreview?: string | null;
 }) {
   const name = file.file?.name || file.uploadedFile?.name || "Attachment";
-  const extension = name.includes(".") ? name.split(".").pop()?.toUpperCase() : null;
-  const shortName = name.replace(/\.[^.]+$/, "");
-  const typeLabel = mimeType.split("/")[0] || "file";
+  const voiceLabel = voiceNoteLabel(name);
+  const extension = !voiceLabel && name.includes(".") ? name.split(".").pop()?.toUpperCase() : null;
+  const shortName = voiceLabel ?? name.replace(/\.[^.]+$/, "");
+  const typeLabel = voiceLabel ? "voice" : mimeType.split("/")[0] || "file";
 
   return (
     <div
@@ -350,6 +354,7 @@ export function FileThumbnails({
   onRetry,
   variant = "default",
 }: FileThumbnailsProps) {
+  const { push } = useModal();
   if (files.length === 0) return null;
 
   const isComposerRail = variant === "composer-rail";
@@ -372,6 +377,34 @@ export function FileThumbnails({
           const isVideo = mimeType.startsWith("video/");
           const isAudio = mimeType.startsWith("audio/");
           const isDocument = getUploadDisplayKind(mimeType) === "document";
+          if (isAudio) {
+            const uploaded = file.uploadedFile;
+            const label = displayFileName(file.file?.name || uploaded?.name) || "Voice note";
+            const uploading = !uploaded?._id && !file.uploadFailed;
+            return (
+              <div key={file.id} className="relative shrink-0" data-testid={isMediaInline ? `media-inline-file-tile-${file.id}` : undefined}>
+                <VoiceNoteTile
+                  id={uploaded?._id || file.id}
+                  src={uploaded?.url || file.base64 || ""}
+                  duration={file.duration ?? uploaded?.duration}
+                  label={label}
+                  onRemove={() => onRemove(file.id)}
+                  onOpen={uploaded?._id ? () => push?.("file-preview", { files: [{ ...uploaded, duration: file.duration ?? uploaded.duration }], readOnly: true }) : undefined}
+                />
+                {file.uploadFailed && onRetry ? (
+                  <div className="absolute inset-0 z-30 flex items-end justify-center rounded-2xl bg-overlay-backdrop p-1">
+                    <button type="button" aria-label={`Retry ${label}`} onClick={() => onRetry(file)} className="rounded-full bg-bg-neutral-solid px-2.5 py-1 font-inter text-[11px] font-semibold text-text-neutral-strong">Retry</button>
+                  </div>
+                ) : uploading ? (
+                  <div className="pointer-events-none absolute inset-x-0 bottom-0 z-30 p-2">
+                    <div className="h-1 overflow-hidden rounded-full bg-fill-neutral-strong/20">
+                      <div className="h-full rounded-full bg-fill-brand-strong transition-[width]" style={{ width: `${Math.max(0, Math.min(100, file.progress ?? 0))}%` }} />
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            );
+          }
           const imgSrc = isImage ? (file.base64 || file.uploadedFile?.url || "") : "";
           const sizeBytes = file.file?.size ?? (typeof file.uploadedFile?.size === "number" ? file.uploadedFile.size : 0);
           const sizeLabel = sizeBytes ? formatFileSize(sizeBytes) : "";

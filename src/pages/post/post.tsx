@@ -1,53 +1,78 @@
-import dayjs from "dayjs";
-import DOMPurify from "isomorphic-dompurify";
-import FileGallery from "@/components/file-gallery";
-import PropsItem from "@/components/props-item";
-import { Calendar1Icon, ClipIcon, TagIcon } from "@/components/icons";
-import { ensureLinksOpenInNewTab, isEmpty } from "@/utility";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { StoryJournalShell } from "@/components/modal/memory/story-journal-shell";
+import {
+  StoryMobileContent,
+  StoryMobileTitle,
+  StoryReaderColumn,
+  StoryReaderContent,
+  StoryReaderFrame,
+  StoryReaderMedia,
+  StoryReaderMeta,
+} from "@/components/modal/memory/story-reader";
+import { useStoryMobileViewport } from "@/components/modal/memory/story-reader-utils";
+import {
+  StoryDetailsContent,
+  StoryDetailsDialog,
+} from "@/components/modal/memory/view-details";
+import { ListFilter } from "lucide-react";
 import type { IPublicMemory } from "@/utility/interface";
 
+/** A read-only version of the story viewer for people opening a shared link. */
 export default function Post({ memory }: { memory: IPublicMemory }) {
+  const isMobile = useStoryMobileViewport();
+  const [detailsOpen, setDetailsOpen] = useState(false);
+
+  const detailsButton = (
+    <Button
+      type="button"
+      variant="ghost"
+      size="sm"
+      aria-haspopup="dialog"
+      aria-expanded={detailsOpen}
+      onClick={() => setDetailsOpen(true)}
+      className="gap-2 font-geist font-semibold text-text-neutral-strong"
+    >
+      <ListFilter aria-hidden />
+      Details
+    </Button>
+  );
+  const meta = (
+    <StoryReaderMeta createdAt={memory.created_at} body={memory.body} />
+  );
+
   return (
-    <div className="w-full space-y-10">
-      <div className="space-y-3">
-        <h3 className="font-garamond text-xl font-medium leading-tight text-text-neutral-strong sm:text-2xl md:text-3xl lg:text-[40px] lg:leading-[48px]">
-          {memory?.title}
-        </h3>
-        <div className="rounded-xl border border-grey-500 p-3">
-          <div className="flex flex-wrap gap-12">
-            <PropsItem
-              icon={<Calendar1Icon width={13} />}
-              title="created:"
-              subtitle={dayjs(memory.created_at).format("MMM DD, YYYY")}
-            />
-            <PropsItem
-              icon={<ClipIcon width={13} />}
-              title="attachment:"
-              subtitle={<span className="mem-tags">{memory.attachments.length || 0}</span>}
-            />
-            <PropsItem
-              icon={<TagIcon width={13} />}
-              title="Tags:"
-              subtitle={
-                <div>
-                  {memory.tags.map((tag) => (
-                    <span key={tag} className="mem-tags mr-1">
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              }
-            />
+    <>
+      {isMobile ? (
+        <article className="mx-auto flex w-full max-w-[758px] flex-col gap-2 px-5 py-6">
+          <div className="space-y-3 border-b border-stroke-neutral-weaker pb-2">
+            <div className="flex items-center justify-between gap-2">
+              {meta}
+              {detailsButton}
+            </div>
+            <StoryMobileTitle title={memory.title} />
           </div>
-        </div>
-      </div>
-      {!isEmpty(memory?.attachments) && <FileGallery files={memory?.attachments || []} />}
-      <div className="tiptap-editor">
-        <div
-          className="tiptap-editor mt-4 font-inter text-sm leading-relaxed text-grey-600 sm:mt-6 sm:text-base"
-          dangerouslySetInnerHTML={{ __html: ensureLinksOpenInNewTab(DOMPurify.sanitize(memory?.body || "")) }}
-        />
-      </div>
-    </div>
+          <div className="pb-6">
+            <StoryMobileContent files={memory.attachments} body={memory.body} readOnly />
+          </div>
+        </article>
+      ) : (
+        <StoryJournalShell presentation="page">
+          <StoryReaderFrame meta={meta} actions={detailsButton}>
+            <StoryReaderColumn>
+              <StoryReaderContent title={memory.title} body={memory.body} />
+            </StoryReaderColumn>
+            <StoryReaderMedia files={memory.attachments} readOnly />
+          </StoryReaderFrame>
+        </StoryJournalShell>
+      )}
+      <StoryDetailsDialog
+        memory={memory}
+        open={detailsOpen}
+        onOpenChange={setDetailsOpen}
+      >
+        <StoryDetailsContent memory={memory} showVisibility={false} />
+      </StoryDetailsDialog>
+    </>
   );
 }

@@ -15,7 +15,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { AudioRecorderModal } from "@/components/modal/memory/recorder-modal";
+import { AudioAttachmentRecorder } from "@/components/recorder/voice-recorder";
+import { displayFileName } from "@/utility/file-label";
 import useFileUpload from "@/hooks/use-file-upload";
 import { useStore } from "@/hooks/use-store";
 import {
@@ -250,16 +251,15 @@ export function ContributionDialog({
               </div>
             )}
             {step === "record" && (
-              <AudioRecorderModal
-                data={{
-                  embedded: true,
-                  onClose: () => setStep("menu"),
-                  onFinish: (file, duration) => {
-                    setKind("voice");
-                    setStep("media");
-                    setTitle(title || "Voice memory");
-                    void upload(file, duration);
-                  },
+              <AudioAttachmentRecorder
+                onClose={() =>
+                  setStep((current) => (current === "record" ? "menu" : current))
+                }
+                onFinish={(file, duration) => {
+                  setKind("voice");
+                  setStep("media");
+                  setTitle(title || "Voice memory");
+                  void upload(file, duration);
                 }}
               />
             )}
@@ -321,7 +321,7 @@ export function ContributionDialog({
                           className="flex items-center justify-between gap-3 text-sm text-text-neutral-weak"
                         >
                           <span className="min-w-0 truncate">
-                            {file.file?.name}{" "}
+                            {displayFileName(file.file?.name)}{" "}
                             {file.uploadedFile
                               ? ""
                               : file.uploadFailed

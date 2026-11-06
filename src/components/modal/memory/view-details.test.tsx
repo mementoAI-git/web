@@ -2,6 +2,8 @@ import { screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { renderWithProviders } from "@/test";
 import type { IMemory } from "@/utility/interface";
+import privateIcon from "@/assets/icon/mingcute_lock-fill.svg";
+import everyoneIcon from "@/assets/icon/heroicons_users-16-solid.svg";
 import { StoryDetailsContent, ViewMemoryDetails } from "./view-details";
 
 const memory: IMemory = {
@@ -25,6 +27,16 @@ describe("Story Details", () => {
   it("shows who can access a shared story", () => {
     renderWithProviders(<StoryDetailsContent memory={{ ...memory, beneficiaries: [{ _id: "person-1", name: "Alice" }] }} />);
     expect(screen.getByText("Shared with Alice")).toBeInTheDocument();
+    expect(screen.queryByTestId("story-visibility-icon")).not.toBeInTheDocument();
+  });
+
+  it.each([
+    ["everyone", "Visible to everyone", everyoneIcon],
+    ["private", "Private — only you", privateIcon],
+  ] as const)("shows the %s visibility icon beside its label", (visibility, label, icon) => {
+    renderWithProviders(<StoryDetailsContent memory={{ ...memory, visibility }} />);
+    expect(screen.getByText(label)).toBeInTheDocument();
+    expect(screen.getByTestId("story-visibility-icon")).toHaveAttribute("src", icon);
   });
 
   it("shows zero reading time for an empty rich text body", () => {

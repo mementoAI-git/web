@@ -25,7 +25,7 @@ import { TypographyH2, TypographyMuted } from "@/components/ui/typography";
 
 function DailyPromptSkeleton() {
   return (
-    <div className="sky-card flex min-h-[267px] min-w-0 flex-col justify-between gap-10 rounded-3xl border border-stroke-neutral-weak bg-fill-neutral-weaker p-[23px]">
+    <div className="sky-card flex min-h-[267px] w-[min(78vw,320px)] shrink-0 flex-col max-lg:snap-start lg:w-auto lg:min-w-0 lg:shrink justify-between gap-10 rounded-3xl border border-stroke-neutral-weak bg-fill-neutral-weaker p-[23px]">
       <div className="flex flex-col gap-3">
         <Skeleton className="h-6 w-full" />
         <Skeleton className="h-6 w-full" />
@@ -130,9 +130,9 @@ export default function DailyPromptSection() {
       <div className="flex items-center justify-between gap-4">
         <TypographyH2
           id="reflection-heading"
-          className="font-garamond text-[28px] font-medium leading-[38px] tracking-normal text-text-neutral-strong sm:text-[32px] lg:text-[32px]"
+          className="font-garamond text-[28px] font-normal leading-tight text-text-neutral-strong sm:text-[32px] lg:text-[32px]"
         >
-          Continue <i className="text-text-neutral-weak">reflecting</i>
+          Continue <i className="text-text-neutral-weaker">reflecting</i>
         </TypographyH2>
         <Button
           type="button"
@@ -160,7 +160,7 @@ export default function DailyPromptSection() {
       <p id="reflection-shuffle-status" role="status" className="-mt-4 text-xs text-text-neutral-weak">
         {usage ? (usage.remaining === 0 ? "Daily shuffle limit reached. Resets at midnight UTC." : `${usage.remaining} ${usage.remaining === 1 ? "shuffle" : "shuffles"} left today`) : shuffleError ? <Button variant="ghost" size="sm" onClick={retryShuffle}>Retry shuffle availability</Button> : "Checking shuffle allowance…"}
       </p>
-      <div ref={cardsRef} className="overview-reflections-reveal t-stagger grid min-w-0 grid-cols-1 gap-6 lg:grid-cols-3">
+      <div ref={cardsRef} className="overview-reflections-reveal t-stagger scrollbar-hide flex min-w-0 gap-4 max-lg:-mx-4 max-lg:-my-1 max-lg:snap-x max-lg:snap-mandatory max-lg:scroll-px-4 max-lg:overflow-x-auto max-lg:overscroll-x-contain max-lg:px-4 max-lg:py-1 sm:max-lg:-mx-5 sm:max-lg:scroll-px-5 sm:max-lg:px-5 md:max-lg:-mx-6 md:max-lg:scroll-px-6 md:max-lg:px-6 lg:grid lg:grid-cols-3 lg:gap-6">
         {isLoading
           ? Array.from({ length: 3 }, (_, index) => (
               <DailyPromptSkeleton key={index} />
@@ -182,7 +182,7 @@ export default function DailyPromptSection() {
                   key={`${row.slot_kind}-${row.reflection_day_key}-${index}`}
                   aria-label={promptLabel(row, index)}
                   style={{ transitionDelay: `calc(var(--stagger-stagger) * ${position})` }}
-                  className="t-stagger-line relative sky-card flex min-h-[267px] min-w-0 flex-col justify-between gap-10 rounded-3xl border border-stroke-neutral-weak bg-fill-neutral-weaker p-[23px] transition-colors hover:bg-fill-neutral-weak"
+                  className="t-stagger-line relative sky-card flex min-h-[267px] w-[min(78vw,320px)] shrink-0 flex-col max-lg:snap-start lg:w-auto lg:min-w-0 lg:shrink justify-between gap-10 rounded-3xl border border-stroke-neutral-weak bg-fill-neutral-weaker p-[23px] transition-colors hover:bg-fill-neutral-weak"
                 >
                   <p className="font-garamond text-[24px] font-normal leading-[31px] text-text-neutral-strong">
                     <button

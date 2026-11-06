@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { postFetcher } from "@/api/fetcher";
+import { authService } from "@/utility/auth-service";
 import type { IResponse } from "@/api/interface";
 import type { IFile } from "@/utility/interface";
 
@@ -52,7 +53,12 @@ export function useSignedMediaAccess(
 
   const refreshOnce = useCallback(async () => {
     const refreshEndpoint = current.access?.refresh_endpoint;
+    // Refreshing needs a session, and a rejected request would send a reader
+    // of a public story to the login page.
+    const canRequest =
+      requester !== defaultRequester || Boolean(authService.getAuthData());
     if (
+      !canRequest ||
       !refreshEndpoint ||
       !SAFE_REFRESH_ENDPOINT.test(refreshEndpoint) ||
       attemptedRef.current

@@ -34,6 +34,7 @@ vi.mock("@/pages", async () => {
     DashboardLayout: Placeholder,
     ExploreCategoryPage: Placeholder,
     ExplorePage: Placeholder,
+    InsightsPage: Placeholder,
     ForgetPasswordPage: Placeholder,
     LoginPage: Placeholder,
     MiscPage: Placeholder,

@@ -130,7 +130,7 @@ export function VoiceSessionProvider({ children }: { children: ReactNode }) {
 
   return <VoiceSessionContext.Provider value={{ connectionPersonId: request?.connectionPersonId, active: Boolean(request), ready, memoryId: request?.memoryId ?? null, start, end, send, dock, timeline }}>
     {children}
-    <div ref={fallback} style={floatingPosition} data-testid="floating-voice-host" className={docked || !request ? "hidden" : "fixed right-4 top-[84px] z-40 w-[min(375px,calc(100vw-2rem))] sm:right-8"} />
+    <div ref={fallback} style={floatingPosition} data-testid="floating-voice-host" className={docked || !request ? "hidden" : "fixed right-4 top-[84px] z-[46] w-[min(375px,calc(100vw-2rem))] sm:right-8"} />
     {request && createPortal(<InlineVoiceSession
       persistent
       connectionPersonId={request.connectionPersonId}

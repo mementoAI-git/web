@@ -31,11 +31,9 @@ export default function DashboardLayout() {
   /** Chat handles its own scroll column; outer overflow-y-auto breaks sticky composer on small viewports. */
   const isChatRoute = location.pathname.startsWith("/chat");
   const isPeopleRoute = location.pathname === "/people" || location.pathname.startsWith("/people/");
-  /** Settings is a full page with its own header, so the dashboard chrome steps aside. */
   const isSettingsRoute = location.pathname === "/settings" || location.pathname.startsWith("/settings/");
-  const currentPath = location.pathname + location.search;
-  const [settingsReturnTo, setSettingsReturnTo] = useState("/overview");
-  if (!isSettingsRoute && settingsReturnTo !== currentPath) setSettingsReturnTo(currentPath);
+  /** These pages scroll their own content column. */
+  const isInsightsRoute = location.pathname === "/insights";
   const { open } = useModal();
   const isVoiceChatRoute = Boolean(
     useMatch({ path: "/chat/:id/voice", end: true }),
@@ -53,6 +51,9 @@ export default function DashboardLayout() {
   }, [location.state, location.pathname, open, navigate]);
 
   useEffect(() => () => setChatOpen(false), [setChatOpen]);
+
+  // The mobile menu covers the page, so going anywhere has to reveal it.
+  useEffect(() => setSidebarOpen(false), [location.pathname]);
 
   useLayoutEffect(() => {
     if (!restoreSidebarFocus.current) return;
@@ -78,17 +79,21 @@ export default function DashboardLayout() {
     <AuthCheck>
       <OnboardingGuard>
         <VoiceSessionProvider>
-        <div data-sky-card-page={isSkyCardPage(location.pathname) ? "" : undefined} className="bg-background w-full h-full min-h-screen flex flex-col md:flex-row overflow-hidden hide-scrollbar dynamic-height">
+        <div data-sky-card-page={isSkyCardPage(location.pathname) ? "" : undefined} className="bg-background w-full h-full flex flex-col md:flex-row overflow-hidden hide-scrollbar dynamic-height pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
           <Modal />
-          {sidebarOpen && (
-            <div
-              className="fixed inset-0 modal-overlay bg-overlay-backdrop z-40 lg:hidden"
-              onClick={() => setSidebarOpen(false)}
-            />
-          )}
-          {!isSettingsRoute ? (
-            <div
+          <div
+            data-open={sidebarOpen}
+            className="navigation-sidebar-scrim fixed inset-0 bg-overlay-backdrop z-40 md:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
+          <div
               inert={isMobile ? !sidebarOpen : mainSidebarCollapsed}
+              data-open={sidebarOpen}
+              onClick={(event) => {
+                // Items that open a modal stay on this route, so they close it here.
+                if ((event.target as HTMLElement).closest('[data-slot="sidebar-menu-button"]'))
+                  setSidebarOpen(false);
+              }}
               className={cn(
                 sidebarOpen
                   ? "translate-x-0"
@@ -106,11 +111,10 @@ export default function DashboardLayout() {
                 handleMainSidebarToggle();
               }} />
             </div>
-          ) : null}
-          <main ref={mainRef} className="flex min-w-0 flex-1 flex-col overflow-hidden dynamic-height-content">
+          <main ref={mainRef} className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
             <DashboardHeaderActionsProvider>
               <ConversationChromeProvider>
-                {!isVoiceChatRoute && !isSettingsRoute ? (
+                {!isVoiceChatRoute ? (
                   <DashboardHeader
                     onMenuClick={() => setSidebarOpen(true)}
                     mobileSidebarOpen={sidebarOpen}
@@ -119,7 +123,7 @@ export default function DashboardLayout() {
                   />
                 ) : null}
                 {!isSettingsRoute ? (
-                  <div className={cn("shrink-0", !isVoiceChatRoute && "pt-[60px] sm:pt-0")}>
+                  <div className="shrink-0">
                     <OnboardingNudgeBanner />
                     <TrialBanner />
                     <SecurityNudgeBanner />
@@ -132,10 +136,10 @@ export default function DashboardLayout() {
                     <div
                       className={cn(
                         "hide-scrollbar h-full min-h-0 w-full flex-1",
-                        isChatRoute || isPeopleRoute || isSettingsRoute ? "overflow-hidden" : "overflow-y-auto",
+                        isChatRoute || isPeopleRoute || isSettingsRoute || isInsightsRoute ? "overflow-hidden" : "overflow-y-auto",
                       )}
                     >
-                      <Outlet context={{ settingsReturnTo }} />
+                      <Outlet />
                     </div>
                   </div>
                   <aside

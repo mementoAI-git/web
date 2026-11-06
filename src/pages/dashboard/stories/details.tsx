@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import useSWR from "swr";
 import Spinner from "@/components/spinner";
 import endpoint from "@/api/endpoint";
 import { useNavigate } from "react-router-dom";
 import { useParams } from "react-router-dom";
 import { useModal } from "@/hooks/use-modal";
+import { useStoryMobileViewport } from "@/components/modal/memory/story-reader-utils";
 import StoriesPage from "./index";
 import MobileStoryDetails from "./mobile-details";
 
@@ -19,13 +20,7 @@ export default function StoriesDetails() {
       navigate(`/chat/reflection/${id}`, { replace: true });
   }, [isReflection, id, navigate]);
   const { open, close } = useModal();
-  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 640);
-
-  useEffect(() => {
-    const updateViewport = () => setIsMobile(window.innerWidth < 640);
-    window.addEventListener("resize", updateViewport);
-    return () => window.removeEventListener("resize", updateViewport);
-  }, []);
+  const isMobile = useStoryMobileViewport();
 
   useEffect(() => {
     if (isLoading || isReflection || isMobile || !id) return;

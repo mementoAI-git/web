@@ -39,6 +39,7 @@ import { useFeatureFlags } from "@/contexts/feature-flags";
 import { useSubscription } from "@/contexts/subscription";
 import { useModal } from "@/hooks/use-modal";
 import { DashboardHeader } from "@/pages/dashboard/component/dashboard-header";
+import { overlayTitleClass } from "@/pages/dashboard/component/overlay-title";
 import { DashboardOverlayFrame } from "@/pages/dashboard/component/dashboard-overlay-frame";
 import "@/components/modal/memory-insights/insights.css";
 import "./pricing-overlay.css";
@@ -263,7 +264,7 @@ export function PricingOverlay({
               <DashboardHeader
                 overlay={{
                   title: (
-                    <p className="font-garamond text-3xl font-medium text-text-neutral-strong sm:text-4xl">
+                    <p className={overlayTitleClass}>
                       My <em>plan</em>
                     </p>
                   ),
@@ -277,7 +278,7 @@ export function PricingOverlay({
                 }}
               />
               <div className="insights-scroll">
-                <main className="insights-main">
+                <main className="insights-main container">
                   <DialogHeader className="items-center gap-3 text-center">
                     <DialogTitle className="font-garamond text-3xl font-medium leading-tight text-text-neutral-strong sm:text-4xl">
                       {canViewPricing

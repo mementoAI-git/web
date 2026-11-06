@@ -5,7 +5,6 @@
   height: 100%;
   min-height: 0;
   flex-direction: column;
-  background: var(--insights-page-background);
   color: var(--text-neutral-strong);
   font-family: var(--font-rounded);
 }
@@ -41,12 +40,12 @@ button.settings-row:focus-visible {
 .settings-pill:hover {
   background: color-mix(in srgb, var(--text-neutral-strong) 32%, transparent) !important;
 }
-/* Quiet inline fields read as values until they are focused. */
 .settings-value-input {
-  height: 32px !important;
-  border: 0 !important;
+  height: 36px !important;
+  border: 1px solid var(--stroke-neutral-weak) !important;
+  border-radius: 8px;
   background: transparent !important;
-  padding: 0 !important;
+  padding: 0 12px !important;
   box-shadow: none !important;
   color: var(--text-neutral-strong);
   font-size: 16px !important;
@@ -54,15 +53,47 @@ button.settings-row:focus-visible {
   text-overflow: ellipsis;
 }
 .settings-value-input:focus-visible {
-  border-radius: 4px;
   outline: 2px solid var(--stroke-neutral-strong);
   outline-offset: 2px;
 }
 .settings-value-input::placeholder {
   color: var(--text-neutral-weaker);
 }
+.settings-value-input[readonly] {
+  background: color-mix(in srgb, var(--text-neutral-strong) 8%, transparent) !important;
+  color: var(--text-neutral-weaker);
+  cursor: not-allowed;
+}
 .settings-value-input[readonly]:focus-visible {
   outline: none;
+}
+/* The link draws the value, so only its text opens the profile; the rest of the field edits. */
+.settings-value-input[data-linked] {
+  color: transparent;
+}
+.settings-value-link {
+  position: absolute;
+  top: 50%;
+  right: 13px;
+  z-index: 1;
+  max-width: calc(100% - 26px);
+  overflow: hidden;
+  border-radius: 4px;
+  color: var(--text-neutral-strong);
+  font-size: 16px;
+  text-decoration: underline;
+  text-decoration-color: var(--text-neutral-weaker);
+  text-overflow: ellipsis;
+  text-underline-offset: 3px;
+  transform: translateY(-50%);
+  white-space: nowrap;
+}
+.settings-value-link:hover {
+  text-decoration-color: currentColor;
+}
+.settings-value-link:focus-visible {
+  outline: 2px solid var(--stroke-neutral-strong);
+  outline-offset: 2px;
 }
 .settings-value-input::-webkit-calendar-picker-indicator {
   display: none;
@@ -81,6 +112,10 @@ button.settings-row:focus-visible {
 @media (max-width: 639px) {
   .settings-value-input {
     text-align: left;
+  }
+  .settings-value-link {
+    right: auto;
+    left: 13px;
   }
   .settings-value-input::-webkit-datetime-edit {
     justify-content: flex-start;

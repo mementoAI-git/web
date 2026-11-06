@@ -15,7 +15,7 @@ export default function NotFoundPage() {
   };
 
   return (
-    <div className="flex w-screen min-h-screen items-center justify-center bg-background px-4 py-8 sm:px-6 md:px-8">
+    <div className="flex w-screen min-h-dvh items-center justify-center bg-background px-4 py-8 sm:px-6 md:px-8">
       <div className="flex flex-col items-center justify-center gap-8 sm:gap-12 md:gap-[56px] w-full max-w-4xl">
         <img
           src={notFoundImage}

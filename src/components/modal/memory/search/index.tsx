@@ -42,8 +42,8 @@ function Content() {
   return (
     <div className="size-full bg-white space-y-6">
       <div className="space-y-4">
-        <h4 className="text-2xl sm:text-[32px] sm:leading-[38px] font-garamond text-gray-800">Search Memento</h4>
-        <span className="text-gray-600 text-sm sm:text-base font-inter block">Find anything on Memento</span>
+        <h4 className="text-2xl sm:text-[32px] sm:leading-[38px] font-garamond text-text-neutral-strong">Search Memento</h4>
+        <span className="text-text-neutral-weak text-sm sm:text-base font-inter block">Find anything on Memento</span>
       </div>
       <div>
         <div className="flex h-full flex-1 items-center gap-2 bg-white rounded-lg border border-gray-200 px-[14px] py-2">
@@ -68,7 +68,7 @@ function Content() {
           </div>
         ) : showRecent ? (
           <div className="space-y-3 animate-fadeIn">
-            <span className="font-inter inline-block font-medium text-sm text-gray-800">Recently opened stories:</span>
+            <span className="font-inter inline-block font-medium text-sm text-text-neutral-strong">Recently opened stories:</span>
             <div className="space-y-2">
               {recentMemories.map((memory, i) => (
                 <div key={i} className="animate-slideIn" style={{ animationDelay: `${i * 50}ms` }}>
@@ -79,7 +79,7 @@ function Content() {
           </div>
         ) : (
           <>
-            <span className="font-inter inline-block font-medium text-sm text-gray-800">
+            <span className="font-inter inline-block font-medium text-sm text-text-neutral-strong">
               {searchResults.length} results found:
             </span>
             {isLoading ? (
@@ -124,9 +124,9 @@ export function SearchMemories() {
         onClose={() => close?.("search-memory")}
         snapPoints={[0, 1]}
       >
-        <Sheet.Container className="max-h-[80dvh] overflow-hidden bg-white">
-          <Sheet.Header className="bg-white rounded-3xl" />
-          <Sheet.Content className="max-h-[80dvh] min-h-0 overflow-y-auto overscroll-contain bg-white px-4 pb-6">
+        <Sheet.Container className="max-h-[80dvh] overflow-hidden bg-bg-raised">
+          <Sheet.Header className="bg-bg-raised rounded-3xl" />
+          <Sheet.Content className="max-h-[80dvh] min-h-0 overflow-y-auto overscroll-contain bg-bg-raised px-4 pb-6">
             <ModalCloseBtn className="!relative ml-auto !right-0 !top-0 mb-2" onClick={() => close?.("search-memory")} />
             <Content />
           </Sheet.Content>

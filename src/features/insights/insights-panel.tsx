@@ -7,17 +7,12 @@ import type { Insight } from "./insights-api.types";
 import { useInsights } from "./use-insights";
 
 export function InsightsPanel({
-  query,
   onOpen,
 }: {
-  query: string;
   onOpen: (insight: Insight) => void;
 }) {
   const { list, error, isLoading, mutate } = useInsights();
-  const needle = query.trim().toLowerCase();
-  const insights = (list?.insights ?? []).filter((insight) =>
-    `${insight.title} ${insight.body}`.toLowerCase().includes(needle),
-  );
+  const insights = list?.insights ?? [];
 
   if (error && !list)
     return (
@@ -64,13 +59,6 @@ export function InsightsPanel({
       </div>
     );
   }
-  if (!insights.length)
-    return (
-      <div className="insights-empty">
-        <p className="text-text-neutral-strong">No matching insights</p>
-        <p>Try another word or clear your search.</p>
-      </div>
-    );
   return (
     <div className="insights-list">
       {insights.map((insight) => (

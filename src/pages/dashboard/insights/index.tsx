@@ -1,10 +1,9 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { Archive, Search } from "lucide-react";
-import { useLocation, useNavigate, useNavigationType } from "react-router-dom";
+import { Archive } from "lucide-react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useModal } from "@/hooks/use-modal";
+import { PageHeading } from "@/pages/dashboard/component/page-heading";
 import { useRequestRecovery } from "@/hooks/use-request-recovery";
-import { DashboardHeader } from "@/pages/dashboard/component/dashboard-header";
-import { DashboardOverlayFrame } from "@/pages/dashboard/component/dashboard-overlay-frame";
 import type { EnrichmentCategory } from "@/features/enrichment/enrichment-categories";
 import { EnrichmentFieldsTable } from "@/features/insights/enrichment-fields-table";
 import { getEnrichmentField } from "@/features/insights/enrichment-fields";
@@ -30,16 +29,9 @@ import type { PersonaObservation } from "@/features/insights/observations-api.ty
 import { useObservations } from "@/features/insights/use-observations";
 import { PlanSummaryCard } from "@/features/insights/plan-summary-card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
 import { Spinner } from "@/components/ui/spinner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import "./insights.css";
+import "@/components/modal/memory-insights/insights.css";
 
 function toItem(observation: PersonaObservation): ObservationItem {
   return {
@@ -49,30 +41,21 @@ function toItem(observation: PersonaObservation): ObservationItem {
   };
 }
 
-/** Where to reopen Insights after looking at one of its sources. */
+/** Where to pick up again when coming back to this page from one of its sources. */
 type ReturnState = {
-  section: InsightsSection;
-  history: View[];
-  locationKey?: string;
+  section?: InsightsSection;
+  history?: View[];
 };
 
 type View =
   | { kind: "insight"; insight: Insight }
   | { kind: "field"; field: EnrichmentCategory };
 
-export default function MemoryInsightsModal() {
-  const { close, open, push, state: modals } = useModal();
-  const returnState = modals?.find((modal) => modal.name === "memory-insights")
-    ?.props as ReturnState | null | undefined;
+export default function InsightsPage() {
+  const { push } = useModal();
   const navigate = useNavigate();
-  const returnFocus = useRef(
-    typeof document !== "undefined" &&
-      document.activeElement instanceof HTMLElement
-      ? document.activeElement
-      : null,
-  );
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [query, setQuery] = useState("");
+  const location = useLocation();
+  const returnState = location.state as ReturnState | null;
   const [section, setSection] = useState<InsightsSection>(
     returnState?.section ?? "observations",
   );
@@ -81,17 +64,6 @@ export default function MemoryInsightsModal() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const mainRef = useRef<HTMLElement>(null);
   const isFirstView = useRef(true);
-  const { key: locationKey } = useLocation();
-  const navigationType = useNavigationType();
-  const openedAtLocation = useRef(returnState?.locationKey ?? locationKey);
-
-  // Going anywhere leaves Insights, or the new page would stay hidden behind it.
-  // A replace only tidies up the current entry, as reopening from history does.
-  useEffect(() => {
-    if (locationKey === openedAtLocation.current) return;
-    if (navigationType === "REPLACE") openedAtLocation.current = locationKey;
-    else close("memory-insights");
-  }, [locationKey, navigationType, close]);
 
   useEffect(() => {
     if (isFirstView.current) {
@@ -115,9 +87,6 @@ export default function MemoryInsightsModal() {
     mutate,
     "Couldn’t load your insights. Please retry.",
   );
-  const needle = query.trim().toLowerCase();
-  const matches = (item: ObservationItem) =>
-    `${item.title} ${item.detail}`.toLowerCase().includes(needle);
   const observations = all
     .filter((item) => item.field !== "key_preferences")
     .map(toItem);
@@ -150,195 +119,104 @@ export default function MemoryInsightsModal() {
       );
     return (
       <ObservationList
-        items={items.filter(matches)}
+        items={items}
         onViewSource={viewSource}
         onChanged={() => mutate()}
         empty={
           <div className="insights-empty">
             <Archive className="size-8 text-icon-neutral-weak" aria-hidden />
-            <p className="text-text-neutral-strong">
-              {query ? "No matches" : emptyTitle}
-            </p>
-            <p>{query ? "Try another word or clear your search." : emptyBody}</p>
-            {query && (
-              <Button variant="ghost" onClick={() => setQuery("")}>
-                Clear search
-              </Button>
-            )}
+            <p className="text-text-neutral-strong">{emptyTitle}</p>
+            <p>{emptyBody}</p>
           </div>
         }
       />
     );
   }
 
-  const leaveTo = (href: string, state?: unknown) => {
-    close("memory-insights");
-    navigate(href, { state });
-  };
   const viewSource = (memory: InsightSource) => {
-    const here: ReturnState = { section, history };
     if (memory.type !== "conversation" && window.innerWidth >= 640) {
-      // The viewer stacks above Insights, so closing it lands right back here.
-      open?.("memory-insights", { ...here, locationKey });
+      // The viewer opens above this page, so closing it lands right back here.
       push?.("view-memory", { memoryId: memory.id });
       return;
     }
-    // Full pages have no close, so going back reopens Insights from this entry.
-    window.history.replaceState(
-      {
-        ...window.history.state,
-        usr: {
-          ...window.history.state?.usr,
-          openModal: "memory-insights",
-          openModalProps: here,
-        },
-      },
-      "",
-    );
-    leaveTo(
+    // Full pages have no close, so going back returns to this entry's saved place.
+    const here: ReturnState = { section, history };
+    navigate(location.pathname, { replace: true, state: here });
+    navigate(
       memory.type === "conversation"
         ? `/chat/${memory.id}`
         : `/stories/${memory.id}`,
     );
   };
   const reflectOn = (field: EnrichmentCategory) =>
-    leaveTo("/chat", {
-      overviewDiscussion: `I’d like to reflect on ${getEnrichmentField(field).label.toLowerCase()}.`,
+    navigate("/chat", {
+      state: {
+        overviewDiscussion: `I’d like to reflect on ${getEnrichmentField(field).label.toLowerCase()}.`,
+      },
     });
-  const openView = (next: View) => {
-    setHistory((current) => [...current, next]);
-    setQuery("");
-    setSearchOpen(false);
-  };
-  const goBack = () => {
-    setHistory((current) => current.slice(0, -1));
-    setQuery("");
-    setSearchOpen(false);
-  };
+  const openView = (next: View) => setHistory((current) => [...current, next]);
+  const goBack = () => setHistory((current) => current.slice(0, -1));
   const openInsight = (insight: Insight) =>
     openView({ kind: "insight", insight });
 
-  const searchBox = searchOpen && (
-    <div className="relative">
-      <Search className="absolute left-4 top-3 size-5 text-icon-neutral-weak" />
-      <Input
-        autoFocus
-        aria-label="Search your insights"
-        placeholder="Search your insights…"
-        value={query}
-        onChange={(event) => setQuery(event.target.value)}
-        className="h-12 rounded-full pl-12"
-      />
-    </div>
-  );
-
   return (
-    <Dialog
-      open
-      onOpenChange={(next) => {
-        if (!next) close("memory-insights");
-      }}
-    >
-      <DialogContent
-        showCloseButton={false}
-        onCloseAutoFocus={(event) => {
-          event.preventDefault();
-          if (returnFocus.current?.isConnected) returnFocus.current.focus();
-        }}
-        className="insights-overlay"
-        overlayClassName="insights-overlay-backdrop z-[100]"
-      >
-        <TooltipProvider>
-          <DashboardOverlayFrame>
-          <DashboardHeader
-            overlay={{
-              title: (
-                <DialogTitle className="font-garamond text-3xl font-medium sm:text-4xl">
-                  My <em>insights</em>
-                </DialogTitle>
-              ),
-              searchLabel: "Search insights",
-              closeLabel: "Close memory insights",
-              searchExpanded: searchOpen,
-              onSearch: () => {
-                setSearchOpen((value) => !value);
-                setQuery("");
-              },
-              onClose: () => close("memory-insights"),
-            }}
-          />
-          <DialogDescription className="sr-only">
-            Explore your observations, insights, preferences, and enrichment
-            fields.
-          </DialogDescription>
-          <div className="insights-scroll" ref={scrollRef}>
-            <main className="insights-main" ref={mainRef} tabIndex={-1}>
-              {view ? (
-                <>
-                  {searchBox}
-                  {view.kind === "insight" ? (
-                    <InsightDetail
-                      insight={view.insight}
-                      query={query}
-                      onBack={goBack}
-                      onView={viewSource}
-                    />
-                  ) : (
-                    <EnrichmentFieldDetail
-                      field={view.field}
-                      query={query}
-                      onBack={goBack}
-                      onView={viewSource}
-                      onReflect={reflectOn}
-                    />
-                  )}
-                </>
+    <TooltipProvider>
+      <div className="insights-page">
+        <div className="insights-scroll" ref={scrollRef}>
+          <main className="insights-main container" ref={mainRef} tabIndex={-1}>
+            {view ? (
+              view.kind === "insight" ? (
+                <InsightDetail
+                  insight={view.insight}
+                  onBack={goBack}
+                  onView={viewSource}
+                />
               ) : (
-                <>
-                  <div className="insights-page-heading">
-                    <h2 className="font-garamond text-4xl text-text-neutral-strong">
-                      Insights
-                    </h2>
-                  </div>
-                  <div className="flex flex-col gap-4">
-                    <MemoryStatistics />
-                    <PlanSummaryCard onNavigate={(href) => leaveTo(href)} />
-                  </div>
-                  {searchBox}
-                  <InsightsOverlayNavigation
-                    value={section}
-                    onValueChange={setSection}
-                    content={{
-                      observations: renderList(
-                        observations,
-                        "Your observations are taking shape",
-                        "Keep saving memories and reflecting. What Memento notices about you will appear here.",
-                      ),
-                      insights: (
-                        <InsightsPanel query={query} onOpen={openInsight} />
-                      ),
-                      preferences: renderList(
-                        preferences,
-                        "No preferences yet",
-                        "As you share what you like and dislike, your preferences will appear here.",
-                      ),
-                      enrichment: (
-                        <EnrichmentFieldsTable
-                          query={query}
-                          onExplore={(field) =>
-                            openView({ kind: "field", field })
-                          }
-                        />
-                      ),
-                    }}
-                  />
-                </>
-              )}
-            </main>
-          </div>
-          </DashboardOverlayFrame>
-        </TooltipProvider>
-      </DialogContent>
-    </Dialog>
+                <EnrichmentFieldDetail
+                  field={view.field}
+                  onBack={goBack}
+                  onView={viewSource}
+                  onReflect={reflectOn}
+                />
+              )
+            ) : (
+              <>
+                <PageHeading>
+                  My <em>insights</em>
+                </PageHeading>
+                <div className="flex flex-col gap-4">
+                  <MemoryStatistics />
+                  <PlanSummaryCard onNavigate={(href) => navigate(href)} />
+                </div>
+                <InsightsOverlayNavigation
+                  value={section}
+                  onValueChange={setSection}
+                  content={{
+                    observations: renderList(
+                      observations,
+                      "Your observations are taking shape",
+                      "Keep saving memories and reflecting. What Memento notices about you will appear here.",
+                    ),
+                    insights: <InsightsPanel onOpen={openInsight} />,
+                    preferences: renderList(
+                      preferences,
+                      "No preferences yet",
+                      "As you share what you like and dislike, your preferences will appear here.",
+                    ),
+                    enrichment: (
+                      <EnrichmentFieldsTable
+                        onExplore={(field) =>
+                          openView({ kind: "field", field })
+                        }
+                      />
+                    ),
+                  }}
+                />
+              </>
+            )}
+          </main>
+        </div>
+      </div>
+    </TooltipProvider>
   );
 }

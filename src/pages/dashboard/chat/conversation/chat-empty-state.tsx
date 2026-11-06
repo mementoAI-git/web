@@ -53,10 +53,8 @@ export function ChatEmptyState({
         <h2 className="font-geist text-base leading-6 font-semibold text-text-neutral-strong">
           Chat with your Memento
         </h2>
-        <p className="max-w-[442px] font-geist text-sm leading-5 text-text-neutral-weak">
-          This is your space to share memories and help your Memento get to know
-          you. Start with a moment that matters, or let your Memento ask a
-          question. The more you share, the better your Memento understands you.
+        <p className="max-w-[255px] font-geist text-sm leading-5 text-text-neutral-weak">
+          Share a memory, or let your Memento ask you a question.
         </p>
       </div>
       <ChatStarterCards prompts={prompts} onPrompt={onPrompt} />

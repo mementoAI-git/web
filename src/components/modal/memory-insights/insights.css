@@ -88,7 +88,17 @@
     opacity: 0;
   }
 }
+/* Sits on the page's own background, like Explore and Overview. */
+.insights-page {
+  display: flex;
+  height: 100%;
+  min-height: 0;
+  flex-direction: column;
+  color: var(--text-neutral-strong);
+}
 .insights-scroll {
+  /* Holds sr-only content in here, or it stretches the document and lets the page shift. */
+  position: relative;
   min-height: 0;
   flex: 1;
   overflow-y: auto;
@@ -96,7 +106,6 @@
 }
 .insights-main {
   display: flex;
-  width: min(100% - 64px, 700px);
   margin: 36px auto 0;
   padding-bottom: 64px;
   flex-direction: column;
@@ -360,7 +369,6 @@
 }
 @media (max-width: 640px) {
   .insights-main {
-    width: calc(100% - 32px);
     margin-top: 20px;
     gap: 24px;
   }

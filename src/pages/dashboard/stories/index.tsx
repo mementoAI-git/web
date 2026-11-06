@@ -3,6 +3,7 @@ import { MotionHeading } from "@/components/motion/text-reveal";
 import { useTextReveal } from "@/components/motion/use-text-reveal";
 import "./stories-motion.css";
 import endpoint from "@/api/endpoint";
+import { useNavigate } from "react-router-dom";
 import { useModal } from "@/hooks/use-modal";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import useSWR from "swr";
@@ -79,6 +80,7 @@ export default function StoriesPage() {
     typeof window !== "undefined" ? window.innerWidth >= 1280 : true,
   );
   const { open } = useModal();
+  const navigate = useNavigate();
   const { summary, usage, isProOrAbove } = useSubscription();
   const { setShowStoriesActions } = useDashboardHeaderActions();
 
@@ -248,7 +250,7 @@ export default function StoriesPage() {
 
             <div>
               <StoriesActionButtons
-                onViewInsights={() => open("memory-insights")}
+                onViewInsights={() => navigate("/insights")}
                 onCreateMemory={() => open("create-memory")}
                 onQuickCapture={() => open("quick-capture")}
               />

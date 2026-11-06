@@ -19,7 +19,9 @@ export const SERVER_TOOL_UNCERTAIN =
   "That is taking longer than usual and may still go through. Do not call it again. Tell the host it might take a moment and that they can check in the app.";
 
 const SCREEN_TOOLS = ["scroll", "go_back", "press_button", "look_at_screen", "type_text"];
-const NOT_SERVER = new Set([SEARCH_MEMORIES_TOOL, ...CALL_ACTION_TOOLS, ...SCREEN_TOOLS]);
+// Time capsules are hidden on web for now, so voice can't start one either.
+const HIDDEN_TOOLS = ["draft_capsule", "schedule_capsule"];
+const NOT_SERVER = new Set([SEARCH_MEMORIES_TOOL, ...CALL_ACTION_TOOLS, ...SCREEN_TOOLS, ...HIDDEN_TOOLS]);
 
 /** The server-run tools out of the token's `tools` list. */
 export function serverToolNames(tools: unknown): string[] {

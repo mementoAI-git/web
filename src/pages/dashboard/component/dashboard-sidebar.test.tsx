@@ -26,7 +26,6 @@ function CurrentLocation() {
 
 describe("DashboardSideBar", () => {
   it.each([
-    ["Insights", "memory-insights"],
     ["Invite friends", "invite-friends"],
     ["Feedback", "create-feedback"],
     ["Upgrade plan", "pricing"],
@@ -68,19 +67,21 @@ describe("DashboardSideBar", () => {
     expect(screen.getByTestId("current-location")).toHaveTextContent("/overview");
   });
 
-  it("opens Insights from the main navigation", async () => {
+  it("treats Insights as a page in the main navigation", async () => {
     const user = userEvent.setup();
     renderWithProviders(
       <>
         <DashboardSideBar />
         <ModalState />
+        <CurrentLocation />
       </>,
       { route: "/overview", auth: true },
     );
     await user.click(screen.getByRole("button", { name: "Insights" }));
-    expect(screen.getByTestId("modal-state")).toHaveTextContent(
-      "memory-insights",
-    );
+    expect(screen.getByTestId("current-location")).toHaveTextContent("/insights");
+    expect(screen.getByTestId("modal-state")).toBeEmptyDOMElement();
+    expect(screen.getByRole("button", { name: "Insights" })).toHaveAttribute("data-active", "true");
+    expect(screen.getByRole("button", { name: "Overview" })).not.toHaveAttribute("data-active", "true");
   });
 
   it("omits the duplicate time capsule navigation entry", () => {
