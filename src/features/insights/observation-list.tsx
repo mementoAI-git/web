@@ -73,8 +73,7 @@ function ObservationSources({
   if (!sources.length)
     return (
       <p className="insights-sources-message">
-        No linked sources. This was saved before Memento kept track of where
-        things came from.
+        No linked sources. This didn’t come from a specific memory.
       </p>
     );
   return (
