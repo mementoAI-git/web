@@ -107,6 +107,7 @@ export interface IUser {
   banner_preset?: number;
   banner_position?: {x: number; y: number};
   last_seen: string;
+  last_task_date?: string;
   streak: number;
   bg_music?: string;
   chat_voice?: string | null;

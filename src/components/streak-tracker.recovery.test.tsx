@@ -7,7 +7,7 @@ import { initialStates, StoreValueProvider } from "@/hooks/use-store";
 import StreakTracker from "./streak-tracker";
 vi.mock("sonner", () => ({ toast: { error: vi.fn(), dismiss: vi.fn() } }));
 async function open(lastSeen = new Date().toISOString()) {
-  renderWithProviders(<StoreValueProvider value={{ ...initialStates, user: { ...mockUser, last_seen: lastSeen } }}><StreakTracker><button>View streak</button></StreakTracker></StoreValueProvider>, { auth: true });
+  renderWithProviders(<StoreValueProvider value={{ ...initialStates, user: { ...mockUser, last_task_date: lastSeen } }}><StreakTracker><button>View streak</button></StreakTracker></StoreValueProvider>, { auth: true });
   await userEvent.click(screen.getByRole("button", { name: "View streak" }));
 }
 it("does not manufacture zeroes during loading or failure and retries stats", async () => {
@@ -15,12 +15,12 @@ it("does not manufacture zeroes during loading or failure and retries stats", as
   server.use(http.get("*/users/stats", () => HttpResponse.json(fail ? { message: "Unavailable" } : { success: true, data: { streak_count: 0, reflections_count: 2, stories_count: 3 } }, { status: fail ? 503 : 200 })));
   await open();
   const retry = await screen.findByRole("button", { name: "Retry streak" });
-  expect(screen.queryByText("Day streak")).not.toBeInTheDocument();
+  expect(screen.queryByText("Weekly streak")).not.toBeInTheDocument();
   expect(toast.error).toHaveBeenCalled();
   fail = false;
   await userEvent.click(retry);
-  expect(await screen.findByText("Day streak")).toBeVisible();
-  expect(screen.getByText(/Every story starts/)).toBeVisible();
+  expect(await screen.findByText("Weekly streak")).toBeVisible();
+  expect(screen.getByText("0 days")).toBeVisible();
   expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   expect(screen.queryByLabelText(/: active/)).not.toBeInTheDocument();
 });
@@ -28,6 +28,6 @@ it("does not mark this week using a last-seen weekday from a previous month", as
   server.use(http.get("*/users/stats", () => HttpResponse.json({ success: true, data: { streak_count: 3, reflections_count: 2, stories_count: 3 } })));
   const old = new Date(); old.setDate(old.getDate() - 30);
   await open(old.toISOString());
-  await waitFor(() => expect(screen.getByText("Day streak")).toBeVisible());
+  await waitFor(() => expect(screen.getByText("Weekly streak")).toBeVisible());
   expect(screen.queryByLabelText(/: active/)).not.toBeInTheDocument();
 });

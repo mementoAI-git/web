@@ -315,6 +315,7 @@
   --fill-info-weak: var(--blue-50);
   --fill-success-strong: var(--green-1000);
   --fill-success-weak: var(--green-50);
+  --fill-streak-complete: #54d384;
   --fill-warning-strong: var(--amber-1000);
   --fill-warning-weak: var(--amber-50);
   --fill-error-strong: var(--red-1000);
@@ -887,6 +888,7 @@
   --color-fill-info-weak: var(--fill-info-weak);
   --color-fill-success-strong: var(--fill-success-strong);
   --color-fill-success-weak: var(--fill-success-weak);
+  --color-fill-streak-complete: var(--fill-streak-complete);
   --color-fill-warning-strong: var(--fill-warning-strong);
   --color-fill-warning-weak: var(--fill-warning-weak);
   --color-fill-error-strong: var(--fill-error-strong);
