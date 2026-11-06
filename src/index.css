@@ -550,7 +550,6 @@
   --sky-midpoint: #191d31;
   --sky-horizon: #2c2d3c;
   --sky-surface: #191e2c;
-  --bg-raised: var(--sky-surface);
   --bg-neutral-solid: var(--sky-surface);
   --background: transparent;
   --color-background: transparent;
@@ -2094,6 +2093,27 @@ body {
   --card: var(--bg-raised);
   --popover: var(--bg-raised);
   background-color: var(--bg-raised);
+}
+
+/*
+ * Deep sky modals match dark mode. Color utilities resolve their tokens at the root,
+ * so sections nested in a modal need dark's canvas rebound here. Insights keeps its sky.
+ */
+.deep-sky :is(
+  [role="dialog"],
+  [role="alertdialog"],
+  [data-slot="sheet-content"],
+  [data-slot="popover-content"],
+  [data-slot="dropdown-menu-content"],
+  [data-slot="select-content"],
+  .modal-container,
+  .react-modal-sheet-container
+):not(.insights-overlay) {
+  --color-bg-neutral: #12131a;
+  --color-bg-neutral-solid: #12131a;
+  --color-card: #12131a;
+  --color-background: #12131a;
+  --color-v3-bg: #12131a;
 }
 
 /* Floating dialogs share the command-search surface radius. */

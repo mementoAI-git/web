@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { vi } from "vitest";
+import { PublishSuccessView } from "./publish-success-view";
 import { SharePost } from "./share-post";
 
 const { copy, open, close } = vi.hoisted(() => ({ copy: vi.fn(), open: vi.fn(), close: vi.fn() }));
@@ -30,4 +31,20 @@ it("uses the mobile publish-success view and opens another story", async () => {
   await user.click(screen.getByRole("button", { name: "Add another story" }));
   expect(close).toHaveBeenCalledWith("share-post");
   expect(open).toHaveBeenCalledWith("create-memory");
+});
+
+it("shows the link without a notice about who can open it", () => {
+  render(<SharePost data={{ id: "story-1" }} />);
+  expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  expect(screen.queryByText(/can read this story|only you can open/i)).not.toBeInTheDocument();
+});
+
+it("leaves the rays to the bottom sheet, so they sit behind its whole surface", () => {
+  const props = { publishedUrl: "https://x.test/post/1", onDismiss: vi.fn(), onAddAnother: vi.fn() };
+  const { unmount } = render(<PublishSuccessView {...props} />);
+  expect(screen.getByTestId("publish-success-rays")).toBeInTheDocument();
+  unmount();
+  render(<PublishSuccessView {...props} sheet />);
+  expect(screen.queryByTestId("publish-success-rays")).not.toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Add another story" })).toBeInTheDocument();
 });

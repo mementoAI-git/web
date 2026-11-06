@@ -1,7 +1,7 @@
 "use client";
 
 import "./share-post.css";
-import { PublishSuccessView } from "./publish-success-view";
+import { PublishSuccessBackdrop, PublishSuccessView } from "./publish-success-view";
 import { useEffect, useState } from "react";
 import { Sheet } from "react-modal-sheet";
 import { CircleCheckIcon, CopyIcon, PlusIcon } from "@/components/icons";
@@ -158,14 +158,15 @@ export function SharePost({ data, isMobile = false }: SharePostProps) {
 
   const handleClose = () => close("share-post");
 
-  const content = data.kind === "conversation" ? <div className="p-5"><SharePostContent data={data} /></div> : (
-    <PublishSuccessView publishedUrl={`${window.location.origin}/post/${data.id}`} onDismiss={handleClose} onAddAnother={() => {
+  const content = data.kind === "conversation" ? <div className={isMobile ? "pb-6" : "p-5"}><SharePostContent data={data} /></div> : (
+    <PublishSuccessView publishedUrl={`${window.location.origin}/post/${data.id}`} sheet={isMobile} onDismiss={handleClose} onAddAnother={() => {
       handleClose();
       open?.("create-memory");
     }} />
   );
 
   if (isMobile) {
+    const isStory = data.kind !== "conversation";
     return (
       <Sheet
         detent="content"
@@ -174,9 +175,10 @@ export function SharePost({ data, isMobile = false }: SharePostProps) {
         snapPoints={[0, 1]}
         initialSnap={1}
       >
-        <Sheet.Container className="max-h-[88dvh] overflow-hidden rounded-t-3xl border border-stroke-neutral-weak !bg-bg-neutral text-text-neutral-strong shadow-lg">
-          <Sheet.Header className="rounded-t-3xl bg-bg-neutral" />
-          <Sheet.Content className="max-h-[88dvh] min-h-0 overflow-y-auto overscroll-contain">
+        <Sheet.Container className="publish-success-sheet isolate max-h-[88dvh] overflow-hidden rounded-t-3xl !bg-bg-raised text-text-neutral-strong shadow-lg">
+          {isStory ? <PublishSuccessBackdrop /> : null}
+          <Sheet.Header className={isStory ? "rounded-t-3xl bg-transparent" : "rounded-t-3xl bg-bg-raised"} />
+          <Sheet.Content className={`max-h-[88dvh] min-h-0 overflow-y-auto overscroll-contain px-4 ${isStory ? "bg-transparent" : "bg-bg-raised"}`}>
             <ModalCloseBtn
               className="!relative ml-auto mb-2 !right-0 !top-0 !bg-fill-neutral-weak text-icon-neutral-strong hover:!bg-fill-neutral-weaker"
               onClick={handleClose}

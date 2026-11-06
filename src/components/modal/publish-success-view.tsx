@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Check, Copy } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/utility";
 import { PublishSuccessRays } from "./publish-success-rays";
 import glow from "@/assets/image/publish-success/glow.svg";
 import glowDark from "@/assets/image/publish-success/glowDark.svg";
@@ -21,9 +22,22 @@ const SOCIAL = [
   { label: "X", Icon: X, href: (url: string) => `https://x.com/intent/tweet?url=${url}` },
 ];
 
+/** The rays and glow. A bottom sheet places this behind its whole surface, so the art has no top edge. */
+export function PublishSuccessBackdrop() {
+  return <div data-testid="publish-success-rays" className="pointer-events-none absolute inset-0 -z-10 overflow-hidden rounded-[inherit]" aria-hidden="true">
+    <PublishSuccessRays />
+    <img src={glow} alt="" className="absolute -top-[33.4px] left-1/2 w-[451.354px] max-w-none -translate-x-1/2 dark:hidden" />
+    <img src={glowDark} alt="" className="absolute -top-[33.4px] left-1/2 hidden w-[451.354px] max-w-none -translate-x-1/2 dark:block" />
+  </div>;
+}
+
 /** Port of mobile's PublishSuccessView, using its original illustration assets. */
-export function PublishSuccessView({ publishedUrl, onDismiss, onAddAnother }: {
-  publishedUrl: string; onDismiss: () => void; onAddAnother: () => void;
+export function PublishSuccessView({ publishedUrl, sheet = false, onDismiss, onAddAnother }: {
+  publishedUrl: string;
+  /** Inside a bottom sheet, which owns the backdrop: the actions are pinned so they're never cut off. */
+  sheet?: boolean;
+  onDismiss: () => void;
+  onAddAnother: () => void;
 }) {
   const [copied, setCopied] = useState(false);
   const mounted = useRef(true);
@@ -43,13 +57,9 @@ export function PublishSuccessView({ publishedUrl, onDismiss, onAddAnother }: {
       toast.error("We couldn’t copy the link. Please try again.");
     }
   }
-  return <div className="relative isolate overflow-hidden rounded-[inherit] bg-bg-neutral font-inter text-text-neutral-strong">
-    <div className="pointer-events-none absolute inset-0 -z-10" aria-hidden="true">
-      <PublishSuccessRays />
-      <img src={glow} alt="" className="absolute -top-[33.4px] left-1/2 w-[451.354px] max-w-none -translate-x-1/2 dark:hidden" />
-      <img src={glowDark} alt="" className="absolute -top-[33.4px] left-1/2 hidden w-[451.354px] max-w-none -translate-x-1/2 dark:block" />
-    </div>
-    <div className="relative flex flex-col px-4 pb-4 pt-2">
+  return <div className={cn("relative isolate font-inter text-text-neutral-strong", !sheet && "overflow-hidden rounded-[inherit] bg-bg-neutral")}>
+    {sheet ? null : <PublishSuccessBackdrop />}
+    <div className={cn("relative flex flex-col", !sheet && "px-4 pb-4 pt-2")}>
       <div className="relative mx-auto aspect-[361/300] w-1/2 max-w-[180.5px]" aria-hidden="true">
         <img src={planet} alt="" className="absolute left-[16.61%] top-[24.97%] w-[8.40%] rotate-[14.22deg]" />
         <img src={smallCloud} alt="" className="absolute left-1/2 top-[13.16%] w-[6.66%]" />
@@ -73,8 +83,8 @@ export function PublishSuccessView({ publishedUrl, onDismiss, onAddAnother }: {
           </Button>)}
         </div>
       </div>
-      <div className="min-h-10 flex-1" />
-      <div className="flex gap-3">
+      {sheet ? null : <div className="min-h-10 flex-1" />}
+      <div className={cn("flex gap-3", sheet && "sticky bottom-0 z-10 bg-bg-raised pb-[max(1rem,env(safe-area-inset-bottom))] pt-4")}>
         <Button variant="ghost" onClick={onDismiss} className="min-h-[52px] flex-[0.45] rounded-full bg-fill-neutral-weaker px-3 text-base font-semibold">Dismiss</Button>
         <Button onClick={onAddAnother} className="min-h-[52px] flex-[0.55] rounded-full px-3 text-base font-semibold">Add another story</Button>
       </div>

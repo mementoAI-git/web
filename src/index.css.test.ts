@@ -91,6 +91,10 @@ describe("dark color token compatibility", () => {
     },
   );
 
+  it("lets deep sky modals inherit the dark surfaces", () => {
+    expect(declaration(".deep-sky", "--bg-raised")).toBeUndefined();
+  });
+
   it("switches status intent primitives to their dark-mode palette", () => {
     expect(declaration(".dark", "--red-1000")).toBe("#ff9c9c");
     expect(declaration(".dark", "--amber-1000")).toBe("#e0be70");
