@@ -9,7 +9,7 @@ Prefer `FormDialog` from `src/components/modal/form-dialog.tsx` when building a 
 
 The layout is 456px wide with a title and round close button, stacked labeled fields, then a right-aligned **Dismiss** button and primary action.
 
-- Compose with `FormDialogField`, `FormDialogInput`, `FormDialogTextarea`, and `FormDialogFooter` instead of custom markup.
+- Compose with `FormDialogField`, `FormDialogInput`, `FormDialogTextarea`, `FormDialogSelectTrigger`, `FormDialogSelectContent`, and `FormDialogFooter` instead of custom markup.
 - Body text in the dialog uses SF Pro Rounded (`font-rounded`), which `FormDialog` already sets.
 - `FormDialog` owns its portal, backdrop, focus trap, and dismissal. When opening one through `useModal`, return it early from `ModalStack` in `src/components/modal/index.tsx` and add it to the Escape exclusion list, or it renders behind the legacy modal overlay.
 - Follow `theme-adaptive-components.mdc`: check the dialog in every theme.

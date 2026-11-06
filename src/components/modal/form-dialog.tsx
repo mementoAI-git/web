@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { SelectContent, SelectTrigger } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/utility";
 
@@ -100,7 +101,7 @@ export function FormDialogField({
       </Label>
       {children}
       {error ? (
-        <span className="text-xs text-text-error-strong">{error}</span>
+        <span id={`${htmlFor}-error`} role="alert" className="text-xs text-text-error-strong">{error}</span>
       ) : null}
     </div>
   );
@@ -111,6 +112,26 @@ export function FormDialogInput({
   ...props
 }: ComponentProps<typeof Input>) {
   return <Input className={cn("h-12 px-3.5", fieldClass, className)} {...props} />;
+}
+
+export function FormDialogSelectTrigger({
+  className,
+  ...props
+}: ComponentProps<typeof SelectTrigger>) {
+  return (
+    <SelectTrigger
+      className={cn("h-12 w-full px-3.5 data-[size=default]:h-12", fieldClass, className)}
+      {...props}
+    />
+  );
+}
+
+/** Keeps the dropdown above the dialog, which sits over the default select layer. */
+export function FormDialogSelectContent({
+  className,
+  ...props
+}: ComponentProps<typeof SelectContent>) {
+  return <SelectContent className={cn("z-[130] font-rounded", className)} {...props} />;
 }
 
 /** Shows a value in a field's frame when it can't be changed. */

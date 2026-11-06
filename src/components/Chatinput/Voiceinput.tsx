@@ -238,7 +238,7 @@ function VoiceSettings({
           Language
         </label>
         <Select value={draftLanguage} onValueChange={(value) => setDraftLanguage(value as VoiceLanguageCode)}>
-          <SelectTrigger id="voice-language" aria-label="Language" className="w-full rounded-xl bg-background">
+          <SelectTrigger id="voice-language" aria-label="Language" className="w-full bg-background">
             <SelectValue />
           </SelectTrigger>
           <SelectContent position="popper" align="end" className="z-[230]">
