@@ -7,6 +7,7 @@ import Billing from "@/components/modal/settings/billing";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useFeatureFlags } from "@/contexts/feature-flags";
 import { useModal } from "@/hooks/use-modal";
+import { cn } from "@/utility";
 import { DashboardHeader } from "@/pages/dashboard/component/dashboard-header";
 import { DashboardOverlayFrame } from "@/pages/dashboard/component/dashboard-overlay-frame";
 import { SettingsHub } from "./settings-hub";
@@ -38,7 +39,7 @@ export default function SettingsPage() {
           <DashboardHeader
             overlay={{
               title: (
-                <h1 className="font-garamond text-3xl font-medium text-text-neutral-strong sm:text-4xl">
+                <h1 className={cn("font-garamond text-3xl font-medium text-text-neutral-strong sm:text-4xl", tab && "max-sm:sr-only")}>
                   Settings & <em>profile</em>
                 </h1>
               ),

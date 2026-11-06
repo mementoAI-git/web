@@ -199,6 +199,8 @@ function ModalStack({ isMobile }: { isMobile: boolean }) {
       {[...state].reverse().map((modal, i) => {
         const ModalComponent = MODAL_COMPONENTS[modal.name];
         if (!ModalComponent) return null;
+        // Insights fills the screen, so it waits unmounted until it is on top again.
+        if (modal.name === "memory-insights") return null;
 
         const isRightPanel =
           RIGHT_PANEL_MODALS.includes(modal.name) && !isMobile;

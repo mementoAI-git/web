@@ -327,7 +327,7 @@ export function SearchMemoriesV2({
       prefersReducedMotion={Boolean(reducedMotion)}
       tweenConfig={{ duration: open ? 0.25 : 0.15, ease: [0.22, 1, 0.36, 1] }}
       onClose={() => close?.("search-memory")}
-      snapPoints={[0, 0.8]}
+      snapPoints={[0, 1]}
     >
       <Sheet.Container className="h-[80dvh] max-h-[80dvh] overflow-hidden bg-bg-neutral-solid">
         <Sheet.Header className="rounded-3xl bg-bg-neutral-solid" />

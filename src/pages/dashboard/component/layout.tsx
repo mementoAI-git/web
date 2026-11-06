@@ -42,10 +42,12 @@ export default function DashboardLayout() {
   );
 
   useEffect(() => {
-    const modalName = (location.state as { openModal?: string } | null)
-      ?.openModal;
+    const { openModal: modalName, openModalProps } = (location.state ?? {}) as {
+      openModal?: string;
+      openModalProps?: unknown;
+    };
     if (modalName) {
-      open(modalName);
+      open(modalName, openModalProps);
       navigate(location.pathname, { replace: true, state: {} });
     }
   }, [location.state, location.pathname, open, navigate]);

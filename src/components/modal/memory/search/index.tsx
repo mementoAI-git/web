@@ -122,7 +122,7 @@ export function SearchMemories() {
         className="block sm:hidden"
         isOpen
         onClose={() => close?.("search-memory")}
-        snapPoints={[0, 0.8]}
+        snapPoints={[0, 1]}
       >
         <Sheet.Container className="max-h-[80dvh] overflow-hidden bg-white">
           <Sheet.Header className="bg-white rounded-3xl" />

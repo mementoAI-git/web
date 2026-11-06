@@ -77,7 +77,7 @@ export function SecurityNudgeBanner() {
         type="button"
         onClick={dismiss}
         aria-label="Dismiss security reminder"
-        className="shrink-0 rounded-full p-1 text-icon-neutral-weak transition-colors hover:bg-fill-neutral-weak hover:text-icon-neutral-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stroke-neutral-strong motion-reduce:transition-none"
+        className="relative shrink-0 rounded-full p-1 text-icon-neutral-weak after:absolute after:-inset-2.5 transition-colors hover:bg-fill-neutral-weak hover:text-icon-neutral-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stroke-neutral-strong motion-reduce:transition-none"
       >
         <X size={14} strokeWidth={1.5} />
       </button>

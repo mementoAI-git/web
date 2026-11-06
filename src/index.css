@@ -1037,7 +1037,7 @@ body {
 
 @layer utilities {
   .container {
-    @apply w-full mx-auto max-w-219.5;
+    @apply w-full mx-auto max-w-[942px] px-4 sm:px-5 md:px-6 lg:px-8;
   }
 
   .page-title {
@@ -2101,6 +2101,118 @@ body {
 [data-slot="alert-dialog-content"],
 .modal-container {
   border-radius: var(--radius-modal) !important;
+}
+
+/*
+ * Phones: every dialog and modal opens as a bottom sheet. Full-screen surfaces
+ * (Insights, Pricing, the story journal) opt out by class. Declarations are
+ * important, and layered so they also win over important width utilities that
+ * individual modals set for desktop.
+ */
+@layer components {
+  /* The drag handle only exists on bottom sheets. */
+  .sheet-grabber {
+    display: none;
+  }
+
+  @media (max-width: 639.98px) {
+    [data-slot="dialog-content"]:not(.insights-overlay, .add-story-journal),
+    [data-slot="alert-dialog-content"],
+    .modal-overlay .modal-container {
+      position: fixed !important;
+      top: auto !important;
+      right: 0 !important;
+      bottom: 0 !important;
+      left: 0 !important;
+      width: 100% !important;
+      min-width: 0 !important;
+      max-width: none !important;
+      height: auto !important;
+      min-height: 0 !important;
+      max-height: calc(100dvh - max(env(safe-area-inset-top), 1.5rem)) !important;
+      margin: 0 !important;
+      border-radius: var(--radius-modal) var(--radius-modal) 0 0 !important;
+      border-width: 0 0 env(safe-area-inset-bottom) !important;
+      border-style: solid !important;
+      border-color: transparent !important;
+      translate: 0 var(--sheet-drag, 0px) !important;
+      transition: translate 200ms cubic-bezier(0.22, 1, 0.36, 1);
+      overscroll-behavior: contain;
+    }
+
+    [data-slot="dialog-content"]:not(.insights-overlay, .add-story-journal, .overflow-hidden),
+    [data-slot="alert-dialog-content"]:not(.overflow-hidden) {
+      overflow-y: auto;
+    }
+
+    .modal-overlay .modal-container {
+      padding-top: 1.75rem !important;
+    }
+
+    [data-slot="dialog-content"][data-state="open"]:not(.insights-overlay, .add-story-journal),
+    [data-slot="alert-dialog-content"][data-state="open"],
+    .modal-overlay .modal-container {
+      animation: bottom-sheet-in 280ms cubic-bezier(0.22, 1, 0.36, 1) both !important;
+    }
+
+    [data-slot="dialog-content"][data-state="closed"]:not(.insights-overlay, .add-story-journal),
+    [data-slot="alert-dialog-content"][data-state="closed"] {
+      animation: bottom-sheet-out 180ms ease-in both !important;
+    }
+
+    [data-slot="dialog-content"]:not(.insights-overlay, .add-story-journal) > .sheet-grabber,
+    .modal-overlay .modal-container > .sheet-grabber {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      z-index: 1;
+      display: flex;
+      width: 6rem;
+      height: 1.5rem;
+      translate: -50% 0;
+      align-items: center;
+      justify-content: center;
+      cursor: grab;
+      touch-action: none;
+    }
+
+    .sheet-grabber::before {
+      content: "";
+      width: 2.25rem;
+      height: 0.25rem;
+      border-radius: 9999px;
+      background: var(--stroke-neutral-strong);
+      opacity: 0.35;
+    }
+
+    /* iOS zooms the whole page when a smaller field takes focus. */
+    input:not([type="checkbox"], [type="radio"], [type="range"]),
+    textarea,
+    select {
+      font-size: 16px !important;
+    }
+  }
+
+  @media (max-width: 639.98px) and (prefers-reduced-motion: reduce) {
+    [data-slot="dialog-content"][data-state]:not(.insights-overlay, .add-story-journal),
+    [data-slot="alert-dialog-content"][data-state],
+    .modal-overlay .modal-container {
+      animation: none !important;
+      transition: none;
+    }
+  }
+}
+
+@keyframes bottom-sheet-in {
+  from {
+    transform: translateY(100%);
+  }
+}
+
+@keyframes bottom-sheet-out {
+  to {
+    transform: translateY(100%);
+  }
 }
 
 /* Story links follow the paper's local text palette, including saved legacy links. */

@@ -1,4 +1,5 @@
 import { TimesIcon } from "@/components/icons";
+import { SheetGrabber } from "@/components/ui/sheet-grabber";
 import { cn, isEmpty } from "@/utility";
 import type { PropsWithChildren, ReactNode } from "react";
 
@@ -132,13 +133,16 @@ interface ModalCloseBtnProps {
 
 export function ModalCloseBtn({ onClick, className = "" }: ModalCloseBtnProps) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label="Close"
-      className={cn("modal-close-btn", { [className]: !isEmpty(className) })}
-    >
-      <TimesIcon width={8.33} height={8.33} />
-    </button>
+    <>
+      {onClick ? <SheetGrabber onDismiss={onClick} /> : null}
+      <button
+        type="button"
+        onClick={onClick}
+        aria-label="Close"
+        className={cn("modal-close-btn", { [className]: !isEmpty(className) })}
+      >
+        <TimesIcon width={8.33} height={8.33} />
+      </button>
+    </>
   );
 }

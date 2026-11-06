@@ -65,7 +65,7 @@ export function ChatSettingsDrawer({ isOpen, onClose, children }: {
   return (
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
       {mobile ? (
-        <Sheet isOpen={isOpen} onClose={onClose} detent="content" snapPoints={[0, 0.8]} initialSnap={1}
+        <Sheet isOpen={isOpen} onClose={onClose} detent="content" snapPoints={[0, 1]} initialSnap={1}
           prefersReducedMotion={Boolean(reducedMotion)}>
           <DialogPrimitive.Content asChild aria-describedby={undefined} onOpenAutoFocus={captureFocus} onCloseAutoFocus={restoreFocus}>
             <Sheet.Container className="max-h-[80dvh]! overflow-hidden bg-bg-neutral-solid outline-none">

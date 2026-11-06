@@ -15,9 +15,9 @@
   .navigation-sidebar-content[data-compact="true"] [data-sidebar-label] { display: none; }
 }
 
-/* Full-screen pages are see-through, so the mobile sidebar needs its own surface. */
+/* Pages are see-through, so the mobile sidebar needs its own surface. */
 @media (max-width: 767px) {
-  .overlay-sidebar {
+  .navigation-sidebar {
     background: var(--bg-raised);
   }
 }

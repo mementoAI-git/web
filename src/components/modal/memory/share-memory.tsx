@@ -125,7 +125,7 @@ export default function ShareMemory({ data }: ShareMemoryProps) {
         className="block sm:hidden"
         isOpen
         onClose={handleClose}
-        snapPoints={[0, 0.8]}
+        snapPoints={[0, 1]}
       >
         <Sheet.Container className="max-h-[80dvh] overflow-hidden bg-background">
           <Sheet.Header className="rounded-3xl bg-background" />

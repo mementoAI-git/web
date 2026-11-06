@@ -595,7 +595,7 @@ export function UpdateMemory({ data }: ContentProps) {
         className="block sm:hidden"
         isOpen
         onClose={() => close("edit-memory")}
-        snapPoints={[0, 0.8]}
+        snapPoints={[0, 1]}
         initialSnap={1}
       >
         <Sheet.Container className="max-h-[80dvh] overflow-hidden bg-fill-neutral-weaker">

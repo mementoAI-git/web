@@ -162,7 +162,7 @@ export function ChatSwitcher({ children }: { children?: ReactNode }) {
                     : getProfileAvatarUrl(user)
                 }
               />
-              <span className="min-w-0">
+              <span className="min-w-0 max-[359px]:sr-only">
                 <span className="block truncate text-sm font-medium leading-4">
                   {selectedName}
                 </span>

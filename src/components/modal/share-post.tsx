@@ -171,7 +171,7 @@ export function SharePost({ data, isMobile = false }: SharePostProps) {
         detent="content"
         isOpen
         onClose={handleClose}
-        snapPoints={[0, 0.88]}
+        snapPoints={[0, 1]}
         initialSnap={1}
       >
         <Sheet.Container className="max-h-[88dvh] overflow-hidden rounded-t-3xl border border-stroke-neutral-weak !bg-bg-neutral text-text-neutral-strong shadow-lg">

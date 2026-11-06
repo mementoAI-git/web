@@ -112,7 +112,7 @@ export function SettingsProfileHeader() {
             {displayName}
           </h2>
           <p className="flex flex-wrap items-center justify-start gap-y-1 text-left text-sm text-text-neutral-weak">
-            {user?.email && <span className="break-all">{user.email}</span>}
+            {user?.email && <span className="max-w-full truncate" title={user.email}>{user.email}</span>}
             {memberSince && (
               <span className="inline-flex items-center">
                 {user?.email && (

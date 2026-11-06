@@ -162,13 +162,13 @@ export function DashboardHeader(props: DashboardHeaderProps) {
   return (
     <header
       data-slot="dashboard-overlay-header"
-      className="navigation-header flex shrink-0 items-center justify-between gap-3 px-4 py-5 sm:px-8 sm:py-6"
+      className="navigation-header grid shrink-0 grid-cols-[auto_minmax(0,1fr)] items-center gap-x-3 gap-y-2 px-4 py-3 sm:flex sm:justify-between sm:px-8 sm:py-6"
     >
-      <div className="flex min-w-0 items-center gap-3 sm:gap-4">
+      <div className="contents sm:flex sm:min-w-0 sm:items-center sm:gap-4">
         <OverlaySidebarToggle />
-        {overlay.title}
+        <div className="col-span-2 row-start-2 min-w-0">{overlay.title}</div>
       </div>
-      <div className="flex items-center gap-2 sm:gap-3">
+      <div className="col-start-2 row-start-1 flex items-center justify-end gap-2 sm:gap-3">
         <Button
           variant="ghost"
           size="icon-lg"
@@ -431,7 +431,7 @@ function DashboardPageHeader({
         <div
           className={cn(
             "col-start-2 flex items-center justify-end lg:col-start-3",
-            usesOverviewNav ? "gap-3" : "gap-2",
+            usesOverviewNav ? "gap-2 sm:gap-3" : "gap-2",
           )}
         >
           <ThemeSwitcher
@@ -441,7 +441,10 @@ function DashboardPageHeader({
             darkIcon={
               usesOverviewNav ? <OverviewDesignIcon name="sun" /> : undefined
             }
-            className={overviewActionClass}
+            className={cn(
+              overviewActionClass,
+              (showChatWorkspace || showConversationNav) && "max-sm:hidden",
+            )}
             contentClassName="navigation-menu"
           />
           <QuickTools
