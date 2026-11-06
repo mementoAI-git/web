@@ -29,18 +29,14 @@ import {
 import { Spinner } from "@/components/ui/spinner";
 import { getQuestionIdenticonUrl } from "@/features/explore/question-identicon";
 import type { InsightSource } from "./insights-api.types";
-import { joinObservation } from "./observation-display";
 import type { PersonaObservationSourcesResponse } from "./observations-api.types";
 
 export interface ObservationItem {
   id: string;
   title: string;
   detail: string;
-  /** The supporting text as stored; `detail` may be a generic fallback. */
-  note: string;
 }
 
-// Together these stay within the API's 500 character limit.
 const MAX_HEADING_LENGTH = 120;
 const MAX_NOTE_LENGTH = 378;
 
@@ -126,16 +122,17 @@ function EditObservationDialog({
 }) {
   const id = useId();
   const [heading, setHeading] = useState(item.title);
-  const [note, setNote] = useState(item.note);
+  const [note, setNote] = useState(item.detail);
   const [saving, setSaving] = useState(false);
   const changed =
-    heading.trim() !== item.title.trim() || note.trim() !== item.note.trim();
+    heading.trim() !== item.title.trim() || note.trim() !== item.detail.trim();
 
   async function save() {
     setSaving(true);
     try {
       await patch(observationUrl(item.id), {
-        content: joinObservation(heading, note),
+        heading: heading.trim(),
+        note: note.trim(),
       });
       await onChanged();
       toast.success("Note updated");
@@ -182,7 +179,7 @@ function EditObservationDialog({
           submitLabel="Save changes"
           busyLabel="Saving…"
           busy={saving}
-          disabled={!heading.trim() || !changed}
+          disabled={!heading.trim() || !note.trim() || !changed}
           dismissLabel={null}
           onDismiss={onClose}
         />
@@ -227,11 +224,9 @@ function ForgetObservationDialog({
         <FormDialogField label="Heading" htmlFor={`${id}-heading`}>
           <FormDialogValue id={`${id}-heading`}>{item.title}</FormDialogValue>
         </FormDialogField>
-        {item.note && (
-          <FormDialogField label="Note" htmlFor={`${id}-note`}>
-            <FormDialogValue id={`${id}-note`}>{item.note}</FormDialogValue>
-          </FormDialogField>
-        )}
+        <FormDialogField label="Note" htmlFor={`${id}-note`}>
+          <FormDialogValue id={`${id}-note`}>{item.detail}</FormDialogValue>
+        </FormDialogField>
         <FormDialogFooter
           submitLabel="Forget note"
           busyLabel="Forgetting…"
@@ -277,11 +272,9 @@ function ObservationCard({
         <h3 className="truncate font-inter text-base font-medium text-text-neutral-strong">
           {item.title}
         </h3>
-        {item.detail && (
-          <p className="mt-1 truncate font-inter text-sm text-text-neutral-weak">
-            {item.detail}
-          </p>
-        )}
+        <p className="mt-1 truncate font-inter text-sm text-text-neutral-weak">
+          {item.detail}
+        </p>
       </div>
       <Popover
         open={action === "sources"}

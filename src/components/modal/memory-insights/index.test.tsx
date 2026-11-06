@@ -69,14 +69,23 @@ const singleInsight = {
 
 const observation = (
   field: string,
-  content: string,
-  id = `${field}-${content.length}`,
-) => ({ id, field, content, reviewed: false, source_count: 1 });
+  heading: string,
+  note = "You often come back to this.",
+  id = `${field}-${heading.length}`,
+) => ({
+  id,
+  field,
+  heading,
+  note,
+  category_key: "identity_self",
+  source_count: 1,
+});
 
 const defaultObservations = [
   observation(
     "important_notes",
-    "You value independent thinking. Autonomy shows up in your decisions.",
+    "You value independent thinking",
+    "Autonomy shows up in your decisions.",
     "note-1",
   ),
   observation("goals_and_aspirations", "You want to write a book"),
@@ -96,6 +105,7 @@ function Location() {
 
 function setup({
   observations = defaultObservations as object[],
+  generating = false,
   insights = {
     insights: [spanningInsight, singleInsight],
     generated_at: "2026-11-05T00:00:00.000Z",
@@ -110,7 +120,7 @@ function setup({
           provider: () => new Map(),
           revalidateOnMount: false,
           fallback: {
-            [endpoint.personaObservations]: { data: { observations } },
+            [endpoint.personaObservations]: { data: { observations, generating } },
             [`${endpoint.personaObservations}/note-1/sources`]: {
               data: {
                 sources: [
@@ -309,18 +319,29 @@ it("edits the heading and note in a modal and saves them as one observation", as
   await user.type(heading, "You think for yourself");
   await user.click(save);
   expect(patch).toHaveBeenCalledWith(`${endpoint.personaObservations}/note-1`, {
-    content: "You think for yourself. Autonomy shows up in your decisions.",
+    heading: "You think for yourself",
+    note: "Autonomy shows up in your decisions.",
   });
   expect(
     screen.queryByRole("dialog", { name: "Edit this note" }),
   ).not.toBeInTheDocument();
 });
 
-it("leaves the note empty rather than saving the generic fallback line", async () => {
+it("always shows a note and will not save a card without one", async () => {
   const user = userEvent.setup();
   setup();
+  expect(screen.getAllByText("You often come back to this.")).toHaveLength(2);
+  expect(screen.queryByText(/^Something you/)).not.toBeInTheDocument();
   await openOption(user, "You want to write a book", "Edit");
-  expect(screen.getByRole("textbox", { name: "Note" })).toHaveValue("");
+  await user.clear(screen.getByRole("textbox", { name: "Note" }));
+  expect(screen.getByRole("button", { name: "Save changes" })).toBeDisabled();
+});
+
+it("says it is working while the first cards are written", () => {
+  setup({ observations: [], generating: true });
+  expect(
+    screen.getByText("Going through what you’ve shared…"),
+  ).toBeVisible();
 });
 
 it("keeps the edit open when saving fails", async () => {

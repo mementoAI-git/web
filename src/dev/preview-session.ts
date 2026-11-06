@@ -258,7 +258,7 @@ export class PreviewSession {
         });
       if (path === "/users/insights/sources") return ok({ sources: [] });
       if (path === "/persona/observations")
-        return ok({ observations: [] });
+        return ok({ observations: [], generating: false });
       if (
         path === "/users/passkeys" ||
         path === "/users/referrals" ||

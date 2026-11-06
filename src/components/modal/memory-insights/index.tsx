@@ -1,8 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Archive, Search } from "lucide-react";
 import { useLocation, useNavigate, useNavigationType } from "react-router-dom";
-import endpoint from "@/api/endpoint";
-import { useApi } from "@/hooks/use-api";
 import { useModal } from "@/hooks/use-modal";
 import { useRequestRecovery } from "@/hooks/use-request-recovery";
 import { DashboardHeader } from "@/pages/dashboard/component/dashboard-header";
@@ -25,18 +23,11 @@ import {
 import { InsightsPanel } from "@/features/insights/insights-panel";
 import { MemoryStatistics } from "@/features/insights/memory-statistics";
 import {
-  normalizeObservationForDisplay,
-  splitObservation,
-} from "@/features/insights/observation-display";
-import {
   ObservationList,
   type ObservationItem,
 } from "@/features/insights/observation-list";
-import type {
-  ObservationField,
-  PersonaObservation,
-  PersonaObservationsResponse,
-} from "@/features/insights/observations-api.types";
+import type { PersonaObservation } from "@/features/insights/observations-api.types";
+import { useObservations } from "@/features/insights/use-observations";
 import { PlanSummaryCard } from "@/features/insights/plan-summary-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -50,23 +41,11 @@ import { Spinner } from "@/components/ui/spinner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import "./insights.css";
 
-/** Everything Memento has noticed about the member, except their preferences. */
-const OBSERVATION_DETAILS: Record<ObservationField, string> = {
-  important_notes: "Something you’ve shared",
-  goals_and_aspirations: "Something you’re working toward",
-  emotional_state_trends: "A pattern in how you feel",
-  key_preferences: "Something you prefer",
-};
-
 function toItem(observation: PersonaObservation): ObservationItem {
-  const { title, detail } = splitObservation(
-    normalizeObservationForDisplay(observation.content),
-  );
   return {
     id: observation.id,
-    title,
-    detail: detail || OBSERVATION_DETAILS[observation.field],
-    note: detail,
+    title: observation.heading,
+    detail: observation.note,
   };
 }
 
@@ -124,11 +103,12 @@ export default function MemoryInsightsModal() {
   }, [history.length]);
 
   const {
-    data: observationsRes,
+    observations: all,
+    generating,
     isLoading,
     error,
     mutate,
-  } = useApi<PersonaObservationsResponse>(endpoint.personaObservations);
+  } = useObservations();
   const retry = useRequestRecovery(
     "insights-persona",
     error,
@@ -138,7 +118,6 @@ export default function MemoryInsightsModal() {
   const needle = query.trim().toLowerCase();
   const matches = (item: ObservationItem) =>
     `${item.title} ${item.detail}`.toLowerCase().includes(needle);
-  const all = observationsRes?.data?.observations ?? [];
   const observations = all
     .filter((item) => item.field !== "key_preferences")
     .map(toItem);
@@ -160,11 +139,13 @@ export default function MemoryInsightsModal() {
           </Button>
         </div>
       );
-    if (isLoading && !items.length)
+    if ((isLoading || generating) && !items.length)
       return (
         <div className="insights-empty" role="status">
           <Spinner />
-          Loading your insights…
+          {generating
+            ? "Going through what you’ve shared…"
+            : "Loading your insights…"}
         </div>
       );
     return (
