@@ -1027,6 +1027,28 @@ describe("CreateMemory", () => {
     }
   });
 
+  it.each([false, true])("moves the Drafts dot from muted to saving to saved as the draft autosaves (isMobile=%s)", async (isMobile) => {
+    vi.useFakeTimers();
+    try {
+      const { container } = renderWithProviders(<CreateMemory data={{}} isMobile={isMobile} />, { auth: true });
+      const dot = () => container.ownerDocument.querySelector('[data-slot="draft-status-dot"]');
+
+      expect(screen.getByRole("button", { name: "Drafts" })).toContainElement(dot() as HTMLElement);
+      expect(dot()).toHaveAttribute("data-status", "empty");
+      expect(screen.getByRole("status")).toHaveClass("sr-only");
+
+      const title = isMobile ? screen.getByLabelText("Title") : screen.getByPlaceholderText(/give this story a title/i);
+      fireEvent.change(title, { target: { value: "A day to remember" } });
+      expect(dot()).toHaveAttribute("data-status", "saving");
+
+      await act(async () => { await vi.advanceTimersByTimeAsync(900); });
+      expect(dot()).toHaveAttribute("data-status", "saved");
+      expect(dot()).toHaveClass("bg-fill-success-strong");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("keeps Clear all in the shared Drafts dropdown header", async () => {
     vi.useFakeTimers();
     renderWithProviders(<CreateMemory data={{}} isMobile={false} />, { auth: true });

@@ -108,7 +108,6 @@ import {
   ChevronsRight,
   Circle,
   Clock3,
-  Cloud,
   FileText,
   Image as ImageIcon,
   ListFilter,
@@ -141,6 +140,26 @@ interface MemoryDraft {
 
 function getDraftSignature({ title, body, tags, attachments }: Pick<MemoryDraft, "title" | "body" | "tags" | "attachments">) {
   return JSON.stringify({ title: title.trim(), body, tags, attachments });
+}
+
+const DRAFT_STATUS_DOT_CLASS = {
+  empty: "bg-text-neutral-weaker",
+  saving: "bg-fill-warning-strong",
+  saved: "bg-fill-success-strong",
+} as const;
+
+function DraftStatusDot({ status }: { status: keyof typeof DRAFT_STATUS_DOT_CLASS }) {
+  return (
+    <span
+      aria-hidden
+      data-slot="draft-status-dot"
+      data-status={status}
+      className={cn(
+        "size-1.5 shrink-0 rounded-full transition-colors duration-150 motion-reduce:transition-none",
+        DRAFT_STATUS_DOT_CLASS[status],
+      )}
+    />
+  );
 }
 
 // ─── CreateMemory ─────────────────────────────────────────────────────────────
@@ -747,6 +766,13 @@ function CreateMemoryBase({
     !isUploading &&
     savedDraftSignature === currentDraftSignature &&
     drafts.some((draft) => getDraftSignature(draft) === savedDraftSignature);
+  const hasAutosavableContent = values.title.trim().length > 0 || bodyPlainText.trim().length > 0;
+  const draftStatus = !hasAutosavableContent ? "empty" : isCurrentDraftSaved ? "saved" : "saving";
+  const draftStatusAnnouncement = (
+    <span className="sr-only" role="status">
+      {isCurrentDraftSaved ? "Draft saved" : "Not saved"}
+    </span>
+  );
   latestCloseStateRef.current = {
     dirty:
       files.length > 0 ||
@@ -1125,13 +1151,15 @@ function CreateMemoryBase({
                   type="button"
                   variant="ghost"
                   size="sm"
-                  className="font-inter text-sm text-text-neutral-weak hover:text-text-neutral-strong"
+                  className="gap-1.5 font-inter text-sm text-text-neutral-weak hover:text-text-neutral-strong"
                 >
+                  <DraftStatusDot status={draftStatus} />
                   Drafts
                 </Button>
               </DropdownMenuTrigger>
               {draftsDropdownContent}
             </DropdownMenu>
+            {draftStatusAnnouncement}
           </div>
         </div>
       <div className="flex min-h-[280px] flex-1 flex-col overflow-hidden">
@@ -1522,7 +1550,7 @@ function CreateMemoryBase({
   if (isMobile && variant === "legacy") {
     return (
       <>
-        <Sheet detent="content" isOpen onClose={handleClose} snapPoints={[0, 0.8]} initialSnap={1}>
+        <Sheet detent="content" isOpen onClose={handleClose} snapPoints={[0, 1]} initialSnap={1}>
           <Sheet.Container className="max-h-[80dvh] overflow-hidden bg-v3-bg">
             <Sheet.Header className="rounded-t-3xl bg-v3-bg" />
             <Sheet.Content className="max-h-[80dvh] min-h-0 overflow-y-auto overscroll-contain bg-v3-bg px-4 pb-6">
@@ -1820,16 +1848,14 @@ function CreateMemoryBase({
                     }}
                   >
                     <DropdownMenuTrigger asChild>
-                      <Button type="button" variant="ghost" size="sm">
+                      <Button type="button" variant="ghost" size="sm" className="gap-1.5">
+                        <DraftStatusDot status={draftStatus} />
                         Drafts
                       </Button>
                     </DropdownMenuTrigger>
                     {draftsDropdownContent}
                   </DropdownMenu>
-                  <div className="flex shrink-0 items-center gap-2 whitespace-nowrap font-geist text-sm text-text-neutral-weaker" role="status">
-                    <Cloud aria-hidden className="size-4" />
-                    <span>{isCurrentDraftSaved ? "Draft saved" : "Not saved"}</span>
-                  </div>
+                  {draftStatusAnnouncement}
                   <Button
                     type="button"
                     size="lg"
