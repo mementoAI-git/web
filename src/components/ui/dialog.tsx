@@ -3,6 +3,7 @@ import { Dialog as DialogPrimitive } from "radix-ui";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { SheetGrabber } from "@/components/ui/sheet-grabber";
 import { XIcon } from "lucide-react";
 
 function Dialog({
@@ -55,6 +56,7 @@ function DialogContent({
   showCloseButton?: boolean;
   overlayClassName?: string;
 }) {
+  const dismissRef = React.useRef<HTMLButtonElement>(null);
   return (
     <DialogPortal>
       <DialogOverlay className={overlayClassName} />
@@ -66,6 +68,8 @@ function DialogContent({
         )}
         {...props}
       >
+        <SheetGrabber onDismiss={() => dismissRef.current?.click()} />
+        <DialogPrimitive.Close ref={dismissRef} hidden />
         {children}
         {showCloseButton && (
           <DialogPrimitive.Close data-slot="dialog-close" asChild>

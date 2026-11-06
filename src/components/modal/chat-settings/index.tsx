@@ -85,7 +85,7 @@ export default function ChatSettings({ children, onOpenChange }: ChatSettingsPro
               className="block h-full sm:hidden"
               isOpen={isOpen}
               onClose={() => updateOpen(false)}
-              snapPoints={[0, 0.8]}
+              snapPoints={[0, 1]}
               initialSnap={1}
             >
               <Sheet.Container className="max-h-[80dvh] overflow-hidden bg-bg-neutral-solid">

@@ -204,7 +204,7 @@ export default function SetTagPermissions({ data }: ISetTagPermissionsProps) {
         className="block md:hidden"
         isOpen
         onClose={() => close("set-tag-permission")}
-        snapPoints={[0, 0.8]}
+        snapPoints={[0, 1]}
         initialSnap={1}
       >
         <Sheet.Container className="max-h-[80dvh] overflow-hidden bg-white" >

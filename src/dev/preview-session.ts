@@ -249,8 +249,16 @@ export class PreviewSession {
       if (path === "/users/persona") return ok(null);
       if (path === "/users/persona/memory-insights-summary")
         return ok({ summary: null, generated_at: null, cached: false });
+      if (path === "/users/insights")
+        return ok({
+          insights: [],
+          generated_at: null,
+          next_refresh_at: null,
+          generating: false,
+        });
+      if (path === "/users/insights/sources") return ok({ sources: [] });
       if (path === "/persona/observations")
-        return ok({ observations: [], categories: [] });
+        return ok({ observations: [] });
       if (
         path === "/users/passkeys" ||
         path === "/users/referrals" ||

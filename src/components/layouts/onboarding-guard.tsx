@@ -18,7 +18,6 @@ export default function OnboardingGuard({ children }: PropsWithChildren) {
 
     const path = location.pathname;
     if (path === "/onboarding" || path.startsWith("/onboarding")) return;
-    if (path === "/onboard" || path.startsWith("/onboard")) return;
 
     const isComplete = user.onboarding_status === "completed" || user.onboarded === true;
     const skipped = user.onboarding_status === "skipped";

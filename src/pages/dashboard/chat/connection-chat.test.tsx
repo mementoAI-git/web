@@ -1,4 +1,4 @@
-import { screen, waitFor } from "@testing-library/react";
+import { fireEvent, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse, delay } from "msw";
 import { renderWithProviders } from "@/test";
@@ -201,9 +201,9 @@ describe("Connection context in Chat", () => {
       auth: true,
       route: "/chat/my-thread?person=sarah",
     });
-    expect(
-      await screen.findByText("A memory we kept together"),
-    ).toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getByText("A memory we kept together")).toBeInTheDocument(),
+    );
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(
       screen.queryByText(/Start a conversation with/),
@@ -284,6 +284,109 @@ describe("Connection context in Chat", () => {
     );
     await waitFor(() => expect(replies).toBe(2));
     expect(contributions).toBe(1);
+  });
+
+  describe("timeline", () => {
+    const contributor = { user_id: mockUser._id, name: "Me" };
+    const base = { original_date: "2026-01-01", shared_via: "direct", attachments: [] };
+    function space(items: unknown[]) {
+      server.use(
+        http.get("*/people/sarah/space", () =>
+          HttpResponse.json({
+            success: true,
+            data: { items, total: items.length, page: 1, has_next_page: false },
+          }),
+        ),
+      );
+    }
+
+    it("shows a shared story as a link to the memory, not its contents", async () => {
+      setup();
+      space([{ ...base, source_id: "story1", source_type: "story", title: "Our trip", body: "Long private body", contributor, shared_via: "individual_visibility" }]);
+      renderWithProviders(<App />, { auth: true, route: "/chat/my-thread?person=sarah" });
+      const link = await screen.findByRole("link", { name: /Our trip/ });
+      expect(link).toHaveAttribute("href", "/stories/story1");
+      expect(link).toHaveTextContent("You shared a memory");
+      expect(screen.queryByText("Long private body")).not.toBeInTheDocument();
+    });
+
+    describe("memory link image", () => {
+      const story = { ...base, source_id: "story1", source_type: "story", title: "Our trip", body: "", contributor };
+      const file = { _id: "f1", thumbnail: null, status: "ready" };
+      const identicon = "https://api.dicebear.com/10.x/disco/svg?seed=story1";
+      async function linkImage(attachments: unknown[]) {
+        setup();
+        space([{ ...story, attachments }]);
+        renderWithProviders(<App />, { auth: true, route: "/chat/my-thread?person=sarah" });
+        const link = await screen.findByRole("link", { name: /Our trip/ });
+        return link.querySelector("img") as HTMLImageElement;
+      }
+
+      it("uses the story's image", async () => {
+        const image = await linkImage([{ ...file, type: "image/jpeg", url: "/photo.jpg" }]);
+        expect(image).toHaveAttribute("src", "/photo.jpg");
+      });
+
+      it("uses a video's thumbnail", async () => {
+        const image = await linkImage([{ ...file, type: "video/mp4", url: "/clip.mp4", thumbnail: "/poster.jpg" }]);
+        expect(image).toHaveAttribute("src", "/poster.jpg");
+      });
+
+      it("falls back to the identicon without a thumbnail", async () => {
+        expect(await linkImage([])).toHaveAttribute("src", identicon);
+      });
+
+      it("skips media that isn't ready", async () => {
+        const image = await linkImage([{ ...file, type: "image/jpeg", url: "/photo.jpg", status: "processing" }]);
+        expect(image).toHaveAttribute("src", identicon);
+      });
+
+      it("falls back to the identicon when the image fails to load", async () => {
+        const image = await linkImage([{ ...file, type: "image/jpeg", url: "/broken.jpg" }]);
+        fireEvent.error(image);
+        await waitFor(() =>
+          expect(screen.getByRole("link", { name: /Our trip/ }).querySelector("img")).toHaveAttribute("src", identicon),
+        );
+      });
+    });
+
+    it("shows a sent message as a chat bubble without the old card or header", async () => {
+      setup();
+      space([{ ...base, source_id: "note1", source_type: "note", title: "Hi Dad", body: "Hi Dad", contributor }]);
+      renderWithProviders(<App />, { auth: true, route: "/chat/my-thread?person=sarah" });
+      await waitFor(() =>
+        expect(screen.getByText("Hi Dad").closest(".sky-card")).toHaveClass("bg-fill-chat-user"),
+      );
+      expect(screen.queryByText(/added a note/)).not.toBeInTheDocument();
+      expect(screen.queryByText("Shared memories")).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Add memory" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("group", { name: "Filter shared memories" })).not.toBeInTheDocument();
+    });
+
+    it("does not repeat a message whose title was taken from its text", async () => {
+      setup();
+      space([{ ...base, source_id: "note3", source_type: "note", title: "Remember the house?", body: "<p>Remember the house?</p>", contributor }]);
+      renderWithProviders(<App />, { auth: true, route: "/chat/my-thread?person=sarah" });
+      await waitFor(() => expect(screen.getAllByText("Remember the house?")).toHaveLength(1));
+    });
+
+    it("hides the placeholder text on attachment-only messages", async () => {
+      setup();
+      space([{ ...base, source_id: "photo1", source_type: "photo", title: "Shared attachment", body: "Shared an attachment", contributor, attachments: [{ _id: "f1", type: "image/jpeg", url: "/f1.jpg", thumbnail: null, status: "ready" }] }]);
+      renderWithProviders(<App />, { auth: true, route: "/chat/my-thread?person=sarah" });
+      expect(await screen.findByTestId("chat-media-group")).toBeInTheDocument();
+      expect(screen.queryByText("Shared an attachment")).not.toBeInTheDocument();
+    });
+
+    it("labels the other person's message", async () => {
+      setup();
+      space([{ ...base, source_id: "note2", source_type: "note", title: "Hello", body: "Hello", contributor: { user_id: "sarah", name: "Sarah" } }]);
+      renderWithProviders(<App />, { auth: true, route: "/chat/my-thread?person=sarah" });
+      await waitFor(() =>
+        expect(screen.getByText("Hello").closest(".chat-reply-surface")).toBeInTheDocument(),
+      );
+      expect(screen.getByText("Sarah")).toBeInTheDocument();
+    });
   });
 
   it("interleaves shared memories and AI replies in chronological order", async () => {

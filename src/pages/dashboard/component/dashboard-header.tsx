@@ -28,6 +28,7 @@ import { useConversationChrome } from "@/contexts/conversation-chrome";
 import { useDashboardHeaderActions } from "@/contexts/dashboard-header-actions";
 import { StoriesActionButtons } from "@/pages/dashboard/stories/components/stories-action-buttons";
 import { Button } from "@/components/ui/button";
+import { useOverlaySidebar } from "./dashboard-overlay-frame";
 import { SearchCommandShortcut } from "@/components/search-command-shortcut";
 
 const defaultHeaderTitle: Record<string, string> = {
@@ -74,6 +75,8 @@ interface DashboardHeaderProps {
     searchLabel: string;
     closeLabel: string;
     searchExpanded?: boolean;
+    /** Adds the theme switcher and streak to the overlay's controls. */
+    showAccountControls?: boolean;
     onSearch: () => void;
     onClose: () => void;
   };
@@ -91,6 +94,51 @@ const convIconBtn =
 
 const overviewActionClass =
   "size-10 shrink-0 rounded-full bg-fill-neutral-weak p-0 [&_svg]:size-5";
+
+function OverviewStreakButton() {
+  const { user } = useStore();
+  return (
+    <StreakTracker>
+      <button
+        type="button"
+        aria-label={`Streak: ${user?.streak || 0} days`}
+        className={cn(
+          overviewActionClass,
+          "relative flex cursor-pointer items-center justify-center transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stroke-neutral-strong",
+        )}
+      >
+        <OverviewDesignIcon name="streak" alt="Streak" />
+        <span
+          aria-hidden
+          className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-bg-neutral px-1 font-geist text-[10px] font-semibold leading-none text-text-neutral-strong ring-1 ring-stroke-neutral-weak"
+        >
+          {user?.streak || 0}
+        </span>
+      </button>
+    </StreakTracker>
+  );
+}
+
+/** Matches the dashboard's reopen control; hidden while the sidebar is open. */
+function OverlaySidebarToggle() {
+  const sidebar = useOverlaySidebar();
+  return (
+    <button
+      type="button"
+      data-sidebar-toggle=""
+      onClick={sidebar?.expand}
+      aria-expanded={sidebar?.expanded ?? false}
+      aria-label="Expand sidebar"
+      className={cn(
+        convIconBtn,
+        "sidebar-reopen-button",
+        sidebar?.expanded && "md:hidden",
+      )}
+    >
+      <House className="size-5" strokeWidth={1.75} aria-hidden />
+    </button>
+  );
+}
 
 export function DashboardHeader(props: DashboardHeaderProps) {
   const overlay = props.overlay;
@@ -114,24 +162,13 @@ export function DashboardHeader(props: DashboardHeaderProps) {
   return (
     <header
       data-slot="dashboard-overlay-header"
-      className="navigation-header flex shrink-0 items-center justify-between gap-3 px-4 py-5 sm:px-8 sm:py-6"
+      className="navigation-header grid shrink-0 grid-cols-[auto_minmax(0,1fr)] items-center gap-x-3 gap-y-2 px-4 py-3 sm:flex sm:justify-between sm:px-8 sm:py-6"
     >
-      <div className="flex min-w-0 items-center gap-3 sm:gap-4">
-        <Button
-          variant="ghost"
-          size="icon-lg"
-          onClick={overlay.onClose}
-          aria-label="Back to dashboard"
-          className={cn(
-            overviewActionClass,
-            "bg-fill-tab-active text-text-tab-active",
-          )}
-        >
-          <House aria-hidden />
-        </Button>
-        {overlay.title}
+      <div className="contents sm:flex sm:min-w-0 sm:items-center sm:gap-4">
+        <OverlaySidebarToggle />
+        <div className="col-span-2 row-start-2 min-w-0">{overlay.title}</div>
       </div>
-      <div className="flex items-center gap-2 sm:gap-3">
+      <div className="col-start-2 row-start-1 flex items-center justify-end gap-2 sm:gap-3">
         <Button
           variant="ghost"
           size="icon-lg"
@@ -142,12 +179,21 @@ export function DashboardHeader(props: DashboardHeaderProps) {
         >
           <IconSearch aria-hidden />
         </Button>
+        {overlay.showAccountControls ? (
+          <ThemeSwitcher
+            lightIcon={<OverviewDesignIcon name="sun" />}
+            darkIcon={<OverviewDesignIcon name="sun" />}
+            className={overviewActionClass}
+            contentClassName="navigation-menu"
+          />
+        ) : null}
         <QuickTools
           overview
           icon={<OverviewDesignIcon name="tools" />}
           className={overviewActionClass}
           contentClassName="z-[120]"
         />
+        {overlay.showAccountControls ? <OverviewStreakButton /> : null}
         <Button
           variant="ghost"
           size="icon-lg"
@@ -385,7 +431,7 @@ function DashboardPageHeader({
         <div
           className={cn(
             "col-start-2 flex items-center justify-end lg:col-start-3",
-            usesOverviewNav ? "gap-3" : "gap-2",
+            usesOverviewNav ? "gap-2 sm:gap-3" : "gap-2",
           )}
         >
           <ThemeSwitcher
@@ -395,7 +441,10 @@ function DashboardPageHeader({
             darkIcon={
               usesOverviewNav ? <OverviewDesignIcon name="sun" /> : undefined
             }
-            className={overviewActionClass}
+            className={cn(
+              overviewActionClass,
+              (showChatWorkspace || showConversationNav) && "max-sm:hidden",
+            )}
             contentClassName="navigation-menu"
           />
           <QuickTools

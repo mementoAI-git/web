@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { fireEvent, screen, waitFor } from "@testing-library/react";
+import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { renderWithProviders } from "@/test";
@@ -7,6 +7,9 @@ import { mockUser } from "@/test/fixtures";
 import { server } from "@/test/mocks/server";
 import { initialStates, StoreValueProvider } from "@/hooks/use-store";
 import { GeneralProfileForm } from "./general-profile-form";
+
+const contact = () => within(screen.getByRole("form", { name: "Your contact details" }));
+const identity = () => within(screen.getByRole("form", { name: "Your name and birthday" }));
 
 function Harness() {
   const [user, setUser] = useState(mockUser);
@@ -36,11 +39,11 @@ describe("inline profile editing", () => {
     );
     renderWithProviders(<Harness />, { auth: true });
     const user = userEvent.setup();
-    const save = screen.getByRole("button", { name: "Save changes" });
+    const save = identity().getByRole("button", { name: "Save changes" });
     expect(save).toBeDisabled();
-    expect(screen.getByLabelText("Email")).toHaveAttribute("readonly");
-    await user.clear(screen.getByLabelText("Display name"));
-    await user.type(screen.getByLabelText("Display name"), "  New name  ");
+    expect(screen.getByLabelText("Email address")).toHaveAttribute("readonly");
+    await user.clear(screen.getByLabelText(/^Display name/));
+    await user.type(screen.getByLabelText(/^Display name/), "  New name  ");
     await user.click(save);
     await waitFor(() =>
       expect(submitted).toHaveBeenCalledWith({ nickname: "New name" }),
@@ -50,7 +53,7 @@ describe("inline profile editing", () => {
         "New name",
       ),
     );
-    expect(screen.getByLabelText("Display name")).toHaveValue("New name");
+    expect(screen.getByLabelText(/^Display name/)).toHaveValue("New name");
     expect(save).toBeDisabled();
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
@@ -70,12 +73,12 @@ describe("inline profile editing", () => {
     renderWithProviders(<Harness />, { auth: true });
     const user = userEvent.setup();
     await user.type(screen.getByLabelText("Location"), "Lagos");
-    await user.click(screen.getByRole("button", { name: "Save changes" }));
+    await user.click(contact().getByRole("button", { name: "Save changes" }));
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "Please try again later",
     );
     expect(screen.getByLabelText("Location")).toHaveValue("Lagos");
-    await user.click(screen.getByRole("button", { name: "Save changes" }));
+    await user.click(contact().getByRole("button", { name: "Save changes" }));
     await waitFor(() =>
       expect(screen.queryByRole("alert")).not.toBeInTheDocument(),
     );
@@ -86,13 +89,13 @@ describe("inline profile editing", () => {
   it("preserves dirty fields when the profile refreshes and ignores whitespace-only changes", async () => {
     renderWithProviders(<Harness />, { auth: true });
     const user = userEvent.setup();
-    await user.type(screen.getByLabelText("Display name"), " ");
-    expect(screen.getByRole("button", { name: "Save changes" })).toBeDisabled();
-    await user.clear(screen.getByLabelText("Display name"));
-    await user.type(screen.getByLabelText("Display name"), "Draft nickname");
+    await user.type(screen.getByLabelText(/^Display name/), " ");
+    expect(identity().getByRole("button", { name: "Save changes" })).toBeDisabled();
+    await user.clear(screen.getByLabelText(/^Display name/));
+    await user.type(screen.getByLabelText(/^Display name/), "Draft nickname");
     await user.click(screen.getByRole("button", { name: "Refresh profile" }));
-    expect(screen.getByLabelText("Display name")).toHaveValue("Draft nickname");
-    expect(screen.getByLabelText("First name")).toHaveValue("Refreshed");
+    expect(screen.getByLabelText(/^Display name/)).toHaveValue("Draft nickname");
+    expect(screen.getByLabelText("Name")).toHaveValue("Refreshed User");
   });
 
   it("supports clearing optional fields, including birthday", async () => {
@@ -108,11 +111,38 @@ describe("inline profile editing", () => {
     fireEvent.change(screen.getByLabelText("Birthday"), {
       target: { value: "" },
     });
-    await user.clear(screen.getByLabelText("Phone"));
-    await user.click(screen.getByRole("button", { name: "Save changes" }));
+    await user.click(identity().getByRole("button", { name: "Save changes" }));
+    await waitFor(() => expect(submitted).toHaveBeenCalledWith({ dob: "" }));
+    await user.clear(screen.getByLabelText("Phone number"));
+    await user.click(contact().getByRole("button", { name: "Save changes" }));
     await waitFor(() =>
-      expect(submitted).toHaveBeenCalledWith({ dob: "", phone_number: "" }),
+      expect(submitted).toHaveBeenCalledWith({ phone_number: "" }),
     );
+  });
+
+  it("splits a single name field into first and last name", async () => {
+    const submitted = vi.fn();
+    server.use(
+      http.put("*/users/profile", async ({ request }) => {
+        submitted(await request.json());
+        return HttpResponse.json({ success: true });
+      }),
+    );
+    renderWithProviders(<Harness />, { auth: true });
+    const user = userEvent.setup();
+    await user.clear(screen.getByLabelText("Name"));
+    await user.type(screen.getByLabelText("Name"), "Ada King Lovelace");
+    await user.click(identity().getByRole("button", { name: "Save changes" }));
+    await waitFor(() =>
+      expect(submitted).toHaveBeenCalledWith({ first_name: "Ada", last_name: "King Lovelace" }),
+    );
+  });
+
+  it("does not allow saving an empty name", async () => {
+    renderWithProviders(<Harness />, { auth: true });
+    const user = userEvent.setup();
+    await user.clear(screen.getByLabelText("Name"));
+    expect(identity().getByRole("button", { name: "Save changes" })).toBeDisabled();
   });
 
   it("locks fields and prevents duplicate submissions while saving", async () => {
@@ -132,7 +162,7 @@ describe("inline profile editing", () => {
     fireEvent.change(screen.getByLabelText("Location"), {
       target: { value: "Lagos" },
     });
-    const form = screen.getByRole("form", { name: "Profile details" });
+    const form = screen.getByRole("form", { name: "Your contact details" });
     fireEvent.submit(form);
     fireEvent.submit(form);
     await waitFor(() => expect(submitted).toHaveBeenCalledTimes(1));

@@ -2,9 +2,13 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ChatMediaGroup } from "./chat-media-group";
+import { splitStackedMedia } from "./conversation-assets";
 
 const push = vi.fn();
 vi.mock("@/hooks/use-modal", () => ({ useModal: () => ({ push }) }));
+
+const images = (count: number) =>
+  Array.from({ length: count }, (_, index) => ({ _id: `f${index}`, name: `${index}.jpg`, type: "image/jpeg", url: `/${index}.jpg`, size: 1 }));
 
 describe("ChatMediaGroup", () => {
   beforeEach(() => push.mockClear());
@@ -14,11 +18,28 @@ describe("ChatMediaGroup", () => {
     expect(screen.getByTestId("chat-media-group").querySelector('[data-layout="single"]')).toBeInTheDocument();
   });
 
-  it("uses one row for three visual items", () => {
-    const files = Array.from({ length: 3 }, (_, index) => ({ _id: `f${index}`, name: `${index}.jpg`, type: "image/jpeg", url: `/${index}.jpg`, size: 1 }));
-    render(<ChatMediaGroup attachments={files} />);
-    expect(screen.getByTestId("chat-media-group").querySelector('[data-layout="row"]')).toBeInTheDocument();
-    expect(screen.getAllByRole("button", { name: /in viewer/i })).toHaveLength(3);
+  it.each([2, 3])("stacks %i visual items with the first in front", (count) => {
+    render(<ChatMediaGroup attachments={images(count)} />);
+    expect(screen.getByTestId("chat-media-group").querySelector('[data-layout="stack"]')).toBeInTheDocument();
+    const tiles = screen.getAllByRole("button", { name: /in viewer/i });
+    expect(tiles).toHaveLength(count);
+    expect(tiles[0]).toHaveClass("z-10", "-rotate-6", "absolute");
+    expect(tiles[1]).toHaveClass("rotate-8");
+  });
+
+  it("switches to the grid at four visual items", () => {
+    render(<ChatMediaGroup attachments={images(4)} />);
+    expect(screen.getByTestId("chat-media-group").querySelector('[data-layout="grid"]')).toBeInTheDocument();
+    expect(screen.queryByText(/^\+/)).not.toBeInTheDocument();
+  });
+
+  it("moves only 1-3 visual items out of the bubble", () => {
+    const doc = { _id: "d1", name: "notes.pdf", type: "application/pdf", url: "/notes.pdf", size: 1 };
+    const three = images(3);
+    expect(splitStackedMedia([three[0], doc, three[1], three[2]])).toEqual({ stacked: three, inline: [doc] });
+    const four = images(4);
+    expect(splitStackedMedia(four)).toEqual({ stacked: [], inline: four });
+    expect(splitStackedMedia([doc])).toEqual({ stacked: [], inline: [doc] });
   });
 
   it("shows four tiles and the remaining count, then opens the exact item", async () => {

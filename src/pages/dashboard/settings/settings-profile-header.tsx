@@ -6,9 +6,6 @@ import Spinner from "@/components/spinner";
 import { cn, isEmpty } from "@/utility";
 import endpoint from "@/api/endpoint";
 import useFetcher from "@/hooks/use-fetcher";
-import { useApi } from "@/hooks/use-api";
-import type { IPersona } from "@/utility/interface";
-import { SocialProfileLinks } from "@/features/profile/social-profile-links";
 import { useStore } from "@/hooks/use-store";
 import { UserAvatar } from "@/components/user-avatar";
 import { useProfileAvatarUpload } from "./use-profile-avatar-upload";
@@ -22,15 +19,12 @@ export function SettingsProfileHeader() {
   const { trigger: publishProfile, isMutating: sharing } = useFetcher(
     endpoint.shareProfile,
   );
-  const { data: persona } = useApi<IPersona | null>(endpoint.persona, {
-    refreshInterval: 30000,
-  });
   const { previewImage, isMutating, handleUpload } = useProfileAvatarUpload();
   const rawDisplayName = [user?.first_name, user?.last_name]
     .filter(Boolean)
     .join(" ")
     .trim();
-  const displayName = user?.nickname?.trim() || rawDisplayName || "Your name";
+  const displayName = rawDisplayName || user?.nickname?.trim() || "Your name";
   const memberSince = useMemo(
     () => (user?.created_at ? dayjs(user.created_at).format("MMM YYYY") : null),
     [user?.created_at],
@@ -74,8 +68,8 @@ export function SettingsProfileHeader() {
   };
 
   return (
-    <header className="flex w-full flex-wrap items-start gap-4">
-      <div className="flex min-w-0 flex-1 basis-full items-start gap-3 sm:basis-auto">
+    <header className="settings-card flex w-full flex-wrap items-center gap-4 p-4">
+      <div className="flex min-w-0 flex-1 basis-full items-center gap-4 sm:basis-auto">
         <label
           htmlFor={AVATAR_INPUT_ID}
           className={cn(
@@ -113,31 +107,27 @@ export function SettingsProfileHeader() {
             </div>
           )}
         </label>
-        <div className="min-w-0 flex-1 space-y-2 text-left">
-          <h2 className="break-words font-sans text-xl font-semibold text-text-neutral-strong sm:text-2xl">
+        <div className="min-w-0 flex-1 space-y-1 text-left">
+          <h2 className="break-words text-xl font-bold text-text-neutral-strong sm:text-2xl">
             {displayName}
           </h2>
-          <p className="flex flex-wrap items-center justify-start gap-y-1 text-left font-inter text-sm text-text-neutral-weak">
-            {user?.email && <span className="break-all">{user.email}</span>}
+          <p className="flex flex-wrap items-center justify-start gap-y-1 text-left text-sm text-text-neutral-weak">
+            {user?.email && <span className="max-w-full truncate" title={user.email}>{user.email}</span>}
             {memberSince && (
               <span className="inline-flex items-center">
                 {user?.email && (
                   <span
-                    className="mx-3 size-1 shrink-0 rounded-full bg-current opacity-40"
+                    className="mx-2 size-1 shrink-0 rounded-full bg-current"
                     aria-hidden
                   />
                 )}
-                <span>Member since {memberSince}</span>
+                <span>Joined {memberSince}</span>
               </span>
             )}
           </p>
         </div>
       </div>
-      <div
-        className="ml-auto hidden shrink-0 flex-wrap items-start gap-3 text-text-neutral-weaker has-[a]:flex"
-        aria-label="Social profiles"
-      >
-        <SocialProfileLinks accounts={persona?.data?.social_accounts} />
+      <div className="hidden">
         <button
           type="button"
           className={`${actionClass} gap-2 !hidden`}

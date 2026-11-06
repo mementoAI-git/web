@@ -37,9 +37,11 @@ const itemLabelClass = "flex-1 text-left text-[13px]";
 export function ProfileDropdown({
   hideName = false,
   subtitle,
+  contentClassName,
 }: {
   hideName?: boolean;
   subtitle?: string;
+  contentClassName?: string;
 }) {
   const { user, unsetAuth } = useStore();
   const { tier, isLoading: subscriptionLoading } = useSubscription();
@@ -108,6 +110,7 @@ export function ProfileDropdown({
         className={cn(
           "navigation-menu min-w-[260px] gap-0 rounded-xl border border-border bg-popover p-1",
           "shadow-xl",
+          contentClassName,
         )}
       >
         <DropdownMenuGroup>

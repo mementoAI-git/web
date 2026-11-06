@@ -236,6 +236,39 @@ describe("Voiceinput", () => {
     expect(liveApi.disconnect).toHaveBeenCalledOnce();
   });
 
+  it.each(["overview", "floating"] as const)("uses the shared voice icons and state fills for the %s mute control", async (variant) => {
+    liveApi.isRecording = true;
+    liveApi.connected = true;
+    const user = userEvent.setup();
+    renderWithProviders(<Voiceinput inline variant={variant} onCancel={vi.fn()} />, { auth: true });
+    const unmuted = screen.getByRole("button", { name: "Mute microphone", exact: true });
+    expect(unmuted).toHaveClass("bg-fill-neutral-weak");
+    expect(unmuted).not.toHaveClass("bg-fill-neutral-strong");
+    expect(unmuted.querySelector("svg")).toBeNull();
+    expect(unmuted.querySelector("img")?.getAttribute("src")).toContain("microphone-01");
+    await user.click(unmuted);
+    const muted = screen.getByRole("button", { name: "Unmute microphone", exact: true });
+    expect(muted).toHaveClass("bg-fill-tab-active");
+    expect(muted).not.toHaveClass("bg-fill-neutral-weak");
+    expect(muted.querySelector("img")?.getAttribute("src")).toContain("microphone-off-01");
+    await user.click(muted);
+    expect(screen.getByRole("button", { name: "Mute microphone", exact: true })).toHaveClass("bg-fill-neutral-weak");
+  });
+
+  it("keeps the compact floating panel's move handle, settings, and call details", async () => {
+    liveApi.isRecording = true;
+    liveApi.connected = true;
+    const user = userEvent.setup();
+    renderWithProviders(<Voiceinput inline variant="floating" onCancel={vi.fn()} />, { auth: true });
+    const handle = screen.getByRole("button", { name: "Move voice window" });
+    expect(handle).toHaveAttribute("data-voice-drag-handle");
+    expect(handle).toHaveClass("inset-0");
+    expect(screen.getByLabelText("Call duration")).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent("Listening");
+    await user.click(screen.getByRole("button", { name: "Voice settings" }));
+    expect(screen.getByRole("dialog", { name: "Voice settings" })).toBeInTheDocument();
+  });
+
   it("shows first-time inline modals and starts with the chosen voice only after saving", async () => {
     voiceState.user = {};
     let finishSaving!: (saved: boolean) => void;
@@ -299,13 +332,17 @@ describe("Voiceinput", () => {
     expect(screen.getByLabelText("Call duration")).toHaveTextContent("00:00");
     expect(screen.getByRole("status")).toHaveTextContent("Listening");
     expect(screen.queryByText("Let’s talk")).not.toBeInTheDocument();
+    const micIconSrc = (name: string) => screen.getByRole("button", { name, exact: true }).querySelector("img")?.getAttribute("src");
     expect(screen.getByRole("button", { name: "Mute microphone", exact: true })).toBeEnabled();
+    expect(micIconSrc("Mute microphone")).toContain("microphone-01");
     await user.click(screen.getByRole("button", { name: "Mute microphone", exact: true }));
     expect(screen.getByRole("status")).toHaveTextContent("You’re muted");
+    expect(micIconSrc("Unmute microphone")).toContain("microphone-off-01");
     expect(liveApi.setInputMuted).toHaveBeenCalledWith(true);
     await user.click(screen.getByRole("button", { name: "Unmute microphone", exact: true }));
     expect(liveApi.setInputMuted).toHaveBeenLastCalledWith(false);
     expect(screen.getByRole("status")).toHaveTextContent("Listening");
+    expect(micIconSrc("Mute microphone")).toContain("microphone-01");
     await user.click(screen.getByRole("button", { name: "Voice settings" }));
     expect(screen.getByRole("dialog", { name: "Voice settings" })).toHaveAttribute("data-side", "bottom");
     expect(document.querySelector('[data-slot="sheet-content"]')).toBeNull();

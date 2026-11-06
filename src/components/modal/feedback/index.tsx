@@ -23,31 +23,21 @@ import { useStore } from "@/hooks/use-store";
 import * as yup from "yup";
 import useFetcher from "@/hooks/use-fetcher";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Spinner } from "@/components/ui/spinner";
 import { Check, Paperclip, X } from "lucide-react";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Field,
-  FieldDescription,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-} from "@/components/ui/field";
+  FormDialog,
+  FormDialogField,
+  FormDialogFooter,
+  FormDialogInput,
+  FormDialogSelectContent,
+  FormDialogSelectTrigger,
+  FormDialogTextarea,
+} from "@/components/modal/form-dialog";
 import {
   Select,
-  SelectContent,
   SelectGroup,
   SelectItem,
-  SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
 import {
@@ -312,34 +302,29 @@ const Content = forwardRef<
     [handleDeleteAllFiles, files.length, isMutating],
   );
 
-  const submitDisabled = isMutating || files.some((f) => !f.uploadedFile);
-
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="flex min-h-0 flex-col gap-6"
-      noValidate
+    <FormDialog
+      title="Send feedback"
+      description="Share a bug, an idea, or something we could improve."
+      onClose={onClose}
+      busy={isMutating}
     >
-      <fieldset disabled={isMutating} className="min-w-0">
-        <FieldGroup className="gap-5">
-          <Field data-invalid={Boolean(errors.type)}>
-            <FieldLabel htmlFor={typeFieldId}>Feedback type</FieldLabel>
+      <form onSubmit={handleSubmit} className="flex flex-col gap-5" noValidate>
+        <fieldset disabled={isMutating} className="flex min-w-0 flex-col gap-5">
+          <FormDialogField label="Feedback type" htmlFor={typeFieldId} error={errors.type}>
             <Select
               name="type"
               value={values.type}
               onValueChange={(value) => handleValue("type", value)}
             >
-              <SelectTrigger
+              <FormDialogSelectTrigger
                 id={typeFieldId}
-                className="w-full"
                 aria-invalid={Boolean(errors.type)}
-                aria-describedby={
-                  errors.type ? `${typeFieldId}-error` : undefined
-                }
+                aria-describedby={errors.type ? `${typeFieldId}-error` : undefined}
               >
                 <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
+              </FormDialogSelectTrigger>
+              <FormDialogSelectContent>
                 <SelectGroup>
                   {FEEDBACK_OPTIONS.map((option) => (
                     <SelectItem key={option.value} value={option.value}>
@@ -347,42 +332,25 @@ const Content = forwardRef<
                     </SelectItem>
                   ))}
                 </SelectGroup>
-              </SelectContent>
+              </FormDialogSelectContent>
             </Select>
-            {errors.type && (
-              <FieldError id={`${typeFieldId}-error`}>{errors.type}</FieldError>
-            )}
-          </Field>
-          <Field data-invalid={Boolean(errors.message)}>
-            <FieldLabel htmlFor={messageFieldId}>Message</FieldLabel>
-            <Textarea
+          </FormDialogField>
+          <FormDialogField label="Message" htmlFor={messageFieldId} error={errors.message}>
+            <FormDialogTextarea
               id={messageFieldId}
               name="message"
               value={values.message}
               onChange={handleChange}
               placeholder="What happened, or what would you like to see?"
-              className="min-h-32 max-h-64 resize-y"
+              className="min-h-32 max-h-64"
               aria-invalid={Boolean(errors.message)}
-              aria-describedby={
-                errors.message ? `${messageFieldId}-error` : undefined
-              }
+              aria-describedby={errors.message ? `${messageFieldId}-error` : undefined}
               required
             />
-            {errors.message && (
-              <FieldError id={`${messageFieldId}-error`}>
-                {errors.message}
-              </FieldError>
-            )}
-          </Field>
+          </FormDialogField>
           {!user && (
-            <Field data-invalid={Boolean(errors.email)}>
-              <FieldLabel htmlFor={emailFieldId}>
-                Email{" "}
-                <span className="text-muted-foreground font-normal">
-                  (optional)
-                </span>
-              </FieldLabel>
-              <Input
+            <FormDialogField label="Email (optional)" htmlFor={emailFieldId} error={errors.email}>
+              <FormDialogInput
                 id={emailFieldId}
                 type="email"
                 name="email"
@@ -391,24 +359,11 @@ const Content = forwardRef<
                 onChange={handleChange}
                 placeholder="you@example.com"
                 aria-invalid={Boolean(errors.email)}
-                aria-describedby={
-                  errors.email ? `${emailFieldId}-error` : undefined
-                }
+                aria-describedby={errors.email ? `${emailFieldId}-error` : undefined}
               />
-              {errors.email && (
-                <FieldError id={`${emailFieldId}-error`}>
-                  {errors.email}
-                </FieldError>
-              )}
-            </Field>
+            </FormDialogField>
           )}
-          <Field>
-            <FieldLabel htmlFor={screenshotsFieldId}>
-              Screenshots{" "}
-              <span className="text-muted-foreground font-normal">
-                (optional)
-              </span>
-            </FieldLabel>
+          <FormDialogField label="Screenshots (optional)" htmlFor={screenshotsFieldId}>
             <input
               id={screenshotsFieldId}
               ref={fileInputRef}
@@ -423,21 +378,21 @@ const Content = forwardRef<
               <Button
                 type="button"
                 variant="outline"
-                size="sm"
+                className="border-stroke-neutral-weak bg-transparent text-text-neutral-strong"
                 onClick={() => fileInputRef.current?.click()}
               >
                 <Paperclip data-icon="inline-start" />
                 Add screenshots
               </Button>
-              <FieldDescription>
+              <span className="text-sm text-text-neutral-weak">
                 Or paste an image from your clipboard.
-              </FieldDescription>
+              </span>
             </div>
             {files.length > 0 && (
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+              <div className="mt-1 grid grid-cols-2 gap-3 sm:grid-cols-3">
                 {files.map((file) => (
                   <div key={file.id} className="flex min-w-0 flex-col gap-1.5">
-                    <div className="relative aspect-video overflow-hidden rounded-xl border border-stroke-neutral-weak bg-fill-neutral-weaker">
+                    <div className="relative aspect-video overflow-hidden rounded-lg border border-stroke-neutral-weak bg-fill-neutral-weak">
                       {file.base64 && (
                         <img
                           src={file.base64}
@@ -478,7 +433,7 @@ const Content = forwardRef<
                       </div>
                     </div>
                     <span
-                      className="truncate text-xs text-muted-foreground"
+                      className="truncate text-xs text-text-neutral-weak"
                       title={file.file.name}
                     >
                       {file.file.name}
@@ -487,24 +442,17 @@ const Content = forwardRef<
                 ))}
               </div>
             )}
-          </Field>
-        </FieldGroup>
-      </fieldset>
-      <DialogFooter>
-        <Button
-          type="button"
-          variant="outline"
-          disabled={isMutating}
-          onClick={onClose}
-        >
-          Cancel
-        </Button>
-        <Button type="submit" disabled={submitDisabled}>
-          {isMutating && <Spinner data-icon="inline-start" />}
-          {isMutating ? "Sending…" : "Send feedback"}
-        </Button>
-      </DialogFooter>
-    </form>
+          </FormDialogField>
+        </fieldset>
+        <FormDialogFooter
+          submitLabel="Send feedback"
+          busyLabel="Sending…"
+          busy={isMutating}
+          disabled={files.some((f) => !f.uploadedFile)}
+          onDismiss={onClose}
+        />
+      </form>
+    </FormDialog>
   );
 });
 
@@ -551,30 +499,12 @@ export function Feedback({ data }: { data: FeedbackModalData }) {
 
   return (
     <>
-      <Dialog
-        open
-        onOpenChange={(open) => {
-          if (!open) requestClose();
-        }}
-      >
-        <DialogContent
-          className="max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-[480px]"
-          overlayClassName="bg-overlay-backdrop dark:bg-overlay-backdrop-dark"
-        >
-          <DialogHeader className="pr-8">
-            <DialogTitle>Send feedback</DialogTitle>
-            <DialogDescription>
-              Share a bug, an idea, or something we could improve.
-            </DialogDescription>
-          </DialogHeader>
-          <Content data={data} ref={contentRef} onClose={requestClose} />
-        </DialogContent>
-      </Dialog>
+      <Content data={data} ref={contentRef} onClose={requestClose} />
       <AlertDialog
         open={showCloseConfirmation}
         onOpenChange={setShowCloseConfirmation}
       >
-        <AlertDialogContent>
+        <AlertDialogContent className="z-[130]" overlayClassName="z-[125]">
           <AlertDialogHeader>
             <AlertDialogTitle>Discard feedback?</AlertDialogTitle>
             <AlertDialogDescription>

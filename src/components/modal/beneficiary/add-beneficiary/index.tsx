@@ -1,6 +1,15 @@
-import { InviteDialog } from "../../invite-dialog";
+import {
+  FormDialog,
+  FormDialogField,
+  FormDialogFooter,
+  FormDialogInput,
+} from "../../form-dialog";
 import { useId, useState } from "react";
-import { X } from "lucide-react";
+import { Check, X } from "lucide-react";
+import useSWR from "swr";
+import { groupColorVar } from "@/components/group-color";
+import { groupsListFetcher, groupsListKey } from "@/api/groups";
+import type { IGroup } from "@/utility/interface";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -51,6 +60,11 @@ export function AddBeneficiary({
   );
   const [selectedGroups, setSelectedGroups] = useState<GroupSearchResultItem[]>(
     [],
+  );
+  const { data: groupsData } = useSWR(
+    isConnection ? groupsListKey(1) : null,
+    groupsListFetcher,
+    { shouldRetryOnError: false },
   );
   const { handleSubmit, isValid, getField } = useForm({
     initial,
@@ -192,17 +206,115 @@ export function AddBeneficiary({
     </form>
   );
 
-  if (isConnection)
+  if (isConnection) {
+    const groups = groupsData?.docs ?? [];
+    const toggleGroup = (group: IGroup) =>
+      setSelectedGroups((current) =>
+        current.some((item) => item.id === group._id)
+          ? current.filter((item) => item.id !== group._id)
+          : [
+              ...current,
+              {
+                id: group._id,
+                name: group.name,
+                source: "group",
+                color: group.color,
+              },
+            ],
+      );
     return (
-      <InviteDialog
-        title="Invite people"
+      <FormDialog
+        title="Invite person"
         description="Share memories with someone you know."
         onClose={() => close?.("add-beneficiary")}
         busy={isMutating}
       >
-        {form}
-      </InviteDialog>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+          <FormDialogField
+            label="Name"
+            htmlFor={`${fieldId}-name`}
+            error={nameField.error}
+          >
+            <FormDialogInput
+              disabled={isMutating}
+              placeholder="John Doe"
+              id={`${fieldId}-name`}
+              name={nameField.name}
+              value={nameField.value}
+              onChange={nameField.onChange}
+              aria-invalid={!!nameField.error}
+            />
+          </FormDialogField>
+          <FormDialogField
+            label="Email address"
+            htmlFor={`${fieldId}-email`}
+            error={emailField.error}
+          >
+            <FormDialogInput
+              disabled={isMutating}
+              type="email"
+              placeholder="example@gmail.com"
+              id={`${fieldId}-email`}
+              name={emailField.name}
+              value={emailField.value}
+              onChange={emailField.onChange}
+              aria-invalid={!!emailField.error}
+            />
+          </FormDialogField>
+          <FormDialogField
+            label="Relationship"
+            htmlFor={`${fieldId}-relationship`}
+            error={relationshipField.error}
+          >
+            <FormDialogInput
+              disabled={isMutating}
+              placeholder="Brother, Friend, Spouse…"
+              id={`${fieldId}-relationship`}
+              name={relationshipField.name}
+              value={relationshipField.value}
+              onChange={relationshipField.onChange}
+              aria-invalid={!!relationshipField.error}
+            />
+          </FormDialogField>
+          {groups.length > 0 ? (
+            <fieldset>
+              <legend className="mb-3 text-sm text-text-neutral-strong">
+                Add to groups
+              </legend>
+              <div className="flex flex-wrap gap-1.5">
+                {groups.map((group) => {
+                  const selected = selectedGroups.some(
+                    (item) => item.id === group._id,
+                  );
+                  return (
+                    <button
+                      key={group._id}
+                      type="button"
+                      disabled={isMutating}
+                      aria-pressed={selected}
+                      onClick={() => toggleGroup(group)}
+                      style={{ backgroundColor: groupColorVar(group.color) }}
+                      className="inline-flex h-6 cursor-pointer items-center gap-1 rounded-full px-2.5 text-xs font-medium text-[var(--group-on-color)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-stroke-neutral-strong"
+                    >
+                      {selected ? <Check className="size-3.5" aria-hidden /> : null}
+                      {group.name}
+                    </button>
+                  );
+                })}
+              </div>
+            </fieldset>
+          ) : null}
+          <FormDialogFooter
+            submitLabel="Send invite"
+            busyLabel="Sending…"
+            busy={isMutating}
+            disabled={!isValid}
+            onDismiss={() => close?.("add-beneficiary")}
+          />
+        </form>
+      </FormDialog>
     );
+  }
 
   return (
     <div className="modal-container !max-w-[480px]">

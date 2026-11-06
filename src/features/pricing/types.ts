@@ -48,6 +48,8 @@ export interface SubscriptionSummary {
   /** ISO 8601 trial end (PRD: trial_ends_at) */
   trial_ends_at?: string;
   cancel_at_period_end?: boolean;
+  /** True once the member has had a subscription; they get no further trial. */
+  has_used_trial?: boolean;
   billing_interval?: "monthly" | "annual" | "lifetime" | null;
   can_manage_subscription?: boolean;
   provider?: BillingProvider;

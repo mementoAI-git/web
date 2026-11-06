@@ -15,15 +15,6 @@ export default function Privacy() {
 
   return (
     <div className="flex w-full flex-col gap-6 sm:gap-8">
-      <header className="flex flex-col gap-1">
-        <span className="font-inter text-base font-bold text-v3-text-strong text-balance">
-          Privacy & account
-        </span>
-        <span className="font-inter text-sm text-v3-text-weak text-pretty">
-          Manage your account privacy settings
-        </span>
-      </header>
-
       <p className="font-inter text-sm text-v3-text-weak text-pretty">
         Memento AI believes in transparent data practices. Learn how your information is protected when using our products, and visit our
         <span className="font-semibold text-v3-brand-strong underline"> Privacy Policy</span> and

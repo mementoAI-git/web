@@ -4,18 +4,20 @@ import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import dayjs from "dayjs";
 import { ChatDesignIcon } from "@/components/chat-design-icon";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { snippetReplyText } from "@/utility/chat-reply-prompt";
 import type { IFile, ILinkMetadata } from "@/utility/interface";
 import { ChatMediaGroup } from "./chat-media-group";
 import { ChatLinkPreview } from "./chat-link-preview";
-import { buildConversationAssetIndex, extractSharedUrls } from "./conversation-assets";
+import { buildConversationAssetIndex, extractSharedUrls, splitStackedMedia } from "./conversation-assets";
 
 type ChatAttachment = Pick<IFile, "url" | "name"> &
   Partial<Omit<IFile, "url" | "name">>;
 
 interface IBubbleProps {
+  /** Extra controls for the row under the bubble, after Copy and Reply. */
+  metaActions?: ReactNode;
   role?: "user" | "ai" | string
   attatchments?: ChatAttachment[]
   text?: string
@@ -68,6 +70,7 @@ export default function Bubble({
   onReply,
   hostChatDeepDive = false,
   linkMetadata = [],
+  metaActions,
 }: IBubbleProps) {
 
   const isUser = role === "user"
@@ -109,6 +112,14 @@ export default function Bubble({
       text.trim() === extractedUrls[0],
   );
 
+  const { stacked: stackedMedia, inline: inlineAttachments } = useMemo(
+    () => splitStackedMedia(attatchments ?? []),
+    [attatchments],
+  );
+  const showSurface =
+    !stackedMedia.length ||
+    Boolean(text.trim() || replyQuote?.text?.trim() || inlineAttachments.length);
+
   if (!isUser && !text.trim() && isEmpty(attatchments) && !is_voice) return null;
 
   return (
@@ -127,7 +138,12 @@ export default function Bubble({
           !isUser && (topic ? "w-fit max-w-full items-start" : "w-fit max-w-[75%] items-start"),
         )}
       >
-        <div
+        {stackedMedia.length ? (
+          <div className={cn(showSurface && "mb-1.5")}>
+            <ChatMediaGroup attachments={stackedMedia} sharedAt={createdAt} />
+          </div>
+        ) : null}
+        {showSurface ? <div
           className={cn(
             "w-fit max-w-full",
             !hostChatDeepDive && "sky-card",
@@ -150,9 +166,9 @@ export default function Bubble({
               </p>
             </div>
           ) : null}
-          {!isEmpty(attatchments) ? (
+          {inlineAttachments.length ? (
             <div className={cn(text.trim() && "mb-1.5")}>
-              <ChatMediaGroup attachments={attatchments} sharedAt={createdAt} />
+              <ChatMediaGroup attachments={inlineAttachments} sharedAt={createdAt} />
             </div>
           ) : null}
           {useMetadataPreview && metadataLink ? (
@@ -198,9 +214,9 @@ export default function Bubble({
               {text || ""}
             </Markdown>
           </span> : null}
-        </div>
+        </div> : null}
         {metaVisible &&
-          (timeLabel || canCopy || (onReply && hasReplyableContent)) && (
+          (timeLabel || canCopy || metaActions || (onReply && hasReplyableContent)) && (
             <div
             className={cn(
               "mt-1 flex w-fit max-w-full flex-wrap items-center gap-1 px-0.5",
@@ -240,6 +256,7 @@ export default function Bubble({
                 Reply
               </button>
             ) : null}
+            {metaActions}
           </div>
         )}
         {isUser && sendFailed && onRetry ? (

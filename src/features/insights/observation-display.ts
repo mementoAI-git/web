@@ -40,3 +40,25 @@ export function normalizeObservationForDisplay(observation: string): string {
     return `You ${toSecondPersonVerb(verb)}`;
   });
 }
+
+/**
+ * Splits a stored observation into a headline and supporting detail. Most
+ * records are one sentence, so `detail` is empty unless the text provides it.
+ */
+export function splitObservation(observation: string): {
+  title: string;
+  detail: string;
+} {
+  const text = observation.trim();
+  const match = text.match(/^(.+?)[.!?](?:\s+)(\S[\s\S]*)$/);
+  if (!match) return { title: text.replace(/[.!]$/, ""), detail: "" };
+  return { title: match[1], detail: match[2].trim() };
+}
+
+/** Rebuilds the stored wording from a headline and its supporting detail. */
+export function joinObservation(title: string, detail: string): string {
+  const heading = title.trim();
+  const note = detail.trim();
+  if (!note) return heading;
+  return `${/[.!?]$/.test(heading) ? heading : `${heading}.`} ${note}`;
+}

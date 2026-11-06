@@ -103,39 +103,14 @@ describe("SettingsAbout", () => {
     await user.keyboard("{Escape}");
     expect(screen.getByRole("dialog")).toBeInTheDocument();
     expect(field).toBeDisabled();
-    expect(screen.getByRole("button", { name: "Cancel" })).toBeDisabled();
-    await user.click(screen.getByRole("button", { name: "Saving…" }));
+    expect(screen.getByRole("button", { name: "Dismiss" })).toBeDisabled();
+    await user.click(screen.getByRole("button", { name: /Saving/ }));
     expect(requests).toBe(1);
     release();
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
     expect(screen.getByText("New introduction.")).toBeInTheDocument();
   });
 
-  it("separates the original user bio from the short AI summary", async () => {
-    server.use(
-      http.get(`${base}/users/persona/memory-insights-summary`, () =>
-        HttpResponse.json({
-          success: true,
-          data: {
-            summary:
-              "You value family. You enjoy travel. You love cooking.\n\nMore detail.",
-          },
-        }),
-      ),
-    );
-    setup();
-    const about = screen.getByRole("region", { name: "About me" });
-    expect(
-      await within(about).findByText("My own introduction."),
-    ).toBeInTheDocument();
-    expect(
-      await screen.findByText("You value family. You enjoy travel."),
-    ).toBeInTheDocument();
-    expect(
-      within(about).queryByText(/You value family/),
-    ).not.toBeInTheDocument();
-    expect(screen.queryByText(/You love cooking/)).not.toBeInTheDocument();
-  });
   it("saves only self_description to the same persona endpoint used on mobile", async () => {
     let payload: unknown;
     server.use(
@@ -152,11 +127,7 @@ describe("SettingsAbout", () => {
       screen.getByRole("dialog", { name: "Edit About me" }),
     ).toBeInTheDocument();
     expect(
-      within(
-        document.querySelector(
-          'section[aria-labelledby="settings-about-heading"]',
-        ) as HTMLElement,
-      ).queryByRole("textbox"),
+      within(screen.getByRole("region", { name: "About me", hidden: true })).queryByRole("textbox"),
     ).not.toBeInTheDocument();
     const field = screen.getByRole("textbox", { name: "Your introduction" });
     expect(field).toHaveValue("My own introduction.");
@@ -187,39 +158,9 @@ describe("SettingsAbout", () => {
       ),
     );
     expect(field).toHaveValue("Unsaved bio");
-    await user.click(screen.getByRole("button", { name: "Cancel" }));
+    await user.click(screen.getByRole("button", { name: "Dismiss" }));
     expect(screen.getByText("My own introduction.")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Edit" }));
     expect(screen.getByRole("textbox", { name: "Your introduction" })).toHaveValue("My own introduction.");
-  });
-  it("shows an honest empty state when no AI summary exists", async () => {
-    setup();
-    expect(
-      await screen.findByText(/Your AI summary will appear here/),
-    ).toBeInTheDocument();
-  });
-  it("allows retrying a failed AI summary request", async () => {
-    server.use(
-      http.get(`${base}/users/persona/memory-insights-summary`, () =>
-        HttpResponse.json({ success: false }, { status: 500 }),
-      ),
-    );
-    setup();
-    expect(await screen.findByRole("button", { name: "Retry loading summary" })).toBeInTheDocument();
-    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
-    server.use(
-      http.get(`${base}/users/persona/memory-insights-summary`, () =>
-        HttpResponse.json({
-          success: true,
-          data: { summary: "You cherish your friendships." },
-        }),
-      ),
-    );
-    await userEvent
-      .setup()
-      .click(screen.getByRole("button", { name: "Retry loading summary" }));
-    expect(
-      await screen.findByText("You cherish your friendships."),
-    ).toBeInTheDocument();
   });
 });

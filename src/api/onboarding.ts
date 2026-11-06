@@ -372,24 +372,3 @@ export async function fetchOnboardingDetails(): Promise<OnboardingDetailsRespons
     return null;
   }
 }
-
-/** Skip onboarding. POST /users/onboarding/skip */
-export async function skipOnboarding(): Promise<{
-  success: boolean;
-  onboarding_status?: OnboardingStatus;
-}> {
-  try {
-    const res = await post<{ onboarding_status?: OnboardingStatus }>(
-      endpoint.onboardingSkip
-    );
-    const data = (res as { data?: { onboarding_status?: OnboardingStatus }; status?: number })
-      ?.data;
-    const status = (res as { status?: number })?.status;
-    return {
-      success: status === 200,
-      onboarding_status: data?.onboarding_status,
-    };
-  } catch {
-    return { success: false };
-  }
-}

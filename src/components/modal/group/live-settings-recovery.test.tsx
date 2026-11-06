@@ -19,14 +19,13 @@ it("opens the registered group dialog from Settings and guards the real shell du
     return HttpResponse.json({ message: "Group service unavailable" }, { status: 503 });
   }));
   renderWithProviders(<><Routes><Route path="/settings/:tab" element={<SettingsPage />} /><Route path="/chat/:id" element={<ChatSwitcher />} /></Routes><Modal /></>, { auth: true, route: "/settings/beneficiary" });
-  await userEvent.click(await screen.findByRole("tab", { name: /Groups/ }));
-  await userEvent.click(screen.getByRole("button", { name: "Create group" }));
+  await userEvent.click(await screen.findByRole("tab", { name: "Groups" }));
+  await userEvent.click(screen.getByRole("button", { name: "New group" }));
   const input = screen.getByPlaceholderText("e.g. Family");
   await userEvent.type(input, "My family");
   await userEvent.click(screen.getByRole("button", { name: "Create group", exact: true }));
   await waitFor(() => expect(requests).toBe(1));
   await userEvent.keyboard("{Escape}");
-  await userEvent.click(screen.getByRole("button", { name: /Cancel.*ESC/ }));
   expect(input).toBeInTheDocument();
   finish();
   await waitFor(() => expect(screen.getByRole("button", { name: "Create group", exact: true })).toBeEnabled());

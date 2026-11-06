@@ -32,7 +32,11 @@ export function StoryJournalShell({
 }: StoryJournalShellProps) {
   const { resolvedTheme } = useTheme();
   const { state } = useModal();
-  const hasStackedModal = state.length > 1 && state[0]?.name !== "create-memory";
+  // Only step back for a modal on top. Insights can wait underneath the viewer.
+  const hasStackedModal =
+    state.length > 1 &&
+    state[0]?.name !== "create-memory" &&
+    state[0]?.name !== "view-memory";
   // The grain's transparent left region follows the WebP's exact source coordinates,
   // so object-cover cropping never puts texture on the leather or chrome.
   const paperTexture = resolvedTheme === "light" ? (

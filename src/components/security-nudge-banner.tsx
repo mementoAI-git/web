@@ -1,4 +1,4 @@
-import { StripBannerFrame } from "./strip-banner-frame";
+import { StripBanner } from "./strip-banner-frame";
 /**
  * SecurityNudgeBanner — shown periodically to users who have neither
  * a passkey nor 2FA enabled. Dismissable for 14 days.
@@ -46,44 +46,41 @@ export function SecurityNudgeBanner() {
   if (!visible) return null;
 
   return (
-    <StripBannerFrame>
-      <div
-        className={cn(
-          "flex w-full items-center justify-between gap-3 rounded-xl border border-stroke-warning-strong/20 bg-fill-warning-weak px-4 py-3",
-          "font-inter text-sm text-text-warning-strong",
-          "motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-top-2 motion-safe:duration-300",
-        )}
-        role="status"
-      >
-        <div className="flex min-w-0 items-center gap-2.5">
-          <Shield
-            size={15}
-            className="shrink-0 text-icon-warning-strong"
-            strokeWidth={1.5}
-          />
-          <span>
-            Secure your account — set up a{" "}
-            <button
-              type="button"
-              className="rounded-sm font-semibold underline underline-offset-2 hover:text-text-warning-weak focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stroke-warning-strong"
-              onClick={() => {
-                navigate("/settings/security");
-                dismiss();
-              }}
-            >
-              passkey or 2FA
-            </button>
-          </span>
-        </div>
-        <button
-          type="button"
-          onClick={dismiss}
-          aria-label="Dismiss security reminder"
-          className="shrink-0 rounded-full p-1 text-icon-warning-strong transition-colors hover:bg-fill-warning-strong/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stroke-warning-strong motion-reduce:transition-none"
-        >
-          <X size={14} strokeWidth={1.5} />
-        </button>
+    <StripBanner
+      className={cn(
+        "flex items-center justify-between gap-3 px-4 py-3",
+        "font-inter text-sm",
+        "motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-top-2 motion-safe:duration-300",
+      )}
+    >
+      <div className="flex min-w-0 items-center gap-2.5">
+        <Shield
+          size={15}
+          className="shrink-0 text-icon-neutral-weak"
+          strokeWidth={1.5}
+        />
+        <span>
+          Secure your account — set up a{" "}
+          <button
+            type="button"
+            className="rounded-sm font-semibold underline underline-offset-2 hover:text-text-neutral-weak focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stroke-neutral-strong"
+            onClick={() => {
+              navigate("/settings/security");
+              dismiss();
+            }}
+          >
+            passkey or 2FA
+          </button>
+        </span>
       </div>
-    </StripBannerFrame>
+      <button
+        type="button"
+        onClick={dismiss}
+        aria-label="Dismiss security reminder"
+        className="relative shrink-0 rounded-full p-1 text-icon-neutral-weak after:absolute after:-inset-2.5 transition-colors hover:bg-fill-neutral-weak hover:text-icon-neutral-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stroke-neutral-strong motion-reduce:transition-none"
+      >
+        <X size={14} strokeWidth={1.5} />
+      </button>
+    </StripBanner>
   );
 }

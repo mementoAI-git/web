@@ -1215,7 +1215,7 @@ function CreateMemoryBase({
   if (isMobile && variant === "legacy") {
     return (
       <>
-        <Sheet detent="content" isOpen onClose={handleClose} snapPoints={[0, 0.8]} initialSnap={1}>
+        <Sheet detent="content" isOpen onClose={handleClose} snapPoints={[0, 1]} initialSnap={1}>
           <Sheet.Container className="max-h-[80dvh] overflow-hidden bg-v3-bg">
             <Sheet.Header className="rounded-t-3xl bg-v3-bg" />
             <Sheet.Content className="max-h-[80dvh] min-h-0 overflow-y-auto overscroll-contain bg-v3-bg px-4 pb-6">

@@ -4,28 +4,45 @@ import endpoint from "@/api/endpoint";
 import { put } from "@/api/mutations";
 import { useApi } from "@/hooks/use-api";
 import type { IPersona } from "@/utility/interface";
-import { Plus } from "lucide-react";
 import {
   normalizeSocialProfileUrl,
   type SocialPlatform,
 } from "@/features/profile/social-accounts";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
+import { SettingsFieldRow } from "@/pages/dashboard/settings/settings-field-row";
 
-const commonPlatforms: SocialPlatform[] = [
-  "x",
-  "facebook",
-  "linkedin",
-  "instagram",
-];
+const commonPlatforms: SocialPlatform[] = ["x", "linkedin", "instagram"];
+
+/** Platforms whose profiles are recognized by a short @handle. */
+const handleBaseUrls: Partial<Record<SocialPlatform, string>> = {
+  x: "https://x.com/",
+  instagram: "https://www.instagram.com/",
+};
+
+function labelFor(key: SocialPlatform, label: string) {
+  return key === "x" ? "X / Twitter" : label;
+}
+
+/** Shows a saved profile link as @handle until the field is focused. */
+function toDisplayValue(key: SocialPlatform, value: string) {
+  if (!handleBaseUrls[key] || !normalizeSocialProfileUrl(key, value)) return value;
+  return `@${new URL(value).pathname.replace(/^\/|\/$/g, "")}`;
+}
+
+/** Accepts @handle for handle-based platforms. Other values go through URL validation. */
+function toProfileUrlInput(key: SocialPlatform, value: string) {
+  const base = handleBaseUrls[key];
+  return base && /^@?[\w.]+$/.test(value) && !/^https?/i.test(value)
+    ? `${base}${value.replace(/^@/, "")}`
+    : value;
+}
 
 type Draft = Partial<Record<SocialPlatform, string>>;
 export function SettingsSocialProfiles() {
@@ -34,6 +51,7 @@ export function SettingsSocialProfiles() {
   const accounts = data?.data?.social_accounts;
   const [draft, setDraft] = useState<Draft>({});
   const [added, setAdded] = useState<SocialPlatform[]>([]);
+  const [focused, setFocused] = useState<SocialPlatform | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const savingRef = useRef(false);
@@ -56,13 +74,32 @@ export function SettingsSocialProfiles() {
   const available = socialPlatforms.filter(
     ({ key }) => !visibleKeys.includes(key),
   );
+  const disabled = saving || isLoading || !data;
+  const setValue = (key: SocialPlatform, value: string) => {
+    setDraft((previous) => ({ ...previous, [key]: value }));
+    setError("");
+  };
+  const paste = async (key: SocialPlatform) => {
+    try {
+      const text = (await navigator.clipboard.readText()).trim();
+      if (text) {
+        setValue(key, text);
+        return;
+      }
+    } catch {
+      // Clipboard access can be declined; typing or pasting by keyboard still works.
+    }
+    document.getElementById(`${id}-${key}`)?.focus();
+  };
   const save = async () => {
     if (!hasChanges || isLoading || savingRef.current) return;
     const changes: Partial<Record<SocialPlatform, string | null>> = {};
     for (const { key, label } of socialPlatforms) {
       const value = valueFor(key).trim();
       if (value === (accounts?.[key]?.url ?? "")) continue;
-      const url = value ? normalizeSocialProfileUrl(key, value) : null;
+      const url = value
+        ? normalizeSocialProfileUrl(key, toProfileUrlInput(key, value))
+        : null;
       if (value && !url) {
         setError(`Enter a valid HTTPS ${label} profile URL.`);
         return;
@@ -105,120 +142,114 @@ export function SettingsSocialProfiles() {
     }
   };
   return (
-    <Card className="sky-card mt-6 gap-0 rounded-3xl border border-stroke-neutral-weak bg-fill-neutral-weak py-0 ring-0">
-      <div className="px-6 py-5">
-        <h2
-          id={`${id}-heading`}
-          className="text-sm font-semibold text-text-neutral-strong"
-        >
-          Social profiles
-        </h2>
-      </div>
-      <form
-        aria-labelledby={`${id}-heading`}
-        aria-busy={saving}
-        onSubmit={(event) => {
-          event.preventDefault();
-          void save();
-        }}
-      >
-        <fieldset disabled={saving || isLoading || !data} className="min-w-0">
-          <legend className="sr-only">Social profile links</legend>
-          {visibleKeys.map((key) => {
-            const { label, placeholder } = socialPlatforms.find(
-              (platform) => platform.key === key,
-            )!;
-            return (
-              <div
-                key={key}
-                className="grid min-w-0 gap-2 px-6 py-4 sm:grid-cols-[160px_minmax(0,1fr)] sm:gap-6"
+    <form
+      aria-label="Social profiles"
+      aria-busy={saving}
+      className="settings-card px-8 py-5"
+      onSubmit={(event) => {
+        event.preventDefault();
+        void save();
+      }}
+    >
+      <fieldset disabled={disabled} className="min-w-0">
+        <legend className="sr-only">Social profile links</legend>
+        {visibleKeys.map((key) => {
+          const { label } = socialPlatforms.find(
+            (platform) => platform.key === key,
+          )!;
+          const value = valueFor(key);
+          return (
+            <SettingsFieldRow
+              key={key}
+              htmlFor={`${id}-${key}`}
+              label={labelFor(key, label)}
+            >
+              <Input
+                id={`${id}-${key}`}
+                maxLength={500}
+                inputMode="url"
+                className="settings-value-input"
+                placeholder={`Paste ${label} link`}
+                value={focused === key ? value : toDisplayValue(key, value)}
+                onFocus={() => setFocused(key)}
+                onBlur={() => setFocused(null)}
+                onChange={(event) => setValue(key, event.target.value)}
+              />
+              {!value ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="xs"
+                  className="settings-pill"
+                  aria-label={`Paste ${label} link`}
+                  onClick={() => void paste(key)}
+                >
+                  Paste
+                </Button>
+              ) : null}
+            </SettingsFieldRow>
+          );
+        })}
+      </fieldset>
+      <p className="pt-2 text-xs text-text-neutral-weaker">
+        Clear a link to remove it. Removed links won’t be added again by AI.
+      </p>
+      <div className="flex flex-wrap items-center justify-end gap-3 pt-3.5">
+        {error && (
+          <p role="alert" className="mr-auto text-sm text-text-error-strong">
+            {error}
+          </p>
+        )}
+        {available.length > 0 && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                disabled={disabled}
+                className="settings-pill h-9 px-4"
               >
-                <Label
-                  htmlFor={`${id}-${key}`}
-                  className="text-sm font-medium text-text-neutral-strong sm:pt-3"
-                >
-                  {key === "x" ? "Twitter / X" : label}
-                </Label>
-                <Input
-                  id={`${id}-${key}`}
-                  type="url"
-                  maxLength={500}
-                  variant="form"
-                  className="min-w-0 bg-transparent motion-reduce:transition-none"
-                  placeholder={placeholder}
-                  value={valueFor(key)}
-                  onChange={(event) => {
-                    setDraft((previous) => ({
-                      ...previous,
-                      [key]: event.target.value,
-                    }));
-                    setError("");
-                  }}
-                />
-              </div>
-            );
-          })}
-          {available.length > 0 && (
-            <div className="px-6 py-4 sm:pl-[208px]">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    disabled={saving || isLoading || !data}
-                    className="gap-2"
-                  >
-                    <Plus className="size-4" aria-hidden />
-                    Add social profile
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent
-                  className="motion-reduce:animate-none"
-                  onCloseAutoFocus={(event) => {
-                    if (!focusAdded.current) return;
-                    event.preventDefault();
-                    requestAnimationFrame(() => {
-                      document
-                        .getElementById(`${id}-${focusAdded.current}`)
-                        ?.focus();
-                      focusAdded.current = null;
-                    });
+                Add new
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              className="motion-reduce:animate-none"
+              onCloseAutoFocus={(event) => {
+                if (!focusAdded.current) return;
+                event.preventDefault();
+                requestAnimationFrame(() => {
+                  document
+                    .getElementById(`${id}-${focusAdded.current}`)
+                    ?.focus();
+                  focusAdded.current = null;
+                });
+              }}
+            >
+              {available.map(({ key, label }) => (
+                <DropdownMenuItem
+                  key={key}
+                  onSelect={() => {
+                    focusAdded.current = key;
+                    setAdded((previous) => [...previous, key]);
                   }}
                 >
-                  {available.map(({ key, label }) => (
-                    <DropdownMenuItem
-                      key={key}
-                      onSelect={() => {
-                        focusAdded.current = key;
-                        setAdded((previous) => [...previous, key]);
-                      }}
-                    >
-                      {label}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          )}
-        </fieldset>
-        <p className="px-6 pt-2 text-xs text-text-neutral-weaker">
-          Clear a link to remove it. Removed links won’t be added again by AI.
-        </p>
-        <div className="flex flex-wrap items-center justify-end gap-4 px-6 py-4">
-          {error && (
-            <p role="alert" className="mr-auto text-sm text-text-error-strong">
-              {error}
-            </p>
-          )}
+                  {label}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+        {hasChanges ? (
           <Button
             type="submit"
-            size="form"
-            disabled={saving || isLoading || !data || !hasChanges}
+            variant="ghost"
+            disabled={disabled}
+            className="settings-pill h-9 px-4"
           >
             {saving ? "Saving…" : "Save changes"}
           </Button>
-        </div>
-      </form>
-    </Card>
+        ) : null}
+      </div>
+    </form>
   );
 }

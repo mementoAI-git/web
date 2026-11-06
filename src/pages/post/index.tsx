@@ -25,7 +25,7 @@ export function PostPage() {
 
   return (
     <div className="min-h-screen w-screen bg-background">
-      <header className="flex max-h-[96px] w-full max-w-[1440px] items-center justify-between border-b border-[#0011661A] px-20 py-6">
+      <header className="flex max-h-[96px] w-full max-w-[1440px] items-center justify-between border-b border-[#0011661A] px-4 py-4 sm:px-8 sm:py-6 lg:px-20">
         <Logo />
         {!hydrated ? (
           <div className="h-12 min-w-38 rounded-lg bg-gray-200" />
@@ -35,7 +35,7 @@ export function PostPage() {
           )
         )}
       </header>
-      <main className="mx-auto p-8">
+      <main className="mx-auto p-4 sm:p-8">
         <div className="mx-auto w-full max-w-235">
           {isLoading ? (
             <Loading />

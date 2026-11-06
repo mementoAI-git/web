@@ -151,3 +151,21 @@ export function messageIdentity(message: Partial<IMessage>) {
     .join(",");
   return [message.role, message.created_at, message.text, attachmentIds].join("|");
 }
+
+export const MAX_STACKED_VISUALS = 3;
+
+function isVisualAttachment(attachment: ChatAttachment) {
+  return ["image", "video"].includes(classifyConversationFile(normalizeChatAttachment(attachment)));
+}
+
+/** 1-3 images or videos sit outside the bubble as a stack; everything else stays inside it. */
+export function splitStackedMedia(attachments: ChatAttachment[]) {
+  const visuals = attachments.filter(isVisualAttachment);
+  if (!visuals.length || visuals.length > MAX_STACKED_VISUALS) {
+    return { stacked: [], inline: attachments };
+  }
+  return {
+    stacked: visuals,
+    inline: attachments.filter((attachment) => !isVisualAttachment(attachment)),
+  };
+}

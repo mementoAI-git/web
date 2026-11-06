@@ -2,6 +2,14 @@
 
 Read the project conventions and applicable rules in `.cursor/rules/` before implementation. Global skills live in `/Users/admin/.codex/skills`.
 
+## Keep components theme adaptive
+
+When a component is built or reused, ensure it is visible across all themes (light sky, light, dark, deep sky, and system). See `.cursor/rules/theme-adaptive-components.mdc`.
+
+## Use the shared modal layout
+
+Prefer `FormDialog` from `src/components/modal/form-dialog.tsx` when building modals. See `.cursor/rules/modal-layout.mdc`.
+
 ## Verify the running product before reporting completion
 
 - Always inspect the implementation against every part of the user's request before reporting it as done.

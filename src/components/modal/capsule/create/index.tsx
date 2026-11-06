@@ -320,7 +320,7 @@ function MobileFormSheet({
       detent="content"
       isOpen={isOpen}
       onClose={onClose}
-      snapPoints={[0, 0.8]}
+      snapPoints={[0, 1]}
       initialSnap={1}
       style={{ zIndex: 9995 }}
     >
@@ -639,7 +639,7 @@ function MobilePreviewSheet({
       detent="content"
       isOpen={isOpen}
       onClose={onClose}
-      snapPoints={[0, 0.8]}
+      snapPoints={[0, 1]}
       initialSnap={1}
       style={{ zIndex: 9998 }}
     >
@@ -707,7 +707,7 @@ function MobileMemorySheet({
       detent="content"
       isOpen={isOpen}
       onClose={onClose}
-      snapPoints={[0, 0.8]}
+      snapPoints={[0, 1]}
       initialSnap={1}
       style={{ zIndex: 9999 }}
     >
@@ -762,7 +762,7 @@ function MobileMediaSheet({
       detent="content"
       isOpen={isOpen}
       onClose={onClose}
-      snapPoints={[0, 0.8]}
+      snapPoints={[0, 1]}
       initialSnap={1}
       style={{ zIndex: 9999 }}
     >

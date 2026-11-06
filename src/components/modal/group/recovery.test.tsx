@@ -49,10 +49,38 @@ it("retries a failed beneficiary picker and keeps selections across pages", asyn
   await userEvent.click(
     await screen.findByRole("checkbox", { name: "Select Ben" }),
   );
-  await userEvent.click(screen.getByRole("button", { name: /Add selected/ }));
+  await userEvent.click(screen.getByRole("button", { name: "Add to group" }));
   await waitFor(() =>
     expect(submitted).toEqual({ beneficiaryIds: ["ada", "ben"] }),
   );
+});
+it("offers only connections who are not already in the group", async () => {
+  server.use(
+    http.get("http://localhost:3000/api/beneficiaries", () =>
+      HttpResponse.json({
+        success: true,
+        data: {
+          docs: [
+            { _id: "ada", name: "Ada" },
+            { _id: "ben", name: "Ben" },
+          ],
+        },
+      }),
+    ),
+    http.get("http://localhost:3000/api/groups/family", () =>
+      HttpResponse.json({
+        success: true,
+        data: { _id: "family", name: "Family", members: [{ _id: "ada", name: "Ada" }] },
+      }),
+    ),
+  );
+  renderWithProviders(<AddGroupMembers data="family" />);
+  expect(await screen.findByRole("checkbox", { name: "Select Ben" })).toBeInTheDocument();
+  await waitFor(() =>
+    expect(screen.queryByRole("checkbox", { name: "Select Ada" })).not.toBeInTheDocument(),
+  );
+  expect(screen.getByRole("dialog", { name: "Add people" })).toBeInTheDocument();
+  expect(screen.queryByPlaceholderText("John Doe")).not.toBeInTheDocument();
 });
 it("removes the last member from cache even when the subsequent refresh fails", async () => {
   let failed = false;

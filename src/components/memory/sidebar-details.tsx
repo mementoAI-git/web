@@ -386,7 +386,7 @@ export default function SidebarDetails({
         isOpen={isOpen}
         className="block md:hidden"
         onClose={onClose}
-        snapPoints={[0, 0.8]}
+        snapPoints={[0, 1]}
       >
         <Sheet.Container className="max-h-[80dvh] overflow-hidden bg-sand-1">
           <Sheet.Header className="rounded-3xl bg-sand-1" />
