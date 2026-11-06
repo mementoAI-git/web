@@ -233,14 +233,11 @@ function StoriesGridItem({
   return (
     <article
       ref={onMeasure}
-      className={cn(
-        "group/card relative w-full",
-        "focus-within:ring-2 focus-within:ring-v3-brand-strong/40 focus-within:ring-offset-2",
-      )}
+      className="group/card relative w-full"
     >
       <Link
         to={storyDestination(memory)}
-        className="block rounded-[20px] outline-none"
+        className="block rounded-[20px] outline-none focus-visible:ring-2 focus-visible:ring-stroke-neutral-strong"
         onClick={handleClick}
         aria-disabled={memory.status === "deleted" || undefined}
         aria-label={`Open story: ${storyTitle}`}

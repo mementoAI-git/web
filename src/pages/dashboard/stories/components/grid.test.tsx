@@ -278,6 +278,20 @@ describe("StoriesGrid", () => {
     ).toHaveClass("border-stroke-neutral-weaker");
   });
 
+  it("shows the card's focus ring for keyboard focus only", () => {
+    renderWithProviders(<StoriesGrid data={pagination(false)} />, {
+      route: "/stories",
+      auth: true,
+    });
+
+    const link = screen.getByRole("link", {
+      name: `Open story: ${memory.title}`,
+    });
+
+    expect(link).toHaveClass("outline-none", "focus-visible:ring-2");
+    expect(link.closest("article")?.className).not.toContain("focus-within");
+  });
+
   it("keeps a story's text-card surface stable", () => {
     expect(getTextCardSurfaceClass(memory, memory.title)).toBe(
       getTextCardSurfaceClass(memory, memory.title),
