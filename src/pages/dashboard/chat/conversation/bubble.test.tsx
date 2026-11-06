@@ -35,6 +35,29 @@ describe("Bubble", () => {
     expect(screen.getByText("User message").closest(".chat-reply-surface")).toBeNull();
   });
 
+  describe("sent images", () => {
+    const image = (id: number) => ({ _id: `f${id}`, name: `${id}.jpg`, type: "image/jpeg", url: `/${id}.jpg` });
+    const surface = (container: HTMLElement) => container.querySelector(".sky-card");
+
+    it("drops the bubble when a message is only 1-3 images", () => {
+      const { container } = render(<Bubble role="user" text="" attatchments={[image(1), image(2)]} />);
+      expect(screen.getByTestId("chat-media-group").querySelector('[data-layout="stack"]')).toBeInTheDocument();
+      expect(surface(container)).toBeNull();
+    });
+
+    it("keeps the caption in its own bubble below the stack", () => {
+      const { container } = render(<Bubble role="user" text="Look at these" attatchments={[image(1)]} />);
+      expect(surface(container)).toContainElement(screen.getByText("Look at these"));
+      expect(surface(container)).not.toContainElement(screen.getByTestId("chat-media-group"));
+    });
+
+    it("keeps four images in the grid inside the bubble", () => {
+      const { container } = render(<Bubble role="user" text="" attatchments={[1, 2, 3, 4].map(image)} />);
+      expect(surface(container)).toContainElement(screen.getByTestId("chat-media-group"));
+      expect(screen.getByTestId("chat-media-group").querySelector('[data-layout="grid"]')).toBeInTheDocument();
+    });
+  });
+
   it("uses fill neutral weak for AI messages", () => {
     render(<Bubble role="ai" text="Hello from the assistant" />);
 

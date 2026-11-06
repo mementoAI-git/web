@@ -120,16 +120,6 @@ function ConnectionConversation({ person }: { person: Person }) {
     () => getSpace(person.user_id, 1, "All"),
     { refreshInterval: 15000, shouldRetryOnError: false },
   );
-  const sharedMemories = useRef<HTMLDivElement>(null);
-  const [showShared, setShowShared] = useState(false);
-  const openSpace = () => {
-    closeDetails();
-    setShowShared(true);
-  };
-  useEffect(() => {
-    if (showShared)
-      sharedMemories.current?.scrollIntoView?.({ block: "start" });
-  }, [showShared]);
   const restoreIdentityFocus = (event: Event) => {
     event.preventDefault();
     document
@@ -162,7 +152,32 @@ function ConnectionConversation({ person }: { person: Person }) {
   }, []);
   useEffect(() => {
     end.current?.scrollIntoView?.({ block: "nearest" });
-  }, [data?.turns.length, busy]);
+  }, [data?.turns.length, spaceData?.total, busy]);
+  const scroller = useRef<HTMLDivElement>(null);
+  const timeline = useRef<HTMLDivElement>(null);
+  // Late-loading images grow the timeline, so stay on the newest message unless the reader has scrolled up.
+  useEffect(() => {
+    const root = scroller.current;
+    const content = timeline.current;
+    if (!root || !content || typeof ResizeObserver === "undefined") return;
+    let pinned = true;
+    let lastTop = root.scrollTop;
+    const onScroll = () => {
+      const top = root.scrollTop;
+      if (root.scrollHeight - top - root.clientHeight < 80) pinned = true;
+      else if (top < lastTop) pinned = false;
+      lastTop = top;
+    };
+    const observer = new ResizeObserver(() => {
+      if (pinned) root.scrollTop = root.scrollHeight;
+    });
+    root.addEventListener("scroll", onScroll, { passive: true });
+    observer.observe(content);
+    return () => {
+      root.removeEventListener("scroll", onScroll);
+      observer.disconnect();
+    };
+  }, []);
   useEffect(() => {
     if (!active && voice?.connectionPersonId === person.user_id) voice.end();
   }, [active, person.user_id, voice]);
@@ -276,7 +291,6 @@ function ConnectionConversation({ person }: { person: Person }) {
     data &&
     !data.turns.length &&
     spaceData?.total === 0 &&
-    !showShared &&
     !isLoading &&
     !error,
   );
@@ -285,18 +299,17 @@ function ConnectionConversation({ person }: { person: Person }) {
       aria-label={`${person.name}’s Memento`}
       className="relative flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-background text-text-neutral-strong"
     >
-      <div className={CHAT_SCROLL_LAYOUT}>
+      <div ref={scroller} className={CHAT_SCROLL_LAYOUT}>
         <div
+          ref={timeline}
           className={cn(
             CHAT_CONTENT_LAYOUT,
             CHAT_CONTENT_INSET,
             firstConversation && "justify-center",
           )}
         >
-          <div ref={sharedMemories}>
-            {(showShared ||
-              Boolean(spaceData?.total) ||
-              Boolean(data?.turns.length)) && (
+          <div>
+            {(Boolean(spaceData?.total) || Boolean(data?.turns.length)) && (
               <OurSpace
                 embedded
                 chatTurns={data?.turns}
@@ -496,9 +509,6 @@ function ConnectionConversation({ person }: { person: Person }) {
                   Start voice conversation
                 </Button>
               )}
-              <Button variant="outline" onClick={openSpace}>
-                Open Our Space
-              </Button>
               <Button
                 variant="ghost"
                 onClick={() => {
