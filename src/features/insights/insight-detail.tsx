@@ -204,7 +204,6 @@ function DetailFrame({
   children: React.ReactNode;
 }) {
   const fields = categories.map(getEnrichmentField);
-  const heroLabel = fields.map((field) => field.label).join(" · ");
   return (
     <div className="flex flex-col gap-4">
       <div className="insights-page-heading">
@@ -232,7 +231,7 @@ function DetailFrame({
         <EnrichmentFieldIcon field={categories[0]} className="size-10" />
         <div className="min-w-0 flex-1">
           <p className="font-inter text-xl font-semibold text-text-neutral-strong">
-            {heroLabel}
+            {fields[0]?.label}
           </p>
           <p className="mt-1 font-inter text-sm text-text-neutral-weak">
             {subtitle}

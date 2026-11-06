@@ -11,6 +11,9 @@ import MemoryInsightsModal from ".";
 
 beforeEach(() => {
   close.mockClear();
+  openModal.mockClear();
+  pushModal.mockClear();
+  modalState = [];
   patch.mockClear();
   del.mockClear();
   vi.stubGlobal(
@@ -34,7 +37,17 @@ vi.mock("@/api/mutations", async (original) => ({
   patch,
   del,
 }));
-vi.mock("@/hooks/use-modal", () => ({ useModal: () => ({ close }) }));
+const openModal = vi.fn();
+const pushModal = vi.fn();
+let modalState: { name: string; props?: unknown }[] = [];
+vi.mock("@/hooks/use-modal", () => ({
+  useModal: () => ({
+    close,
+    open: openModal,
+    push: pushModal,
+    state: modalState,
+  }),
+}));
 vi.mock("@/hooks/use-store", () => ({ useStore: () => ({ user: null }) }));
 
 const spanningInsight = {
@@ -183,6 +196,9 @@ const tab = (name: string) => screen.getByRole("tab", { name });
 
 it("opens on observations without mixing in preferences", () => {
   setup();
+  expect(
+    screen.queryByRole("button", { name: "Insight settings" }),
+  ).not.toBeInTheDocument();
   expect(screen.getByRole("dialog", { name: "My insights" })).toHaveClass(
     "insights-overlay",
   );
@@ -255,9 +271,15 @@ it("lists the sources of an observation and opens one", async () => {
     name: "View Why I changed careers",
   });
   expect(source).toHaveTextContent("May 18, 2026");
+  expect(source.querySelector("img")).toHaveAttribute(
+    "src",
+    "https://api.dicebear.com/10.x/disco/svg?seed=story-1",
+  );
   await user.click(source);
-  expect(close).toHaveBeenCalledWith("memory-insights");
-  expect(screen.getByTestId("location")).toHaveTextContent("/stories/story-1");
+  expect(pushModal).toHaveBeenCalledWith("view-memory", {
+    memoryId: "story-1",
+  });
+  expect(screen.getByTestId("location")).not.toHaveTextContent("/stories");
 });
 
 it("says when an observation has no linked sources", async () => {
@@ -432,18 +454,75 @@ it("opens insight details, sorts sources, and returns to the same tab", async ()
   expect(tab("Insights")).toHaveAttribute("aria-selected", "true");
 });
 
-it("closes the overlay and opens the right page for a source", async () => {
+it("stacks a story above Insights and remembers where you were", async () => {
   const user = userEvent.setup();
   setup();
   await user.click(tab("Insights"));
   await user.click(
-    screen.getByRole("button", {
-      name: "You protect your Sundays",
-    }),
+    screen.getByRole("button", { name: "You protect your Sundays" }),
   );
   await user.click(screen.getByRole("button", { name: "View Sunday at home" }));
+  expect(close).not.toHaveBeenCalled();
+  expect(screen.getByTestId("location")).not.toHaveTextContent("/stories");
+  expect(openModal).toHaveBeenCalledWith(
+    "memory-insights",
+    expect.objectContaining({
+      section: "insights",
+      history: [
+        { kind: "insight", insight: expect.objectContaining({ id: "insight-1" }) },
+      ],
+    }),
+  );
+  expect(pushModal).toHaveBeenCalledWith("view-memory", { memoryId: "older" });
+});
+
+it("opens a chat as a page and saves the way back in history", async () => {
+  const user = userEvent.setup();
+  const replaceState = vi.spyOn(window.history, "replaceState");
+  setup();
+  await user.click(tab("Insights"));
+  await user.click(
+    screen.getByRole("button", { name: "You protect your Sundays" }),
+  );
+  await user.click(
+    screen.getByRole("button", { name: "View Talking about rest" }),
+  );
+  expect(replaceState.mock.lastCall?.[0]).toMatchObject({
+    usr: {
+      openModal: "memory-insights",
+      openModalProps: { section: "insights" },
+    },
+  });
   expect(close).toHaveBeenCalledWith("memory-insights");
-  expect(screen.getByTestId("location")).toHaveTextContent("/stories/older");
+  expect(screen.getByTestId("location")).toHaveTextContent("/chat/newer");
+  replaceState.mockRestore();
+});
+
+it("reopens on the saved tab and details screen", () => {
+  modalState = [
+    {
+      name: "memory-insights",
+      props: {
+        section: "insights",
+        history: [{ kind: "insight", insight: spanningInsight }],
+      },
+    },
+  ];
+  setup();
+  expect(
+    screen.getByText("Memories that helped shape this insight"),
+  ).toBeVisible();
+  expect(screen.getByRole("button", { name: "Back to insights" })).toBeVisible();
+});
+
+it("names only the strongest field in the details header", async () => {
+  const user = userEvent.setup();
+  setup();
+  await user.click(tab("Insights"));
+  await user.click(
+    screen.getByRole("button", { name: "You protect your Sundays" }),
+  );
+  expect(screen.queryByText(/Relationships & People/)).not.toBeInTheDocument();
 });
 
 it("lists all ten enrichment fields with scores and locked state", async () => {

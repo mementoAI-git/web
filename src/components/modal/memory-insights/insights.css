@@ -295,6 +295,10 @@
 .insights-sources-row {
   grid-template-columns: minmax(0, 1fr) 150px 86px;
 }
+.insights-fields-row > :last-child,
+.insights-sources-row > :last-child {
+  justify-self: end;
+}
 .insights-fields-row + .insights-fields-row,
 .insights-sources-row + .insights-sources-row {
   border-top: 1px solid var(--stroke-neutral-weak);

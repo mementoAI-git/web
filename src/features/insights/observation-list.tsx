@@ -91,16 +91,14 @@ function ObservationSources({
             aria-label={`View ${source.title}`}
             onClick={() => onView(source)}
           >
-            {source.thumbnail ? (
-              <img
-                src={source.thumbnail}
-                alt=""
-                loading="lazy"
-                className="insights-source-thumbnail object-cover"
-              />
-            ) : (
-              <span className="insights-source-thumbnail" aria-hidden />
-            )}
+            <img
+              src={source.thumbnail || getQuestionIdenticonUrl(source.id)}
+              alt=""
+              loading="lazy"
+              decoding="async"
+              referrerPolicy="no-referrer"
+              className="insights-source-thumbnail object-cover"
+            />
             <span className="min-w-0 flex-1 truncate text-left font-medium text-text-neutral-strong">
               {source.title}
             </span>

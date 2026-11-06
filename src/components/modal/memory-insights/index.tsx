@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { Archive, Search, Settings } from "lucide-react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Archive, Search } from "lucide-react";
+import { useLocation, useNavigate, useNavigationType } from "react-router-dom";
 import endpoint from "@/api/endpoint";
 import { useApi } from "@/hooks/use-api";
 import { useModal } from "@/hooks/use-modal";
@@ -70,12 +70,21 @@ function toItem(observation: PersonaObservation): ObservationItem {
   };
 }
 
+/** Where to reopen Insights after looking at one of its sources. */
+type ReturnState = {
+  section: InsightsSection;
+  history: View[];
+  locationKey?: string;
+};
+
 type View =
   | { kind: "insight"; insight: Insight }
   | { kind: "field"; field: EnrichmentCategory };
 
 export default function MemoryInsightsModal() {
-  const { close } = useModal();
+  const { close, open, push, state: modals } = useModal();
+  const returnState = modals?.find((modal) => modal.name === "memory-insights")
+    ?.props as ReturnState | null | undefined;
   const navigate = useNavigate();
   const returnFocus = useRef(
     typeof document !== "undefined" &&
@@ -85,19 +94,25 @@ export default function MemoryInsightsModal() {
   );
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const [section, setSection] = useState<InsightsSection>("observations");
-  const [history, setHistory] = useState<View[]>([]);
+  const [section, setSection] = useState<InsightsSection>(
+    returnState?.section ?? "observations",
+  );
+  const [history, setHistory] = useState<View[]>(returnState?.history ?? []);
   const view = history.at(-1);
   const scrollRef = useRef<HTMLDivElement>(null);
   const mainRef = useRef<HTMLElement>(null);
   const isFirstView = useRef(true);
   const { key: locationKey } = useLocation();
-  const openedAtLocation = useRef(locationKey);
+  const navigationType = useNavigationType();
+  const openedAtLocation = useRef(returnState?.locationKey ?? locationKey);
 
-  // Any navigation leaves Insights, or the new page would stay hidden behind it.
+  // Going anywhere leaves Insights, or the new page would stay hidden behind it.
+  // A replace only tidies up the current entry, as reopening from history does.
   useEffect(() => {
-    if (locationKey !== openedAtLocation.current) close("memory-insights");
-  }, [locationKey, close]);
+    if (locationKey === openedAtLocation.current) return;
+    if (navigationType === "REPLACE") openedAtLocation.current = locationKey;
+    else close("memory-insights");
+  }, [locationKey, navigationType, close]);
 
   useEffect(() => {
     if (isFirstView.current) {
@@ -179,12 +194,32 @@ export default function MemoryInsightsModal() {
     close("memory-insights");
     navigate(href, { state });
   };
-  const viewSource = (memory: InsightSource) =>
+  const viewSource = (memory: InsightSource) => {
+    const here: ReturnState = { section, history };
+    if (memory.type !== "conversation" && window.innerWidth >= 640) {
+      // The viewer stacks above Insights, so closing it lands right back here.
+      open?.("memory-insights", { ...here, locationKey });
+      push?.("view-memory", { memoryId: memory.id });
+      return;
+    }
+    // Full pages have no close, so going back reopens Insights from this entry.
+    window.history.replaceState(
+      {
+        ...window.history.state,
+        usr: {
+          ...window.history.state?.usr,
+          openModal: "memory-insights",
+          openModalProps: here,
+        },
+      },
+      "",
+    );
     leaveTo(
       memory.type === "conversation"
         ? `/chat/${memory.id}`
         : `/stories/${memory.id}`,
     );
+  };
   const reflectOn = (field: EnrichmentCategory) =>
     leaveTo("/chat", {
       overviewDiscussion: `I’d like to reflect on ${getEnrichmentField(field).label.toLowerCase()}.`,
@@ -279,19 +314,10 @@ export default function MemoryInsightsModal() {
                 </>
               ) : (
                 <>
-                  <div className="insights-page-heading justify-between">
+                  <div className="insights-page-heading">
                     <h2 className="font-garamond text-4xl text-text-neutral-strong">
                       Insights
                     </h2>
-                    <Button
-                      variant="ghost"
-                      size="icon-lg"
-                      className="insights-round-button"
-                      aria-label="Insight settings"
-                      onClick={() => leaveTo("/settings/general?view=about")}
-                    >
-                      <Settings aria-hidden />
-                    </Button>
                   </div>
                   <div className="flex flex-col gap-4">
                     <MemoryStatistics />
