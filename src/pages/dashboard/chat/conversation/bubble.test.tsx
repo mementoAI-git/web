@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { clearAuth, seedAuth } from "@/test";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { http, HttpResponse } from "msw";
@@ -236,6 +237,7 @@ describe("Bubble", () => {
   });
 
   it("refreshes a failed signed chat image", async () => {
+    seedAuth();
     server.use(
       http.post(`${API}/files/file-1/access`, () =>
         HttpResponse.json({
@@ -284,6 +286,7 @@ describe("Bubble", () => {
     await waitFor(() =>
       expect(image).toHaveAttribute("src", "/files/photo.jpg?cap=new"),
     );
+    clearAuth();
   });
 
   it("renders a URL-only message as one metadata preview when metadata exists", () => {
