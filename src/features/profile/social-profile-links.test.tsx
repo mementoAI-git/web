@@ -4,6 +4,23 @@ import { SocialProfileLinks } from "./social-profile-links";
 import { normalizeSocialProfileUrl } from "./social-accounts";
 
 describe("SocialProfileLinks", () => {
+  it("normalizes Instagram profiles and rejects non-profile or unsafe URLs", () => {
+    expect(
+      normalizeSocialProfileUrl(
+        "instagram",
+        "https://instagram.com/my.profile/?utm_source=share",
+      ),
+    ).toBe("https://www.instagram.com/my.profile");
+    for (const url of [
+      "https://instagram.com/p/123",
+      "https://instagram.com/reels",
+      "https://instagram.com/accounts",
+      "https://instagram.com.evil.test/me",
+      "http://instagram.com/me",
+    ]) {
+      expect(normalizeSocialProfileUrl("instagram", url)).toBeNull();
+    }
+  });
   it("hides absent and explicitly removed accounts", () => {
     render(<SocialProfileLinks accounts={{ x: null }} />);
     expect(screen.queryByRole("link")).not.toBeInTheDocument();

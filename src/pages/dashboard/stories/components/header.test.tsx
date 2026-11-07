@@ -52,7 +52,7 @@ describe("StoriesHeader", () => {
     expect(search.closest('[data-slot="stories-sticky-search"]')).toHaveClass(
       "sticky",
       "top-4",
-      "z-40",
+      "z-[46]",
       "pb-3",
       "stories-search-surface",
     );
@@ -118,14 +118,9 @@ describe("StoriesHeader", () => {
       "aria-selected",
       "true",
     );
-    expect(activeTab).toHaveStyle({ color: "var(--text-neutral-strong)" });
-    expect(activeTab).toHaveClass(
-      "data-active:after:opacity-100",
-      "after:w-6",
-    );
-    expect(screen.getByRole("tab", { name: "Bookmarked 2" })).toHaveStyle({
-      color: "var(--text-neutral-weak)",
-    });
+    expect(activeTab).toHaveClass("rounded-full", "h-8", "data-active:bg-fill-tab-active", "data-active:text-text-tab-active");
+    expect(activeTab).not.toHaveClass("data-active:after:opacity-100");
+    expect(screen.getByRole("tab", { name: "Bookmarked 2" })).toHaveClass("bg-fill-neutral-weak");
 
     await user.click(screen.getByRole("tab", { name: "Bookmarked 2" }));
 

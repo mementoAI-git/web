@@ -24,9 +24,9 @@ import { cn } from "@/utility";
 import { useRequestRecovery } from "@/hooks/use-request-recovery";
 
 const sectionClass =
-  "sky-card rounded-3xl border border-stroke-neutral-weak bg-fill-neutral-weak p-4 sm:p-5";
+  "settings-card p-4 sm:p-6";
 const actionClass =
-  "h-9 rounded-lg border-stroke-neutral-weak bg-fill-neutral-weaker px-3 font-geist text-sm text-text-neutral-strong";
+  "h-9 rounded-lg border-stroke-neutral-weak bg-transparent px-3 font-geist text-sm text-text-neutral-strong";
 const planActionClass =
   "h-auto rounded-full bg-[var(--fill-billing-badge)] px-2.5 py-1.5 font-inter text-xs font-semibold leading-[18px] text-[var(--text-billing-badge)] [background-image:none] hover:bg-[var(--fill-billing-badge)]/90";
 
@@ -169,21 +169,16 @@ export default function Billing() {
       : summary?.current_period_end;
 
   return (
-    <div className="flex w-full flex-col gap-4 font-geist text-text-neutral-strong">
+    <div className="page-stagger flex w-full flex-col gap-4 font-geist text-text-neutral-strong">
       <PricingOverlay
         open={manageOpen}
         onOpenChange={setManageOpen}
         title="Manage plan"
         description="Choose the plan that fits your memories."
       />
-      <header>
-        <h2 className="font-garamond text-[40px] font-medium leading-[48px]">
-          Billing
-        </h2>
-        <p className="mt-1 text-sm text-text-neutral-weak">
-          Manage your subscription, invoices, and payment methods.
-        </p>
-      </header>
+      <p className="text-sm text-text-neutral-weak">
+        Manage your subscription, invoices, and payment methods.
+      </p>
       <Tabs
         value={tab}
         onValueChange={(value) => setTab(String(value))}
@@ -219,7 +214,7 @@ export default function Billing() {
             <section
               aria-label="Current plan"
               className={cn(
-                "rounded-3xl p-4 text-text-inverse-strong sm:p-5",
+                "rounded-2xl p-4 text-text-inverse-strong sm:p-6",
                 isProOrAbove
                   ? "min-h-[146px] [background-image:var(--gradient-billing-pro)]"
                   : "min-h-24 [background-image:var(--gradient-billing-free)]",

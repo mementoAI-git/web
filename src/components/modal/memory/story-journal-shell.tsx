@@ -13,7 +13,7 @@ interface StoryJournalShellProps {
   children: ReactNode;
   sidebar?: ReactNode;
   onKeyDown?: KeyboardEventHandler<HTMLElement>;
-  presentation?: "original" | "overlay-b" | "overlay-c";
+  presentation?: "original" | "overlay-b" | "overlay-c" | "page";
   onClose?: () => void;
   onEscapeKeyDown?: ComponentProps<typeof DialogContent>["onEscapeKeyDown"];
   title?: string;
@@ -32,7 +32,13 @@ export function StoryJournalShell({
 }: StoryJournalShellProps) {
   const { resolvedTheme } = useTheme();
   const { state } = useModal();
-  const hasStackedModal = state.length > 1 && state[0]?.name !== "create-memory";
+  // Only step back for a modal on top. Insights can wait underneath the viewer.
+  // Share's dialog already layers above this one, and stepping back would remount the story.
+  const hasStackedModal =
+    state.length > 1 &&
+    state[0]?.name !== "create-memory" &&
+    state[0]?.name !== "view-memory" &&
+    state[0]?.name !== "share-memory";
   // The grain's transparent left region follows the WebP's exact source coordinates,
   // so object-cover cropping never puts texture on the leather or chrome.
   const paperTexture = resolvedTheme === "light" ? (
@@ -61,6 +67,18 @@ export function StoryJournalShell({
       {paperTexture}
       {children}
     </>;
+    // Public story links have no app behind them, so the album is the page.
+    if (presentation === "page") {
+      return (
+        <main
+          data-testid="desktop-journal-shell"
+          data-story-presentation={presentation}
+          className="add-story-journal relative mx-auto h-full w-full max-w-[1120px] overflow-hidden rounded-3xl border border-stroke-neutral-weak bg-bg-neutral shadow-2xl"
+        >
+          {page}
+        </main>
+      );
+    }
     return (
       <Dialog open modal={!hasStackedModal} onOpenChange={(open) => { if (!open && !hasStackedModal) onClose?.(); }}>
         <DialogContent

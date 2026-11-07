@@ -320,11 +320,12 @@ function MobileFormSheet({
       detent="content"
       isOpen={isOpen}
       onClose={onClose}
-      snapPoints={[0, 0.8]}
+      snapPoints={[0, 1]}
       initialSnap={1}
       style={{ zIndex: 9995 }}
     >
       <Sheet.Container
+        className="sheet-see-through"
         style={{
           background: "transparent", // Important: made transparent to show peek card behind
           borderRadius: "24px 24px 0 0",
@@ -639,11 +640,12 @@ function MobilePreviewSheet({
       detent="content"
       isOpen={isOpen}
       onClose={onClose}
-      snapPoints={[0, 0.8]}
+      snapPoints={[0, 1]}
       initialSnap={1}
       style={{ zIndex: 9998 }}
     >
       <Sheet.Container
+        className="sheet-see-through"
         style={{
           background: "transparent",
           borderRadius: "24px 24px 0 0",
@@ -707,11 +709,12 @@ function MobileMemorySheet({
       detent="content"
       isOpen={isOpen}
       onClose={onClose}
-      snapPoints={[0, 0.8]}
+      snapPoints={[0, 1]}
       initialSnap={1}
       style={{ zIndex: 9999 }}
     >
       <Sheet.Container
+        className="sheet-see-through"
         style={{
           background: "transparent",
           borderRadius: "24px 24px 0 0",
@@ -762,11 +765,12 @@ function MobileMediaSheet({
       detent="content"
       isOpen={isOpen}
       onClose={onClose}
-      snapPoints={[0, 0.8]}
+      snapPoints={[0, 1]}
       initialSnap={1}
       style={{ zIndex: 9999 }}
     >
       <Sheet.Container
+        className="sheet-see-through"
         style={{
           background: "transparent",
           borderRadius: "24px 24px 0 0",

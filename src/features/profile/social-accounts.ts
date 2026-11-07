@@ -4,6 +4,7 @@ export const SOCIAL_PLATFORMS = [
   "youtube",
   "linkedin",
   "facebook",
+  "instagram",
 ] as const;
 export type SocialPlatform = (typeof SOCIAL_PLATFORMS)[number];
 export interface SocialAccount {
@@ -61,6 +62,14 @@ export function normalizeSocialProfileUrl(
       case "linkedin":
         return host === "linkedin.com" && /^\/in\/[a-z0-9_-]+$/i.test(path)
           ? `https://www.linkedin.com${path}`
+          : null;
+      case "instagram":
+        return host === "instagram.com" &&
+          /^\/[a-z0-9_][a-z0-9_.]{0,29}$/i.test(path) &&
+          !/^\/(accounts|about|developer|direct|explore|legal|p|reel|reels|stories|tv|web)$/i.test(
+            path,
+          )
+          ? `https://www.instagram.com${path}`
           : null;
       case "facebook":
         if (host !== "facebook.com") return null;

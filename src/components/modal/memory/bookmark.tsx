@@ -36,15 +36,15 @@ export function BookmarkMemory({ data: memory }: BookmarkMemoryProps) {
           <h4 className="modal-title">
             {isBookmarked ? "Remove from bookmarks" : "Add to bookmarks"}
           </h4>
-          <span className="font-inter text-sm text-grey-600">
+          <span className="font-inter text-sm text-text-neutral-weak">
             {isBookmarked
               ? "Are you sure you want to remove this memory from your bookmarks? You can always add it back later."
               : "Add this memory to your bookmarks for quick access later. You can find all your bookmarked memories in the bookmarks section."}
           </span>
           {memory.title && (
             <div className="rounded-lg bg-grey-50 p-3">
-              <p className="mb-1 text-sm font-medium text-grey-800">Memory:</p>
-              <p className="line-clamp-2 text-sm text-grey-600">{memory.title}</p>
+              <p className="mb-1 text-sm font-medium text-text-neutral-strong">Memory:</p>
+              <p className="line-clamp-2 text-sm text-text-neutral-weak">{memory.title}</p>
             </div>
           )}
         </div>

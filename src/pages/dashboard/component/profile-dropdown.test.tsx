@@ -78,6 +78,20 @@ describe("ProfileDropdown", () => {
     expect(screen.queryByRole("menuitem", { name: "Theme" })).not.toBeInTheDocument();
   });
 
+  it("offers theme choices in the account menu on phones and keeps it open", async () => {
+    const originalWidth = window.innerWidth;
+    Object.defineProperty(window, "innerWidth", { configurable: true, value: 390 });
+    try {
+      const user = userEvent.setup();
+      renderWithProviders(<ProfileDropdown />, { auth: true });
+      await user.click(screen.getByRole("button", { name: /user/i }));
+      await user.click(await screen.findByRole("menuitemradio", { name: "Deep sky" }));
+      expect(screen.getByRole("menuitemradio", { name: "Deep sky" })).toHaveAttribute("aria-checked", "true");
+    } finally {
+      Object.defineProperty(window, "innerWidth", { configurable: true, value: originalWidth });
+    }
+  });
+
   it("uses compact account menu spacing and label typography", async () => {
     const user = userEvent.setup();
     renderWithProviders(<ProfileDropdown />, { auth: true });

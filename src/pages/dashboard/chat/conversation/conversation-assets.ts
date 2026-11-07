@@ -1,3 +1,4 @@
+import { voiceNoteLabel } from "@/utility/file-label";
 import type { IFile, ILinkMetadata, IMessage } from "@/utility/interface";
 
 export type ChatAttachment = Pick<IFile, "url" | "name"> &
@@ -58,9 +59,11 @@ function extension(name: string) {
 export function classifyConversationFile(file: Pick<IFile, "name" | "type">): ConversationFileAsset["kind"] {
   const type = file.type?.toLowerCase() ?? "";
   const ext = extension(file.name);
+  // WebM is also an audio container, and voice notes can be stored as video/webm.
+  if (type.startsWith("audio/") || voiceNoteLabel(file.name)) return "audio";
   if (type.startsWith("image/") || imageExtensions.has(ext)) return "image";
   if (type.startsWith("video/") || videoExtensions.has(ext)) return "video";
-  if (type.startsWith("audio/") || audioExtensions.has(ext)) return "audio";
+  if (audioExtensions.has(ext)) return "audio";
   return "document";
 }
 
@@ -150,4 +153,22 @@ export function messageIdentity(message: Partial<IMessage>) {
     .map((file) => file._id || `${file.url}|${file.name}`)
     .join(",");
   return [message.role, message.created_at, message.text, attachmentIds].join("|");
+}
+
+export const MAX_STACKED_VISUALS = 3;
+
+function isVisualAttachment(attachment: ChatAttachment) {
+  return ["image", "video"].includes(classifyConversationFile(normalizeChatAttachment(attachment)));
+}
+
+/** 1-3 images or videos sit outside the bubble as a stack; everything else stays inside it. */
+export function splitStackedMedia(attachments: ChatAttachment[]) {
+  const visuals = attachments.filter(isVisualAttachment);
+  if (!visuals.length || visuals.length > MAX_STACKED_VISUALS) {
+    return { stacked: [], inline: attachments };
+  }
+  return {
+    stacked: visuals,
+    inline: attachments.filter((attachment) => !isVisualAttachment(attachment)),
+  };
 }

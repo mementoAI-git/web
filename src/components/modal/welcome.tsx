@@ -118,7 +118,7 @@ export default function Welcome() {
         >
           Start a conversation
         </button>
-        <button onClick={handleClose} className="btn flex-1 !py-[18px] !px-[32px] text-sm font-semibold font-inter !bg-black/4 !text-gray-900">
+        <button onClick={handleClose} className="btn flex-1 !py-[18px] !px-[32px] text-sm font-semibold font-inter !bg-fill-neutral-weak !text-text-neutral-strong">
           Not now
         </button>
       </div>

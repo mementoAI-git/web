@@ -83,3 +83,25 @@ it("keeps voice from pressing or typing into the call's own controls", async () 
   await user.click(screen.getByText("Start"));
   expect(screen.getByRole("region", { name: "Persistent call" }).closest("[data-voice-ignore]")).not.toBeNull();
 });
+
+function ConnectionPages() {
+  const voice = useVoiceSession()!;
+  const navigate = useNavigate();
+  return <><button onClick={()=>voice.start({connectionPersonId:'sarah'})}>Start Sarah</button><button onClick={()=>voice.start({memoryId:'personal'})}>Start personal</button><button onClick={()=>navigate('/chat/new')}>My context</button><button onClick={()=>navigate('/chat/new?person=sarah')}>Sarah context</button><output data-testid="context-timeline">{JSON.stringify(voice.timeline)}</output></>;
+}
+it('ends a personal call when entering a connection even through browser navigation',async()=>{
+ const user=userEvent.setup();render(<MemoryRouter initialEntries={['/chat/new']}><VoiceSessionProvider><ConnectionPages /></VoiceSessionProvider></MemoryRouter>);
+ await user.click(screen.getByText('Start personal'));expect(screen.getByRole('region',{name:'Persistent call'})).toBeInTheDocument();
+ await user.click(screen.getByText('Sarah context'));
+ await waitFor(()=>expect(screen.queryByRole('region',{name:'Persistent call'})).not.toBeInTheDocument());
+});
+it('marks connection voice history and ends its call on returning to My Memento',async()=>{
+ const user=userEvent.setup();render(<MemoryRouter initialEntries={['/chat/new?person=sarah']}><VoiceSessionProvider><ConnectionPages /></VoiceSessionProvider></MemoryRouter>);
+ await user.click(screen.getByText('Start Sarah'));
+ const observer=lifecycle.messageObservers.at(-1)!;
+ act(()=>observer([{_id:'private',text:'Sarah private transcript',created_at:new Date().toISOString()}]));
+ const entries=JSON.parse(screen.getByTestId('context-timeline').textContent!);
+ expect(entries.every((entry:{connectionPersonId?:string})=>entry.connectionPersonId==='sarah')).toBe(true);
+ await user.click(screen.getByText('My context'));
+ await waitFor(()=>expect(screen.queryByRole('region',{name:'Persistent call'})).not.toBeInTheDocument());
+});

@@ -23,12 +23,14 @@ export function SharedItemDialog({
   onRemoved,
   onTalk,
   confirmRemoval = false,
+  sharedChat = false,
 }: {
   person: Person;
   sourceId: string;
   onClose: () => void;
   onRemoved: () => void;
   confirmRemoval?: boolean;
+  sharedChat?: boolean;
   onTalk?: (id: string, title: string) => void;
 }) {
   const restoreFocus = useDialogFocus();
@@ -123,7 +125,7 @@ export function SharedItemDialog({
                 >
                   View original memory
                 </Button>
-                {person.memento_state === "active" && onTalk && (
+                {(sharedChat || person.memento_state === "active") && onTalk && (
                   <Button
                     size="form"
                     disabled={busy}

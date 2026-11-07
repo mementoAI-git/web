@@ -16,10 +16,10 @@ export { default as ChatLandingPage } from "./dashboard/chat/main";
 export { default as StoriesPage } from "./dashboard/stories";
 export { default as StoriesDetailsPage } from "./dashboard/stories/details";
 export { default as SettingsPage } from "./dashboard/settings";
+export { default as InsightsPage } from "./dashboard/insights";
 export { default as PricingPage } from "./pricing";
 export { default as NotFoundPage } from "./404";
 export { default as ErrorPage } from "./error";
 export { default as CapsuleViewPage } from "./capsule-view";
-export { default as HostOnboardingChatPage } from "./onboard-chat";
 
 export { default as PeoplePage } from "./dashboard/people";

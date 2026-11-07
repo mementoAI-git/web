@@ -1,3 +1,4 @@
+import { Instagram } from "lucide-react";
 import Bluesky from "@/assets/icon/social-profiles/bluesky_social.svg?react";
 import X from "@/assets/icon/social-profiles/social_x.svg?react";
 import Youtube from "@/assets/icon/social-profiles/youtube.svg?react";
@@ -28,5 +29,11 @@ export const socialPlatforms = [
     label: "Facebook",
     Icon: Facebook,
     placeholder: "https://www.facebook.com/you",
+  },
+  {
+    key: "instagram",
+    label: "Instagram",
+    Icon: Instagram,
+    placeholder: "https://www.instagram.com/you",
   },
 ] as const;

@@ -1,3 +1,4 @@
+import { UserAvatar } from "@/components/user-avatar";
 import type { ICapsule } from "@/utility/interface";
 import { CapsuleEmptyState } from "./CapsuleEmptyState";
 import ImageThumbnail from "./ImageThumbnail";
@@ -59,22 +60,7 @@ function CapsuleListItem({ capsule }: { capsule: ICapsule }) {
                   <>
                     {/* First recipient with avatar */}
                     <div className="flex items-center gap-1.5">
-                      {recipients[0].picture_url ? (
-                        <img
-                          src={recipients[0].picture_url}
-                          alt={getDisplayName(recipients[0])}
-                          className="w-5 h-5 rounded-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center text-xs font-medium text-gray-600">
-                          {(
-                            recipients[0].first_name ||
-                            recipients[0].email
-                          )
-                            .charAt(0)
-                            .toUpperCase()}
-                        </div>
-                      )}
+                      <UserAvatar alt={getDisplayName(recipients[0])} src={recipients[0].picture_url} userId={recipients[0]._id} email={recipients[0].email} name={getDisplayName(recipients[0])} className="size-5" />
                       <span className="text-sm font-medium text-gray-900">
                         {recipients[0].first_name ||
                           recipients[0].email.split("@")[0]}

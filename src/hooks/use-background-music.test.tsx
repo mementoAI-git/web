@@ -190,3 +190,119 @@ describe("server background music catalog", () => {
     expect(audioInstances[0].src).toBe("/audio/seawaves.mp3");
   });
 });
+
+it("falls back to the bundled track if an idle server source fails without autoplaying", async () => {
+  savedMusic = "moonlight";
+  accountId = "fallback-account";
+  audioInstances.length = 0;
+  vi.stubGlobal("Audio", MockAudio);
+  render(
+    <SWRConfig
+      value={{
+        provider: () => new Map(),
+        fetcher: async () => ({
+          success: true,
+          data: [
+            {
+              key: "moonlight",
+              title: "Moonlight",
+              url: "https://api.test/missing/moonlight.mp3",
+            },
+          ],
+        }),
+      }}
+    >
+      <BackgroundMusicProvider>
+        <MusicControls />
+      </BackgroundMusicProvider>
+    </SWRConfig>,
+  );
+  const audio = audioInstances.at(-1)!;
+  await waitFor(() =>
+    expect(audio.src).toBe("https://api.test/missing/moonlight.mp3"),
+  );
+  act(() => audio.dispatchEvent(new Event("error")));
+  expect(audio.src).toBe("/audio/moonlight.mp3");
+  expect(audio.play).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByText("Play saved track"));
+  expect(screen.getByLabelText("Playback")).toHaveTextContent("Playing");
+});
+
+it("continues a requested track using the bundled audio when the server source fails", async () => {
+  savedMusic = "moonlight";
+  audioInstances.length = 0;
+  vi.mocked(toast.error).mockClear();
+  vi.stubGlobal("Audio", MockAudio);
+  render(
+    <SWRConfig
+      value={{
+        provider: () => new Map(),
+        fetcher: async () => ({
+          success: true,
+          data: [
+            {
+              key: "seawaves",
+              title: "Sea Waves",
+              url: "https://api.test/missing/seawaves.mp3",
+            },
+          ],
+        }),
+      }}
+    >
+      <BackgroundMusicProvider>
+        <MusicControls />
+      </BackgroundMusicProvider>
+    </SWRConfig>,
+  );
+  await waitFor(() =>
+    expect(screen.getByLabelText("Track source")).toHaveTextContent(
+      "https://api.test/missing/seawaves.mp3",
+    ),
+  );
+  fireEvent.click(screen.getByText("Play track"));
+  const audio = audioInstances.at(-1)!;
+  act(() => audio.dispatchEvent(new Event("error")));
+  expect(audio.src).toBe("/audio/seawaves.mp3");
+  expect(audio.play).toHaveBeenCalledTimes(2);
+  expect(screen.getByLabelText("Playback")).toHaveTextContent("Playing");
+  expect(toast.error).not.toHaveBeenCalled();
+  act(() => audio.dispatchEvent(new Event("error")));
+  expect(toast.error).toHaveBeenCalledTimes(1);
+  expect(screen.getByLabelText("Playback")).toHaveTextContent("Stopped");
+});
+
+it("does not retry another source when the browser blocks playback permission", async () => {
+  savedMusic = "moonlight";
+  audioInstances.length = 0;
+  vi.stubGlobal("Audio", MockAudio);
+  render(
+    <SWRConfig
+      value={{
+        provider: () => new Map(),
+        fetcher: async () => ({
+          success: true,
+          data: [
+            {
+              key: "moonlight",
+              title: "Moonlight",
+              url: "https://api.test/moonlight.mp3",
+            },
+          ],
+        }),
+      }}
+    >
+      <BackgroundMusicProvider>
+        <MusicControls />
+      </BackgroundMusicProvider>
+    </SWRConfig>,
+  );
+  const audio = audioInstances.at(-1)!;
+  await waitFor(() => expect(audio.src).toBe("https://api.test/moonlight.mp3"));
+  audio.play.mockRejectedValueOnce({ name: "NotAllowedError" });
+  fireEvent.click(screen.getByText("Play saved track"));
+  await waitFor(() =>
+    expect(screen.getByLabelText("Buffering")).toHaveTextContent("false"),
+  );
+  expect(audio.src).toBe("https://api.test/moonlight.mp3");
+  expect(audio.play).toHaveBeenCalledTimes(1);
+});

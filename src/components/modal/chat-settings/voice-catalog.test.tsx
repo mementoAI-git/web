@@ -43,11 +43,11 @@ describe("voice catalog recovery", () => {
       return failed ? HttpResponse.json({}, { status: 500 }) : HttpResponse.json({ data: { voices: [voice] } });
     }));
     renderWithProviders(<RefreshableVoices />, { auth: true });
-    await screen.findByRole("button", { name: /Hannah/ });
+    await screen.findByRole("button", { name: /select voice/i });
     failed = true;
     await userEvent.setup().click(screen.getByRole("button", { name: "Refresh voices" }));
     await screen.findByRole("button", { name: "Retry loading voices" });
-    expect(screen.getByRole("button", { name: /Hannah/ })).toBeEnabled();
+    expect(screen.getByRole("button", { name: /select voice/i })).toBeEnabled();
     expect(screen.queryByText(/No voices/)).not.toBeInTheDocument();
   });
 
@@ -67,7 +67,7 @@ describe("voice catalog recovery", () => {
     const retry = await screen.findByRole("button", {name: "Retry loading voices"});
     failed = false;
     await userEvent.setup().click(retry);
-    expect(await screen.findByRole("button", {name: /Hannah/})).toBeEnabled();
+    expect(await screen.findByRole("button", {name: /select voice/i})).toBeEnabled();
     await waitFor(() => expect(screen.queryByRole("button", {name: "Retry loading voices"})).not.toBeInTheDocument());
     expect(geminiRequests).toBe(2);
     expect(elevenRequests).toBe(0);

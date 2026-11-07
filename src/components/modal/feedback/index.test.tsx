@@ -167,7 +167,7 @@ describe("Feedback", () => {
     renderWithProviders(<FeedbackHost />, { auth: true });
     await user.click(screen.getByRole("button", { name: /open feedback/i }));
     expect(screen.getAllByRole("dialog")).toHaveLength(1);
-    expect(screen.getAllByRole("button", { name: /^cancel$/i })).toHaveLength(
+    expect(screen.getAllByRole("button", { name: /^dismiss$/i })).toHaveLength(
       1,
     );
     await user.keyboard("{Escape}");

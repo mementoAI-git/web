@@ -1,0 +1,13 @@
+/* The wrapper owns the responsive gutters, so the surface fills it exactly. */
+@layer utilities {
+  .share-post-container.modal-container {
+    width: 100% !important;
+  }
+}
+
+/* Light sky's fills are translucent white, which would vanish on this sheet's white surface. */
+.light-sky .publish-success-sheet {
+  --color-fill-neutral-weak: color-mix(in srgb, var(--fill-neutral-strong) 8%, transparent);
+  --color-fill-neutral-weaker: color-mix(in srgb, var(--fill-neutral-strong) 4%, transparent);
+}
+

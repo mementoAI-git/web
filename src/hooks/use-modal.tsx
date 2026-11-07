@@ -33,6 +33,8 @@ const modal = createContext<ModalContext>(initialStates);
 export function ModalProvider({ children }: PropsWithChildren) {
   const [state, setState] = useState<IState[]>([]);
   const closeGuardsRef = useRef<Map<string, () => boolean>>(new Map());
+  const stateRef = useRef(state);
+  stateRef.current = state;
 
   const registerCloseGuard = useCallback((name: string, guard: () => boolean) => {
     closeGuardsRef.current.set(name, guard);
@@ -50,13 +52,15 @@ export function ModalProvider({ children }: PropsWithChildren) {
   }, []);
 
   const close = useCallback((name?: string, options?: ModalCloseOptions) => {
+    // Guards may set state or save, so they can't run inside a state updater.
+    if (!options?.force) {
+      const guardName = name ?? stateRef.current[0]?.name;
+      const guard = guardName ? closeGuardsRef.current.get(guardName) : undefined;
+      if (guard && !guard()) return;
+    }
     setState((p) => {
       const modalName = name ?? p[0]?.name;
-      if (!modalName || !p.some((a) => a.name === modalName)) return p;
-      if (!options?.force) {
-        const guard = closeGuardsRef.current.get(modalName);
-        if (guard && !guard()) return p;
-      }
+      if (!modalName) return p;
       return p.filter((n) => n.name !== modalName);
     });
   }, []);

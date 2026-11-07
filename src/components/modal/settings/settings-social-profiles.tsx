@@ -1,42 +1,105 @@
 import { socialPlatforms } from "@/features/profile/social-platforms";
-import { useRef, useState } from "react";
+import { useId, useRef, useState } from "react";
 import endpoint from "@/api/endpoint";
 import { put } from "@/api/mutations";
 import { useApi } from "@/hooks/use-api";
 import type { IPersona } from "@/utility/interface";
-import { SocialProfileLinks } from "@/features/profile/social-profile-links";
 import {
   normalizeSocialProfileUrl,
   type SocialPlatform,
 } from "@/features/profile/social-accounts";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { SettingsSectionCard } from "./settings-section-card";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
+import { SettingsFieldRow } from "@/pages/dashboard/settings/settings-field-row";
+
+const commonPlatforms: SocialPlatform[] = ["x", "linkedin", "instagram"];
+
+/** Platforms whose profiles are recognized by a short @handle. */
+const handleBaseUrls: Partial<Record<SocialPlatform, string>> = {
+  x: "https://x.com/",
+  instagram: "https://www.instagram.com/",
+};
+
+function labelFor(key: SocialPlatform, label: string) {
+  return key === "x" ? "X / Twitter" : label;
+}
+
+/** Shows a saved profile link as @handle until the field is focused. */
+function toDisplayValue(key: SocialPlatform, value: string) {
+  if (!handleBaseUrls[key] || !normalizeSocialProfileUrl(key, value)) return value;
+  return `@${new URL(value).pathname.replace(/^\/|\/$/g, "")}`;
+}
+
+/** Accepts @handle for handle-based platforms. Other values go through URL validation. */
+function toProfileUrlInput(key: SocialPlatform, value: string) {
+  const base = handleBaseUrls[key];
+  return base && /^@?[\w.]+$/.test(value) && !/^https?/i.test(value)
+    ? `${base}${value.replace(/^@/, "")}`
+    : value;
+}
 
 type Draft = Partial<Record<SocialPlatform, string>>;
 export function SettingsSocialProfiles() {
-  const { data, mutate } = useApi<IPersona | null>(endpoint.persona);
+  const id = useId();
+  const { data, mutate, isLoading } = useApi<IPersona | null>(endpoint.persona);
   const accounts = data?.data?.social_accounts;
-  const [draft, setDraft] = useState<Draft | null>(null);
-  const [original, setOriginal] = useState<Draft>({});
+  const [draft, setDraft] = useState<Draft>({});
+  const [added, setAdded] = useState<SocialPlatform[]>([]);
+  const [focused, setFocused] = useState<SocialPlatform | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const savingRef = useRef(false);
-  const edit = () => {
-    const values = Object.fromEntries(
-      socialPlatforms.map(({ key }) => [key, accounts?.[key]?.url ?? ""]),
-    );
-    setOriginal(values);
-    setDraft(values);
+  const focusAdded = useRef<SocialPlatform | null>(null);
+  const valueFor = (key: SocialPlatform) =>
+    draft[key] ?? accounts?.[key]?.url ?? "";
+  const hasChanges = socialPlatforms.some(
+    ({ key }) => valueFor(key).trim() !== (accounts?.[key]?.url ?? ""),
+  );
+  const visibleKeys = [
+    ...commonPlatforms,
+    ...socialPlatforms
+      .map(({ key }) => key)
+      .filter(
+        (key) =>
+          !commonPlatforms.includes(key) &&
+          (added.includes(key) || accounts?.[key]?.url),
+      ),
+  ];
+  const available = socialPlatforms.filter(
+    ({ key }) => !visibleKeys.includes(key),
+  );
+  const disabled = saving || isLoading || !data;
+  const setValue = (key: SocialPlatform, value: string) => {
+    setDraft((previous) => ({ ...previous, [key]: value }));
     setError("");
   };
+  const paste = async (key: SocialPlatform) => {
+    try {
+      const text = (await navigator.clipboard.readText()).trim();
+      if (text) {
+        setValue(key, text);
+        return;
+      }
+    } catch {
+      // Clipboard access can be declined; typing or pasting by keyboard still works.
+    }
+    document.getElementById(`${id}-${key}`)?.focus();
+  };
   const save = async () => {
-    if (!draft || savingRef.current) return;
+    if (!hasChanges || isLoading || savingRef.current) return;
     const changes: Partial<Record<SocialPlatform, string | null>> = {};
     for (const { key, label } of socialPlatforms) {
-      const value = draft[key]?.trim() ?? "";
-      if (value === original[key]) continue;
-      const url = value ? normalizeSocialProfileUrl(key, value) : null;
+      const value = valueFor(key).trim();
+      if (value === (accounts?.[key]?.url ?? "")) continue;
+      const url = value
+        ? normalizeSocialProfileUrl(key, toProfileUrlInput(key, value))
+        : null;
       if (value && !url) {
         setError(`Enter a valid HTTPS ${label} profile URL.`);
         return;
@@ -44,7 +107,7 @@ export function SettingsSocialProfiles() {
       changes[key] = url;
     }
     if (!Object.keys(changes).length) {
-      setDraft(null);
+      setDraft({});
       return;
     }
     setSaving(true);
@@ -69,7 +132,7 @@ export function SettingsSocialProfiles() {
         }),
         { revalidate: false },
       );
-      setDraft(null);
+      setDraft({});
       void mutate().catch(() => undefined);
     } catch {
       setError("We couldn’t save your social profiles. Please try again.");
@@ -79,89 +142,131 @@ export function SettingsSocialProfiles() {
     }
   };
   return (
-    <SettingsSectionCard
-      title={
-        <div className="flex items-center justify-between gap-3">
-          <span>Social profiles</span>
-          {!draft && (
-            <Button
-              variant="secondary"
-              className="h-8 rounded-md"
-              onClick={edit}
-            >
-              Edit social profiles
-            </Button>
-          )}
-        </div>
-      }
-      className="mt-6"
+    <form
+      aria-label="Social profiles"
+      aria-busy={saving}
+      className="settings-card p-4 sm:p-6"
+      onSubmit={(event) => {
+        event.preventDefault();
+        void save();
+      }}
     >
-      <p className="font-inter text-sm text-text-neutral-weak">
-        Add your official accounts. Memento can also add accounts you explicitly
-        identify as yours in stories or conversations.
-      </p>
-      {draft ? (
-        <form
-          onSubmit={(event) => {
-            event.preventDefault();
-            void save();
-          }}
-          className="space-y-4"
-        >
-          {socialPlatforms.map(({ key, label, placeholder }) => (
-            <div key={key} className="space-y-2">
-              <label
-                htmlFor={`social-${key}`}
-                className="font-inter text-sm text-text-neutral-strong"
-              >
-                {label}
-              </label>
-              <Input
-                id={`social-${key}`}
-                type="url"
-                maxLength={500}
-                placeholder={placeholder}
-                value={draft[key] ?? ""}
-                disabled={saving}
-                onChange={(event) =>
-                  setDraft({ ...draft, [key]: event.target.value })
-                }
-              />
-            </div>
-          ))}
-          <p className="text-xs text-text-neutral-weaker">
-            Clear a link to remove it. Removed links won’t be added again by AI.
-          </p>
-          {error && (
-            <p role="alert" className="text-sm text-text-error-strong">
-              {error}
-            </p>
-          )}
-          <div className="flex justify-end gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              disabled={saving}
-              onClick={() => setDraft(null)}
+      <fieldset disabled={disabled} className="min-w-0">
+        <legend className="sr-only">Social profile links</legend>
+        {visibleKeys.map((key) => {
+          const { label } = socialPlatforms.find(
+            (platform) => platform.key === key,
+          )!;
+          const value = valueFor(key);
+          const displayValue = toDisplayValue(key, value);
+          const profileUrl =
+            focused === key
+              ? null
+              : normalizeSocialProfileUrl(key, toProfileUrlInput(key, value.trim()));
+          return (
+            <SettingsFieldRow
+              key={key}
+              htmlFor={`${id}-${key}`}
+              label={labelFor(key, label)}
             >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={saving}>
-              {saving ? "Saving…" : "Save social profiles"}
-            </Button>
-          </div>
-        </form>
-      ) : (
-        <div className="flex flex-wrap gap-3">
-          {socialPlatforms.some(({ key }) => accounts?.[key]) ? (
-            <SocialProfileLinks accounts={accounts} />
-          ) : (
-            <p className="text-sm text-text-neutral-weaker">
-              No social profiles added yet.
-            </p>
-          )}
-        </div>
-      )}
-    </SettingsSectionCard>
+              <div className="relative min-w-0 flex-1">
+                {/* Before the input so Tab still reaches it: the link unmounts while the input has focus. */}
+                {profileUrl ? (
+                  <a
+                    href={profileUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={`Open ${label} profile ${displayValue}`}
+                    className="settings-value-link"
+                  >
+                    {displayValue}
+                  </a>
+                ) : null}
+                <Input
+                  id={`${id}-${key}`}
+                  maxLength={500}
+                  inputMode="url"
+                  className="settings-value-input"
+                  data-linked={profileUrl ? "" : undefined}
+                  placeholder={`Paste ${label} link`}
+                  value={focused === key ? value : displayValue}
+                  onFocus={() => setFocused(key)}
+                  onBlur={() => setFocused(null)}
+                  onChange={(event) => setValue(key, event.target.value)}
+                />
+              </div>
+              {!value ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="xs"
+                  className="settings-pill"
+                  aria-label={`Paste ${label} link`}
+                  onClick={() => void paste(key)}
+                >
+                  Paste
+                </Button>
+              ) : null}
+            </SettingsFieldRow>
+          );
+        })}
+      </fieldset>
+      <div className="flex flex-wrap items-center justify-end gap-3 pt-3.5">
+        {error && (
+          <p role="alert" className="mr-auto text-sm text-text-error-strong">
+            {error}
+          </p>
+        )}
+        {available.length > 0 && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                disabled={disabled}
+                className="settings-pill h-9 px-4"
+              >
+                Add new
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              className="motion-reduce:animate-none"
+              onCloseAutoFocus={(event) => {
+                if (!focusAdded.current) return;
+                event.preventDefault();
+                requestAnimationFrame(() => {
+                  document
+                    .getElementById(`${id}-${focusAdded.current}`)
+                    ?.focus();
+                  focusAdded.current = null;
+                });
+              }}
+            >
+              {available.map(({ key, label }) => (
+                <DropdownMenuItem
+                  key={key}
+                  onSelect={() => {
+                    focusAdded.current = key;
+                    setAdded((previous) => [...previous, key]);
+                  }}
+                >
+                  {label}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+        {hasChanges ? (
+          <Button
+            type="submit"
+            variant="ghost"
+            disabled={disabled}
+            className="settings-pill h-9 px-4"
+          >
+            {saving ? "Saving…" : "Save changes"}
+          </Button>
+        ) : null}
+      </div>
+    </form>
   );
 }

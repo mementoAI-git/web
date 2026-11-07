@@ -96,8 +96,8 @@ vi.mock("@/hooks/use-modal", async (importOriginal) => {
 });
 
 describe("resolveSidebarDesktopWidthPx", () => {
-  it("caps chat panel at the 485px design width on wide viewports", () => {
-    expect(resolveSidebarDesktopWidthPx(1440, { wideChatPanel: true })).toBe(485);
+  it("reduces the desktop chat panel design width by five percent", () => {
+    expect(resolveSidebarDesktopWidthPx(1440, { wideChatPanel: true })).toBe(460.75);
   });
 
   it("shrinks chat panel when the viewport leaves limited budget for the sidebar", () => {
@@ -136,26 +136,19 @@ describe("SidebarDetails", () => {
       '[data-testid="memory-sidebar-desktop"]',
     ) as HTMLElement | null;
     expect(desktopPanel).toBeTruthy();
-    expect(desktopPanel).toHaveStyle({ width: "485px" });
+    expect(desktopPanel).toHaveStyle({ width: "460.75px" });
     expect(desktopPanel?.className).toContain("bg-bg-neutral-solid");
     expect(desktopPanel?.style.opacity).toBe("");
-
-    const drawerSurface = desktopPanel?.querySelector('[data-testid="sidebar-details-content"]');
-    expect(drawerSurface?.className).toContain("bg-bg-neutral-solid");
-    expect(drawerSurface?.className).not.toContain("bg-transparent");
 
     const content = desktopPanel?.querySelector(
       '[data-testid="sidebar-details-content"]',
     ) as HTMLElement | null;
     expect(content).toBeTruthy();
     expect(content?.className).toContain("overflow-y-auto");
-    expect(content?.className).toContain("bg-bg-neutral-solid");
+    // The drawer's raised fill shows through; a second fill here would darken it in dark mode.
+    expect(content?.className).not.toContain("bg-bg-neutral-solid");
     expect(content?.className).not.toContain("bg-gradient-to-b");
-    const gradientArtwork = within(content!).getByTestId("chat-settings-gradient");
-    expect(gradientArtwork).toBeInstanceOf(HTMLImageElement);
-    expect(decodeURIComponent(gradientArtwork.getAttribute("src") ?? "")).toContain(
-      "chat settings gradient.png",
-    );
+    expect(within(content!).queryByTestId("chat-settings-gradient")).not.toBeInTheDocument();
 
     const title = within(content!).getByRole("heading", { name: /chat settings/i });
     const preferences = within(content!).getByTestId("mock-chat-preferences-panel");
@@ -186,21 +179,20 @@ describe("SidebarDetails", () => {
     });
   });
 
-  it("keeps the mobile sheet as the sole scroll owner for gesture tracking", () => {
+  it("uses the shared bottom sheet on phones, which owns the title, margins, and scrolling", () => {
     const original = window.innerWidth;
     Object.defineProperty(window, "innerWidth", { configurable: true, value: 390 });
     renderSidebar({ includeChatPreferences: true });
     Object.defineProperty(window, "innerWidth", { configurable: true, value: original });
 
-    const sheetContent = screen.getByTestId("mock-sheet-content");
-    expect(sheetContent).not.toHaveAttribute("data-disable-scroll");
+    const sheet = screen.getByRole("dialog", { name: "Chat settings" });
+    expect(sheet).toHaveAttribute("data-slot", "sheet-content");
+    expect(sheet).toHaveClass("quick-tools-panel", "max-h-[85dvh]", "overflow-y-auto");
+    expect(screen.getAllByText("Chat settings")).toHaveLength(1);
 
-    const mobileContent = sheetContent.querySelector(
-      '[data-testid="sidebar-details-content"]',
-    );
-    expect(mobileContent?.className).toContain("h-auto");
-    expect(mobileContent?.className).toContain("overflow-visible");
-    expect(mobileContent?.className).not.toContain("overflow-y-auto");
+    const content = sheet.querySelector('[data-testid="sidebar-details-content"]');
+    expect(content).toHaveClass("h-auto", "overflow-visible");
+    expect(content?.className).not.toMatch(/\bp-|bg-/);
   });
 
   it("docks desktop overlay to the right and paints a card-style content shell", () => {

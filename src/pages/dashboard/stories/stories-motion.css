@@ -1,4 +1,4 @@
-/* Transitions.dev sliding tabs: fixed-size view pill and full-width filter marker. */
+/* Transitions.dev sliding marker for the grid/list view pill. */
 .stories-view-toggle {
   position: relative;
   isolation: isolate;
@@ -22,19 +22,6 @@
   background: transparent;
 }
 .stories-filter-tabs [data-slot="tabs-trigger"]::after { content: none; }
-.stories-filter-indicator {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: var(--active-tab-width);
-  height: 2px;
-  border-radius: 100px;
-  background: var(--text-neutral-strong);
-  pointer-events: none;
-  transform: translateX(var(--active-tab-left));
-  transition: transform 250ms cubic-bezier(0.22, 1, 0.36, 1),
-    width 250ms cubic-bezier(0.22, 1, 0.36, 1);
-}
 /* Reveal loaded results as a single surface; pagination and refresh keep DOM identity. */
 .stories-results-reveal.is-shown[data-loading="false"] {
   animation: stories-results-in 400ms ease-in-out;
@@ -51,7 +38,6 @@
 .stories-motion [role="button"] { transition: background-color 150ms ease-out; }
 @media (prefers-reduced-motion: reduce) {
   .stories-view-toggle::before,
-  .stories-filter-indicator,
   .stories-motion button,
   .stories-motion [role="button"] { transition: none !important; }
   .stories-motion button:active { transform: none !important; }
@@ -63,11 +49,7 @@
 /* Theme surfaces are scoped to the table list; grid cards keep their artwork. */
 .stories-table,
 .stories-list-surface {
-  background-color: var(--bg-neutral);
-}
-:root:not(.dark) .stories-table,
-:root:not(.dark) .stories-list-surface {
-  background-color: color-mix(in srgb, var(--bg-neutral) 85%, transparent);
+  background-color: var(--insights-card);
 }
 .stories-table {
   display: flex;
@@ -76,6 +58,10 @@
 }
 .stories-table > div:first-child {
   flex: 1;
+}
+/* Title and menu fit narrow widths, so the shared table's minimum isn't needed. */
+.stories-table table {
+  min-width: 0;
 }
 .stories-empty-surface {
   min-height: 240px;
@@ -106,22 +92,18 @@
   transition: background-color 150ms ease-out;
 }
 .stories-table tbody tr:hover {
+  background-color: color-mix(in srgb, var(--text-neutral-strong) 6%, transparent);
+}
+.stories-table tbody td:last-child button {
+  border: 1px solid transparent;
+}
+.stories-table tbody td:last-child button:hover,
+.stories-table tbody td:last-child button[aria-expanded="true"] {
+  border-color: var(--stroke-neutral-weak);
   background-color: var(--fill-neutral-weak);
 }
 .stories-table > div:last-child button:hover:not(:disabled) {
   background-color: var(--fill-neutral-weak);
-}
-.stories-table-tag {
-  display: inline-block;
-  border: 1px solid var(--stroke-neutral-weak);
-  border-radius: 100px;
-  background-color: var(--fill-neutral-weak);
-  color: var(--text-neutral-weak);
-  padding: 2px 8px;
-  font-family: var(--font-inter);
-  font-size: 12px;
-  font-weight: 500;
-  text-transform: capitalize;
 }
 @media (prefers-reduced-motion: reduce) {
   .stories-table tbody tr { transition: none; }

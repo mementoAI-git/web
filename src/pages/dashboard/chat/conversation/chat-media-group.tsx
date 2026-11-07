@@ -1,8 +1,11 @@
-import { FileText, Mic, Play } from "lucide-react";
+import { displayFileName } from "@/utility/file-label";
+import { FileText, Play } from "lucide-react";
+import { SavedVoiceNoteTile } from "@/components/recorder/voice-note-tile";
 import { useModal } from "@/hooks/use-modal";
 import { useSignedMediaAccess } from "@/features/media/signed-media-access";
 import { cn } from "@/lib/utils";
 import {
+  MAX_STACKED_VISUALS,
   classifyConversationFile,
   normalizeChatAttachment,
   type ChatAttachment,
@@ -12,6 +15,19 @@ import {
 type ChatMediaGroupProps = {
   attachments: ChatAttachment[];
   sharedAt?: string;
+};
+
+const STACK_TILE_CLASS =
+  "absolute aspect-square w-[58%] rounded-[22px] bg-background shadow-lg ring-1 ring-stroke-neutral-weaker transition-[rotate,scale] duration-150 hover:z-20 hover:scale-[1.02] hover:rotate-0 focus-visible:z-20 motion-reduce:transition-none";
+
+/** Tile positions, first attachment in front. Insets leave room for the rotated corners. */
+const STACK_SLOTS: Record<number, string[]> = {
+  2: ["left-[5%] top-[36%] z-10 -rotate-6", "left-[37%] top-[5%] rotate-8"],
+  3: [
+    "left-[5%] top-[26%] z-10 -rotate-6",
+    "left-[37%] top-[3%] rotate-8",
+    "left-[36%] top-[52%] rotate-8",
+  ],
 };
 
 function VisualTile({
@@ -38,7 +54,7 @@ function VisualTile({
     <button
       type="button"
       onClick={openViewer}
-      aria-label={`Open ${file.name || "file"} in viewer`}
+      aria-label={`Open ${displayFileName(file.name) || "file"} in viewer`}
       className={cn(
         "group relative min-h-0 min-w-0 cursor-pointer overflow-hidden rounded-lg bg-fill-neutral-weak focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stroke-brand-strong",
         className,
@@ -89,7 +105,17 @@ function CompactFileRow({
   const { push } = useModal();
   const { src } = useSignedMediaAccess(file);
   const kind = classifyConversationFile(file);
-  const Icon = kind === "audio" ? Mic : FileText;
+  if (kind === "audio") {
+    const label = displayFileName(file.name) || "Voice note";
+    return (
+      <SavedVoiceNoteTile
+        file={file}
+        label={`${label} in viewer`}
+        onOpen={() => push?.("file-preview", { files, startIndex: index })}
+      />
+    );
+  }
+  const Icon = FileText;
   const content = (
     <>
       <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-fill-brand-weak text-text-brand-strong">
@@ -97,19 +123,17 @@ function CompactFileRow({
       </span>
       <span className="min-w-0 flex-1">
         <span className="block truncate font-geist text-sm font-medium text-text-neutral-strong">
-          {file.name || (kind === "audio" ? "Audio" : "File")}
+          {displayFileName(file.name) || "File"}
         </span>
         <span className="block truncate font-inter text-xs text-text-neutral-weak">
-          {kind === "audio" ? "Audio" : file.type || "Document"}
+          {file.type || "Document"}
         </span>
       </span>
     </>
   );
   const classes = "sky-card flex min-h-14 w-full min-w-0 items-center gap-3 rounded-lg border border-stroke-neutral-weaker bg-fill-neutral-weaker px-3 py-2 text-left transition-colors hover:bg-fill-neutral-weak focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stroke-brand-strong";
-  return kind === "audio" ? (
-    <button type="button" onClick={() => push?.("file-preview", { files, startIndex: index })} aria-label={`Open ${file.name || "file"} in viewer`} className={classes}>{content}</button>
-  ) : (
-    <a href={src} download={file.name} aria-label={`Download ${file.name || "file"}`} className={classes}>{content}</a>
+  return (
+    <a href={src} download={file.name} aria-label={`Download ${displayFileName(file.name) || "file"}`} className={classes}>{content}</a>
   );
 }
 
@@ -129,16 +153,17 @@ export function ChatMediaGroup({ attachments, sharedAt }: ChatMediaGroupProps) {
   }));
   const visibleVisual = visual.slice(0, visual.length >= 4 ? 4 : visual.length);
   const visualLayout =
-    visual.length === 1 ? "single" : visual.length <= 3 ? "row" : "grid";
+    visual.length === 1 ? "single" : visual.length <= MAX_STACKED_VISUALS ? "stack" : "grid";
 
   return (
     <div className="space-y-2" data-testid="chat-media-group">
       {visual.length ? (
         <div
           className={cn(
-            "w-full max-w-[380px] overflow-hidden rounded-xl bg-fill-neutral-weaker p-1",
-            visualLayout === "row" && "grid grid-flow-col auto-cols-fr gap-1",
-            visualLayout === "grid" && "grid grid-cols-2 gap-1",
+            visualLayout === "single" && "w-[260px] max-w-full p-2",
+            visualLayout === "stack" && "relative w-[300px] max-w-full",
+            visualLayout === "stack" && (visual.length === 2 ? "aspect-square" : "aspect-[3/4]"),
+            visualLayout === "grid" && "grid w-full max-w-[380px] grid-cols-2 gap-1 overflow-hidden rounded-xl bg-fill-neutral-weaker p-1",
           )}
           data-layout={visualLayout}
         >
@@ -155,9 +180,11 @@ export function ChatMediaGroup({ attachments, sharedAt }: ChatMediaGroupProps) {
                   : 0
               }
               className={cn(
-                visualLayout === "single" && "max-h-[420px] w-full",
-                visualLayout === "single" && "[&_img]:h-auto [&_img]:max-h-[420px] [&_img]:w-auto [&_img]:max-w-full [&_img]:object-contain",
-                visualLayout !== "single" && "aspect-[4/3] w-full",
+                visualLayout === "single" && "block w-full -rotate-2 rounded-[22px] shadow-lg ring-1 ring-stroke-neutral-weaker transition-[rotate,scale] duration-150 hover:scale-[1.02] hover:rotate-0 motion-reduce:transition-none",
+                visualLayout === "single" && "[&_img]:block [&_img]:h-auto [&_img]:max-h-[340px] [&_img]:w-full",
+                visualLayout === "stack" && STACK_TILE_CLASS,
+                visualLayout === "stack" && STACK_SLOTS[visual.length]?.[visibleIndex],
+                visualLayout === "grid" && "aspect-[4/3] w-full",
               )}
             />
           ))}

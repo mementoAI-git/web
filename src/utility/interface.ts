@@ -107,6 +107,7 @@ export interface IUser {
   banner_preset?: number;
   banner_position?: {x: number; y: number};
   last_seen: string;
+  last_task_date?: string;
   streak: number;
   bg_music?: string;
   chat_voice?: string | null;
@@ -187,7 +188,7 @@ export interface IPagination<T> {
 
 type IBeneficiaryUser = Pick<
   IUser,
-  "email" | "first_name" | "last_name" | "picture_url"
+  "_id" | "email" | "first_name" | "last_name" | "picture_url"
 >;
 
 export interface IBeneficiary {
@@ -321,4 +322,7 @@ export interface IMessage {
   attachments?: IFile[];
   attatchments?: IFile[];
   link_metadata?: ILinkMetadata[];
+  is_voice?: boolean;
+  /** The voice call this message came from. */
+  voice_session_id?: string;
 }

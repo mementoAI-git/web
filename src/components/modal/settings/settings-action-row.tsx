@@ -33,7 +33,7 @@ export const settingsPillButtonClass = {
     "cursor-not-allowed border border-stroke-neutral-disabled bg-transparent text-text-neutral-disabled",
   ),
   /** Solid destructive */
-  destructive: cn(pillBase, "border border-transparent bg-danger text-white hover:opacity-90"),
+  destructive: cn(pillBase, "border border-transparent bg-[color:var(--fill-error-solid)] text-white hover:opacity-90"),
 } as const;
 
 export type SettingsPillVariant = keyof typeof settingsPillButtonClass;

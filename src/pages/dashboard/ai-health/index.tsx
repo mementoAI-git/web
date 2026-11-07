@@ -125,17 +125,17 @@ export default function AiHealthPage() {
         </section>
 
         {(overviewError || timeseriesError) && (
-          <div className="rounded-xl border border-red-300 bg-red-50 p-3 text-sm text-red-700">
+          <div className="rounded-xl border border-stroke-error-strong/20 bg-fill-error-weak p-3 text-sm text-text-error-strong">
             Could not load AI metrics. Please try again.
           </div>
         )}
 
         {alerts.length > 0 && (
-          <section className="rounded-xl border border-amber-300 bg-amber-50 p-4">
-            <h2 className="text-sm font-semibold text-amber-800">Active Alerts</h2>
+          <section className="rounded-xl border border-stroke-warning-strong/20 bg-fill-warning-weak p-4">
+            <h2 className="text-sm font-semibold text-text-warning-strong">Active Alerts</h2>
             <div className="mt-2 space-y-1.5">
               {alerts.map((alert) => (
-                <p key={alert.key} className="text-sm text-amber-700">
+                <p key={alert.key} className="text-sm text-text-warning-weak">
                   [{alert.severity.toUpperCase()}] {alert.message}
                 </p>
               ))}

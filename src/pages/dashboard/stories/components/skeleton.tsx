@@ -4,17 +4,10 @@ export function TableRowSekeleton() {
       <td>
         <div className="flex w-75 cursor-pointer items-center gap-2 px-4 py-3">
           <div className="h-10 w-[46.87px] bg-v3-fill-weaker rounded" />
-          <span className="h-3 w-full bg-v3-fill-weaker rounded" />
-        </div>
-      </td>
-      <td>
-        <div className="h-3 w-full max-w-18 bg-v3-fill-weaker rounded px-4 py-3" />
-      </td>
-      <td>
-        <div className="flex items-center gap-1 px-4 py-3">
-          <div className="rounded-full bg-v3-fill-weaker h-4 w-9" />
-          <div className="rounded-full bg-v3-fill-weaker h-4 w-9" />
-          <div className="rounded-full bg-v3-fill-weaker h-4 w-9" />
+          <div className="w-full space-y-2">
+            <div className="h-3 w-full bg-v3-fill-weaker rounded" />
+            <div className="h-3 w-full max-w-18 bg-v3-fill-weaker rounded" />
+          </div>
         </div>
       </td>
     </tr>

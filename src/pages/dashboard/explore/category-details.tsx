@@ -128,32 +128,32 @@ export default function CategoryDetails({ category }: CategoryDetailsProps) {
               Back
             </Link>
           </Button>
-          <header className="sky-card flex w-full flex-col gap-6 rounded-[32px] border border-stroke-neutral-weak bg-fill-neutral-weak px-6 py-5 md:flex-row">
-            <div className="aspect-[336/266] w-full shrink-0 overflow-hidden rounded-[20px] md:w-[40%] md:max-w-[336px]">
+          <header className="sky-card flex w-full flex-col gap-3 rounded-[12px] border border-stroke-neutral-weak bg-fill-neutral-weak p-3 sm:gap-6 sm:rounded-[32px] sm:px-6 sm:py-5 md:flex-row">
+            <div className="aspect-[2/1] w-full shrink-0 overflow-hidden rounded-[8px] sm:aspect-[336/266] sm:rounded-[20px] md:w-[40%] md:max-w-[336px]">
               <ExploreCategoryImage
                 slug={category.slug}
                 alt=""
-                sizes="(min-width: 768px) 336px, calc(100vw - 80px)"
+                sizes="(min-width: 768px) 336px, calc(100vw - 56px)"
                 loading="eager"
                 className="size-full object-cover object-center"
               />
             </div>
-            <div className="flex min-w-0 flex-1 flex-col items-start justify-between gap-6">
-              <div className="flex flex-col gap-4">
-                <h1 className="font-garamond text-[32px] font-medium leading-tight text-text-neutral-strong sm:text-[40px] sm:leading-[48px]">
+            <div className="flex min-w-0 flex-1 flex-col items-start justify-between gap-3 sm:gap-6">
+              <div className="flex flex-col gap-1 sm:gap-4">
+                <h1 className="font-garamond text-2xl font-medium leading-tight text-text-neutral-strong sm:text-[40px] sm:leading-[48px]">
                   {category.title}
                 </h1>
-                <p className="font-garamond text-[24px] font-normal leading-[34px] text-text-neutral-strong">
+                <p className="font-garamond text-lg font-normal leading-snug text-text-neutral-strong sm:text-[24px] sm:leading-[34px]">
                   {category.description}
                 </p>
               </div>
               <Badge
                 variant="outline"
-                className="h-auto gap-1.5 rounded-full border-stroke-neutral-strong bg-transparent px-2 py-1 font-geist text-base font-medium text-text-neutral-strong"
+                className="h-auto gap-1.5 rounded-full border-stroke-neutral-strong bg-transparent px-2 py-0.5 font-geist text-xs font-medium text-text-neutral-strong sm:py-1 sm:text-base"
               >
                 <span
                   aria-hidden="true"
-                  className="size-2.5 rounded-full bg-fill-info-strong"
+                  className="size-2 rounded-full bg-fill-info-strong sm:size-2.5"
                 />
                 {data ? `${totalDocs} ${totalDocs === 1 ? "topic" : "topics"}` : "Topics"}
               </Badge>
@@ -192,7 +192,7 @@ export default function CategoryDetails({ category }: CategoryDetailsProps) {
                 : "No prompts available for this category."}
             </TypographyMuted>
           ) : (
-            <div className="flex flex-col gap-6">
+            <div className="flex flex-col gap-3 sm:gap-6">
               {prompts.map((prompt, index: number) => (
                 <CategoryPromptCard
                   key={prompt._id ?? index}

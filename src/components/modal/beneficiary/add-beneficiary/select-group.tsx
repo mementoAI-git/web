@@ -1,5 +1,7 @@
 "use client";
 
+import { UserAvatar } from "@/components/user-avatar";
+
 import { useState, useEffect, useRef } from "react";
 import useSWR from "swr";
 import { X } from "lucide-react";
@@ -172,9 +174,7 @@ export function SelectGroup({
                   disabled={selectedGroups.some((g) => g.id === item.id)}
                   className="flex w-full items-center gap-2.5 px-3 py-2 text-left hover:bg-v3-fill-weaker disabled:pointer-events-none disabled:opacity-40"
                 >
-                  <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-v3-fill-weak font-inter text-xs font-semibold text-v3-text-strong">
-                    {item.name[0]?.toUpperCase()}
-                  </div>
+                  <UserAvatar alt="" name={item.name} userId={item.id} className="size-7" />
                   <span className="min-w-0 flex-1 truncate font-inter text-sm font-medium text-v3-text-strong">
                     {item.name}
                   </span>

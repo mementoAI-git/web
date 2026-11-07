@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Sparkles } from "lucide-react";
 import zapIcon from "@/assets/icon/zap.svg";
 import { AutogenerateTagsButton } from "@/components/Buttons";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
@@ -12,7 +13,8 @@ interface TagsFieldProps {
   setTags: React.Dispatch<React.SetStateAction<string[]>>;
   title: string;
   body: string;
-  variant?: "default" | "panel";
+  /** "sheet" is the phone publish sheet, matching the mobile app. */
+  variant?: "default" | "panel" | "sheet";
 }
 
 export function TagsField({
@@ -29,6 +31,78 @@ export function TagsField({
     if (t && !tags.includes(t)) setTags((prev) => [...prev, t]);
     setTagInput("");
   };
+
+  if (variant === "sheet") {
+    return (
+      <div>
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <Label
+            htmlFor="create-memory-tags-sheet"
+            className="font-geist text-base font-normal text-text-neutral-strong"
+          >
+            Tags (optional)
+          </Label>
+          <AutogenerateTagsButton
+            title={title}
+            body={body}
+            onTagsGenerated={(newTags) =>
+              setTags((prev) => {
+                const seen = new Set(prev.map((t) => t.toLowerCase()));
+                const fresh = newTags
+                  .map((raw) => raw.trim())
+                  .filter((t) => {
+                    const key = t.toLowerCase();
+                    if (!t || seen.has(key)) return false;
+                    seen.add(key);
+                    return true;
+                  });
+                return [...prev, ...fresh];
+              })
+            }
+            label="Autotag"
+            icon={<Sparkles aria-hidden className="size-3.5" />}
+            className="h-8 gap-1.5 rounded-full border border-stroke-info-strong/25 bg-fill-info-weak/40 px-3 font-geist text-xs font-medium text-text-info-strong"
+          />
+        </div>
+        <input
+          id="create-memory-tags-sheet"
+          value={tagInput}
+          onChange={(e) => setTagInput(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === ",") {
+              e.preventDefault();
+              addTag(tagInput);
+            }
+          }}
+          placeholder="Add tags if you like"
+          className="min-h-[50px] w-full rounded-xl border border-stroke-neutral-weaker bg-bg-neutral-solid px-3.5 font-geist text-base text-text-neutral-strong outline-none placeholder:text-text-neutral-weaker focus-visible:border-ring"
+        />
+        {tags.length > 0 ? (
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {tags.map((t) => (
+              <span
+                key={t}
+                className="inline-flex items-center gap-1 rounded-full border border-stroke-neutral-weak bg-fill-neutral-weak px-2 py-0.5 font-inter text-xs font-medium text-text-neutral-strong"
+              >
+                {t.startsWith("#") ? t : `#${t}`}
+                <button
+                  type="button"
+                  onClick={() => setTags((prev) => prev.filter((x) => x !== t))}
+                  className="leading-none opacity-60"
+                  aria-label={`Remove ${t}`}
+                >
+                  ×
+                </button>
+              </span>
+            ))}
+          </div>
+        ) : null}
+        <p className="mt-2 font-geist text-xs leading-4 text-text-neutral-weaker">
+          Relevant tags will be added in the background if you leave this blank.
+        </p>
+      </div>
+    );
+  }
 
   if (variant === "panel") {
     return (

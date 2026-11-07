@@ -56,10 +56,10 @@ export default function BrowseTopics() {
   };
 
   return (
-    <div className="flex w-full min-w-0 flex-col gap-6 pb-12">
+    <div className="flex w-full min-w-0 flex-col gap-6 pb-11">
       <div className="flex items-center justify-between gap-4">
-        <TypographyH2 className="min-w-0 font-garamond font-medium tracking-normal text-xl leading-tight text-text-neutral-strong sm:text-2xl sm:leading-[38px] lg:text-[32px]">
-          Explore more <i className="text-text-neutral-weak">topics</i>
+        <TypographyH2 className="min-w-0 font-garamond text-[28px] font-normal leading-tight text-text-neutral-strong sm:text-[32px] lg:text-[32px]">
+          Explore more <i className="text-text-neutral-weaker">topics</i>
         </TypographyH2>
         <div className="flex shrink-0 items-center gap-3">
           <Button
@@ -88,7 +88,7 @@ export default function BrowseTopics() {
           {/* Bleed horizontal scroll to screen edges on small viewports; snap for predictable swipes */}
           <div
             ref={scrollRef}
-            className="overview-topics-reveal t-stagger -mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-pl-4 scroll-pr-4 hide-scrollbar sm:mx-0 sm:scroll-pl-0 sm:scroll-pr-0 sm:gap-6"
+            className="overview-topics-reveal t-stagger -mx-4 flex px-4 snap-x snap-mandatory gap-4 overflow-x-auto scroll-pl-4 scroll-pr-4 hide-scrollbar sm:mx-0 sm:px-0 sm:scroll-pl-0 sm:scroll-pr-0 sm:gap-6"
           >
             {isLoading ? (
               <>

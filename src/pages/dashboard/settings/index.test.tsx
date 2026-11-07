@@ -1,91 +1,76 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { Routes, Route } from "react-router-dom";
+import { Outlet, Routes, Route, useLocation } from "react-router-dom";
 import { renderWithProviders } from "@/test";
 import SettingsPage from "./index";
 
+const flags = vi.hoisted(() => ({ billing: true }));
+vi.mock("@/contexts/feature-flags", () => ({
+  useFeatureFlags: () => ({ canUse: (key: string) => key !== "settings.billing_tab" || flags.billing }),
+}));
+
+function Location() {
+  return <output data-testid="location">{useLocation().pathname}</output>;
+}
+
+function renderSettings(route: string) {
+  return renderWithProviders(
+    <>
+      <Routes>
+        <Route element={<Outlet />}>
+          <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/settings/:tab" element={<SettingsPage />} />
+        </Route>
+        <Route path="*" element={null} />
+      </Routes>
+      <Location />
+    </>,
+    { route, auth: true },
+  );
+}
+
 describe("SettingsPage", () => {
-  it("renders general settings on /settings/general", async () => {
-    const { container } = renderWithProviders(
-      <Routes>
-        <Route path="/settings/:tab" element={<SettingsPage />} />
-      </Routes>,
-      { route: "/settings/general", auth: true },
-    );
-
-    expect(
-      await screen.findByRole("heading", { name: "About me" }),
-    ).toBeInTheDocument();
-
-    const viewport = container.querySelector(".page-viewport");
-    expect(viewport).toBeTruthy();
-
-    const settingsNavs = screen.getAllByRole("navigation", {
-      name: /settings sections/i,
-    });
-    expect(settingsNavs.length).toBeGreaterThanOrEqual(1);
+  it("shows the overview with a link to every section", async () => {
+    renderSettings("/settings");
+    expect(screen.getByRole("heading", { name: "Settings & profile" })).toBeInTheDocument();
+    for (const [name, href] of [
+      ["Personal info", "/settings/general"],
+      ["Security", "/settings/security"],
+      ["People & Groups", "/settings/beneficiary"],
+      ["Privacy & Account", "/settings/privacy"],
+      ["Billing", "/settings/billing"],
+    ])
+      expect(screen.getByRole("link", { name })).toHaveAttribute("href", href);
+    expect(screen.getByRole("button", { name: "Logout" })).toBeInTheDocument();
   });
 
-  it("redirects invalid tab to general", async () => {
-    renderWithProviders(
-      <Routes>
-        <Route path="/settings/:tab" element={<SettingsPage />} />
-      </Routes>,
-      { route: "/settings/not-a-tab", auth: true },
-    );
-
-    await waitFor(() => {
-      expect(
-        screen.getByRole("heading", { name: "About me" }),
-      ).toBeInTheDocument();
-    });
+  it("hides billing when the feature is unavailable", () => {
+    flags.billing = false;
+    renderSettings("/settings");
+    expect(screen.queryByRole("link", { name: "Billing" })).not.toBeInTheDocument();
+    flags.billing = true;
   });
 
-  it("navigates between tabs via section links", async () => {
+  it("opens a section and returns to the overview", async () => {
     const user = userEvent.setup();
-    renderWithProviders(
-      <Routes>
-        <Route path="/settings/:tab" element={<SettingsPage />} />
-      </Routes>,
-      { route: "/settings/general", auth: true },
-    );
-
-    await screen.findByRole("heading", { name: "About me" });
-    const settingsNavs = screen.getAllByRole("navigation", {
-      name: /settings sections/i,
-    });
-    expect(settingsNavs.length).toBeGreaterThanOrEqual(1);
-    expect(
-      screen.getByRole("link", { name: /personal info/i }),
-    ).toHaveAttribute("href", "/settings/general");
-
-    const securityLinks = screen.getAllByRole("link", { name: /security/i });
-    const securityLink = securityLinks.find(
-      (el) => el.getAttribute("href") === "/settings/security",
-    );
-    expect(securityLink).toBeTruthy();
-    await user.click(securityLink!);
-
-    await waitFor(() => {
-      expect(
-        screen.getByText("Manage your Memento account security"),
-      ).toBeInTheDocument();
-    });
-
-    const personalLinks = screen.getAllByRole("link", {
-      name: /personal info/i,
-    });
-    const personalLink = personalLinks.find(
-      (el) => el.getAttribute("href") === "/settings/general",
-    );
-    expect(personalLink).toBeTruthy();
-    await user.click(personalLink!);
-
-    await waitFor(() => {
-      expect(
-        screen.getByRole("heading", { name: "About me" }),
-      ).toBeInTheDocument();
-    });
+    renderSettings("/settings");
+    await user.click(screen.getByRole("link", { name: "Security" }));
+    expect(await screen.findByRole("heading", { name: "Security" })).toBeInTheDocument();
+    await user.click(screen.getByRole("link", { name: "Back to settings" }));
+    expect(screen.getByTestId("location")).toHaveTextContent("/settings");
+    expect(screen.getByRole("link", { name: "Security" })).toBeInTheDocument();
   });
+
+  it("supports deep links to a section", async () => {
+    renderSettings("/settings/general");
+    expect(await screen.findByRole("heading", { name: "About me" })).toBeInTheDocument();
+  });
+
+  it("redirects an unknown section to the overview", async () => {
+    renderSettings("/settings/not-a-tab");
+    await waitFor(() => expect(screen.getByTestId("location")).toHaveTextContent("/settings"));
+    expect(screen.getByRole("link", { name: "Security" })).toBeInTheDocument();
+  });
+
 });

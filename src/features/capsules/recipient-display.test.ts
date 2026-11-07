@@ -19,3 +19,7 @@ describe("capsule recipient display", () => {
     })[0]).toMatchObject({ first_name: "Legacy" });
   });
 });
+
+it("preserves the linked account identity for capsule avatar consistency", () => {
+  expect(getCapsuleDisplayRecipients({ recipients: [], recipient_snapshots: [{ recipient_id: "snapshot-1", linked_user_id: "user-123", email: "sam@example.com", display_name: "Sam", delivery_status: "pending" }] })[0]._id).toBe("user-123");
+});

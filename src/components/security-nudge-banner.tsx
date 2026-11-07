@@ -1,3 +1,4 @@
+import { StripBanner } from "./strip-banner-frame";
 /**
  * SecurityNudgeBanner — shown periodically to users who have neither
  * a passkey nor 2FA enabled. Dismissable for 14 days.
@@ -30,7 +31,8 @@ export function SecurityNudgeBanner() {
   useEffect(() => {
     if (!hydrated || !user) return;
     const has2FA = user.two_factor?.enabled;
-    const hasPasskey = (user as import("@/utility/interface").IUser).passkeys?.length > 0;
+    const hasPasskey =
+      (user as import("@/utility/interface").IUser).passkeys?.length > 0;
     if (!has2FA && !hasPasskey && !isDismissed()) {
       setVisible(true);
     }
@@ -44,22 +46,28 @@ export function SecurityNudgeBanner() {
   if (!visible) return null;
 
   return (
-    <div
+    <StripBanner
       className={cn(
-        "flex w-full max-w-[1200px] items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3",
-        "font-inter text-sm text-amber-800",
+        "flex items-center justify-between gap-3 px-4 py-3",
+        "font-inter text-sm",
         "motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-top-2 motion-safe:duration-300",
       )}
-      role="status"
     >
       <div className="flex min-w-0 items-center gap-2.5">
-        <Shield size={15} className="shrink-0 text-amber-600" strokeWidth={1.5} />
-        <span className="truncate">
+        <Shield
+          size={15}
+          className="shrink-0 text-icon-neutral-weak"
+          strokeWidth={1.5}
+        />
+        <span>
           Secure your account — set up a{" "}
           <button
             type="button"
-            className="font-semibold underline underline-offset-2 hover:text-amber-900"
-            onClick={() => { navigate("/settings/security"); dismiss(); }}
+            className="rounded-sm font-semibold underline underline-offset-2 hover:text-text-neutral-weak focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stroke-neutral-strong"
+            onClick={() => {
+              navigate("/settings/security");
+              dismiss();
+            }}
           >
             passkey or 2FA
           </button>
@@ -69,10 +77,10 @@ export function SecurityNudgeBanner() {
         type="button"
         onClick={dismiss}
         aria-label="Dismiss security reminder"
-        className="shrink-0 rounded-full p-1 text-amber-600 transition-colors hover:bg-amber-100 hover:text-amber-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+        className="relative shrink-0 rounded-full p-1 text-icon-neutral-weak after:absolute after:-inset-2.5 transition-colors hover:bg-fill-neutral-weak hover:text-icon-neutral-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stroke-neutral-strong motion-reduce:transition-none"
       >
         <X size={14} strokeWidth={1.5} />
       </button>
-    </div>
+    </StripBanner>
   );
 }

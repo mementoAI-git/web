@@ -1,3 +1,4 @@
+import ReflectionPage from "@/pages/dashboard/chat/reflection";
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import App from "@/App";
 import {
@@ -17,7 +18,6 @@ import {
   MiscPage,
   NicknamePage,
   OnboardLayout,
-  HostOnboardingChatPage,
   OnboardingSummaryPage,
   WelcomePage,
   OnboardPage,
@@ -30,7 +30,7 @@ import {
   StoriesPage,
   StoriesDetailsPage,
   SettingsPage,
-  PeoplePage,
+  InsightsPage,
   NotFoundPage,
   ErrorPage,
   OAuthCallbackPage,
@@ -67,19 +67,6 @@ export const router = createBrowserRouter([
           { path: "misc", element: <MiscPage /> },
           { path: "summary", element: <OnboardingSummaryPage /> },
           { path: "beneficiary", element: <BeneficiaryPage /> },
-          { path: "chat", element: <Navigate to="/onboard/chat" replace /> },
-        ],
-      },
-      {
-        path: "onboard",
-        children: [
-          { index: true, element: <Navigate to="/onboarding" replace /> },
-          { path: "welcome", element: <Navigate to="/onboarding/welcome" replace /> },
-          { path: "nickname", element: <Navigate to="/onboarding/nickname" replace /> },
-          { path: "misc", element: <Navigate to="/onboarding/misc" replace /> },
-          { path: "summary", element: <Navigate to="/onboarding/summary" replace /> },
-          { path: "beneficiary", element: <Navigate to="/onboarding/beneficiary" replace /> },
-          { path: "chat", element: <HostOnboardingChatPage /> },
         ],
       },
       {
@@ -104,6 +91,7 @@ export const router = createBrowserRouter([
             element: <Navigate to="/chat" replace />,
           },
           { path: "chat/reply/:id", element: <ReplyPage /> },
+          { path: "chat/reflection/:id", element: <ReflectionPage /> },
           // Live voice (Gemini Live): ChatPage + Conversation; composer mounts Voiceinput fullscreen
           { path: "chat/:id/voice", element: <ChatPage /> },
           { path: "chat/:id", element: <ChatPage /> },
@@ -111,9 +99,11 @@ export const router = createBrowserRouter([
           { path: "stories/:id", element: <StoriesDetailsPage /> },
           { path: "capsule", element: <Navigate to="/overview" replace /> },
           { path: "pricing", element: <PricingPage /> },
-          { path: "people", element: <PeoplePage /> },
-          { path: "settings", element: <Navigate to="/settings/general" replace /> },
-          { path: "settings/stats", element: <Navigate to="/settings/general?view=about" replace /> },
+          { path: "people", element: <Navigate to="/chat?people=1" replace /> },
+          { path: "chat/people", element: <Navigate to="/chat?people=1" replace /> },
+          { path: "insights", element: <InsightsPage /> },
+          { path: "settings", element: <SettingsPage /> },
+          { path: "settings/stats", element: <Navigate to="/settings/general" replace /> },
           { path: "settings/:tab", element: <SettingsPage /> },
         ],
       },

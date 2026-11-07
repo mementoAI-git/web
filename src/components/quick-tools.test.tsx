@@ -64,8 +64,18 @@ describe("QuickTools", () => {
     expect(screen.getByRole("button", { name: "Quick tools" })).toHaveFocus();
   });
 
+  it("lists quick actions as short rows on phones", async () => {
+    Object.defineProperty(window, "innerWidth", { configurable: true, value: 390 });
+    await openTools();
+    const button = within(screen.getByRole("region", { name: "Quick actions" })).getByRole("button", { name: "Quick note" });
+    expect(button).toHaveClass("flex-row", "items-center", "p-3");
+    expect(button).not.toHaveClass("h-[85px]");
+    expect(screen.getByRole("button", { name: /^Theme: / })).toBeInTheDocument();
+  });
+
   it("shows Quick note and Add people without story, voice mode or links", async () => {
     await openTools();
+    expect(screen.queryByRole("button", { name: /^Theme: / })).not.toBeInTheDocument();
     expect(screen.getByRole("dialog", { name: "Quick tools" })).toHaveClass("w-[315px]");
     const player = screen.getByRole("region", { name: "Music player" });
     expect(player).toHaveClass("bg-fill-neutral-weak");
@@ -131,11 +141,8 @@ it("uses a frosted music panel with contrasting volume controls", async () => {
   const musicPanel = screen.getByRole("region", { name: "Music player" });
   expect(musicPanel).toHaveClass("music-player-panel", "border-stroke-neutral-weak");
   expect(musicPanel.closest(".quick-tools-panel")).toBeInTheDocument();
-  const fills = [...musicPanel.querySelectorAll<HTMLElement>("[style]")].map((e) => e.style.backgroundColor);
-  expect(fills).toContain("var(--stroke-neutral-weak)");
-  expect(fills).toContain("var(--icon-neutral-weak)");
-  expect(fills).toContain("var(--icon-neutral-strong)");
   const slider = within(musicPanel).getByRole("slider", { name: "Volume" });
+  expect(slider).toHaveClass("bg-[var(--icon-neutral-strong)]");
   slider.focus();
   await user.keyboard("{ArrowRight}");
   expect(music.setVolume).toHaveBeenCalledWith(51);

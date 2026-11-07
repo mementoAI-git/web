@@ -5,6 +5,21 @@ import { renderWithProviders } from "@/test";
 import CategoryPromptCard from "./category-prompt-card";
 
 describe("CategoryPromptCard", () => {
+  it("uses a 32px image and 12px corners on phones, keeping the larger desktop sizes", () => {
+    const { container } = renderWithProviders(
+      <CategoryPromptCard _id="prompt-1" title="A question" onFeedback={vi.fn()} />,
+    );
+    expect(container.querySelector("article")).toHaveClass(
+      "rounded-[12px]",
+      "sm:rounded-3xl",
+    );
+    expect(container.querySelector("img")).toHaveClass(
+      "size-8",
+      "sm:h-[113px]",
+      "sm:w-[135px]",
+    );
+  });
+
   it("opens not-relevant feedback from the menu without navigating", async () => {
     const user = userEvent.setup();
     const onFeedback = vi.fn();

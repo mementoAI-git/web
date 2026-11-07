@@ -1,6 +1,10 @@
+/** Narrower windows use the drawer, so the panel doesn't squeeze the conversation beside the app's sidebar. */
+export const CHAT_SETTINGS_INLINE_MIN_VIEWPORT_PX = 1200;
+export const CHAT_SETTINGS_INLINE_WIDTH_PX = 318;
+
 /** Minimum width kept for the main chat column before shrinking the docked sidebar. */
 const SIDEBAR_DESKTOP_MAIN_RESERVE_PX = 420;
-const SIDEBAR_CHAT_MAX_PX = 485;
+const SIDEBAR_CHAT_MAX_PX = 485 * 0.95;
 const SIDEBAR_CHAT_MIN_PX = 280;
 const SIDEBAR_MEMORY_MAX_PX = 316;
 const SIDEBAR_MEMORY_MIN_PX = 260;

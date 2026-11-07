@@ -1,0 +1,106 @@
+/* Resolved at the root, because dialogs rebind the surface tokens for themselves. */
+:root {
+  --story-composer-page: var(--bg-neutral-solid);
+}
+
+/* A full-screen page, so it keeps the page color instead of a floating surface. */
+.story-composer-mobile[role="dialog"] {
+  background-color: var(--story-composer-page);
+}
+
+.story-composer-mobile .tiptap-editor .ProseMirror,
+.story-composer-mobile .tiptap-editor .ProseMirror p,
+.story-composer-mobile .tiptap-editor .ProseMirror li,
+.story-composer-mobile .tiptap-editor .ProseMirror blockquote {
+  font-family: var(--font-geist);
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 400;
+  color: var(--text-neutral-strong);
+}
+
+.story-composer-mobile .tiptap-editor .ProseMirror p.is-editor-empty:first-child::before {
+  color: var(--text-neutral-weaker);
+}
+
+.story-composer-mobile textarea.story-composer-title {
+  font-size: 24px;
+  line-height: 32px;
+}
+
+/* A tint of the text color, because white fills vanish on the light themes' white surfaces. */
+.story-composer-tint {
+  background-color: color-mix(in srgb, var(--text-neutral-strong) 7%, transparent);
+}
+
+/*
+ * The album's blank paper, cropped clear of the leather, rings and rounded corners
+ * (source x 310-1480 of 1536). Sized from the screen so the keyboard doesn't rescale it.
+ */
+.story-composer-paper {
+  --paper-width: max(131.3vw, 150dvh);
+  position: absolute;
+  top: 0;
+  right: calc(var(--paper-width) * -0.0365);
+  z-index: -1;
+  width: var(--paper-width);
+  max-width: none;
+  height: calc(var(--paper-width) / 1.5);
+  pointer-events: none;
+}
+
+/* The writer scrolls as one page, so the editor grows with its text. */
+.story-composer-mobile .tiptap-editor .ProseMirror {
+  height: auto;
+  min-height: 120px;
+  overflow: visible;
+}
+
+.story-composer-mobile .tiptap-editor .ProseMirror p:first-child {
+  margin-top: 0;
+}
+
+/* The mobile app's story text styles. */
+.story-mobile-body {
+  font-family: var(--font-inter);
+  font-size: 15px;
+  line-height: 23px;
+  color: var(--text-neutral-strong);
+}
+
+.story-mobile-body :is(p, ul, ol, blockquote, h1, h2) {
+  margin: 0 0 14px;
+}
+
+.story-mobile-body h1 {
+  font-family: var(--font-garamond);
+  font-size: 28px;
+  line-height: 34px;
+  font-weight: 400;
+}
+
+.story-mobile-body h2 {
+  font-family: var(--font-garamond);
+  font-size: 22px;
+  line-height: 28px;
+  font-weight: 400;
+}
+
+.story-mobile-body blockquote {
+  border-left: 3px solid var(--fill-brand-strong);
+  padding-left: 12px;
+  font-style: italic;
+  color: var(--text-neutral-weak);
+}
+
+.story-mobile-body ul { list-style: disc; padding-left: 20px; }
+.story-mobile-body ol { list-style: decimal; padding-left: 20px; }
+.story-mobile-body li + li { margin-top: 8px; }
+.story-mobile-body strong, .story-mobile-body b { font-weight: 700; }
+.story-mobile-body a { color: var(--text-brand-strong); text-decoration: underline; }
+
+/* Media tiles stay dark in every theme, like the mobile app's. */
+.story-media-surface { background-color: #12131a; color: #fff; }
+.story-media-scrim { background-color: rgb(0 0 0 / 0.52); color: #fff; }
+.story-media-pill { background-color: rgb(255 255 255 / 0.15); }
+.story-media-weak { color: rgb(255 255 255 / 0.78); }

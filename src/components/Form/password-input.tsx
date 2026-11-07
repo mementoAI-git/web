@@ -18,7 +18,7 @@ export function Passwordinput({
           type="button"
           variant="ghost"
           size="icon-sm"
-          className="text-grey-300"
+          className="text-icon-neutral-weak"
           onClick={() => setShow((p) => !p)}
           aria-label={show ? "Hide password" : "Show password"}
           aria-pressed={show}

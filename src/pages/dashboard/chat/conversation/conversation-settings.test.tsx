@@ -121,7 +121,7 @@ describe("Conversation settings", () => {
     );
     expect(screen.getByTestId("sidebar-details")).toHaveAttribute(
       "data-layout",
-      "overlay",
+      "inline",
     );
     expect(screen.getByTestId("sidebar-details")).toHaveAttribute(
       "data-has-files",

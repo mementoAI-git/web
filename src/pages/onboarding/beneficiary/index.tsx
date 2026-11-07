@@ -19,11 +19,10 @@ export default function BeneficiaryPage() {
     <div className="flex flex-1 flex-col gap-8 p-4 sm:p-6 lg:gap-10 lg:p-10">
       <div className="flex flex-col gap-4">
         <h3 className="font-garamond text-[28px] font-medium leading-[34px] text-text-neutral-strong sm:text-[32px] sm:leading-[38px]">
-          Great. Now let’s add some beneficiaries
+          Great. Now let’s invite your people
         </h3>
         <span className="font-garamond text-xl font-normal leading-[28px] text-text-neutral-weak sm:text-2xl">
-          Is there someone you’d like to share your Memento with? You can simply invite them as a
-          beneficiary.
+          Invite someone you’d like to share memories with.
         </span>
       </div>
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { AudioAttachmentRecorder } from "@/components/recorder/voice-recorder";
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import calendarIcon from "@/assets/icon/uim_calendar.svg";
 import { EditorContent, useEditorState } from "@tiptap/react";
@@ -51,7 +52,6 @@ import Picker from "@emoji-mart/react";
 import emojiData from "@emoji-mart/data";
 import Spinner from "@/components/spinner";
 import { createPortal } from "react-dom";
-import { CloseWithFilesConfirmation } from "../close-with-files-confirmation";
 import { Sheet } from "react-modal-sheet";
 import { LinkInput } from "@/components/memory/text-area/link-input";
 import { SlashCommandPopup } from "@/components/memory/text-area/slash-command-popup";
@@ -68,6 +68,11 @@ import { useCreateMemoryAssistant } from "./create-memory-ai";
 import { UpgradePrompt } from "@/features/pricing/upgrade-prompt";
 import { useFeatureFlags } from "@/contexts/feature-flags";
 import { StoryJournalShell } from "../story-journal-shell";
+import albumArtwork from "@/assets/image/HD Album story bg memento.webp";
+import darkAlbumArtwork from "@/assets/image/HD Album story bg memento dark.webp";
+import paperGrain from "@/assets/image/story-paper-grain.svg";
+import { useTheme } from "@/contexts/theme";
+import { useVisualViewport } from "@/hooks/use-visual-viewport";
 import {
   Card,
   CardContent,
@@ -81,12 +86,12 @@ import { getQuestionIdenticonUrl } from "@/features/explore/question-identicon";
 import draftClearIcon from "@/assets/drafts/clear-all.svg";
 import draftDivider from "@/assets/drafts/divider.svg";
 import "./drafts-menu.css";
+import "./mobile-composer.css";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -104,11 +109,16 @@ import {
 import type { IBeneficiary, IOnUploadPayload } from "@/utility/interface";
 import posthog from "@/lib/posthog";
 import {
+  ArrowLeft,
+  Bold,
+  Italic,
+  Underline,
+  Strikethrough,
+  List,
   Check,
   ChevronsRight,
   Circle,
   Clock3,
-  Cloud,
   FileText,
   Image as ImageIcon,
   ListFilter,
@@ -143,10 +153,36 @@ function getDraftSignature({ title, body, tags, attachments }: Pick<MemoryDraft,
   return JSON.stringify({ title: title.trim(), body, tags, attachments });
 }
 
+const DRAFT_STATUS_DOT_CLASS = {
+  empty: "bg-text-neutral-weaker",
+  saving: "bg-fill-warning-strong",
+  saved: "bg-fill-success-strong",
+} as const;
+
+function DraftStatusDot({ status }: { status: keyof typeof DRAFT_STATUS_DOT_CLASS }) {
+  return (
+    <span
+      aria-hidden
+      data-slot="draft-status-dot"
+      data-status={status}
+      className={cn(
+        "size-1.5 shrink-0 rounded-full transition-colors duration-150 motion-reduce:transition-none",
+        DRAFT_STATUS_DOT_CLASS[status],
+      )}
+    />
+  );
+}
+
 // ─── CreateMemory ─────────────────────────────────────────────────────────────
 
 interface CreateMemoryProps {
-  data?: { payload?: Partial<typeof initial> };
+  data?: {
+    payload?: Partial<typeof initial>;
+    /** Already-uploaded recordings to start the story with. */
+    attachments?: { file: NonNullable<IOnUploadPayload["uploadedFile"]>; duration?: number }[];
+    /** Called once the story was published or kept in Drafts, so the source can let go of its copy. */
+    onHandedOff?: (outcome: "published" | "draft") => void;
+  };
   isMobile?: boolean;
 }
 
@@ -172,12 +208,14 @@ function CreateMemoryBase({
   presentation = "original",
 }: CreateMemoryBaseProps) {
   const isCenteredOverlay = presentation !== "original";
-  const { close, open, push, registerCloseGuard } = useModal();
+  const { close, open, registerCloseGuard } = useModal();
   const { user } = useStore();
   const { canUse } = useFeatureFlags();
   const navigate = useNavigate();
   const location = useLocation();
   const [showUploadGate, setShowUploadGate] = useState(false);
+  const [isPublishOpen, setIsPublishOpen] = useState(false);
+  const viewportBox = useVisualViewport();
   const fileInputImageRef = useRef<HTMLInputElement>(null);
   const fileInputVideoRef = useRef<HTMLInputElement>(null);
   const fileInputAudioRef = useRef<HTMLInputElement>(null);
@@ -190,13 +228,11 @@ function CreateMemoryBase({
   const hasToggledDetailsRef = useRef(false);
 
   const [showEmoji, setShowEmoji] = useState(false);
-  const [showCloseConfirmation, setShowCloseConfirmation] = useState(false);
+  const { resolvedTheme } = useTheme();
   const [drafts, setDrafts] = useState<MemoryDraft[]>([]);
   const [savedDraftSignature, setSavedDraftSignature] = useState<string | null>(null);
   const activeDraftIdRef = useRef<string | null>(null);
   const autosaveTimerRef = useRef<number | null>(null);
-  const discardingRef = useRef(false);
-  const [discarding, setDiscarding] = useState(false);
   const emojiPickerRef = useRef<HTMLDivElement>(null);
   const emojiPickerPortalRef = useRef<HTMLDivElement>(null);
   const [selectedAccess, setSelectedAccess] = useState<SearchResultItem[]>([]);
@@ -207,7 +243,7 @@ function CreateMemoryBase({
   const [showVideoRecorder, setShowVideoRecorder] = useState(false);
   const [videoRecordedFile, setVideoRecordedFile] = useState<File | null>(null);
   const [isUsingVideo, setIsUsingVideo] = useState(false);
-  const [audioRecordingCount, setAudioRecordingCount] = useState(1);
+  const [showAudioRecorder, setShowAudioRecorder] = useState(false);
   const [activeSidebarTab, setActiveSidebarTab] = useState<"properties" | "assistant">("properties");
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 
@@ -222,6 +258,18 @@ function CreateMemoryBase({
 
   const { trigger, isMutating } = useSWRMutation(endpoint.memories, postFetcher);
   const { files, handleUpload, retryUpload, handleDeleteFile, setFiles } = useFileUpload({ retainFailures: true });
+  const seededAttachments = useRef(false);
+  useEffect(() => {
+    if (seededAttachments.current || !data?.attachments?.length) return;
+    seededAttachments.current = true;
+    setFiles(data.attachments.map(({ file, duration }) => ({
+      id: file._id,
+      file: null,
+      progress: 100,
+      duration,
+      uploadedFile: file,
+    })));
+  }, [data?.attachments, setFiles]);
   const { data: beneficiariesRes } = useSWR(
     `${endpoint.beneficiaries}?page=1&limit=100`,
     paginatedResponseFetcher<IBeneficiary>,
@@ -236,9 +284,46 @@ function CreateMemoryBase({
     return scanQuickCaptureDraftKeys(user?.email);
   }, [user?.email, quickCaptureDraftNonce]);
 
+  const publishingRef = useRef(false);
+  const handoffRef = useRef(data?.onHandedOff);
+  const settleHandoff = useCallback((outcome: "published" | "draft" = "draft") => {
+    const handoff = handoffRef.current;
+    if (!handoff) return;
+    if (outcome === "draft") {
+      // Only hand off once the content is really in Drafts; a discarded story keeps its source.
+      try {
+        const stored = JSON.parse(localStorage.getItem(DRAFT_STORAGE_KEY) ?? "[]") as MemoryDraft[];
+        if (!activeDraftIdRef.current || !stored.some((draft) => draft.id === activeDraftIdRef.current)) return;
+      } catch {
+        return;
+      }
+    }
+    handoffRef.current = undefined;
+    handoff(outcome);
+  }, []);
+  useEffect(() => () => settleHandoff(), [settleHandoff]);
+  const removeActiveDraft = () => {
+    const draftId = activeDraftIdRef.current;
+    if (!draftId) return;
+    activeDraftIdRef.current = null;
+    try {
+      const stored = JSON.parse(localStorage.getItem(DRAFT_STORAGE_KEY) ?? "[]") as MemoryDraft[];
+      const remaining = stored.filter((draft) => draft.id !== draftId);
+      localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(remaining));
+      setDrafts(remaining);
+      setSavedDraftSignature(null);
+    } catch {
+      /* The story is published; a leftover draft is the only cost. */
+    }
+  };
+
   const { values, handleChange, handleSubmit, handleValue, setValues } = useForm({
     initial: { ...initial, ...data?.payload },
     async onSubmit(p) {
+      if (showAudioRecorder) {
+        return toast.error("Finish or cancel your recording first.");
+      }
+      if (publishingRef.current) return;
       if (files.some((file) => !file.uploadedFile?._id || file.uploadFailed)) {
         return toast.error("Wait for your uploads to finish, or retry or remove unfinished files.");
       }
@@ -262,9 +347,15 @@ function CreateMemoryBase({
         uploadedFiles.length > 0 ? { attachments: uploadedFiles } : {},
       );
 
+      publishingRef.current = true;
       try {
         const result = await trigger(payload as Parameters<typeof trigger>[0]);
         if (result?.success) {
+          // The story now exists, so its draft must not stay around to be published again.
+          if (autosaveTimerRef.current !== null) window.clearTimeout(autosaveTimerRef.current);
+          removeActiveDraft();
+          settleHandoff("published");
+          editor?.commands.clearContent();
           if (posthog.__loaded) {
             posthog.capture("story_created", {
               attachment_count: uploadedFiles.length,
@@ -289,6 +380,8 @@ function CreateMemoryBase({
         if (parseSubscriptionGateError(err)) {
           setShowUploadGate(true);
         }
+      } finally {
+        publishingRef.current = false;
       }
     },
   });
@@ -335,7 +428,8 @@ function CreateMemoryBase({
   const queueFileUploadRef = useRef(queueFileUpload);
   queueFileUploadRef.current = queueFileUpload;
 
-  const latestCloseStateRef = useRef({ dirty: false, saved: false });
+  const latestCloseStateRef = useRef({ saved: false, recording: false, uploading: false, hasDraftContent: false });
+  const persistDraftRef = useRef<() => void>(() => undefined);
 
   const {
     editor,
@@ -352,12 +446,14 @@ function CreateMemoryBase({
     selectSlashCommand,
   } = useMemoryEditor({
     initialContent: values.body || "",
-    placeholder:
-      variant === "next" && !isMobile
+    placeholder: isMobile
+      ? "Write something ..."
+      : variant === "next"
         ? "Write story here..."
         : "What's on your mind today? Type / for formatting options",
-    editorClassName:
-      variant === "next" && !isMobile
+    editorClassName: isMobile
+      ? "prose prose-sm max-w-none focus:outline-none min-h-[120px] w-full px-0 py-0 font-geist text-base leading-6 text-text-neutral-strong"
+      : variant === "next"
         ? "prose prose-sm max-w-none focus:outline-none min-h-[240px] w-full px-0 py-0 font-geist text-lg leading-[1.7] text-text-neutral-strong"
         : "prose prose-sm max-w-none focus:outline-none min-h-[140px] w-full px-4 py-4 text-sm text-text-neutral-strong",
     linkClassName: "text-text-brand-strong underline cursor-pointer",
@@ -371,6 +467,7 @@ function CreateMemoryBase({
       italic: currentEditor?.isActive("italic") ?? false,
       strike: currentEditor?.isActive("strike") ?? false,
       underline: currentEditor?.isActive("underline") ?? false,
+      orderedList: currentEditor?.isActive("orderedList") ?? false,
       link: currentEditor?.isActive("link") ?? false,
       bulletList: currentEditor?.isActive("bulletList") ?? false,
     }),
@@ -379,6 +476,7 @@ function CreateMemoryBase({
     italic: false,
     strike: false,
     underline: false,
+    orderedList: false,
     link: false,
     bulletList: false,
   };
@@ -410,12 +508,27 @@ function CreateMemoryBase({
   useEffect(() => {
     if (!registerCloseGuard) return;
     return registerCloseGuard("create-memory", () => {
-      const { dirty, saved } = latestCloseStateRef.current;
-      if (!dirty || (variant === "next" && !isMobile && saved)) return true;
-      setShowCloseConfirmation(true);
-      return false;
+      const { saved, recording, uploading, hasDraftContent } = latestCloseStateRef.current;
+      // Closing keeps the story as a draft. Only what a draft can't hold yet stops it.
+      if (recording) {
+        toast.error("Finish or cancel your recording first.");
+        return false;
+      }
+      if (uploading) {
+        toast.error("Wait for your uploads to finish, or remove unfinished files.");
+        return false;
+      }
+      if (hasDraftContent && !saved) {
+        try {
+          persistDraftRef.current();
+        } catch {
+          toast.error("Couldn’t save your draft. Your story is still here.");
+          return false;
+        }
+      }
+      return true;
     });
-  }, [isMobile, registerCloseGuard, variant]);
+  }, [registerCloseGuard]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -445,7 +558,6 @@ function CreateMemoryBase({
       .filter((file): file is NonNullable<IOnUploadPayload["uploadedFile"]> => Boolean(file));
 
     const timeout = window.setTimeout(() => {
-      if (discardingRef.current) return;
       const draftId = activeDraftIdRef.current ?? uuidv4();
       activeDraftIdRef.current = draftId;
       const nextDraft: MemoryDraft = {
@@ -471,12 +583,12 @@ function CreateMemoryBase({
   }, [values.title, values.body, tags, editor, files]);
 
   useEffect(() => {
-    if (variant !== "next" || isMobile) return;
+    if (variant !== "next" && !isMobile) return;
     const el = titleTextareaRef.current;
     if (!el) return;
     const resizeTitle = () => {
       el.style.height = "0px";
-      el.style.height = `${Math.max(el.scrollHeight, 48)}px`;
+      el.style.height = `${Math.max(el.scrollHeight, isMobile ? 32 : 48)}px`;
     };
     resizeTitle();
     window.addEventListener("resize", resizeTitle);
@@ -549,7 +661,6 @@ function CreateMemoryBase({
       handleUpload({ id: uuidv4(), file, base64: reader.result as string, progress: 0, ...(duration !== undefined && { duration }) });
     };
     reader.readAsDataURL(file);
-    setAudioRecordingCount((c) => c + 1);
   };
 
   const handleUseVideo = () => {
@@ -572,29 +683,6 @@ function CreateMemoryBase({
 
   const handleClose = () => close("create-memory");
 
-  const handleConfirmClose = async () => {
-    if (discardingRef.current) return;
-    discardingRef.current = true;
-    setDiscarding(true);
-    if (autosaveTimerRef.current !== null) window.clearTimeout(autosaveTimerRef.current);
-    try {
-      const stored = JSON.parse(localStorage.getItem(DRAFT_STORAGE_KEY) ?? "[]") as MemoryDraft[];
-      const remaining = stored.filter((draft) => draft.id !== activeDraftIdRef.current);
-      // Persist first: a storage failure must never leave a draft pointing at deleted files.
-      localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(remaining));
-      setDrafts(remaining);
-      const results = await Promise.allSettled(disposableDraftUploads(files, remaining).map(handleDeleteFile));
-      if (results.some((result) => result.status === "rejected")) toast.error("Story discarded, but some unused files couldn’t be cleaned up.");
-      setFiles([]);
-      setShowCloseConfirmation(false);
-      close("create-memory", { force: true });
-    } catch {
-      discardingRef.current = false;
-      setDiscarding(false);
-      toast.error("Couldn’t discard your draft. Your story is still here.");
-    }
-  };
-
   const handleLinkClick = () => {
     openLinkInputAtSelection();
   };
@@ -604,6 +692,8 @@ function CreateMemoryBase({
   };
 
   const handleLoadDraft = (draft: MemoryDraft) => {
+    settleHandoff();
+    handoffRef.current = undefined;
     activeDraftIdRef.current = draft.id;
     setValues((prev) => ({ ...prev, title: draft.title, body: draft.body }));
     setTags(draft.tags || []);
@@ -623,6 +713,15 @@ function CreateMemoryBase({
       const raw = localStorage.getItem(storageKey);
       const d = raw ? parseQuickCaptureDraftJson(raw) : null;
       if (!d) return;
+      settleHandoff();
+      // A quick note moved into this story must not stay behind as a second draft.
+      handoffRef.current = () => {
+        try {
+          localStorage.removeItem(storageKey);
+        } catch {
+          /* ignore */
+        }
+      };
       activeDraftIdRef.current = null;
       setSavedDraftSignature(null);
       const note = typeof d.note === "string" ? d.note : "";
@@ -657,7 +756,7 @@ function CreateMemoryBase({
       setSelectedAccess(access);
       setShareAudience("private");
     },
-    [beneficiaryDocs, editor, setFiles, setValues, setTags, setSelectedAccess],
+    [beneficiaryDocs, editor, setFiles, setValues, setTags, setSelectedAccess, settleHandoff],
   );
 
   const handleDeleteQuickCaptureDraft = useCallback((storageKey: string) => {
@@ -697,7 +796,7 @@ function CreateMemoryBase({
     activeDraftIdRef.current = null;
   };
 
-  const handleSaveDraft = useCallback(() => {
+  const persistDraft = useCallback(() => {
     const uploadedAttachments = files
       .map((file) => file.uploadedFile)
       .filter((file): file is NonNullable<IOnUploadPayload["uploadedFile"]> => Boolean(file));
@@ -712,21 +811,13 @@ function CreateMemoryBase({
       updatedAt: new Date().toISOString(),
     };
 
-    setDrafts((prev) => {
-      const remaining = prev.filter((draft) => draft.id !== draftId);
-      const next = [nextDraft, ...remaining].slice(0, MAX_DRAFTS);
-      localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(next));
-      return next;
-    });
+    // Written here, not in a state updater, because the composer may close right after.
+    const next = [nextDraft, ...drafts.filter((draft) => draft.id !== draftId)].slice(0, MAX_DRAFTS);
+    localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(next));
+    setDrafts(next);
     setSavedDraftSignature(getDraftSignature(nextDraft));
-    toast.success("Draft saved");
-  }, [editor, files, tags, values.title]);
-
-  const handleSaveDraftAndClose = useCallback(() => {
-    handleSaveDraft();
-    setShowCloseConfirmation(false);
-    close("create-memory", { force: true });
-  }, [close, handleSaveDraft]);
+  }, [drafts, editor, files, tags, values.title]);
+  persistDraftRef.current = persistDraft;
 
   const handleSlashCommandSelect = (command: (typeof SLASH_COMMANDS)[0]) => {
     selectSlashCommand(command);
@@ -747,14 +838,21 @@ function CreateMemoryBase({
     !isUploading &&
     savedDraftSignature === currentDraftSignature &&
     drafts.some((draft) => getDraftSignature(draft) === savedDraftSignature);
+  const hasAutosavableContent = values.title.trim().length > 0 || bodyPlainText.trim().length > 0;
+  const draftStatus = !hasAutosavableContent ? "empty" : isCurrentDraftSaved ? "saved" : "saving";
+  const draftStatusAnnouncement = (
+    <span className="sr-only" role="status">
+      {isCurrentDraftSaved ? "Draft saved" : "Not saved"}
+    </span>
+  );
   latestCloseStateRef.current = {
-    dirty:
-      files.length > 0 ||
+    recording: showAudioRecorder,
+    uploading: files.some((file) => !file.uploadedFile?._id && !file.uploadFailed),
+    hasDraftContent:
+      files.some((file) => Boolean(file.uploadedFile)) ||
       values.title.trim().length > 0 ||
       bodyPlainText.trim().length > 0 ||
-      tags.length > 0 ||
-      selectedAccess.length > 0 ||
-      shareAudience !== "private",
+      tags.length > 0,
     saved: isCurrentDraftSaved,
   };
   const inlineAttachmentFiles = useMemo(() => files, [files]);
@@ -1049,6 +1147,13 @@ function CreateMemoryBase({
     />
   );
 
+  const audioRecorder = showAudioRecorder ? (
+    <AudioAttachmentRecorder
+      onFinish={handleAddAudioFile}
+      onClose={() => setShowAudioRecorder(false)}
+    />
+  ) : null;
+
   const composerSection = (
     <section
       className={cn(
@@ -1125,13 +1230,15 @@ function CreateMemoryBase({
                   type="button"
                   variant="ghost"
                   size="sm"
-                  className="font-inter text-sm text-text-neutral-weak hover:text-text-neutral-strong"
+                  className="gap-1.5 font-inter text-sm text-text-neutral-weak hover:text-text-neutral-strong"
                 >
+                  <DraftStatusDot status={draftStatus} />
                   Drafts
                 </Button>
               </DropdownMenuTrigger>
               {draftsDropdownContent}
             </DropdownMenu>
+            {draftStatusAnnouncement}
           </div>
         </div>
       <div className="flex min-h-[280px] flex-1 flex-col overflow-hidden">
@@ -1160,6 +1267,7 @@ function CreateMemoryBase({
         </div>
       </div>
       <div className="mt-3 mb-3 w-full min-w-0 px-3" onClick={(e) => e.stopPropagation()}>
+        {audioRecorder}
         <div className="flex min-h-[48px] items-center justify-start gap-1 rounded-2xl border border-stroke-neutral-weak bg-fill-neutral-weaker/60 px-2 py-1.5">
               {/* Attachments & media */}
               <DropdownMenu
@@ -1277,12 +1385,8 @@ function CreateMemoryBase({
                 type="button"
                 variant="ghost"
                 size="icon-lg"
-                onClick={() =>
-                  push("audio-recorder", {
-                    onFinish: handleAddAudioFile,
-                    recordingNumber: audioRecordingCount,
-                  })
-                }
+                disabled={showAudioRecorder}
+                onClick={() => setShowAudioRecorder(true)}
                 className="rounded-xl text-icon-neutral-strong hover:bg-fill-neutral-weaker"
                 title="Record audio"
                 aria-label="Record audio"
@@ -1387,60 +1491,6 @@ function CreateMemoryBase({
     </div>
   );
 
-  const closeConfirmationPortal = variant === "next" && !isMobile ? (
-    <Dialog
-      open={showCloseConfirmation}
-      onOpenChange={(open) => { if (!discarding) setShowCloseConfirmation(open); }}
-    >
-      <DialogContent
-        showCloseButton={false}
-        overlayClassName="z-[300]"
-        className="z-[310] gap-5 rounded-[24px] border border-stroke-neutral-weak bg-[#fffdf9] sm:max-w-[460px]"
-        onClick={(event) => event.stopPropagation()}
-        onEscapeKeyDown={(event) => { event.stopPropagation(); if (discarding) event.preventDefault(); }}
-      >
-        <DialogHeader>
-          <DialogTitle className="font-geist text-xl font-semibold text-text-neutral-strong">
-            Save this story?
-          </DialogTitle>
-          <DialogDescription className="font-geist leading-6 text-text-neutral-weak">
-            You have unsaved changes. Save them as a draft before leaving, or discard them.
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter className="gap-2 sm:justify-end">
-          <Button
-            type="button"
-            variant="ghost"
-            disabled={discarding}
-            onClick={() => setShowCloseConfirmation(false)}
-          >
-            Keep editing
-          </Button>
-          <Button type="button" variant="destructive" disabled={discarding} onClick={handleConfirmClose}>
-            {discarding ? "Discarding…" : "Discard"}
-          </Button>
-          <Button
-            type="button"
-            onClick={handleSaveDraftAndClose}
-            disabled={isUploading || discarding}
-          >
-            Save draft and exit
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  ) : showCloseConfirmation ? (
-    createPortal(
-      <CloseWithFilesConfirmation
-        open={showCloseConfirmation}
-        busy={discarding}
-        close={() => setShowCloseConfirmation(false)}
-        onConfirm={handleConfirmClose}
-      />,
-      document.body,
-    )
-  ) : null;
-
   const resetVideoRecorder = () => {
     videoRecorderRef.current?.reset?.();
     videoRecorderRef.current?.resetStream?.();
@@ -1520,31 +1570,226 @@ function CreateMemoryBase({
 
   // Mobile
   if (isMobile && variant === "legacy") {
+    const canContinue =
+      Boolean(values.title?.trim() || bodyPlainText.trim() || files.length) &&
+      !isUploading;
+    const formatButton = (
+      pressed: boolean,
+      label: string,
+      onClick: () => void,
+      icon: ReactNode,
+    ) => (
+      <Toggle
+        type="button"
+        onMouseDown={(event) => event.preventDefault()}
+        pressed={pressed}
+        onPressedChange={onClick}
+        aria-label={label}
+        className="size-9 min-w-9 shrink-0 rounded-lg px-0 text-icon-neutral-strong data-[state=on]:text-text-brand-strong"
+      >
+        {icon}
+      </Toggle>
+    );
     return (
       <>
-        <Sheet detent="content" isOpen onClose={handleClose} snapPoints={[0, 0.8]} initialSnap={1}>
-          <Sheet.Container className="max-h-[80dvh] overflow-hidden bg-v3-bg">
-            <Sheet.Header className="rounded-t-3xl bg-v3-bg" />
-            <Sheet.Content className="max-h-[80dvh] min-h-0 overflow-y-auto overscroll-contain bg-v3-bg px-4 pb-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="font-garamond text-xl font-medium text-text-neutral-strong">Add New Story</h2>
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Add Story"
+          data-testid="mobile-story-composer"
+          className="story-composer-mobile fixed left-0 z-[1] flex w-full flex-col overflow-hidden text-text-neutral-strong"
+          style={{
+            top: viewportBox?.top ?? 0,
+            height: viewportBox?.height ?? "100dvh",
+          }}
+          onClick={(event) => event.stopPropagation()}
+        >
+          <img
+            data-testid="mobile-album-artwork"
+            src={resolvedTheme === "dark" ? darkAlbumArtwork : albumArtwork}
+            alt=""
+            aria-hidden="true"
+            className="story-composer-paper"
+          />
+          {resolvedTheme === "light" ? (
+            <img src={paperGrain} alt="" aria-hidden="true" className="story-composer-paper opacity-10" />
+          ) : null}
+          {fileInputs}
+          <header className="flex shrink-0 items-center justify-between px-4 pb-3 pt-[max(1rem,calc(env(safe-area-inset-top)+0.5rem))]">
+            <button
+              type="button"
+              onClick={handleClose}
+              aria-label="Cancel editing"
+              className="flex h-[34px] items-center gap-1.5 rounded-full story-composer-tint px-3 font-geist text-sm font-medium text-text-neutral-weak"
+            >
+              <ArrowLeft aria-hidden className="size-4" />
+              Cancel
+            </button>
+            <div className="flex items-center gap-2">
+              <DropdownMenu
+                modal={false}
+                onOpenChange={(open) => {
+                  if (open) setQuickCaptureDraftNonce((n) => n + 1);
+                }}
+              >
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    className="flex h-[34px] items-center gap-1.5 rounded-full story-composer-tint px-3 font-geist text-sm font-medium text-text-neutral-weak"
+                  >
+                    <DraftStatusDot status={draftStatus} />
+                    Drafts
+                  </button>
+                </DropdownMenuTrigger>
+                {draftsDropdownContent}
+              </DropdownMenu>
+              {draftStatusAnnouncement}
+              <Button
+                type="button"
+                disabled={!canContinue}
+                onClick={() => setIsPublishOpen(true)}
+                aria-label="Next step"
+                className="h-[34px] rounded-full px-[18px] font-geist text-sm font-medium"
+              >
+                Next
+              </Button>
+            </div>
+          </header>
+          {uploadGateBanner}
+          <div className="hide-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-4">
+            <textarea
+              ref={titleTextareaRef}
+              id="create-memory-title-mobile"
+              aria-label="Title"
+              placeholder="Title"
+              value={values.title}
+              name="title"
+              onChange={handleTitleChange}
+              onKeyDown={handleTitleKeyDown}
+              rows={1}
+              className="story-composer-title mt-1 mb-1 block w-full resize-none overflow-hidden border-0 bg-transparent p-0 font-garamond text-text-neutral-strong outline-none placeholder:text-text-neutral-disabled"
+            />
+            {inlineAttachmentFiles.length > 0 ? (
+              <div className="mt-3">
+                <FileThumbnails
+                  onRetry={retryUpload}
+                  files={inlineAttachmentFiles}
+                  onRemove={handleRemoveFile}
+                  variant="media-inline"
+                />
+              </div>
+            ) : null}
+            <div className="relative pl-1 pt-2">
+              <EditorContent
+                editor={editor}
+                className="tiptap-editor w-full"
+              />
+              <SlashCommandPopup
+                show={showSlashMenu}
+                position={slashPosition}
+                commands={SLASH_COMMANDS}
+                selectedIndex={slashSelectedIndex}
+                onSelectedIndexChange={setSlashSelectedIndex}
+                onCommandSelect={handleSlashCommandSelect}
+                onClose={() => setShowSlashMenu(false)}
+              />
+            </div>
+          </div>
+          {audioRecorder ? <div className="shrink-0 px-2">{audioRecorder}</div> : null}
+          <div
+            data-testid="mobile-formatting-toolbar"
+            className="hide-scrollbar flex shrink-0 items-center gap-0.5 overflow-x-auto border-t border-stroke-neutral-weaker px-3 py-1.5 pb-[max(0.375rem,env(safe-area-inset-bottom))]"
+          >
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              aria-label="Add attachment"
+              onClick={() => fileInputAllRef.current?.click()}
+              className="size-9 shrink-0 rounded-[10px] bg-fill-tab-active text-text-tab-active hover:bg-fill-tab-active hover:text-text-tab-active"
+            >
+              <Plus className="size-5" />
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              aria-label="Record audio"
+              disabled={showAudioRecorder}
+                onClick={() => setShowAudioRecorder(true)}
+              className="size-9 shrink-0 rounded-[10px] story-composer-tint text-icon-neutral-strong"
+            >
+              <Mic className="size-5" />
+            </Button>
+            <Separator
+              orientation="vertical"
+              className="mx-1.5 h-5 shrink-0 bg-stroke-neutral-weaker"
+            />
+            {formatButton(formattingState.bold, "Bold", () => editor?.chain().focus().toggleBold().run(), <Bold aria-hidden className="size-[18px]" />)}
+            {formatButton(formattingState.italic, "Italic", () => editor?.chain().focus().toggleItalic().run(), <Italic aria-hidden className="size-[18px]" />)}
+            {formatButton(formattingState.underline, "Underline", () => editor?.chain().focus().toggleUnderline().run(), <Underline aria-hidden className="size-[18px]" />)}
+            {formatButton(formattingState.strike, "Strikethrough", () => editor?.chain().focus().toggleStrike().run(), <Strikethrough aria-hidden className="size-[18px]" />)}
+            {formatButton(formattingState.bulletList, "Bullet list", () => editor?.chain().focus().toggleBulletList().run(), <List aria-hidden className="size-[18px]" />)}
+            {formatButton(formattingState.orderedList, "Numbered list", () => editor?.chain().focus().toggleOrderedList().run(), <ListOrdered aria-hidden className="size-[18px]" />)}
+          </div>
+        </div>
+        <Sheet
+          detent="content"
+          isOpen={isPublishOpen}
+          onClose={() => setIsPublishOpen(false)}
+          snapPoints={[0, 1]}
+          initialSnap={1}
+        >
+          <Sheet.Container className="story-publish-sheet max-h-[92dvh] overflow-hidden bg-bg-raised">
+            <Sheet.Header className="rounded-t-3xl bg-bg-raised pt-2">
+              <div className="mx-auto h-1 w-[30px] rounded-full bg-stroke-neutral-strong opacity-30" />
+              <div className="mt-2 flex min-h-8 items-center justify-between px-5">
+                <h2 className="font-geist text-xl font-semibold leading-8 text-text-neutral-strong">
+                  Publish post
+                </h2>
                 <Button
                   type="button"
                   variant="ghost"
                   size="icon-sm"
-                  onClick={handleClose}
-                  className="rounded-full bg-fill-neutral-weaker text-icon-neutral-weak hover:bg-fill-neutral-weak"
+                  aria-label="Close publish sheet"
+                  onClick={() => setIsPublishOpen(false)}
+                  className="size-8 rounded-full story-composer-tint text-text-neutral-weak"
                 >
-                  <TimesIcon width={10} height={10} />
+                  <X aria-hidden className="size-4" />
                 </Button>
+                            </div>
+            </Sheet.Header>
+            <Sheet.Content className="min-h-0 overflow-y-auto overscroll-contain bg-bg-raised px-5 pb-[max(2rem,calc(env(safe-area-inset-bottom)+1.5rem))] pt-8">
+              <div className="flex flex-col gap-6">
+                <AccessField
+                  value={selectedAccess}
+                  onChange={setSelectedAccess}
+                  shareAudience={shareAudience}
+                  onShareAudienceChange={setShareAudience}
+                  variant="sheet"
+                  dismissOnEscape
+                />
+                <TagsField
+                  tags={tags}
+                  setTags={setTags}
+                  title={values.title ?? ""}
+                  body={bodyPlainText}
+                  variant="sheet"
+                />
               </div>
-              <div className="space-y-4">{legacyFormContent}</div>
-              <div className="mt-4 pt-4 border-t border-stroke-neutral-weak">{footer}</div>
+              <Button
+                type="button"
+                onClick={handleSubmit}
+                disabled={isMutating || isUploading}
+                className="mt-8 h-14 w-full rounded-full font-geist text-base font-semibold"
+              >
+                Post now
+                <Spinner loading={isMutating} className="size-4!" />
+              </Button>
             </Sheet.Content>
           </Sheet.Container>
-          <Sheet.Backdrop onTap={handleClose} />
+          <Sheet.Backdrop onTap={() => setIsPublishOpen(false)} />
         </Sheet>
-        {closeConfirmationPortal}
         {videoRecorderDialog}
       </>
     );
@@ -1568,7 +1813,6 @@ function CreateMemoryBase({
           <CardFooter className="shrink-0 border-t border-stroke-neutral-weak px-6 py-4">{footer}</CardFooter>
         </Card>
 
-        {closeConfirmationPortal}
         {videoRecorderDialog}
       </>
     );
@@ -1820,16 +2064,14 @@ function CreateMemoryBase({
                     }}
                   >
                     <DropdownMenuTrigger asChild>
-                      <Button type="button" variant="ghost" size="sm">
+                      <Button type="button" variant="ghost" size="sm" className="gap-1.5">
+                        <DraftStatusDot status={draftStatus} />
                         Drafts
                       </Button>
                     </DropdownMenuTrigger>
                     {draftsDropdownContent}
                   </DropdownMenu>
-                  <div className="flex shrink-0 items-center gap-2 whitespace-nowrap font-geist text-sm text-text-neutral-weaker" role="status">
-                    <Cloud aria-hidden className="size-4" />
-                    <span>{isCurrentDraftSaved ? "Draft saved" : "Not saved"}</span>
-                  </div>
+                  {draftStatusAnnouncement}
                   <Button
                     type="button"
                     size="lg"
@@ -1916,6 +2158,7 @@ function CreateMemoryBase({
                     data-testid="desktop-formatting-strip"
                     className="mt-4 w-full max-w-[760px] shrink-0 px-3"
                   >
+                    {audioRecorder}
                     <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
                       <div className="flex min-w-0 flex-wrap items-center gap-1.5">
                         <DropdownMenu
@@ -2006,12 +2249,8 @@ function CreateMemoryBase({
                           type="button"
                           variant="ghost"
                           size="icon"
-                          onClick={() =>
-                            push("audio-recorder", {
-                              onFinish: handleAddAudioFile,
-                              recordingNumber: audioRecordingCount,
-                            })
-                          }
+                          disabled={showAudioRecorder}
+                onClick={() => setShowAudioRecorder(true)}
                           className="size-9 rounded-[10px] text-icon-neutral-strong hover:bg-fill-neutral-weak"
                           aria-label="Record audio"
                           title="Record audio"
@@ -2082,7 +2321,6 @@ function CreateMemoryBase({
             </div>
         </div>
       </StoryJournalShell>
-      {closeConfirmationPortal}
       {videoRecorderDialog}
     </>
   );

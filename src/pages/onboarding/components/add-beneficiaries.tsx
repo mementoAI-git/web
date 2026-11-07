@@ -23,7 +23,7 @@ export default function AddBeneficiaries() {
     initial,
     schema,
     async onSubmit(p) {
-      await trigger({ ...p, relationship: "friend" })
+      await trigger({ ...p, relationship: "friend", access_scope: "shared_only" })
 
     },
   });

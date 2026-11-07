@@ -8,6 +8,8 @@ type Recipient = {
   relationship: string;
   avatar: string;
   user?: {
+    _id?: string;
+    email?: string;
     name?: string;
     picture_url?: string;
   };
@@ -54,7 +56,10 @@ export default function RecentRecipients({
           ""
         ).split(/[@\s]/)[0];
         const initialsSource =
-          recipient.name || recipient.user?.name || recipient.email?.split("@")[0] || "";
+          recipient.name ||
+          recipient.user?.name ||
+          recipient.email?.split("@")[0] ||
+          "";
         const isSelected = selectedRecipients.includes(recipient.email);
         return (
           <button
@@ -71,9 +76,14 @@ export default function RecentRecipients({
             <div className="flex size-6 items-center justify-center overflow-hidden rounded-full transition-transform group-hover:scale-105">
               <UserAvatar
                 alt={recipient.name}
-                src={!isEmpty(recipient?.user?.picture_url) ? recipient.user?.picture_url : undefined}
+                src={
+                  !isEmpty(recipient?.user?.picture_url)
+                    ? recipient.user?.picture_url
+                    : undefined
+                }
                 name={initialsSource || undefined}
-                email={recipient.email}
+                userId={recipient.user?._id}
+                email={recipient.user?.email || recipient.email}
                 size="sm"
                 className="!rounded-full"
               />

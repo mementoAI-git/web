@@ -79,7 +79,7 @@ describe("BrowseTopics", () => {
     expect(image).toHaveAttribute("srcset");
     expect(image.closest("a")).toHaveClass("max-w-[230px]");
     expect(image.closest("a")?.parentElement).toHaveClass("sm:w-[230px]");
-    expect(image.parentElement).toHaveClass("h-[120px]");
+    expect(image.parentElement).toHaveClass("h-[138px]", "rounded-[8px]");
     expect(
       container.querySelector(".bg-gradient-to-l"),
     ).not.toBeInTheDocument();

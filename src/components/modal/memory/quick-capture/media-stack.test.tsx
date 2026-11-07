@@ -159,3 +159,37 @@ describe("QuickCaptureMediaStack", () => {
     expect(video).toHaveAttribute("src", "https://example.com/movie.mp4");
   });
 });
+
+describe("QuickCaptureMediaStack recordings", () => {
+  const recording = (overrides: Partial<IOnUploadPayload>): IOnUploadPayload => ({
+    id: "voice",
+    file: new File(["a"], "recording-1793993595214.mp4", { type: "audio/mp4" }),
+    progress: 40,
+    ...overrides,
+  });
+  const voiceNoteIds = { voice: true as const };
+
+  it("keeps a recording playable while it uploads", () => {
+    URL.createObjectURL = vi.fn(() => "blob:local");
+    URL.revokeObjectURL = vi.fn();
+    renderWithProviders(
+      <QuickCaptureMediaStack files={[recording({})]} voiceNoteIds={voiceNoteIds} onRemove={vi.fn()} />,
+    );
+    expect(screen.getByRole("button", { name: "Play voice note" })).toBeInTheDocument();
+    expect(screen.getByRole("progressbar", { name: "Uploading voice note" })).toBeInTheDocument();
+    expect(screen.queryByText(/Uploading…/)).not.toBeInTheDocument();
+  });
+
+  it("keeps a failed recording, with a way to retry it", async () => {
+    URL.createObjectURL = vi.fn(() => "blob:local");
+    URL.revokeObjectURL = vi.fn();
+    const onRetry = vi.fn();
+    const failed = recording({ progress: 0, uploadFailed: true });
+    renderWithProviders(
+      <QuickCaptureMediaStack files={[failed]} voiceNoteIds={voiceNoteIds} onRemove={vi.fn()} onRetry={onRetry} />,
+    );
+    expect(screen.getByRole("button", { name: "Play voice note" })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Retry" }));
+    expect(onRetry).toHaveBeenCalledWith(failed);
+  });
+});

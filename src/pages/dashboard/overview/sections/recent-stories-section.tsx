@@ -1,8 +1,11 @@
+import { storyDestination } from "@/lib/story-destination";
+import { Plus } from "lucide-react";
 import { Link } from "react-router-dom";
 import useSWR from "swr";
 import dayjs from "dayjs";
 import endpoint from "@/api/endpoint";
 import { Button } from "@/components/ui/button";
+import { useModal } from "@/hooks/use-modal";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TypographyH2, TypographyMuted } from "@/components/ui/typography";
 import { StoryListThumbnail } from "@/pages/dashboard/stories/components/list-thumbnail";
@@ -27,6 +30,7 @@ export default function RecentStoriesSection() {
     `${endpoint.memories}?page=1&limit=5&sort=-created_at`,
   );
   const stories = (data?.data?.docs ?? []).slice(0, 5);
+  const { open } = useModal();
 
   return (
     <section
@@ -81,7 +85,7 @@ export default function RecentStoriesSection() {
           {stories.map((story) => (
             <li key={story._id}>
               <Link
-                to={`/stories/${story._id}`}
+                to={storyDestination(story)}
                 className="flex min-h-11 items-center gap-3 rounded-xl py-3 outline-none transition-colors hover:bg-fill-neutral-weaker focus-visible:ring-2 focus-visible:ring-stroke-brand-strong motion-reduce:transition-none"
               >
                 <StoryListThumbnail memory={story} />
@@ -103,9 +107,19 @@ export default function RecentStoriesSection() {
           ))}
         </ul>
       ) : (
-        <TypographyMuted className="py-8 text-center font-inter text-sm text-text-neutral-weak">
-          Your story begins here. Save a story to see it here.
-        </TypographyMuted>
+        <div className="sky-card flex flex-col items-center gap-4 rounded-[16px] border border-stroke-neutral-weak bg-fill-neutral-weaker px-6 py-[51px] text-center">
+          <TypographyMuted className="font-inter text-sm text-text-neutral-weak">
+            No stories added yet
+          </TypographyMuted>
+          <Button
+            type="button"
+            size="lg"
+            className="rounded-[64px]"
+            onClick={() => open?.("create-memory")}
+          >
+            <Plus className="size-5 shrink-0" aria-hidden /> Add story
+          </Button>
+        </div>
       )}
     </section>
   );

@@ -1,6 +1,6 @@
-import { render, screen } from "@testing-library/react";
+import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter } from "react-router-dom";
+import { renderWithProviders } from "@/test";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { PricingOverlay } from "./pricing-overlay";
 import { openCustomerPortal } from "./open-customer-portal";
@@ -14,12 +14,13 @@ const state = vi.hoisted(() => ({
   error: null as unknown,
   checkout: true,
   pricing: true,
-  interval: "monthly",
+  interval: "monthly" as string | null,
   manageable: true,
   scheduled: false,
 }));
 const navigate = vi.hoisted(() => vi.fn());
-vi.mock("@/contexts/subscription", () => ({
+vi.mock("@/contexts/subscription", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/contexts/subscription")>()),
   useSubscription: () => ({
     isProOrAbove: state.paid,
     summary: {
@@ -33,7 +34,8 @@ vi.mock("@/contexts/subscription", () => ({
     error: state.error,
   }),
 }));
-vi.mock("@/contexts/feature-flags", () => ({
+vi.mock("@/contexts/feature-flags", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/contexts/feature-flags")>()),
   useFeatureFlags: () => ({
     canUse: (key: string) =>
       key === "billing.checkout" ? state.checkout : state.pricing,
@@ -47,11 +49,10 @@ vi.mock("react-router-dom", async () => ({
 }));
 
 function show(onOpenChange = vi.fn()) {
-  render(
-    <MemoryRouter>
-      <PricingOverlay open onOpenChange={onOpenChange} />
-    </MemoryRouter>,
-  );
+  renderWithProviders(<PricingOverlay open onOpenChange={onOpenChange} />, {
+    route: "/pricing",
+    auth: true,
+  });
   return onOpenChange;
 }
 
@@ -107,18 +108,20 @@ describe("PricingOverlay subscription states", () => {
     expect(annual).toHaveAttribute("data-state", "on");
     expect(monthly).toHaveAttribute("data-state", "off");
   });
-  it("removes the card captions and uses a compact dialog with a white Pro action", async () => {
+  it("fills the screen with the shared page layout and an adaptive Pro action", async () => {
     show();
     expect(
       screen.queryByText("A place for your everyday memories."),
     ).not.toBeInTheDocument();
     expect(screen.queryByText(/Billed monthly/)).not.toBeInTheDocument();
-    expect(screen.getByRole("dialog")).toHaveClass("sm:max-w-[880px]");
+    expect(screen.getByRole("dialog")).toHaveClass("insights-overlay");
+    expect(screen.getByRole("main")).toHaveClass("insights-main", "page-motion");
+    expect(screen.getByRole("heading", { level: 2, name: "Free" }).closest(".pricing-plans")).toHaveClass("page-stagger");
     expect(
       screen.getByRole("button", { name: "Start 14-day trial" }),
     ).toHaveClass(
-      "bg-[var(--fill-billing-badge)]",
-      "text-[var(--text-billing-badge)]",
+      "bg-fill-tab-active",
+      "text-text-tab-active",
     );
     await userEvent.click(screen.getByRole("radio", { name: "Annual" }));
     expect(screen.queryByText(/Billed yearly/)).not.toBeInTheDocument();
@@ -173,11 +176,21 @@ describe("PricingOverlay subscription states", () => {
       screen.getByRole("button", { name: "Downgrade to free" }),
     ).toBeDisabled();
   });
-  it("does not offer cancellation for non-recurring Pro access", () => {
+  it("never offers checkout or cancellation to non-recurring Pro access", () => {
     state.paid = true;
     state.manageable = false;
+    state.interval = null;
     show();
-    expect(screen.getByRole("button", { name: "Cancel plan" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Current plan" })).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: "Downgrade to free" }),
+    ).toBeDisabled();
+    expect(
+      screen.queryByRole("button", { name: "Cancel plan" }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByRole("radio")).not.toBeInTheDocument();
+    expect(screen.getByText(/No monthly or annual billing/)).toBeInTheDocument();
+    expect(startCheckout).not.toHaveBeenCalled();
   });
   it("prevents checkout while the subscription is loading or unavailable", () => {
     state.loading = true;
@@ -204,6 +217,25 @@ describe("PricingOverlay subscription states", () => {
     const close = show();
     await userEvent.keyboard("{Escape}");
     expect(close).toHaveBeenCalledWith(false);
+  });
+  it("uses the shared header to close and to leave for search", async () => {
+    const close = show();
+    await userEvent.click(screen.getByRole("button", { name: "Close" }));
+    expect(close).toHaveBeenCalledWith(false);
+    close.mockClear();
+    await userEvent.click(
+      screen.getByRole("button", { name: "Search memories" }),
+    );
+    expect(close).toHaveBeenCalledWith(false);
+  });
+  it("keeps the compact dialog for confirming a cancellation", async () => {
+    state.paid = true;
+    show();
+    await userEvent.click(
+      screen.getByRole("button", { name: "Downgrade to free" }),
+    );
+    expect(screen.getByRole("dialog")).not.toHaveClass("insights-overlay");
+    expect(screen.queryByRole("main")).not.toBeInTheDocument();
   });
   it("hides plans when pricing is disabled", () => {
     state.pricing = false;

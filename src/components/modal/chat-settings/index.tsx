@@ -14,9 +14,17 @@ import { createPortal } from "react-dom";
 import { Sheet } from "react-modal-sheet";
 import { TimesIcon } from "@/components/icons";
 import { Button } from "@/components/ui/button";
+import { useModal } from "@/hooks/use-modal";
+import type { ConversationFilesRequest } from "@/pages/dashboard/chat/conversation/conversation-assets";
 import { ChatPreferencesPanel } from "./chat-preferences-panel";
 
-function Content({ onClose }: { onClose: () => void }) {
+function Content({ onClose, conversationId }: { onClose: () => void; conversationId?: string }) {
+  const { push } = useModal();
+  // This panel stacks above dialogs, so it closes to reveal the files.
+  const openFiles = ({ tab, mediaFilter }: ConversationFilesRequest) => {
+    onClose();
+    push?.("conversation-files", { conversationId, messages: [], initialTab: tab, initialMediaFilter: mediaFilter });
+  };
   return (
     <div className="flex min-h-0 w-full flex-1 flex-col bg-bg-neutral-solid">
       <div className="flex shrink-0 items-center justify-between border-b border-stroke-neutral-weaker px-5 py-4 sm:px-6 sm:py-5">
@@ -34,7 +42,7 @@ function Content({ onClose }: { onClose: () => void }) {
           <TimesIcon width={12} height={12} aria-hidden />
         </Button>
       </div>
-      <ChatPreferencesPanel density="comfortable" className="min-h-0 flex-1" />
+      <ChatPreferencesPanel density="comfortable" className="min-h-0 flex-1" onOpenConversationFiles={openFiles} />
     </div>
   );
 }
@@ -42,9 +50,10 @@ function Content({ onClose }: { onClose: () => void }) {
 type ChatSettingsProps = PropsWithChildren & {
   /** Fires when the sheet / side panel opens or closes (e.g. to hide the trigger in voice mode). */
   onOpenChange?: (open: boolean) => void;
+  conversationId?: string;
 };
 
-export default function ChatSettings({ children, onOpenChange }: ChatSettingsProps) {
+export default function ChatSettings({ children, onOpenChange, conversationId }: ChatSettingsProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   const updateOpen = useCallback(
@@ -85,13 +94,13 @@ export default function ChatSettings({ children, onOpenChange }: ChatSettingsPro
               className="block h-full sm:hidden"
               isOpen={isOpen}
               onClose={() => updateOpen(false)}
-              snapPoints={[0, 0.8]}
+              snapPoints={[0, 1]}
               initialSnap={1}
             >
-              <Sheet.Container className="max-h-[80dvh] overflow-hidden bg-bg-neutral-solid">
-                <Sheet.Header className="rounded-3xl bg-bg-neutral-solid" />
-                <Sheet.Content className="flex max-h-[80dvh] min-h-0 flex-col overflow-y-auto overscroll-contain bg-bg-neutral-solid">
-                  <Content onClose={() => updateOpen(false)} />
+              <Sheet.Container className="max-h-[80dvh] overflow-hidden bg-bg-raised">
+                <Sheet.Header className="rounded-3xl bg-bg-raised" />
+                <Sheet.Content className="scrollbar-hide flex max-h-[80dvh] min-h-0 flex-col overflow-y-auto overscroll-contain bg-bg-raised">
+                  <Content onClose={() => updateOpen(false)} conversationId={conversationId} />
                 </Sheet.Content>
               </Sheet.Container>
               <Sheet.Backdrop onTap={() => updateOpen(false)} />
@@ -111,7 +120,7 @@ export default function ChatSettings({ children, onOpenChange }: ChatSettingsPro
                 aria-label="Chat settings"
                 onClick={(e) => e.stopPropagation()}
               >
-                <Content onClose={() => updateOpen(false)} />
+                <Content onClose={() => updateOpen(false)} conversationId={conversationId} />
               </div>
             </>,
             document.body,

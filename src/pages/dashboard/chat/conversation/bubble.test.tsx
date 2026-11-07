@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { clearAuth, seedAuth } from "@/test";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { http, HttpResponse } from "msw";
@@ -15,12 +16,47 @@ vi.mock("sonner", () => ({
 }));
 
 describe("Bubble", () => {
+  it.each(["", "   "])("hides empty assistant placeholders (%j) until reply text arrives", (text) => {
+    const { container, rerender } = render(<Bubble role="ai" text={text} />);
+    expect(container).toBeEmptyDOMElement();
+    rerender(<Bubble role="ai" text="A reply" />);
+    expect(screen.getByText("A reply")).toBeVisible();
+  });
+
+  it("keeps voice-only assistant messages", () => {
+    const { container } = render(<Bubble role="ai" text="" is_voice duration={12} />);
+    expect(container).not.toBeEmptyDOMElement();
+  });
+
   it.each([false, true])("gives assistant replies a themeable panel including topic=%s", (topic) => {
     const { rerender } = render(<Bubble role="ai" text="Assistant reply" topic={topic} />);
     expect(screen.getByText("Assistant reply").closest(".chat-reply-surface")).toBeInTheDocument();
     expect(screen.getByText("Assistant reply").closest("span")).toHaveClass("text-text-neutral-strong");
     rerender(<Bubble role="user" text="User message" topic={topic} />);
     expect(screen.getByText("User message").closest(".chat-reply-surface")).toBeNull();
+  });
+
+  describe("sent images", () => {
+    const image = (id: number) => ({ _id: `f${id}`, name: `${id}.jpg`, type: "image/jpeg", url: `/${id}.jpg` });
+    const surface = (container: HTMLElement) => container.querySelector(".sky-card");
+
+    it("drops the bubble when a message is only 1-3 images", () => {
+      const { container } = render(<Bubble role="user" text="" attatchments={[image(1), image(2)]} />);
+      expect(screen.getByTestId("chat-media-group").querySelector('[data-layout="stack"]')).toBeInTheDocument();
+      expect(surface(container)).toBeNull();
+    });
+
+    it("keeps the caption in its own bubble below the stack", () => {
+      const { container } = render(<Bubble role="user" text="Look at these" attatchments={[image(1)]} />);
+      expect(surface(container)).toContainElement(screen.getByText("Look at these"));
+      expect(surface(container)).not.toContainElement(screen.getByTestId("chat-media-group"));
+    });
+
+    it("keeps four images in the grid inside the bubble", () => {
+      const { container } = render(<Bubble role="user" text="" attatchments={[1, 2, 3, 4].map(image)} />);
+      expect(surface(container)).toContainElement(screen.getByTestId("chat-media-group"));
+      expect(screen.getByTestId("chat-media-group").querySelector('[data-layout="grid"]')).toBeInTheDocument();
+    });
   });
 
   it("uses fill neutral weak for AI messages", () => {
@@ -201,6 +237,7 @@ describe("Bubble", () => {
   });
 
   it("refreshes a failed signed chat image", async () => {
+    seedAuth();
     server.use(
       http.post(`${API}/files/file-1/access`, () =>
         HttpResponse.json({
@@ -249,6 +286,7 @@ describe("Bubble", () => {
     await waitFor(() =>
       expect(image).toHaveAttribute("src", "/files/photo.jpg?cap=new"),
     );
+    clearAuth();
   });
 
   it("renders a URL-only message as one metadata preview when metadata exists", () => {

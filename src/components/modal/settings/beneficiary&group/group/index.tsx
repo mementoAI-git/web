@@ -1,127 +1,71 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { createPortal } from "react-dom";
+import { useEffect, useState } from "react";
 import useSWR from "swr";
+import dayjs from "dayjs";
+import { ChevronRight, MoreHorizontal, Users } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useModal } from "@/hooks/use-modal";
 import { useRequestRecovery } from "@/hooks/use-request-recovery";
 import { Spinner } from "@/components/ui/spinner";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
-import { MoreHorizontal } from "lucide-react";
-import dayjs from "dayjs";
+import { groupColorVar } from "@/components/group-color";
 import type { IGroup, IPagination } from "@/utility/interface";
 import { groupsListKey, groupsListFetcher } from "@/api/groups";
-import { useModal } from "@/hooks/use-modal";
-import { GROUP_COLORS } from "@/utility/constant";
-import { cn } from "@/utility";
 
-interface RowMenuProps {
-  group: IGroup;
-  onViewMembers: () => void;
-  onEdit: () => void;
-  onDelete: () => void;
-}
-
-function RowMenu({ group: _group, onViewMembers, onEdit, onDelete }: RowMenuProps) {
-  const [open, setOpen] = useState(false);
-  const [pos, setPos] = useState({ top: 0, left: 0 });
-  const btnRef = useRef<HTMLButtonElement>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  const toggleMenu = () => {
-    if (!open && btnRef.current) {
-      const rect = btnRef.current.getBoundingClientRect();
-      setPos({ top: rect.bottom + 4, left: rect.right - 160 });
-    }
-    setOpen((v) => !v);
-  };
-
-  useEffect(() => {
-    if (!open) return;
-    const handleClick = (e: MouseEvent) => {
-      if (
-        menuRef.current && !menuRef.current.contains(e.target as Node) &&
-        btnRef.current && !btnRef.current.contains(e.target as Node)
-      ) {
-        setOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, [open]);
-
-  const items = [
-    { label: "View members", action: onViewMembers },
-    { label: "Edit group", action: onEdit },
-    { label: "Remove group", action: onDelete, danger: true },
-  ];
-
-  return (
-    <>
-      <button
-        ref={btnRef}
-        type="button"
-        onClick={toggleMenu}
-        className="flex size-7 items-center justify-center rounded-lg text-v3-text-weaker transition-colors hover:bg-v3-fill-weak hover:text-v3-text-strong focus-visible:outline-none"
-        aria-label="Group options"
-      >
-        <MoreHorizontal size={15} strokeWidth={1.5} />
-      </button>
-
-      {open && createPortal(
-        <div
-          ref={menuRef}
-          style={{ top: pos.top, left: pos.left, width: 160 }}
-          className="fixed z-[9999] overflow-hidden rounded-xl border border-v3-stroke-weak bg-bg-neutral py-1 shadow-lg"
-        >
-          {items.map((item) => (
-            <button
-              key={item.label}
-              type="button"
-              onClick={() => { setOpen(false); item.action(); }}
-              className={cn(
-                "w-full px-3 py-2 text-left font-inter text-sm transition-colors hover:bg-v3-fill-weaker",
-                item.danger ? "text-danger" : "text-v3-text-strong",
-              )}
-            >
-              {item.label}
-            </button>
-          ))}
-        </div>,
-        document.body,
-      )}
-    </>
-  );
-}
-
-export default function GroupManagement() {
+export default function GroupManagement({
+  compact = false,
+}: {
+  /** The chat People panel's list, which opens groups in modals. */
+  compact?: boolean;
+}) {
+  const { open } = useModal();
   const [page, setPage] = useState(1);
-  const { data, isLoading, error, mutate, isValidating } = useSWR<IPagination<IGroup>>(groupsListKey(page), groupsListFetcher, {
+  const { data, isLoading, error, mutate, isValidating } = useSWR<
+    IPagination<IGroup>
+  >(groupsListKey(page), groupsListFetcher, {
     revalidateOnFocus: false,
     shouldRetryOnError: false,
   });
-  const { open } = useModal();
 
   const docs = data?.docs ?? [];
   const totalPages = data?.totalPages ?? 1;
 
-  const retry = useRequestRecovery(`settings-groups:${page}`, error, mutate, "We couldn’t load your groups. Please try again.");
-  const retryControl = error ? <Button variant="outline" onClick={retry} disabled={isValidating}>Retry loading groups</Button> : null;
+  const retry = useRequestRecovery(
+    `settings-groups:${page}`,
+    error,
+    mutate,
+    "We couldn’t load your groups. Please try again.",
+  );
+  const retryControl = error ? (
+    <Button
+      variant="outline"
+      className="self-start"
+      onClick={retry}
+      disabled={isValidating}
+    >
+      Retry loading groups
+    </Button>
+  ) : null;
   const recoverPage = Boolean(data && !error && !docs.length && page > 1);
   useEffect(() => {
-    if (recoverPage) setPage((current) => Math.max(1, Math.min(current - 1, totalPages)));
+    if (recoverPage)
+      setPage((current) => Math.max(1, Math.min(current - 1, totalPages)));
   }, [recoverPage, totalPages]);
 
   if ((isLoading && !data) || recoverPage) {
     return (
-      <div role="status" aria-label="Loading groups" className="flex items-center justify-center py-12">
+      <div
+        role="status"
+        aria-label="Loading groups"
+        className="flex items-center justify-center py-12"
+      >
         <Spinner className="size-5" />
       </div>
     );
@@ -131,109 +75,147 @@ export default function GroupManagement() {
 
   if (!docs.length) {
     return (
-      <div className="rounded-3xl border border-dashed border-v3-stroke-weak bg-fill-neutral-weak px-4 py-10 text-center">
+      <div
+        className={
+          compact
+            ? "flex flex-col items-center rounded-3xl border border-dashed border-stroke-neutral-weak bg-fill-neutral-weak px-4 py-10 sm:px-6 text-center"
+            : "settings-card flex flex-col items-center px-4 py-10 text-center sm:px-6"
+        }
+      >
         {retryControl}
-        <p className="font-inter text-sm font-medium text-v3-text-strong">No groups yet</p>
-        <p className="mt-1 font-inter text-sm text-v3-text-weak">
-          Create a group to organize your beneficiaries.
+        <p className="text-sm font-medium text-text-neutral-strong">
+          No groups yet
+        </p>
+        <p className="mt-1 text-sm text-text-neutral-weak">
+          Create a group to organize your people.
         </p>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-4">
       {retryControl}
-      <div className="overflow-hidden rounded-3xl border border-v3-stroke-weak bg-fill-neutral-weak">
-        <table className="w-full border-collapse">
-          <thead>
-            <tr className="bg-v3-fill-weaker">
-              <th className="px-4 py-2.5 text-left font-inter text-[11px] font-semibold uppercase tracking-wide text-v3-text-weaker">Group name</th>
-              <th className="px-4 py-2.5 text-left font-inter text-[11px] font-semibold uppercase tracking-wide text-v3-text-weaker">Date created</th>
-              <th className="px-4 py-2.5 text-left font-inter text-[11px] font-semibold uppercase tracking-wide text-v3-text-weaker">Description</th>
-              <th className="px-4 py-2.5 text-left font-inter text-[11px] font-semibold uppercase tracking-wide text-v3-text-weaker">Members</th>
-              <th className="px-4 py-2.5"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {docs.map((group) => {
-              const colorClass = GROUP_COLORS[Math.min(group.color ?? 0, GROUP_COLORS.length - 1)];
-              return (
-                <tr key={group._id} className="border-t border-v3-stroke-weak">
-                  <td className="px-4 py-3">
-                    <span
-                      className={cn(
-                        "inline-flex max-w-[160px] items-center truncate rounded-full border px-2.5 py-1 font-inter text-xs font-medium",
-                        colorClass,
-                      )}
-                    >
-                      {group.name || "—"}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 font-inter text-xs text-v3-text-weak">
-                    {group.created_at ? dayjs(group.created_at).format("MMM D, YYYY") : "—"}
-                  </td>
-                  <td className="px-4 py-3 font-inter text-xs text-v3-text-weak">
-                    <span className="block max-w-[200px] truncate">
-                      {group.description || "—"}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 font-inter text-xs text-v3-text-strong">
-                    <span className="font-medium tabular-nums">
-                      {Array.isArray(group.members) ? group.members.length : 0}
-                      <span className="ml-1 font-normal text-v3-text-weak">
-                        {Array.isArray(group.members) && group.members.length === 1 ? "member" : "members"}
-                      </span>
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <RowMenu
-                      group={group}
-                      onViewMembers={() => open?.("group-detail", group._id)}
-                      onEdit={() => open?.("update-group", group)}
-                      onDelete={() => open?.("delete-group", group._id)}
-                    />
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-
-      {totalPages > 1 && (
-        <div className="flex justify-center pt-1">
-          <Pagination>
-            <PaginationContent>
-              <PaginationItem>
-                <PaginationPrevious
-                  href="#"
-                  onClick={(e) => { e.preventDefault(); setPage((p) => Math.max(1, p - 1)); }}
-                  aria-disabled={page <= 1}
-                  className={page <= 1 ? "pointer-events-none opacity-50" : ""}
-                />
-              </PaginationItem>
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-                <PaginationItem key={p}>
-                  <PaginationLink
-                    href="#"
-                    isActive={p === page}
-                    onClick={(e) => { e.preventDefault(); setPage(p); }}
+      {compact ? (
+        <div className="space-y-1">
+          {docs.map((group) => (
+            <div
+              key={group._id}
+              className="flex items-center gap-3 rounded-2xl p-3 hover:bg-fill-neutral-weak"
+            >
+              <button
+                type="button"
+                onClick={() => open?.("group-detail", group._id)}
+                className="flex min-w-0 flex-1 items-center gap-3 rounded-lg text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring"
+              >
+                <span className="flex size-12 shrink-0 items-center justify-center rounded-full bg-fill-neutral-weak">
+                  <Users className="size-5" aria-hidden />
+                </span>
+                <span className="min-w-0">
+                  <span className="block truncate text-base font-medium">
+                    {group.name}
+                  </span>
+                  <span className="block text-sm text-text-neutral-weaker">
+                    {group.members?.length ?? 0}{" "}
+                    {group.members?.length === 1 ? "member" : "members"}
+                  </span>
+                </span>
+              </button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="size-8 rounded-full"
+                    aria-label={`Options for ${group.name}`}
                   >
-                    {p}
-                  </PaginationLink>
-                </PaginationItem>
-              ))}
-              <PaginationItem>
-                <PaginationNext
-                  href="#"
-                  onClick={(e) => { e.preventDefault(); setPage((p) => Math.min(totalPages, p + 1)); }}
-                  aria-disabled={page >= totalPages}
-                  className={page >= totalPages ? "pointer-events-none opacity-50" : ""}
+                    <MoreHorizontal className="size-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="people-menu">
+                  <DropdownMenuItem
+                    onSelect={() => open?.("group-detail", group._id)}
+                  >
+                    View members
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onSelect={() => open?.("update-group", group)}
+                  >
+                    Edit group
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onSelect={() => open?.("delete-group", group._id)}
+                  >
+                    Remove group
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          ))}
+        </div>
+      ) : (
+      <ul className="flex flex-col gap-4">
+        {docs.map((group) => {
+          const count = group.members?.length ?? 0;
+          return (
+            <li key={group._id}>
+              <Link
+                to={`/settings/beneficiary?group=${group._id}`}
+                className="settings-card settings-row items-start p-4 sm:p-6"
+              >
+                <span className="flex min-w-0 items-start gap-4">
+                  <span
+                    aria-hidden
+                    className="size-6 shrink-0 rounded-md"
+                    style={{ backgroundColor: groupColorVar(group.color) }}
+                  />
+                  <span className="min-w-0">
+                    <span className="block truncate text-xl font-bold text-text-neutral-strong">
+                      {group.name || "Untitled group"}
+                    </span>
+                    <span className="mt-0.5 flex flex-wrap items-center gap-x-2 text-sm text-text-neutral-weak">
+                      {group.created_at ? (
+                        <>
+                          Created {dayjs(group.created_at).format("MMM D, YYYY")}
+                          <span aria-hidden className="size-1 rounded-full bg-current" />
+                        </>
+                      ) : null}
+                      {count} {count === 1 ? "person" : "people"}
+                    </span>
+                  </span>
+                </span>
+                <ChevronRight
+                  className="size-5 shrink-0 text-icon-neutral-strong"
+                  strokeWidth={1.75}
+                  aria-hidden
                 />
-              </PaginationItem>
-            </PaginationContent>
-          </Pagination>
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+      )}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between gap-3">
+          <Button
+            variant="ghost"
+            disabled={page <= 1}
+            onClick={() => setPage((current) => Math.max(1, current - 1))}
+          >
+            Previous page
+          </Button>
+          <span className="text-sm text-text-neutral-weak">
+            Page {page} of {totalPages}
+          </span>
+          <Button
+            variant="ghost"
+            disabled={page >= totalPages}
+            onClick={() =>
+              setPage((current) => Math.min(totalPages, current + 1))
+            }
+          >
+            Next page
+          </Button>
         </div>
       )}
     </div>

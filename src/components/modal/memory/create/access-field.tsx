@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useMemo, useId } from "react";
 import useSWR from "swr";
-import { CheckCircle2, ChevronDown, ChevronUp, Search, Users } from "lucide-react";
+import { CheckCircle2, ChevronDown, ChevronUp, Search } from "lucide-react";
 import privateIcon from "@/assets/icon/mingcute_lock-fill.svg";
 import everyoneIcon from "@/assets/icon/heroicons_users-16-solid.svg";
 import { useModal } from "@/hooks/use-modal";
@@ -24,6 +24,7 @@ import { Separator } from "@/components/ui/separator";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import type { SearchResultItem } from "./access-field-types";
 import { stableColorIndexFromId, toBeneficiarySearchItem } from "./beneficiary-to-access-item";
+import { StoryVisibilityIcon } from "./story-visibility-icon";
 
 const LIST_LIMIT = 100;
 
@@ -37,7 +38,8 @@ interface AccessFieldProps {
   onChange: (selected: SearchResultItem[]) => void;
   shareAudience: MemoryShareAudience;
   onShareAudienceChange: (audience: MemoryShareAudience) => void;
-  variant?: "default" | "panel";
+  /** "sheet" is the phone publish sheet, matching the mobile app. */
+  variant?: "default" | "panel" | "sheet";
   dismissOnEscape?: boolean;
 }
 
@@ -108,29 +110,23 @@ export function AccessField({
     if (selectedAccess.length > 1) {
       return `Shared with ${selectedAccess.length} people and groups`;
     }
+    if (variant === "sheet") {
+      return shareAudience === "everyone" ? "Everyone" : "Private · Only me";
+    }
     return shareAudience === "everyone" ? "Visible to everyone" : "Private — only you";
-  }, [selectedAccess, shareAudience]);
+  }, [selectedAccess, shareAudience, variant]);
 
-  const summaryIcon =
-    selectedAccess.length > 0 ? (
-      <Users className="size-4 shrink-0 text-text-neutral-weaker" aria-hidden />
-    ) : shareAudience === "everyone" ? (
-      <img
-        data-testid="story-visibility-icon"
-        src={everyoneIcon}
-        alt=""
-        aria-hidden="true"
-        className="size-4 shrink-0 object-contain"
-      />
-    ) : (
-      <img
-        data-testid="story-visibility-icon"
-        src={privateIcon}
-        alt=""
-        aria-hidden="true"
-        className="size-4 shrink-0 object-contain"
-      />
-    );
+  const summaryIcon = (
+    <StoryVisibilityIcon
+      audience={
+        selectedAccess.length > 0
+          ? "shared"
+          : shareAudience === "everyone"
+            ? "everyone"
+            : "private"
+      }
+    />
+  );
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -218,7 +214,7 @@ export function AccessField({
             align="start"
             sideOffset={6}
             onEscapeKeyDown={(event) => event.stopPropagation()}
-            className="z-[220] max-h-[min(520px,var(--radix-popover-content-available-height))] w-[326px] max-w-[calc(100vw-2rem)] gap-4 overflow-y-auto rounded-lg border border-stroke-neutral-weak bg-popover p-3 shadow-lg"
+            className="z-[220] max-h-[min(520px,var(--radix-popover-content-available-height))] w-(--radix-popover-trigger-width) min-w-[326px] max-w-[calc(100vw-2rem)] gap-4 overflow-y-auto rounded-lg border border-stroke-neutral-weak bg-popover p-3 shadow-lg"
           >
             <ToggleGroup
               type="single"
@@ -349,7 +345,7 @@ export function AccessField({
                         onCheckedChange={() => toggleAccess(beneficiary)}
                         aria-label={beneficiary.name}
                       />
-                      <UserAvatar name={beneficiary.name} alt={beneficiary.name} size="sm" />
+                      <UserAvatar userId={beneficiary.avatar?.userId} email={beneficiary.avatar?.email} src={beneficiary.avatar?.src} name={beneficiary.name} alt={beneficiary.name} size="sm" />
                       <span className="min-w-0 flex-1 truncate">{beneficiary.name}</span>
                     </label>
                   );
@@ -390,24 +386,33 @@ export function AccessField({
   }
 
   return (
-    <div className="space-y-2">
+    <div
+      className={cn(
+        variant === "sheet"
+          ? "story-composer-tint space-y-3.5 rounded-2xl p-4"
+          : "space-y-2",
+      )}
+    >
       <div>
         <Label
           htmlFor={accessInputId}
           className={cn(
-            variant === "panel"
-              ? "font-geist text-sm font-normal text-text-neutral-strong"
+            variant === "sheet"
+              ? "font-geist text-base font-normal text-text-neutral-strong"
               : "font-inter font-medium text-text-neutral-strong",
           )}
         >
-          {variant === "panel" ? "Who can see this story?" : "Who can see this story?"}
+          Who can see this story?
         </Label>
-        <p className="mt-1.5 font-inter text-xs leading-relaxed text-text-neutral-weaker">
-          {variant === "panel" ? (
-            <>
-              Stories are visible to all beneficiaries by default. Choose{" "}
-              <span className="font-semibold text-text-error-strong">Private</span> to hide them.
-            </>
+        <p
+          className={cn(
+            variant === "sheet"
+              ? "mt-1 font-geist text-sm leading-5 text-text-neutral-weak"
+              : "mt-1.5 font-inter text-xs leading-relaxed text-text-neutral-weaker",
+          )}
+        >
+          {variant === "sheet" ? (
+            "New stories are private unless you choose otherwise."
           ) : (
             <>
               Stories are <span className="text-text-neutral-strong">private by default</span>
@@ -430,8 +435,8 @@ export function AccessField({
       >
         <div
           className={cn(
-            variant === "panel"
-              ? "rounded-[8px] border border-stroke-neutral-weak bg-fill-neutral-weak transition-[color,box-shadow,border-color]"
+            variant === "sheet"
+              ? "rounded-xl border border-stroke-neutral-weaker bg-bg-neutral-solid"
               : "rounded-xl border border-stroke-neutral-weak bg-fill-neutral-weaker/40 transition-[color,box-shadow,border-color]",
             "focus-within:border-ring focus-within:ring-[3px] focus-within:ring-inset focus-within:ring-ring/50",
           )}
@@ -448,8 +453,8 @@ export function AccessField({
             }}
             className={cn(
               "flex w-full items-center gap-2.5 text-left text-sm text-text-neutral-strong",
-              variant === "panel"
-                ? "px-3 py-2 font-geist hover:bg-fill-neutral-weak"
+              variant === "sheet"
+                ? "rounded-xl px-3.5 py-[13px] font-geist"
                 : "px-3 py-2.5 font-inter hover:bg-fill-neutral-weaker/60",
             )}
           >

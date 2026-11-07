@@ -43,7 +43,7 @@ describe("conversation files", () => {
     render(<ConversationFiles data={{ conversationId: "conversation-1", messages }} />);
     expect(screen.getByRole("dialog", { name: "Shared files" })).toBeInTheDocument();
     expect(screen.getByRole("img", { name: "family.jpg" })).toBeInTheDocument();
-    await userEvent.click(screen.getByRole("tab", { name: /docs/i }));
+    await userEvent.click(screen.getByRole("radio", { name: /docs/i }));
     expect(screen.getByText("notes.pdf")).toBeInTheDocument();
     fireEvent.change(screen.getByRole("textbox", { name: /search conversation files/i }), { target: { value: "missing" } });
     expect(screen.getByText(/no results for “missing”/i)).toBeInTheDocument();
@@ -56,7 +56,7 @@ describe("conversation files", () => {
     } });
     render(<ConversationFiles data={{ conversationId: "conversation-1", messages: [] }} />);
     expect(await screen.findByRole("img", { name: "family.jpg" })).toBeInTheDocument();
-    await userEvent.click(screen.getByRole("tab", { name: /docs/i }));
+    await userEvent.click(screen.getByRole("radio", { name: /docs/i }));
     expect(screen.getByText("notes.pdf")).toBeInTheDocument();
   });
 
@@ -87,9 +87,9 @@ describe("conversation files", () => {
     fetcherMock.mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
     render(<ConversationFiles data={{ conversationId: "conversation-1", messages: [] }} />);
     expect(screen.getByRole("status", { name: "Loading shared files" })).toBeInTheDocument();
-    expect(screen.queryByText("No media yet")).not.toBeInTheDocument();
+    expect(screen.queryByText("No files yet")).not.toBeInTheDocument();
     finish({ success: true, data: { messages: [], next: null } });
-    expect(await screen.findByText("No media yet")).toBeInTheDocument();
+    expect(await screen.findByText("No files yet")).toBeInTheDocument();
     expect(screen.getByText(/you share in this conversation will appear here/)).toBeInTheDocument();
   });
 
@@ -103,6 +103,54 @@ describe("conversation files", () => {
     expect(search).toHaveValue("");
     expect(search).toHaveFocus();
     expect(screen.getByRole("img", { name: "family.jpg" })).toBeInTheDocument();
+  });
+
+  it("has no All filter, and opens on a shortcut's filter", async () => {
+    render(<ConversationFiles data={{ conversationId: "conversation-1", messages, initialTab: "docs" }} />);
+    expect(screen.getAllByRole("radio").map((item) => item.textContent)).toEqual(["Images (1)", "Videos (0)", "Audio (0)", "Docs (1)", "Links (1)"]);
+    expect(screen.getByRole("radio", { name: "Docs (1)" })).toBeChecked();
+    expect(screen.getByText("notes.pdf")).toBeInTheDocument();
+    expect(screen.queryByRole("img", { name: "family.jpg" })).not.toBeInTheDocument();
+    await waitFor(() => expect(fetcherMock).toHaveBeenCalled());
+  });
+
+  it("opens on the first filter with files", async () => {
+    render(<ConversationFiles data={{ conversationId: "conversation-1", messages: [{ ...messages[0], text: "", attatchments: [doc] }] }} />);
+    expect(screen.getByRole("radio", { name: "Docs (1)" })).toBeChecked();
+    expect(screen.getByText("notes.pdf")).toBeInTheDocument();
+    await waitFor(() => expect(fetcherMock).toHaveBeenCalled());
+  });
+
+  it("shows an empty filter and lets you move to one with files", async () => {
+    const user = userEvent.setup();
+    render(<ConversationFiles data={{ conversationId: "conversation-1", messages, initialMediaFilter: "audio" }} />);
+    expect(await screen.findByText("No audio yet")).toBeInTheDocument();
+    await user.click(screen.getByRole("radio", { name: "Images (1)" }));
+    expect(screen.getByRole("img", { name: "family.jpg" })).toBeInTheDocument();
+  });
+
+  it("counts search matches under each filter", async () => {
+    render(<ConversationFiles data={{ conversationId: "conversation-1", messages }} />);
+    fireEvent.change(screen.getByRole("textbox", { name: /search conversation files/i }), { target: { value: "notes" } });
+    expect(screen.getByRole("radio", { name: "Images (0)" })).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: "Docs (1)" })).toBeChecked();
+    await waitFor(() => expect(fetcherMock).toHaveBeenCalled());
+  });
+
+  it("shows the file name in place of an image the browser can't display", async () => {
+    const photo = { ...image, _id: "f3", name: "photo.heic", type: "image/heic", url: "/photo.heic" };
+    render(<ConversationFiles data={{ conversationId: "conversation-1", messages: [{ ...messages[0], attatchments: [photo] }] }} />);
+    fireEvent.error(screen.getByRole("img", { name: "photo.heic" }));
+    expect(await screen.findByText("photo.heic")).toBeInTheDocument();
+    expect(screen.queryByRole("img", { name: "photo.heic" })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: /open photo.heic in viewer/i }));
+    expect(push).toHaveBeenCalledWith("file-preview", expect.objectContaining({ startIndex: 0 }));
+  });
+
+  it("opens for a chat with no saved history, without requesting any", async () => {
+    render(<ConversationFiles data={{ messages: [] }} />);
+    expect(await screen.findByText("No files yet")).toBeInTheDocument();
+    expect(fetcherMock).not.toHaveBeenCalled();
   });
 
   it("dismisses through the shared dialog close button and Escape", async () => {

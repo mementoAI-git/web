@@ -13,7 +13,7 @@ import {
   type GeminiLivePlaybackState,
 } from "./playback";
 import { mutate } from "swr";
-import { post } from "@/api/mutations";
+import { get, post } from "@/api/mutations";
 import { voiceToolsEnabled, voiceTokenParams } from "@/features/voice/tools/capabilities";
 import { createCallActionHandlers, resolveWebDestination, showWebDestination, type CallControls } from "@/features/voice/tools/call-actions";
 import { VoiceToolRelay } from "@/features/voice/tools/relay";
@@ -61,6 +61,7 @@ export type TranscriptEntry = {
 };
 
 interface UseLiveAPIProps {
+  connectionPersonId?: string;
   memoryId?: string | null;
   turns?: { role: "user" | "ai", text: string }[];
   languageCode?: string;
@@ -104,7 +105,7 @@ export type LiveSessionOverrides = {
   voiceName?: string;
 };
 
-type LiveToken = { token?: string; live?: { model?: string }; tools?: unknown };
+type LiveToken = { token?: string; connectionSessionId?: string; live?: { model?: string }; tools?: unknown };
 
 const VOICE_CONNECTION_LOST = "The voice connection was lost. Please start the call again.";
 
@@ -114,7 +115,16 @@ const HYBRID_END_MS = parseHybridEndMs(import.meta.env.VITE_VOICE_HYBRID_END_MS)
 const SELF_INTERRUPT_GUARD = import.meta.env.VITE_VOICE_SELF_INTERRUPT_GUARD !== "false";
 const THINKING_CHECK_MS = 150;
 
+/**
+ * The API rejects a missing or malformed memory_id, which would fail every save
+ * in the call. Without one, the session id keeps the call in its own conversation.
+ */
+function savedConversationId(memoryId: string | null | undefined) {
+  return memoryId && /^[a-f\d]{24}$/i.test(memoryId) ? { memory_id: memoryId } : {};
+}
+
 export function useLiveAPI({
+  connectionPersonId,
   memoryId,
   turns = [],
   languageCode = "en-US",
@@ -129,6 +139,7 @@ export function useLiveAPI({
   const { user } = useStore();
   const messageObserver = useRef(onMessages);
   messageObserver.current = onMessages;
+  const connectionSession = useRef<string | null>(null);
   const memoryIdRef = useRef(memoryId);
   if (memoryId) memoryIdRef.current = memoryId;
   const [isRecording, setIsRecording] = useState(false);
@@ -275,6 +286,30 @@ export function useLiveAPI({
     pending.then?.();
   }, []);
 
+  const validateConnectionVoice = useCallback(async () => {
+    if (!connectionPersonId) return;
+    if (!connectionSession.current) throw new Error("Connection voice is not ready.");
+    await get(`/people/${encodeURIComponent(connectionPersonId)}/voice/${encodeURIComponent(connectionSession.current)}`, {skipErrorHandling:true});
+  }, [connectionPersonId]);
+
+  useEffect(() => {
+    if (!connectionPersonId || !connected) return;
+    let checking = false;
+    let cancelled = false;
+    const timer = window.setInterval(async () => {
+      if (checking || cancelled) return;
+      checking = true;
+      try { await validateConnectionVoice(); }
+      catch {
+        if (cancelled) return;
+        ++connectionAttempt.current;
+        void sessionPromiseRef.current?.then(session => session.close()).catch(() => {});
+        endLostCallRef.current("This Memento’s shared context changed. End this call and start again.");
+      } finally { checking = false; }
+    }, 2000);
+    return () => { cancelled = true; window.clearInterval(timer); };
+  }, [connectionPersonId, connected, validateConnectionVoice]);
+
   // Start audio recording
   const startRecording = useCallback(async () => {
     if (isRecordingRef.current) return true;
@@ -381,7 +416,9 @@ export function useLiveAPI({
 
   const persistMessages = useCallback(async (messages: Record<string, unknown>[]) => {
     const job = saveQueue.current.catch(() => {}).then(async () => {
-      const response = await addMessageToMemory({ memory_id: memoryIdRef.current, session_id: sessionIdRef.current, messages });
+      const response = connectionPersonId
+        ? await post<VoiceMessage[]>(`/people/${encodeURIComponent(connectionPersonId)}/voice`, {session_id: connectionSession.current, request_id: uuidv4(), messages})
+        : await addMessageToMemory({ ...savedConversationId(memoryIdRef.current), session_id: sessionIdRef.current, messages });
       const saved = response?.data;
       if (!Array.isArray(saved)) throw new Error("Could not save the voice conversation.");
       if (saved[0]?.memory) memoryIdRef.current = String(saved[0].memory);
@@ -389,7 +426,7 @@ export function useLiveAPI({
     });
     saveQueue.current = job;
     return job;
-  }, [addMessageToMemory]);
+  }, [addMessageToMemory, connectionPersonId]);
 
   const recordMessages = useCallback((messages: Record<string, unknown>[], attachments: VoiceTextInput["attachments"] = []) => {
     const observer = messageObserver.current;
@@ -452,6 +489,7 @@ export function useLiveAPI({
     if (!hasConnectedRef.current || !isRecordingRef.current) throw new Error("Voice is not connected yet.");
     const attempt = connectionAttempt.current;
     const parts = await buildVoiceInputParts(input);
+    await validateConnectionVoice();
     const session = await sessionPromiseRef.current;
     if (!session || !hasConnectedRef.current || attempt !== connectionAttempt.current) throw new Error("The voice connection ended. Please retry your message.");
     // The audio connection stays open; this turn becomes part of the same context.
@@ -469,7 +507,7 @@ export function useLiveAPI({
       role: "user", text: input.text.trim() || "Shared an image", is_voice: true,
       ...(input.attachments?.length ? { attachments: input.attachments.map(file => file._id) } : {}),
     }], input.attachments);
-  }, [recordMessages, startAiTurn]);
+  }, [recordMessages, startAiTurn, validateConnectionVoice]);
 
   // Stop audio recording
   const stopRecording = useCallback(() => {
@@ -550,7 +588,9 @@ export function useLiveAPI({
             acceptSetup();
           }
           const handle = resumeHandleFrom(message.sessionResumptionUpdate);
-          if (handle) resumeHandleRef.current = handle;
+          // The API starts connection calls from approved context only and ignores
+          // handles, so a lost connection call ends instead of restarting blank.
+          if (handle && !connectionPersonId) resumeHandleRef.current = handle;
           // Gemini is about to close this connection; carry the call over first.
           if (message.goAway) void reconnectRef.current("go-away").then(endIfReconnectFailedRef.current);
 
@@ -647,7 +687,7 @@ export function useLiveAPI({
       },
       config: {
         responseModalities: [Modality.AUDIO],
-        systemInstruction: context,
+        systemInstruction: connectionPersonId ? "Use only the server-approved connection context." : context,
         speechConfig: {
           languageCode: overrides.languageCode || languageCode,
           voiceConfig: {
@@ -675,6 +715,7 @@ export function useLiveAPI({
     context,
     outputNode,
     languageCode,
+    connectionPersonId,
   ]);
 
   // Connect to Live API
@@ -693,15 +734,18 @@ export function useLiveAPI({
     try {
       setError(null);
       await outputAudioContext.resume();
-      const wantsTools = Boolean(toolControlsRef.current) && voiceToolsEnabled();
+      const wantsTools = !connectionPersonId && Boolean(toolControlsRef.current) && voiceToolsEnabled();
       const result = await fetchEphemeralToken(
-        voiceTokenParams({ memoryId: memoryIdRef.current, tools: wantsTools }),
+        connectionPersonId
+          ? {person_id: connectionPersonId, shared_space: "true", share_inputs: "true"}
+          : voiceTokenParams({ memoryId: memoryIdRef.current, tools: wantsTools }),
       );
       if (outputAudioContextRef.current !== outputAudioContext || connectionAttempt.current !== attempt) return false;
       const liveToken = result?.data as LiveToken | undefined;
       if (!liveToken?.token) {
         throw new Error("Failed to get a fresh Live API token");
       }
+      connectionSession.current = liveToken.connectionSessionId || null;
       ephemeralTokenRef.current = liveToken.token;
 
       stopVoiceTools();
@@ -789,7 +833,7 @@ export function useLiveAPI({
       }).catch(() => {});
       const [session] = await Promise.all([pendingSession, socket.setupReady]);
       if (!isCurrent() || !hasConnectedRef.current) return false;
-      if (!isEmpty(turns)) {
+      if (!connectionPersonId && !isEmpty(turns)) {
         session.sendClientContent({
           turns: turns.map(({ role, text }) => ({
             role: role === "ai" ? "model" : "user",
@@ -824,6 +868,7 @@ export function useLiveAPI({
     resetTurnTaking,
     fetchEphemeralToken,
     turns,
+    connectionPersonId,
   ]);
 
   // "Thinking…": checked a few times a second, since it turns on when the host goes quiet.

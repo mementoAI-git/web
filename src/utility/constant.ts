@@ -26,8 +26,6 @@ export const storageKeys = {
   welcomeOnce: "memento:welcome-once",
   /** Host onboarding (Groot) progress — persists across refreshes */
   onboardingState: "memento_onboarding_state",
-  /** Host onboarding chat (PRD v3 scripted flow) — survives skip / refresh until completed */
-  hostOnboardingChat: "memento:host-onboarding-chat",
 };
 
 // Supported file types for uploads
@@ -73,9 +71,6 @@ export const SUPPORTED_FILE_TYPES = [
   "audio/speex",
 ] as const;
 
-/** `accept` string for memory attachments (MIME list + extensions for OS file pickers). */
-export const MEMORY_ATTACHMENT_ACCEPT = [...SUPPORTED_FILE_TYPES, ".doc", ".docx", ".txt"].join(",");
-
 /** Image-only picker (photos). */
 export const MEMORY_ACCEPT_IMAGES =
   "image/png,image/jpeg,image/jpg,image/heic,image/webp,image/gif,.jpg,.jpeg,.png,.heic,.webp,.gif";
@@ -91,6 +86,19 @@ export const MEMORY_ACCEPT_AUDIO =
 /** Documents & text files. */
 export const MEMORY_ACCEPT_DOCUMENTS =
   "application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,.pdf,.doc,.docx,.txt";
+
+/** Every memory attachment type: the mobile picker has to cover all four lists above in one sheet. */
+export const MEMORY_ATTACHMENT_ACCEPT = [
+  ...new Set([
+    ...SUPPORTED_FILE_TYPES,
+    ...[
+      MEMORY_ACCEPT_IMAGES,
+      MEMORY_ACCEPT_VIDEOS,
+      MEMORY_ACCEPT_AUDIO,
+      MEMORY_ACCEPT_DOCUMENTS,
+    ].flatMap((types) => types.split(",")),
+  ]),
+].join(",");
 
 export const CAPSULE_SUPPORTED_FILE_TYPES = [
   "image/jpeg",

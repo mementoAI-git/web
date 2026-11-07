@@ -5,6 +5,7 @@ export function getCapsuleDisplayRecipients(
 ): Array<Partial<IUser> & { email: string }> {
   if (capsule.recipient_snapshots?.length) {
     return capsule.recipient_snapshots.map((recipient) => ({
+      _id: recipient.linked_user_id,
       email: recipient.email,
       first_name: recipient.display_name || recipient.email.split("@")[0],
     }));

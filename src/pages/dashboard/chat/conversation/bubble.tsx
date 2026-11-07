@@ -4,18 +4,20 @@ import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import dayjs from "dayjs";
 import { ChatDesignIcon } from "@/components/chat-design-icon";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { snippetReplyText } from "@/utility/chat-reply-prompt";
 import type { IFile, ILinkMetadata } from "@/utility/interface";
 import { ChatMediaGroup } from "./chat-media-group";
 import { ChatLinkPreview } from "./chat-link-preview";
-import { buildConversationAssetIndex, extractSharedUrls } from "./conversation-assets";
+import { buildConversationAssetIndex, extractSharedUrls, splitStackedMedia } from "./conversation-assets";
 
 type ChatAttachment = Pick<IFile, "url" | "name"> &
   Partial<Omit<IFile, "url" | "name">>;
 
 interface IBubbleProps {
+  /** Extra controls for the row under the bubble, after Copy and Reply. */
+  metaActions?: ReactNode;
   role?: "user" | "ai" | string
   attatchments?: ChatAttachment[]
   text?: string
@@ -68,6 +70,7 @@ export default function Bubble({
   onReply,
   hostChatDeepDive = false,
   linkMetadata = [],
+  metaActions,
 }: IBubbleProps) {
 
   const isUser = role === "user"
@@ -109,6 +112,16 @@ export default function Bubble({
       text.trim() === extractedUrls[0],
   );
 
+  const { stacked: stackedMedia, inline: inlineAttachments } = useMemo(
+    () => splitStackedMedia(attatchments ?? []),
+    [attatchments],
+  );
+  const showSurface =
+    !stackedMedia.length ||
+    Boolean(text.trim() || replyQuote?.text?.trim() || inlineAttachments.length);
+
+  if (!isUser && !text.trim() && isEmpty(attatchments) && !is_voice) return null;
+
   return (
     <div
       className={cn(
@@ -125,7 +138,12 @@ export default function Bubble({
           !isUser && (topic ? "w-fit max-w-full items-start" : "w-fit max-w-[75%] items-start"),
         )}
       >
-        <div
+        {stackedMedia.length ? (
+          <div className={cn(showSurface && "mb-1.5")}>
+            <ChatMediaGroup attachments={stackedMedia} sharedAt={createdAt} />
+          </div>
+        ) : null}
+        {showSurface ? <div
           className={cn(
             "w-fit max-w-full",
             !hostChatDeepDive && "sky-card",
@@ -148,9 +166,9 @@ export default function Bubble({
               </p>
             </div>
           ) : null}
-          {!isEmpty(attatchments) ? (
+          {inlineAttachments.length ? (
             <div className={cn(text.trim() && "mb-1.5")}>
-              <ChatMediaGroup attachments={attatchments} sharedAt={createdAt} />
+              <ChatMediaGroup attachments={inlineAttachments} sharedAt={createdAt} />
             </div>
           ) : null}
           {useMetadataPreview && metadataLink ? (
@@ -196,9 +214,9 @@ export default function Bubble({
               {text || ""}
             </Markdown>
           </span> : null}
-        </div>
+        </div> : null}
         {metaVisible &&
-          (timeLabel || canCopy || (onReply && hasReplyableContent)) && (
+          (timeLabel || canCopy || metaActions || (onReply && hasReplyableContent)) && (
             <div
             className={cn(
               "mt-1 flex w-fit max-w-full flex-wrap items-center gap-1 px-0.5",
@@ -238,6 +256,7 @@ export default function Bubble({
                 Reply
               </button>
             ) : null}
+            {metaActions}
           </div>
         )}
         {isUser && sendFailed && onRetry ? (
@@ -312,57 +331,4 @@ export function TypingBubble({ text, streamDone, onFinish, modelLabel, topic }: 
   return <Bubble role="ai" topic={topic} text={safeText.slice(0, displayLength)} modelLabel={modelLabel} />
 }
 
-export function Typing() {
-  const loadingPhrases = [
-    "Stirring stardust",
-    "Tickling neurons",
-    "Polishing moonbeams",
-    "Herding wild ideas",
-    "Brewing word-tea",
-    "Chasing sparkles",
-    "Weaving thought-ribbons",
-    "Dusting off genius",
-    "Tuning tiny violins",
-    "Summoning cleverness",
-    "Juggling metaphors",
-    "Untangling noodle-thoughts",
-    "Whispering to commas",
-    "Folding clouds into sentences",
-    "Feeding the brain gremlins",
-    "Conducting the idea orchestra",
-    "Aligning cosmic vibes",
-    "Gluing thoughts with glitter",
-    "Warming up the wisdom engine",
-    "Adding a pinch of whimsy",
-  ];
-  const [phraseIdx, setPhraseIdx] = useState(0);
-
-  useEffect(() => {
-    const id = setInterval(() => {
-      setPhraseIdx((prev) => (prev + 1) % loadingPhrases.length);
-    }, 1800);
-    return () => clearInterval(id);
-  }, [loadingPhrases.length]);
-
-  return (
-    <div
-      className="flex min-w-0 flex-wrap items-center gap-2 px-0 py-3 sm:flex-nowrap sm:px-1"
-      aria-live="polite"
-      aria-label="Assistant is typing"
-    >
-      <div
-        className="h-3.5 w-3.5 shrink-0 animate-spin rounded-full border border-solid border-[#1ED348] border-t-transparent"
-        aria-hidden
-      />
-      <span
-        className="min-w-0 max-w-full font-inter text-xs text-[#1ED348] sm:text-sm"
-        style={{ wordBreak: "break-word" }}
-      >
-        {loadingPhrases[phraseIdx]}
-      </span>
-      <div className="w-1.5 h-1.5 bg-icon-neutral-weaker rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-      <div className="w-1.5 h-1.5 bg-icon-neutral-weaker rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-      <div className="w-1.5 h-1.5 bg-icon-neutral-weaker rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
-    </div>
-  )
-}
+export { ChatTypingIndicator as Typing } from "@/components/chat-typing-indicator";

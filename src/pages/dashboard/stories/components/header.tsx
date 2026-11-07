@@ -1,4 +1,3 @@
-import { Tabs as BaseTabs } from "@base-ui/react/tabs";
 import "../stories-motion.css";
 import { SearchIcon } from "@/components/icons";
 import { useModal } from "@/hooks/use-modal";
@@ -40,7 +39,7 @@ export default function StoriesHeader({
   return (
     <div
       data-slot="stories-sticky-search"
-      className="stories-search-surface sticky top-4 z-40 flex items-center gap-3 pb-3"
+      className="stories-search-surface sticky top-4 z-[46] flex items-center gap-3 pb-3"
     >
       <Button
         type="button"
@@ -110,33 +109,22 @@ export function StoriesFilters({
       className="gap-0"
     >
       <TabsList
-        variant="line"
         aria-label="Filter memories"
-        className="stories-filter-tabs relative hide-scrollbar h-11 w-full justify-start gap-4 overflow-x-auto p-0"
+        className="stories-filter-tabs h-auto w-full flex-wrap justify-start gap-3 rounded-none bg-transparent p-0 group-data-horizontal/tabs:h-auto"
       >
-        <BaseTabs.Indicator aria-hidden="true" className="stories-filter-indicator" />
-        {filters.map((item) => {
-          const isActive = filter === item.value;
-
-          return (
-            <TabsTrigger
-              key={item.value}
-              value={item.value}
-              aria-label={`${item.label} ${item.count}`}
-              style={{
-                color: isActive
-                  ? "var(--text-neutral-strong)"
-                  : "var(--text-neutral-weak)",
-              }}
-              className="h-11 flex-none rounded-none border-0 px-3 font-inter text-sm font-medium transition-colors duration-150 after:bottom-0 after:left-1/2 after:right-auto after:w-6 after:-translate-x-1/2 after:rounded-full after:bg-text-neutral-strong hover:text-text-neutral-strong data-active:after:opacity-100 motion-reduce:transition-none sm:text-base"
-            >
-              {item.label}
-              <span className="font-inter text-xs font-normal text-text-neutral-weaker">
-                {item.count}
-              </span>
-            </TabsTrigger>
-          );
-        })}
+        {filters.map((item) => (
+          <TabsTrigger
+            key={item.value}
+            value={item.value}
+            aria-label={`${item.label} ${item.count}`}
+            className="inline-flex h-8 flex-none items-center rounded-full bg-fill-neutral-weak px-3 font-inter text-xs font-medium text-text-neutral-weak transition-[background-color,color] duration-150 ease-out hover:bg-fill-neutral-weak hover:text-text-neutral-strong data-active:bg-fill-tab-active data-active:text-text-tab-active dark:data-active:bg-fill-tab-active dark:data-active:text-text-tab-active dark:data-active:border-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stroke-neutral-strong focus-visible:ring-offset-2 motion-reduce:transition-none"
+          >
+            {item.label}
+            <span className="font-inter text-xs font-normal text-current opacity-70">
+              {item.count}
+            </span>
+          </TabsTrigger>
+        ))}
       </TabsList>
     </Tabs>
   );

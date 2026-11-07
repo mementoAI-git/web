@@ -1,0 +1,31 @@
+---
+description: Every built or reused component must stay visible and correct across all themes
+alwaysApply: true
+---
+
+# Theme-Adaptive Components (`memento-web`)
+
+Whenever a component is built or reused, ensure it is visible and legible in every theme. Reusing a component on a new surface counts: check it against that surface, not only where it was first built.
+
+## Themes to cover
+
+Theme definitions live in `src/lib/theme.ts`.
+
+- **Light sky** (`light-sky`, the default): translucent surfaces over a sky backdrop.
+- **Light** (`daylight`): reached through **System** on a light OS; a stored `light` preference opens as light sky.
+- **Dark** (`dark`)
+- **Deep sky** (`dark deep-sky`): dark tokens over a sky backdrop.
+- **System**: follows the OS and resolves to light or dark.
+
+## Requirements
+
+- Use semantic tokens for fills, text, icons, and strokes, following `v3-color-system-usage.mdc`. Their values change per theme; raw palette colors, hex values, and status colors chosen for one theme do not.
+- Do not force one theme onto a subtree by adding a `dark` class, or hardcode `text-white` or similar on a surface that changes with the theme.
+- Check that the token's value changes in each theme. Some keep the same value, such as `*-warning-*` and `--fill-neutral-strong` in light and dark, so they may lose contrast on one theme's surface.
+- Keep every state visible: default, hover, active/pressed, focus, disabled, and loading.
+- Icons must adapt too. Prefer `currentColor` icons. An `<img>` SVG has a fixed color, so it needs a tested treatment for dark themes.
+- Check translucent fills against the backdrops of the sky themes, not only flat backgrounds.
+
+## Verification
+
+Before reporting UI work as complete, view the component in light sky, light, dark, and deep sky. Follow the verification rules in `agents-and-project-conventions.md`. If a theme could not be checked, say so.

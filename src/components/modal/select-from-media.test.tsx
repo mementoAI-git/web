@@ -1,7 +1,8 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { http, HttpResponse } from "msw";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { clearAuth, seedAuth } from "@/test";
 import { server } from "@/test/mocks/server";
 import type { IFile } from "@/utility/interface";
 import { MediaItem } from "./select-from-media";
@@ -9,7 +10,10 @@ import { MediaItem } from "./select-from-media";
 const API = "http://localhost:3000/api";
 
 describe("MediaItem", () => {
+  afterEach(() => clearAuth());
+
   it("refreshes a failed signed library thumbnail", async () => {
+    seedAuth();
     const file: IFile = {
       _id: "file-1",
       url: "/files/photo.jpg?cap=old",

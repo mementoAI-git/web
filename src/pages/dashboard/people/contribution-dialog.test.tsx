@@ -110,8 +110,13 @@ describe("People contribution actions", () => {
         onSaved={() => {}}
       />,
     );
+    vi.stubGlobal("MediaRecorder", class {});
+    Object.defineProperty(navigator, "mediaDevices", {
+      configurable: true,
+      value: { getUserMedia: () => new Promise(() => {}) },
+    });
     await userEvent.click(screen.getByRole("button", { name: /Record audio/ }));
-    await userEvent.click(screen.getAllByRole("button", { name: "Close" })[0]);
+    await userEvent.click(screen.getByRole("button", { name: "Cancel recording" }));
     expect(
       screen.getByRole("button", { name: /Write a note/ }),
     ).toBeInTheDocument();

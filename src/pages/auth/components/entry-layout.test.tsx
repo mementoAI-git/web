@@ -25,6 +25,8 @@ it("keeps the theme switcher available and changes the illustration with the the
       <p>Form fields</p>
     </AuthEntryLayout>,
   );
+  expect(container.querySelectorAll(".auth-entry-caption img")).toHaveLength(3);
+  expect(container.querySelectorAll('img[src*="auth/avatar-"]')).toHaveLength(3);
   const lightImage = container
     .querySelector(".auth-entry-gradient")
     ?.getAttribute("src");
@@ -40,7 +42,7 @@ it("keeps the theme switcher available and changes the illustration with the the
   await user.click(
     screen.getByRole("button", { name: "Choose theme" }),
   );
-  await user.click(screen.getByRole("menuitemradio", { name: "Light", exact: true }));
+  await user.click(screen.getByRole("menuitemradio", { name: /^Light/ }));
   expect(
     container.querySelector(".auth-entry-gradient")?.getAttribute("src"),
   ).toBe(lightImage);

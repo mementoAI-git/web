@@ -22,16 +22,16 @@ function renderStatus(enabled: boolean) {
 describe("Two-factor authentication status", () => {
   it("shows the current enabled status and turn-off action without duplicate instructions", () => {
     renderStatus(true);
-    expect(screen.getByText("Authenticator app is set up.")).toBeInTheDocument();
+    expect(screen.getByText("On")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Turn off 2FA" })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Set up" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Setup 2FA" })).not.toBeInTheDocument();
     expect(screen.queryByText(/adds a verification step/)).not.toBeInTheDocument();
   });
 
   it("shows the current disabled status and setup action", () => {
     renderStatus(false);
-    expect(screen.getByText("Authenticator app is not set up yet.")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Set up" })).toBeInTheDocument();
+    expect(screen.getByText("Off")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Setup 2FA" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Turn off 2FA" })).not.toBeInTheDocument();
   });
 });

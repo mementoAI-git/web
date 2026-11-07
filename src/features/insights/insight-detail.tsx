@@ -1,0 +1,322 @@
+import { useState, type CSSProperties } from "react";
+import dayjs from "dayjs";
+import { ChevronDown, Undo2 } from "lucide-react";
+import useSWR from "swr";
+import aiFillIcon from "@/assets/icon/mingcute_ai-fill.svg";
+import endpoint from "@/api/endpoint";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Spinner } from "@/components/ui/spinner";
+import type { EnrichmentCategory } from "@/features/enrichment/enrichment-categories";
+import { PageHeading } from "@/pages/dashboard/component/page-heading";
+import { EnrichmentFieldIcon } from "./enrichment-field-icon";
+import { getQuestionIdenticonUrl } from "@/features/explore/question-identicon";
+import { enrichmentFieldColor, getEnrichmentField } from "./enrichment-fields";
+import type {
+  Insight,
+  InsightSource,
+  InsightSourceList,
+} from "./insights-api.types";
+import type { ObservationItem } from "./observation-list";
+import {
+  NO_OBSERVATION_SOURCES,
+  observationSourcesUrl,
+} from "./observation-sources";
+
+type SortOrder = "newest" | "oldest";
+const SORT_LABELS: Record<SortOrder, string> = {
+  newest: "Newest first",
+  oldest: "Oldest first",
+};
+
+function sortSources(sources: InsightSource[], order: SortOrder) {
+  const direction = order === "newest" ? -1 : 1;
+  return [...sources].sort(
+    (a, b) =>
+      direction *
+      (dayjs(a.created_at ?? 0).valueOf() - dayjs(b.created_at ?? 0).valueOf()),
+  );
+}
+
+/** Italicizes the last word of a heading, matching the overlay's title style. */
+function FieldHeading({ label }: { label: string }) {
+  const split = label.lastIndexOf(" ");
+  if (split < 0) return <em>{label}</em>;
+  return (
+    <>
+      {label.slice(0, split)} <em>{label.slice(split + 1)}</em>
+    </>
+  );
+}
+
+function SourcesTable({
+  sourcesKey,
+  empty,
+  onView,
+}: {
+  sourcesKey: string;
+  empty: string;
+  onView: (source: InsightSource) => void;
+}) {
+  const [order, setOrder] = useState<SortOrder>("newest");
+  const { data, error, isLoading, mutate } = useSWR<{
+    data: InsightSourceList;
+  }>(sourcesKey);
+  const all = data?.data?.sources ?? [];
+  const sources = sortSources(all, order);
+
+  if (error && !data)
+    return (
+      <div className="insights-empty">
+        <p>Couldn’t load these memories.</p>
+        <Button variant="outline" onClick={() => void mutate()}>
+          Retry memories
+        </Button>
+      </div>
+    );
+  if (isLoading && !data)
+    return (
+      <div className="insights-empty" role="status">
+        <Spinner />
+        Loading memories…
+      </div>
+    );
+  return (
+    <section aria-label="Memory sources" className="flex flex-col gap-6">
+      <div className="flex items-center justify-between gap-3">
+        <h3 className="font-inter text-base font-medium text-text-neutral-strong">
+          {all.length} Memory {all.length === 1 ? "source" : "sources"}
+        </h3>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="outline"
+              className="insights-action"
+              aria-label="Sort memory sources"
+            >
+              {SORT_LABELS[order]}
+              <ChevronDown aria-hidden />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="z-[120]">
+            {(Object.keys(SORT_LABELS) as SortOrder[]).map((key) => (
+              <DropdownMenuItem key={key} onSelect={() => setOrder(key)}>
+                {SORT_LABELS[key]}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+      {!sources.length ? (
+        <div className="insights-empty">
+          <p>{empty}</p>
+        </div>
+      ) : (
+        <ul className="insights-table" aria-label="Memory sources">
+          {sources.map((source) => (
+            <li
+              // A chat appears once for each day that supports the insight.
+              key={`${source.id}-${source.created_at}`}
+              className="insights-sources-row insights-source-row"
+              onClick={() => onView(source)}
+            >
+              <div className="flex min-w-0 items-center gap-3">
+                <img
+                  src={source.thumbnail || getQuestionIdenticonUrl(source.id)}
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                  referrerPolicy="no-referrer"
+                  className="insights-thumbnail object-cover"
+                />
+                {/* The row handles clicks; this is its keyboard and screen reader control. */}
+                <button
+                  type="button"
+                  className="insights-source-open truncate text-left font-inter text-sm font-medium text-text-neutral-strong"
+                  aria-label={`View ${source.title}`}
+                >
+                  {source.title}
+                </button>
+              </div>
+              <span className="font-inter text-sm whitespace-nowrap text-text-neutral-weak">
+                {source.created_at
+                  ? dayjs(source.created_at).format("D MMM, YYYY")
+                  : "—"}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
+function DetailFrame({
+  categories,
+  subtitle,
+  note,
+  onBack,
+  action,
+  children,
+}: {
+  categories: EnrichmentCategory[];
+  subtitle: string;
+  note: React.ReactNode;
+  onBack: () => void;
+  action?: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  const fields = categories.map(getEnrichmentField);
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="insights-page-heading">
+        <Button
+          variant="ghost"
+          size="icon-lg"
+          className="insights-round-button"
+          aria-label="Back to insights"
+          onClick={onBack}
+        >
+          <Undo2 aria-hidden />
+        </Button>
+        <PageHeading>
+          <FieldHeading label={fields[0]?.label ?? "Insight"} />
+        </PageHeading>
+      </div>
+      <div
+        className="insights-hero"
+        style={
+          {
+            "--field": enrichmentFieldColor(categories[0]),
+          } as CSSProperties
+        }
+      >
+        <EnrichmentFieldIcon field={categories[0]} className="size-10" />
+        <div className="min-w-0 flex-1">
+          <p className="font-inter text-xl font-semibold text-text-neutral-strong">
+            {fields[0]?.label}
+          </p>
+          <p className="mt-1 font-inter text-sm text-text-neutral-weak">
+            {subtitle}
+          </p>
+        </div>
+        {action}
+      </div>
+      <div className="insights-note">
+        <img
+          src={aiFillIcon}
+          alt=""
+          aria-hidden="true"
+          className="size-6 shrink-0 object-contain"
+        />
+        <div className="min-w-0 font-inter text-sm text-text-neutral-strong">
+          {note}
+        </div>
+      </div>
+      <div className="mt-6 flex flex-col gap-6">{children}</div>
+    </div>
+  );
+}
+
+export function InsightDetail({
+  insight,
+  onBack,
+  onView,
+}: {
+  insight: Insight;
+  onBack: () => void;
+  onView: (source: InsightSource) => void;
+}) {
+  return (
+    <DetailFrame
+      categories={insight.categories}
+      subtitle="Memories that helped shape this insight"
+      onBack={onBack}
+      note={
+        <>
+          <p>{insight.title}</p>
+          <p className="mt-1 text-text-neutral-weak">{insight.body}</p>
+        </>
+      }
+    >
+      <SourcesTable
+        sourcesKey={`${endpoint.insightSources}?insight=${encodeURIComponent(insight.id)}`}
+        empty="The memories behind this insight are no longer available."
+        onView={onView}
+      />
+    </DetailFrame>
+  );
+}
+
+/** One observation or preference and the memories it came from. */
+export function ObservationDetail({
+  item,
+  onBack,
+  onView,
+}: {
+  item: ObservationItem;
+  onBack: () => void;
+  onView: (source: InsightSource) => void;
+}) {
+  return (
+    <DetailFrame
+      categories={[item.category]}
+      subtitle="Memories behind this note"
+      onBack={onBack}
+      note={
+        <>
+          <p>{item.title}</p>
+          <p className="mt-1 text-text-neutral-weak">{item.detail}</p>
+        </>
+      }
+    >
+      <SourcesTable
+        sourcesKey={observationSourcesUrl(item.id)}
+        empty={NO_OBSERVATION_SOURCES}
+        onView={onView}
+      />
+    </DetailFrame>
+  );
+}
+
+/** One enrichment field and every memory tagged with it. */
+export function EnrichmentFieldDetail({
+  field,
+  onBack,
+  onView,
+  onReflect,
+}: {
+  field: EnrichmentCategory;
+  onBack: () => void;
+  onView: (source: InsightSource) => void;
+  onReflect: (field: EnrichmentCategory) => void;
+}) {
+  return (
+    <DetailFrame
+      categories={[field]}
+      subtitle="Memories that shape this field"
+      onBack={onBack}
+      note={getEnrichmentField(field).description}
+      action={
+        <Button
+          variant="outline"
+          className="insights-action"
+          onClick={() => onReflect(field)}
+        >
+          Reflect on this
+        </Button>
+      }
+    >
+      <SourcesTable
+        sourcesKey={`${endpoint.insightSources}?category=${field}`}
+        empty="No memories here yet. Reflect on this field to start filling it in."
+        onView={onView}
+      />
+    </DetailFrame>
+  );
+}

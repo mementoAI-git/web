@@ -47,12 +47,12 @@ export default function CategoryCard({
         { [className]: !isEmpty(className) },
       )}
     >
-      {/* Image wrapper — flat (no radius), category tag positioned absolute top-left */}
+      {/* Image wrapper — category tag positioned absolute top-left */}
       <div
         className={cn(
-          "relative w-full overflow-hidden",
+          "relative w-full overflow-hidden rounded-[8px]",
           variant === "overview"
-            ? "h-[120px]"
+            ? "h-[138px]"
             : "h-[132px] sm:h-[152px] md:h-[164px]",
         )}
       >

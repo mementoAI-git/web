@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
+import dayjs from "dayjs";
 import * as yup from "yup";
-import { Fingerprint, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { startRegistration } from "@simplewebauthn/browser";
 import { getMementoClientHeaders } from "@/api/client-metadata";
 import { authService } from "@/utility/auth-service";
@@ -15,10 +16,9 @@ import { useRequestRecovery } from "@/hooks/use-request-recovery";
 import { Button } from "@/components/ui/button";
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel } from "@/components/ui/alert-dialog";
 import { deleteFetcher, fetcher } from "@/api/fetcher";
-import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { FormDialog, FormDialogFooter } from "@/components/modal/form-dialog";
+import { SettingsSubpage } from "@/pages/dashboard/settings/settings-subpage";
 import TwoFactorAuthenticator from "./two-fa";
-import { SettingsSectionCard } from "./settings-section-card";
-import { SettingsPillButton } from "./settings-action-row";
 
 const initial = {
   new_password: "",
@@ -49,39 +49,28 @@ function ChangePasswordDialog() {
   const [isMutating, setBusy] = useState(false);
 
   return (
-    <Dialog open={open} onOpenChange={(next) => {
-      if (isMutating) return;
-      setOpen(next);
-    }}>
-      <SettingsSectionCard
-        title="Password"
-        description="Update the password you use to sign in to Memento."
-        className="sm:min-h-[97px]"
-        headerAction={<DialogTrigger asChild><SettingsPillButton variant="default">Change password</SettingsPillButton></DialogTrigger>}
-      />
-      <DialogContent
-        data-sky-card-page=""
-        showCloseButton={!isMutating}
-        className="sky-card max-h-[calc(100dvh-2rem)] overflow-y-auto border border-v3-stroke-weak sm:max-w-md motion-reduce:animate-none"
-        overlayClassName="bg-overlay-backdrop motion-reduce:animate-none"
-        onOpenAutoFocus={(event) => {
-          event.preventDefault();
-          document.getElementById("change-old-password")?.focus();
-        }}
-        onEscapeKeyDown={(event) => { if (isMutating) event.preventDefault(); }}
-        onInteractOutside={(event) => { if (isMutating) event.preventDefault(); }}
-      >
-        <DialogHeader className="pr-8">
-          <DialogTitle>Change password</DialogTitle>
-          <DialogDescription>Update the password you use to sign in.</DialogDescription>
-        </DialogHeader>
-        <ChangePasswordForm onBusyChange={setBusy} onSuccess={() => setOpen(false)} />
-      </DialogContent>
-    </Dialog>
+    <>
+      <div className="settings-row min-h-9 flex-wrap">
+        <span className="text-sm text-text-neutral-strong">Password</span>
+        <Button type="button" variant="ghost" className="settings-pill h-9 px-4" onClick={() => setOpen(true)}>
+          Change password
+        </Button>
+      </div>
+      {open ? (
+        <FormDialog
+          title="Change password"
+          description="Update the password you use to sign in."
+          busy={isMutating}
+          onClose={() => setOpen(false)}
+        >
+          <ChangePasswordForm onBusyChange={setBusy} onSuccess={() => setOpen(false)} onDismiss={() => setOpen(false)} />
+        </FormDialog>
+      ) : null}
+    </>
   );
 }
 
-function ChangePasswordForm({ onBusyChange, onSuccess }: { onBusyChange: (busy: boolean) => void; onSuccess: () => void }) {
+function ChangePasswordForm({ onBusyChange, onSuccess, onDismiss }: { onBusyChange: (busy: boolean) => void; onSuccess: () => void; onDismiss: () => void }) {
   const { trigger, isMutating } = useFetcher(endpoint.changePassword);
   const { values, handleChange, handleSubmit, errors } = useForm({
     initial,
@@ -112,6 +101,7 @@ function ChangePasswordForm({ onBusyChange, onSuccess }: { onBusyChange: (busy: 
         error={errors.old_password}
         onChange={handleChange}
         labelClassName={inputLabelClass}
+        inputClassName="!bg-transparent"
       />
       <Passwordinput
         disabled={isMutating}
@@ -122,6 +112,7 @@ function ChangePasswordForm({ onBusyChange, onSuccess }: { onBusyChange: (busy: 
         error={errors.new_password}
         onChange={handleChange}
         labelClassName={inputLabelClass}
+        inputClassName="!bg-transparent"
       />
       <Passwordinput
         disabled={isMutating}
@@ -132,13 +123,9 @@ function ChangePasswordForm({ onBusyChange, onSuccess }: { onBusyChange: (busy: 
         error={errors.c_password}
         onChange={handleChange}
         labelClassName={inputLabelClass}
+        inputClassName="!bg-transparent"
       />
-      <div className="flex justify-end border-t border-v3-stroke-weak pt-4">
-        <SettingsPillButton type="submit" variant="default" aria-label="Save password" aria-busy={isMutating} disabled={isMutating}>
-          <span>Save password</span>
-          {isMutating ? <Spinner loading className="!size-4 text-v3-text-strong" /> : null}
-        </SettingsPillButton>
-      </div>
+      <FormDialogFooter submitLabel="Save password" busyLabel="Saving…" busy={isMutating} onDismiss={onDismiss} />
     </form>
   );
 }
@@ -236,54 +223,53 @@ function PasskeyManager() {
   }
 
   return (
-    <SettingsSectionCard
-      title="Passkeys"
-      description="Sign in with your fingerprint, face, or device PIN."
-      className="[&>div:first-child]:gap-0"
-      headerAction={
-<SettingsPillButton ref={addButtonRef} type="button" variant="default" className="sm:-translate-y-1.5" disabled={adding || Boolean(deletingId)} onClick={handleAddPasskey}>
-          <Fingerprint size={14} strokeWidth={1.5} />
-          <span>Add a passkey</span>
-          {adding ? <Spinner loading className="!size-4 text-v3-text-strong" /> : null}
-        </SettingsPillButton>
-      }
-    >
-      {error && <Button variant="outline" onClick={retry}>Retry loading passkeys</Button>}
+    <section aria-label="Passkeys" className="settings-card flex flex-col gap-9 p-4 sm:p-6">
+      <div className="settings-row min-h-9 flex-wrap">
+        <div className="flex min-w-0 items-center gap-1.5 text-sm text-text-neutral-strong">
+          Passkeys
+          {passkeys.length > 0 ? (
+            <span className="rounded-full border border-stroke-brand-strong px-2.5 py-0.5 text-xs font-semibold text-text-brand-strong">
+              {passkeys.length} added
+            </span>
+          ) : null}
+        </div>
+        <Button ref={addButtonRef} type="button" variant="ghost" className="settings-pill h-9 px-4" disabled={adding || Boolean(deletingId)} onClick={handleAddPasskey}>
+          Add passkey
+          {adding ? <Spinner loading className="!size-4" /> : null}
+        </Button>
+      </div>
+      {error && <Button variant="outline" className="self-start" onClick={retry}>Retry loading passkeys</Button>}
       {isLoading ? (
-        <div className="flex items-center gap-2 font-inter text-sm text-v3-text-weak">
+        <div className="flex items-center gap-2 text-sm text-text-neutral-weak">
           <Spinner loading className="!size-4" /> Loading passkeys…
         </div>
       ) : passkeys.length === 0 && !error ? (
-        <p className="font-inter text-sm text-v3-text-weak">No passkeys registered yet.</p>
+        <p className="text-sm text-text-neutral-weak">No passkeys registered yet.</p>
       ) : (
-        <ul className="flex flex-col gap-2">
+        <ul className="flex flex-col gap-9">
           {passkeys.map((pk) => (
-            <li
-              key={pk.credential_id}
-              className="sky-card flex items-center justify-between gap-3 rounded-xl border border-v3-stroke-weak px-4 py-3"
-            >
-              <div className="flex min-w-0 items-center gap-3">
-                <Fingerprint size={16} className="shrink-0 text-v3-text-weak" strokeWidth={1.5} />
-                <div className="flex min-w-0 flex-col">
-                  <span className="truncate font-inter text-sm font-medium text-v3-text-strong">{pk.device_name}</span>
-                  <span className="font-inter text-xs text-v3-text-weak">
-                    Added {new Date(pk.created_at).toLocaleDateString()}
-                  </span>
-                </div>
+            <li key={pk.credential_id} className="settings-row flex-wrap">
+              <span className="min-w-0 truncate text-sm text-text-neutral-strong">{pk.device_name}</span>
+              <div className="flex shrink-0 items-center gap-2">
+                <span className="text-base text-text-neutral-weak">
+                  Added {dayjs(pk.created_at).format("MMM D, YYYY")}
+                </span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-xs"
+                  onClick={(event) => { removalTriggerRef.current = event.currentTarget; removedRef.current = false; setSelectedPasskey(pk); }}
+                  disabled={Boolean(deletingId) || adding}
+                  className="rounded-full text-text-error-strong hover:text-text-error-strong"
+                  aria-label="Remove passkey"
+                >
+                  {deletingId === pk.credential_id ? (
+                    <Spinner loading className="!size-4" />
+                  ) : (
+                    <Trash2 className="!size-5" strokeWidth={1.75} aria-hidden />
+                  )}
+                </Button>
               </div>
-              <button
-                type="button"
-                onClick={(event) => { removalTriggerRef.current = event.currentTarget; removedRef.current = false; setSelectedPasskey(pk); }}
-                disabled={Boolean(deletingId) || adding}
-                className="flex shrink-0 items-center justify-center rounded-full p-2 text-danger transition-colors hover:bg-danger/10 disabled:opacity-50"
-                aria-label="Remove passkey"
-              >
-                {deletingId === pk.credential_id ? (
-                  <Spinner loading className="!size-4 text-danger" />
-                ) : (
-                  <Trash2 size={14} strokeWidth={1.5} />
-                )}
-              </button>
             </li>
           ))}
         </ul>
@@ -308,28 +294,20 @@ function PasskeyManager() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-
-
-    </SettingsSectionCard>
+    </section>
   );
 }
 
 export default function Security() {
-
   return (
-    <div className="flex w-full flex-col gap-6">
-      <header className="flex min-w-0 flex-col gap-1">
-        <span className="font-inter text-base font-bold text-v3-text-strong text-balance">Security</span>
-        <span className="font-inter text-sm text-v3-text-weak text-pretty">Manage your Memento account security</span>
-      </header>
-
-      <ChangePasswordDialog />
-
-      <PasskeyManager />
-
-      <TwoFactorAuthenticator />
-
-    </div>
+    <SettingsSubpage title="Security">
+      <div className="page-stagger flex w-full flex-col gap-4">
+        <section aria-label="Sign-in" className="settings-card flex flex-col gap-9 p-4 sm:p-6">
+          <ChangePasswordDialog />
+          <TwoFactorAuthenticator />
+        </section>
+        <PasskeyManager />
+      </div>
+    </SettingsSubpage>
   );
 }

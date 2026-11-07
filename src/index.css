@@ -4,6 +4,39 @@
 @config "../tailwind.config.ts";
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* Use installed SF Pro Rounded faces without bundling platform font files. */
+@font-face {
+  font-family: "SF Pro Rounded";
+  src: local("SFProRounded-Regular"), local("SF Pro Rounded Regular");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "SF Pro Rounded";
+  src: local("SFProRounded-Medium"), local("SF Pro Rounded Medium");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "SF Pro Rounded";
+  src: local("SFProRounded-Semibold"), local("SF Pro Rounded Semibold");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "SF Pro Rounded";
+  src: local("SFProRounded-Bold"), local("SF Pro Rounded Bold");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --color-primary: var(--v3-brand-strong);
   --color-secondary: rgba(0, 6, 38, 0.9);
@@ -100,7 +133,6 @@
 
   /* Overview design surfaces and accents. */
   --fill-lime-weak: rgba(161, 177, 43, 0.11);
-  --fill-overview-banner: var(--fill-lime-weak);
   --gradient-overview-banner: linear-gradient(
     0deg,
     rgba(255, 223, 118, 0.15),
@@ -108,9 +140,17 @@
   );
   --gradient-overview-voice: linear-gradient(0deg, rgba(255, 223, 118, 0.08), rgba(255, 176, 41, 0.15));
   --fill-overview-voice: #20c660;
-  --fill-voice-elevated: #1d1e26;
+  /* Group identity colors, indexed by the color stored on each group. */
+  --group-color-0: #42a8f5;
+  --group-color-1: #22c55e;
+  --group-color-2: #ff7b72;
+  --group-color-3: #a78bfa;
+  --group-color-4: #f48fdc;
+  --group-color-5: #4dd0e1;
+  --group-color-6: #eab308;
+  --group-on-color: var(--brown-1000);
   --fill-chat-user: rgba(224, 148, 67, 0.14);
-  --text-overview-voice: var(--text-inverse-strong);
+  --text-overview-voice: var(--brown-1000);
   --text-overview-greeting: #e5c600;
   --gradient-overview-story: linear-gradient(#f3945c, #e97532);
   --fill-topic-badge: rgba(255, 255, 255, 0.9);
@@ -191,6 +231,8 @@
   --overlay-media-backdrop: rgba(0, 0, 0, 0.8);
 
   /* Selected tab controls retain the existing dark-on-light presentation. */
+  --fill-chat-send: var(--fill-neutral-strong);
+  --icon-chat-send: var(--text-inverse-strong);
   --fill-tab-active: var(--fill-neutral-strong);
   --text-tab-active: var(--text-inverse-strong);
 
@@ -273,13 +315,16 @@
   --fill-info-weak: var(--blue-50);
   --fill-success-strong: var(--green-1000);
   --fill-success-weak: var(--green-50);
+  --fill-streak-complete: #54d384;
   --fill-warning-strong: var(--amber-1000);
   --fill-warning-weak: var(--amber-50);
   --fill-error-strong: var(--red-1000);
   --fill-error-weak: var(--red-50);
+  --fill-error-solid: var(--red-1000);
 
   /* Background Colors */
   --bg-neutral-solid: #ffffff;
+  --bg-raised: #ffffff;
   --bg-neutral: var(--bg-neutral-solid);
   --bg-neutral-strong: var(--neutral-100);
   --bg-neutral-weak: var(--neutral-50);
@@ -334,21 +379,26 @@
   --rdp-day-selected-background: var(--v3-brand-strong);
 
   --font-garamond: "EB Garamond", serif;
+  --font-georgia: var(--font-garamond);
   --font-azeret: "Azeret Mono", monospace;
-  --font-bricolage: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-bricolage: var(--font-body);
   --font-averia: "Averia Serif Libre", serif;
-  --font-georgia: "Georgia", serif;
-  --font-inter: "Inter", sans-serif;
-  --font-geist: "Geist", sans-serif;
+  --font-body: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui,
+    "Segoe UI", sans-serif;
+  --font-rounded: "SF Pro Rounded", ui-rounded, var(--font-body);
+  /* Keep existing body-font utilities aligned with the shared system stack. */
+  --font-inter: var(--font-body);
+  --font-geist: var(--font-body);
 
   /* SHADCN — aligned to V3 semantic tokens (docs/COLOR_INVENTORY.md, .cursor/rules/v3-color-system-usage.mdc) */
   --radius: 0.5rem;
   --radius-modal: 1rem;
+  --radius-sheet: 20px;
   --background: #ffffff;
   --foreground: var(--text-neutral-strong);
   --card: #ffffff;
   --card-foreground: var(--text-neutral-strong);
-  --popover: #ffffff;
+  --popover: var(--bg-raised);
   --popover-foreground: var(--text-neutral-strong);
   --primary: var(--text-brand-strong);
   --primary-foreground: #ffffff;
@@ -374,6 +424,46 @@
 }
 
 .dark {
+
+  /* Rebind intent aliases in this scope so they resolve dark primitives. */
+  /* --red-1000 is pale here, so solid red buttons need their own value. */
+  --fill-error-solid: #a33434;
+  --text-info-strong: var(--blue-1000);
+  --text-info-weak: var(--blue-800);
+  --text-info-weaker: var(--blue-200);
+  --text-info-disabled: var(--blue-50);
+  --icon-info-strong: var(--blue-1000);
+  --stroke-info-strong: var(--blue-1000);
+  --stroke-info-weak: var(--blue-200);
+  --fill-info-strong: var(--blue-1000);
+  --fill-info-weak: var(--blue-50);
+  --text-warning-strong: var(--amber-1000);
+  --text-warning-weak: var(--amber-800);
+  --text-warning-weaker: var(--amber-200);
+  --text-warning-disabled: var(--amber-50);
+  --icon-warning-strong: var(--amber-1000);
+  --stroke-warning-strong: var(--amber-1000);
+  --stroke-warning-weak: var(--amber-200);
+  --fill-warning-strong: var(--amber-1000);
+  --fill-warning-weak: var(--amber-50);
+  --text-success-strong: var(--green-1000);
+  --text-success-weak: var(--green-800);
+  --text-success-weaker: var(--green-200);
+  --text-success-disabled: var(--green-50);
+  --icon-success-strong: var(--green-1000);
+  --stroke-success-strong: var(--green-1000);
+  --stroke-success-weak: var(--green-200);
+  --fill-success-strong: var(--green-1000);
+  --fill-success-weak: var(--green-50);
+  --text-error-strong: var(--red-1000);
+  --text-error-weak: var(--red-800);
+  --text-error-weaker: var(--red-200);
+  --text-error-disabled: var(--red-50);
+  --icon-error-strong: var(--red-1000);
+  --stroke-error-strong: var(--red-1000);
+  --stroke-error-weak: var(--red-200);
+  --fill-error-strong: var(--red-1000);
+  --fill-error-weak: var(--red-50);
   --text-overview-voice: var(--brown-1000);
   --gradient-overview-banner: linear-gradient(
     0deg,
@@ -384,6 +474,8 @@
   --color-secondary: var(--secondary);
   --color-background: #12131a;
 
+  --fill-chat-send: var(--fill-inverse-strong);
+  --icon-chat-send: var(--brown-1000);
   --fill-tab-active: var(--fill-inverse-strong);
   --text-tab-active: var(--brown-1000);
   --text-neutral-strong: var(--brown-dark-1000);
@@ -427,6 +519,10 @@
   --fill-neutral-disabled: var(--brown-dark-25);
 
   --bg-neutral-solid: #12131a;
+  --bg-raised: #1d1e26;
+  --bg-sheet: #12131a;
+  /* Denser than the light themes' grey, so raised sheets read as the brightest surface. */
+  --overlay-backdrop: rgba(0, 0, 0, 0.72);
   --bg-neutral: var(--bg-neutral-solid);
   --bg-neutral-strong: var(--neutral-dark-100);
   --bg-neutral-weak: var(--neutral-dark-50);
@@ -439,7 +535,7 @@
   --foreground: var(--text-neutral-strong);
   --card: var(--background);
   --card-foreground: var(--text-neutral-strong);
-  --popover: var(--background);
+  --popover: var(--bg-raised);
   --popover-foreground: var(--text-neutral-strong);
   --secondary: var(--fill-neutral-weak);
   --secondary-foreground: var(--text-neutral-strong);
@@ -458,6 +554,7 @@
   --sky-midpoint: #191d31;
   --sky-horizon: #2c2d3c;
   --sky-surface: #191e2c;
+  --bg-sheet: var(--sky-surface);
   --bg-neutral-solid: var(--sky-surface);
   --background: transparent;
   --color-background: transparent;
@@ -465,14 +562,14 @@
   --bg-neutral: var(--sky-surface);
   --bg-overview-sidebar: rgba(17, 23, 40, 0.72);
   --card: var(--sky-surface);
-  --popover: var(--sky-surface);
+  --popover: var(--bg-raised);
   background-color: var(--sky-canvas);
 }
 
 /* Daytime companion: translucent white surfaces over a pale, warm-horizon sky. */
 .light-sky {
-  --sky-canvas: #cbd5e4;
-  --sky-midpoint: #acc4dd;
+  --sky-canvas: #b3c4dc;
+  --sky-midpoint: #94b2d6;
   --sky-horizon: #d9d6d1;
   --sky-surface: rgba(255, 255, 255, 0.68);
   --background: transparent;
@@ -483,6 +580,7 @@
   --bg-neutral-weak: rgba(255, 255, 255, 0.55);
   --bg-neutral-weaker: rgba(255, 255, 255, 0.32);
   --fill-neutral-strong: #1b1d23;
+  --fill-chat-send: var(--fill-neutral-strong);
   --fill-neutral-weak: rgba(255, 255, 255, 0.55);
   --fill-neutral-weaker: rgba(255, 255, 255, 0.32);
   --fill-chat-reply: rgba(255, 255, 255, 0.68);
@@ -496,9 +594,8 @@
   --icon-neutral-weak: var(--text-neutral-weak);
   --stroke-neutral-weak: rgba(27, 29, 35, 0.12);
   --stroke-neutral-weaker: rgba(27, 29, 35, 0.06);
-  --fill-overview-banner: var(--sky-surface);
   --card: var(--sky-surface);
-  --popover: rgba(255, 255, 255, 0.96);
+  --popover: var(--bg-raised);
   --secondary: var(--fill-neutral-strong);
   --secondary-foreground: #ffffff;
   background-color: var(--sky-canvas);
@@ -628,16 +725,19 @@
   }
 }
 
+@theme inline {
+  --color-fill-chat-send: var(--fill-chat-send);
+  --color-icon-chat-send: var(--icon-chat-send);
+}
+
 @theme {
   --color-fill-tab-active: var(--fill-tab-active);
   --color-text-tab-active: var(--text-tab-active);
   --color-bg-overview-sidebar: var(--bg-overview-sidebar);
   --color-fill-topic-badge: var(--fill-topic-badge);
   --color-topic-badge: var(--text-topic-badge);
-  --color-fill-voice-elevated: var(--fill-voice-elevated);
   --color-fill-chat-user: var(--fill-chat-user);
   --color-fill-lime-weak: var(--fill-lime-weak);
-  --color-fill-overview-banner: var(--fill-overview-banner);
   --color-fill-overview-voice: var(--fill-overview-voice);
   --color-overview-voice: var(--text-overview-voice);
   --color-overview-greeting: var(--text-overview-greeting);
@@ -792,12 +892,14 @@
   --color-fill-info-weak: var(--fill-info-weak);
   --color-fill-success-strong: var(--fill-success-strong);
   --color-fill-success-weak: var(--fill-success-weak);
+  --color-fill-streak-complete: var(--fill-streak-complete);
   --color-fill-warning-strong: var(--fill-warning-strong);
   --color-fill-warning-weak: var(--fill-warning-weak);
   --color-fill-error-strong: var(--fill-error-strong);
   --color-fill-error-weak: var(--fill-error-weak);
 
   /* Semantic Color Tokens - Background */
+  --color-bg-raised: var(--bg-raised);
   --color-bg-neutral: var(--bg-neutral);
   --color-bg-neutral-solid: var(--bg-neutral-solid);
   --color-bg-neutral-strong: var(--bg-neutral-strong);
@@ -818,12 +920,14 @@
 
   --radius-lg: 8px;
 
+  --font-sans: var(--font-body);
   --font-inter: var(--font-inter);
   --font-geist: var(--font-geist);
   --font-bricolage: var(--font-bricolage);
   --font-averia: var(--font-averia);
-  --font-georgia: var(--font-georgia);
   --font-garamond: var(--font-garamond);
+  --font-georgia: var(--font-georgia);
+  --font-rounded: var(--font-rounded);
   --font-azeret: var(--font-azeret);
 
   /* SHADCN */
@@ -866,11 +970,7 @@ body {
   font-weight: 400;
   font-size: 16px;
   overflow: hidden;
-  font-family:
-    var(--font-inter),
-    -apple-system,
-    BlinkMacSystemFont,
-    sans-serif;
+  font-family: var(--font-body);
 }
 
 /* Ensure all clickable links show pointer cursor on hover */
@@ -902,21 +1002,14 @@ a:focus,
   min-height: 100dvh;
 }
 
-.dynamic-height-content {
-  height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
-  height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
-  min-height: calc(
-    100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom)
-  );
-  min-height: calc(
-    100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom)
-  );
-}
-
 .chat-messages {
   flex: 1;
   overflow-y: auto;
   padding-bottom: env(safe-area-inset-bottom);
+}
+
+html {
+  overscroll-behavior: none;
 }
 
 body {
@@ -941,7 +1034,7 @@ body {
 
 @layer utilities {
   .container {
-    @apply w-full mx-auto max-w-219.5;
+    @apply w-full mx-auto max-w-[942px] px-4 sm:px-5 md:px-6 lg:px-8;
   }
 
   .page-title {
@@ -987,7 +1080,7 @@ body {
   }
 
   .mem-tags {
-    @apply cursor-pointer rounded-full border bg-sand-1 border-sand-5 px-2 py-0.5 text-center font-inter text-xs font-medium capitalize;
+    @apply cursor-pointer rounded-full border bg-sand-1 border-sand-5 px-2 py-0.5 text-center font-inter text-xs font-medium capitalize dark:bg-fill-neutral-weak dark:border-stroke-neutral-weak;
   }
 
   .icon-container {
@@ -999,7 +1092,7 @@ body {
   }
 
   .modal-container {
-    @apply relative !w-[95%] sm:w-full max-w-[95vw] sm:max-w-[480px] md:max-w-[618px] rounded-[var(--radius-modal)] bg-bg-neutral-solid text-text-neutral-strong p-4 sm:p-8 md:p-10;
+    @apply relative !w-[95%] sm:w-full max-w-[95vw] sm:max-w-[480px] md:max-w-[618px] rounded-[var(--radius-modal)] bg-bg-raised text-text-neutral-strong p-4 sm:p-8 md:p-10;
   }
 
   .modal-overlay {
@@ -1059,7 +1152,7 @@ body {
   }
 
   .modal-title {
-    @apply font-garamond text-2xl md:text-3xl leading-7 sm:leading-8 md:leading-9 text-gray-900;
+    @apply font-garamond text-2xl md:text-3xl leading-7 sm:leading-8 md:leading-9 text-text-neutral-strong;
   }
 
   .btn {
@@ -1881,20 +1974,61 @@ body {
   border-color: var(--stroke-error-strong);
 }
 
-/* Blur the scrolling surface, keeping the navigation and its controls crisp. */
+/* Progressively soften content below the nav without filtering its controls. */
 .dashboard-header-surface {
   isolation: isolate;
   flex-shrink: 0;
 }
-.dashboard-header-surface::before {
-  content: "";
+.dashboard-header-surface::before,
+.dashboard-header-blur {
   position: absolute;
-  inset: 0 0 -16px;
+  inset: 0 0 -48px;
   z-index: -1;
   pointer-events: none;
-  -webkit-backdrop-filter: blur(20px);
-  backdrop-filter: blur(20px);
-  mask-image: linear-gradient(to bottom, black calc(100% - 16px), transparent);
+}
+.dashboard-header-surface::before {
+  content: "";
+  background: var(--background);
+  -webkit-mask-image: linear-gradient(to bottom, black 0%, black 20%, rgba(0, 0, 0, 0.96) 35%, rgba(0, 0, 0, 0.8) 50%, rgba(0, 0, 0, 0.45) 65%, rgba(0, 0, 0, 0.12) 82%, transparent 100%);
+  mask-image: linear-gradient(to bottom, black 0%, black 20%, rgba(0, 0, 0, 0.96) 35%, rgba(0, 0, 0, 0.8) 50%, rgba(0, 0, 0, 0.45) 65%, rgba(0, 0, 0, 0.12) 82%, transparent 100%);
+}
+.dashboard-header-blur > span {
+  position: absolute;
+  inset: 0;
+  -webkit-backdrop-filter: blur(var(--nav-blur));
+  backdrop-filter: blur(var(--nav-blur));
+  -webkit-mask-image: linear-gradient(to bottom, black var(--nav-fade-start), rgba(0, 0, 0, 0.95) calc(var(--nav-fade-start) + (var(--nav-fade-end) - var(--nav-fade-start)) * 0.2), rgba(0, 0, 0, 0.5) calc(var(--nav-fade-start) + (var(--nav-fade-end) - var(--nav-fade-start)) * 0.5), rgba(0, 0, 0, 0.05) calc(var(--nav-fade-start) + (var(--nav-fade-end) - var(--nav-fade-start)) * 0.8), transparent var(--nav-fade-end));
+  mask-image: linear-gradient(to bottom, black var(--nav-fade-start), rgba(0, 0, 0, 0.95) calc(var(--nav-fade-start) + (var(--nav-fade-end) - var(--nav-fade-start)) * 0.2), rgba(0, 0, 0, 0.5) calc(var(--nav-fade-start) + (var(--nav-fade-end) - var(--nav-fade-start)) * 0.5), rgba(0, 0, 0, 0.05) calc(var(--nav-fade-start) + (var(--nav-fade-end) - var(--nav-fade-start)) * 0.8), transparent var(--nav-fade-end));
+}
+.dashboard-header-blur > span:nth-child(1) {
+  --nav-blur: 0.5px;
+  --nav-fade-start: calc(100% - 36px);
+  --nav-fade-end: calc(100% - 0px);
+}
+.dashboard-header-blur > span:nth-child(2) {
+  --nav-blur: 1px;
+  --nav-fade-start: calc(100% - 48px);
+  --nav-fade-end: calc(100% - 2px);
+}
+.dashboard-header-blur > span:nth-child(3) {
+  --nav-blur: 2px;
+  --nav-fade-start: calc(100% - 60px);
+  --nav-fade-end: calc(100% - 8px);
+}
+.dashboard-header-blur > span:nth-child(4) {
+  --nav-blur: 4px;
+  --nav-fade-start: calc(100% - 76px);
+  --nav-fade-end: calc(100% - 16px);
+}
+.dashboard-header-blur > span:nth-child(5) {
+  --nav-blur: 8px;
+  --nav-fade-start: calc(100% - 92px);
+  --nav-fade-end: calc(100% - 28px);
+}
+.dashboard-header-blur > span:nth-child(6) {
+  --nav-blur: 16px;
+  --nav-fade-start: calc(100% - 108px);
+  --nav-fade-end: calc(100% - 40px);
 }
 
 /* Original light appearance: quiet daylight through an off-screen window. */
@@ -1945,11 +2079,235 @@ body {
   }
 }
 
+/* Floating surfaces and their nested sections use the raised theme fill. */
+[role="dialog"],
+[role="alertdialog"],
+[data-slot="sheet-content"],
+.modal-container,
+.react-modal-sheet-container {
+  --background: var(--bg-raised);
+  --bg-neutral-solid: var(--bg-raised);
+  --bg-neutral: var(--bg-raised);
+  --card: var(--bg-raised);
+  --popover: var(--bg-raised);
+  background-color: var(--bg-raised);
+}
+
+/*
+ * Deep sky modals match dark mode. Color utilities resolve their tokens at the root,
+ * so sections nested in a modal need dark's canvas rebound here. Insights keeps its sky.
+ */
+.deep-sky :is(
+  [role="dialog"],
+  [role="alertdialog"],
+  [data-slot="sheet-content"],
+  [data-slot="popover-content"],
+  [data-slot="dropdown-menu-content"],
+  [data-slot="select-content"],
+  .modal-container,
+  .react-modal-sheet-container
+):not(.insights-overlay) {
+  --color-bg-neutral: #12131a;
+  --color-bg-neutral-solid: #12131a;
+  --color-card: #12131a;
+  --color-background: #12131a;
+  --color-v3-bg: #12131a;
+}
+
+/* The sheet library paints its container white; left alone it shows around the rounded corners. */
+.react-modal-sheet-container:not(.sheet-see-through) {
+  background-color: var(--bg-raised) !important;
+}
+.react-modal-sheet-backdrop {
+  background-color: var(--overlay-backdrop) !important;
+}
+
+/*
+ * Bottom sheets in dark themes keep one fill from edge to edge. Color utilities
+ * resolve their tokens at the root, so inner panels need those rebound as well.
+ */
+:is(.dark, .deep-sky) :is(.react-modal-sheet-container, [data-slot="sheet-content"][data-side="bottom"]) {
+  --bg-raised: var(--bg-sheet);
+  --color-bg-raised: var(--bg-sheet);
+  --color-bg-neutral: var(--bg-sheet);
+  --color-bg-neutral-solid: var(--bg-sheet);
+  --color-card: var(--bg-sheet);
+  --color-popover: var(--bg-sheet);
+  --color-background: var(--bg-sheet);
+  --color-v3-bg: var(--bg-sheet);
+  --color-text-neutral-weaker: rgba(255, 255, 255, 0.68);
+}
+
+@media (max-width: 639.98px) {
+  :is(.dark, .deep-sky) :is(
+    [data-slot="dialog-content"]:not(.insights-overlay, .add-story-journal),
+    [data-slot="alert-dialog-content"],
+    .modal-overlay .modal-container
+  ) {
+    --bg-raised: var(--bg-sheet);
+    --color-bg-raised: var(--bg-sheet);
+    --color-bg-neutral: var(--bg-sheet);
+    --color-bg-neutral-solid: var(--bg-sheet);
+    --color-card: var(--bg-sheet);
+    --color-popover: var(--bg-sheet);
+    --color-background: var(--bg-sheet);
+    --color-v3-bg: var(--bg-sheet);
+    --color-text-neutral-weaker: rgba(255, 255, 255, 0.68);
+  }
+}
+
 /* Floating dialogs share the command-search surface radius. */
 [data-slot="dialog-content"],
 [data-slot="alert-dialog-content"],
 .modal-container {
   border-radius: var(--radius-modal) !important;
+}
+
+/*
+ * Phones: every dialog and modal opens as a bottom sheet. Full-screen surfaces
+ * (Insights, Pricing, the story journal) opt out by class. Declarations are
+ * important, and layered so they also win over important width utilities that
+ * individual modals set for desktop.
+ */
+@layer components {
+  /* These components are bottom sheets at every width. */
+  [data-slot="sheet-content"][data-side="bottom"],
+  .react-modal-sheet-container,
+  .react-modal-sheet-header-container,
+  .react-modal-sheet-header {
+    border-top-left-radius: var(--radius-sheet) !important;
+    border-top-right-radius: var(--radius-sheet) !important;
+  }
+
+  /* The drag handle only exists on bottom sheets. */
+  .sheet-grabber {
+    display: none;
+  }
+
+  @media (max-width: 639.98px) {
+    [data-slot="dialog-content"]:not(.insights-overlay, .add-story-journal),
+    [data-slot="alert-dialog-content"],
+    .modal-overlay .modal-container {
+      position: fixed !important;
+      top: auto !important;
+      right: 0 !important;
+      bottom: 0 !important;
+      left: 0 !important;
+      width: 100% !important;
+      min-width: 0 !important;
+      max-width: none !important;
+      height: auto !important;
+      min-height: 0 !important;
+      max-height: 92dvh !important;
+      margin: 0 !important;
+      border-radius: var(--radius-sheet) var(--radius-sheet) 0 0 !important;
+      border-width: 0 0 env(safe-area-inset-bottom) !important;
+      border-style: solid !important;
+      border-color: transparent !important;
+      translate: 0 var(--sheet-drag, 0px) !important;
+      --tw-ring-color: transparent !important;
+      transition: translate 200ms cubic-bezier(0.22, 1, 0.36, 1);
+      overscroll-behavior: contain;
+    }
+
+    [data-slot="dialog-content"]:not(.insights-overlay, .add-story-journal, .overflow-hidden),
+    [data-slot="alert-dialog-content"]:not(.overflow-hidden) {
+      overflow-y: auto;
+    }
+
+    /* Publish post sets the size of every bottom sheet; short confirmations stay compact. */
+    [data-slot="dialog-content"]:not(.insights-overlay, .add-story-journal),
+    .modal-overlay .modal-container,
+    [data-slot="sheet-content"][data-side="bottom"],
+    .react-modal-sheet-container:not(.sheet-see-through) {
+      min-height: min(524px, 92dvh) !important;
+      max-height: 92dvh !important;
+      /* Grid dialogs would otherwise stretch their rows to fill the spare height. */
+      align-content: start;
+    }
+
+    /* Spare height sits above the actions, so they stay at the bottom of the sheet. */
+    .form-dialog:not(.grid, .flex) {
+      display: flex !important;
+      flex-direction: column;
+    }
+    .form-dialog > form {
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+    }
+    .form-dialog .form-dialog-footer {
+      margin-top: auto !important;
+    }
+
+    .modal-overlay .modal-container {
+      padding-top: 1.75rem !important;
+    }
+
+    [data-slot="dialog-content"][data-state="open"]:not(.insights-overlay, .add-story-journal),
+    [data-slot="alert-dialog-content"][data-state="open"],
+    .modal-overlay .modal-container {
+      animation: bottom-sheet-in 280ms cubic-bezier(0.22, 1, 0.36, 1) both !important;
+    }
+
+    [data-slot="dialog-content"][data-state="closed"]:not(.insights-overlay, .add-story-journal),
+    [data-slot="alert-dialog-content"][data-state="closed"] {
+      animation: bottom-sheet-out 180ms ease-in both !important;
+    }
+
+    [data-slot="dialog-content"]:not(.insights-overlay, .add-story-journal) > .sheet-grabber,
+    .modal-overlay .modal-container > .sheet-grabber {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      z-index: 1;
+      display: flex;
+      width: 6rem;
+      height: 1.5rem;
+      translate: -50% 0;
+      align-items: center;
+      justify-content: center;
+      cursor: grab;
+      touch-action: none;
+    }
+
+    .sheet-grabber::before {
+      content: "";
+      width: 2.25rem;
+      height: 0.25rem;
+      border-radius: 9999px;
+      background: var(--stroke-neutral-strong);
+      opacity: 0.35;
+    }
+
+    /* iOS zooms the whole page when a smaller field takes focus. */
+    input:not([type="checkbox"], [type="radio"], [type="range"]),
+    textarea:not(.story-composer-title),
+    select {
+      font-size: 16px !important;
+    }
+  }
+
+  @media (max-width: 639.98px) and (prefers-reduced-motion: reduce) {
+    [data-slot="dialog-content"][data-state]:not(.insights-overlay, .add-story-journal),
+    [data-slot="alert-dialog-content"][data-state],
+    .modal-overlay .modal-container {
+      animation: none !important;
+      transition: none;
+    }
+  }
+}
+
+@keyframes bottom-sheet-in {
+  from {
+    transform: translateY(100%);
+  }
+}
+
+@keyframes bottom-sheet-out {
+  to {
+    transform: translateY(100%);
+  }
 }
 
 /* Story links follow the paper's local text palette, including saved legacy links. */

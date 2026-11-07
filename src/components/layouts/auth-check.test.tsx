@@ -1,4 +1,6 @@
-import { render, screen } from "@testing-library/react";
+import { mockAuth, mockUser } from "@/test/fixtures";
+import endpoint from "@/api/endpoint";
+import { render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Routes, Route } from "react-router-dom";
 import { SWRConfig } from "swr";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -24,4 +26,17 @@ describe("AuthCheck request gating", () => {
     expect(fetcher).not.toHaveBeenCalled();
     expect(screen.queryByText("Protected content")).not.toBeInTheDocument();
   });
+});
+
+it("hydrates the profile store when SWR already has the profile cached", async () => {
+  const setUser = vi.fn();
+  useStore.mockReturnValue({ auth: mockAuth, user: null, hydrated: true, setUser });
+  const cache = new Map([[endpoint.profile, { data: { success: true, data: mockUser } }]]);
+  render(
+    <SWRConfig value={{ provider: () => cache, revalidateIfStale: false }}>
+      <MemoryRouter><AuthCheck><span>Protected content</span></AuthCheck></MemoryRouter>
+    </SWRConfig>,
+  );
+  await waitFor(() => expect(setUser).toHaveBeenCalledWith(mockUser));
+  expect(fetcher).not.toHaveBeenCalled();
 });

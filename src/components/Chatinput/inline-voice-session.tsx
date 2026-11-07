@@ -4,7 +4,8 @@ import { UpgradePrompt } from "@/features/pricing/upgrade-prompt";
 import { Button } from "@/components/ui/button";
 import Voiceinput from "./Voiceinput";
 
-export function InlineVoiceSession({ memoryId, history = [], variant = "composer", onSessionChange, onRuntime, onMessages, persistent, onEnd }: {
+export function InlineVoiceSession({ connectionPersonId, memoryId, history = [], variant = "composer", onSessionChange, onRuntime, onMessages, persistent, onEnd }: {
+  connectionPersonId?: string;
   memoryId?: string | null;
   variant?: "composer" | "overview" | "floating";
   persistent?: boolean;
@@ -22,5 +23,5 @@ export function InlineVoiceSession({ memoryId, history = [], variant = "composer
       <Button variant="ghost" onClick={onEnd}>Back</Button>
     </div>
   );
-  return <Voiceinput persistent={persistent} onRuntime={onRuntime} onMessages={onMessages} onSessionChange={onSessionChange} inline variant={variant} autoStart onCancel={onEnd} memoryId={memoryId} history={history} />;
+  return <Voiceinput connectionPersonId={connectionPersonId} persistent={persistent} onRuntime={onRuntime} onMessages={onMessages} onSessionChange={onSessionChange} inline variant={variant} autoStart onCancel={onEnd} memoryId={memoryId} history={history} />;
 }

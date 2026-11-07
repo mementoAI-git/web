@@ -5,6 +5,7 @@ export type VoiceRuntime = { send: (input: VoiceTextInput) => Promise<void>; rea
 export type VoiceMessage = Partial<IMessage> & { _id: string; created_at: string; clientId?: string };
 export type VoiceTimelineEntry = {
   id: string;
+  connectionPersonId?: string;
   sessionId?: string;
   memoryId: string | null;
   created_at: string;

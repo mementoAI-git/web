@@ -62,6 +62,9 @@ class AuthService {
   }
 
   redirectToLoginWithPath(): void {
+    // Shared story links work without a session, so an expired one only makes
+    // the reader a visitor. The page offers its own login button.
+    if (typeof window !== "undefined" && window.location.pathname.startsWith("/post/")) return;
     if (typeof window !== "undefined" && window.location.pathname !== "/login") {
       const currentPath = this.getCurrentPath();
       const redirectParam = currentPath

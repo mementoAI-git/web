@@ -46,4 +46,15 @@ describe("CategoryCard", () => {
     expect(image).toHaveAttribute("height");
     expect(image).toHaveAttribute("alt", "");
   });
+
+  it.each(["default", "overview"] as const)(
+    "rounds the %s card image by 8px",
+    (variant) => {
+      const { container } = renderWithProviders(
+        <CategoryCard variant={variant} subtitle="A prompt" />,
+        { route: "/overview", auth: true },
+      );
+      expect(container.querySelector("a > div")).toHaveClass("rounded-[8px]");
+    },
+  );
 });

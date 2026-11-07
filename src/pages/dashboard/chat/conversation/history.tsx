@@ -1,3 +1,4 @@
+import { plainTextFromQuickCaptureNote } from "@/lib/quick-capture-drafts";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { mergeVoiceTimeline } from "@/features/voice/timeline";
@@ -58,7 +59,8 @@ export default function History({
 }: IHistory) {
   const chatDetailMatch = useMatch({ path: "/chat/:id", end: true });
   const chatVoiceMatch = useMatch({ path: "/chat/:id/voice", end: true });
-  const isTopic = Boolean(useMatch({ path: "/chat/reply/:id", end: true }));
+  const isReflection = Boolean(useMatch({ path: "/chat/reflection/:id", end: true }));
+  const isTopic = Boolean(useMatch({ path: "/chat/reply/:id", end: true })) || isReflection;
   const hideInlineConversationHeader = Boolean(chatDetailMatch || chatVoiceMatch);
 
   const isLoadingMoreRef = useRef(false);
@@ -179,7 +181,10 @@ export default function History({
           <ConversationHeader {...{ onViewDetails, memory }} />
         </div>
       ) : null}
-      <div className={isTopic ? "min-w-0 space-y-2 px-4 pt-4" : "min-w-0 space-y-6 px-0"}>
+      <div className={isTopic ? "min-w-0 space-y-1 px-4 pt-4" : "min-w-0 space-y-1 px-0"}>
+        {memory?.prompt_type && (memory?.body?.trim() || memory?.attachments?.length > 0) && (
+          <Bubble role="user" text={plainTextFromQuickCaptureNote(memory.body || "")} attatchments={memory.attachments || []} createdAt={memory.created_at} topic />
+        )}
         {isLoadingMore && (
           <div className="py-3 flex justify-center items-center">
             <div className="flex gap-1.5 text-sm text-text-neutral-weaker">
@@ -195,8 +200,29 @@ export default function History({
           (() => {
             let lastDayKey: string | null = null;
             let lastMonthKey: string | null = null;
+            const dayLabel = (iso: string) => (
+                    <div
+                      className={isTopic ? "flex justify-center" : "flex justify-center py-2"}
+                      role="separator"
+                      aria-label={dayDividerLabel(iso)}
+                    >
+                      <span className={isTopic ? "font-geist text-xs leading-4 text-text-neutral-weaker opacity-70" : "px-3 py-1 font-inter text-xs font-normal text-text-neutral-weaker"}>
+                        {isTopic ? dayjs(iso).format("MMMM D, YYYY") : dayDividerLabel(iso)}
+                      </span>
+                    </div>
+            );
             return mergeVoiceTimeline(messages, liveTimeline).map((row, i) => {
-              if (row.kind !== "message") return <VoiceSessionDivider key={row.id} active={row.kind === "started"} />;
+              if (row.kind !== "message") {
+                const dividerDay = dayjs(row.created_at);
+                const opensDay = dividerDay.isValid() && dividerDay.format("YYYY-MM-DD") !== lastDayKey;
+                if (opensDay) lastDayKey = dividerDay.format("YYYY-MM-DD");
+                return (
+                  <Fragment key={row.id}>
+                    {opensDay ? dayLabel(row.created_at) : null}
+                    <VoiceSessionDivider active={row.kind === "started"} />
+                  </Fragment>
+                );
+              }
               const m = row.message;
               const failed = Boolean((m as { sendFailed?: boolean }).sendFailed);
               const attachments = m.attachments ?? m.attatchments;
@@ -214,17 +240,7 @@ export default function History({
 
               return (
                 <Fragment key={`${m._id ?? "msg"}-${i}`}>
-                  {showDayDivider && validIso && iso ? (
-                    <div
-                      className={isTopic ? "flex justify-center" : "flex justify-center py-2"}
-                      role="separator"
-                      aria-label={dayDividerLabel(iso)}
-                    >
-                      <span className={isTopic ? "font-geist text-xs leading-4 text-text-neutral-weaker opacity-70" : "px-3 py-1 font-inter text-xs font-normal text-text-neutral-weaker"}>
-                        {isTopic ? dayjs(iso).format("MMMM D, YYYY") : dayDividerLabel(iso)}
-                      </span>
-                    </div>
-                  ) : null}
+                  {showDayDivider && validIso && iso ? dayLabel(iso) : null}
                   <div id={showMonthAnchor && monthK ? `host-chat-anchor-${monthK}` : undefined}>
                     <Bubble
                       topic={isTopic}

@@ -17,7 +17,7 @@ const cancelClass =
   "h-10 cursor-pointer rounded-full border border-stroke-neutral-weak bg-white/1 px-4 py-2.5 font-inter text-sm font-semibold shadow";
 
 const confirmClass =
-  "flex h-10 cursor-pointer items-center justify-center gap-2 rounded-full bg-danger px-4 py-2.5 font-inter text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-70";
+  "flex h-10 cursor-pointer items-center justify-center gap-2 rounded-full bg-[color:var(--fill-error-solid)] px-4 py-2.5 font-inter text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-70";
 
 export function DeletePromptModal({
   onClose,

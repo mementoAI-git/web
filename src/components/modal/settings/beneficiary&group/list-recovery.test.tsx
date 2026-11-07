@@ -18,7 +18,7 @@ function RefreshGroups() {
 
 describe("settings list recovery", () => {
   it.each([
-    { label: "beneficiaries", path: "/beneficiaries", Component: Beneficiary, emptyText: "No beneficiaries yet" },
+    { label: "beneficiaries", path: "/beneficiaries", Component: Beneficiary, emptyText: "No people yet" },
     { label: "groups", path: "/groups", Component: Groups, emptyText: "No groups yet" },
   ])("does not mistake failed $label for an empty list and retries", async ({ label, path, Component, emptyText }) => {
     let fail = true;
@@ -56,7 +56,7 @@ describe("settings list recovery", () => {
     }));
     renderWithProviders(<Groups />, { auth: true });
     await screen.findByText("Family");
-    await userEvent.setup().click(screen.getByRole("link", { name: "2" }));
+    await userEvent.setup().click(screen.getByRole("button", { name: "Next page" }));
     expect(await screen.findByText("Family")).toBeInTheDocument();
     expect(screen.queryByText("No groups yet")).not.toBeInTheDocument();
   });

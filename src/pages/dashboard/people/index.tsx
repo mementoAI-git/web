@@ -1,7 +1,7 @@
 import { useState } from "react";
 import useSWR from "swr";
 import { ArrowLeft } from "lucide-react";
-import { getPeople, PEOPLE_ENDPOINT } from "@/api/people";
+import { getPeople, PEOPLE_ENDPOINT, type Person } from "@/api/people";
 import { useRequestRecovery } from "@/hooks/use-request-recovery";
 import { useStore } from "@/hooks/use-store";
 import { useModal } from "@/hooks/use-modal";
@@ -15,8 +15,7 @@ import {
 import { cn } from "@/utility";
 import { PeopleSidebar } from "./people-sidebar";
 import { ActivationDialog } from "./activation-dialog";
-import { BlockedPeopleDialog } from "./connection-settings";
-import { PeopleWelcome } from "./people-welcome";
+import { BlockedPeopleDialog, ConnectionSettingsDialog } from "./connection-settings";
 import { RelationshipWorkspace } from "./relationship-workspace";
 import "./people-motion.css";
 
@@ -25,7 +24,7 @@ export default function PeoplePage() {
   const { open } = useModal();
   const [activation, setActivation] = useState(false);
   const [blocked, setBlocked] = useState(false);
-  const [search, setSearch] = useState("");
+  const [settingsPerson, setSettingsPerson] = useState<Person | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
   const { data, error, isLoading, isValidating, mutate } = useSWR(
     user?._id ? [PEOPLE_ENDPOINT, user._id] : null,
@@ -46,11 +45,12 @@ export default function PeoplePage() {
       aria-label="People"
       className="flex h-full min-h-0 w-full overflow-hidden bg-background font-inter"
     >
+      {settingsPerson && <ConnectionSettingsDialog person={settingsPerson} onClose={() => setSettingsPerson(null)} />}
       {activation && <ActivationDialog onClose={() => setActivation(false)} />}
       {blocked && <BlockedPeopleDialog onClose={() => setBlocked(false)} />}
       <div
         className={cn(
-          "h-full min-h-0 w-full md:w-auto md:flex",
+          "h-full min-h-0 w-full",
           (hasSelection || error) && "hidden",
         )}
       >
@@ -58,18 +58,19 @@ export default function PeoplePage() {
           people={data}
           unavailable={Boolean(error && !data)}
           loading={loading}
-          search={search}
-          onSearch={setSearch}
           selected={selected}
           onSelect={setSelected}
           onInvite={invite}
           onBlocked={() => setBlocked(true)}
           onActivation={() => setActivation(true)}
+          onSettings={setSettingsPerson}
+          onResend={invite => open("resend-invite", { email: invite.email, mode: "connection" })}
+          onCancel={invite => open("delete-beneficiary", { id: invite.invite_id, mode: "connection" })}
         />
       </div>
       <div
         className={cn(
-          "people-main min-h-0 min-w-0 flex-1 flex-col p-3 md:flex sm:p-5",
+          "people-main min-h-0 min-w-0 flex-1 flex-col p-3 sm:p-5",
           hasSelection || error ? "flex" : "hidden",
         )}
       >
@@ -92,7 +93,7 @@ export default function PeoplePage() {
             <Button
               size="form"
               variant="ghost"
-              className="people-control m-4 w-fit md:hidden"
+              className="people-control m-4 w-fit"
               onClick={() => setSelected(null)}
             >
               <ArrowLeft data-icon="inline-start" aria-hidden />
@@ -135,15 +136,7 @@ export default function PeoplePage() {
               </div>
             </Empty>
           </div>
-        ) : (
-          <PeopleWelcome
-            hasPeople={Boolean(
-              data?.connections.length || data?.pending.length,
-            )}
-            loading={loading}
-            onInvite={invite}
-          />
-        )}
+        ) : null}
       </div>
     </section>
   );

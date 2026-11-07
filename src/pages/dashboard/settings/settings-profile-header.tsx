@@ -1,15 +1,11 @@
 import { useMemo } from "react";
 import dayjs from "dayjs";
-import { ProfileBanner } from "./profile-banner";
 import { Share2 } from "lucide-react";
 import { toast } from "sonner";
 import Spinner from "@/components/spinner";
 import { cn, isEmpty } from "@/utility";
 import endpoint from "@/api/endpoint";
 import useFetcher from "@/hooks/use-fetcher";
-import { useApi } from "@/hooks/use-api";
-import type { IPersona } from "@/utility/interface";
-import { SocialProfileLinks } from "@/features/profile/social-profile-links";
 import { useStore } from "@/hooks/use-store";
 import { UserAvatar } from "@/components/user-avatar";
 import { useProfileAvatarUpload } from "./use-profile-avatar-upload";
@@ -23,15 +19,12 @@ export function SettingsProfileHeader() {
   const { trigger: publishProfile, isMutating: sharing } = useFetcher(
     endpoint.shareProfile,
   );
-  const { data: persona } = useApi<IPersona | null>(endpoint.persona, {
-    refreshInterval: 30000,
-  });
   const { previewImage, isMutating, handleUpload } = useProfileAvatarUpload();
   const rawDisplayName = [user?.first_name, user?.last_name]
     .filter(Boolean)
     .join(" ")
     .trim();
-  const displayName = user?.nickname?.trim() || rawDisplayName || "Your name";
+  const displayName = rawDisplayName || user?.nickname?.trim() || "Your name";
   const memberSince = useMemo(
     () => (user?.created_at ? dayjs(user.created_at).format("MMM YYYY") : null),
     [user?.created_at],
@@ -75,13 +68,12 @@ export function SettingsProfileHeader() {
   };
 
   return (
-    <header className="w-full">
-      <ProfileBanner />
-      <div className="relative -mt-10 px-6 pb-2 sm:px-8">
+    <header className="settings-card flex w-full flex-wrap items-center gap-4 p-4">
+      <div className="flex min-w-0 flex-1 basis-full items-center gap-4 sm:basis-auto">
         <label
           htmlFor={AVATAR_INPUT_ID}
           className={cn(
-            "relative block size-20 cursor-pointer overflow-hidden rounded-full",
+            "relative block size-16 shrink-0 cursor-pointer overflow-hidden rounded-full",
             "focus-within:ring-2 focus-within:ring-stroke-neutral-strong focus-within:ring-offset-2",
           )}
           title="Change profile photo"
@@ -107,7 +99,7 @@ export function SettingsProfileHeader() {
             onChange={handleUpload}
           />
           {isMutating && (
-            <div className="absolute inset-0 flex items-center justify-center bg-fill-neutral-strong/25">
+            <div className="absolute inset-0 flex items-center justify-center rounded-full bg-fill-neutral-strong/25">
               <Spinner
                 loading
                 className="!mr-0 !size-5 text-text-neutral-strong"
@@ -115,38 +107,37 @@ export function SettingsProfileHeader() {
             </div>
           )}
         </label>
-        <h2 className="mt-6 font-garamond text-3xl font-medium text-text-neutral-strong sm:text-4xl">
-          {displayName}
-        </h2>
-        <div className="mt-3 flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-          <p className="flex flex-wrap items-center justify-start gap-y-1 font-inter text-sm text-text-neutral-weak">
-            {user?.email && <span className="break-all">{user.email}</span>}
+        <div className="min-w-0 flex-1 space-y-1 text-left">
+          <h2 className="break-words text-xl font-bold text-text-neutral-strong sm:text-2xl">
+            {displayName}
+          </h2>
+          <p className="flex flex-wrap items-center justify-start gap-y-1 text-left text-sm text-text-neutral-weak">
+            {user?.email && <span className="max-w-full truncate" title={user.email}>{user.email}</span>}
             {memberSince && (
-              <>
-                <span
-                  className="mx-3 size-1 rounded-full bg-current opacity-40"
-                  aria-hidden
-                />
-                <span>Member since {memberSince}</span>
-              </>
+              <span className="inline-flex items-center">
+                {user?.email && (
+                  <span
+                    className="mx-2 size-1 shrink-0 rounded-full bg-current"
+                    aria-hidden
+                  />
+                )}
+                <span>Joined {memberSince}</span>
+              </span>
             )}
           </p>
-          <div
-            className="flex flex-wrap shrink-0 items-center gap-3 text-text-neutral-weaker"
-            aria-label="Social profiles"
-          >
-            <SocialProfileLinks accounts={persona?.data?.social_accounts} />
-            <button
-              type="button"
-              className={`${actionClass} gap-2`}
-              disabled={sharing}
-              onClick={() => void shareProfile()}
-            >
-              <Share2 className="size-4" aria-hidden />
-              {sharing ? "Preparing…" : "Share"}
-            </button>
-          </div>
         </div>
+      </div>
+      <div className="hidden">
+        <button
+          type="button"
+          className={`${actionClass} gap-2 !hidden`}
+          hidden
+          disabled={sharing}
+          onClick={() => void shareProfile()}
+        >
+          <Share2 className="size-4" aria-hidden />
+          {sharing ? "Preparing…" : "Share"}
+        </button>
       </div>
     </header>
   );

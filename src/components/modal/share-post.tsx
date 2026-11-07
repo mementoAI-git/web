@@ -1,5 +1,7 @@
 "use client";
 
+import "./share-post.css";
+import { PublishSuccessBackdrop, PublishSuccessView } from "./publish-success-view";
 import { useEffect, useState } from "react";
 import { Sheet } from "react-modal-sheet";
 import { CircleCheckIcon, CopyIcon, PlusIcon } from "@/components/icons";
@@ -152,27 +154,36 @@ function SharePostContent({ data }: SharePostProps) {
 }
 
 export function SharePost({ data, isMobile = false }: SharePostProps) {
-  const { close } = useModal();
+  const { close, open } = useModal();
 
   const handleClose = () => close("share-post");
 
+  const content = data.kind === "conversation" ? <div className={isMobile ? "pb-6" : "p-5"}><SharePostContent data={data} /></div> : (
+    <PublishSuccessView publishedUrl={`${window.location.origin}/post/${data.id}`} sheet={isMobile} onDismiss={handleClose} onAddAnother={() => {
+      handleClose();
+      open?.("create-memory");
+    }} />
+  );
+
   if (isMobile) {
+    const isStory = data.kind !== "conversation";
     return (
       <Sheet
         detent="content"
         isOpen
         onClose={handleClose}
-        snapPoints={[0, 0.88]}
+        snapPoints={[0, 1]}
         initialSnap={1}
       >
-        <Sheet.Container className="max-h-[88dvh] overflow-hidden rounded-t-3xl border border-stroke-neutral-weak !bg-bg-neutral text-text-neutral-strong shadow-lg">
-          <Sheet.Header className="rounded-t-3xl bg-bg-neutral" />
-          <Sheet.Content className="max-h-[88dvh] min-h-0 overflow-y-auto overscroll-contain px-5 pb-6 pt-1">
+        <Sheet.Container className="publish-success-sheet isolate max-h-[88dvh] overflow-hidden rounded-t-3xl bg-bg-raised text-text-neutral-strong shadow-lg">
+          {isStory ? <PublishSuccessBackdrop /> : null}
+          <Sheet.Header className={isStory ? "rounded-t-3xl bg-transparent" : "rounded-t-3xl bg-bg-raised"} />
+          <Sheet.Content className={`max-h-[88dvh] min-h-0 overflow-y-auto overscroll-contain px-4 ${isStory ? "bg-transparent" : "bg-bg-raised"}`}>
             <ModalCloseBtn
               className="!relative ml-auto mb-2 !right-0 !top-0 !bg-fill-neutral-weak text-icon-neutral-strong hover:!bg-fill-neutral-weaker"
               onClick={handleClose}
             />
-            <SharePostContent data={data} />
+            {content}
           </Sheet.Content>
         </Sheet.Container>
         <Sheet.Backdrop
@@ -185,15 +196,15 @@ export function SharePost({ data, isMobile = false }: SharePostProps) {
 
   return (
     <div
-      className="mx-auto w-full max-w-lg shrink-0 px-4"
+      className="mx-auto w-[432px] max-w-[calc(100vw-2rem)] shrink-0"
       onClick={(e) => e.stopPropagation()}
     >
-      <div className="modal-container !max-w-120 !p-5 border border-stroke-neutral-weak !bg-bg-neutral text-text-neutral-strong">
+      <div className="share-post-container modal-container !w-full !max-w-none !p-0 max-h-[90dvh] overflow-y-auto border border-stroke-neutral-weak !bg-bg-neutral text-text-neutral-strong">
         <ModalCloseBtn
-          className="!bg-fill-neutral-weak text-icon-neutral-strong hover:!bg-fill-neutral-weaker"
+          className="z-10 !bg-fill-neutral-weak text-icon-neutral-strong hover:!bg-fill-neutral-weaker"
           onClick={handleClose}
         />
-        <SharePostContent data={data} />
+        {content}
       </div>
     </div>
   );

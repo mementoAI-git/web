@@ -50,7 +50,6 @@ import Picker from "@emoji-mart/react";
 import emojiData from "@emoji-mart/data";
 import Spinner from "@/components/spinner";
 import { createPortal } from "react-dom";
-import { CloseWithFilesConfirmation } from "../close-with-files-confirmation";
 import { Sheet } from "react-modal-sheet";
 import { LinkInput } from "@/components/memory/text-area/link-input";
 import { SlashCommandPopup } from "@/components/memory/text-area/slash-command-popup";
@@ -136,7 +135,7 @@ function CreateMemoryBase({
   isMobile = false,
   variant = "next",
 }: CreateMemoryBaseProps) {
-  const { close, open, push, registerCloseGuard } = useModal();
+  const { close, open, push } = useModal();
   const { user } = useStore();
   const { canUse } = useFeatureFlags();
   const navigate = useNavigate();
@@ -151,7 +150,6 @@ function CreateMemoryBase({
   const titleTextareaRef = useRef<HTMLTextAreaElement>(null);
 
   const [showEmoji, setShowEmoji] = useState(false);
-  const [showCloseConfirmation, setShowCloseConfirmation] = useState(false);
   const [drafts, setDrafts] = useState<MemoryDraft[]>([]);
   const emojiPickerRef = useRef<HTMLDivElement>(null);
   const emojiPickerPortalRef = useRef<HTMLDivElement>(null);
@@ -269,7 +267,6 @@ function CreateMemoryBase({
   const queueFileUploadRef = useRef(queueFileUpload);
   queueFileUploadRef.current = queueFileUpload;
 
-  const latestDirtyRef = useRef<() => boolean>(() => false);
 
   const {
     editor,
@@ -321,23 +318,6 @@ function CreateMemoryBase({
       },
     });
   }, [editor]);
-
-  latestDirtyRef.current = () =>
-    files.length > 0 ||
-    values.title.trim().length > 0 ||
-    (editor?.getText()?.trim().length ?? 0) > 0 ||
-    tags.length > 0 ||
-    selectedAccess.length > 0 ||
-    shareAudience !== "private";
-
-  useEffect(() => {
-    if (!registerCloseGuard) return;
-    return registerCloseGuard("create-memory", () => {
-      if (!latestDirtyRef.current()) return true;
-      setShowCloseConfirmation(true);
-      return false;
-    });
-  }, [registerCloseGuard]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -471,14 +451,6 @@ function CreateMemoryBase({
   };
 
   const handleClose = () => close("create-memory");
-
-  const handleConfirmClose = async () => {
-    setShowCloseConfirmation(false);
-    const deletes = files.filter((f) => f.uploadedFile).map((f) => handleDeleteFile(f));
-    await Promise.all(deletes);
-    setFiles([]);
-    close("create-memory", { force: true });
-  };
 
   const handleLinkClick = () => {
     openLinkInputAtSelection();
@@ -1124,17 +1096,6 @@ function CreateMemoryBase({
     </div>
   );
 
-  const closeConfirmationPortal = showCloseConfirmation
-    ? createPortal(
-      <CloseWithFilesConfirmation
-        open={showCloseConfirmation}
-        close={() => setShowCloseConfirmation(false)}
-        onConfirm={handleConfirmClose}
-      />,
-      document.body,
-    )
-    : null;
-
   const resetVideoRecorder = () => {
     videoRecorderRef.current?.reset?.();
     videoRecorderRef.current?.resetStream?.();
@@ -1215,10 +1176,10 @@ function CreateMemoryBase({
   if (isMobile && variant === "legacy") {
     return (
       <>
-        <Sheet detent="content" isOpen onClose={handleClose} snapPoints={[0, 0.8]} initialSnap={1}>
-          <Sheet.Container className="max-h-[80dvh] overflow-hidden bg-v3-bg">
-            <Sheet.Header className="rounded-t-3xl bg-v3-bg" />
-            <Sheet.Content className="max-h-[80dvh] min-h-0 overflow-y-auto overscroll-contain bg-v3-bg px-4 pb-6">
+        <Sheet detent="content" isOpen onClose={handleClose} snapPoints={[0, 1]} initialSnap={1}>
+          <Sheet.Container className="max-h-[80dvh] overflow-hidden bg-bg-raised">
+            <Sheet.Header className="rounded-t-3xl bg-bg-raised" />
+            <Sheet.Content className="max-h-[80dvh] min-h-0 overflow-y-auto overscroll-contain bg-bg-raised px-4 pb-6">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="font-garamond text-xl font-medium text-text-neutral-strong">Add New Story</h2>
                 <Button
@@ -1237,7 +1198,6 @@ function CreateMemoryBase({
           </Sheet.Container>
           <Sheet.Backdrop onTap={handleClose} />
         </Sheet>
-        {closeConfirmationPortal}
         {videoRecorderDialog}
       </>
     );
@@ -1261,7 +1221,6 @@ function CreateMemoryBase({
           <CardFooter className="shrink-0 border-t border-stroke-neutral-weak px-6 py-4">{footer}</CardFooter>
         </Card>
 
-        {closeConfirmationPortal}
         {videoRecorderDialog}
       </>
     );
@@ -1636,7 +1595,6 @@ function CreateMemoryBase({
           </div>
         </div>
       </div>
-      {closeConfirmationPortal}
       {videoRecorderDialog}
     </>
   );

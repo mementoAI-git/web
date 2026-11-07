@@ -11,7 +11,31 @@ import {
   identifyMissingDetailsTask,
   rewriteStoryDraftTask,
   selectAssistantSubagentTask,
+  suggestStoryTagsTask,
+  suggestStoryTitleTask,
 } from "./tasks";
+
+describe("story composer suggestions", () => {
+  it("requests a title from the server's title endpoint with the story as the body", () => {
+    expect(suggestStoryTitleTask.endpoint).toBe("/ai/generate-story-title");
+    expect(suggestStoryTitleTask.buildRequest).toBeUndefined();
+    expect(
+      suggestStoryTitleTask.parseResponse?.({
+        data: { title: " Sunday Dinner " },
+      } as never),
+    ).toEqual({ title: "Sunday Dinner" });
+  });
+
+  it("requests tags from the server's tags endpoint with the story as the body", () => {
+    expect(suggestStoryTagsTask.endpoint).toBe("/ai/generate-tags");
+    expect(suggestStoryTagsTask.buildRequest).toBeUndefined();
+    expect(
+      suggestStoryTagsTask.parseResponse?.({
+        data: { tags: ["Family", "Home"] },
+      } as never),
+    ).toEqual({ tags: ["Family", "Home"] });
+  });
+});
 
 describe("rewriteStoryDraftTask", () => {
   it("parses a structured draft rewrite result", () => {

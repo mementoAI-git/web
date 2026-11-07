@@ -1,0 +1,52 @@
+---
+description: Use the shared form dialog layout for new modals
+alwaysApply: true
+---
+
+# Modal Layout (`memento-web`)
+
+## Desktop sizes
+
+Every new desktop modal uses one of these two sizes. Pick the one that fits the content, and don't introduce a third.
+
+| Size | Reference | Width | Height |
+| --- | --- | --- | --- |
+| **Modal A** | Invite Friends (`InviteDialog`) | 358px | At least 480px, growing with content up to `100dvh - 2rem`, then scrolling |
+| **Modal B** | Share Post (`SharePost`) and `FormDialog` | 432px | Fits its content, up to `90dvh`, then scrolling |
+
+```tsx
+// Modal A
+<DialogContent className="block max-h-[calc(100dvh-2rem)] overflow-y-auto p-0 sm:max-w-[358px]">
+  <div className="flex flex-col sm:min-h-[min(480px,calc(100dvh-2rem))]">…</div>
+</DialogContent>
+
+// Modal B: use FormDialog or FormDialogContent.
+```
+
+These are desktop sizes. Below 640px, dialogs become bottom sheets through the shared styles in `src/index.css`, sized as below.
+
+## Mobile bottom sheet size
+
+Every bottom sheet on mobile web uses the **Publish post** sheet's sizing (`story-publish-sheet` in `src/components/modal/memory/create/index.tsx`). The minimum and maximum height are applied globally in `src/index.css`, so don't set them per sheet. Short confirmations (`alert-dialog`) are the one exception and stay compact. The top corners use `--radius-sheet` (20px) and the fill uses `--bg-sheet` (`#12131a` in Dark, `#191e2c` in Deep sky, the Publish post colors), also applied globally.
+
+| Part | Size |
+| --- | --- |
+| Width | Full screen width |
+| Minimum height | 524px, including the handle and header. Short content keeps this height, and the content area holds the spare space |
+| Maximum height | `92dvh`, then the content scrolls |
+| Header | Drag handle, then the title and a round 32px close button in a row, 20px from each side |
+| Content | 20px side padding, 32px below the header, 24px between sections |
+| Primary action | Full width, 56px tall, fully rounded, 32px above the bottom edge or more where the safe area needs it |
+
+
+## Layout
+
+Prefer `FormDialog` from `src/components/modal/form-dialog.tsx` when building a modal. Existing modals are being moved to this layout over time.
+
+The layout is Modal B's 432px width, with a title and round close button, stacked labeled fields, then a right-aligned **Dismiss** button and primary action.
+
+- A modal that owns its `Dialog` root, such as one with a trigger, uses `FormDialogContent` instead, which keeps the same size and surface.
+- Compose with `FormDialogField`, `FormDialogInput`, `FormDialogTextarea`, `FormDialogSelectTrigger`, `FormDialogSelectContent`, and `FormDialogFooter` instead of custom markup.
+- Body text in the dialog uses SF Pro Rounded (`font-rounded`), which `FormDialog` already sets.
+- `FormDialog` owns its portal, backdrop, focus trap, and dismissal. When opening one through `useModal`, return it early from `ModalStack` in `src/components/modal/index.tsx` and add it to the Escape exclusion list, or it renders behind the legacy modal overlay.
+- Follow `theme-adaptive-components.mdc`: check the dialog in every theme.

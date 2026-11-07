@@ -121,7 +121,7 @@ describe("History", () => {
       expect(screen.queryByTestId("conversation-header")).toBeNull();
     });
     expect(
-      document.querySelector(".min-w-0.space-y-6.px-0"),
+      document.querySelector(".min-w-0.space-y-1.px-0"),
     ).toBeTruthy();
   });
 
@@ -132,7 +132,7 @@ describe("History", () => {
       expect(screen.queryByTestId("go-back")).not.toBeInTheDocument();
       expect(screen.queryByTestId("conversation-header")).not.toBeInTheDocument();
     });
-    expect(document.querySelector(".space-y-2.px-4")).toBeTruthy();
+    expect(document.querySelector(".space-y-1.px-4")).toBeTruthy();
   });
 });
 
@@ -148,4 +148,25 @@ it("places voice start and end dividers in the conversation and keeps them when 
   expect(screen.getAllByRole("separator").map(node => node.getAttribute("aria-label"))).toEqual(["Voice conversation started", "Voice conversation ended"]);
   rerender(view([{ _id: "older", text: "Earlier", role: "ai" }, lastMessage]));
   expect(screen.getAllByRole("separator")).toHaveLength(2);
+});
+
+it("uses the topic header when reopening a daily reflection and preserves its original answer", async () => {
+  render(
+    <MemoryRouter initialEntries={["/chat/reflection/m1"]}>
+      <History
+        memory={{
+          ...memory,
+          prompt_type: "ai-generated",
+          prompt_text: "What brought you joy?",
+          body: "<p>My original reflection.</p>",
+        }}
+        messages={[]}
+        setMessages={() => {}}
+        scrollContainerRef={{ current: null }}
+        onViewDetails={() => {}}
+      />
+    </MemoryRouter>,
+  );
+  expect(screen.getByTestId("topic-header")).toBeInTheDocument();
+  expect(screen.getByText("My original reflection.")).toBeVisible();
 });

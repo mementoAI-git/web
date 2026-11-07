@@ -1,0 +1,486 @@
+:root {
+  --insights-page-background: var(--bg-neutral-solid);
+  --insights-card: var(--fill-neutral-weak);
+  --insights-table-head: var(--fill-neutral-weak);
+  --insights-note: color-mix(in srgb, #d99a1c 12%, transparent);
+  --enrichment-memories-experiences: #1f7fd1;
+  --enrichment-heritage-roots: #3d8fc9;
+  --enrichment-lessons-wisdom: #1f9e6e;
+  --enrichment-relationships-people: #4b9e3f;
+  --enrichment-beliefs-worldview: #7a9413;
+  --enrichment-passions-interests: #b98a10;
+  --enrichment-hopes-legacy: #c9702a;
+  --enrichment-work-purpose: #cf5a38;
+  --enrichment-everyday-life: #cf3f45;
+  --enrichment-identity-self: #c23aa0;
+}
+.dark {
+  --enrichment-memories-experiences: #2196f3;
+  --enrichment-heritage-roots: #6dbcf5;
+  --enrichment-lessons-wisdom: #6fdca6;
+  --enrichment-relationships-people: #9bdf7e;
+  --enrichment-beliefs-worldview: #c5e55e;
+  --enrichment-passions-interests: #f4cc62;
+  --enrichment-hopes-legacy: #f2a561;
+  --enrichment-work-purpose: #ee7d5c;
+  --enrichment-everyday-life: #ec5f62;
+  --enrichment-identity-self: #e85fc6;
+}
+/* Both sky themes keep their sky behind the overlay instead of a flat surface. */
+.deep-sky,
+.light-sky {
+  --insights-page-background: linear-gradient(
+    180deg,
+    var(--sky-canvas) 0%,
+    var(--sky-midpoint) 48%,
+    var(--sky-horizon) 100%
+  );
+}
+.deep-sky {
+  --insights-card: rgba(255, 255, 255, 0.07);
+  --insights-table-head: rgba(255, 255, 255, 0.05);
+}
+.light-sky {
+  --insights-card: var(--sky-surface);
+  --insights-table-head: rgba(255, 255, 255, 0.4);
+  --insights-note: rgba(255, 244, 214, 0.62);
+}
+.insights-overlay-backdrop {
+  background: var(--insights-page-background);
+}
+.insights-overlay[data-slot="dialog-content"] {
+  inset: 0;
+  z-index: 110;
+  display: flex;
+  width: 100%;
+  max-width: none;
+  height: 100dvh;
+  transform: none;
+  translate: none;
+  flex-direction: column;
+  gap: 0;
+  overflow: hidden;
+  border-radius: 0 !important;
+  padding: 0;
+  background: var(--insights-page-background);
+  color: var(--text-neutral-strong);
+  box-shadow: none;
+  --modal-open-dur: 250ms;
+  --modal-close-dur: 150ms;
+  --modal-ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+.insights-overlay[data-state="open"] {
+  animation: insights-appear var(--modal-open-dur) var(--modal-ease);
+}
+.insights-overlay[data-state="closed"] {
+  animation: insights-disappear var(--modal-close-dur) var(--modal-ease);
+}
+@keyframes insights-appear {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes insights-disappear {
+  to {
+    opacity: 0;
+  }
+}
+/* Sits on the page's own background, like Explore and Overview. */
+.insights-page {
+  display: flex;
+  height: 100%;
+  min-height: 0;
+  flex-direction: column;
+  color: var(--text-neutral-strong);
+}
+.insights-scroll {
+  /* Holds sr-only content in here, or it stretches the document and lets the page shift. */
+  position: relative;
+  min-height: 0;
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+/* Insights and Settings read as a narrow column; Pricing keeps the page container. */
+.insights-main:not(.container) {
+  width: min(100% - 64px, 700px);
+}
+.insights-main {
+  display: flex;
+  margin: 36px auto 0;
+  padding-bottom: 64px;
+  flex-direction: column;
+  gap: 32px;
+  outline: none;
+}
+.insights-stat {
+  position: relative;
+  display: flex;
+  min-height: 84px;
+  overflow: hidden;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
+  border-radius: 12px;
+  padding: 16px;
+  background: var(--insights-card);
+}
+.insights-stat::before {
+  position: absolute;
+  inset: 0;
+  content: "";
+  pointer-events: none;
+  opacity: 0.3;
+  background-image:
+    linear-gradient(var(--stroke-neutral-weak) 1px, transparent 1px),
+    linear-gradient(90deg, var(--stroke-neutral-weak) 1px, transparent 1px);
+  background-size: 26px 26px;
+  mask-image: linear-gradient(110deg, black, transparent);
+}
+.insights-stat > * {
+  position: relative;
+}
+.insights-tabs {
+  height: auto !important;
+  justify-content: flex-start;
+  gap: 12px;
+  padding: 0;
+  background: transparent;
+}
+.insights-tab {
+  height: 40px;
+  flex: none;
+  border: 1px solid var(--stroke-neutral-weak);
+  border-radius: 999px;
+  padding: 0 24px;
+  color: var(--text-neutral-weak);
+  transition:
+    background-color 150ms ease-out,
+    color 150ms ease-out;
+}
+.insights-tab[data-active] {
+  border-color: transparent;
+  background: var(--fill-tab-active);
+  color: var(--text-tab-active);
+}
+.insights-tab:hover:not([data-active]) {
+  background: var(--fill-neutral-weak);
+}
+.insights-page-heading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.insights-round-button {
+  flex: none;
+  border-radius: 999px;
+  background: var(--insights-card);
+}
+.insights-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.insights-card {
+  display: flex;
+  border-radius: 12px;
+  background: var(--insights-card);
+}
+.insights-observation {
+  position: relative;
+  min-height: 84px;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 20px 16px;
+  transition: background-color 150ms ease-out;
+}
+.insights-observation:has(.insights-observation-open:focus-visible) {
+  outline: 2px solid var(--stroke-neutral-strong);
+  outline-offset: 2px;
+}
+.insights-observation-open {
+  cursor: pointer;
+  outline: none;
+}
+.insights-observation-open::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+.insights-observation-options {
+  position: relative;
+  z-index: 1;
+}
+@media (hover: hover) {
+  .insights-observation:hover {
+    background: color-mix(in srgb, var(--text-neutral-strong) 6%, var(--insights-card));
+  }
+}
+/* Follows the cursor, so it must never catch the pointer. */
+.insights-sources-popup {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 120;
+  width: min(360px, calc(100vw - 32px));
+  border: 1px solid var(--stroke-neutral-weak);
+  border-radius: 16px;
+  padding: 6px;
+  background: var(--popover);
+  color: var(--popover-foreground);
+  box-shadow: 0 12px 32px rgb(0 0 0 / 0.18);
+  pointer-events: none;
+}
+.insights-sources-more {
+  padding: 4px 8px 6px;
+  font-size: 12px;
+  color: var(--text-neutral-weak);
+}
+.insights-sources-label {
+  padding: 6px 8px 4px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-neutral-weak);
+}
+.insights-sources-list {
+  display: flex;
+  max-height: 280px;
+  flex-direction: column;
+  overflow-y: auto;
+}
+.insights-source {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 10px;
+  border-radius: 10px;
+  padding: 8px;
+  font-size: 14px;
+}
+.insights-source-thumbnail {
+  display: block;
+  width: 28px;
+  height: 28px;
+  flex: none;
+  border-radius: 6px;
+  background: var(--stroke-neutral-weak);
+}
+.insights-sources-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px;
+  text-align: center;
+  font-size: 14px;
+  color: var(--text-neutral-weak);
+}
+.insights-insight {
+  cursor: pointer;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 20px 24px;
+  transition: background-color 150ms ease-out;
+}
+@media (hover: hover) {
+  .insights-insight:hover {
+    background: color-mix(in srgb, var(--text-neutral-strong) 6%, var(--insights-card));
+  }
+}
+.insights-insight:has(.insights-insight-open:focus-visible) {
+  outline: 2px solid var(--stroke-neutral-strong);
+  outline-offset: 2px;
+}
+.insights-insight-open {
+  cursor: pointer;
+  text-align: left;
+  outline: none;
+}
+.insights-field-icon {
+  display: block;
+  flex: none;
+}
+.insights-plan {
+  align-items: flex-start;
+  gap: 16px;
+  padding: 16px;
+}
+.insights-plan-action {
+  flex: none;
+  border-radius: 999px !important;
+  background: color-mix(in srgb, var(--text-neutral-strong) 16%, transparent) !important;
+  color: var(--text-neutral-strong) !important;
+}
+.insights-plan-action:hover {
+  background: color-mix(in srgb, var(--text-neutral-strong) 24%, transparent) !important;
+}
+.insights-table {
+  overflow: hidden;
+  border: 1px solid var(--stroke-neutral-weak);
+  border-radius: 12px;
+  background: var(--insights-card);
+}
+.insights-action {
+  border-radius: 8px !important;
+}
+.insights-table-head {
+  min-height: 44px !important;
+  background: var(--insights-table-head);
+  font-family: var(--font-inter, inherit);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-neutral-strong);
+}
+.insights-fields-row,
+.insights-sources-row {
+  display: grid;
+  min-height: 72px;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 22px;
+}
+.insights-fields-row {
+  grid-template-columns: minmax(0, 1fr) 136px 78px;
+}
+.insights-sources-row {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+.insights-fields-row > :last-child,
+.insights-sources-row > :last-child {
+  justify-self: end;
+}
+.insights-fields-row + .insights-fields-row,
+.insights-sources-row + .insights-sources-row {
+  border-top: 1px solid var(--stroke-neutral-weak);
+}
+.insights-source-row {
+  cursor: pointer;
+  transition: background-color 150ms ease-out;
+}
+.insights-source-row:has(.insights-source-open:focus-visible) {
+  outline: 2px solid var(--stroke-neutral-strong);
+  outline-offset: -2px;
+}
+.insights-source-open {
+  cursor: pointer;
+  outline: none;
+}
+@media (hover: hover) {
+  .insights-source-row:hover {
+    background: color-mix(in srgb, var(--text-neutral-strong) 6%, transparent);
+  }
+}
+.insights-meter {
+  position: relative;
+  height: 3px;
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--stroke-neutral-weak);
+}
+.insights-meter::after {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: var(--value);
+  border-radius: inherit;
+  background: var(--field);
+  content: "";
+}
+.insights-thumbnail {
+  display: block;
+  width: 40px;
+  height: 40px;
+  flex: none;
+  border-radius: 8px;
+  background: var(--stroke-neutral-weak);
+}
+.insights-hero {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  border-radius: 12px;
+  padding: 24px;
+  background: color-mix(in srgb, var(--field) 12%, var(--insights-card));
+}
+.insights-note {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-radius: 10px;
+  padding: 12px 14px;
+  background: var(--insights-note);
+}
+.insights-empty {
+  display: flex;
+  min-height: 240px;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 12px;
+  border-radius: 12px;
+  background: var(--insights-card);
+  padding: 32px;
+  text-align: center;
+  color: var(--text-neutral-weak);
+}
+@media (max-width: 640px) {
+  .insights-main:not(.container) {
+    width: calc(100% - 32px);
+  }
+  .insights-main {
+    margin-top: 20px;
+    gap: 24px;
+  }
+  .insights-stat {
+    min-height: 76px;
+    padding: 14px;
+  }
+  .insights-tabs {
+    gap: 8px;
+  }
+  .insights-tab {
+    padding: 0 18px;
+  }
+  .insights-insight {
+    padding: 16px;
+  }
+  .insights-table-head {
+    display: none !important;
+  }
+  .insights-fields-row,
+  .insights-sources-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px 12px;
+    padding: 14px;
+  }
+  .insights-fields-row > :nth-child(1) {
+    grid-column: 1 / -1;
+  }
+  .insights-hero {
+    padding: 16px;
+  }
+  .insights-hero > div:nth-child(2) {
+    flex-basis: 100%;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .insights-overlay[data-state],
+  .insights-overlay * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+.insights-overlay [data-slot="tabs"] {
+  flex-direction: column;
+}
+.insights-overlay .insights-tab[aria-selected="true"] {
+  background: var(--fill-tab-active);
+  color: var(--text-tab-active);
+}

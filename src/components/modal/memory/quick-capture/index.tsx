@@ -2,14 +2,13 @@
 
 import { reportFetcherError } from "@/api/report-fetcher-error";
 
-import { getProfileAvatarUrl } from "@/utility/profile-avatar";
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Sheet } from "react-modal-sheet";
 import useSWR from "swr";
 import useSWRMutation from "swr/mutation";
-import { X, Square, Pause, Play } from "lucide-react";
+import { Plus, ImageIcon, Video, Music, Paperclip } from "lucide-react";
 import { toast } from "sonner";
 import { mutate } from "swr";
 import { v4 as uuidv4 } from "uuid";
@@ -19,7 +18,8 @@ import emojiData from "@emoji-mart/data";
 import { useModal } from "@/hooks/use-modal";
 import { useDismissOnOutsidePress } from "@/hooks/use-dismiss-on-outside-press";
 import { useStore } from "@/hooks/use-store";
-import { useOverviewDictation } from "@/pages/dashboard/overview/sections/use-overview-dictation";
+import { VoiceRecorderControls, VoiceRecorderSilenceHint } from "@/components/recorder/voice-recorder";
+import { useVoiceCapture } from "@/hooks/use-voice-capture";
 import { useFeatureFlags } from "@/contexts/feature-flags";
 import { useTheme } from "@/contexts/theme";
 import useFileUpload from "@/hooks/use-file-upload";
@@ -29,6 +29,7 @@ import { paginatedResponseFetcher } from "@/api/domain-fetchers";
 import { cn } from "@/utility";
 import { parseSubscriptionGateError } from "@/features/pricing/subscription-errors";
 import {
+  MEMORY_ACCEPT_DOCUMENTS,
   SUPPORTED_FILE_TYPES,
   inferMimeType,
   isSupportedFileMime,
@@ -39,13 +40,16 @@ import { Card } from "@/components/ui/card";
 import Spinner from "@/components/spinner";
 import { AudiencePicker } from "./audience-picker";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import closeIcon from "@/assets/icon/quick-story/imgX.svg";
 import draftsChevron from "@/assets/icon/quick-story/imgIconRight.svg";
-import plusIcon from "@/assets/icon/quick-story/imgPlus.svg";
 import emojiIcon from "@/assets/icon/quick-story/imgNotoSlightlySmilingFace.svg";
 import micIcon from "@/assets/icon/quick-story/imgMicrophone01.svg";
 import videoIcon from "@/assets/icon/quick-story/imgVideoRecorder.svg";
@@ -119,7 +123,7 @@ export function QuickCapture(props: { isMobile?: boolean; data?: unknown }) {
 
   const [note, setNote] = useState("");
   const [voiceNoteIds, setVoiceNoteIds] = useState<Record<string, true>>({});
-  const { files, handleUpload, handleDeleteFile, setFiles } = useFileUpload();
+  const { files, handleUpload, retryUpload, handleDeleteFile, setFiles } = useFileUpload({ retainFailures: true });
   const [selectedBeneficiaryIds, setSelectedBeneficiaryIds] = useState<
     string[]
   >([]);
@@ -130,6 +134,7 @@ export function QuickCapture(props: { isMobile?: boolean; data?: unknown }) {
   const fileInputImageRef = useRef<HTMLInputElement>(null);
   const fileInputVideoRef = useRef<HTMLInputElement>(null);
   const fileInputAudioRef = useRef<HTMLInputElement>(null);
+  const fileInputDocsRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const actionBarRef = useRef<HTMLDivElement>(null);
   const draftsMenuRef = useRef<HTMLDivElement>(null);
@@ -217,14 +222,18 @@ export function QuickCapture(props: { isMobile?: boolean; data?: unknown }) {
     .map((f) => f.uploadedFile._id);
 
   const uploadsPending = files.some((f) => f.progress !== 100);
-  const recording = useOverviewDictation((text) => {
-    setNote((previous) =>
-      `${previous}${previous.trim() && !/\s$/.test(previous) ? " " : ""}${text}`.slice(
-        0,
-        NOTE_CHAR_MAX,
-      ),
-    );
-    requestAnimationFrame(() => textareaRef.current?.focus());
+  const queueFileUploadRef = useRef<
+    (file: File, options?: { duration?: number; voice?: boolean }) => void
+  >(() => {});
+  const recording = useVoiceCapture({
+    mode: "audio",
+    onAudio: (file, duration) => {
+      if (!canUse("attachments.audio_upload")) {
+        toast.error("Audio uploads are currently disabled.");
+        return;
+      }
+      queueFileUploadRef.current(file, { duration, voice: true });
+    },
   });
   const recordingUi = recording.phase !== "idle";
 
@@ -404,7 +413,7 @@ export function QuickCapture(props: { isMobile?: boolean; data?: unknown }) {
   }, [persistDraft]);
 
   const queueFileUpload = useCallback(
-    (file: File) => {
+    (file: File, options?: { duration?: number; voice?: boolean }) => {
       if (!canUse("attachments.doc_upload")) {
         toast.error("File uploads are currently disabled.");
         return;
@@ -432,13 +441,16 @@ export function QuickCapture(props: { isMobile?: boolean; data?: unknown }) {
         toast.error("Video uploads are currently disabled.");
         return;
       }
+      const id = uuidv4();
+      if (options?.voice) setVoiceNoteIds((prev) => ({ ...prev, [id]: true }));
       const reader = new FileReader();
       reader.onloadend = () => {
         handleUpload({
-          id: uuidv4(),
+          id,
           file,
           base64: reader.result as string,
           progress: 0,
+          ...(options?.duration !== undefined && { duration: options.duration }),
         });
       };
       reader.readAsDataURL(file);
@@ -446,10 +458,12 @@ export function QuickCapture(props: { isMobile?: boolean; data?: unknown }) {
     [canUse, handleUpload],
   );
 
+  queueFileUploadRef.current = queueFileUpload;
+
   const handleFileSelect = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const selected = Array.from(e.target.files || []);
-      selected.forEach(queueFileUpload);
+      selected.forEach((file) => queueFileUpload(file));
       e.target.value = "";
     },
     [queueFileUpload],
@@ -499,8 +513,7 @@ export function QuickCapture(props: { isMobile?: boolean; data?: unknown }) {
   const canSave =
     (note.trim().length > 0 || attachmentIds.length > 0) &&
     !uploadsPending &&
-    !recordingUi &&
-    !recording.canRetry;
+    !recordingUi;
 
   const flushOutbox = useCallback(async () => {
     if (!navigator.onLine || !outboxKey || syncingOutboxes.has(outboxKey))
@@ -642,8 +655,7 @@ export function QuickCapture(props: { isMobile?: boolean; data?: unknown }) {
     const canSaveNow =
       (bodyForSave.length > 0 || attachmentIds.length > 0) &&
       !uploadsPending &&
-      !recordingUi &&
-      !recording.canRetry;
+      !recordingUi;
     if (
       savingRef.current ||
       completed.current ||
@@ -770,10 +782,7 @@ export function QuickCapture(props: { isMobile?: boolean; data?: unknown }) {
     close("quick-capture");
   };
 
-  const avatarUrl = getProfileAvatarUrl(user);
-  const initials = user
-    ? `${user.first_name?.[0] ?? ""}${user.last_name?.[0] ?? ""}`.trim() || "?"
-    : "?";
+
 
   const draftKeys = scanQuickCaptureDraftKeys(user?.email);
 
@@ -787,7 +796,7 @@ export function QuickCapture(props: { isMobile?: boolean; data?: unknown }) {
     ) : null;
 
   const draftsPanel = draftsOpen ? (
-    <div className="absolute top-8 right-0 z-20 max-h-64 w-72 overflow-y-auto rounded-xl border border-stroke-neutral-weaker bg-popover py-1 shadow-lg">
+    <div className="absolute top-full right-0 z-20 mt-1 max-h-64 w-[min(18rem,calc(100vw-5rem))] overflow-y-auto rounded-xl border border-stroke-neutral-weaker bg-popover py-1 shadow-lg">
       {draftKeys.length === 0 ? (
         <p className="px-3 py-2 font-inter text-xs text-text-neutral-weaker">
           No drafts yet.
@@ -823,29 +832,47 @@ export function QuickCapture(props: { isMobile?: boolean; data?: unknown }) {
     </div>
   ) : null;
 
+  const closeButton = (
+    <Button
+      type="button"
+      variant="ghost"
+      size="icon-sm"
+      onClick={handleDismiss}
+      className={cn(
+        "rounded-full bg-fill-neutral-weak text-icon-neutral-strong",
+        isMobile && "size-9",
+      )}
+      aria-label="Close"
+    >
+      <img src={closeIcon} alt="" className="dark:invert" />
+    </Button>
+  );
+
   const headerRow = (
-    <div className="relative flex shrink-0 items-center justify-between">
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon-sm"
-        onClick={handleDismiss}
-        className="rounded-full bg-fill-neutral-weak text-icon-neutral-strong"
-        aria-label="Close"
-      >
-        <img src={closeIcon} alt="" className="dark:invert" />
-      </Button>
-      <div ref={draftsMenuRef} className="relative">
-        <button
-          type="button"
-          aria-expanded={draftsOpen}
-          disabled={recordingUi || isMutating}
-          className="flex h-8 items-center gap-2 rounded-md border border-stroke-neutral-weak px-4 text-sm font-semibold shadow-sm focus-visible:outline-2 focus-visible:outline-stroke-brand-strong"
-          onClick={() => setDraftsOpen((o) => !o)}
-        >
-          Drafts <img src={draftsChevron} alt="" className="dark:invert" />
-        </button>
-        {draftsPanel}
+    <div className="relative flex shrink-0 items-center justify-between gap-3">
+      {!isMobile && closeButton}
+      {isMobile && (
+        <h2 className="min-w-0 truncate font-garamond text-2xl font-medium text-text-neutral-strong">
+          Quick note
+        </h2>
+      )}
+      <div className="flex shrink-0 items-center gap-2">
+        <div ref={draftsMenuRef} className="relative">
+          <button
+            type="button"
+            aria-expanded={draftsOpen}
+            disabled={recordingUi || isMutating}
+            className={cn(
+              "flex items-center gap-2 border border-stroke-neutral-weak text-sm font-semibold focus-visible:outline-2 focus-visible:outline-stroke-brand-strong",
+              isMobile ? "h-9 rounded-full px-3.5" : "h-8 rounded-md px-4 shadow-sm",
+            )}
+            onClick={() => setDraftsOpen((o) => !o)}
+          >
+            Drafts <img src={draftsChevron} alt="" className="dark:invert" />
+          </button>
+          {draftsPanel}
+        </div>
+        {isMobile && closeButton}
       </div>
     </div>
   );
@@ -870,44 +897,49 @@ export function QuickCapture(props: { isMobile?: boolean; data?: unknown }) {
     />
   );
 
-  const actionBar = (
-    <div
-      ref={actionBarRef}
-      className="flex shrink-0 items-center justify-between gap-2"
-    >
+  const attachTools = (
       <div className="flex items-center gap-3 max-[400px]:gap-0">
-        <Popover>
-          <PopoverTrigger asChild>
+        <DropdownMenu modal={false} onOpenChange={(open) => { if (open) setShowEmoji(false); }}>
+          <DropdownMenuTrigger asChild>
             <Button
               type="button"
               variant="ghost"
               size="icon"
               disabled={uploadsPending || recordingUi || isMutating}
-              className="size-10 rounded-[10px] bg-fill-neutral-strong text-text-inverse-strong hover:bg-fill-neutral-strong/90"
+              className="size-10 rounded-[10px] bg-fill-neutral-strong text-text-inverse-strong hover:bg-fill-neutral-strong/90 dark:bg-fill-neutral-weak dark:text-icon-neutral-strong dark:hover:bg-fill-neutral-weaker"
               aria-label="Add attachment"
             >
-              <img src={plusIcon} alt="" />
+              <Plus aria-hidden className="size-5" strokeWidth={1.66667} />
             </Button>
-          </PopoverTrigger>
-          <PopoverContent
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            side="top"
             align="start"
-            className="navigation-menu z-[10001] w-44 gap-1 p-1"
+            className="z-[10001]"
             onEscapeKeyDown={(event) => event.stopPropagation()}
           >
-            <Button
-              variant="ghost"
-              onClick={() => fileInputImageRef.current?.click()}
-            >
-              Add image
-            </Button>
-            <Button
-              variant="ghost"
-              onClick={() => fileInputAudioRef.current?.click()}
-            >
-              Attach audio file
-            </Button>
-          </PopoverContent>
-        </Popover>
+            <DropdownMenuGroup>
+              <DropdownMenuLabel>Choose upload type</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onSelect={() => fileInputImageRef.current?.click()}>
+                <ImageIcon />
+                Photos
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => fileInputVideoRef.current?.click()}>
+                <Video />
+                Videos
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => fileInputAudioRef.current?.click()}>
+                <Music />
+                Audio
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => fileInputDocsRef.current?.click()}>
+                <Paperclip />
+                Documents
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
         <div ref={emojiAnchorRef} className="relative">
           <Button
             type="button"
@@ -979,63 +1011,57 @@ export function QuickCapture(props: { isMobile?: boolean; data?: unknown }) {
           <img src={videoIcon} alt="" className="dark:invert" />
         </Button>
       </div>
-      <div className="flex items-center gap-2">
-        <Button
-          type="button"
-          onClick={handleSave}
-          disabled={!canSave || isMutating}
-          className="h-10 rounded-lg px-[18px] text-sm font-bold disabled:opacity-50"
-        >
-          Publish
-          <Spinner loading={isMutating} className="size-4!" />
-        </Button>
-      </div>
+  );
+
+  const publishButton = (
+    <Button
+      type="button"
+      onClick={handleSave}
+      disabled={!canSave || isMutating}
+      className={cn(
+        "text-sm font-bold disabled:opacity-50",
+        isMobile
+          ? "h-12 w-full shrink-0 rounded-full text-base"
+          : "h-10 rounded-lg px-[18px]",
+      )}
+    >
+      Publish
+      <Spinner loading={isMutating} className="size-4!" />
+    </Button>
+  );
+
+  const actionBar = (
+    <div
+      ref={actionBarRef}
+      className="flex shrink-0 items-center justify-between gap-2"
+    >
+      {attachTools}
+      <div className="flex items-center gap-2">{publishButton}</div>
     </div>
   );
 
   const scrollBody = (
     <div className="hide-scrollbar min-h-0 overflow-y-auto">
-      <div
-        className={cn(
-          "flex items-start gap-2",
-          !files.length && "min-h-[122px]",
-        )}
-      >
-        {!note && (
-          <div data-testid="quick-story-avatar" className="shrink-0">
-            {avatarUrl ? (
-              <img
-                src={avatarUrl}
-                alt=""
-                className="size-10 rounded-full border-[3px] border-bg-neutral object-cover"
-              />
-            ) : (
-              <div className="flex size-10 items-center justify-center rounded-full bg-fill-neutral-weak text-xs font-semibold">
-                {initials}
-              </div>
-            )}
-          </div>
-        )}
-        <div className="min-w-0 flex-1">
-          {pinnedPrompt}
-          <textarea
-            ref={textareaRef}
-            readOnly={isMutating || recordingUi}
-            id="qc-note"
-            aria-label="Story"
-            value={plainTextFromQuickCaptureNote(note)}
-            onChange={(e) => setNote(e.target.value.slice(0, NOTE_CHAR_MAX))}
-            placeholder="What's on your mind?"
-            rows={2}
-            className="w-full resize-none border-0 bg-transparent text-base leading-6 text-text-neutral-strong outline-none placeholder:text-text-neutral-weaker focus:ring-0"
-          />
-        </div>
+      <div className={cn(!files.length && "min-h-[122px]")}>
+        {pinnedPrompt}
+        <textarea
+          ref={textareaRef}
+          readOnly={isMutating || recordingUi}
+          id="qc-note"
+          aria-label="Story"
+          value={plainTextFromQuickCaptureNote(note)}
+          onChange={(e) => setNote(e.target.value.slice(0, NOTE_CHAR_MAX))}
+          placeholder="What's on your mind?"
+          rows={isMobile ? 4 : 2}
+          className="w-full resize-none border-0 bg-transparent text-base leading-6 text-text-neutral-strong outline-none placeholder:text-text-neutral-weaker focus:ring-0"
+        />
       </div>
       {files.length > 0 && (
         <div className="mt-6">
           <QuickCaptureMediaStack
             files={files}
             voiceNoteIds={voiceNoteIds}
+            onRetry={retryUpload}
             onRemove={handleRemoveFile}
           />
         </div>
@@ -1044,66 +1070,25 @@ export function QuickCapture(props: { isMobile?: boolean; data?: unknown }) {
   );
   const recorderRow = (
     <div className="flex flex-col gap-2">
-      <div className="flex h-10 items-center gap-3">
-        <Button
-          variant="outline"
-          size="icon"
-          aria-label="Cancel recording"
-          onClick={recording.cancel}
-          className="size-10 rounded-full border-stroke-neutral-strong bg-transparent"
-        >
-          <X className="size-5" />
-        </Button>
-        <div
-          className="flex h-10 min-w-0 flex-1 items-center justify-end gap-1 overflow-hidden"
-          aria-hidden
-        >
-          {recording.levels.map((height, i) => (
-            <span
-              key={i}
-              className="w-1 shrink-0 rounded-full bg-icon-neutral-weak"
-              style={{ height }}
-            />
-          ))}
-        </div>
-        <Button
-          variant="outline"
-          size="icon"
-          disabled={
-            recording.phase === "starting" || recording.phase === "transcribing"
-          }
-          aria-label="Stop recording and transcribe"
-          onClick={recording.stop}
-          className="size-10 rounded-full border-stroke-neutral-strong bg-transparent"
-        >
-          <Square className="size-4 fill-current text-icon-brand-strong" />
-        </Button>
-      </div>
+      <VoiceRecorderSilenceHint silent={recording.silent} />
+      <VoiceRecorderControls
+        phase={recording.phase}
+        levels={recording.levels}
+        onCancel={recording.cancel}
+        onStop={recording.stop}
+      />
       <div
         role="status"
         className="flex items-center justify-between text-xs text-text-neutral-weak"
       >
         <span>
-          {recording.phase === "transcribing"
-            ? "Transcribing…"
+          {recording.phase === "saving"
+            ? "Saving…"
             : recording.phase === "starting"
               ? "Starting…"
               : `${recording.phase === "paused" ? "Paused" : "Recording"} · ${Math.floor(recording.seconds / 60)}:${String(recording.seconds % 60).padStart(2, "0")}`}
         </span>
-        {(recording.phase === "recording" || recording.phase === "paused") && (
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            aria-label={
-              recording.phase === "paused"
-                ? "Resume recording"
-                : "Pause recording"
-            }
-            onClick={recording.togglePause}
-          >
-            {recording.phase === "paused" ? <Play /> : <Pause />}
-          </Button>
-        )}
+
       </div>
     </div>
   );
@@ -1134,46 +1119,46 @@ export function QuickCapture(props: { isMobile?: boolean; data?: unknown }) {
         onChange={handleFileSelect}
         multiple
       />
+      <input
+        ref={fileInputDocsRef}
+        type="file"
+        accept={MEMORY_ACCEPT_DOCUMENTS}
+        aria-label="Upload documents"
+        className="hidden"
+        onChange={handleFileSelect}
+        multiple
+      />
     </>
   );
 
   const shell = (
     <div
       className={cn(
-        "flex max-h-[90dvh] w-full flex-col gap-6 overflow-y-auto bg-bg-neutral p-6 font-geist text-text-neutral-strong",
+        "flex w-full flex-col overflow-y-auto bg-bg-raised font-geist text-text-neutral-strong",
         isMobile
-          ? "rounded-t-3xl"
-          : "max-w-[456px] rounded-3xl shadow-2xl ring-1 ring-stroke-neutral-weak",
+          ? "min-h-0 gap-4 px-4 pt-1 pb-[max(1rem,env(safe-area-inset-bottom))]"
+          : "max-h-[90dvh] max-w-[432px] gap-6 rounded-3xl p-6 shadow-2xl ring-1 ring-stroke-neutral-weak",
       )}
       onClick={(e) => e.stopPropagation()}
     >
-      <h2 className="sr-only">Quick capture</h2>
+      {!isMobile && <h2 className="sr-only">Quick capture</h2>}
       {headerRow}
-      {scrollBody}
+      {isMobile ? (
+        <div className="flex shrink-0 flex-col gap-2 rounded-2xl border border-stroke-neutral-weak bg-fill-neutral-weaker p-3">
+          {scrollBody}
+          {/* The emoji picker opens above this row. */}
+          <div ref={actionBarRef}>{attachTools}</div>
+        </div>
+      ) : (
+        scrollBody
+      )}
       {recordingUi ? recorderRow : privacyRow}
       {recording.error && (
-        <div
-          role="alert"
-          className="flex flex-wrap items-center gap-2 text-xs text-text-error-strong"
-        >
+        <div role="alert" className="text-xs text-text-error-strong">
           {recording.error}
-          {recording.canRetry && (
-            <>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => void recording.retry()}
-              >
-                Retry transcription
-              </Button>
-              <Button variant="ghost" size="sm" onClick={recording.cancel}>
-                Discard recording
-              </Button>
-            </>
-          )}
         </div>
       )}
-      {actionBar}
+      {isMobile ? publishButton : actionBar}
       {hiddenInputs}
     </div>
   );
@@ -1189,7 +1174,7 @@ export function QuickCapture(props: { isMobile?: boolean; data?: unknown }) {
       >
         <Sheet.Container
           className="max-h-[80dvh] overflow-hidden"
-          style={{ backgroundColor: "var(--bg-neutral)" }}
+          style={{ backgroundColor: "var(--bg-raised)" }}
         >
           <Sheet.Header className="rounded-t-3xl" />
           <Sheet.Content className="flex max-h-[80dvh] min-h-0 flex-col overflow-hidden px-0 pb-0">

@@ -1,18 +1,54 @@
 /* Transitions.dev resize and dropdown recipes, adapted to Radix presence. */
 .navigation-sidebar {
   transition: width 300ms cubic-bezier(0.22, 1, 0.36, 1),
-    transform 300ms cubic-bezier(0.22, 1, 0.36, 1),
     opacity 150ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @media (min-width: 768px) {
   .navigation-sidebar { overflow: hidden; }
-  .navigation-sidebar-content { width: 280px; min-width: 280px; }
+  .navigation-sidebar-content { width: 252px; min-width: 252px; }
   .navigation-sidebar-content[data-compact="true"] { width: 72px; min-width: 72px; }
   .navigation-sidebar-content[data-compact="true"] [data-slot="sidebar-header"] { justify-content: center; padding-left: 0; padding-right: 0; }
   .navigation-sidebar-content[data-compact="true"] [data-slot="sidebar-group"] { padding-left: 12px; padding-right: 12px; }
   .navigation-sidebar-content[data-compact="true"] [data-slot="sidebar-menu-button"] { justify-content: center; padding-left: 0; padding-right: 0; }
   .navigation-sidebar-content[data-compact="true"] [data-sidebar-label] { display: none; }
+}
+
+/*
+ * Transitions.dev panel reveal, sliding across the full width. The travel is long
+ * enough to read as a full open without the recipe's cross-blur.
+ * Pages are see-through, so the mobile sidebar needs its own surface.
+ */
+@media (max-width: 767px) {
+  .navigation-sidebar {
+    --panel-open-dur: 400ms;
+    --panel-close-dur: 350ms;
+    --panel-ease: cubic-bezier(0.22, 1, 0.36, 1);
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    background: var(--bg-raised);
+    opacity: 0;
+    transition: translate var(--panel-close-dur) var(--panel-ease),
+      opacity var(--panel-close-dur) var(--panel-ease);
+  }
+  .navigation-sidebar[data-open="true"] {
+    opacity: 1;
+    transition-duration: var(--panel-open-dur);
+  }
+  .navigation-sidebar .dynamic-height {
+    height: 100%;
+    min-height: 0;
+  }
+  .navigation-sidebar-scrim {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 350ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .navigation-sidebar-scrim[data-open="true"] {
+    opacity: 1;
+    pointer-events: auto;
+    transition-duration: 400ms;
+  }
 }
 
 .navigation-header button,
@@ -61,6 +97,7 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .navigation-sidebar,
+  .navigation-sidebar-scrim,
   .navigation-header button,
   .navigation-button { transition: none !important; }
   .navigation-header button:active,
@@ -82,6 +119,15 @@
 :is(.dark, .deep-sky) .navigation-header button.sidebar-reopen-button {
   background-color: var(--fill-inverse-strong);
   color: var(--fill-neutral-strong);
+}
+/* Phones and tablets always show it, so it sits quietly with the other header icons. */
+@media (max-width: 767.98px) {
+  .navigation-header button.sidebar-reopen-button,
+  :is(.dark, .deep-sky) .navigation-header button.sidebar-reopen-button {
+    background-color: var(--fill-neutral-weak);
+    color: var(--icon-neutral-strong);
+    box-shadow: none;
+  }
 }
 .navigation-header button.sidebar-reopen-button:focus-visible {
   outline: 2px solid var(--stroke-neutral-strong);

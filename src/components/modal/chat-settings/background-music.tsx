@@ -1,6 +1,7 @@
 import { reportFetcherError } from "@/api/report-fetcher-error";
 import { Button } from "@/components/ui/button";
-import { Slider } from "@/components/ui/slider";
+import { VolumeControl } from "./volume-control";
+import { chatSettingsCard } from "./chat-settings-card";
 import "./volume-slider.css";
 import { useCallback, useRef } from "react";
 import { mutate } from "swr";
@@ -148,7 +149,7 @@ export default function BackgroundMusic({ compact = false }: { compact?: boolean
           </div>
         </div>
         {isBuffering && <p role="status" className="text-xs text-text-neutral-weak">Loading music…</p>}
-        <Slider className="ambience-volume-slider" label="Volume" size="compact" trackStyle={{ backgroundColor: "var(--stroke-neutral-weak)" }} fillStyle={{ backgroundColor: "var(--icon-neutral-weak)" }} thumbColor="var(--icon-neutral-strong)" thumbBorderColor="var(--bg-neutral-solid)" value={volume} onChange={(value) => { if (typeof value === "number") setVolume(value); }} min={0} max={100} formatValue={(value) => `${value}%`} />
+        <VolumeControl value={volume} onChange={setVolume} />
       </section>
     );
   }
@@ -158,69 +159,63 @@ export default function BackgroundMusic({ compact = false }: { compact?: boolean
       <h2 className="font-geist text-base font-semibold leading-6 text-text-neutral-strong">
         Background Ambience
       </h2>
-      {audioFiles.length === 0 ? <p className="text-sm text-text-neutral-weak">No background tracks are available.</p> : null}
-      <Slider
-        className="ambience-volume-slider"
-        label="Volume"
-        size="default"
-        value={volume}
-        onChange={(value) => { if (typeof value === "number") setVolume(value); }}
-        min={0}
-        max={100}
-        formatValue={(value) => `${value}%`}
-      />
-      <div className="grid grid-cols-2 gap-3">
-        <button
-          type="button"
-          className={cn(
-            "relative flex min-h-[66px] items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition-[transform,background-color,border-color] duration-150 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100",
-            !isEnabled ? "border-stroke-brand-strong bg-background" : "border-stroke-neutral-weak bg-background",
-          )}
-          onClick={() => void handleToggle(false)}
-          disabled={isMutating}
-          aria-label="Off No tune"
-        >
-          <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-fill-neutral-weaker">
-            <VolumeX className="size-4" aria-hidden />
-          </span>
-          <span className="flex min-w-0 flex-col">
-            <span className="font-geist text-sm font-semibold text-text-neutral-strong">Off</span>
-            <span className="font-inter text-xs text-text-neutral-weak">No tune</span>
-          </span>
-          {!isEnabled ? (
-            <CheckCircle2 className="absolute right-1.5 top-1.5 fill-fill-brand-strong text-text-inverse-strong" aria-hidden />
-          ) : null}
-        </button>
-        {audioFiles.map((audio, index) => (
+      <div data-testid="ambience-card" className={cn("flex flex-col gap-3", chatSettingsCard)}>
+        {audioFiles.length === 0 ? <p className="text-sm text-text-neutral-weak">No background tracks are available.</p> : null}
+        <VolumeControl value={volume} onChange={setVolume} />
+        <div className="grid grid-cols-1 gap-2">
           <button
             type="button"
-            key={audio.key}
             className={cn(
-              "relative flex min-h-[66px] max-w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition-[transform,background-color,border-color] duration-150 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100",
-              currentTrackIndex === index && isEnabled
-                ? "border-stroke-brand-strong bg-background"
-                : "border-stroke-neutral-weak bg-background text-text-neutral-strong hover:bg-fill-neutral-weaker",
-              isMutating ? "cursor-not-allowed opacity-50" : "cursor-pointer",
+              "relative flex items-center gap-3 rounded-xl border py-1.5 pl-3 pr-10 text-left transition-[transform,background-color,border-color] duration-150 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100",
+              !isEnabled ? "border-stroke-neutral-weak bg-fill-neutral-weak" : "border-stroke-neutral-weak bg-background",
+              isMutating ? "cursor-not-allowed" : "cursor-pointer",
             )}
-            onClick={() => !isMutating && handleTrackSelect(index)}
+            onClick={() => void handleToggle(false)}
             disabled={isMutating}
+            aria-label="Off No tune"
           >
-            <img src={musicImage} width={32} height={32} alt="" className="size-8 shrink-0" />
-            <div className="flex min-w-0 flex-1 flex-col">
-              <span className="block truncate font-inter text-sm font-medium text-text-neutral-strong">{audio.title}</span>
-              <span className="font-inter text-xs text-text-neutral-weak">Tune {index + 1}</span>
-            </div>
-            {currentTrackIndex === index && isPlaying && isEnabled && (
-              <span className="relative flex size-2 shrink-0">
-                <span className="absolute size-full animate-ping motion-reduce:animate-none rounded-full bg-fill-brand-strong" />
-                <span className="relative inline-flex size-2 rounded-full bg-fill-brand-strong" />
-              </span>
-            )}
-            {currentTrackIndex === index && isEnabled ? (
-              <CheckCircle2 className="absolute right-1.5 top-1.5 fill-fill-brand-strong text-text-inverse-strong" aria-hidden />
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-fill-neutral-weaker">
+              <VolumeX className="size-4" aria-hidden />
+            </span>
+            <span className="flex min-w-0 flex-col">
+              <span className="font-geist text-sm font-semibold text-text-neutral-strong">Off</span>
+              <span className="font-inter text-xs text-text-neutral-weaker">No tune</span>
+            </span>
+            {!isEnabled ? (
+              <CheckCircle2 className="absolute right-3 top-1/2 size-4 -translate-y-1/2 text-text-brand-strong" aria-hidden />
             ) : null}
           </button>
-        ))}
+          {audioFiles.map((audio, index) => (
+            <button
+              type="button"
+              key={audio.key}
+              className={cn(
+                "relative flex max-w-full items-center gap-3 rounded-xl border py-1.5 pl-3 pr-10 text-left transition-[transform,background-color,border-color] duration-150 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100",
+                currentTrackIndex === index && isEnabled
+                  ? "border-stroke-neutral-weak bg-fill-neutral-weak text-text-neutral-strong"
+                  : "border-stroke-neutral-weak bg-background text-text-neutral-strong hover:bg-fill-neutral-weaker",
+                isMutating ? "cursor-not-allowed opacity-50" : "cursor-pointer",
+              )}
+              onClick={() => !isMutating && handleTrackSelect(index)}
+              disabled={isMutating}
+            >
+              <img src={musicImage} width={32} height={32} alt="" className="size-8 shrink-0" />
+              <div className="flex min-w-0 flex-1 flex-col">
+                <span className="block truncate font-inter text-sm font-medium text-text-neutral-strong">{audio.title}</span>
+                <span className="font-inter text-xs text-text-neutral-weaker">Tune {index + 1}</span>
+              </div>
+              {currentTrackIndex === index && isPlaying && isEnabled && (
+                <span className="relative flex size-2 shrink-0">
+                  <span className="absolute size-full animate-ping motion-reduce:animate-none rounded-full bg-fill-brand-strong" />
+                  <span className="relative inline-flex size-2 rounded-full bg-fill-brand-strong" />
+                </span>
+              )}
+              {currentTrackIndex === index && isEnabled ? (
+                <CheckCircle2 className="absolute right-3 top-1/2 size-4 -translate-y-1/2 text-text-brand-strong" aria-hidden />
+              ) : null}
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );
