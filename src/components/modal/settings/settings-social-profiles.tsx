@@ -145,7 +145,7 @@ export function SettingsSocialProfiles() {
     <form
       aria-label="Social profiles"
       aria-busy={saving}
-      className="settings-card px-8 py-5"
+      className="settings-card p-4 sm:p-6"
       onSubmit={(event) => {
         event.preventDefault();
         void save();

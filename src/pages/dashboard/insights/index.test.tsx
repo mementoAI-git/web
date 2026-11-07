@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, useLocation } from "react-router-dom";
 import { SWRConfig } from "swr";
@@ -264,30 +264,131 @@ it("offers sources, edit, and forget for an observation", async () => {
   ).toEqual(["Sources", "Edit", "Forget"]);
 });
 
-it("lists the sources of an observation and opens one", async () => {
+it("does not show the plan card on the insights page", () => {
+  setup();
+  expect(screen.queryByRole("button", { name: "Manage plan" })).toBeNull();
+  expect(screen.queryByRole("button", { name: "Upgrade" })).toBeNull();
+  expect(screen.queryByText(/You’re on Memento/)).toBeNull();
+});
+
+it("opens a page of sources when an observation is clicked, and comes back", async () => {
   const user = userEvent.setup();
   setup();
-  await openOption(user, "You value independent thinking", "Sources");
-  const source = await screen.findByRole("button", {
+  await user.click(
+    screen.getByRole("button", { name: "You value independent thinking" }),
+  );
+  expect(screen.getByText("Memories behind this note")).toBeVisible();
+  expect(screen.getByText("Autonomy shows up in your decisions.")).toBeVisible();
+  expect(screen.getByText("1 Memory source")).toBeVisible();
+  const source = screen.getByRole("button", {
     name: "View Why I changed careers",
   });
-  expect(source).toHaveTextContent("May 18, 2026");
-  expect(source.querySelector("img")).toHaveAttribute(
-    "src",
-    "https://api.dicebear.com/10.x/disco/svg?seed=story-1",
-  );
   await user.click(source);
   expect(pushModal).toHaveBeenCalledWith("view-memory", {
     memoryId: "story-1",
   });
   expect(screen.getByTestId("location")).not.toHaveTextContent("/stories");
+  await user.click(screen.getByRole("button", { name: "Back to insights" }));
+  expect(tab("Observations")).toHaveAttribute("aria-selected", "true");
+});
+
+it("opens a source by clicking anywhere in its row, once per click", async () => {
+  const user = userEvent.setup();
+  setup();
+  await user.click(
+    screen.getByRole("button", { name: "You value independent thinking" }),
+  );
+  await user.click(screen.getByText("Why I changed careers"));
+  expect(pushModal).toHaveBeenCalledTimes(1);
+  expect(pushModal).toHaveBeenLastCalledWith("view-memory", {
+    memoryId: "story-1",
+  });
+  await user.click(screen.getByText("18 May, 2026"));
+  expect(pushModal).toHaveBeenCalledTimes(2);
+  await user.click(
+    screen.getByRole("button", { name: "View Why I changed careers" }),
+  );
+  expect(pushModal).toHaveBeenCalledTimes(3);
+  screen.getByRole("button", { name: "View Why I changed careers" }).focus();
+  await user.keyboard("{Enter}");
+  expect(pushModal).toHaveBeenCalledTimes(4);
+});
+
+it("lists sources as rows of title and date, without headers or a View button", async () => {
+  const user = userEvent.setup();
+  setup();
+  await user.click(
+    screen.getByRole("button", { name: "You value independent thinking" }),
+  );
+  expect(screen.queryByText("Topic")).toBeNull();
+  expect(screen.queryByText("Date created")).toBeNull();
+  expect(screen.queryByText("View")).toBeNull();
+  const row = screen.getByRole("listitem");
+  expect(row).toHaveTextContent("Why I changed careers");
+  expect(row.lastElementChild).toHaveTextContent("18 May, 2026");
+});
+
+it("opens the same page from the Sources option", async () => {
+  const user = userEvent.setup();
+  setup();
+  await openOption(user, "You value independent thinking", "Sources");
+  expect(await screen.findByText("1 Memory source")).toBeVisible();
+});
+
+it("does not open the page when using an observation's options", async () => {
+  const user = userEvent.setup();
+  setup();
+  await openOption(user, "You value independent thinking", "Edit");
+  expect(screen.getByRole("dialog", { name: "Edit this note" })).toBeVisible();
+  expect(screen.queryByText("Memories behind this note")).toBeNull();
+});
+
+it("previews sources beside the cursor without blocking the card", async () => {
+  const user = userEvent.setup();
+  setup();
+  const card = screen.getByRole("button", {
+    name: "You value independent thinking",
+  });
+  await user.hover(card);
+  const preview = await screen.findByTestId("observation-sources-preview");
+  expect(preview).toHaveAttribute("aria-hidden", "true");
+  expect(preview).toHaveTextContent("Why I changed careers");
+  expect(preview).toHaveTextContent("May 18, 2026");
+  expect(preview.querySelector("img")).toHaveAttribute(
+    "src",
+    "https://api.dicebear.com/10.x/disco/svg?seed=story-1",
+  );
+  await user.click(card);
+  expect(screen.getByText("Memories behind this note")).toBeVisible();
+  await waitFor(() =>
+    expect(screen.queryByTestId("observation-sources-preview")).toBeNull(),
+  );
+});
+
+it("hides the preview over the options button and while its menu is open", async () => {
+  const user = userEvent.setup();
+  setup();
+  await user.hover(
+    screen.getByRole("button", { name: "You value independent thinking" }),
+  );
+  await screen.findByTestId("observation-sources-preview");
+  await user.hover(
+    screen.getByRole("button", {
+      name: "Options for You value independent thinking",
+    }),
+  );
+  await waitFor(() =>
+    expect(screen.queryByTestId("observation-sources-preview")).toBeNull(),
+  );
 });
 
 it("says when an observation has no linked sources", async () => {
   const user = userEvent.setup();
   setup();
   await user.click(tab("Preferences"));
-  await openOption(user, "You prefer quiet mornings", "Sources");
+  await user.click(
+    screen.getByRole("button", { name: "You prefer quiet mornings" }),
+  );
   expect(await screen.findByText(/No linked sources/)).toBeVisible();
 });
 
@@ -443,7 +544,7 @@ it("opens insight details, sorts sources, and returns to the same tab", async ()
   ).toBeVisible();
   expect(screen.getByText("2 Memory sources")).toBeVisible();
   const titles = () =>
-    within(screen.getByRole("table", { name: "Memory sources" }))
+    within(screen.getByRole("list", { name: "Memory sources" }))
       .getAllByRole("button", { name: /^View / })
       .map((button) => button.getAttribute("aria-label"));
   expect(titles()).toEqual(["View Talking about rest", "View Sunday at home"]);

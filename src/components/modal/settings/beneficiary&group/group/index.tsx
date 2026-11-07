@@ -78,8 +78,8 @@ export default function GroupManagement({
       <div
         className={
           compact
-            ? "flex flex-col items-center rounded-3xl border border-dashed border-stroke-neutral-weak bg-fill-neutral-weak px-4 py-10 text-center"
-            : "settings-card flex flex-col items-center px-4 py-10 text-center"
+            ? "flex flex-col items-center rounded-3xl border border-dashed border-stroke-neutral-weak bg-fill-neutral-weak px-4 py-10 sm:px-6 text-center"
+            : "settings-card flex flex-col items-center px-4 py-10 text-center sm:px-6"
         }
       >
         {retryControl}
@@ -161,7 +161,7 @@ export default function GroupManagement({
             <li key={group._id}>
               <Link
                 to={`/settings/beneficiary?group=${group._id}`}
-                className="settings-card settings-row items-start p-4"
+                className="settings-card settings-row items-start p-4 sm:p-6"
               >
                 <span className="flex min-w-0 items-start gap-4">
                   <span

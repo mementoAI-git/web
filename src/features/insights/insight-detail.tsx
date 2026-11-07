@@ -1,6 +1,6 @@
 import { useState, type CSSProperties } from "react";
 import dayjs from "dayjs";
-import { ChevronDown, CircleHelp, Undo2 } from "lucide-react";
+import { ChevronDown, Undo2 } from "lucide-react";
 import useSWR from "swr";
 import aiFillIcon from "@/assets/icon/mingcute_ai-fill.svg";
 import endpoint from "@/api/endpoint";
@@ -12,11 +12,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Spinner } from "@/components/ui/spinner";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import type { EnrichmentCategory } from "@/features/enrichment/enrichment-categories";
 import { PageHeading } from "@/pages/dashboard/component/page-heading";
 import { EnrichmentFieldIcon } from "./enrichment-field-icon";
@@ -27,6 +22,11 @@ import type {
   InsightSource,
   InsightSourceList,
 } from "./insights-api.types";
+import type { ObservationItem } from "./observation-list";
+import {
+  NO_OBSERVATION_SOURCES,
+  observationSourcesUrl,
+} from "./observation-sources";
 
 type SortOrder = "newest" | "oldest";
 const SORT_LABELS: Record<SortOrder, string> = {
@@ -117,34 +117,15 @@ function SourcesTable({
           <p>{empty}</p>
         </div>
       ) : (
-        <div className="insights-table" role="table" aria-label="Memory sources">
-          <div className="insights-table-head insights-sources-row" role="row">
-            <span role="columnheader">Topic</span>
-            <span role="columnheader" className="flex items-center gap-1.5">
-              Date created
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button type="button" aria-label="About date created">
-                    <CircleHelp className="size-4" aria-hidden />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent className="z-[120]">
-                  When this was saved or shared
-                </TooltipContent>
-              </Tooltip>
-            </span>
-            <span role="columnheader" className="sr-only">
-              Action
-            </span>
-          </div>
+        <ul className="insights-table" aria-label="Memory sources">
           {sources.map((source) => (
-            <div
+            <li
               // A chat appears once for each day that supports the insight.
               key={`${source.id}-${source.created_at}`}
-              className="insights-sources-row"
-              role="row"
+              className="insights-sources-row insights-source-row"
+              onClick={() => onView(source)}
             >
-              <div className="flex min-w-0 items-center gap-3" role="cell">
+              <div className="flex min-w-0 items-center gap-3">
                 <img
                   src={source.thumbnail || getQuestionIdenticonUrl(source.id)}
                   alt=""
@@ -153,31 +134,23 @@ function SourcesTable({
                   referrerPolicy="no-referrer"
                   className="insights-thumbnail object-cover"
                 />
-                <span className="truncate font-inter text-sm font-medium text-text-neutral-strong">
+                {/* The row handles clicks; this is its keyboard and screen reader control. */}
+                <button
+                  type="button"
+                  className="insights-source-open truncate text-left font-inter text-sm font-medium text-text-neutral-strong"
+                  aria-label={`View ${source.title}`}
+                >
                   {source.title}
-                </span>
+                </button>
               </div>
-              <span
-                className="font-inter text-sm text-text-neutral-weak"
-                role="cell"
-              >
+              <span className="font-inter text-sm whitespace-nowrap text-text-neutral-weak">
                 {source.created_at
                   ? dayjs(source.created_at).format("D MMM, YYYY")
                   : "—"}
               </span>
-              <div role="cell">
-                <Button
-                  variant="outline"
-                  className="insights-action"
-                  aria-label={`View ${source.title}`}
-                  onClick={() => onView(source)}
-                >
-                  View
-                </Button>
-              </div>
-            </div>
+            </li>
           ))}
-        </div>
+        </ul>
       )}
     </section>
   );
@@ -274,6 +247,37 @@ export function InsightDetail({
       <SourcesTable
         sourcesKey={`${endpoint.insightSources}?insight=${encodeURIComponent(insight.id)}`}
         empty="The memories behind this insight are no longer available."
+        onView={onView}
+      />
+    </DetailFrame>
+  );
+}
+
+/** One observation or preference and the memories it came from. */
+export function ObservationDetail({
+  item,
+  onBack,
+  onView,
+}: {
+  item: ObservationItem;
+  onBack: () => void;
+  onView: (source: InsightSource) => void;
+}) {
+  return (
+    <DetailFrame
+      categories={[item.category]}
+      subtitle="Memories behind this note"
+      onBack={onBack}
+      note={
+        <>
+          <p>{item.title}</p>
+          <p className="mt-1 text-text-neutral-weak">{item.detail}</p>
+        </>
+      }
+    >
+      <SourcesTable
+        sourcesKey={observationSourcesUrl(item.id)}
+        empty={NO_OBSERVATION_SOURCES}
         onView={onView}
       />
     </DetailFrame>

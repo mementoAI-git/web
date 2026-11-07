@@ -12,7 +12,7 @@ export function SettingsFieldRow({
   children: ReactNode;
 }) {
   return (
-    <div className="flex min-w-0 flex-col gap-1 py-3.5 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+    <div className="flex min-w-0 flex-col gap-1 py-3.5 first-of-type:pt-0 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
       <Label
         htmlFor={htmlFor}
         className="shrink-0 text-sm font-normal text-text-neutral-strong sm:w-32"

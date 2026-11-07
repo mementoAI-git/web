@@ -10,6 +10,7 @@ import { SettingsHub } from "./settings-hub";
 import { SettingsSubpage } from "./settings-subpage";
 import "@/components/modal/memory-insights/insights.css";
 import "./settings-overlay.css";
+import "@/components/motion/page-motion.css";
 
 const VALID_TABS = ["general", "security", "beneficiary", "privacy", "billing"];
 
@@ -29,7 +30,7 @@ export default function SettingsPage() {
     <TooltipProvider>
       <div className="settings-page">
         <div className="insights-scroll">
-          <main className="insights-main container">
+          <main className="page-motion insights-main">
             {!tab ? <SettingsHub /> : null}
             {tab === "general" ? <General /> : null}
             {tab === "security" ? <Security /> : null}

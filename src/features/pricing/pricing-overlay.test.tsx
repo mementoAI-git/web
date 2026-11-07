@@ -115,7 +115,8 @@ describe("PricingOverlay subscription states", () => {
     ).not.toBeInTheDocument();
     expect(screen.queryByText(/Billed monthly/)).not.toBeInTheDocument();
     expect(screen.getByRole("dialog")).toHaveClass("insights-overlay");
-    expect(screen.getByRole("main")).toHaveClass("insights-main");
+    expect(screen.getByRole("main")).toHaveClass("insights-main", "page-motion");
+    expect(screen.getByRole("heading", { level: 2, name: "Free" }).closest(".pricing-plans")).toHaveClass("page-stagger");
     expect(
       screen.getByRole("button", { name: "Start 14-day trial" }),
     ).toHaveClass(

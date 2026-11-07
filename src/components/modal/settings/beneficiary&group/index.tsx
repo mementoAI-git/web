@@ -24,7 +24,7 @@ export default function PeopleAndGroups() {
       <Tabs
         value={view}
         onValueChange={(next) => setSearchParams({ view: String(next) })}
-        className="min-w-0 flex-col gap-7"
+        className="page-stagger min-w-0 flex-col gap-7"
       >
         <div className="flex flex-wrap items-center justify-between gap-3">
           <TabsList aria-label="People and groups" className="insights-tabs">

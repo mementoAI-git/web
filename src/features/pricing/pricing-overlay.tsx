@@ -1,6 +1,7 @@
 import { useLocation } from "react-router-dom";
 import { isSkyCardPage } from "@/pages/dashboard/component/sky-card-page";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
+import "@/components/motion/page-motion.css";
 
 import {
   AudioLines,
@@ -278,8 +279,8 @@ export function PricingOverlay({
                 }}
               />
               <div className="insights-scroll">
-                <main className="insights-main container">
-                  <DialogHeader className="items-center gap-3 text-center">
+                <main className="page-motion insights-main container">
+                  <DialogHeader className="page-rise page-rise--heading items-center gap-3 text-center">
                     <DialogTitle className="font-garamond text-3xl font-medium leading-tight text-text-neutral-strong sm:text-4xl">
                       {canViewPricing
                         ? title
@@ -295,7 +296,10 @@ export function PricingOverlay({
                   </DialogHeader>
                   {canViewPricing ? (
                     <>
-                      <div className="pricing-plans">
+                      <div
+                        className="page-stagger pricing-plans"
+                        style={{ "--page-stagger-start": 1 } as CSSProperties}
+                      >
                         <Card className="pricing-plan gap-6 py-7">
                           <CardHeader>
                             {/* Matches the Pro row's height so both cards' content lines up. */}
@@ -395,62 +399,69 @@ export function PricingOverlay({
                           </CardContent>
                         </Card>
                       </div>
-                      {plan.note && (
-                        <p className="text-sm text-muted-foreground">
-                          {plan.note}
-                        </p>
-                      )}
-                      {plan.cancelRow && (
-                        <div className="insights-card flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
-                          <div className="flex flex-col gap-1">
-                            <p className="font-medium">{plan.cancelRow.title}</p>
-                            <p className="text-sm text-muted-foreground">
-                              {plan.cancelRow.body}
-                            </p>
+                      {/* Stays out of the layout, so these keep their spacing while still staggering. */}
+                      <div
+                        className="page-stagger contents"
+                        style={{ "--page-stagger-start": 3 } as CSSProperties}
+                      >
+                        {plan.note && (
+                          <p className="text-sm text-muted-foreground">
+                            {plan.note}
+                          </p>
+                        )}
+                        {plan.cancelRow && (
+                          <div className="insights-card flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="flex flex-col gap-1">
+                              <p className="font-medium">{plan.cancelRow.title}</p>
+                              <p className="text-sm text-muted-foreground">
+                                {plan.cancelRow.body}
+                              </p>
+                            </div>
+                            <Button
+                              variant={
+                                plan.cancelRow.action === "resume"
+                                  ? "outline"
+                                  : "ghost"
+                              }
+                              className={
+                                plan.cancelRow.action === "resume"
+                                  ? undefined
+                                  : "rounded-full bg-fill-error-weak text-text-error-strong hover:bg-fill-error-weak/80"
+                              }
+                              disabled={
+                                checkoutLoading ||
+                                subscriptionLoading ||
+                                Boolean(subscriptionError)
+                              }
+                              onClick={() =>
+                                plan.cancelRow?.action === "resume"
+                                  ? void resume()
+                                  : setCancelling(true)
+                              }
+                            >
+                              {plan.cancelRow.action === "resume"
+                                ? "Keep plan"
+                                : "Cancel plan"}
+                            </Button>
                           </div>
+                        )}
+                        {dismissLabel && (
                           <Button
-                            variant={
-                              plan.cancelRow.action === "resume"
-                                ? "outline"
-                                : "ghost"
-                            }
-                            className={
-                              plan.cancelRow.action === "resume"
-                                ? undefined
-                                : "rounded-full bg-fill-error-weak text-text-error-strong hover:bg-fill-error-weak/80"
-                            }
-                            disabled={
-                              checkoutLoading ||
-                              subscriptionLoading ||
-                              Boolean(subscriptionError)
-                            }
-                            onClick={() =>
-                              plan.cancelRow?.action === "resume"
-                                ? void resume()
-                                : setCancelling(true)
-                            }
+                            variant="ghost"
+                            className="self-center"
+                            disabled={checkoutLoading}
+                            onClick={requestClose}
                           >
-                            {plan.cancelRow.action === "resume"
-                              ? "Keep plan"
-                              : "Cancel plan"}
+                            {dismissLabel}
                           </Button>
-                        </div>
-                      )}
-                      {dismissLabel && (
-                        <Button
-                          variant="ghost"
-                          className="self-center"
-                          disabled={checkoutLoading}
-                          onClick={requestClose}
-                        >
-                          {dismissLabel}
-                        </Button>
-                      )}
+                        )}
+                      </div>
                     </>
                   ) : (
                     <Button
                       variant="outline"
-                      className="self-center"
+                      className="page-rise self-center"
+                      style={{ "--page-rise-index": 1 } as CSSProperties}
                       onClick={requestClose}
                     >
                       Back to Memento

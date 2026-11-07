@@ -42,7 +42,7 @@ export function InsightsOverlayNavigation({
         </TabsList>
       </div>
       {sections.map((section) => (
-        <TabsContent key={section.value} value={section.value} className="mt-0">
+        <TabsContent key={section.value} value={section.value} className="page-fade-in mt-0">
           {content[section.value]}
         </TabsContent>
       ))}

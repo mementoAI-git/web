@@ -1,0 +1,90 @@
+/*
+ * The Overview and Stories entrance, as keyframes rather than the t-stagger-line
+ * transition: nothing stays on the element once it lands, so a settled page keeps
+ * no transform, filter or will-change for fixed and sticky children to work around.
+ */
+.page-rise {
+  --page-rise-dur: 250ms;
+  --page-rise-distance: 8px;
+  --page-rise-blur: 2px;
+  animation: page-rise var(--page-rise-dur) cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  animation-delay: calc(40ms * var(--page-rise-index, 0));
+}
+.page-rise--heading {
+  --page-rise-dur: 500ms;
+  --page-rise-distance: 12px;
+  --page-rise-blur: 3px;
+}
+@keyframes page-rise {
+  from {
+    opacity: 0;
+    transform: translateY(var(--page-rise-distance));
+    filter: blur(var(--page-rise-blur));
+  }
+}
+
+/*
+ * Overview's card stagger: each child comes in on its own, 40ms after the last. Set
+ * --page-stagger-start to carry the count on from the items before this group, and
+ * nest another group to reach items inside a wrapper, which itself stays still.
+ */
+.page-stagger > * {
+  --page-rise-dur: 250ms;
+  --page-rise-distance: 8px;
+  --page-rise-blur: 2px;
+  animation: page-rise var(--page-rise-dur) cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  animation-delay: calc(40ms * (var(--page-stagger-start, 0) + var(--page-stagger-index, 0)));
+}
+.page-stagger > :nth-child(2) { --page-stagger-index: 1; }
+.page-stagger > :nth-child(3) { --page-stagger-index: 2; }
+.page-stagger > :nth-child(4) { --page-stagger-index: 3; }
+.page-stagger > :nth-child(5) { --page-stagger-index: 4; }
+.page-stagger > :nth-child(6) { --page-stagger-index: 5; }
+.page-stagger > :nth-child(7) { --page-stagger-index: 6; }
+.page-stagger > :nth-child(n + 8) { --page-stagger-index: 7; }
+.page-stagger > .page-stagger {
+  animation: none;
+}
+
+/* Stories' results fade, for content that swaps in place: tabs, details and loaded lists. */
+.page-fade-in {
+  animation: page-fade-in 400ms ease-in-out;
+}
+@keyframes page-fade-in {
+  from { opacity: 0; }
+}
+
+/* Stories' press feedback. */
+.page-motion button,
+.page-motion .settings-row {
+  transition: background-color 150ms ease-out, color 150ms ease-out,
+    opacity 150ms ease-out, transform 150ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.page-motion button:active:not(:disabled),
+.page-motion a.settings-row:active {
+  transform: scale(0.98);
+}
+.page-motion a.settings-row > svg:last-child {
+  transition: transform 150ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.page-motion a.settings-row:hover > svg:last-child {
+  transform: translateX(2px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-rise,
+  .page-stagger > *,
+  .page-fade-in {
+    animation: none !important;
+  }
+  .page-motion button,
+  .page-motion .settings-row,
+  .page-motion a.settings-row > svg:last-child {
+    transition: none !important;
+  }
+  .page-motion button:active,
+  .page-motion a.settings-row:active,
+  .page-motion a.settings-row:hover > svg:last-child {
+    transform: none !important;
+  }
+}

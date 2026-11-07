@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { Undo2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -17,7 +17,7 @@ export function SettingsSubpage({
 }) {
   return (
     <div className="flex flex-col gap-10">
-      <div className="insights-page-heading">
+      <div className="insights-page-heading page-rise page-rise--heading">
         <Button
           asChild
           variant="ghost"
@@ -30,7 +30,9 @@ export function SettingsSubpage({
         </Button>
         <PageHeading className="break-words">{title}</PageHeading>
       </div>
-      {children}
+      <div className="page-stagger flex flex-col gap-10" style={{ "--page-stagger-start": 1 } as CSSProperties}>
+        {children}
+      </div>
     </div>
   );
 }

@@ -1,4 +1,11 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import "@/components/motion/page-motion.css";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+} from "react";
 import { Archive } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useModal } from "@/hooks/use-modal";
@@ -10,6 +17,7 @@ import { getEnrichmentField } from "@/features/insights/enrichment-fields";
 import {
   EnrichmentFieldDetail,
   InsightDetail,
+  ObservationDetail,
 } from "@/features/insights/insight-detail";
 import type {
   Insight,
@@ -27,7 +35,6 @@ import {
 } from "@/features/insights/observation-list";
 import type { PersonaObservation } from "@/features/insights/observations-api.types";
 import { useObservations } from "@/features/insights/use-observations";
-import { PlanSummaryCard } from "@/features/insights/plan-summary-card";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -38,6 +45,7 @@ function toItem(observation: PersonaObservation): ObservationItem {
     id: observation.id,
     title: observation.heading,
     detail: observation.note,
+    category: observation.category_key,
   };
 }
 
@@ -49,6 +57,7 @@ type ReturnState = {
 
 type View =
   | { kind: "insight"; insight: Insight }
+  | { kind: "observation"; item: ObservationItem }
   | { kind: "field"; field: EnrichmentCategory };
 
 export default function InsightsPage() {
@@ -120,7 +129,7 @@ export default function InsightsPage() {
     return (
       <ObservationList
         items={items}
-        onViewSource={viewSource}
+        onOpen={(item) => openView({ kind: "observation", item })}
         onChanged={() => mutate()}
         empty={
           <div className="insights-empty">
@@ -163,55 +172,77 @@ export default function InsightsPage() {
     <TooltipProvider>
       <div className="insights-page">
         <div className="insights-scroll" ref={scrollRef}>
-          <main className="insights-main container" ref={mainRef} tabIndex={-1}>
+          <main
+            className="page-motion insights-main"
+            ref={mainRef}
+            tabIndex={-1}
+          >
             {view ? (
-              view.kind === "insight" ? (
-                <InsightDetail
-                  insight={view.insight}
-                  onBack={goBack}
-                  onView={viewSource}
-                />
-              ) : (
-                <EnrichmentFieldDetail
-                  field={view.field}
-                  onBack={goBack}
-                  onView={viewSource}
-                  onReflect={reflectOn}
-                />
-              )
+              <div
+                key={history.length}
+                className="page-fade-in flex min-w-0 flex-col [gap:inherit]"
+              >
+                {view.kind === "insight" ? (
+                  <InsightDetail
+                    insight={view.insight}
+                    onBack={goBack}
+                    onView={viewSource}
+                  />
+                ) : view.kind === "observation" ? (
+                  <ObservationDetail
+                    item={view.item}
+                    onBack={goBack}
+                    onView={viewSource}
+                  />
+                ) : (
+                  <EnrichmentFieldDetail
+                    field={view.field}
+                    onBack={goBack}
+                    onView={viewSource}
+                    onReflect={reflectOn}
+                  />
+                )}
+              </div>
             ) : (
               <>
-                <PageHeading>
+                <PageHeading className="page-rise page-rise--heading">
                   My <em>insights</em>
                 </PageHeading>
-                <div className="flex flex-col gap-4">
+                <div
+                  className="page-rise"
+                  style={{ "--page-rise-index": 1 } as CSSProperties}
+                >
                   <MemoryStatistics />
-                  <PlanSummaryCard onNavigate={(href) => navigate(href)} />
                 </div>
-                <InsightsOverlayNavigation
-                  value={section}
-                  onValueChange={setSection}
-                  content={{
-                    observations: renderList(
-                      observations,
-                      "Your observations are taking shape",
-                      "Keep saving memories and reflecting. What Memento notices about you will appear here.",
-                    ),
-                    insights: <InsightsPanel onOpen={openInsight} />,
-                    preferences: renderList(
-                      preferences,
-                      "No preferences yet",
-                      "As you share what you like and dislike, your preferences will appear here.",
-                    ),
-                    enrichment: (
-                      <EnrichmentFieldsTable
-                        onExplore={(field) =>
-                          openView({ kind: "field", field })
-                        }
-                      />
-                    ),
-                  }}
-                />
+                <div
+                  className="page-rise min-w-0"
+                  style={{ "--page-rise-index": 2 } as CSSProperties}
+                >
+                  <InsightsOverlayNavigation
+                    value={section}
+                    onValueChange={setSection}
+                    content={{
+                      observations: renderList(
+                        observations,
+                        "Your observations are taking shape",
+                        "Keep saving memories and reflecting. What Memento notices about you will appear here.",
+                      ),
+                      insights: <InsightsPanel onOpen={openInsight} />,
+                      preferences: renderList(
+                        preferences,
+                        "No preferences yet",
+                        "As you share what you like and dislike, your preferences will appear here.",
+                      ),
+                      enrichment: (
+                        <EnrichmentFieldsTable
+                          onExplore={(field) =>
+                            openView({ kind: "field", field })
+                          }
+                        />
+                      ),
+                    }}
+                  />
+                </div>
               </>
             )}
           </main>

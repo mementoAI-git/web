@@ -135,7 +135,7 @@ function ProfileSection({ label, fields }: { label: string; fields: Field[] }) {
       aria-label={label}
       onSubmit={save}
       aria-busy={isMutating}
-      className="settings-card px-8 py-5"
+      className="settings-card p-4 sm:p-6"
     >
       <fieldset disabled={!user || isMutating} className="min-w-0">
         <legend className="sr-only">{label}</legend>

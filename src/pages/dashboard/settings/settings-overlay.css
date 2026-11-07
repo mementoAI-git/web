@@ -12,6 +12,9 @@
   border-radius: 16px;
   background: var(--insights-card);
 }
+.settings-card.settings-row {
+  border-radius: 16px;
+}
 .settings-row {
   display: flex;
   min-width: 0;

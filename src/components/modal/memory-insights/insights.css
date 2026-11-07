@@ -104,6 +104,10 @@
   overflow-y: auto;
   overscroll-behavior: contain;
 }
+/* Insights and Settings read as a narrow column; Pricing keeps the page container. */
+.insights-main:not(.container) {
+  width: min(100% - 64px, 700px);
+}
 .insights-main {
   display: flex;
   margin: 36px auto 0;
@@ -186,16 +190,61 @@
   background: var(--insights-card);
 }
 .insights-observation {
+  position: relative;
   min-height: 84px;
   align-items: flex-start;
   gap: 16px;
   padding: 20px 16px;
+  transition: background-color 150ms ease-out;
 }
-.insights-sources-popup[data-slot="popover-content"] {
+.insights-observation:has(.insights-observation-open:focus-visible) {
+  outline: 2px solid var(--stroke-neutral-strong);
+  outline-offset: 2px;
+}
+.insights-observation-open {
+  cursor: pointer;
+  outline: none;
+}
+.insights-observation-open::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+.insights-observation-options {
+  position: relative;
+  z-index: 1;
+}
+@media (hover: hover) {
+  .insights-observation:hover {
+    background: color-mix(in srgb, var(--text-neutral-strong) 6%, var(--insights-card));
+  }
+}
+/* Follows the cursor, so it must never catch the pointer. */
+.insights-sources-popup {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 120;
   width: min(360px, calc(100vw - 32px));
-  gap: 0;
+  border: 1px solid var(--stroke-neutral-weak);
   border-radius: 16px;
   padding: 6px;
+  background: var(--popover);
+  color: var(--popover-foreground);
+  box-shadow: 0 12px 32px rgb(0 0 0 / 0.18);
+  pointer-events: none;
+}
+.insights-sources-more {
+  padding: 4px 8px 6px;
+  font-size: 12px;
+  color: var(--text-neutral-weak);
+}
+.insights-sources-label {
+  padding: 6px 8px 4px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-neutral-weak);
 }
 .insights-sources-list {
   display: flex;
@@ -211,10 +260,6 @@
   border-radius: 10px;
   padding: 8px;
   font-size: 14px;
-  transition: background-color 150ms ease-out;
-}
-.insights-source:hover {
-  background: var(--fill-neutral-weak);
 }
 .insights-source-thumbnail {
   display: block;
@@ -302,7 +347,7 @@
   grid-template-columns: minmax(0, 1fr) 136px 78px;
 }
 .insights-sources-row {
-  grid-template-columns: minmax(0, 1fr) 150px 86px;
+  grid-template-columns: minmax(0, 1fr) auto;
 }
 .insights-fields-row > :last-child,
 .insights-sources-row > :last-child {
@@ -311,6 +356,23 @@
 .insights-fields-row + .insights-fields-row,
 .insights-sources-row + .insights-sources-row {
   border-top: 1px solid var(--stroke-neutral-weak);
+}
+.insights-source-row {
+  cursor: pointer;
+  transition: background-color 150ms ease-out;
+}
+.insights-source-row:has(.insights-source-open:focus-visible) {
+  outline: 2px solid var(--stroke-neutral-strong);
+  outline-offset: -2px;
+}
+.insights-source-open {
+  cursor: pointer;
+  outline: none;
+}
+@media (hover: hover) {
+  .insights-source-row:hover {
+    background: color-mix(in srgb, var(--text-neutral-strong) 6%, transparent);
+  }
 }
 .insights-meter {
   position: relative;
@@ -368,6 +430,9 @@
   color: var(--text-neutral-weak);
 }
 @media (max-width: 640px) {
+  .insights-main:not(.container) {
+    width: calc(100% - 32px);
+  }
   .insights-main {
     margin-top: 20px;
     gap: 24px;
@@ -394,8 +459,7 @@
     gap: 10px 12px;
     padding: 14px;
   }
-  .insights-fields-row > :nth-child(1),
-  .insights-sources-row > :nth-child(1) {
+  .insights-fields-row > :nth-child(1) {
     grid-column: 1 / -1;
   }
   .insights-hero {
