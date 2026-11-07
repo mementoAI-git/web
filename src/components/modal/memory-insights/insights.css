@@ -209,7 +209,8 @@
   content: "";
   position: absolute;
   inset: 0;
-  border-radius: inherit;
+  /* The card's corners, not the pill button's. */
+  border-radius: 12px;
 }
 .insights-observation-options {
   position: relative;
@@ -309,14 +310,39 @@
   gap: 16px;
   padding: 16px;
 }
-/* Same tint and outline as the Pro card on the plan page. */
+/* Free plans get a bright billing card, with white text over it. Orange is live;
+   swap the class in PlanSummaryCard to `insights-plan-free-blue` for the blue one. */
 .insights-plan.insights-plan-free {
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--fill-brand-strong) 4%, var(--insights-card)),
-    color-mix(in srgb, var(--fill-brand-strong) 20%, var(--insights-card))
-  );
-  box-shadow: inset 0 0 0 1.5px var(--stroke-brand-weak);
+  /* A step deeper than --gradient-billing-pro (#ecc68c → #f58c2e), which Billing keeps. */
+  background: linear-gradient(to top, #e6ad6a, #ee7a1c 80.173%);
+}
+.insights-plan.insights-plan-free-blue {
+  background: var(--gradient-billing-free);
+}
+:is(.insights-plan-free, .insights-plan-free-blue) :is(.insights-plan-title, .insights-plan-body) {
+  color: var(--text-inverse-strong);
+}
+:is(.insights-plan-free, .insights-plan-free-blue) .insights-plan-body {
+  opacity: 0.85;
+}
+:is(.insights-plan-free, .insights-plan-free-blue) .insights-plan-action {
+  background: rgba(255, 255, 255, 0.2) !important;
+  color: var(--text-inverse-strong) !important;
+}
+/* The whole free card upgrades; see PlanSummaryCard. */
+.insights-plan:is(.insights-plan-free, .insights-plan-free-blue) {
+  cursor: pointer;
+}
+.insights-plan:is(.insights-plan-free, .insights-plan-free-blue):hover .insights-plan-action,
+:is(.insights-plan-free, .insights-plan-free-blue) .insights-plan-action:hover {
+  background: rgba(255, 255, 255, 0.3) !important;
+}
+.insights-plan-action {
+  background: rgba(255, 255, 255, 0.24) !important;
+  color: var(--text-inverse-strong) !important;
+}
+.insights-plan-free .insights-plan-action:hover {
+  background: rgba(255, 255, 255, 0.34) !important;
 }
 .insights-plan-action {
   flex: none;
