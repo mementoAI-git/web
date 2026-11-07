@@ -64,6 +64,7 @@ import {
   type VoiceModeVoice,
 } from "./voice-mode-voices";
 import { useVoicePreviewClip } from "./use-voice-preview-clip";
+import { VOICE_MENU_LAYER, VOICE_OVERLAY_LAYER, VOICE_SURFACE_LAYER } from "./voice-layers";
 
 interface VoiceinputProps {
   connectionPersonId?: string;
@@ -167,9 +168,10 @@ function VoicePicker({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
+        data-voice-ignore=""
         showCloseButton={false}
-        overlayClassName="z-[210] bg-overlay-backdrop"
-        className="z-[220] max-h-[calc(100dvh-2rem)] overflow-y-auto bg-background p-6 sm:max-w-[358px]"
+        overlayClassName={cn(VOICE_OVERLAY_LAYER, "bg-overlay-backdrop")}
+        className={cn(VOICE_SURFACE_LAYER, "max-h-[calc(100dvh-2rem)] overflow-y-auto bg-background p-6 sm:max-w-[358px]")}
       >
         {/* Phone sheets reset min-height on the dialog itself, so the height lives here. */}
         <div className="grid min-h-[calc(60dvh-3rem)] grid-rows-[1fr_auto] gap-6 sm:min-h-[min(432px,calc(100dvh-6rem))]">
@@ -294,7 +296,7 @@ function VoiceSettings({
           <SelectTrigger id="voice-language" aria-label="Language" className="w-full bg-background">
             <SelectValue />
           </SelectTrigger>
-          <SelectContent position="popper" align="end" className="z-[240]">
+          <SelectContent data-voice-ignore="" position="popper" align="end" className={VOICE_MENU_LAYER}>
             <SelectGroup>
               <SelectLabel>Conversation language</SelectLabel>
               {VOICE_LANGUAGES.map((language) => (
@@ -377,8 +379,9 @@ function VoiceSettingsSurface({
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogTrigger asChild>{trigger}</DialogTrigger>
         <FormDialogContent
-          overlayClassName="z-[225]"
-          className="z-[230] flex flex-col gap-0 overflow-hidden p-0"
+          data-voice-ignore=""
+          overlayClassName={VOICE_OVERLAY_LAYER}
+          className={cn(VOICE_SURFACE_LAYER, "flex flex-col gap-0 overflow-hidden p-0")}
         >
           <VoiceSettings {...settings} sheet />
         </FormDialogContent>
@@ -389,12 +392,14 @@ function VoiceSettingsSurface({
     <Popover open={open} onOpenChange={onOpenChange}>
       <PopoverTrigger asChild>{trigger}</PopoverTrigger>
       <PopoverContent
+        data-voice-ignore=""
         align="end"
         side="bottom"
         sideOffset={8}
         collisionPadding={16}
         aria-label="Voice settings"
         className={cn(
+          VOICE_SURFACE_LAYER,
           "flex max-h-[min(32rem,var(--radix-popover-content-available-height))] w-80 flex-col gap-0 overflow-hidden p-0",
           popoverClassName,
         )}
@@ -624,7 +629,7 @@ export default function Voiceinput({ onCancel, connectionPersonId, memoryId, his
 
   const onboardingModals = (<>
       <Dialog open={introOpen === true} onOpenChange={(open) => !open && onCancel()}>
-        <DialogContent showCloseButton={false} overlayClassName="z-[210] bg-overlay-backdrop" className="z-[220] max-h-[calc(100dvh-2rem)] gap-0 overflow-y-auto bg-background p-0 sm:max-w-[358px]">
+        <DialogContent data-voice-ignore="" showCloseButton={false} overlayClassName={cn(VOICE_OVERLAY_LAYER, "bg-overlay-backdrop")} className={cn(VOICE_SURFACE_LAYER, "max-h-[calc(100dvh-2rem)] gap-0 overflow-y-auto bg-background p-0 sm:max-w-[358px]")}>
           <div className="flex h-[min(36dvh,320px)] items-center justify-center bg-gradient-to-b from-stroke-brand-weak to-transparent px-6 pt-6 sm:h-48 sm:pt-5 [border-radius:0_0_50%_50%/0_0_2rem_2rem]">
             <img src={phoneArtwork} alt="" className="h-full max-h-60 object-contain sm:max-h-36" />
           </div>
@@ -790,7 +795,7 @@ export default function Voiceinput({ onCancel, connectionPersonId, memoryId, his
             open={settingsOpen}
             onOpenChange={setSettingsOpen}
             settings={settingsProps}
-            popoverClassName="z-[220] shadow-overlay-backdrop-dark"
+            popoverClassName="shadow-overlay-backdrop-dark"
             trigger={
               <Button type="button" variant="ghost" size="icon-lg" aria-label="Voice settings">
                 <Settings />

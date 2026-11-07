@@ -3,6 +3,8 @@ import { createContext, useCallback, useContext, useEffect, useLayoutEffect, use
 import { createPortal } from "react-dom";
 import { useLocation, useNavigate } from "react-router-dom";
 import { InlineVoiceSession } from "@/components/Chatinput/inline-voice-session";
+import { VOICE_CALL_LAYER } from "@/components/Chatinput/voice-layers";
+import { cn } from "@/lib/utils";
 import type { VoiceMessage, VoiceRuntime, VoiceTextInput, VoiceTimelineEntry } from "@/features/voice/types";
 import { useStore } from "@/hooks/use-store";
 import posthog from "@/lib/posthog";
@@ -130,7 +132,8 @@ export function VoiceSessionProvider({ children }: { children: ReactNode }) {
 
   return <VoiceSessionContext.Provider value={{ connectionPersonId: request?.connectionPersonId, active: Boolean(request), ready, memoryId: request?.memoryId ?? null, start, end, send, dock, timeline }}>
     {children}
-    <div ref={fallback} style={floatingPosition} data-testid="floating-voice-host" className={docked || !request ? "hidden" : "fixed right-4 top-[84px] z-[46] w-[min(375px,calc(100vw-2rem))] sm:right-8"} />
+    {/* In body, so no page's stacking can trap it. Open dialogs turn off pointer events on body, so it turns them back on. */}
+    {createPortal(<div ref={fallback} style={floatingPosition} data-testid="floating-voice-host" className={docked || !request ? "hidden" : cn(VOICE_CALL_LAYER, "pointer-events-auto fixed right-4 top-[84px] w-[min(375px,calc(100vw-2rem))] sm:right-8")} />, document.body)}
     {request && createPortal(<InlineVoiceSession
       persistent
       connectionPersonId={request.connectionPersonId}
