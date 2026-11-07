@@ -175,7 +175,7 @@ export function SharePost({ data, isMobile = false }: SharePostProps) {
         snapPoints={[0, 1]}
         initialSnap={1}
       >
-        <Sheet.Container className="publish-success-sheet isolate max-h-[88dvh] overflow-hidden rounded-t-3xl !bg-bg-raised text-text-neutral-strong shadow-lg">
+        <Sheet.Container className="publish-success-sheet isolate max-h-[88dvh] overflow-hidden rounded-t-3xl bg-bg-raised text-text-neutral-strong shadow-lg">
           {isStory ? <PublishSuccessBackdrop /> : null}
           <Sheet.Header className={isStory ? "rounded-t-3xl bg-transparent" : "rounded-t-3xl bg-bg-raised"} />
           <Sheet.Content className={`max-h-[88dvh] min-h-0 overflow-y-auto overscroll-contain px-4 ${isStory ? "bg-transparent" : "bg-bg-raised"}`}>
