@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { useSubscriptionSummary } from "@/features/pricing/use-subscription-summary";
 
 export function PlanSummaryCard({
@@ -17,7 +18,11 @@ export function PlanSummaryCard({
         ? "You’re on Memento Legacy"
         : "You’re on Memento Pro";
   return (
-    <section aria-label="Your plan" className="insights-card insights-plan">
+    <section
+      aria-label="Your plan"
+      // Free plans get the Pro card's tint, as a nudge toward upgrading.
+      className={cn("insights-card insights-plan", isFree && "insights-plan-free")}
+    >
       <div className="min-w-0 flex-1">
         <h3 className="font-inter text-base font-semibold text-text-neutral-strong">
           {title}
