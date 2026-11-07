@@ -9,29 +9,40 @@ const clipUrls = import.meta.glob<string>("../assets/audio/voice-previews/*.mp3"
   import: "default",
 });
 
-/** Groups clips by voice, keeping only lines every voice has so they all get the same choice. */
-export function groupEvenClips(urlsByPath: Record<string, string>): Map<string, string[]> {
-  const lines = new Map<string, Map<string, string>>();
+type VoiceClip = { line: string; url: string };
+
+export function groupClips(urlsByPath: Record<string, string>): Map<string, VoiceClip[]> {
+  const clips = new Map<string, VoiceClip[]>();
   for (const [path, url] of Object.entries(urlsByPath)) {
     const match = path.match(/([^/]+)-(\d+)\.mp3$/);
     if (!match) continue;
     const [, voiceId, line] = match;
-    lines.set(voiceId, (lines.get(voiceId) ?? new Map<string, string>()).set(line, url));
+    clips.set(voiceId, [...(clips.get(voiceId) ?? []), { line, url }]);
   }
-  const voices = [...lines.values()];
-  return new Map(
-    [...lines].map(([voiceId, clips]) => [
-      voiceId,
-      [...clips].filter(([line]) => voices.every((voice) => voice.has(line))).map(([, url]) => url),
-    ]),
-  );
+  return clips;
 }
 
-const clipsByVoice = groupEvenClips(clipUrls);
+const clipsByVoice = groupClips(clipUrls);
+const lineByUrl = new Map([...clipsByVoice.values()].flat().map(({ line, url }) => [url, line]));
 
-/** A random line for this voice, avoiding `previous` when there is another to play. */
+/**
+ * A random line for this voice that differs from `previous`, which may be another voice's
+ * clip, so trying voices in turn doesn't repeat a sentence. A voice with nothing else
+ * recorded plays what it has.
+ */
 export function pickVoicePreviewClip(voiceId: string, previous?: string | null): string | null {
   const clips = clipsByVoice.get(voiceId) ?? [];
-  const choices = clips.length > 1 ? clips.filter((clip) => clip !== previous) : clips;
-  return choices[Math.floor(Math.random() * choices.length)] ?? null;
+  const previousLine = previous ? lineByUrl.get(previous) : undefined;
+  const fresh = clips.filter(({ line }) => line !== previousLine);
+  const choices = fresh.length ? fresh : clips;
+  return choices[Math.floor(Math.random() * choices.length)]?.url ?? null;
+}
+
+/** Fetches every clip ahead of time, so the first play of each voice starts straight away. */
+export function preloadVoicePreviewClips() {
+  for (const { url } of [...clipsByVoice.values()].flat()) {
+    const audio = new Audio();
+    audio.preload = "auto";
+    audio.src = url;
+  }
 }

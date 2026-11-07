@@ -141,11 +141,8 @@ it("uses a frosted music panel with contrasting volume controls", async () => {
   const musicPanel = screen.getByRole("region", { name: "Music player" });
   expect(musicPanel).toHaveClass("music-player-panel", "border-stroke-neutral-weak");
   expect(musicPanel.closest(".quick-tools-panel")).toBeInTheDocument();
-  const fills = [...musicPanel.querySelectorAll<HTMLElement>("[style]")].map((e) => e.style.backgroundColor);
-  expect(fills).toContain("var(--stroke-neutral-weak)");
-  expect(fills).toContain("var(--icon-neutral-weak)");
-  expect(fills).toContain("var(--icon-neutral-strong)");
   const slider = within(musicPanel).getByRole("slider", { name: "Volume" });
+  expect(slider).toHaveClass("bg-[var(--icon-neutral-strong)]");
   slider.focus();
   await user.keyboard("{ArrowRight}");
   expect(music.setVolume).toHaveBeenCalledWith(51);

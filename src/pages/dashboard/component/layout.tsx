@@ -11,6 +11,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import "@/components/motion/navigation-motion.css";
 import { useModal } from "@/hooks/use-modal";
 import { useChatSidebar } from "@/contexts/chat-sidebar";
+import { useStoryMobileViewport } from "@/components/modal/memory/story-reader-utils";
 import { isSkyCardPage } from "./sky-card-page";
 import { DashboardHeader } from "./dashboard-header";
 import { DashboardSideBar } from "./dashboard-sidebar";
@@ -18,6 +19,7 @@ import { DashboardChatSidebar } from "./dashboard-chat-sidebar";
 import Modal from "@/components/modal";
 import { ConversationChromeProvider } from "@/contexts/conversation-chrome";
 import { DashboardHeaderActionsProvider } from "@/contexts/dashboard-header-actions";
+import { DASHBOARD_RIGHT_COLUMN_ID } from "@/components/memory/chat-settings-inline";
 
 export default function DashboardLayout() {
   const isMobile = useIsMobile();
@@ -34,6 +36,10 @@ export default function DashboardLayout() {
   const isSettingsRoute = location.pathname === "/settings" || location.pathname.startsWith("/settings/");
   /** These pages scroll their own content column. */
   const isInsightsRoute = location.pathname === "/insights";
+  /** Phones and tablets read a story full screen, with its own back button. */
+  const isStoryViewport = useStoryMobileViewport();
+  const storyRoute = useMatch({ path: "/stories/:id", end: true });
+  const isMobileStoryRoute = isStoryViewport && Boolean(storyRoute);
   const { open } = useModal();
   const isVoiceChatRoute = Boolean(
     useMatch({ path: "/chat/:id/voice", end: true }),
@@ -101,7 +107,7 @@ export default function DashboardLayout() {
                 "fixed md:relative inset-y-0 left-0 z-50 md:z-auto",
                 "navigation-sidebar",
                 "w-full shrink-0",
-                "md:w-[280px]",
+                "md:w-[252px]",
                 mainSidebarCollapsed &&
                   "md:!w-0 md:!min-w-0 md:overflow-hidden md:opacity-0",
               )}
@@ -114,7 +120,7 @@ export default function DashboardLayout() {
           <main ref={mainRef} className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
             <DashboardHeaderActionsProvider>
               <ConversationChromeProvider>
-                {!isVoiceChatRoute ? (
+                {!isVoiceChatRoute && !isMobileStoryRoute ? (
                   <DashboardHeader
                     onMenuClick={() => setSidebarOpen(true)}
                     mobileSidebarOpen={sidebarOpen}
@@ -122,7 +128,7 @@ export default function DashboardLayout() {
                     onMainSidebarToggle={handleMainSidebarToggle}
                   />
                 ) : null}
-                {!isSettingsRoute ? (
+                {!isSettingsRoute && !isMobileStoryRoute ? (
                   <div className="shrink-0">
                     <OnboardingNudgeBanner />
                     <TrialBanner />
@@ -154,6 +160,8 @@ export default function DashboardLayout() {
               </ConversationChromeProvider>
             </DashboardHeaderActionsProvider>
           </main>
+          {/* A full-height third column, filled by panels such as Chat settings. */}
+          <div id={DASHBOARD_RIGHT_COLUMN_ID} className="hidden min-h-0 shrink-0 md:flex" />
         </div>
       </VoiceSessionProvider>
       </OnboardingGuard>

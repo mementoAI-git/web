@@ -15,7 +15,7 @@ export function useVoicePreviewClip() {
   const play = useCallback((voiceId: string) => {
     audioRef.current?.pause();
     const clip = pickVoicePreviewClip(voiceId, lastClipRef.current);
-    if (!clip) return;
+    if (!clip) return false;
     lastClipRef.current = clip;
     audioRef.current ??= new Audio();
     audioRef.current.src = clip;
@@ -24,6 +24,7 @@ export function useVoicePreviewClip() {
       // AbortError only means the next voice took over before this one started.
       if (!(error instanceof DOMException && error.name === "AbortError")) setFailed(true);
     });
+    return true;
   }, []);
 
   useEffect(() => stop, [stop]);

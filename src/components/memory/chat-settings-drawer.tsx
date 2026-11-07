@@ -63,7 +63,7 @@ export function ChatSettingsDrawer({ isOpen, onClose, children }: {
           side="bottom"
           showCloseButton={false}
           aria-describedby={undefined}
-          className={bottomSheetClass}
+          className={`${bottomSheetClass} scrollbar-hide`}
           onOpenAutoFocus={captureFocus}
           onCloseAutoFocus={restoreFocus}
         >

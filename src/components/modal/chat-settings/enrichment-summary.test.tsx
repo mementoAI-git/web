@@ -3,101 +3,45 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { MemoryRouter, useLocation } from "react-router-dom";
 import { EnrichmentSummary } from "./enrichment-summary";
-import type { CategoryScore } from "@/features/enrichment";
 
 const {openInsights} = vi.hoisted(()=>({openInsights:vi.fn()}));
 vi.mock("@/hooks/use-modal", ()=>({useModal:()=>({open:openInsights})}));
 
-const categoryScores: CategoryScore[] = [
-  { key: "identity_self", label: "Identity & Self", score: 1, weight: 0.1, itemCount: 1, unlocked: true },
-  { key: "memories_experiences", label: "Memories & Experiences", score: 10, weight: 0.1, itemCount: 1, unlocked: true },
-  { key: "relationships_people", label: "Relationships & People", score: 7, weight: 0.1, itemCount: 1, unlocked: true },
-  { key: "heritage_roots", label: "Heritage & Roots", score: 9, weight: 0.1, itemCount: 1, unlocked: true },
-  { key: "lessons_wisdom", label: "Lessons & Wisdom", score: 8, weight: 0.1, itemCount: 1, unlocked: true },
-  { key: "beliefs_worldview", label: "Beliefs & Worldview", score: 6, weight: 0.1, itemCount: 1, unlocked: true },
-  { key: "passions_interests", label: "Passions & Interests", score: 5, weight: 0.1, itemCount: 1, unlocked: true },
-  { key: "hopes_legacy", label: "Hopes & Legacy", score: 4, weight: 0.1, itemCount: 1, unlocked: true },
-  { key: "work_purpose", label: "Work & Purpose", score: 3, weight: 0.1, itemCount: 1, unlocked: true },
-  { key: "everyday_life", label: "Everyday Life", score: 2, weight: 0.1, itemCount: 1, unlocked: true },
-];
-
 describe("EnrichmentSummary", () => {
-  it("shows a qualitative state without exposing a percentage", () => {
-    render(<MemoryRouter><EnrichmentSummary score={72} categoryScores={[]} /></MemoryRouter>);
-    expect(screen.getByText("Strong")).toBeInTheDocument();
-    expect(screen.queryByText("72%")).not.toBeInTheDocument();
+  it.each([[72, "Strong"], [35, "Medium"], [7, "Weak"]])("shows a score of %i as %s, without the number", (score, word) => {
+    render(<MemoryRouter><EnrichmentSummary score={score} /></MemoryRouter>);
+    expect(screen.getByRole("heading", { name: `Enrichment score: ${word}` })).toHaveTextContent(word);
+    expect(screen.queryByText(/%$/)).not.toBeInTheDocument();
+    expect(screen.getByText(/reflects your memory health across 10 key life areas/i)).toBeInTheDocument();
   });
 
-  it("renders media shortcuts and the deep-dive insight rail", () => {
-    render(<MemoryRouter><EnrichmentSummary score={34} categoryScores={[]} /></MemoryRouter>);
-    for (const label of ["Images", "Videos", "Audio", "Docs", "Links"]) {
-      expect(screen.getByRole("button", { name: label })).toBeInTheDocument();
-    }
-    expect(screen.getByRole("heading", { name: "Deep dive insights" })).toBeInTheDocument();
-    expect(screen.getByLabelText("Deep dive insights")).toHaveClass("scrollbar-hide");
-    expect(screen.getByText("Missing places")).toHaveClass("line-clamp-1");
-    expect(
-      screen.getByText("Share the places that shaped you and the memories connected to them."),
-    ).toHaveClass("line-clamp-3");
+  it("holds the word back until the score has loaded", () => {
+    render(<MemoryRouter><EnrichmentSummary /></MemoryRouter>);
+    expect(screen.getByRole("heading", { name: "Enrichment score: –" })).toBeInTheDocument();
   });
 
-  it("maps shortcuts to conversation file tabs and media filters", async () => {
+  it("offers one card for shared files, and no deep-dive insights", async () => {
     const onOpenFiles = vi.fn();
-    render(<MemoryRouter><EnrichmentSummary onOpenFiles={onOpenFiles} /></MemoryRouter>);
-    await userEvent.click(screen.getByRole("button", { name: "Images" }));
-    await userEvent.click(screen.getByRole("button", { name: "Audio" }));
-    await userEvent.click(screen.getByRole("button", { name: "Docs" }));
-    await userEvent.click(screen.getByRole("button", { name: "Links" }));
-    expect(onOpenFiles.mock.calls.map(([request]) => request)).toEqual([
-      { tab: "media", mediaFilter: "images" },
-      { tab: "media", mediaFilter: "audio" },
-      { tab: "docs" },
-      { tab: "links" },
-    ]);
+    render(<MemoryRouter><EnrichmentSummary onOpenFiles={onOpenFiles} fileCount={154} /></MemoryRouter>);
+    await userEvent.click(screen.getByRole("button", { name: "Shared media & links (154)" }));
+    expect(onOpenFiles).toHaveBeenCalledWith({ tab: "media" });
+    for (const label of ["Images", "Videos", "Audio", "Docs", "Links"]) {
+      expect(screen.queryByRole("button", { name: label })).not.toBeInTheDocument();
+    }
+    expect(screen.queryByRole("heading", { name: "Deep dive insights" })).not.toBeInTheDocument();
   });
 
-  it("maps life-area percentages to the reference color order", () => {
-    render(
-      <MemoryRouter>
-        <EnrichmentSummary score={72} categoryScores={categoryScores} />
-      </MemoryRouter>,
-    );
-
-    const chart = screen.getByRole("img", { name: /life area enrichment distribution/i });
-    const segments = Array.from(chart.children) as HTMLElement[];
-    expect(segments).toHaveLength(10);
-    expect(segments.map((segment) => segment.dataset.lifeArea)).toEqual([
-      "memories_experiences",
-      "heritage_roots",
-      "lessons_wisdom",
-      "relationships_people",
-      "beliefs_worldview",
-      "passions_interests",
-      "hopes_legacy",
-      "work_purpose",
-      "everyday_life",
-      "identity_self",
-    ]);
-    expect(segments[0]).toHaveStyle({ flexGrow: "10" });
-    expect(segments[9]).toHaveStyle({ flexGrow: "1" });
+  it("leaves the count out until it's known", () => {
+    render(<MemoryRouter><EnrichmentSummary /></MemoryRouter>);
+    expect(screen.getByRole("button", { name: "Shared media & links" })).toBeInTheDocument();
   });
 
-  it("keeps all ten life areas visible when scores are unavailable", () => {
-    render(
-      <MemoryRouter>
-        <EnrichmentSummary score={0} categoryScores={[]} />
-      </MemoryRouter>,
-    );
-    const chart = screen.getByRole("img", { name: /life area enrichment distribution/i });
-    expect(Array.from(chart.children)).toHaveLength(10);
-    expect(chart.firstElementChild).toHaveStyle({ flexGrow: "1" });
-  });
-  it("opens Insights instead of the removed Stats tab", async () => {
+  it("opens Insights on the enrichment tab", async () => {
     const user = userEvent.setup();
-    const Location = () => <output data-testid="location">{useLocation().pathname}</output>;
+    const Location = () => { const { pathname, state } = useLocation(); return <output data-testid="location">{pathname} {state?.section}</output>; };
     render(<MemoryRouter><EnrichmentSummary /><Location /></MemoryRouter>);
-    await user.click(screen.getByRole("button", {name:"Discover which areas need more context"}));
-    expect(screen.getByTestId("location")).toHaveTextContent("/insights");
+    await user.click(screen.getByRole("button", {name:"View Insight"}));
+    expect(screen.getByTestId("location")).toHaveTextContent("/insights enrichment");
   });
 
 });

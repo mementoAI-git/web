@@ -3,8 +3,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { mutate } from "swr";
 import useSWR from "swr";
-import { CheckCircle2, Loader2 } from "lucide-react";
+import { CheckCircle2, ChevronDown, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { VoiceAvatar } from "@/components/voice-avatar";
 import { getMobileVoiceChoices, getMobileVoiceDefinition } from "@/features/voice/mobile-voice-catalog";
 import { useStore } from "@/hooks/use-store";
@@ -14,7 +20,8 @@ import { toast } from "sonner";
 import { previewGeminiChatVoice, type VoicePreviewToken } from "@/lib/gemini-voice-preview";
 import { previewElevenLabsVoice } from "@/lib/elevenlabs-voice-preview";
 import { useRequestRecovery } from "@/hooks/use-request-recovery";
-import { cn } from "@/lib/utils";
+import { useVoicePreviewClip } from "@/components/Chatinput/use-voice-preview-clip";
+import { preloadVoicePreviewClips } from "@/lib/voice-preview-clips";
 type VoiceEntry = {
   id: string;
   title: string;
@@ -46,11 +53,34 @@ const LEGACY_VOICE_FALLBACK: Record<string, string> = {
   Zubenelgenubi: "Puck",
 };
 
+function VoiceDetails({ voice, previewing }: {
+  voice: { artwork: string; title: string; subtitle: string };
+  previewing: boolean;
+}) {
+  return (
+    <>
+      <VoiceAvatar artwork={voice.artwork} title={voice.title} />
+      <span className="grid min-w-0 flex-1 text-left">
+        <span className="flex min-w-0 items-center gap-2">
+          <span className="truncate font-inter text-sm font-semibold leading-tight text-text-neutral-strong">{voice.title}</span>
+          {previewing ? (
+            <Loader2 className="size-4 shrink-0 animate-spin stroke-[2] text-text-neutral-weaker motion-reduce:animate-none" aria-hidden />
+          ) : null}
+        </span>
+        <span className="truncate font-geist text-xs leading-4 text-text-neutral-weaker">{voice.subtitle}</span>
+      </span>
+    </>
+  );
+}
+
 export default function Voices() {
   const { user, setUser } = useStore();
-  const { isMutating, trigger } = useFetcher(endpoint.profile, "put");
+  const { trigger } = useFetcher(endpoint.profile, "put");
   const { trigger: fetchEphemeralToken } = useFetcher(endpoint.ephemeralToken, "get");
   const [previewingVoice, setPreviewingVoice] = useState<string | null>(null);
+  /** Shown as selected straight away, ahead of its save finishing. */
+  const [chosenVoice, setChosenVoice] = useState<string | null>(null);
+  const { play: playClip, failed: clipFailed } = useVoicePreviewClip();
   const savingRef = useRef(false);
   const previewAbortRef = useRef<AbortController | null>(null);
   useEffect(() => () => previewAbortRef.current?.abort(), []);
@@ -73,6 +103,7 @@ export default function Voices() {
   );
 
   const selectedVoice = useMemo(() => {
+    if (chosenVoice) return chosenVoice;
     const saved = getMobileVoiceDefinition(user?.chat_voice)?.voiceName || user?.chat_voice;
     // Always trust the live catalog first; only apply legacy remap for unknown historic values.
     if (saved && allowedVoiceNames.has(saved)) return saved;
@@ -80,55 +111,58 @@ export default function Voices() {
     if (resolved && allowedVoiceNames.has(resolved)) return resolved;
     const first = dynamicVoices[0]?.voiceName;
     return first || "Fenrir";
-  }, [user?.chat_voice, allowedVoiceNames, dynamicVoices]);
+  }, [chosenVoice, user?.chat_voice, allowedVoiceNames, dynamicVoices]);
 
-  const applyVoice = useCallback(
-    async (voiceName: string, provider: VoiceProvider): Promise<boolean> => {
-      if ((getMobileVoiceDefinition(user?.chat_voice)?.voiceName || user?.chat_voice) === voiceName && (user?.chat_voice_provider || "gemini") === provider) return true;
+  const userRef = useRef(user);
+  userRef.current = user;
+  const nextSaveRef = useRef<{ voiceName: string; provider: VoiceProvider } | null>(null);
+
+  // Trying voices quickly saves only the latest one, once the save in progress is done.
+  const saveVoice = useCallback(
+    async (voiceName: string, provider: VoiceProvider) => {
+      const saved = getMobileVoiceDefinition(userRef.current?.chat_voice)?.voiceName || userRef.current?.chat_voice;
+      nextSaveRef.current = { voiceName, provider };
+      if (savingRef.current) return;
+      if (saved === voiceName && (userRef.current?.chat_voice_provider || "gemini") === provider) {
+        nextSaveRef.current = null;
+        setChosenVoice(null);
+        return;
+      }
       savingRef.current = true;
       try {
-        await trigger({ chat_voice: voiceName, chat_voice_provider: provider });
-        if (user) {
-          setUser({ ...user, chat_voice: voiceName, chat_voice_provider: provider });
+        while (nextSaveRef.current) {
+          const next = nextSaveRef.current;
+          nextSaveRef.current = null;
+          await trigger({ chat_voice: next.voiceName, chat_voice_provider: next.provider });
+          if (userRef.current) {
+            setUser({ ...userRef.current, chat_voice: next.voiceName, chat_voice_provider: next.provider });
+          }
         }
-        toast.success(
-          `Voice changed to ${dynamicVoices.find((v) => v.voiceName === voiceName)?.title} (${provider})`,
-        );
         void Promise.resolve(mutate(endpoint.profile)).catch(() => undefined);
-        return true;
       } catch (error) {
         console.error(error);
+        nextSaveRef.current = null;
         toast.error("Failed to update voice settings");
-        return false;
       } finally {
         savingRef.current = false;
+        setChosenVoice(null);
       }
     },
-    [trigger, setUser, user, dynamicVoices],
+    [trigger, setUser],
   );
 
-  const handleVoiceClick = useCallback(
-    async (voiceName: string) => {
-      if (savingRef.current) return;
-      previewAbortRef.current?.abort();
+  /** For a voice with no bundled clip, which has to be generated live and takes a few seconds. */
+  const playLiveSample = useCallback(
+    async (voiceName: string, provider: VoiceProvider) => {
       const ac = new AbortController();
       previewAbortRef.current = ac;
       setPreviewingVoice(voiceName);
       try {
-        const selected = dynamicVoices.find((v) => v.voiceName === voiceName);
-        const provider = selected?.provider || "gemini";
-        // Keep card behavior deterministic: select this voice first, then preview this exact voiceName.
-        const saveOk = await applyVoice(voiceName, provider);
-        if (!saveOk || ac.signal.aborted) return;
-
         if (provider === "elevenlabs") {
           if (voiceName.startsWith("agent_")) {
             toast.success("Agent selected as default. Start a voice call to use this agent.");
           } else {
-          await previewElevenLabsVoice({
-            voiceId: voiceName,
-            signal: ac.signal,
-          });
+            await previewElevenLabsVoice({ voiceId: voiceName, signal: ac.signal });
           }
         } else {
           await previewGeminiChatVoice({
@@ -141,9 +175,7 @@ export default function Voices() {
           });
         }
       } catch (e: unknown) {
-        if (ac.signal.aborted || (e instanceof DOMException && e.name === "AbortError")) {
-          return;
-        }
+        if (ac.signal.aborted || (e instanceof DOMException && e.name === "AbortError")) return;
         console.error(e);
         toast.error("Could not play voice sample");
       } finally {
@@ -153,12 +185,31 @@ export default function Voices() {
         }
       }
     },
-    [applyVoice, fetchEphemeralToken, dynamicVoices],
+    [fetchEphemeralToken],
   );
+
+  const handleVoiceClick = useCallback(
+    (voiceName: string) => {
+      const voice = dynamicVoices.find((v) => v.voiceName === voiceName);
+      const provider = voice?.provider || "gemini";
+      setChosenVoice(voiceName);
+      previewAbortRef.current?.abort();
+      // Starts within the click, and doesn't wait for the save.
+      if (!voice || !playClip(voice.id)) void playLiveSample(voiceName, provider);
+      void saveVoice(voiceName, provider);
+    },
+    [dynamicVoices, playClip, playLiveSample, saveVoice],
+  );
+
+  useEffect(() => {
+    if (clipFailed) toast.error("Could not play voice sample");
+  }, [clipFailed]);
+
+  const current = dynamicVoices.find((voice) => voice.voiceName === selectedVoice) ?? dynamicVoices[0];
 
   return (
     <div className="flex flex-col gap-3">
-      <h2 className="font-geist text-base font-semibold leading-6 text-text-neutral-strong">AI Voice (Voice Mode)</h2>
+      <h3 className="font-geist text-sm font-medium leading-5 text-text-neutral-strong">Select voice</h3>
       {catalogLoading ? (
         <p role="status" className="text-sm text-text-neutral-weak">Loading voices…</p>
       ) : null}
@@ -170,42 +221,39 @@ export default function Voices() {
           {geminiValidating ? "Retrying…" : "Retry loading voices"}
         </Button>
       ) : null}
-      <div className="grid grid-cols-2 gap-2">
-        {dynamicVoices.map(({ title, subtitle, artwork, voiceName }) => (
-          <Button
-            key={voiceName}
-            type="button"
-            variant="outline"
-            className={cn(
-              "relative h-auto min-h-16 w-full justify-start gap-3 rounded-xl px-3 py-3.5 text-left transition-[transform,background-color,border-color] duration-150 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100",
-              selectedVoice === voiceName
-                ? "border-stroke-brand-strong bg-background text-text-neutral-strong"
-                : "border-stroke-neutral-weak bg-background text-text-neutral-strong hover:bg-fill-neutral-weaker",
-              isMutating && "opacity-85",
-            )}
-            disabled={isMutating}
-            aria-busy={previewingVoice === voiceName}
-            aria-pressed={selectedVoice === voiceName}
-            onClick={() => void handleVoiceClick(voiceName)}
+      {current ? (
+        // A menu rather than a select, because picking the current voice replays its sample.
+        <DropdownMenu modal={false} onOpenChange={(open) => { if (open) preloadVoicePreviewClips(); }}>
+          <DropdownMenuTrigger
+            aria-busy={Boolean(previewingVoice)}
+            aria-label={`Select voice: ${current.title}, ${current.subtitle}`}
+            className="flex w-full cursor-pointer items-center gap-3 rounded-xl border border-stroke-neutral-weak bg-background py-1.5 pl-3 pr-3 text-left text-text-neutral-strong outline-none transition-colors hover:bg-fill-neutral-weaker focus-visible:ring-[3px] focus-visible:ring-ring/50 data-[state=open]:bg-fill-neutral-weaker motion-reduce:transition-none"
           >
-            <VoiceAvatar artwork={artwork} title={title} />
-            <span className="grid min-w-0 flex-1 text-left">
-              <span className="flex min-w-0 items-center gap-2">
-                <span className="truncate font-inter text-sm font-semibold leading-tight">{title}</span>
-                {previewingVoice === voiceName ? (
-                  <Loader2 className="size-4 shrink-0 animate-spin motion-reduce:animate-none stroke-[2] text-text-neutral-weaker" aria-hidden />
+            <VoiceDetails voice={current} previewing={previewingVoice === current.voiceName} />
+            <ChevronDown className="size-4 shrink-0 text-icon-neutral-weak" aria-hidden />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent aria-label="Voices" className="z-[230] font-rounded [--font-geist:var(--font-rounded)] [--font-inter:var(--font-rounded)]">
+            {dynamicVoices.map((voice) => (
+              <DropdownMenuItem
+                key={voice.voiceName}
+                role="menuitemradio"
+                aria-checked={selectedVoice === voice.voiceName}
+                className="cursor-pointer gap-3 py-1.5 focus:bg-fill-neutral-weaker focus:text-text-neutral-strong"
+                onSelect={(event) => {
+                  // Stays open, so every voice can be tried in turn.
+                  event.preventDefault();
+                  handleVoiceClick(voice.voiceName);
+                }}
+              >
+                <VoiceDetails voice={voice} previewing={previewingVoice === voice.voiceName} />
+                {selectedVoice === voice.voiceName ? (
+                  <CheckCircle2 className="size-4 shrink-0 text-text-brand-strong" aria-hidden />
                 ) : null}
-              </span>
-              <span className="truncate font-geist text-xs leading-4 text-text-neutral-weak">
-                {subtitle}
-              </span>
-            </span>
-            {selectedVoice === voiceName ? (
-              <CheckCircle2 className="absolute right-1.5 top-1.5 fill-fill-brand-strong text-text-inverse-strong" aria-hidden />
-            ) : null}
-          </Button>
-        ))}
-      </div>
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ) : null}
     </div>
   );
 }

@@ -9,7 +9,7 @@ import {
   ChevronLeft,
   PanelLeft,
   House,
-  MoreHorizontal,
+  SlidersHorizontal,
   X,
 } from "lucide-react";
 import dayjs from "dayjs";
@@ -17,7 +17,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { useModal } from "@/hooks/use-modal";
 import { useStore } from "@/hooks/use-store";
 import StreakTracker from "@/components/streak-tracker";
-import { Link, useLocation, useMatch, useNavigate } from "react-router-dom";
+import { Link, useLocation, useMatch } from "react-router-dom";
 import { cn } from "@/utility";
 import { SearchIcon as IconSearch } from "@/components/icons";
 import { useConversationChrome } from "@/contexts/conversation-chrome";
@@ -211,7 +211,6 @@ function DashboardPageHeader({
   onMainSidebarToggle,
 }: DashboardHeaderProps) {
   const location = useLocation();
-  const navigate = useNavigate();
   const mdUp = useMdViewport();
   const chatConversationMatch = useMatch({ path: "/chat/:id", end: true });
   const chatVoiceMatch = useMatch({ path: "/chat/:id/voice", end: true });
@@ -434,11 +433,11 @@ function DashboardPageHeader({
                   type="button"
                   variant="ghost"
                   size="icon-lg"
-                  className={cn(overviewActionClass, "text-icon-neutral-weak")}
+                  className={overviewActionClass}
                   aria-label="Chat settings"
                   onClick={chrome.onOpenChatPreferences}
                 >
-                  <MoreHorizontal aria-hidden />
+                  <SlidersHorizontal className="size-5" strokeWidth={1.75} aria-hidden />
                 </Button>
               ) : null}
             </>
@@ -474,7 +473,6 @@ function DashboardPageHeader({
             <div className="hidden h-10 items-stretch xl:flex">
               <StoriesActionButtons
                 compactInNav
-                onViewInsights={() => navigate("/insights")}
                 onCreateMemory={() => open("create-memory")}
                 onQuickCapture={() => open("quick-capture")}
               />

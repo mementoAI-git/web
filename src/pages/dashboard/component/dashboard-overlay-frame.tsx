@@ -58,7 +58,7 @@ export function DashboardOverlayFrame({ children }: PropsWithChildren) {
           className={cn(
             expanded ? "translate-x-0" : "-translate-x-full md:translate-x-0",
             "fixed inset-y-0 left-0 z-50 md:relative md:z-auto",
-            "navigation-sidebar overlay-sidebar w-full shrink-0 md:w-[280px]",
+            "navigation-sidebar overlay-sidebar w-full shrink-0 md:w-[252px]",
             !expanded && "md:!w-0 md:!min-w-0 md:overflow-hidden md:opacity-0",
           )}
           onClick={(event) => {

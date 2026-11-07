@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 
 import { ChatSettingsDrawer } from "./chat-settings-drawer";
+import { ChatSettingsInline } from "./chat-settings-inline";
 import PropsItem from "@/components/props-item";
 import type { IMemory } from "@/utility/interface";
 import { getPostTypeLabel, type PostTypeSource } from "@/utility/memory";
@@ -28,7 +29,7 @@ import { Separator } from "@/components/ui/separator";
 import * as motion from "motion/react-client";
 import { ChatPreferencesPanel } from "@/components/modal/chat-settings/chat-preferences-panel";
 import { HostChatEnrichmentBar } from "@/features/host-chat/components/host-chat-enrichment-bar";
-import { resolveSidebarDesktopWidthPx } from "@/components/memory/sidebar-desktop-width";
+import { CHAT_SETTINGS_INLINE_MIN_VIEWPORT_PX, CHAT_SETTINGS_INLINE_WIDTH_PX, resolveSidebarDesktopWidthPx } from "@/components/memory/sidebar-desktop-width";
 import type { CategoryScore } from "@/features/enrichment";
 import type { ConversationFilesRequest } from "@/pages/dashboard/chat/conversation/conversation-assets";
 
@@ -86,9 +87,11 @@ interface SidebarDetailsProps {
   /**
    * Desktop only. `overlay` = fixed right panel + dimmed backdrop (stories, etc.).
    * `inline` = third column in page flex row, no backdrop (chat conversation).
+   * Chat preferences only go inline on wide windows, and use the drawer otherwise.
    */
   desktopLayout?: "overlay" | "inline";
   onOpenConversationFiles?: (request: ConversationFilesRequest) => void;
+  conversationFileCount?: number;
 }
 
 interface ContentProps {
@@ -104,10 +107,13 @@ interface ContentProps {
   categoryScores?: CategoryScore[] | null;
   desktopLayout?: "overlay" | "inline";
   onOpenConversationFiles?: (request: ConversationFilesRequest) => void;
+  conversationFileCount?: number;
   /** The chat settings drawer supplies the fill at every width. */
   inDrawer?: boolean;
   /** The bottom sheet also supplies the title and margins. */
   inBottomSheet?: boolean;
+  /** The inline column pins its own title above this content. */
+  titleAbove?: boolean;
 }
 
 const sectionBadgeClass =
@@ -298,8 +304,10 @@ function Content({
   categoryScores,
   desktopLayout = "overlay",
   onOpenConversationFiles,
+  conversationFileCount,
   inDrawer = false,
   inBottomSheet = false,
+  titleAbove = false,
 }: ContentProps) {
   const { open } = useModal();
 
@@ -321,9 +329,11 @@ function Content({
         isMobile
           ? "h-auto overflow-visible"
           : "h-full min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain",
+        includeChatPreferences && "scrollbar-hide",
         !inBottomSheet && (includeChatPreferences
           ? "p-2.5 sm:p-3 md:p-3 lg:p-6"
           : "min-w-[min(100%,287px)] p-3 sm:p-4 lg:p-6"),
+        titleAbove && "px-4 pb-4 pt-0 sm:px-4 sm:pb-4 sm:pt-0 md:px-4 md:pb-4 md:pt-0 lg:px-4 lg:pb-4 lg:pt-0",
         isDesktopOverlayCard &&
           "rounded-[24px] border border-stroke-neutral-weak shadow-xl",
       )}
@@ -331,13 +341,13 @@ function Content({
       {includeChatPreferences ? (
         <>
           <div className="relative z-[1] flex flex-col">
-            {inBottomSheet ? null : <h2 className="mb-6 font-garamond text-3xl font-normal text-text-neutral-strong">Chat settings</h2>}
+            {inBottomSheet || titleAbove ? null : <h2 className="mb-6 font-garamond text-3xl font-normal text-text-neutral-strong">Chat settings</h2>}
             <ChatPreferencesPanel
               density="compact"
               enrichmentScore={enrichmentScore}
-              categoryScores={categoryScores}
               onOpenConversationFiles={onOpenConversationFiles}
-              className="h-auto w-full min-h-0 flex-none overflow-visible pb-4"
+              conversationFileCount={conversationFileCount}
+              className={cn("h-auto w-full min-h-0 flex-none overflow-visible", titleAbove ? "pb-0" : "pb-4")}
             />
           </div>
         </>
@@ -370,18 +380,40 @@ export default function SidebarDetails({
   categoryScores,
   desktopLayout = "overlay",
   onOpenConversationFiles,
+  conversationFileCount,
 }: SidebarDetailsProps) {
   const wideChatPanel = Boolean(isOpen && includeChatPreferences);
   const desktopWidthPx = useAnimatedSidebarWidthPx(isOpen, wideChatPanel);
   const isInlineDesktop = desktopLayout === "inline";
+  const [viewportWidth, setViewportWidth] = useState(() => window.innerWidth);
 
-  if (includeChatPreferences && !isInlineDesktop) {
+  useEffect(() => {
+    const onResize = () => setViewportWidth(window.innerWidth);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
+  if (includeChatPreferences && isInlineDesktop && viewportWidth >= CHAT_SETTINGS_INLINE_MIN_VIEWPORT_PX) {
+    return (
+      <ChatSettingsInline
+        isOpen={isOpen}
+        onClose={onClose}
+        width={CHAT_SETTINGS_INLINE_WIDTH_PX}
+      >
+        <Content memory={memory} onClose={onClose} source={source} isMobile={false} inDrawer titleAbove
+          desktopLayout={desktopLayout} includeChatPreferences enrichmentScore={enrichmentScore}
+          categoryScores={categoryScores} onOpenConversationFiles={onOpenConversationFiles} conversationFileCount={conversationFileCount} />
+      </ChatSettingsInline>
+    );
+  }
+
+  if (includeChatPreferences) {
     return (
       <ChatSettingsDrawer isOpen={isOpen} onClose={onClose}>
         {(mobile) => <Content memory={memory} onClose={onClose} source={source}
-          isMobile={mobile} inDrawer inBottomSheet={mobile} desktopLayout={desktopLayout}
+          isMobile={mobile} inDrawer inBottomSheet={mobile} desktopLayout="overlay"
           includeChatPreferences enrichmentScore={enrichmentScore}
-          categoryScores={categoryScores} onOpenConversationFiles={onOpenConversationFiles} />}
+          categoryScores={categoryScores} onOpenConversationFiles={onOpenConversationFiles} conversationFileCount={conversationFileCount} />}
       </ChatSettingsDrawer>
     );
   }

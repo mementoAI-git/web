@@ -1,12 +1,13 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { useOptionalConversationChrome } from "@/contexts/conversation-chrome";
 import BackgroundMusic from "./background-music";
 import Voices from "./voices";
 import { EnrichmentSummary } from "./enrichment-summary";
-import type { CategoryScore } from "@/features/enrichment";
+import { chatSettingsCard } from "./chat-settings-card";
 import type { ConversationFilesRequest } from "@/pages/dashboard/chat/conversation/conversation-assets";
 
 type ChatPreferencesPanelProps = {
@@ -14,8 +15,8 @@ type ChatPreferencesPanelProps = {
   /** Tighter spacing for narrow sidebar vs modal */
   density?: "comfortable" | "compact";
   enrichmentScore?: number;
-  categoryScores?: CategoryScore[] | null;
   onOpenConversationFiles?: (request: ConversationFilesRequest) => void;
+  conversationFileCount?: number;
 };
 
 function SpokenRepliesSetting() {
@@ -24,10 +25,10 @@ function SpokenRepliesSetting() {
   return (
     <div className="flex items-center justify-between gap-4">
       <div className="min-w-0">
-        <h2 id="spoken-replies-label" className="font-geist text-base font-semibold leading-6 text-text-neutral-strong">
+        <h3 id="spoken-replies-label" className="font-geist text-sm font-medium leading-5 text-text-neutral-strong">
           Voice narration
-        </h2>
-        <p id="spoken-replies-help" className="font-geist text-sm leading-5 text-text-neutral-weak">
+        </h3>
+        <p id="spoken-replies-help" className="font-geist text-sm leading-5 text-text-neutral-weaker">
           {spokenReplies.supported ? "Read new replies aloud." : "Not available in this browser."}
         </p>
       </div>
@@ -46,22 +47,30 @@ function SpokenRepliesSetting() {
 export function ChatPreferencesPanel({
   className,
   density = "comfortable",
-  enrichmentScore = 0,
-  categoryScores = [],
+  enrichmentScore,
   onOpenConversationFiles,
+  conversationFileCount,
 }: ChatPreferencesPanelProps) {
   const compact = density === "compact";
   return (
     <div
       className={cn(
-        "flex h-full w-full min-h-0 flex-col overflow-y-auto overflow-x-hidden overscroll-contain [scrollbar-gutter:stable]",
+        // Body text is SF Pro Rounded; the font tokens are rebound for children that name one.
+        "flex h-full w-full min-h-0 flex-col font-rounded [--font-geist:var(--font-rounded)] [--font-inter:var(--font-rounded)] overflow-y-auto overflow-x-hidden overscroll-contain scrollbar-hide",
         compact ? "gap-6 px-0 pb-1" : "gap-6 px-5 py-5 sm:px-6 sm:py-6",
         className,
       )}
     >
-      <EnrichmentSummary score={enrichmentScore} categoryScores={categoryScores} onOpenFiles={onOpenConversationFiles} />
-      <SpokenRepliesSetting />
-      <Voices />
+      <EnrichmentSummary score={enrichmentScore} onOpenFiles={onOpenConversationFiles} fileCount={conversationFileCount} />
+      <Separator className="h-px bg-stroke-neutral-weak" />
+      <section className="flex flex-col gap-3">
+        <h2 className="font-geist text-base font-semibold leading-6 text-text-neutral-strong">AI Voice</h2>
+        <div data-testid="ai-voice-card" className={cn("flex flex-col gap-3", chatSettingsCard)}>
+          <SpokenRepliesSetting />
+          <Voices />
+        </div>
+      </section>
+      <Separator className="h-px bg-stroke-neutral-weak" />
       <BackgroundMusic />
     </div>
   );
