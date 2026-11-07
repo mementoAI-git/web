@@ -104,7 +104,7 @@
   overflow-y: auto;
   overscroll-behavior: contain;
 }
-/* Insights and Settings read as a narrow column; Pricing keeps the page container. */
+/* Insights, Settings, Pricing and Feedback read as one narrow column. */
 .insights-main:not(.container) {
   width: min(100% - 64px, 700px);
 }
