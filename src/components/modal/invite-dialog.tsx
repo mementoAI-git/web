@@ -1,4 +1,4 @@
-import { useRef, type ReactNode } from "react";
+import { useRef, type ReactNode, type RefObject } from "react";
 import {
   Dialog,
   DialogContent,
@@ -14,12 +14,15 @@ export function InviteDialog({
   description,
   onClose,
   busy = false,
+  initialFocusRef,
   children,
 }: {
   title: string;
   description: string;
   onClose: () => void;
   busy?: boolean;
+  /** Takes focus on open instead of the first field. */
+  initialFocusRef?: RefObject<HTMLElement | null>;
   children: ReactNode;
 }) {
   const returnFocusRef = useRef(document.activeElement as HTMLElement | null);
@@ -33,6 +36,17 @@ export function InviteDialog({
       <DialogContent
         className="block max-h-[calc(100dvh-2rem)] overflow-y-auto p-0 sm:max-w-[358px] motion-reduce:animate-none [&_[data-slot=dialog-close]]:rounded-full [&_[data-slot=dialog-close]]:bg-popover [&_[data-slot=dialog-close]]:text-text-neutral-strong"
         overlayClassName="bg-overlay-backdrop"
+        onOpenAutoFocus={
+          initialFocusRef
+            ? (event) => {
+                event.preventDefault();
+                const target = initialFocusRef.current;
+                // Still loading: hold focus on the dialog until the target can take it.
+                if (target && !target.matches(":disabled")) target.focus();
+                else (event.currentTarget as HTMLElement | null)?.focus();
+              }
+            : undefined
+        }
         onCloseAutoFocus={(event) => {
           event.preventDefault();
           returnFocusRef.current?.focus();
