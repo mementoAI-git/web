@@ -31,25 +31,27 @@ export function InviteDialog({
       }}
     >
       <DialogContent
-        className="block max-h-[calc(100dvh-2rem)] overflow-y-auto p-0 sm:max-w-[432px] motion-reduce:animate-none"
+        className="block max-h-[calc(100dvh-2rem)] overflow-y-auto p-0 sm:max-w-[358px] motion-reduce:animate-none [&_[data-slot=dialog-close]]:rounded-full [&_[data-slot=dialog-close]]:bg-popover [&_[data-slot=dialog-close]]:text-text-neutral-strong"
         overlayClassName="bg-overlay-backdrop"
         onCloseAutoFocus={(event) => {
           event.preventDefault();
           returnFocusRef.current?.focus();
         }}
       >
+        {/* Same size as the voice picker on desktop. Phones use the shared bottom sheet height. */}
+        <div className="flex min-h-[min(524px,92dvh)] flex-col sm:min-h-[min(480px,calc(100dvh-2rem))]">
         <div
           aria-hidden="true"
-          className="relative h-[63px] overflow-hidden sm:h-[72px]"
+          className="relative min-h-[63px] flex-1 overflow-hidden sm:min-h-[72px]"
         >
           <img
             src={inviteArtwork}
             alt=""
-            className="h-full w-full object-cover object-[center_35%]"
+            className="absolute inset-0 h-full w-full object-cover object-[center_35%]"
           />
           <div className="absolute inset-x-0 bottom-0 h-12 bg-linear-to-b from-transparent via-popover/70 to-popover" />
         </div>
-        <div className="relative space-y-4 px-5 pb-5 sm:px-6">
+        <div className="relative shrink-0 space-y-4 px-5 pb-5 sm:px-6">
           <DialogHeader className="items-center text-center">
             <DialogTitle className="font-garamond text-[32px] font-medium leading-10">
               {title}
@@ -59,6 +61,7 @@ export function InviteDialog({
             </DialogDescription>
           </DialogHeader>
           {children}
+        </div>
         </div>
       </DialogContent>
     </Dialog>

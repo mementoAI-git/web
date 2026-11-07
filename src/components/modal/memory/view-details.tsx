@@ -11,6 +11,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { StoryVisibilityIcon } from "./create/story-visibility-icon";
+
+type StoryDetailsMemory = Pick<IMemory, "body" | "attachments" | "tags"> &
+  Partial<Pick<IMemory, "visibility" | "groups" | "beneficiaries">>;
 
 export function StoryDetailsDialog({
   memory,
@@ -19,7 +23,7 @@ export function StoryDetailsDialog({
   onCloseAutoFocus,
   children,
 }: {
-  memory: IMemory;
+  memory: StoryDetailsMemory;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onCloseAutoFocus?: ComponentProps<typeof DialogContent>["onCloseAutoFocus"];
@@ -70,7 +74,13 @@ export function ViewMemoryDetails({
   );
 }
 
-export function StoryDetailsContent({ memory }: { memory: IMemory }) {
+export function StoryDetailsContent({
+  memory,
+  showVisibility = true,
+}: {
+  memory: StoryDetailsMemory;
+  showVisibility?: boolean;
+}) {
   const words = DOMPurify.sanitize(memory.body)
     .replace(/<[^>]+>/g, " ")
     .trim()
@@ -80,18 +90,29 @@ export function StoryDetailsContent({ memory }: { memory: IMemory }) {
 
   return (
     <div className="flex flex-col gap-7 font-geist">
-      <section>
-        <h3 className="text-base font-semibold text-text-neutral-strong">
-          Visibility
-        </h3>
-        <p className="mt-2 text-sm text-text-neutral-weak">
-          {memory.visibility === "everyone"
-            ? "Visible to everyone"
-            : audience.length > 0
-              ? `Shared with ${audience.map((item) => item.name).join(", ")}`
-              : "Private — only you"}
-        </p>
-      </section>
+      {showVisibility ? (
+        <section>
+          <h3 className="text-base font-semibold text-text-neutral-strong">
+            Visibility
+          </h3>
+          <p className="mt-2 flex items-center gap-2 text-sm text-text-neutral-weak">
+            <StoryVisibilityIcon
+              audience={
+                memory.visibility === "everyone"
+                  ? "everyone"
+                  : audience.length > 0
+                    ? "shared"
+                    : "private"
+              }
+            />
+            {memory.visibility === "everyone"
+              ? "Visible to everyone"
+              : audience.length > 0
+                ? `Shared with ${audience.map((item) => item.name).join(", ")}`
+                : "Private — only you"}
+          </p>
+        </section>
+      ) : null}
       <section>
         <h3 className="text-base font-semibold text-text-neutral-strong">
           Story Overview

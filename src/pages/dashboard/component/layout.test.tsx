@@ -1,5 +1,5 @@
 import { fireEvent, screen } from "@testing-library/react";
-import { Route, Routes } from "react-router-dom";
+import { Link, Route, Routes } from "react-router-dom";
 import { vi } from "vitest";
 import { renderWithProviders } from "@/test";
 import { ChatSidebarProvider } from "@/contexts/chat-sidebar";
@@ -21,7 +21,7 @@ vi.mock("./dashboard-header", () => ({
 }));
 
 vi.mock("./dashboard-sidebar", () => ({
-  DashboardSideBar: ({ onCollapse, compact }: { onCollapse: () => void; compact?: boolean }) => <div data-testid="dashboard-sidebar" data-compact={compact}><button onClick={onCollapse}>Close sidebar</button></div>,
+  DashboardSideBar: ({ onCollapse, compact }: { onCollapse: () => void; compact?: boolean }) => <div data-testid="dashboard-sidebar" data-compact={compact}><button onClick={onCollapse}>Close sidebar</button><button data-slot="sidebar-menu-button">Insights</button><Link to="/stories">Go to stories</Link></div>,
 }));
 
 vi.mock("./dashboard-chat-sidebar", () => ({
@@ -35,15 +35,30 @@ vi.mock("@/features/onboarding-groot", () => ({
 import DashboardLayout from "./layout";
 
 describe("DashboardLayout", () => {
-  it("hides the dashboard chrome on settings routes", () => {
-    renderWithProviders(<ChatSidebarProvider><DashboardLayout /></ChatSidebarProvider>, {route: "/settings/security", auth: true});
-    expect(screen.queryByTestId("dashboard-sidebar")).not.toBeInTheDocument();
-    expect(screen.queryByTestId("dashboard-header")).not.toBeInTheDocument();
+  it.each(["/settings/security", "/insights"])("keeps the dashboard chrome on %s", (route) => {
+    renderWithProviders(<ChatSidebarProvider><DashboardLayout /></ChatSidebarProvider>, {route, auth: true});
+    expect(screen.getByTestId("dashboard-sidebar")).toBeInTheDocument();
+    expect(screen.getByTestId("dashboard-header")).toBeInTheDocument();
   });
   it.each([["/chat/people", false], ["/overview", false], ["/stories", false]])("keeps the full sidebar on %s", (route, compact) => {
     renderWithProviders(<ChatSidebarProvider><DashboardLayout /></ChatSidebarProvider>, {route, auth: true});
     expect(screen.getByTestId("dashboard-sidebar")).toHaveAttribute("data-compact", String(compact));
   });
+  it.each([
+    ["a menu item is tapped", "Insights", "button"],
+    ["the route changes", "Go to stories", "link"],
+  ] as const)("closes the mobile sidebar when %s", (_, name, role) => {
+    renderWithProviders(
+      <ChatSidebarProvider><DashboardLayout /></ChatSidebarProvider>,
+      { route: "/overview", auth: true },
+    );
+    const sidebar = screen.getByTestId("dashboard-sidebar").parentElement!;
+    fireEvent.click(screen.getByRole("button", { name: "Open sidebar" }));
+    expect(sidebar).toHaveAttribute("data-open", "true");
+    fireEvent.click(screen.getByRole(role, { name }));
+    expect(sidebar).toHaveAttribute("data-open", "false");
+  });
+
   it("removes the closed mobile sidebar from keyboard navigation", () => {
     const originalWidth = window.innerWidth;
     Object.defineProperty(window, "innerWidth", { configurable: true, value: 390 });

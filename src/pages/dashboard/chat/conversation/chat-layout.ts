@@ -1,6 +1,9 @@
 /** The personal and connection conversations use the same Chat dimensions. */
 export const CHAT_CONTENT_LAYOUT =
   "mx-auto flex w-full min-w-0 max-w-[810px] flex-1 flex-col";
+/** Narrows the messages and composer beside the inline Chat settings column, which starts at 1200px. */
+export const CHAT_WIDTH_WITH_SETTINGS_OPEN =
+  "min-[1200px]:max-w-[min(762px,calc(100%-48px))]";
 export const CHAT_CONTENT_INSET = "px-3 pt-6 sm:px-4 sm:pt-12";
 export const CHAT_COMPOSER_LAYOUT =
   "mx-auto w-full min-w-0 max-w-[810px] sm:px-4";

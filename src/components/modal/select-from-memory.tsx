@@ -85,7 +85,7 @@ export default function SelectFromMemory({
             <ModalCloseBtn onClick={handleClose} />
             <div className="space-y-1 mb-6">
               <h4 className="modal-title">Select item from memory</h4>
-              <p className="font-inter text-sm text-grey-600">
+              <p className="font-inter text-sm text-text-neutral-weak">
                 Share an entry from memory as a time capsule
               </p>
             </div>

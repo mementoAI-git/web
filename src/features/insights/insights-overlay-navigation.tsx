@@ -22,7 +22,7 @@ export function InsightsOverlayNavigation({
     <Tabs
       value={value}
       onValueChange={(next) => onValueChange(next as InsightsSection)}
-      className="min-w-0 gap-6"
+      className="min-w-0 flex-col gap-6"
     >
       <div className="overflow-x-auto pb-1">
         <TabsList
@@ -42,7 +42,7 @@ export function InsightsOverlayNavigation({
         </TabsList>
       </div>
       {sections.map((section) => (
-        <TabsContent key={section.value} value={section.value} className="mt-0">
+        <TabsContent key={section.value} value={section.value} className="page-fade-in mt-0">
           {content[section.value]}
         </TabsContent>
       ))}

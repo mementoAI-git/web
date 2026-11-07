@@ -46,8 +46,9 @@ it("uses the question category and preserves share, bookmark and back actions", 
   expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
     "What makes your friends special?",
   );
-  expect(screen.getByText("People I Love")).toBeInTheDocument();
   const user = userEvent.setup();
+  await user.click(screen.getByRole("button", { name: "Expand topic card" }));
+  expect(screen.getByText("People I Love")).toBeInTheDocument();
   await user.click(screen.getByRole("button", { name: "Share topic" }));
   expect(open).toHaveBeenCalledWith("share-post", {
     id: "memory-1",
@@ -59,15 +60,10 @@ it("uses the question category and preserves share, bookmark and back actions", 
   expect(screen.getByText("Category page")).toBeInTheDocument();
 });
 
-it("collapses to the identicon, title and three actions, then restores the badge when expanded", async () => {
+it("starts collapsed with the identicon, title and three actions, then shows the badge when expanded", async () => {
   renderHeader({ _id: "memory-1", title: "My question" });
-  expect(screen.getByText("People I Love")).toHaveClass(
-    "bg-fill-brand-weak",
-    "text-text-brand-strong",
-  );
-  const user = userEvent.setup();
-  await user.click(screen.getByRole("button", { name: "Collapse topic card" }));
   const card = screen.getByRole("region", { name: "Topic question" });
+  expect(card).toHaveClass("rounded-[12px]", "sm:rounded-3xl");
   expect(screen.queryByText("People I Love")).not.toBeInTheDocument();
   expect(card.querySelector("img")).toHaveAttribute("width", "40");
   expect(card.querySelector("img")).toHaveAttribute("height", "40");
@@ -79,6 +75,7 @@ it("collapses to the identicon, title and three actions, then restores the badge
   expect(
     screen.getByRole("button", { name: "Expand topic card" }),
   ).toHaveAttribute("aria-expanded", "false");
+  const user = userEvent.setup();
   await user.click(screen.getByRole("button", { name: "Share topic" }));
   expect(open).toHaveBeenCalledWith("share-post", {
     id: "memory-1",
@@ -87,8 +84,13 @@ it("collapses to the identicon, title and three actions, then restores the badge
   await user.click(screen.getByRole("button", { name: "Bookmark topic" }));
   expect(toggleBookmark).toHaveBeenCalledOnce();
   await user.click(screen.getByRole("button", { name: "Expand topic card" }));
-  expect(screen.getByText("People I Love")).toBeInTheDocument();
+  expect(screen.getByText("People I Love")).toHaveClass(
+    "bg-fill-brand-weak",
+    "text-text-brand-strong",
+  );
   expect(card.querySelector("img")).toHaveAttribute("width", "56");
+  await user.click(screen.getByRole("button", { name: "Collapse topic card" }));
+  expect(screen.queryByText("People I Love")).not.toBeInTheDocument();
 });
 
 it("does not submit share or bookmark actions before the question has a saved conversation", () => {

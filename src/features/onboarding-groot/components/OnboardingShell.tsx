@@ -77,7 +77,7 @@ export function OnboardingShell({
   }, [currentStep]);
 
   return (
-    <div ref={containerRef} className="flex h-screen flex-col overflow-hidden bg-bg-neutral" role="main" aria-label="Onboarding">
+    <div ref={containerRef} className="flex h-dvh flex-col overflow-hidden bg-bg-neutral" role="main" aria-label="Onboarding">
       {/* Topbar */}
       <header className="flex shrink-0 items-center justify-between px-4 py-6 sm:px-6">
         <Link to="/" className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-v3-brand-strong focus-visible:ring-offset-2 rounded">

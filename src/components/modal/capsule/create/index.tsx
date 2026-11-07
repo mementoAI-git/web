@@ -325,6 +325,7 @@ function MobileFormSheet({
       style={{ zIndex: 9995 }}
     >
       <Sheet.Container
+        className="sheet-see-through"
         style={{
           background: "transparent", // Important: made transparent to show peek card behind
           borderRadius: "24px 24px 0 0",
@@ -644,6 +645,7 @@ function MobilePreviewSheet({
       style={{ zIndex: 9998 }}
     >
       <Sheet.Container
+        className="sheet-see-through"
         style={{
           background: "transparent",
           borderRadius: "24px 24px 0 0",
@@ -712,6 +714,7 @@ function MobileMemorySheet({
       style={{ zIndex: 9999 }}
     >
       <Sheet.Container
+        className="sheet-see-through"
         style={{
           background: "transparent",
           borderRadius: "24px 24px 0 0",
@@ -767,6 +770,7 @@ function MobileMediaSheet({
       style={{ zIndex: 9999 }}
     >
       <Sheet.Container
+        className="sheet-see-through"
         style={{
           background: "transparent",
           borderRadius: "24px 24px 0 0",

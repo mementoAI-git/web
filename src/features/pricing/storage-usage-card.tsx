@@ -64,7 +64,7 @@ export function StorageUsageCard({
       <section
         aria-label="Storage"
         className={cn(
-          "flex flex-col gap-2 rounded-3xl bg-fill-neutral-weak p-4 font-geist sm:p-5",
+          "settings-card flex flex-col gap-2 p-4 font-geist sm:p-6",
           className,
         )}
       >

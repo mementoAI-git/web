@@ -1,0 +1,5 @@
+/* Light sky's fills are translucent white, which would vanish on this dialog's white surface. */
+.light-sky .conversation-files-dialog {
+  --color-fill-neutral-weak: color-mix(in srgb, var(--fill-neutral-strong) 8%, transparent);
+  --color-fill-neutral-weaker: color-mix(in srgb, var(--fill-neutral-strong) 4%, transparent);
+}

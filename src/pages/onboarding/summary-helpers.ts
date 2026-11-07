@@ -13,8 +13,7 @@ export type PostOnboardingAction =
   | "dashboard"
   | "voice_recorder"
   | "reflection_prompt"
-  | "file_upload"
-  | "time_capsule";
+  | "file_upload";
 
 export interface OnboardingSummarySnapshot {
   nextAction: PostOnboardingAction;
@@ -209,8 +208,6 @@ export function getPostOnboardingDestination(action: PostOnboardingAction): {
       };
     case "reflection_prompt":
       return { path: "/explore", label: "Browse prompts" };
-    case "time_capsule":
-      return { path: "/capsule", label: "Open time capsules" };
     default:
       return { path: "/overview", label: "Go to dashboard" };
   }

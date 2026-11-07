@@ -31,14 +31,17 @@ export function StoryMediaControls({
   editor,
   onUpload,
   disabled,
+  recording,
+  onRecord,
 }: {
   editor: Editor | null;
   onUpload: (file: File, duration?: number) => void;
   disabled: boolean;
+  recording: boolean;
+  onRecord: () => void;
 }) {
   const { push } = useModal();
   const [showEmoji, setShowEmoji] = useState(false);
-  const recordingNumber = useRef(1);
   const photos = useRef<HTMLInputElement>(null);
   const videos = useRef<HTMLInputElement>(null);
   const audio = useRef<HTMLInputElement>(null);
@@ -180,19 +183,11 @@ export function StoryMediaControls({
         type="button"
         variant="ghost"
         size="icon"
-        disabled={disabled}
+        disabled={disabled || recording}
         className={controlClass}
         aria-label="Record audio"
         title="Record audio"
-        onClick={() =>
-          push?.("audio-recorder", {
-            onFinish: (file: File, duration?: number) => {
-              onUpload(file, duration);
-              recordingNumber.current += 1;
-            },
-            recordingNumber: recordingNumber.current,
-          })
-        }
+        onClick={onRecord}
       >
         <Mic className="size-5" />
       </Button>

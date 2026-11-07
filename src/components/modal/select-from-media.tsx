@@ -115,7 +115,7 @@ export default function SelectFromMedia({
             <ModalCloseBtn onClick={handleClose} />
             <div className="space-y-1 mb-6">
               <h4 className="modal-title">Select from media</h4>
-              <p className="font-inter text-sm text-grey-600">
+              <p className="font-inter text-sm text-text-neutral-weak">
                 Add media files from your library
               </p>
             </div>

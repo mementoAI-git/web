@@ -212,7 +212,7 @@ describe("SearchMemoriesV2", () => {
     expect(document.body.querySelector(".bg-white")).not.toBeInTheDocument();
   });
 
-  it("uses the solid neutral surface token across the mobile search surface", () => {
+  it("uses the raised surface token across the mobile search surface", () => {
     render(
       <MemoryRouter>
         <SearchMemoriesV2 isMobile />
@@ -221,13 +221,13 @@ describe("SearchMemoriesV2", () => {
 
     expect(
       document.body.querySelector('[data-slot="sheet-container"]'),
-    ).toHaveClass("bg-bg-neutral-solid");
+    ).toHaveClass("bg-bg-raised");
     expect(
       document.body.querySelector('[data-slot="sheet-header"]'),
-    ).toHaveClass("bg-bg-neutral-solid");
+    ).toHaveClass("bg-bg-raised");
     expect(
       document.body.querySelector('[data-slot="sheet-content"]'),
-    ).toHaveClass("bg-bg-neutral-solid");
+    ).toHaveClass("bg-bg-raised");
     expect(document.body.querySelector('[data-slot="command"]')).toHaveClass(
       "bg-bg-neutral-solid",
     );

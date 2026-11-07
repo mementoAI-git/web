@@ -7,8 +7,10 @@ import VideoPlayer from "@/components/player/video-player";
 import type { IOnUploadPayload } from "@/utility/interface";
 import { cn } from "@/utility";
 import { inferMimeType } from "@/utility/constant";
+import { displayFileName, voiceNoteLabel } from "@/utility/file-label";
+import { VoiceNoteTile } from "@/components/recorder/voice-note-tile";
+import { useModal } from "@/hooks/use-modal";
 
-const VOICE_BAR_COUNT = 44;
 
 function formatTimestamp(totalSec: number): string {
   const s = Math.max(0, Math.floor(totalSec));
@@ -44,16 +46,6 @@ function mediaSrc(f: IOnUploadPayload): string {
   return "";
 }
 
-/** Deterministic bar heights per attachment so the shape doesn’t jump between renders. */
-function barHeightsForId(id: string, count = VOICE_BAR_COUNT): number[] {
-  let h = 0;
-  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) | 0;
-  return Array.from({ length: count }, (_, i) => {
-    const v = Math.sin((h + i * 997) * 0.013) * 0.5 + 0.5;
-    return 5 + Math.round(v * 20);
-  });
-}
-
 function WaveformBars({ active }: { active?: boolean }) {
   const heights = [12, 20, 16, 24, 14, 22, 10, 18, 26, 14, 20, 16];
   return (
@@ -73,52 +65,21 @@ function WaveformBars({ active }: { active?: boolean }) {
   );
 }
 
-function VoiceWaveformProgress({
-  progress,
-  barHeights,
-}: {
-  progress: number;
-  barHeights: number[];
-}) {
-  const n = barHeights.length;
-  const p = Math.max(0, Math.min(1, progress));
-  return (
-    <div className="flex h-10 w-full min-w-0 items-end gap-[2px]">
-      {barHeights.map((h, i) => {
-        const filled = (i + 0.5) / n <= p;
-        return (
-          <span
-            key={i}
-            className={cn(
-              "min-w-0 flex-1 rounded-full transition-[background-color] duration-100",
-              filled ? "bg-fill-brand-strong" : "bg-fill-inverse-strong/25",
-            )}
-            style={{ height: `${h}px`, maxHeight: "100%" }}
-          />
-        );
-      })}
-    </div>
-  );
-}
-
 export function QuickCaptureMediaStack({
   files,
   voiceNoteIds,
   onRemove,
+  onRetry,
 }: {
   files: IOnUploadPayload[];
   voiceNoteIds: Record<string, true>;
   onRemove: (id: string) => void;
+  onRetry?: (file: IOnUploadPayload) => void;
 }) {
+  const { push } = useModal();
   const [expanded, setExpanded] = useState(false);
   const [playingId, setPlayingId] = useState<string | null>(null);
-  const [progressById, setProgressById] = useState<Record<string, number>>({});
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const playingIdRef = useRef<string | null>(null);
-
-  useEffect(() => {
-    playingIdRef.current = playingId;
-  }, [playingId]);
 
   useEffect(() => {
     return () => {
@@ -126,51 +87,6 @@ export function QuickCaptureMediaStack({
       audioRef.current = null;
     };
   }, []);
-
-  const toggleVoicePlay = (id: string, src: string) => {
-    if (!src) return;
-
-    if (playingId === id) {
-      audioRef.current?.pause();
-      audioRef.current = null;
-      setPlayingId(null);
-      setProgressById((m) => ({ ...m, [id]: 0 }));
-      return;
-    }
-
-    if (audioRef.current) {
-      const prev = playingIdRef.current;
-      audioRef.current.pause();
-      audioRef.current = null;
-      if (prev) setProgressById((m) => ({ ...m, [prev]: 0 }));
-    }
-
-    const el = new Audio(src);
-    const onTime = () => {
-      if (el.duration && Number.isFinite(el.duration)) {
-        setProgressById((m) => ({
-          ...m,
-          [id]: Math.min(1, el.currentTime / el.duration),
-        }));
-      }
-    };
-    el.addEventListener("timeupdate", onTime);
-    el.addEventListener("ended", () => {
-      setPlayingId(null);
-      setProgressById((m) => ({ ...m, [id]: 0 }));
-      el.removeEventListener("timeupdate", onTime);
-      audioRef.current = null;
-    });
-
-    audioRef.current = el;
-    setPlayingId(id);
-    void el.play().catch(() => {
-      setPlayingId(null);
-      setProgressById((m) => ({ ...m, [id]: 0 }));
-      el.removeEventListener("timeupdate", onTime);
-      audioRef.current = null;
-    });
-  };
 
   const toggleAudioPlay = (id: string, src: string) => {
     if (!src) return;
@@ -274,6 +190,49 @@ export function QuickCaptureMediaStack({
         const src = mediaSrc(f);
         const dur = durationOf(f);
 
+        // First, so a recording stays playable from this device while it uploads or if it fails.
+        if (isVoice) {
+          const uploaded = f.uploadedFile;
+          return (
+            <VoiceNoteTile
+              key={f.id}
+              id={uploaded?._id || f.id}
+              src={src}
+              localFile={f.file}
+              duration={dur}
+              label={voiceNoteLabel(f.file?.name || uploaded?.name) ?? "Voice note"}
+              onRetry={f.uploadFailed && onRetry ? () => onRetry(f) : undefined}
+              uploadProgress={f.uploadFailed ? undefined : f.progress}
+              onRemove={() => onRemove(f.id)}
+              onOpen={uploaded?._id ? () => push?.("file-preview", { files: [{ ...uploaded, duration: dur }], readOnly: true }) : undefined}
+            />
+          );
+        }
+
+        if (f.uploadFailed) {
+          return (
+            <div
+              key={f.id}
+              role="alert"
+              className="flex items-center justify-between gap-3 rounded-xl border border-stroke-neutral-weaker px-3 py-3 font-inter text-xs text-text-neutral-weak"
+            >
+              <span className="min-w-0 truncate">
+                {displayFileName(f.file?.name) || "File"} didn’t upload
+              </span>
+              <span className="flex shrink-0 items-center gap-3">
+                {onRetry ? (
+                  <button type="button" onClick={() => onRetry(f)} className="cursor-pointer font-semibold text-text-brand-strong">
+                    Retry
+                  </button>
+                ) : null}
+                <button type="button" onClick={() => onRemove(f.id)} className="cursor-pointer font-semibold">
+                  Remove
+                </button>
+              </span>
+            </div>
+          );
+        }
+
         if (f.progress !== undefined && f.progress < 100) {
           return (
             <div
@@ -300,60 +259,6 @@ export function QuickCaptureMediaStack({
               </button>
               <div className="relative overflow-hidden rounded-xl bg-fill-neutral-strong">
                 <VideoPlayer src={src} />
-              </div>
-            </div>
-          );
-        }
-
-        if (isVoice) {
-          const title =
-            f.file?.name || f.uploadedFile?.name
-              ? `Voice note · ${f.file?.name || f.uploadedFile?.name}`
-              : `Voice note · ${formatTimestamp(dur)}`;
-          const progress = playingId === f.id ? (progressById[f.id] ?? 0) : 0;
-          const bars = barHeightsForId(f.id);
-
-          return (
-            <div
-              key={f.id}
-              className="relative overflow-hidden rounded-2xl bg-fill-neutral-strong px-4 pb-3.5 pt-3 shadow-sm"
-            >
-              <button
-                type="button"
-                onClick={() => onRemove(f.id)}
-                className="absolute top-2.5 right-2.5 z-10 flex size-7 items-center justify-center rounded-full text-text-inverse-weaker transition-colors hover:bg-fill-inverse-weak hover:text-text-inverse-strong"
-                aria-label="Remove voice note"
-              >
-                <TimesIcon width={8} height={8} />
-              </button>
-              <div className="min-w-0 pr-9">
-                <p className="truncate font-inter text-[13px] leading-snug text-text-inverse-strong">
-                  {title}
-                </p>
-                <div className="mt-3 flex items-end gap-3">
-                  <div className="min-w-0 flex-1 pt-0.5">
-                    <VoiceWaveformProgress
-                      progress={progress}
-                      barHeights={bars}
-                    />
-                  </div>
-                  <button
-                    type="button"
-                    className="flex size-10 shrink-0 items-center justify-center rounded-full text-text-inverse-strong transition-opacity hover:opacity-90"
-                    aria-label={
-                      playingId === f.id
-                        ? "Pause voice note"
-                        : "Play voice note"
-                    }
-                    onClick={() => toggleVoicePlay(f.id, src)}
-                  >
-                    {playingId === f.id ? (
-                      <Pause className="size-5 fill-current" />
-                    ) : (
-                      <Play className="size-5 fill-current pl-0.5" />
-                    )}
-                  </button>
-                </div>
               </div>
             </div>
           );
@@ -388,7 +293,7 @@ export function QuickCaptureMediaStack({
               <div className="min-w-0 flex-1 pl-1">
                 <WaveformBars active={playingId === f.id} />
                 <p className="mt-1 truncate font-inter text-xs text-text-neutral-strong">
-                  {f.file?.name || f.uploadedFile?.name || "Audio"}
+                  {displayFileName(f.file?.name || f.uploadedFile?.name) || "Audio"}
                 </p>
               </div>
               <span className="shrink-0 font-inter text-xs tabular-nums text-text-neutral-weak">

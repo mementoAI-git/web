@@ -6,7 +6,7 @@ describe("sky card page scope", () => {
     "includes %s", (pathname) => expect(isSkyCardPage(pathname)).toBe(true),
   );
 
-  it.each(["/stories", "/stories/memory", "/insights", "/people", "/beneficiaries", "/settings/beneficiary", "/settings/beneficiary/groups", "/chatty", "/settings-other"])(
+  it.each(["/stories", "/stories/memory", "/people", "/beneficiaries", "/settings/beneficiary", "/settings/beneficiary/groups", "/chatty", "/settings-other"])(
     "leaves %s unchanged", (pathname) => expect(isSkyCardPage(pathname)).toBe(false),
   );
 });

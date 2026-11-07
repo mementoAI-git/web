@@ -14,7 +14,7 @@ export default function Privacy() {
   const actionButtonBase = "w-full sm:w-auto rounded-full px-4 py-2 text-sm font-semibold motion-safe:transition-opacity motion-safe:duration-150";
 
   return (
-    <div className="flex w-full flex-col gap-6 sm:gap-8">
+    <div className="page-stagger flex w-full flex-col gap-6 sm:gap-8">
       <p className="font-inter text-sm text-v3-text-weak text-pretty">
         Memento AI believes in transparent data practices. Learn how your information is protected when using our products, and visit our
         <span className="font-semibold text-v3-brand-strong underline"> Privacy Policy</span> and
@@ -22,7 +22,7 @@ export default function Privacy() {
       </p>
 
       {/* Protection Info Card */}
-      <div className="sky-card flex flex-col gap-4 rounded-3xl border border-v3-stroke-weak bg-fill-neutral-weak p-4 sm:p-5">
+      <div className="settings-card flex flex-col gap-4 p-4 sm:p-6">
         <span className="font-inter text-sm font-semibold text-v3-text-strong">
           How we protect your information
         </span>
@@ -45,7 +45,7 @@ export default function Privacy() {
       </div>
 
       {/* Privacy Settings Card */}
-      <div className="sky-card flex flex-col gap-4 rounded-3xl border border-v3-stroke-weak bg-fill-neutral-weak p-4 sm:p-5">
+      <div className="settings-card flex flex-col gap-4 p-4 sm:p-6">
         <span className="font-inter text-sm font-semibold text-v3-text-strong">
           Privacy settings
         </span>
@@ -80,7 +80,7 @@ export default function Privacy() {
       </div>
 
       {/* Account Settings Card */}
-      <div className="sky-card flex flex-col gap-4 rounded-3xl border border-v3-stroke-weak bg-fill-neutral-weak p-4 sm:p-5">
+      <div className="settings-card flex flex-col gap-4 p-4 sm:p-6">
         <span className="font-inter text-sm font-semibold text-v3-text-strong">Account Settings</span>
         <div className="flex flex-col gap-4">
           <div className={actionRowBase}>
@@ -104,7 +104,7 @@ export default function Privacy() {
               onClick={() => setShowDeleteConfirm(true)}
               className={cn(
                 actionButtonBase,
-                "bg-fill-error-strong text-white hover:opacity-90",
+                "bg-[color:var(--fill-error-solid)] text-white hover:opacity-90",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stroke-error-strong focus-visible:ring-offset-2",
               )}
             >

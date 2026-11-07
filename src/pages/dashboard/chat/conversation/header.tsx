@@ -49,7 +49,7 @@ export default function ConversationHeader({ memory, onViewDetails }: { memory: 
               <MemoryDropdown {...{ memory, onViewDetails }} />
             </>
           ) : null}
-          <ChatSettings>
+          <ChatSettings conversationId={memory?._id}>
             <button
               type="button"
               aria-label="Chat settings"

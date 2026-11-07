@@ -17,6 +17,72 @@ import { cn } from "@/utility";
 const fieldClass =
   "rounded-lg border-stroke-neutral-weak bg-fill-neutral-weak text-base text-text-neutral-strong shadow-none placeholder:text-text-neutral-weaker";
 
+/** The dialog surface and size, for callers that own their `Dialog` root, such as ones with a trigger. Leave out `title` to supply your own header. */
+export function FormDialogContent({
+  title,
+  description,
+  onClose,
+  busy = false,
+  className,
+  overlayClassName,
+  headerClassName,
+  children,
+  ...props
+}: Omit<ComponentProps<typeof DialogContent>, "title"> & {
+  headerClassName?: string;
+  title?: string;
+  /** Read by screen readers only; the layout has no visible subtitle. */
+  description?: string;
+  onClose?: () => void;
+  busy?: boolean;
+}) {
+  return (
+    <DialogContent
+      showCloseButton={false}
+      className={cn(
+        "form-dialog z-[120] block max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-3xl bg-popover p-6 font-rounded text-text-neutral-strong [--font-geist:var(--font-rounded)] [--font-inter:var(--font-rounded)] sm:max-w-[432px] motion-reduce:animate-none",
+        className,
+      )}
+      overlayClassName={cn(
+        "z-[115] bg-overlay-backdrop supports-backdrop-filter:backdrop-blur-none motion-reduce:animate-none",
+        overlayClassName,
+      )}
+      onOpenAutoFocus={(event) => {
+        const field = event.currentTarget instanceof HTMLElement
+          ? event.currentTarget.querySelector<HTMLElement>("input:not([type='hidden'], [hidden]), textarea")
+          : null;
+        if (!field) return;
+        event.preventDefault();
+        field.focus();
+      }}
+      {...props}
+    >
+      {title ? (
+        <div className={cn("mb-6 flex items-center justify-between gap-3", headerClassName)}>
+          <DialogTitle className="font-rounded text-2xl font-semibold text-text-neutral-strong">
+            {title}
+          </DialogTitle>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            aria-label="Close"
+            disabled={busy}
+            className="rounded-full bg-fill-neutral-weak text-icon-neutral-strong"
+            onClick={onClose}
+          >
+            <X aria-hidden />
+          </Button>
+        </div>
+      ) : null}
+      {description ? (
+        <DialogDescription className="sr-only">{description}</DialogDescription>
+      ) : null}
+      {children}
+    </DialogContent>
+  );
+}
+
 /** Standard modal layout: title and close button, stacked fields, then Dismiss and a primary action. */
 export function FormDialog({
   title,
@@ -40,42 +106,18 @@ export function FormDialog({
         if (!open && !busy) onClose();
       }}
     >
-      <DialogContent
-        showCloseButton={false}
-        className="z-[120] block max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-3xl bg-popover p-6 font-rounded text-text-neutral-strong [--font-geist:var(--font-rounded)] [--font-inter:var(--font-rounded)] sm:max-w-[456px] motion-reduce:animate-none"
-        overlayClassName="z-[115] bg-overlay-backdrop supports-backdrop-filter:backdrop-blur-none motion-reduce:animate-none"
-        onOpenAutoFocus={(event) => {
-          const field = event.currentTarget instanceof HTMLElement
-            ? event.currentTarget.querySelector<HTMLElement>("input:not([type='hidden']), textarea")
-            : null;
-          if (!field) return;
-          event.preventDefault();
-          field.focus();
-        }}
+      <FormDialogContent
+        title={title}
+        description={description}
+        onClose={onClose}
+        busy={busy}
         onCloseAutoFocus={(event) => {
           event.preventDefault();
           if (returnFocusRef.current?.isConnected) returnFocusRef.current.focus();
         }}
       >
-        <div className="mb-6 flex items-center justify-between gap-3">
-          <DialogTitle className="font-rounded text-2xl font-semibold text-text-neutral-strong">
-            {title}
-          </DialogTitle>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            aria-label="Close"
-            disabled={busy}
-            className="rounded-full bg-fill-neutral-weak text-icon-neutral-strong"
-            onClick={onClose}
-          >
-            <X aria-hidden />
-          </Button>
-        </div>
-        <DialogDescription className="sr-only">{description}</DialogDescription>
         {children}
-      </DialogContent>
+      </FormDialogContent>
     </Dialog>
   );
 }
@@ -185,7 +227,7 @@ export function FormDialogFooter({
   destructive?: boolean;
 }) {
   return (
-    <div className="mt-2 flex flex-wrap items-center justify-end gap-3">
+    <div className="form-dialog-footer mt-2 flex flex-wrap items-center justify-end gap-3">
       {leading ? <div className="mr-auto">{leading}</div> : null}
       {dismissLabel ? (
         <Button

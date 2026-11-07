@@ -2,7 +2,7 @@ import { act, fireEvent, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { renderWithProviders, server } from "@/test";
-import { postFetcher } from "@/api/fetcher";
+import { fileUploadFetcher, postFetcher } from "@/api/fetcher";
 import { useState } from "react";
 import { QuickCapture } from "./index";
 
@@ -18,10 +18,11 @@ const voice = vi.hoisted(() => ({
   retry: vi.fn(),
   togglePause: vi.fn(),
 }));
-let receive: (text: string) => void;
-vi.mock("@/pages/dashboard/overview/sections/use-overview-dictation", () => ({
-  useOverviewDictation: (callback: typeof receive) => {
-    receive = callback;
+let receive: (file: File, durationSeconds: number) => void;
+vi.mock("@/hooks/use-voice-capture", () => ({
+  useVoiceCapture: ({ mode, onAudio }: { mode: string; onAudio: typeof receive }) => {
+    expect(mode).toBe("audio");
+    receive = onAudio;
     return voice;
   },
 }));
@@ -32,6 +33,10 @@ vi.mock("@/contexts/feature-flags", () => ({
 vi.mock("@/api/fetcher", async (original) => ({
   ...(await original<typeof import("@/api/fetcher")>()),
   postFetcher: vi.fn(),
+  fileUploadFetcher: vi.fn().mockResolvedValue({
+    success: true,
+    data: { _id: "voice-1", name: "voice.webm", url: "https://x/voice.webm", size: 5, type: "audio/webm" },
+  }),
 }));
 beforeEach(() => {
   localStorage.clear();
@@ -77,19 +82,18 @@ it("offers the Add Story upload options and opens the document picker", async ()
   expect(screen.queryByRole("menu")).not.toBeInTheDocument();
 });
 
-it("hides the avatar while typing and restores it when cleared", () => {
+it("shows no avatar and enables Publish only once there is text", () => {
   renderWithProviders(<QuickCapture />);
-  expect(screen.getByTestId("quick-story-avatar")).toBeInTheDocument();
+  expect(screen.queryByAltText("Your avatar")).not.toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Publish" })).toBeDisabled();
   fireEvent.change(screen.getByRole("textbox", { name: "Story" }), {
     target: { value: "A memory" },
   });
-  expect(screen.queryByTestId("quick-story-avatar")).not.toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Publish" })).toBeEnabled();
   fireEvent.change(screen.getByRole("textbox", { name: "Story" }), {
     target: { value: "" },
   });
-  expect(screen.getByTestId("quick-story-avatar")).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Publish" })).toBeDisabled();
 });
 it.each(["everyone", "group"])(
   "publishes %s access through the existing story endpoint",
@@ -121,7 +125,7 @@ it.each(["everyone", "group"])(
     );
   },
 );
-it("uses shared dictation controls and appends the transcript to the existing story", async () => {
+it("uses shared recorder controls and keeps the audio without changing the story text", async () => {
   let refresh!: () => void;
   function Harness() {
     const [, update] = useState(0);
@@ -143,25 +147,24 @@ it("uses shared dictation controls and appends the transcript to the existing st
   expect(screen.queryByRole("button", { name: /pause recording|resume recording/i })).not.toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Cancel recording" })).toBeEnabled();
   fireEvent.click(
-    screen.getByRole("button", { name: "Stop recording and transcribe" }),
+    screen.getByRole("button", { name: "Stop recording" }),
   );
   expect(voice.stop).toHaveBeenCalledOnce();
-  voice.phase = "transcribing";
+  voice.phase = "saving";
   act(() => refresh());
-  expect(screen.getByRole("status")).toHaveTextContent("Transcribing…");
-  act(() => receive("A new thought."));
+  expect(screen.getByRole("status")).toHaveTextContent("Saving…");
+  act(() => receive(new File(["audio"], "voice.webm", { type: "audio/webm" }), 8));
   voice.phase = "idle";
   act(() => refresh());
+  // The audio is kept as an attachment and the note's text is left alone.
   expect(screen.getByRole("textbox", { name: "Story" })).toHaveValue(
-    "Earlier thought. A new thought.",
+    "Earlier thought.",
   );
-});
-it("exposes retry and discard for a failed transcription", () => {
-  voice.error = "Couldn’t transcribe";
-  voice.canRetry = true;
-  renderWithProviders(<QuickCapture />);
-  fireEvent.click(screen.getByRole("button", { name: "Retry transcription" }));
-  expect(voice.retry).toHaveBeenCalledOnce();
-  fireEvent.click(screen.getByRole("button", { name: "Discard recording" }));
-  expect(voice.cancel).toHaveBeenCalledOnce();
+  await waitFor(() => expect(fileUploadFetcher).toHaveBeenCalled());
+  expect(fileUploadFetcher).toHaveBeenCalledWith(
+    expect.anything(),
+    expect.objectContaining({
+      arg: expect.objectContaining({ duration: 8, file: expect.any(File) }),
+    }),
+  );
 });

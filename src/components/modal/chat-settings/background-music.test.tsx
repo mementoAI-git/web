@@ -122,15 +122,15 @@ describe("BackgroundMusic", () => {
     expect(title.parentElement).toHaveClass("flex", "flex-col");
   });
 
-  it("renders the Fluid volume slider and supports keyboard adjustment", async () => {
+  it("renders the volume slider and supports keyboard adjustment", async () => {
     setVolume.mockClear();
     const user = await import("@testing-library/user-event").then(({ default: userEvent }) => userEvent.setup());
     render(<BackgroundMusic />);
 
     const slider = screen.getByRole("slider", { name: /^volume$/i });
     expect(slider).toHaveAttribute("aria-valuenow", "50");
-    expect(slider).toHaveAttribute("min", "0");
-    expect(slider).toHaveAttribute("max", "100");
+    expect(slider).toHaveAttribute("aria-valuemin", "0");
+    expect(slider).toHaveAttribute("aria-valuemax", "100");
     slider.focus();
     await user.keyboard("{ArrowRight}");
     expect(setVolume).toHaveBeenCalledWith(51);

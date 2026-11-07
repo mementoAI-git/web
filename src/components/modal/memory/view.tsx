@@ -1,15 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { EditorContent, useEditorState } from "@tiptap/react";
-import DOMPurify from "isomorphic-dompurify";
 import { Link as LinkIcon, ListFilter, ListTree, X } from "lucide-react";
 import useSWR, { mutate } from "swr";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
-import calendarIcon from "@/assets/icon/uim_calendar.svg";
 import endpoint from "@/api/endpoint";
 import { deleteFetcher } from "@/api/fetcher";
-import FileGallery from "@/components/file-gallery";
 import { useMemoryEditor } from "@/components/memory/text-area/use-memory-editor";
 import { LinkInput } from "@/components/memory/text-area/link-input";
 import { Button } from "@/components/ui/button";
@@ -36,7 +33,7 @@ import { useModal } from "@/hooks/use-modal";
 import { useStore } from "@/hooks/use-store";
 import { MemoryItemActions } from "@/pages/dashboard/stories/components/dropdown";
 import { StoryDetailsDialog } from "./view-details";
-import { addToRecentMemories, ensureLinksOpenInNewTab } from "@/utility";
+import { addToRecentMemories } from "@/utility";
 import type { IMemory, IOnUploadPayload } from "@/utility/interface";
 import { AccessField } from "./create/access-field";
 import { FileThumbnails } from "./create/file-thumbnails";
@@ -48,17 +45,15 @@ import {
 } from "./story-edit-state";
 import { StoryJournalShell } from "./story-journal-shell";
 import { StoryMediaControls } from "./story-media-controls";
-
-function ensureHtmlFormat(body: string): string {
-  const trimmed = (body || "").trim();
-  if (!trimmed) return "";
-  if (/<[a-z][\s\S]*>/i.test(trimmed)) return trimmed;
-  return trimmed
-    .split(/\n\n+/)
-    .filter(Boolean)
-    .map((paragraph) => `<p>${paragraph.replace(/\n/g, "<br>")}</p>`)
-    .join("");
-}
+import { AudioAttachmentRecorder } from "@/components/recorder/voice-recorder";
+import {
+  StoryReaderColumn,
+  StoryReaderContent,
+  StoryReaderFrame,
+  StoryReaderMedia,
+  StoryReaderMeta,
+} from "./story-reader";
+import { useStoryMobileViewport } from "./story-reader-utils";
 
 interface ViewMemoryProps {
   data: { memoryId?: string; memory?: IMemory };
@@ -88,6 +83,7 @@ export function ViewMemory({ data, isMobile }: ViewMemoryProps) {
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [pendingExit, setPendingExit] = useState<PendingExit>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isRecordingAudio, setIsRecordingAudio] = useState(false);
   const [removedAttachmentIds, setRemovedAttachmentIds] = useState<string[]>(
     [],
   );
@@ -111,6 +107,15 @@ export function ViewMemory({ data, isMobile }: ViewMemoryProps) {
   const remoteMemory = (fetched?.data as IMemory | undefined) ?? data.memory;
   const memory = localMemory ?? remoteMemory;
   const isEditing = mode === "edit";
+  const isMobileViewport = useStoryMobileViewport();
+  // Rotating a tablet must not throw away a story that's being edited.
+  const showsMobilePage = isMobileViewport && !isEditing;
+
+  useEffect(() => {
+    if (!showsMobilePage || !memoryId) return;
+    close?.("view-memory", { force: true });
+    navigate(`/stories/${memoryId}`);
+  }, [close, memoryId, navigate, showsMobilePage]);
 
   useEffect(() => {
     if (remoteMemory && mode === "view" && !hasLocalSaveRef.current) {
@@ -385,31 +390,9 @@ export function ViewMemory({ data, isMobile }: ViewMemoryProps) {
     ...addedFiles,
   ];
 
-  const dateLabel = useMemo(() => {
-    const value = memory?.created_at ? new Date(memory.created_at) : new Date();
-    return new Intl.DateTimeFormat("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    }).format(value);
-  }, [memory?.created_at]);
-
-  if (isMobile) return null;
+  if (isMobile || showsMobilePage) return null;
 
   const loading = !memory && isLoading;
-  const sanitizedBody = memory
-    ? ensureLinksOpenInNewTab(
-        DOMPurify.sanitize(ensureHtmlFormat(memory.body || "")),
-      )
-    : "";
-
-  const wordCount = DOMPurify.sanitize(memory?.body || "")
-    .replace(/<[^>]+>/g, " ")
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean).length;
-  const readingMinutes =
-    wordCount === 0 ? 0 : Math.max(1, Math.ceil(wordCount / 200));
   const readerActions = (
     <div className="flex flex-wrap items-center gap-3">
       <Button
@@ -450,7 +433,7 @@ export function ViewMemory({ data, isMobile }: ViewMemoryProps) {
         type="button"
         size="lg"
         onClick={saveChanges}
-        disabled={!isDirty || isMutating || isSaving || uploadsPending}
+        disabled={!isDirty || isMutating || isSaving || uploadsPending || isRecordingAudio}
       >
         {isMutating || isSaving ? "Saving…" : "Save changes"}
       </Button>
@@ -494,110 +477,25 @@ export function ViewMemory({ data, isMobile }: ViewMemoryProps) {
   );
 
   const storyContent = (
-    <section className="flex min-h-0 min-w-0 flex-col pl-4 pr-1">
-      <div className="hide-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain p-0 text-left">
-        <div className="flex min-h-full min-w-0 max-w-[760px] flex-col">
-          {loading ? (
-            <ViewMemorySkeleton />
-          ) : error && !memory ? (
-            <div className="rounded-xl border border-stroke-error-strong bg-fill-error-weak p-5">
-              <h1 className="font-garamond text-3xl text-text-neutral-strong">
-                Story unavailable
-              </h1>
-              <p className="mt-2 font-geist text-sm text-text-neutral-weak">
-                We couldn’t load this story. Close this view and try again.
-              </p>
-            </div>
-          ) : isEditing && draft ? (
-            <>
-              <textarea
-                ref={titleRef}
-                aria-label="Story title"
-                value={draft.title}
-                onChange={(event) =>
-                  setDraft((current) =>
-                    current
-                      ? { ...current, title: event.target.value }
-                      : current,
-                  )
-                }
-                rows={1}
-                onKeyDown={(event) => {
-                  if (
-                    event.key !== "Enter" ||
-                    event.shiftKey ||
-                    event.nativeEvent.isComposing
-                  )
-                    return;
-                  event.preventDefault();
-                  editor?.commands.focus();
-                }}
-                className="w-full shrink-0 resize-none overflow-hidden border-0 bg-transparent p-0 font-garamond text-[clamp(2rem,3vw,2.5rem)] italic leading-[1.15] text-text-neutral-strong focus:outline-none"
-              />
-              <div className="relative mt-6 flex min-h-[240px] flex-1 flex-col">
-                <EditorContent
-                  editor={editor}
-                  className="tiptap-editor tiptap-editor--memory-next min-h-[240px] w-full flex-1"
-                />
-                {showLinkInput ? (
-                  <LinkInput
-                    show
-                    position={linkPosition}
-                    initialUrl={editor?.getAttributes("link").href ?? ""}
-                    initialText={
-                      editor
-                        ? editor.state.doc.textBetween(
-                            editor.state.selection.from,
-                            editor.state.selection.to,
-                          )
-                        : ""
-                    }
-                    onSubmit={submitLink}
-                    onRemove={() =>
-                      editor
-                        ?.chain()
-                        .focus()
-                        .extendMarkRange("link")
-                        .unsetLink()
-                        .run()
-                    }
-                    onClose={() => setShowLinkInput(false)}
-                  />
-                ) : null}
-              </div>
-              {draftFiles.length > 0 ? (
-                <div className="mt-auto pt-6">
-                  <FileThumbnails
-                    files={draftFiles}
-                    onRemove={removeAttachment}
-                    variant="media-inline"
-                  />
-                </div>
-              ) : null}
-            </>
-          ) : memory ? (
-            <>
-              <h1 className="font-garamond text-[clamp(2rem,3vw,2.5rem)] italic leading-[1.15] text-text-neutral-strong">
-                {memory.title || "Story"}
-              </h1>
-              <div
-                className="story-viewer-body tiptap-editor tiptap-editor--memory-next prose prose-sm mt-5 min-h-[240px] max-w-none font-geist text-base leading-[1.5] text-text-neutral-strong"
-                dangerouslySetInnerHTML={{ __html: sanitizedBody }}
-              />
-            </>
-          ) : null}
-        </div>
-      </div>
-      {isEditing ? (
+    <StoryReaderColumn
+      footer={isEditing ? (
         <div
           data-testid="view-story-formatting-strip"
           className="mt-4 w-full max-w-[760px] shrink-0 px-3"
         >
+          {isRecordingAudio ? (
+            <AudioAttachmentRecorder
+              onFinish={addFile}
+              onClose={() => setIsRecordingAudio(false)}
+            />
+          ) : null}
           <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
             <StoryMediaControls
               editor={editor}
               onUpload={addFile}
               disabled={isMutating || isSaving}
+              recording={isRecordingAudio}
+              onRecord={() => setIsRecordingAudio(true)}
             />
             <div className="flex min-h-9 min-w-0 flex-wrap items-center gap-1">
               <Toggle
@@ -678,7 +576,89 @@ export function ViewMemory({ data, isMobile }: ViewMemoryProps) {
           </div>
         </div>
       ) : null}
-    </section>
+    >
+          {loading ? (
+            <ViewMemorySkeleton />
+          ) : error && !memory ? (
+            <div className="rounded-xl border border-stroke-error-strong bg-fill-error-weak p-5">
+              <h1 className="font-garamond text-3xl text-text-neutral-strong">
+                Story unavailable
+              </h1>
+              <p className="mt-2 font-geist text-sm text-text-neutral-weak">
+                We couldn’t load this story. Close this view and try again.
+              </p>
+            </div>
+          ) : isEditing && draft ? (
+            <>
+              <textarea
+                ref={titleRef}
+                aria-label="Story title"
+                value={draft.title}
+                onChange={(event) =>
+                  setDraft((current) =>
+                    current
+                      ? { ...current, title: event.target.value }
+                      : current,
+                  )
+                }
+                rows={1}
+                onKeyDown={(event) => {
+                  if (
+                    event.key !== "Enter" ||
+                    event.shiftKey ||
+                    event.nativeEvent.isComposing
+                  )
+                    return;
+                  event.preventDefault();
+                  editor?.commands.focus();
+                }}
+                className="w-full shrink-0 resize-none overflow-hidden border-0 bg-transparent p-0 font-garamond text-[clamp(2rem,3vw,2.5rem)] italic leading-[1.15] text-text-neutral-strong focus:outline-none"
+              />
+              <div className="relative mt-6 flex min-h-[240px] flex-1 flex-col">
+                <EditorContent
+                  editor={editor}
+                  className="tiptap-editor tiptap-editor--memory-next min-h-[240px] w-full flex-1"
+                />
+                {showLinkInput ? (
+                  <LinkInput
+                    show
+                    position={linkPosition}
+                    initialUrl={editor?.getAttributes("link").href ?? ""}
+                    initialText={
+                      editor
+                        ? editor.state.doc.textBetween(
+                            editor.state.selection.from,
+                            editor.state.selection.to,
+                          )
+                        : ""
+                    }
+                    onSubmit={submitLink}
+                    onRemove={() =>
+                      editor
+                        ?.chain()
+                        .focus()
+                        .extendMarkRange("link")
+                        .unsetLink()
+                        .run()
+                    }
+                    onClose={() => setShowLinkInput(false)}
+                  />
+                ) : null}
+              </div>
+              {draftFiles.length > 0 ? (
+                <div className="mt-auto pt-6">
+                  <FileThumbnails
+                    files={draftFiles}
+                    onRemove={removeAttachment}
+                    variant="media-inline"
+                  />
+                </div>
+              ) : null}
+            </>
+          ) : memory ? (
+            <StoryReaderContent title={memory.title} body={memory.body} />
+          ) : null}
+    </StoryReaderColumn>
   );
 
   const detailsButton = (
@@ -702,17 +682,10 @@ export function ViewMemory({ data, isMobile }: ViewMemoryProps) {
   );
 
   const mediaContent = (
-    <aside
-      aria-label="Story attachments"
-      className="story-viewer-media flex min-h-0 min-w-0 flex-col items-center justify-between pt-16"
-    >
-      <div className="flex min-h-0 flex-1 flex-col items-center justify-center pb-12">
-        {!isEditing && memory && memory.attachments.length > 0 ? (
-          <FileGallery files={memory.attachments} variant="stacked" />
-        ) : null}
-      </div>
-      <div className="self-end pb-2">{detailsButton}</div>
-    </aside>
+    <StoryReaderMedia
+      files={!isEditing && memory ? memory.attachments : undefined}
+      action={detailsButton}
+    />
   );
 
   const detailsDialog = memory ? (
@@ -776,35 +749,21 @@ export function ViewMemory({ data, isMobile }: ViewMemoryProps) {
           } else handleClose();
         }}
       >
-        <div className="relative grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)] gap-5 py-6 pl-[max(225px,22%,min(254px,calc((100dvh-48px)*0.31)))] pr-6 xl:gap-8 xl:py-8 xl:pr-8">
-          <header
-            aria-label="Story navigation"
-            className="flex min-w-0 flex-wrap items-center justify-between gap-3 pl-4"
-          >
-            {!isEditing ? (
-              <div className="flex items-center gap-2 whitespace-nowrap font-geist text-xs text-text-neutral-weak">
-                <img
-                  src={calendarIcon}
-                  alt=""
-                  aria-hidden
-                  className="size-4 object-contain"
-                />
-                <span>{dateLabel}</span>
-                <span aria-hidden>·</span>
-                <span>{readingMinutes} min read</span>
-              </div>
-            ) : null}
-            <div className="ml-auto flex min-w-0 flex-wrap items-center justify-end gap-2 xl:gap-3">
-              {headerActions}
-            </div>
-          </header>
-          <div
-            className={`story-viewer-layout grid min-h-0 gap-5 xl:gap-7 ${isEditing ? "grid-cols-[minmax(0,1fr)_100px]" : "grid-cols-[minmax(0,1fr)_250px]"}`}
-          >
-            {storyContent}
-            {mediaContent}
-          </div>
-        </div>
+        <StoryReaderFrame
+          meta={
+            !isEditing ? (
+              <StoryReaderMeta
+                createdAt={memory?.created_at}
+                body={memory?.body}
+              />
+            ) : null
+          }
+          actions={headerActions}
+          narrowMedia={isEditing}
+        >
+          {storyContent}
+          {mediaContent}
+        </StoryReaderFrame>
       </StoryJournalShell>
 
       {detailsDialog}

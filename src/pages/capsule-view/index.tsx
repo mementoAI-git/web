@@ -92,7 +92,7 @@ function CapsuleSession({ token }: { token: string | null }) {
   }, [token, attempt]);
 
   return (
-    <div className="min-h-screen bg-background px-5 py-8 text-text-neutral-strong sm:px-8">
+    <div className="min-h-dvh bg-background px-5 py-8 text-text-neutral-strong sm:px-8">
       <meta name="referrer" content="no-referrer" />
       <header className="mx-auto flex w-full max-w-3xl items-center justify-between border-b border-stroke-neutral-weaker pb-6">
         <Logo />

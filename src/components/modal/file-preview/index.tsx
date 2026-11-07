@@ -1,3 +1,4 @@
+import { displayFileName } from "@/utility/file-label";
 import FocusTrap from "focus-trap-react";
 import dayjs from "dayjs";
 import { ChevronLeft, ChevronRight, FileText } from "lucide-react";
@@ -13,12 +14,13 @@ import { getDocumentKind } from "./document-kind";
 
 export interface FilePreviewItemBase extends ConversationPreviewFile {
   onDelete: (id: string) => void;
+  readOnly?: boolean;
 }
 
 export interface FilePreviewItem extends FilePreviewItemBase { isActive?: boolean }
 
 interface FilePreviewProps {
-  data: { files: ConversationPreviewFile[]; startIndex?: number };
+  data: { files: ConversationPreviewFile[]; startIndex?: number; readOnly?: boolean };
 }
 
 const clampIndex = (value: number, length: number) =>
@@ -73,7 +75,7 @@ export default function FilePreview({ data }: FilePreviewProps) {
 
   return (
     <FocusTrap focusTrapOptions={{ initialFocus: "[data-viewer-close]", escapeDeactivates: false, clickOutsideDeactivates: false }}>
-      <section role="dialog" aria-modal="true" aria-label={`Preview ${active.name || "file"}`} className="fixed inset-0 z-50 overflow-hidden bg-overlay-media-backdrop" onClick={(event) => {
+      <section role="dialog" aria-modal="true" aria-label={`Preview ${displayFileName(active.name) || "file"}`} className="fixed inset-0 z-50 overflow-hidden bg-overlay-media-backdrop" onClick={(event) => {
         event.stopPropagation();
         if (event.target instanceof Element && !event.target.closest("[data-viewer-content], button")) close?.("file-preview");
       }}>
@@ -83,11 +85,11 @@ export default function FilePreview({ data }: FilePreviewProps) {
               {kind === "video" ? "▶" : kind === "audio" ? "♪" : kind === "document" ? <FileText className="size-4" /> : "▧"}
             </span>
             <span className="min-w-0">
-              <strong className="block truncate font-geist text-sm font-semibold sm:text-base">{active.name || "File"}</strong>
+              <strong className="block truncate font-geist text-sm font-semibold sm:text-base">{displayFileName(active.name) || "File"}</strong>
               {sharedLabel ? <span className="block truncate font-inter text-xs text-text-neutral-weak">{sharedLabel}</span> : null}
             </span>
           </div>
-          <ActionBtn {...active} onDelete={handleDelete} />
+          <ActionBtn {...active} onDelete={handleDelete} readOnly={data.readOnly} />
         </header>
 
         <div className={`absolute inset-x-0 bottom-0 top-[72px] flex items-center justify-center py-4 pb-16 sm:py-8 sm:pb-20 ${kind === "document" && files.length > 1 ? "px-16 sm:px-40" : "px-4 sm:px-8"}`}>

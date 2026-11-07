@@ -322,4 +322,7 @@ export interface IMessage {
   attachments?: IFile[];
   attatchments?: IFile[];
   link_metadata?: ILinkMetadata[];
+  is_voice?: boolean;
+  /** The voice call this message came from. */
+  voice_session_id?: string;
 }

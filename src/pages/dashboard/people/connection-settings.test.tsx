@@ -43,7 +43,7 @@ it("requires confirmation before disconnecting and sends only the selected relat
   const remove = await screen.findByRole("button", { name: "Remove connection" });
   expect(remove).toHaveClass("text-text-error-strong", "hover:text-text-error-strong", "border-stroke-error-strong/20");
   expect(screen.getByRole("dialog")).toHaveClass(
-    "sm:max-w-[456px]",
+    "sm:max-w-[432px]",
     "rounded-3xl",
     "p-6",
   );

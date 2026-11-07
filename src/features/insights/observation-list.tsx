@@ -1,9 +1,12 @@
-import { useId, useRef, useState, type ReactNode } from "react";
-import dayjs from "dayjs";
-import { ClockCheck, MoreHorizontal } from "lucide-react";
-import useSWR from "swr";
+import {
+  useId,
+  useRef,
+  useState,
+  type PointerEvent,
+  type ReactNode,
+} from "react";
+import { MoreHorizontal } from "lucide-react";
 import { toast } from "sonner";
-import endpoint from "@/api/endpoint";
 import { del, patch } from "@/api/mutations";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,99 +24,21 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Popover,
-  PopoverAnchor,
-  PopoverContent,
-} from "@/components/ui/popover";
-import { Spinner } from "@/components/ui/spinner";
+import type { EnrichmentCategory } from "@/features/enrichment/enrichment-categories";
 import { getQuestionIdenticonUrl } from "@/features/explore/question-identicon";
-import type { InsightSource } from "./insights-api.types";
-import { joinObservation } from "./observation-display";
-import type { PersonaObservationSourcesResponse } from "./observations-api.types";
+import { observationUrl } from "./observation-sources";
+import { ObservationSourcesPreview } from "./observation-sources-preview";
+import { useSourcesPreview } from "./use-sources-preview";
 
 export interface ObservationItem {
   id: string;
   title: string;
   detail: string;
-  /** The supporting text as stored; `detail` may be a generic fallback. */
-  note: string;
+  category: EnrichmentCategory;
 }
 
-// Together these stay within the API's 500 character limit.
 const MAX_HEADING_LENGTH = 120;
 const MAX_NOTE_LENGTH = 378;
-
-const observationUrl = (id: string) =>
-  endpoint.personaObservation.replace(":observationId", id);
-
-function ObservationSources({
-  id,
-  onView,
-}: {
-  id: string;
-  onView: (source: InsightSource) => void;
-}) {
-  const { data, error, isLoading, mutate } = useSWR<{
-    data: PersonaObservationSourcesResponse;
-  }>(`${observationUrl(id)}/sources`);
-  if (error && !data)
-    return (
-      <div className="insights-sources-message">
-        <p>Couldn’t load the sources.</p>
-        <Button variant="outline" size="sm" onClick={() => void mutate()}>
-          Retry
-        </Button>
-      </div>
-    );
-  if (isLoading && !data)
-    return (
-      <div className="insights-sources-message" role="status">
-        <Spinner />
-        Loading sources…
-      </div>
-    );
-  const sources = data?.data?.sources ?? [];
-  if (!sources.length)
-    return (
-      <p className="insights-sources-message">
-        No linked sources. This was saved before Memento kept track of where
-        things came from.
-      </p>
-    );
-  return (
-    <ul className="insights-sources-list" aria-label="Sources">
-      {sources.map((source) => (
-        <li key={source.id}>
-          <button
-            type="button"
-            className="insights-source"
-            aria-label={`View ${source.title}`}
-            onClick={() => onView(source)}
-          >
-            <img
-              src={source.thumbnail || getQuestionIdenticonUrl(source.id)}
-              alt=""
-              loading="lazy"
-              decoding="async"
-              referrerPolicy="no-referrer"
-              className="insights-source-thumbnail object-cover"
-            />
-            <span className="min-w-0 flex-1 truncate text-left font-medium text-text-neutral-strong">
-              {source.title}
-            </span>
-            {source.created_at && (
-              <span className="flex shrink-0 items-center gap-1.5 text-xs text-text-neutral-weak">
-                <ClockCheck className="size-4" aria-hidden />
-                {dayjs(source.created_at).format("MMM D, YYYY")}
-              </span>
-            )}
-          </button>
-        </li>
-      ))}
-    </ul>
-  );
-}
 
 function EditObservationDialog({
   item,
@@ -126,16 +51,17 @@ function EditObservationDialog({
 }) {
   const id = useId();
   const [heading, setHeading] = useState(item.title);
-  const [note, setNote] = useState(item.note);
+  const [note, setNote] = useState(item.detail);
   const [saving, setSaving] = useState(false);
   const changed =
-    heading.trim() !== item.title.trim() || note.trim() !== item.note.trim();
+    heading.trim() !== item.title.trim() || note.trim() !== item.detail.trim();
 
   async function save() {
     setSaving(true);
     try {
       await patch(observationUrl(item.id), {
-        content: joinObservation(heading, note),
+        heading: heading.trim(),
+        note: note.trim(),
       });
       await onChanged();
       toast.success("Note updated");
@@ -182,7 +108,7 @@ function EditObservationDialog({
           submitLabel="Save changes"
           busyLabel="Saving…"
           busy={saving}
-          disabled={!heading.trim() || !changed}
+          disabled={!heading.trim() || !note.trim() || !changed}
           dismissLabel={null}
           onDismiss={onClose}
         />
@@ -227,11 +153,9 @@ function ForgetObservationDialog({
         <FormDialogField label="Heading" htmlFor={`${id}-heading`}>
           <FormDialogValue id={`${id}-heading`}>{item.title}</FormDialogValue>
         </FormDialogField>
-        {item.note && (
-          <FormDialogField label="Note" htmlFor={`${id}-note`}>
-            <FormDialogValue id={`${id}-note`}>{item.note}</FormDialogValue>
-          </FormDialogField>
-        )}
+        <FormDialogField label="Note" htmlFor={`${id}-note`}>
+          <FormDialogValue id={`${id}-note`}>{item.detail}</FormDialogValue>
+        </FormDialogField>
         <FormDialogFooter
           submitLabel="Forget note"
           busyLabel="Forgetting…"
@@ -246,23 +170,40 @@ function ForgetObservationDialog({
   );
 }
 
-type Action = "sources" | "edit" | "forget";
+type Action = "edit" | "forget";
 
 function ObservationCard({
   item,
-  onViewSource,
+  onOpen,
+  onPreview,
+  onPreviewEnd,
   onChanged,
 }: {
   item: ObservationItem;
-  onViewSource: (source: InsightSource) => void;
+  onOpen: (item: ObservationItem) => void;
+  onPreview: (item: ObservationItem, event: PointerEvent) => void;
+  onPreviewEnd: () => void;
   onChanged: () => Promise<unknown>;
 }) {
   const [action, setAction] = useState<Action | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
   // Runs once the menu has closed, so it doesn't take focus from what opens.
   const [pendingAction, setPendingAction] = useState<Action | null>(null);
   const optionsButton = useRef<HTMLButtonElement>(null);
   return (
-    <article className="insights-card insights-observation">
+    <article
+      className="insights-card insights-observation"
+      onPointerMove={(event) => {
+        if (event.pointerType === "touch") return;
+        const onOptions =
+          event.target instanceof Element &&
+          event.target.closest(".insights-observation-options");
+        // Menus and dialogs portal out, but their events still arrive here.
+        if (onOptions || menuOpen || action) onPreviewEnd();
+        else onPreview(item, event);
+      }}
+      onPointerLeave={onPreviewEnd}
+    >
       <img
         src={getQuestionIdenticonUrl(item.id)}
         alt=""
@@ -274,74 +215,65 @@ function ObservationCard({
         className="size-10 shrink-0 rounded-md bg-fill-neutral-weak object-cover"
       />
       <div className="min-w-0 flex-1">
-        <h3 className="truncate font-inter text-base font-medium text-text-neutral-strong">
-          {item.title}
-        </h3>
-        {item.detail && (
-          <p className="mt-1 truncate font-inter text-sm text-text-neutral-weak">
-            {item.detail}
-          </p>
-        )}
-      </div>
-      <Popover
-        open={action === "sources"}
-        onOpenChange={(open) => !open && setAction(null)}
-      >
-        <DropdownMenu>
-          <PopoverAnchor asChild>
-            <DropdownMenuTrigger asChild>
-              <Button
-                ref={optionsButton}
-                variant="ghost"
-                size="icon"
-                className="-mt-1 shrink-0 rounded-full"
-                aria-label={`Options for ${item.title}`}
-              >
-                <MoreHorizontal />
-              </Button>
-            </DropdownMenuTrigger>
-          </PopoverAnchor>
-          <DropdownMenuContent
-            align="end"
-            className="z-[120]"
-            onCloseAutoFocus={(event) => {
-              if (!pendingAction) return;
-              event.preventDefault();
-              // Dialogs return focus to whatever held it when they opened.
-              optionsButton.current?.focus();
-              setAction(pendingAction);
-              setPendingAction(null);
-            }}
+        <h3 className="font-inter text-base font-medium text-text-neutral-strong">
+          {/* Stretches over the whole card in CSS, so only the options stay separate. */}
+          <button
+            type="button"
+            className="insights-observation-open block w-full truncate text-left"
+            onClick={() => onOpen(item)}
           >
-            <DropdownMenuGroup>
-              <DropdownMenuItem onSelect={() => setPendingAction("sources")}>
-                Sources
-              </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => setPendingAction("edit")}>
-                Edit
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                variant="destructive"
-                onSelect={() => setPendingAction("forget")}
-              >
-                Forget
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-          </DropdownMenuContent>
-        </DropdownMenu>
-        <PopoverContent
+            {item.title}
+          </button>
+        </h3>
+        <p className="mt-1 truncate font-inter text-sm text-text-neutral-weak">
+          {item.detail}
+        </p>
+      </div>
+      <DropdownMenu
+        onOpenChange={(open) => {
+          setMenuOpen(open);
+          if (open) onPreviewEnd();
+        }}
+      >
+        <DropdownMenuTrigger asChild>
+          <Button
+            ref={optionsButton}
+            variant="ghost"
+            size="icon"
+            className="insights-observation-options -mt-1 shrink-0 rounded-full"
+            aria-label={`Options for ${item.title}`}
+          >
+            <MoreHorizontal />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent
           align="end"
-          collisionPadding={16}
-          aria-label={`Sources for ${item.title}`}
-          className="insights-sources-popup z-[120]"
+          className="z-[120]"
           onCloseAutoFocus={(event) => {
+            if (!pendingAction) return;
             event.preventDefault();
+            // Dialogs return focus to whatever held it when they opened.
             optionsButton.current?.focus();
+            setAction(pendingAction);
+            setPendingAction(null);
           }}
         >
-          <ObservationSources id={item.id} onView={onViewSource} />
-        </PopoverContent>
-      </Popover>
+          <DropdownMenuGroup>
+            <DropdownMenuItem onSelect={() => onOpen(item)}>
+              Sources
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => setPendingAction("edit")}>
+              Edit
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              variant="destructive"
+              onSelect={() => setPendingAction("forget")}
+            >
+              Forget
+            </DropdownMenuItem>
+          </DropdownMenuGroup>
+        </DropdownMenuContent>
+      </DropdownMenu>
       {action === "edit" && (
         <EditObservationDialog
           item={item}
@@ -363,14 +295,15 @@ function ObservationCard({
 export function ObservationList({
   items,
   empty,
-  onViewSource,
+  onOpen,
   onChanged,
 }: {
   items: ObservationItem[];
   empty: ReactNode;
-  onViewSource: (source: InsightSource) => void;
+  onOpen: (item: ObservationItem) => void;
   onChanged: () => Promise<unknown>;
 }) {
+  const preview = useSourcesPreview();
   if (!items.length) return empty;
   return (
     <div className="insights-list">
@@ -378,10 +311,13 @@ export function ObservationList({
         <ObservationCard
           key={item.id}
           item={item}
-          onViewSource={onViewSource}
+          onOpen={onOpen}
+          onPreview={preview.show}
+          onPreviewEnd={preview.hide}
           onChanged={onChanged}
         />
       ))}
+      <ObservationSourcesPreview preview={preview} />
     </div>
   );
 }

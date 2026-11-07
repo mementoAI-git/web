@@ -23,12 +23,15 @@ describe("ErrorPage", () => {
 
     expect(screen.getByRole("img", { name: /^error$/i })).toBeInTheDocument();
     expect(screen.getByText("Error 505")).toBeInTheDocument();
-    expect(screen.getByText(/sorry, we seem to be having an issue/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: /sorry, we seem to be having an issue/i }),
+    ).toBeInTheDocument();
     expect(
       screen.getByText(/we have been automatically notified of this issue/i),
-    ).toBeInTheDocument();
+    ).toHaveClass("font-rounded");
+    expect(screen.getByTestId("error-state-panel")).toHaveClass("backdrop-blur-xl");
 
-    expect(screen.getByRole("button", { name: /go back/i })).toHaveClass("btn-outline-v3");
+    expect(screen.getByRole("button", { name: /go back/i })).toHaveAttribute("data-variant", "outline");
     expect(screen.getByRole("button", { name: /homepage/i })).toBeInTheDocument();
   });
 

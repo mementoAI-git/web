@@ -12,11 +12,11 @@ describe("ConversationChatinput", () => {
     const user = userEvent.setup();
     renderWithProviders(<ConversationChatinput topic onSend={() => {}} />, { auth: true, route: "/chat/reply/q1" });
     expect(screen.getByRole("button", { name: "Send" })).toBeDisabled();
-    expect(screen.getByRole("button", { name: "Record voice clip" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Dictate a message" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Voice call" })).not.toBeInTheDocument();
     await user.type(screen.getByPlaceholderText("Type text here..."), "A memory of my friends");
     expect(screen.getByRole("button", { name: "Send" })).toBeEnabled();
-    expect(screen.getByRole("button", { name: "Record voice clip" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Dictate a message" })).toBeInTheDocument();
   });
   afterEach(() => {
     localStorage.removeItem(DRAFT_KEY);
@@ -59,7 +59,7 @@ describe("ConversationChatinput", () => {
     );
     expect(screen.getByRole("button", { name: /voice call/i })).toHaveClass("bg-fill-overview-voice");
     expect(
-      screen.getByRole("button", { name: /record voice clip/i }),
+      screen.getByRole("button", { name: /dictate a message/i }),
     ).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /^send$/i })).toBeNull();
 

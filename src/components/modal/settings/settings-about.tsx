@@ -62,7 +62,7 @@ export function SettingsAbout() {
     <>
       <section
         aria-labelledby={`${id}-heading`}
-        className="settings-card p-4"
+        className="settings-card p-4 sm:p-6"
       >
         <div className="mb-4 flex items-center justify-between gap-3">
           <h2

@@ -24,7 +24,7 @@ export default function Beneficiary() {
           ))}
         </div>
       ) : !data && error ? null : docs.length === 0 ? (
-        <div className="settings-card px-4 py-10 text-center">
+        <div className="settings-card px-4 py-10 text-center sm:px-6">
           <p className="text-sm font-medium text-text-neutral-strong">No people yet</p>
           <p className="mt-1 text-sm text-text-neutral-weak">
             Invite someone to start sharing memories together.

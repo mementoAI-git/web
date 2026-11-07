@@ -223,7 +223,7 @@ function PasskeyManager() {
   }
 
   return (
-    <section aria-label="Passkeys" className="settings-card flex flex-col gap-9 px-8 py-7">
+    <section aria-label="Passkeys" className="settings-card flex flex-col gap-9 p-4 sm:p-6">
       <div className="settings-row min-h-9 flex-wrap">
         <div className="flex min-w-0 items-center gap-1.5 text-sm text-text-neutral-strong">
           Passkeys
@@ -301,8 +301,8 @@ function PasskeyManager() {
 export default function Security() {
   return (
     <SettingsSubpage title="Security">
-      <div className="flex w-full flex-col gap-4">
-        <section aria-label="Sign-in" className="settings-card flex flex-col gap-9 px-8 py-7">
+      <div className="page-stagger flex w-full flex-col gap-4">
+        <section aria-label="Sign-in" className="settings-card flex flex-col gap-9 p-4 sm:p-6">
           <ChangePasswordDialog />
           <TwoFactorAuthenticator />
         </section>

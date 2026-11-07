@@ -1,4 +1,4 @@
-import { CHAT_CONTENT_LAYOUT, CHAT_CONTENT_INSET, CHAT_COMPOSER_LAYOUT, CHAT_COMPOSER_FOOTER, CHAT_SCROLL_LAYOUT } from "./chat-layout";
+import { CHAT_CONTENT_LAYOUT, CHAT_CONTENT_INSET, CHAT_COMPOSER_LAYOUT, CHAT_COMPOSER_FOOTER, CHAT_SCROLL_LAYOUT, CHAT_WIDTH_WITH_SETTINGS_OPEN } from "./chat-layout";
 import ReflectionLoading from "../reflection-loading";
 import type {ReflectionEntry} from "@/lib/reflection-entry";
 import { reportFetcherError } from "@/api/report-fetcher-error";
@@ -17,6 +17,7 @@ import useSWR, { mutate } from "swr";
 import endpoint from "@/api/endpoint";
 import { cn, isEmpty } from "@/utility";
 import History from "./history";
+import { useConversationFileCount } from "@/components/modal/chat-settings/use-conversation-file-count";
 import { type IMessage } from "@/utility/interface";
 import Loader from "./loader";
 import useSWRMutation from "swr/mutation";
@@ -86,7 +87,6 @@ function ConversationSession({ id, type = "memory", reflectionEntry }: { id: str
   const [messages, setMessages] = useState<Partial<IMessage>[]>([])
   const voiceSession = useVoiceSession();
   const { enabled: spokenRepliesEnabled, supported: spokenRepliesSupported, isLoading: spokenRepliesLoading, toggle: toggleSpokenReplies, speak: speakReply, stream: streamReply, stop: stopSpokenReply } = useSpokenReplies(id, isVoiceRoute || Boolean(voiceSession?.active));
-  const liveTimeline = useMemo(() => voiceSession?.timeline.filter(entry => !entry.connectionPersonId && (entry.memoryId === id || (id === "new" && entry.memoryId === voiceSession.memoryId))) ?? [], [voiceSession?.timeline, voiceSession?.memoryId, id]);
   const [voiceEvents, setVoiceEvents] = useState<VoiceSessionEvent[]>([]);
   const handleVoiceSessionChange = useCallback((active: boolean) => {
     setVoiceEvents(previous => {
@@ -127,6 +127,7 @@ function ConversationSession({ id, type = "memory", reflectionEntry }: { id: str
   const { trigger: startConversation, isMutating: startingConversation } = useFetcher(endpoint.startConversation)
 
   const memory = useMemo(() => memoryData?.data || promptData?.data, [promptData, memoryData]);
+  const liveTimeline = useMemo(() => voiceSession?.timeline.filter(entry => !entry.connectionPersonId && (entry.memoryId === id || (memory?._id && entry.memoryId === memory._id) || (id === "new" && entry.memoryId === voiceSession.memoryId))) ?? [], [voiceSession?.timeline, voiceSession?.memoryId, id, memory?._id]);
 
   const hostChatSubtitle = useMemo(() => {
     if (!isHostChat || !memory?.created_at) return undefined;
@@ -156,17 +157,18 @@ function ConversationSession({ id, type = "memory", reflectionEntry }: { id: str
     setIsSidebarOpen((prev) => !prev);
   }, []);
 
+  const { fileCount: conversationFileCount, knownMessages } = useConversationFileCount(memory?._id, messages, isSidebarOpen);
+
   const handleOpenConversationFiles = useCallback(
     ({ tab, mediaFilter }: ConversationFilesRequest) => {
-      if (!memory?._id) return;
       push?.("conversation-files", {
-        conversationId: memory._id,
-        messages,
+        conversationId: memory?._id,
+        messages: knownMessages,
         initialTab: tab,
         initialMediaFilter: mediaFilter,
       });
     },
-    [memory?._id, messages, push],
+    [memory?._id, knownMessages, push],
   );
 
   const handleChuckArrival = useCallback((chunk: string) => {
@@ -471,7 +473,7 @@ function ConversationSession({ id, type = "memory", reflectionEntry }: { id: str
     }
     setChrome({
       memory: memory ?? null,
-      onOpenChatPreferences: memory?._id ? handleToggleSettingsDrawer : undefined,
+      onOpenChatPreferences: handleToggleSettingsDrawer,
       spokenReplies: { enabled: spokenRepliesEnabled, isLoading: spokenRepliesLoading, supported: spokenRepliesSupported, onToggle: toggleSpokenReplies },
       ...((isHostChat || isVoiceRoute) ?
         {
@@ -526,7 +528,7 @@ function ConversationSession({ id, type = "memory", reflectionEntry }: { id: str
           ref={scrollContainerRef}
           onScroll={handleScroll}
         >
-          <div className={cn(CHAT_CONTENT_LAYOUT, isTopic ? "px-3 pt-3 sm:px-0" : CHAT_CONTENT_INSET)}>
+          <div className={cn(CHAT_CONTENT_LAYOUT, isSidebarOpen && CHAT_WIDTH_WITH_SETTINGS_OPEN, isTopic ? "px-3 pt-3 sm:px-0" : CHAT_CONTENT_INSET)}>
           {isNew && messages.length === 0 && voiceEvents.length === 0 && liveTimeline.length === 0 && !isTyping ? (
             <ChatEmptyState
               onPrompt={(text) => handleSend({ text, attachments: [] })}
@@ -576,7 +578,7 @@ function ConversationSession({ id, type = "memory", reflectionEntry }: { id: str
           )}
           </div>
           <div className={cn(CHAT_COMPOSER_FOOTER, isTopic ? "pt-2" : "pt-1")}>
-            <div className={cn(CHAT_COMPOSER_LAYOUT, isTopic ? "px-7" : "px-3")}>
+            <div className={cn(CHAT_COMPOSER_LAYOUT, isSidebarOpen && CHAT_WIDTH_WITH_SETTINGS_OPEN, isTopic ? "px-7" : "px-3")}>
               <ConversationChatinput
                 key={`chat-draft-${memory?._id ?? id}`}
                 onVoiceSessionChange={handleVoiceSessionChange}
@@ -599,24 +601,25 @@ function ConversationSession({ id, type = "memory", reflectionEntry }: { id: str
       </div>
       {/* Updated sidebar with slide-in transition */}
       {
-        memory?._id &&
+        // A new chat has no conversation yet, but its preferences still apply.
         <SidebarDetails
-          memory={memory}
+          memory={memory?._id ? memory : undefined}
           onClose={handleCloseSidebar}
           isOpen={isSidebarOpen}
-          desktopLayout="overlay"
+          desktopLayout="inline"
           source={type === "prompt" ? "prompt" : "conversation"}
-          quickActions={{
+          quickActions={memory?._id ? {
             onViewFullDetails: () => push("view-memory-details", { memory }),
             onEditMemory: () => push("edit-memory", { memory }),
             onExportConversation: handleExportConversation,
             onDelete: () => push("delete-memory", { memory }),
-          }}
+          } : undefined}
           includeChatPreferences
-          enrichmentScore={enrichmentStats?.enrichment_score ?? 5}
+          enrichmentScore={enrichmentStats?.enrichment_score}
           deltaToday={deltaToday}
           categoryScores={enrichmentStats?.category_scores}
           onOpenConversationFiles={handleOpenConversationFiles}
+          conversationFileCount={conversationFileCount}
         />
       }
     </div>

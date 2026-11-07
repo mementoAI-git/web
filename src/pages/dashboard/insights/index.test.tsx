@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, useLocation } from "react-router-dom";
 import { SWRConfig } from "swr";
@@ -7,13 +7,10 @@ import { SubscriptionProvider } from "@/contexts/subscription";
 import { ThemeProvider } from "@/contexts/theme";
 import { BackgroundMusicProvider } from "@/hooks/use-background-music";
 import endpoint from "@/api/endpoint";
-import MemoryInsightsModal from ".";
+import InsightsPage from ".";
 
 beforeEach(() => {
-  close.mockClear();
-  openModal.mockClear();
   pushModal.mockClear();
-  modalState = [];
   patch.mockClear();
   del.mockClear();
   vi.stubGlobal(
@@ -27,7 +24,6 @@ beforeEach(() => {
 });
 afterEach(() => vi.unstubAllGlobals());
 
-const close = vi.fn();
 const { patch, del } = vi.hoisted(() => ({
   patch: vi.fn().mockResolvedValue({}),
   del: vi.fn().mockResolvedValue({}),
@@ -37,15 +33,10 @@ vi.mock("@/api/mutations", async (original) => ({
   patch,
   del,
 }));
-const openModal = vi.fn();
 const pushModal = vi.fn();
-let modalState: { name: string; props?: unknown }[] = [];
 vi.mock("@/hooks/use-modal", () => ({
   useModal: () => ({
-    close,
-    open: openModal,
     push: pushModal,
-    state: modalState,
   }),
 }));
 vi.mock("@/hooks/use-store", () => ({ useStore: () => ({ user: null }) }));
@@ -69,14 +60,23 @@ const singleInsight = {
 
 const observation = (
   field: string,
-  content: string,
-  id = `${field}-${content.length}`,
-) => ({ id, field, content, reviewed: false, source_count: 1 });
+  heading: string,
+  note = "You often come back to this.",
+  id = `${field}-${heading.length}`,
+) => ({
+  id,
+  field,
+  heading,
+  note,
+  category_key: "identity_self",
+  source_count: 1,
+});
 
 const defaultObservations = [
   observation(
     "important_notes",
-    "You value independent thinking. Autonomy shows up in your decisions.",
+    "You value independent thinking",
+    "Autonomy shows up in your decisions.",
     "note-1",
   ),
   observation("goals_and_aspirations", "You want to write a book"),
@@ -95,7 +95,9 @@ function Location() {
 }
 
 function setup({
+  route = { pathname: "/insights" } as object,
   observations = defaultObservations as object[],
+  generating = false,
   insights = {
     insights: [spanningInsight, singleInsight],
     generated_at: "2026-11-05T00:00:00.000Z",
@@ -104,13 +106,13 @@ function setup({
   } as object,
 } = {}) {
   return render(
-    <MemoryRouter>
+    <MemoryRouter initialEntries={[route]}>
       <SWRConfig
         value={{
           provider: () => new Map(),
           revalidateOnMount: false,
           fallback: {
-            [endpoint.personaObservations]: { data: { observations } },
+            [endpoint.personaObservations]: { data: { observations, generating } },
             [`${endpoint.personaObservations}/note-1/sources`]: {
               data: {
                 sources: [
@@ -182,7 +184,7 @@ function setup({
         <ThemeProvider>
           <BackgroundMusicProvider>
             <SubscriptionProvider>
-              <MemoryInsightsModal />
+              <InsightsPage />
             </SubscriptionProvider>
             <Location />
           </BackgroundMusicProvider>
@@ -199,9 +201,8 @@ it("opens on observations without mixing in preferences", () => {
   expect(
     screen.queryByRole("button", { name: "Insight settings" }),
   ).not.toBeInTheDocument();
-  expect(screen.getByRole("dialog", { name: "My insights" })).toHaveClass(
-    "insights-overlay",
-  );
+  expect(screen.getByRole("heading", { name: "My insights" })).toBeVisible();
+  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   expect(tab("Observations")).toHaveAttribute("aria-selected", "true");
   expect(screen.getByText("You value independent thinking")).toBeVisible();
   expect(
@@ -263,30 +264,131 @@ it("offers sources, edit, and forget for an observation", async () => {
   ).toEqual(["Sources", "Edit", "Forget"]);
 });
 
-it("lists the sources of an observation and opens one", async () => {
+it("does not show the plan card on the insights page", () => {
+  setup();
+  expect(screen.queryByRole("button", { name: "Manage plan" })).toBeNull();
+  expect(screen.queryByRole("button", { name: "Upgrade" })).toBeNull();
+  expect(screen.queryByText(/You’re on Memento/)).toBeNull();
+});
+
+it("opens a page of sources when an observation is clicked, and comes back", async () => {
   const user = userEvent.setup();
   setup();
-  await openOption(user, "You value independent thinking", "Sources");
-  const source = await screen.findByRole("button", {
+  await user.click(
+    screen.getByRole("button", { name: "You value independent thinking" }),
+  );
+  expect(screen.getByText("Memories behind this note")).toBeVisible();
+  expect(screen.getByText("Autonomy shows up in your decisions.")).toBeVisible();
+  expect(screen.getByText("1 Memory source")).toBeVisible();
+  const source = screen.getByRole("button", {
     name: "View Why I changed careers",
   });
-  expect(source).toHaveTextContent("May 18, 2026");
-  expect(source.querySelector("img")).toHaveAttribute(
-    "src",
-    "https://api.dicebear.com/10.x/disco/svg?seed=story-1",
-  );
   await user.click(source);
   expect(pushModal).toHaveBeenCalledWith("view-memory", {
     memoryId: "story-1",
   });
   expect(screen.getByTestId("location")).not.toHaveTextContent("/stories");
+  await user.click(screen.getByRole("button", { name: "Back to insights" }));
+  expect(tab("Observations")).toHaveAttribute("aria-selected", "true");
+});
+
+it("opens a source by clicking anywhere in its row, once per click", async () => {
+  const user = userEvent.setup();
+  setup();
+  await user.click(
+    screen.getByRole("button", { name: "You value independent thinking" }),
+  );
+  await user.click(screen.getByText("Why I changed careers"));
+  expect(pushModal).toHaveBeenCalledTimes(1);
+  expect(pushModal).toHaveBeenLastCalledWith("view-memory", {
+    memoryId: "story-1",
+  });
+  await user.click(screen.getByText("18 May, 2026"));
+  expect(pushModal).toHaveBeenCalledTimes(2);
+  await user.click(
+    screen.getByRole("button", { name: "View Why I changed careers" }),
+  );
+  expect(pushModal).toHaveBeenCalledTimes(3);
+  screen.getByRole("button", { name: "View Why I changed careers" }).focus();
+  await user.keyboard("{Enter}");
+  expect(pushModal).toHaveBeenCalledTimes(4);
+});
+
+it("lists sources as rows of title and date, without headers or a View button", async () => {
+  const user = userEvent.setup();
+  setup();
+  await user.click(
+    screen.getByRole("button", { name: "You value independent thinking" }),
+  );
+  expect(screen.queryByText("Topic")).toBeNull();
+  expect(screen.queryByText("Date created")).toBeNull();
+  expect(screen.queryByText("View")).toBeNull();
+  const row = screen.getByRole("listitem");
+  expect(row).toHaveTextContent("Why I changed careers");
+  expect(row.lastElementChild).toHaveTextContent("18 May, 2026");
+});
+
+it("opens the same page from the Sources option", async () => {
+  const user = userEvent.setup();
+  setup();
+  await openOption(user, "You value independent thinking", "Sources");
+  expect(await screen.findByText("1 Memory source")).toBeVisible();
+});
+
+it("does not open the page when using an observation's options", async () => {
+  const user = userEvent.setup();
+  setup();
+  await openOption(user, "You value independent thinking", "Edit");
+  expect(screen.getByRole("dialog", { name: "Edit this note" })).toBeVisible();
+  expect(screen.queryByText("Memories behind this note")).toBeNull();
+});
+
+it("previews sources beside the cursor without blocking the card", async () => {
+  const user = userEvent.setup();
+  setup();
+  const card = screen.getByRole("button", {
+    name: "You value independent thinking",
+  });
+  await user.hover(card);
+  const preview = await screen.findByTestId("observation-sources-preview");
+  expect(preview).toHaveAttribute("aria-hidden", "true");
+  expect(preview).toHaveTextContent("Why I changed careers");
+  expect(preview).toHaveTextContent("May 18, 2026");
+  expect(preview.querySelector("img")).toHaveAttribute(
+    "src",
+    "https://api.dicebear.com/10.x/disco/svg?seed=story-1",
+  );
+  await user.click(card);
+  expect(screen.getByText("Memories behind this note")).toBeVisible();
+  await waitFor(() =>
+    expect(screen.queryByTestId("observation-sources-preview")).toBeNull(),
+  );
+});
+
+it("hides the preview over the options button and while its menu is open", async () => {
+  const user = userEvent.setup();
+  setup();
+  await user.hover(
+    screen.getByRole("button", { name: "You value independent thinking" }),
+  );
+  await screen.findByTestId("observation-sources-preview");
+  await user.hover(
+    screen.getByRole("button", {
+      name: "Options for You value independent thinking",
+    }),
+  );
+  await waitFor(() =>
+    expect(screen.queryByTestId("observation-sources-preview")).toBeNull(),
+  );
 });
 
 it("says when an observation has no linked sources", async () => {
   const user = userEvent.setup();
   setup();
   await user.click(tab("Preferences"));
-  await openOption(user, "You prefer quiet mornings", "Sources");
+  await user.click(
+    screen.getByRole("button", { name: "You prefer quiet mornings" }),
+  );
   expect(await screen.findByText(/No linked sources/)).toBeVisible();
 });
 
@@ -309,18 +411,29 @@ it("edits the heading and note in a modal and saves them as one observation", as
   await user.type(heading, "You think for yourself");
   await user.click(save);
   expect(patch).toHaveBeenCalledWith(`${endpoint.personaObservations}/note-1`, {
-    content: "You think for yourself. Autonomy shows up in your decisions.",
+    heading: "You think for yourself",
+    note: "Autonomy shows up in your decisions.",
   });
   expect(
     screen.queryByRole("dialog", { name: "Edit this note" }),
   ).not.toBeInTheDocument();
 });
 
-it("leaves the note empty rather than saving the generic fallback line", async () => {
+it("always shows a note and will not save a card without one", async () => {
   const user = userEvent.setup();
   setup();
+  expect(screen.getAllByText("You often come back to this.")).toHaveLength(2);
+  expect(screen.queryByText(/^Something you/)).not.toBeInTheDocument();
   await openOption(user, "You want to write a book", "Edit");
-  expect(screen.getByRole("textbox", { name: "Note" })).toHaveValue("");
+  await user.clear(screen.getByRole("textbox", { name: "Note" }));
+  expect(screen.getByRole("button", { name: "Save changes" })).toBeDisabled();
+});
+
+it("says it is working while the first cards are written", () => {
+  setup({ observations: [], generating: true });
+  expect(
+    screen.getByText("Going through what you’ve shared…"),
+  ).toBeVisible();
 });
 
 it("keeps the edit open when saving fails", async () => {
@@ -350,18 +463,6 @@ it("shows what will be forgotten and only forgets after confirming", async () =>
   await openOption(user, "You value independent thinking", "Forget");
   await user.click(screen.getByRole("button", { name: "Forget note" }));
   expect(del).toHaveBeenCalledWith(`${endpoint.personaObservations}/note-1`);
-});
-
-it("searches the active list and offers a way to clear it", async () => {
-  const user = userEvent.setup();
-  setup();
-  await user.click(screen.getByRole("button", { name: "Search insights" }));
-  const search = screen.getByRole("textbox", { name: "Search your insights" });
-  expect(search).toHaveFocus();
-  await user.type(search, "unmatched");
-  expect(screen.getByText("No matches")).toBeVisible();
-  await user.click(screen.getByRole("button", { name: "Clear search" }));
-  expect(screen.getByText("You value independent thinking")).toBeVisible();
 });
 
 it("shows honest empty states", async () => {
@@ -443,7 +544,7 @@ it("opens insight details, sorts sources, and returns to the same tab", async ()
   ).toBeVisible();
   expect(screen.getByText("2 Memory sources")).toBeVisible();
   const titles = () =>
-    within(screen.getByRole("table", { name: "Memory sources" }))
+    within(screen.getByRole("list", { name: "Memory sources" }))
       .getAllByRole("button", { name: /^View / })
       .map((button) => button.getAttribute("aria-label"));
   expect(titles()).toEqual(["View Talking about rest", "View Sunday at home"]);
@@ -454,7 +555,7 @@ it("opens insight details, sorts sources, and returns to the same tab", async ()
   expect(tab("Insights")).toHaveAttribute("aria-selected", "true");
 });
 
-it("stacks a story above Insights and remembers where you were", async () => {
+it("opens a story above the page without leaving it", async () => {
   const user = userEvent.setup();
   setup();
   await user.click(tab("Insights"));
@@ -462,23 +563,13 @@ it("stacks a story above Insights and remembers where you were", async () => {
     screen.getByRole("button", { name: "You protect your Sundays" }),
   );
   await user.click(screen.getByRole("button", { name: "View Sunday at home" }));
-  expect(close).not.toHaveBeenCalled();
-  expect(screen.getByTestId("location")).not.toHaveTextContent("/stories");
-  expect(openModal).toHaveBeenCalledWith(
-    "memory-insights",
-    expect.objectContaining({
-      section: "insights",
-      history: [
-        { kind: "insight", insight: expect.objectContaining({ id: "insight-1" }) },
-      ],
-    }),
-  );
+  expect(screen.getByTestId("location")).toHaveTextContent("/insights");
   expect(pushModal).toHaveBeenCalledWith("view-memory", { memoryId: "older" });
+  expect(screen.getByText("Memories that helped shape this insight")).toBeVisible();
 });
 
 it("opens a chat as a page and saves the way back in history", async () => {
   const user = userEvent.setup();
-  const replaceState = vi.spyOn(window.history, "replaceState");
   setup();
   await user.click(tab("Insights"));
   await user.click(
@@ -487,28 +578,19 @@ it("opens a chat as a page and saves the way back in history", async () => {
   await user.click(
     screen.getByRole("button", { name: "View Talking about rest" }),
   );
-  expect(replaceState.mock.lastCall?.[0]).toMatchObject({
-    usr: {
-      openModal: "memory-insights",
-      openModalProps: { section: "insights" },
-    },
-  });
-  expect(close).toHaveBeenCalledWith("memory-insights");
   expect(screen.getByTestId("location")).toHaveTextContent("/chat/newer");
-  replaceState.mockRestore();
 });
 
-it("reopens on the saved tab and details screen", () => {
-  modalState = [
-    {
-      name: "memory-insights",
-      props: {
+it("comes back to the saved tab and details screen", () => {
+  setup({
+    route: {
+      pathname: "/insights",
+      state: {
         section: "insights",
         history: [{ kind: "insight", insight: spanningInsight }],
       },
     },
-  ];
-  setup();
+  });
   expect(
     screen.getByText("Memories that helped shape this insight"),
   ).toBeVisible();
@@ -554,40 +636,8 @@ it("shows only memory sources on an enrichment field and can start a reflection"
     screen.queryByText("You protect your Sundays"),
   ).not.toBeInTheDocument();
   await user.click(screen.getByRole("button", { name: "Reflect on this" }));
-  expect(close).toHaveBeenCalledWith("memory-insights");
   const location = screen.getByTestId("location");
   expect(location).toHaveTextContent("/chat");
   expect(location.dataset.state).toContain("everyday life");
 });
 
-it("brings back the sidebar from Home without closing the overlay", async () => {
-  const user = userEvent.setup();
-  setup();
-  const home = screen.getByRole("button", { name: "Expand sidebar" });
-  expect(home).toHaveAttribute("aria-expanded", "false");
-  await user.click(home);
-  expect(close).not.toHaveBeenCalled();
-  expect(home).toHaveAttribute("aria-expanded", "true");
-  const collapse = screen.getByRole("button", { name: "Collapse sidebar" });
-  expect(collapse).toHaveFocus();
-  await user.click(collapse);
-  expect(home).toHaveAttribute("aria-expanded", "false");
-  expect(home).toHaveFocus();
-  expect(close).not.toHaveBeenCalled();
-});
-
-it("leaves Insights for the page chosen in the sidebar", async () => {
-  const user = userEvent.setup();
-  setup();
-  await user.click(screen.getByRole("button", { name: "Expand sidebar" }));
-  await user.click(screen.getByRole("button", { name: /Explore topics/ }));
-  expect(screen.getByTestId("location")).toHaveTextContent("/explore");
-  expect(close).toHaveBeenCalledWith("memory-insights");
-});
-
-it("closes with Escape", async () => {
-  const user = userEvent.setup();
-  setup();
-  await user.keyboard("{Escape}");
-  expect(close).toHaveBeenCalledWith("memory-insights");
-});

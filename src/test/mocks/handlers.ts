@@ -120,7 +120,7 @@ export const handlers = [
     return HttpResponse.json({
       status: 200,
       message: "Observations retrieved successfully",
-      data: { observations: [] },
+      data: { observations: [], generating: false },
     });
   }),
 

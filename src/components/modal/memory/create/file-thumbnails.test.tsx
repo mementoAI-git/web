@@ -110,7 +110,7 @@ describe("FileThumbnails", () => {
     expect(flow).toHaveClass("flex-wrap");
     expect(container.querySelector('[data-testid="media-inline-file-tile-img-1"]')).toHaveClass("size-[72px]");
     const audioTile = container.querySelector('[data-testid="media-inline-file-tile-audio-1"]');
-    expect(audioTile).toHaveClass("size-[72px]");
+    expect(audioTile?.querySelector('[data-testid="voice-note-tile"]')).toBeInTheDocument();
     const videoTile = container.querySelector('[data-testid="media-inline-file-tile-video-1"]');
     expect(videoTile).toHaveClass("size-[72px]");
     const documentTile = container.querySelector('[data-testid="media-inline-file-tile-doc-1"]');

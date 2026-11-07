@@ -8,7 +8,7 @@ When a component is built or reused, ensure it is visible across all themes (lig
 
 ## Use the shared modal layout
 
-Prefer `FormDialog` from `src/components/modal/form-dialog.tsx` when building modals. See `.cursor/rules/modal-layout.mdc`.
+Prefer `FormDialog` from `src/components/modal/form-dialog.tsx` when building modals. New desktop modals use one of two sizes: Modal A (358×480, Invite Friends) or Modal B (432 wide, Share Post). New mobile bottom sheets use the Publish post sheet's sizing (full width, 524 minimum height, `92dvh` maximum). See `.cursor/rules/modal-layout.mdc`.
 
 ## Verify the running product before reporting completion
 

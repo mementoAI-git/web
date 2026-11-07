@@ -12,7 +12,8 @@ vi.mock("@/hooks/use-modal", async (original) => ({
 it.each([
   ["stays on top with Insights waiting underneath", ["view-memory", "memory-insights"], "z-[110]"],
   ["stays on top when nothing else is open", ["view-memory"], "z-[110]"],
-  ["steps back for a dialog opened above it", ["share-memory", "view-memory"], "z-[95]"],
+  ["steps back for a dialog opened above it", ["delete-memory", "view-memory"], "z-[95]"],
+  ["stays mounted in place under the share dialog, which layers above it", ["share-memory", "view-memory"], "z-[110]"],
 ])("%s", (_name, names, layer) => {
   modal.state = names.map((name) => ({ name }));
   renderWithProviders(

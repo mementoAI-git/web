@@ -23,7 +23,7 @@ export function PersonCard({
 }) {
   const label = name || email;
   return (
-    <article className="settings-card flex items-start gap-4 p-4">
+    <article className="settings-card flex items-start gap-4 p-4 sm:p-6">
       <UserAvatar
         alt={label}
         src={user?.picture_url}

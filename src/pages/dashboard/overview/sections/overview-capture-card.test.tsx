@@ -1,27 +1,30 @@
 import { toast } from "sonner";
 import { beforeEach, expect, it, vi } from "vitest";
 import { useReducer } from "react";
-import { act, fireEvent, screen } from "@testing-library/react";
+import { act, fireEvent, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useLocation } from "react-router-dom";
 import { renderWithProviders } from "@/test";
 import { useModal } from "@/hooks/use-modal";
-import { postFetcher } from "@/api/fetcher";
+import { deleteFetcher, fileUploadFetcher, postFetcher } from "@/api/fetcher";
 import endpoint from "@/api/endpoint";
 import { OverviewCaptureCard } from "./overview-capture-card";
 vi.mock("@/api/fetcher", async (original) => ({
   ...(await original<typeof import("@/api/fetcher")>()),
   postFetcher: vi.fn(),
+  fileUploadFetcher: vi.fn(),
+  deleteFetcher: vi.fn(),
 }));
-let append: (text: string) => void;
-let phase: "idle" | "starting" | "recording" | "paused" | "transcribing" = "idle";
+let finishRecording: (file: File, durationSeconds: number) => void;
+let phase: "idle" | "starting" | "recording" | "paused" | "saving" = "idle";
 const cancel = vi.fn();
 const retry = vi.fn();
 let captureError = "";
 let canRetry = false;
-vi.mock("./use-overview-dictation", () => ({
-  useOverviewDictation: (callback: typeof append) => {
-    append = callback;
+vi.mock("@/hooks/use-voice-capture", () => ({
+  useVoiceCapture: ({ mode, onAudio }: { mode: string; onAudio: typeof finishRecording }) => {
+    expect(mode).toBe("audio");
+    finishRecording = onAudio;
     return {
       phase,
       error: captureError,
@@ -59,6 +62,11 @@ beforeEach(() => {
   vi.spyOn(toast, "error").mockClear();
   vi.spyOn(toast, "success").mockClear();
   vi.mocked(postFetcher).mockReset();
+  vi.mocked(deleteFetcher).mockReset().mockResolvedValue({ success: true } as never);
+  vi.mocked(fileUploadFetcher).mockReset().mockResolvedValue({
+    success: true,
+    data: { _id: "voice-1", name: "voice.webm", url: "https://x/voice.webm", size: 5, type: "audio/webm" },
+  } as never);
 });
 it("uses the recording shell while the microphone starts and preserves the draft on cancel", async () => {
   let refresh: () => void;
@@ -82,7 +90,7 @@ it("uses the recording shell while the microphone starts and preserves the draft
     screen.queryByRole("button", { name: "Use as story" }),
   ).not.toBeInTheDocument();
   const stop = screen.getByRole("button", {
-    name: "Stop recording and transcribe",
+    name: "Stop recording",
   });
   const pause = screen.getByRole("button", { name: "Pause recording" });
   expect(stop).toBeDisabled();
@@ -94,7 +102,7 @@ it("uses the recording shell while the microphone starts and preserves the draft
     refresh();
   });
   expect(
-    screen.getByRole("button", { name: "Stop recording and transcribe" }),
+    screen.getByRole("button", { name: "Stop recording" }),
   ).toBe(stop);
   expect(screen.getByRole("button", { name: "Cancel recording" })).toBe(
     cancelButton,
@@ -137,25 +145,6 @@ it("prefills the story with every line, escapes markup and preserves the draft a
   await user.click(screen.getByText("Close editor"));
   expect(screen.getByRole("textbox")).toHaveValue(text);
   expect(localStorage.getItem("memento-overview-draft:a")).toBe(text);
-});
-it("appends speech to the latest edited draft and restores it on remount", () => {
-  const view = renderWithProviders(
-    <OverviewCaptureCard userId="a" onVoiceConversation={vi.fn()} />,
-  );
-  fireEvent.change(screen.getByRole("textbox"), {
-    target: { value: "Edited thoughts" },
-  });
-  act(() => append("Recorded thoughts"));
-  expect(screen.getByRole("textbox")).toHaveValue(
-    "Edited thoughts Recorded thoughts",
-  );
-  view.unmount();
-  renderWithProviders(
-    <OverviewCaptureCard userId="a" onVoiceConversation={vi.fn()} />,
-  );
-  expect(screen.getByRole("textbox")).toHaveValue(
-    "Edited thoughts Recorded thoughts",
-  );
 });
 it("keeps users’ drafts separate", () => {
   localStorage.setItem("memento-overview-draft:a", "Private draft");
@@ -210,7 +199,7 @@ it("shows exactly the design actions and clears only after confirmation", async 
   expect(screen.getByRole("textbox")).toHaveValue("");
   expect(localStorage.getItem("memento-overview-draft:a")).toBeNull();
 });
-it("saves the full transcript privately using quick capture", async () => {
+it("saves the full text privately using quick capture", async () => {
   const user = userEvent.setup();
   vi.mocked(postFetcher).mockResolvedValue({
     success: true,
@@ -236,7 +225,7 @@ it("saves the full transcript privately using quick capture", async () => {
   expect(toast.success).toHaveBeenCalledWith("Quick note saved. Details will finish processing in the background.");
   expect(screen.getByRole("textbox")).toHaveValue("");
 });
-it("preserves the transcript if saving fails", async () => {
+it("preserves the text if saving fails", async () => {
   const user = userEvent.setup();
   vi.mocked(postFetcher).mockRejectedValue(new Error("Offline"));
   renderWithProviders(
@@ -249,7 +238,7 @@ it("preserves the transcript if saving fails", async () => {
   expect(screen.getByRole("textbox")).toHaveValue("My memory");
 });
 
-it("grows with typed or transcribed lines up to nine before scrolling", () => {
+it("grows with typed lines up to nine before scrolling", () => {
   renderWithProviders(
     <OverviewCaptureCard userId="a" onVoiceConversation={vi.fn()} />,
   );
@@ -263,7 +252,7 @@ it("grows with typed or transcribed lines up to nine before scrolling", () => {
   fireEvent.change(input, { target: { value: "One\nTwo\nThree\nFour" } });
   expect(input).toHaveStyle({ height: "136px", overflowY: "hidden" });
   contentHeight = 306;
-  act(() => append("Five\nSix\nSeven\nEight"));
+  fireEvent.change(input, { target: { value: "One\nTwo\nThree\nFour\nFive\nSix\nSeven\nEight" } });
   expect(input).toHaveStyle({ height: "306px", overflowY: "hidden" });
   contentHeight = 340;
   fireEvent.change(input, {
@@ -275,110 +264,8 @@ it("grows with typed or transcribed lines up to nine before scrolling", () => {
   expect(input).toHaveStyle({ height: "34px", overflowY: "hidden" });
 });
 
-it("keeps earlier transcripts visible through another recording and continues in the same paragraph", () => {
-  let refresh: () => void;
-  function Harness() {
-    const [, update] = useReducer((value: number) => value + 1, 0);
-    refresh = update;
-    return <OverviewCaptureCard userId="a" onVoiceConversation={vi.fn()} />;
-  }
-  renderWithProviders(<Harness />);
-  act(() => append("First memory."));
-  for (const next of ["starting", "recording", "transcribing"] as const) {
-    act(() => {
-      phase = next;
-      refresh();
-    });
-    if (next === "transcribing") {
-      expect(screen.getByRole("textbox")).toHaveTextContent("First memory.");
-    } else {
-      expect(screen.getByRole("textbox")).toHaveValue("First memory.");
-    }
-  }
-  act(() => {
-    append("Second memory.");
-    phase = "idle";
-    refresh();
-  });
-  expect(screen.getByRole("textbox")).toHaveValue(
-    "First memory. Second memory.",
-  );
-});
-it("preserves an intentional paragraph break when appending speech", () => {
-  renderWithProviders(
-    <OverviewCaptureCard userId="a" onVoiceConversation={vi.fn()} />,
-  );
-  fireEvent.change(screen.getByRole("textbox"), {
-    target: { value: "First memory.\n\n" },
-  });
-  act(() => append("  Second memory.  "));
-  expect(screen.getByRole("textbox")).toHaveValue(
-    "First memory.\n\nSecond memory.",
-  );
-});
 
-it("shows a small loader and transcription label without a placeholder for the first recording", () => {
-  phase = "transcribing";
-  renderWithProviders(
-    <OverviewCaptureCard userId="a" onVoiceConversation={vi.fn()} />,
-  );
-  expect(
-    screen.queryByPlaceholderText("What’s on your mind today?"),
-  ).not.toBeInTheDocument();
-  expect(
-    screen.getByRole("status", { name: "Transcribing" }),
-  ).toHaveTextContent("Transcribing…");
-  expect(
-    screen.getByRole("status", { name: "Transcribing" }).querySelector("svg"),
-  ).toHaveClass("animate-spin", "size-4");
-  expect(
-    screen.getByRole("button", { name: "Stop recording and transcribe" }),
-  ).toBeDisabled();
-  expect(
-    screen.getByRole("button", { name: "Pause recording" }),
-  ).toBeDisabled();
-  expect(
-    screen.getByRole("button", { name: "Cancel recording" }),
-  ).toBeEnabled();
-  expect(
-    screen.queryByRole("button", { name: "Add story" }),
-  ).not.toBeInTheDocument();
-});
-it("places only an animated loader inline after existing text during additional transcription", () => {
-  phase = "transcribing";
-  localStorage.setItem(
-    "memento-overview-draft:a",
-    "First memory.\nAnother thought.",
-  );
-  renderWithProviders(
-    <OverviewCaptureCard userId="a" onVoiceConversation={vi.fn()} />,
-  );
-  const text = screen.getByRole("textbox", { name: "Your thoughts" });
-  expect(text).toHaveAttribute("aria-readonly", "true");
-  expect(text).toHaveTextContent("First memory. Another thought.");
-  const loader = screen.getByRole("status", {
-    name: "Transcribing additional recording",
-  });
-  expect(loader).toHaveClass("inline-block", "animate-spin");
-  expect(text.lastElementChild).toBe(loader);
-  expect(screen.queryByText("Transcribing…")).not.toBeInTheDocument();
-  expect(
-    screen.queryByRole("button", { name: "Cancel" }),
-  ).not.toBeInTheDocument();
-});
 
-it("continues an unfinished sentence without duplicating spaces and keeps transcript paragraphs", () => {
-  renderWithProviders(
-    <OverviewCaptureCard userId="a" onVoiceConversation={vi.fn()} />,
-  );
-  fireEvent.change(screen.getByRole("textbox"), {
-    target: { value: "I remember " },
-  });
-  act(() => append("a warm afternoon.\n\nYears later, we returned."));
-  expect(screen.getByRole("textbox")).toHaveValue(
-    "I remember a warm afternoon.\n\nYears later, we returned.",
-  );
-});
 
 it("reports no speech using a toast without adding an error to the card", () => {
   captureError = "No speech was detected. Try recording again.";
@@ -391,28 +278,6 @@ it("reports no speech using a toast without adding an error to the card", () => 
   expect(
     screen.getByRole("button", { name: "Record your thoughts" }),
   ).toBeEnabled();
-});
-it("offers retry and discard in a persistent toast instead of the card", () => {
-  captureError = "Transcription service unavailable";
-  canRetry = true;
-  renderWithProviders(
-    <OverviewCaptureCard userId="a" onVoiceConversation={vi.fn()} />,
-  );
-  const options = vi.mocked(toast.error).mock.calls.at(-1)?.[1];
-  expect(options).toEqual(
-    expect.objectContaining({
-      duration: Infinity,
-      action: expect.objectContaining({ label: "Retry" }),
-      cancel: expect.objectContaining({ label: "Discard" }),
-    }),
-  );
-  expect(
-    screen.queryByRole("button", { name: "Retry transcription" }),
-  ).not.toBeInTheDocument();
-  expect(screen.queryByRole("alert")).not.toBeInTheDocument();
-  if (options?.action && "onClick" in options.action)
-    options.action.onClick({} as never);
-  expect(retry).toHaveBeenCalledOnce();
 });
 it("keeps a draft in the card and toasts when device storage fails", () => {
   const storage = vi
@@ -475,4 +340,115 @@ it("does not focus the draft by clicking recording space while recording", async
   await user.click(screen.getByTestId("overview-capture-card"));
   expect(screen.getByRole("textbox")).not.toHaveFocus();
   expect(screen.getByRole("textbox")).toHaveValue("Existing draft");
+});
+const recordedFile = () => new File(["audio"], "voice.webm", { type: "audio/webm" });
+async function recordVoiceNote() {
+  act(() => finishRecording(recordedFile(), 12));
+  await waitFor(() =>
+    expect(screen.getByRole("button", { name: "Save now" })).toBeEnabled(),
+  );
+}
+it("keeps the recording as audio and saves a voice-only note with no text", async () => {
+  const user = userEvent.setup();
+  vi.mocked(postFetcher).mockResolvedValue({
+    success: true,
+    data: { _id: "saved" },
+    message: "Saved",
+  });
+  renderWithProviders(<OverviewCaptureCard userId="a" onVoiceConversation={vi.fn()} />);
+  await recordVoiceNote();
+  expect(fileUploadFetcher).toHaveBeenCalledWith(
+    endpoint.upload,
+    expect.objectContaining({
+      arg: expect.objectContaining({ file: expect.any(File), duration: 12 }),
+    }),
+  );
+  expect(screen.getByRole("textbox")).toHaveValue("");
+  expect(screen.queryByRole("button", { name: "Discuss" })).not.toBeInTheDocument();
+  await user.click(screen.getByRole("button", { name: "Save now" }));
+  expect(postFetcher).toHaveBeenCalledWith(
+    endpoint.memoriesQuickCapture,
+    expect.objectContaining({
+      arg: { attachments: ["voice-1"], visibility: "private" },
+    }),
+  );
+  await waitFor(() =>
+    expect(screen.queryByRole("button", { name: "Save now" })).not.toBeInTheDocument(),
+  );
+  expect(localStorage.getItem("memento-overview-voice:a")).toBeNull();
+});
+it("restores an unsaved recording after remounting", async () => {
+  const view = renderWithProviders(<OverviewCaptureCard userId="a" onVoiceConversation={vi.fn()} />);
+  await recordVoiceNote();
+  view.unmount();
+  renderWithProviders(<OverviewCaptureCard userId="a" onVoiceConversation={vi.fn()} />);
+  expect(await screen.findByRole("button", { name: "Save now" })).toBeEnabled();
+  expect(screen.getByRole("button", { name: "Record more" })).toBeEnabled();
+});
+it("carries the recording into the story when using it as a story", async () => {
+  const user = userEvent.setup();
+  renderWithProviders(
+    <>
+      <OverviewCaptureCard userId="a" onVoiceConversation={vi.fn()} />
+      <State />
+    </>,
+  );
+  await recordVoiceNote();
+  await user.click(screen.getByRole("button", { name: "Use as story" }));
+  expect(screen.getByTestId("modal").textContent).toContain('"_id":"voice-1"');
+});
+it("deletes the uploaded recording when the draft is cleared", async () => {
+  const user = userEvent.setup();
+  renderWithProviders(<OverviewCaptureCard userId="a" onVoiceConversation={vi.fn()} />);
+  await recordVoiceNote();
+  await user.click(screen.getByRole("button", { name: "Clear text" }));
+  await user.click(screen.getByRole("button", { name: "Clear text" }));
+  expect(deleteFetcher).toHaveBeenCalledOnce();
+  expect(screen.queryByRole("button", { name: "Save now" })).not.toBeInTheDocument();
+});
+function ModalProbe({ onState }: { onState: (state: unknown) => void }) {
+  const { state } = useModal();
+  onState(state);
+  return null;
+}
+async function useAsStory() {
+  let modals: { props: { onHandedOff: (outcome: "published" | "draft") => void } }[] = [];
+  renderWithProviders(
+    <>
+      <OverviewCaptureCard userId="a" onVoiceConversation={vi.fn()} />
+      <ModalProbe onState={(state) => { modals = state as typeof modals; }} />
+    </>,
+  );
+  fireEvent.change(screen.getByRole("textbox"), { target: { value: "My note" } });
+  await recordVoiceNote();
+  await userEvent.click(screen.getByRole("button", { name: "Use as story" }));
+  return modals[0].props.onHandedOff;
+}
+it("clears the card once its draft is published as a story, so it can't be saved twice", async () => {
+  const handOff = await useAsStory();
+  expect(screen.getByRole("textbox")).toHaveValue("My note");
+  act(() => handOff("published"));
+  await waitFor(() =>
+    expect(screen.queryByRole("button", { name: "Save now" })).not.toBeInTheDocument(),
+  );
+  expect(screen.getByRole("textbox")).toHaveValue("");
+  expect(localStorage.getItem("memento-overview-draft:a")).toBeNull();
+  expect(localStorage.getItem("memento-overview-voice:a")).toBeNull();
+  expect(deleteFetcher).not.toHaveBeenCalled();
+});
+it("says where the draft went when the story was kept in Drafts", async () => {
+  const handOff = await useAsStory();
+  act(() => handOff("draft"));
+  await waitFor(() => expect(screen.getByRole("textbox")).toHaveValue(""));
+  expect(toast.success).toHaveBeenCalledWith("Moved to your story drafts.");
+  expect(deleteFetcher).not.toHaveBeenCalled();
+});
+it("keeps text typed after the hand-off", async () => {
+  const handOff = await useAsStory();
+  fireEvent.change(screen.getByRole("textbox"), { target: { value: "Something newer" } });
+  act(() => handOff("published"));
+  await waitFor(() =>
+    expect(localStorage.getItem("memento-overview-voice:a")).toBeNull(),
+  );
+  expect(screen.getByRole("textbox")).toHaveValue("Something newer");
 });

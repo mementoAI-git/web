@@ -2,13 +2,6 @@ import type { IMemory } from "@/utility/interface";
 
 const TALL_TEXT_CARD_MIN_LINES = 5;
 
-export const TEXT_ONLY_CARD_SURFACES = [
-  "bg-[#F7A21A]/20 dark:bg-[#F7A21A]/20",
-  "bg-[#1A80F7]/20 dark:bg-[#1A80F7]/20",
-  "bg-[#C7F71A]/20 dark:bg-[#C7F71A]/20",
-  "bg-[#0F0700]/[0.04] dark:bg-[#FFFFFF]/[0.06]",
-] as const;
-
 function getStableHash(source: string) {
   let hash = 0;
   for (let index = 0; index < source.length; index += 1) {
@@ -40,8 +33,4 @@ export function hasAtLeastRenderedBodyLines(
   );
 
   return lineTops.size >= minimum;
-}
-
-export function getTextCardSurfaceClass(memory: IMemory, title: string) {
-  return pickBySeed(TEXT_ONLY_CARD_SURFACES, getCardSeed(memory, title));
 }

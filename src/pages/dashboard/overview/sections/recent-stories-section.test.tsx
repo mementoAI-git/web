@@ -104,12 +104,11 @@ describe("Recent stories", () => {
     ).toHaveAttribute("href", "/chat/reflection/story-0");
   });
 
-  it("shows a warm empty state", async () => {
+  it("offers to add a story when there are none", async () => {
     respond([]);
     renderSection();
-    expect(
-      await screen.findByText(/your story begins here/i),
-    ).toBeInTheDocument();
+    expect(await screen.findByText("No stories added yet")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Add story" })).toBeEnabled();
     expect(screen.queryByRole("list")).not.toBeInTheDocument();
   });
 

@@ -11,7 +11,6 @@ export interface CTAConfig {
     | "voice_recorder"
     | "reflection_prompt"
     | "file_upload"
-    | "time_capsule"
     | "dashboard";
 }
 
@@ -92,9 +91,6 @@ export function getPrimaryCTA(
   const hasGuided = modes.includes("guided");
 
   if (modes.length > 0) {
-    if (motivation === "practical") {
-      return { label: "Create your first time capsule", action: "time_capsule" };
-    }
     if (motivation === "explorer") {
       return { label: "Go to dashboard", action: "dashboard" };
     }
@@ -120,8 +116,6 @@ export function getPrimaryCTA(
     case "memory_preservation":
     case "emotional_depth":
       return { label: "Record your first memory", action: "voice_recorder" };
-    case "practical":
-      return { label: "Create your first time capsule", action: "time_capsule" };
     case "explorer":
     case "external":
     default:

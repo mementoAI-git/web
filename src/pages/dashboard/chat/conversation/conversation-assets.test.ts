@@ -57,3 +57,17 @@ describe("conversation assets", () => {
     expect(filterConversationAssets(index, "missing").total).toBe(0);
   });
 });
+
+describe("classifyConversationFile for voice notes", () => {
+  it("treats audio WebM as audio, not video", () => {
+    expect(classifyConversationFile({ name: "song.webm", type: "audio/webm" })).toBe("audio");
+  });
+  it("treats our recordings as audio even when stored as video/webm", () => {
+    expect(
+      classifyConversationFile({ name: "recording-1793990813293_261106143012.webm", type: "video/webm" }),
+    ).toBe("audio");
+  });
+  it("still treats an ordinary WebM as video", () => {
+    expect(classifyConversationFile({ name: "clip.webm", type: "video/webm" })).toBe("video");
+  });
+});

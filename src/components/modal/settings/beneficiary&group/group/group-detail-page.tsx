@@ -112,7 +112,7 @@ export function GroupDetailPage({ groupId }: { groupId: string }) {
       <div className="flex flex-col gap-10">
         <section
           aria-label="Group summary"
-          className="flex items-center justify-between gap-4 rounded-2xl p-6 text-[var(--group-on-color)]"
+          className="flex items-center justify-between gap-4 rounded-2xl p-4 text-[var(--group-on-color)] sm:p-6"
           style={{ backgroundColor: groupColorVar(group.color) }}
         >
           <div className="min-w-0">
@@ -152,7 +152,7 @@ export function GroupDetailPage({ groupId }: { groupId: string }) {
             </Button>
           </div>
           {count === 0 ? (
-            <div className="settings-card px-4 py-10 text-center">
+            <div className="settings-card px-4 py-10 text-center sm:px-6">
               <p className="text-sm font-medium text-text-neutral-strong">No members yet</p>
               <p className="mt-1 text-sm text-text-neutral-weak">Add people from your connections.</p>
             </div>

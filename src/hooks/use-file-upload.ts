@@ -63,7 +63,7 @@ export default function useFileUpload({ retainFailures = false }: { retainFailur
         );
       }
     } catch {
-      if (mounted.current && retainFailures) toast.error("Couldn’t upload the file. Retry when you’re connected.");
+      if (mounted.current) toast.error(retainFailures ? "Couldn’t upload the file. Retry when you’re connected." : "Couldn’t upload the file. Try again.");
       markFailed();
     } finally {
       inFlight.current.delete(file.id);

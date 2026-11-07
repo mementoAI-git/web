@@ -5,7 +5,7 @@ import { AboutInput } from "./about-input";
 
 let transcript: (text: string) => void;
 const recording = { phase: "idle", seconds: 65, levels: [5, 12], error: "", canRetry: false, start: vi.fn(), stop: vi.fn(), cancel: vi.fn(), togglePause: vi.fn(), retry: vi.fn() };
-vi.mock("@/pages/dashboard/overview/sections/use-overview-dictation", () => ({ useOverviewDictation: (receive: (text: string) => void) => { transcript = receive; return recording; } }));
+vi.mock("@/hooks/use-voice-capture", () => ({ useVoiceCapture: ({ onTranscript }: { onTranscript: (text: string) => void }) => { transcript = onTranscript; return recording; } }));
 beforeEach(() => { vi.clearAllMocks(); recording.phase = "idle"; recording.error = ""; recording.canRetry = false; });
 
 function Editor({ initial = "" }: { initial?: string }) {

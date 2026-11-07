@@ -124,6 +124,10 @@ export function createLiveDictation() {
       listening = true;
       begin();
     },
+    /** Everything heard so far, even if the recognizer later failed or stopped early. */
+    heard() {
+      return text();
+    },
     finish(): Promise<string | null> {
       listening = false;
       if (failed || cancelled || !running)
@@ -140,7 +144,7 @@ export function createLiveDictation() {
           } catch {
             /* Already stopped. */
           }
-        }, 700);
+        }, 1500);
         try {
           recognition.stop();
         } catch {

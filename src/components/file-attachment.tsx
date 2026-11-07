@@ -1,6 +1,7 @@
 import Docs from "@/components/docs";
 import { TrashIcon } from "@/components/icons";
 import { cn, formatFileSize, truncateFileName } from "@/utility";
+import { displayFileName } from "@/utility/file-label";
 import type { IOnUploadPayload } from "@/utility/interface";
 
 interface FileAttachmentProps {
@@ -20,7 +21,7 @@ export default function FileAttachment({ file, onDelete, progressType = "bar", c
       <div className="flex-1">
         <div>
           <div className="flex items-center justify-between">
-            <span className="font-inter text-sm font-medium text-foreground">{truncateFileName(name)}</span>
+            <span className="font-inter text-sm font-medium text-foreground">{truncateFileName(displayFileName(name))}</span>
             {file.uploadedFile && (
               <button
                 type="button"

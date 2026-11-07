@@ -1,9 +1,11 @@
+import type { CSSProperties } from "react";
 import { ChevronRight, CreditCard, LockKeyhole, LogOut, ShieldCheck, UserRound, UsersRound } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useFeatureFlags } from "@/contexts/feature-flags";
 import { PlanSummaryCard } from "@/features/insights/plan-summary-card";
 import { useLogout } from "@/hooks/use-logout";
+import { PageHeading } from "@/pages/dashboard/component/page-heading";
 import { SettingsProfileHeader } from "./settings-profile-header";
 
 const sections = [
@@ -31,12 +33,19 @@ export function SettingsHub() {
 
   return (
     <div className="flex flex-col gap-10">
-      <div className="flex flex-col gap-4">
+      <PageHeading className="page-rise page-rise--heading">
+        Settings & <em>profile</em>
+      </PageHeading>
+      <div className="page-stagger flex flex-col gap-4" style={{ "--page-stagger-start": 1 } as CSSProperties}>
         <SettingsProfileHeader />
         <PlanSummaryCard onNavigate={(href) => navigate(href)} />
       </div>
       <div className="flex flex-col gap-4">
-        <nav aria-label="Settings sections" className="settings-card flex flex-col gap-1 p-4">
+        <nav
+          aria-label="Settings sections"
+          className="page-rise page-stagger settings-card flex flex-col gap-1 p-4"
+          style={{ "--page-rise-index": 3, "--page-stagger-start": 4 } as CSSProperties}
+        >
           {sections
             .filter((section) => canUseBilling || section.label !== "Billing")
             .map(({ to, label, Icon }) => (
@@ -49,7 +58,7 @@ export function SettingsHub() {
               </Link>
             ))}
         </nav>
-        <div className="settings-card px-4 py-3">
+        <div className="page-rise settings-card px-4 py-3" style={{ "--page-rise-index": 9 } as CSSProperties}>
           <button
             type="button"
             className={rowClass}

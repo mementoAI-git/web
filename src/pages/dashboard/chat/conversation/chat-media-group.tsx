@@ -1,4 +1,6 @@
-import { FileText, Mic, Play } from "lucide-react";
+import { displayFileName } from "@/utility/file-label";
+import { FileText, Play } from "lucide-react";
+import { SavedVoiceNoteTile } from "@/components/recorder/voice-note-tile";
 import { useModal } from "@/hooks/use-modal";
 import { useSignedMediaAccess } from "@/features/media/signed-media-access";
 import { cn } from "@/lib/utils";
@@ -52,7 +54,7 @@ function VisualTile({
     <button
       type="button"
       onClick={openViewer}
-      aria-label={`Open ${file.name || "file"} in viewer`}
+      aria-label={`Open ${displayFileName(file.name) || "file"} in viewer`}
       className={cn(
         "group relative min-h-0 min-w-0 cursor-pointer overflow-hidden rounded-lg bg-fill-neutral-weak focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stroke-brand-strong",
         className,
@@ -103,7 +105,17 @@ function CompactFileRow({
   const { push } = useModal();
   const { src } = useSignedMediaAccess(file);
   const kind = classifyConversationFile(file);
-  const Icon = kind === "audio" ? Mic : FileText;
+  if (kind === "audio") {
+    const label = displayFileName(file.name) || "Voice note";
+    return (
+      <SavedVoiceNoteTile
+        file={file}
+        label={`${label} in viewer`}
+        onOpen={() => push?.("file-preview", { files, startIndex: index })}
+      />
+    );
+  }
+  const Icon = FileText;
   const content = (
     <>
       <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-fill-brand-weak text-text-brand-strong">
@@ -111,19 +123,17 @@ function CompactFileRow({
       </span>
       <span className="min-w-0 flex-1">
         <span className="block truncate font-geist text-sm font-medium text-text-neutral-strong">
-          {file.name || (kind === "audio" ? "Audio" : "File")}
+          {displayFileName(file.name) || "File"}
         </span>
         <span className="block truncate font-inter text-xs text-text-neutral-weak">
-          {kind === "audio" ? "Audio" : file.type || "Document"}
+          {file.type || "Document"}
         </span>
       </span>
     </>
   );
   const classes = "sky-card flex min-h-14 w-full min-w-0 items-center gap-3 rounded-lg border border-stroke-neutral-weaker bg-fill-neutral-weaker px-3 py-2 text-left transition-colors hover:bg-fill-neutral-weak focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stroke-brand-strong";
-  return kind === "audio" ? (
-    <button type="button" onClick={() => push?.("file-preview", { files, startIndex: index })} aria-label={`Open ${file.name || "file"} in viewer`} className={classes}>{content}</button>
-  ) : (
-    <a href={src} download={file.name} aria-label={`Download ${file.name || "file"}`} className={classes}>{content}</a>
+  return (
+    <a href={src} download={file.name} aria-label={`Download ${displayFileName(file.name) || "file"}`} className={classes}>{content}</a>
   );
 }
 

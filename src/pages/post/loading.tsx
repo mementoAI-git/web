@@ -1,20 +1,16 @@
 export default function Loading() {
   return (
-    <div className="w-full space-y-5">
+    <div
+      role="status"
+      aria-label="Loading story"
+      className="mx-auto w-full max-w-[760px] animate-pulse space-y-5 p-6"
+    >
+      <div className="h-10 w-3/5 rounded bg-fill-neutral-weaker" />
       <div className="space-y-3">
-        <div className="h-7 w-1/2 rounded bg-gray-200" />
-        <div className="h-20 w-full rounded-xl bg-gray-200" />
+        <div className="h-4 w-full rounded bg-fill-neutral-weaker" />
+        <div className="h-4 w-5/6 rounded bg-fill-neutral-weaker" />
+        <div className="h-4 w-2/3 rounded bg-fill-neutral-weaker" />
       </div>
-      <div className="flex flex-wrap gap-2">
-        <div className="h-50 w-61.5 shrink-0 rounded bg-gray-200" />
-        <div className="h-50 min-w-94 rounded bg-gray-200" />
-        <div className="h-50 w-61.5 shrink-0 rounded bg-gray-200" />
-        <div className="h-50 min-w-94 rounded bg-gray-200" />
-        <div className="h-50 w-61.5 shrink-0 rounded bg-gray-200" />
-        <div className="h-50 w-61.5 shrink-0 rounded bg-gray-200" />
-      </div>
-      <div className="h-100 w-full rounded bg-gray-200" />
     </div>
   );
 }
-

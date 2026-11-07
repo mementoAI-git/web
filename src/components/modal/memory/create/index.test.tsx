@@ -1,4 +1,4 @@
-import { act, fireEvent, screen } from "@testing-library/react";
+import { act, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
@@ -9,6 +9,12 @@ import { renderWithProviders } from "@/test";
 import { server } from "@/test/mocks/server";
 import { http, HttpResponse } from "msw";
 import type { IOnUploadPayload } from "@/utility/interface";
+import {
+  MEMORY_ACCEPT_AUDIO,
+  MEMORY_ACCEPT_DOCUMENTS,
+  MEMORY_ACCEPT_IMAGES,
+  MEMORY_ACCEPT_VIDEOS,
+} from "@/utility/constant";
 import albumArtwork from "@/assets/image/HD Album story bg memento.webp";
 import referenceAlbum from "@/assets/image/story-overlay-c-tall-album.webp";
 import darkAlbumArtwork from "@/assets/image/HD Album story bg memento dark.webp";
@@ -434,16 +440,18 @@ vi.mock("./file-thumbnails", () => ({
 }));
 
 vi.mock("react-modal-sheet", () => {
-  function MockSheet({ children }: { children: ReactNode }) {
-    return <div data-testid="mock-sheet">{children}</div>;
+  function MockSheet({ children, isOpen = true }: { children: ReactNode; isOpen?: boolean }) {
+    return isOpen ? <div data-testid="mock-sheet">{children}</div> : null;
   }
   MockSheet.Container = ({ children, className }: { children: ReactNode; className?: string }) => (
     <div data-testid="sheet-container" className={className}>
       {children}
     </div>
   );
-  MockSheet.Header = ({ className }: { className?: string }) => (
-    <div data-testid="sheet-header" className={className} />
+  MockSheet.Header = ({ className, children }: { className?: string; children?: ReactNode }) => (
+    <div data-testid="sheet-header" className={className}>
+      {children}
+    </div>
   );
   MockSheet.Content = ({ children, className }: { children: ReactNode; className?: string }) => (
     <div data-testid="sheet-content" className={className}>
@@ -460,6 +468,16 @@ function ComposerModal() {
     <>
       <button onClick={() => open?.("create-memory")}>Open composer</button>
       <Modal />
+    </>
+  );
+}
+
+function MobileComposerModal() {
+  const { open, state } = useModal();
+  return (
+    <>
+      <button onClick={() => open?.("create-memory")}>Open composer</button>
+      {state.some((modal) => modal.name === "create-memory") ? <CreateMemory data={{}} isMobile /> : null}
     </>
   );
 }
@@ -517,7 +535,7 @@ describe("CreateMemory", () => {
 
     rerender(<CreateMemory data={{}} isMobile />);
 
-    expect(screen.getByTestId("sheet-container")).toBeInTheDocument();
+    expect(screen.getByTestId("mobile-story-composer")).toBeInTheDocument();
     expect(screen.queryByTestId("desktop-journal-shell")).not.toBeInTheDocument();
   });
 
@@ -535,8 +553,8 @@ describe("CreateMemory", () => {
     expect(screen.queryByRole("dialog", { name: "Add Story" })).not.toBeInTheDocument();
   });
 
-  it.each(["B", "C"])("preserves unsaved-story safeguards in overlay %s", async (overlay) => {
-    // Keep this draft unsaved while testing the close guard; autosave is covered separately.
+  it.each(["B", "C"])("saves an unsaved story on close in overlay %s", async (overlay) => {
+    // Keep autosave from running, so only closing can save this draft.
     const scheduleTimeout = window.setTimeout.bind(window);
     vi.spyOn(window, "setTimeout").mockImplementation((handler, timeout, ...args) =>
       scheduleTimeout(handler, timeout === 900 ? 60_000 : timeout, ...args),
@@ -546,11 +564,6 @@ describe("CreateMemory", () => {
     await user.click(screen.getByRole("button", { name: "Open composer" }));
     await user.type(screen.getByPlaceholderText(/give this story a title/i), "Overlay draft");
     await user.click(screen.getByRole("button", { name: "Close" }));
-    expect(screen.getByRole("dialog", { name: "Save this story?" })).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Keep editing" }));
-    expect(screen.getByPlaceholderText(/give this story a title/i)).toHaveValue("Overlay draft");
-    await user.click(screen.getByRole("button", { name: "Close" }));
-    await user.click(screen.getByRole("button", { name: "Save draft and exit" }));
     expect(JSON.parse(localStorage.getItem("create-memory-drafts") ?? "[]")[0].title).toBe("Overlay draft");
     expect(screen.queryByRole("dialog", { name: "Add Story" })).not.toBeInTheDocument();
   }, 20_000);
@@ -574,12 +587,104 @@ describe("CreateMemory", () => {
     );
   });
 
-  it("uses v3 background on mobile sheet surfaces", () => {
-    renderWithProviders(<CreateMemory data={{}} isMobile />, { auth: true });
+  describe("on a phone", () => {
+    const setup = () => {
+      const user = userEvent.setup();
+      renderWithProviders(<CreateMemory data={{}} isMobile />, { auth: true });
+      return user;
+    };
 
-    expect(screen.getByTestId("sheet-container").className).toContain("bg-v3-bg");
-    expect(screen.getByTestId("sheet-header").className).toContain("bg-v3-bg");
-    expect(screen.getByTestId("sheet-content").className).toContain("bg-v3-bg");
+    it("closes straight to a saved draft, with no discard prompt", async () => {
+      // Keep autosave from running, so only closing can save this draft.
+      const scheduleTimeout = window.setTimeout.bind(window);
+      vi.spyOn(window, "setTimeout").mockImplementation((handler, timeout, ...args) =>
+        scheduleTimeout(handler, timeout === 900 ? 60_000 : timeout, ...args),
+      );
+      const user = userEvent.setup();
+      renderWithProviders(<MobileComposerModal />, { auth: true });
+      await user.click(screen.getByRole("button", { name: "Open composer" }));
+      await user.type(screen.getByRole("textbox", { name: "Title" }), "Keep me");
+      await user.click(screen.getByRole("button", { name: "Cancel editing" }));
+      expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+      expect(screen.queryByRole("dialog", { name: "Add Story" })).not.toBeInTheDocument();
+      expect(JSON.parse(localStorage.getItem("create-memory-drafts") ?? "[]")[0].title).toBe("Keep me");
+    });
+
+    it("opens one system picker for every attachment type, with no menu first", async () => {
+      const click = vi.spyOn(HTMLInputElement.prototype, "click").mockImplementation(() => undefined);
+      const user = setup();
+      await user.click(screen.getByRole("button", { name: "Add attachment" }));
+      expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+      expect(click).toHaveBeenCalledTimes(1);
+      const picker = click.mock.contexts[0] as HTMLInputElement;
+      expect(picker.multiple).toBe(true);
+      const accepted = picker.accept.split(",");
+      for (const list of [
+        MEMORY_ACCEPT_IMAGES,
+        MEMORY_ACCEPT_VIDEOS,
+        MEMORY_ACCEPT_AUDIO,
+        MEMORY_ACCEPT_DOCUMENTS,
+      ]) {
+        expect(accepted).toEqual(expect.arrayContaining(list.split(",")));
+      }
+      click.mockRestore();
+    });
+
+    it("uses the album paper for the writer's background", () => {
+      setup();
+      expect(screen.getByTestId("mobile-album-artwork")).toHaveClass("story-composer-paper");
+    });
+
+    it("opens a full-screen writer matching the mobile app", () => {
+      setup();
+      expect(screen.getByRole("dialog", { name: "Add Story" })).toHaveClass(
+        "story-composer-mobile",
+      );
+      expect(screen.getByRole("textbox", { name: "Title" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Cancel editing" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Drafts" })).toBeInTheDocument();
+      for (const name of [
+        "Add attachment",
+        "Record audio",
+        "Bold",
+        "Italic",
+        "Underline",
+        "Strikethrough",
+        "Bullet list",
+        "Numbered list",
+      ]) {
+        expect(
+          within(screen.getByTestId("mobile-formatting-toolbar")).getByRole("button", { name }),
+        ).toBeInTheDocument();
+      }
+    });
+
+    it("keeps Next off until there is something to publish", async () => {
+      const user = setup();
+      const next = screen.getByRole("button", { name: "Next step" });
+      expect(next).toBeDisabled();
+      await user.type(screen.getByRole("textbox", { name: "Title" }), "This is the title");
+      expect(next).toBeEnabled();
+    });
+
+    it("moves publishing to its own sheet with the mobile copy", async () => {
+      const user = setup();
+      expect(screen.queryByText("Publish post")).not.toBeInTheDocument();
+      await user.type(screen.getByRole("textbox", { name: "Title" }), "This is the title");
+      await user.click(screen.getByRole("button", { name: "Next step" }));
+      expect(await screen.findByText("Publish post")).toBeVisible();
+      expect(screen.getByText("New stories are private unless you choose otherwise.")).toBeVisible();
+      expect(screen.getByText("Private · Only me")).toBeVisible();
+      expect(screen.getByLabelText("Tags (optional)")).toHaveAttribute(
+        "placeholder",
+        "Add tags if you like",
+      );
+      expect(
+        screen.getByText("Relevant tags will be added in the background if you leave this blank."),
+      ).toBeVisible();
+      expect(screen.getByRole("button", { name: /Autotag/ })).toBeVisible();
+      expect(screen.getByRole("button", { name: /Post now/ })).toBeVisible();
+    });
   });
 
   it("moves focus to the body editor when enter is pressed in the desktop title", async () => {
@@ -857,26 +962,6 @@ describe("CreateMemory", () => {
     expect(screen.queryByRole("button", { name: "Save Draft" })).not.toBeInTheDocument();
   });
 
-  it("offers shadcn draft actions when closing an unsaved desktop story", async () => {
-    const user = userEvent.setup();
-    renderWithProviders(<ComposerModal />, { auth: true });
-    await user.click(screen.getByRole("button", { name: "Open composer" }));
-    await user.type(screen.getByPlaceholderText(/give this story a title/i), "A story to keep");
-
-    await user.click(screen.getByRole("button", { name: "Close" }));
-
-    const dialog = screen.getByRole("dialog", { name: "Save this story?" });
-    expect(dialog).toHaveAttribute("data-slot", "dialog-content");
-    expect(dialog).toHaveClass("z-[310]");
-    expect(document.querySelector('[data-slot="dialog-overlay"].z-\\[300\\]')).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Save draft and exit" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Discard" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Keep editing" })).toBeInTheDocument();
-
-    await user.click(screen.getByRole("button", { name: "Keep editing" }));
-    expect(screen.getByTestId("desktop-journal-shell")).toBeInTheDocument();
-  });
-
   it("saves an unsaved desktop story before exiting", async () => {
     const user = userEvent.setup();
     renderWithProviders(<ComposerModal />, { auth: true });
@@ -884,28 +969,7 @@ describe("CreateMemory", () => {
     await user.type(screen.getByPlaceholderText(/give this story a title/i), "A saved exit");
     await user.click(screen.getByRole("button", { name: "Close" }));
 
-    await user.click(screen.getByRole("button", { name: "Save draft and exit" }));
-
     expect(JSON.parse(localStorage.getItem("create-memory-drafts") ?? "[]")[0].title).toBe("A saved exit");
-    expect(screen.queryByTestId("desktop-journal-shell")).not.toBeInTheDocument();
-  });
-
-  it("discards the active draft without deleting other drafts or recreating it through autosave", async () => {
-    const user = userEvent.setup();
-    localStorage.setItem("create-memory-drafts", JSON.stringify([
-      { id: "active-draft", title: "Attachment draft", body: "", tags: [], attachments: [{ _id: "restored-file", name: "photo.png", type: "image/png", url: "https://example.test/photo", size: 5 }], updatedAt: new Date().toISOString() },
-      { id: "other-draft", title: "Keep this draft", body: "", tags: [], attachments: [], updatedAt: new Date().toISOString() },
-    ]));
-    renderWithProviders(<ComposerModal />, { auth: true });
-    await user.click(screen.getByRole("button", { name: "Open composer" }));
-    await user.click(screen.getByRole("button", { name: "Drafts" }));
-    await user.click(screen.getByRole("button", { name: /Attachment draft/ }));
-    fireEvent.change(screen.getByPlaceholderText(/give this story a title/i), { target: { value: "Attachment draft edited" } });
-    fireEvent.click(screen.getByRole("button", { name: "Close" }));
-    fireEvent.click(screen.getByRole("button", { name: "Discard" }));
-    await act(async () => { await new Promise((resolve) => setTimeout(resolve, 1100)); });
-    const saved = JSON.parse(localStorage.getItem("create-memory-drafts") ?? "[]");
-    expect(saved.map((draft: { id: string }) => draft.id)).toEqual(["other-draft"]);
     expect(screen.queryByTestId("desktop-journal-shell")).not.toBeInTheDocument();
   });
 
@@ -1590,5 +1654,57 @@ describe("CreateMemory", () => {
     expect(
       aiTaskRunMock.mock.calls.filter(([task]) => task === "assistant.compose_response"),
     ).toHaveLength(1);
+  });
+});
+
+describe("CreateMemory hand-off and double saves", () => {
+  const DRAFTS_KEY = "create-memory-drafts";
+  function publishServer() {
+    let calls = 0;
+    server.use(
+      http.post("http://localhost:3000/api/memories", async () => {
+        calls += 1;
+        await new Promise((resolve) => setTimeout(resolve, 30));
+        return HttpResponse.json({ success: true, data: { _id: "story-1" } });
+      }),
+    );
+    return () => calls;
+  }
+  const seeded = (onHandedOff = vi.fn()) => ({
+    payload: { title: "A story", body: "<p>Hello</p>" },
+    attachments: [{ file: { _id: "voice-1", name: "voice.webm", url: "https://x/voice.webm", size: 5, type: "audio/webm" }, duration: 3 }],
+    onHandedOff,
+  });
+
+  it("publishes once, removes the autosaved draft and hands off", async () => {
+    const calls = publishServer();
+    const onHandedOff = vi.fn();
+    localStorage.removeItem(DRAFTS_KEY);
+    renderWithProviders(<CreateMemory data={seeded(onHandedOff)} />);
+    await waitFor(() => expect(JSON.parse(localStorage.getItem(DRAFTS_KEY) ?? "[]")).toHaveLength(1), { timeout: 3000 });
+    const publish = screen.getByRole("button", { name: "Publish Story" });
+    fireEvent.click(publish);
+    fireEvent.click(publish);
+    await waitFor(() => expect(onHandedOff).toHaveBeenCalledWith("published"));
+    expect(calls()).toBe(1);
+    expect(onHandedOff).toHaveBeenCalledTimes(1);
+    expect(JSON.parse(localStorage.getItem(DRAFTS_KEY) ?? "[]")).toHaveLength(0);
+  });
+
+  it("hands off as a draft when the composer closes with its story in Drafts", async () => {
+    const onHandedOff = vi.fn();
+    localStorage.removeItem(DRAFTS_KEY);
+    const view = renderWithProviders(<CreateMemory data={seeded(onHandedOff)} />);
+    await waitFor(() => expect(JSON.parse(localStorage.getItem(DRAFTS_KEY) ?? "[]")).toHaveLength(1), { timeout: 3000 });
+    view.unmount();
+    expect(onHandedOff).toHaveBeenCalledWith("draft");
+  });
+
+  it("does not hand off when nothing was saved, so the source keeps its copy", () => {
+    const onHandedOff = vi.fn();
+    localStorage.removeItem(DRAFTS_KEY);
+    const view = renderWithProviders(<CreateMemory data={seeded(onHandedOff)} />);
+    view.unmount();
+    expect(onHandedOff).not.toHaveBeenCalled();
   });
 });
