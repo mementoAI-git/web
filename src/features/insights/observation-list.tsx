@@ -120,11 +120,11 @@ function EditObservationDialog({
 function ForgetObservationDialog({
   item,
   onClose,
-  onChanged,
+  onForget,
 }: {
   item: ObservationItem;
   onClose: () => void;
-  onChanged: () => Promise<unknown>;
+  onForget: (id: string, request: () => Promise<unknown>) => Promise<unknown>;
 }) {
   const id = useId();
   const [forgetting, setForgetting] = useState(false);
@@ -132,8 +132,8 @@ function ForgetObservationDialog({
   async function forget() {
     setForgetting(true);
     try {
-      await del(observationUrl(item.id));
-      await onChanged();
+      // The card leaves the list right away, and this dialog goes with it.
+      await onForget(item.id, () => del(observationUrl(item.id)));
       toast.success("Note forgotten");
       onClose();
     } catch {
@@ -178,12 +178,14 @@ function ObservationCard({
   onPreview,
   onPreviewEnd,
   onChanged,
+  onForget,
 }: {
   item: ObservationItem;
   onOpen: (item: ObservationItem) => void;
   onPreview: (item: ObservationItem, event: PointerEvent) => void;
   onPreviewEnd: () => void;
   onChanged: () => Promise<unknown>;
+  onForget: (id: string, request: () => Promise<unknown>) => Promise<unknown>;
 }) {
   const [action, setAction] = useState<Action | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -285,7 +287,7 @@ function ObservationCard({
         <ForgetObservationDialog
           item={item}
           onClose={() => setAction(null)}
-          onChanged={onChanged}
+          onForget={onForget}
         />
       )}
     </article>
@@ -297,11 +299,13 @@ export function ObservationList({
   empty,
   onOpen,
   onChanged,
+  onForget,
 }: {
   items: ObservationItem[];
   empty: ReactNode;
   onOpen: (item: ObservationItem) => void;
   onChanged: () => Promise<unknown>;
+  onForget: (id: string, request: () => Promise<unknown>) => Promise<unknown>;
 }) {
   const preview = useSourcesPreview();
   if (!items.length) return empty;
@@ -315,6 +319,7 @@ export function ObservationList({
           onPreview={preview.show}
           onPreviewEnd={preview.hide}
           onChanged={onChanged}
+          onForget={onForget}
         />
       ))}
       <ObservationSourcesPreview preview={preview} />

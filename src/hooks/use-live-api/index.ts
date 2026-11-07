@@ -98,6 +98,7 @@ const REFRESH_PREFIXES: Record<VoiceRefreshable, string[]> = {
   memories: [endpoint.memories],
   capsules: [endpoint.capsule],
   beneficiaries: [endpoint.beneficiaries],
+  observations: [endpoint.personaObservations],
 };
 
 export type LiveSessionOverrides = {
