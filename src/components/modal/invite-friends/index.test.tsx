@@ -27,6 +27,15 @@ describe("Invite friends", () => {
   beforeEach(() => {
     vi.mocked(get).mockReset();
   });
+  it("starts on the Copy button, not the link, and shows no visible link label", async () => {
+    vi.mocked(get).mockResolvedValue({ success: true, data: details });
+    renderWithProviders(<InviteFriends />, { auth: true });
+    const copy = await screen.findByRole("button", { name: "Copy" });
+    await waitFor(() => expect(copy).toBeEnabled());
+    await waitFor(() => expect(copy).toHaveFocus());
+    expect(screen.getByLabelText("Your invite link")).not.toHaveFocus();
+    expect(screen.queryByText("Your invite link")).not.toBeInTheDocument();
+  });
   it("shows actual signup count and copies the personal link", async () => {
     const user = userEvent.setup();
     vi.mocked(get).mockResolvedValue({ success: true, data: details });

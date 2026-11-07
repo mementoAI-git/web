@@ -57,7 +57,7 @@ describe("ConversationChatinput", () => {
       <ConversationChatinput onSend={() => {}} memoryId="m1" />,
       { auth: true, route: "/chat/m1" },
     );
-    expect(screen.getByRole("button", { name: /voice call/i })).toHaveClass("bg-fill-overview-voice");
+    expect(screen.getByRole("button", { name: /voice call/i })).toHaveClass("bg-white");
     expect(
       screen.getByRole("button", { name: /dictate a message/i }),
     ).toBeInTheDocument();

@@ -472,23 +472,6 @@ export function OverviewCaptureCard({
                   >
                     Discuss
                   </Button>}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    aria-label="Clear text"
-                    disabled={busy || saving}
-                    onClick={() => setClearOpen(true)}
-                    className="size-10 rounded-full border-0 p-[10px] text-icon-error-strong backdrop-blur-[1px]"
-                  >
-                    <img
-                      src={trash}
-                      alt=""
-                      aria-hidden
-                      width={20}
-                      height={20}
-                      className="size-5 shrink-0"
-                    />
-                  </Button>
                 </>
               ) : (
                 <>
@@ -506,7 +489,7 @@ export function OverviewCaptureCard({
                     key="voice-conversation"
                     disabled={busy}
                     onClick={onVoiceConversation}
-                    className="h-10 gap-2 rounded-[64px] bg-fill-overview-voice px-4 font-geist text-sm font-semibold text-overview-voice [background-image:none] hover:bg-fill-overview-voice/90"
+                    className="h-10 gap-2 rounded-[64px] border border-stroke-neutral-weak bg-white px-4 font-geist text-sm font-semibold text-overview-voice [background-image:none] hover:bg-white/90 dark:border-transparent"
                   >
                     <OverviewDesignIcon name="phone" /> Talk
                   </Button>
@@ -514,6 +497,25 @@ export function OverviewCaptureCard({
               )}
             </div>
             <div className="ml-auto flex items-center gap-2">
+              {hasDraft && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label="Clear text"
+                  disabled={busy || saving}
+                  onClick={() => setClearOpen(true)}
+                  className="size-[42px] shrink-0 rounded-full border border-stroke-error-weak bg-fill-error-weak p-[10px] text-icon-error-strong backdrop-blur-[1px] hover:bg-fill-error-weak/80"
+                >
+                  <img
+                    src={trash}
+                    alt=""
+                    aria-hidden
+                    width={20}
+                    height={20}
+                    className="size-5 shrink-0"
+                  />
+                </Button>
+              )}
               <Button
                 disabled={busy || saving}
                 variant="outline"

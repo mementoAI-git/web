@@ -104,6 +104,7 @@ export default {
   ephemeralToken: "/ai/ephemeral-token",
   /** POST /ai/voice/tools/:name runs a server-side voice tool. */
   voiceTools: "/ai/voice/tools",
+  chatActions: "/ai/chat/actions",
   voiceMemorySearch: "/ai/voice/memory-search",
   generateTags: "/ai/generate-tags",
   generateStoryTitle: "/ai/generate-story-title",

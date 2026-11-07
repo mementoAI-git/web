@@ -8,7 +8,7 @@ export const CALL_ACTION_TOOLS = [END_CALL_TOOL, SET_MICROPHONE_TOOL, OPEN_SCREE
 // Keep in sync with VOICE_SCREEN_DESTINATIONS in
 // api/src/module/api/ai/live-session-config.ts, apart from time_capsules, which is hidden on web for now.
 export const VOICE_SCREEN_DESTINATIONS = [
-  "home", "chat", "stories", "new_story", "quick_note", "explore_prompts",
+  "home", "chat", "stories", "bookmarks", "people", "new_story", "quick_note", "explore_prompts",
   "insights", "account", "settings", "profile", "plan_and_billing", "upgrade", "privacy",
   "beneficiaries", "feedback", "activity", "two_factor",
 ] as const;
@@ -22,6 +22,8 @@ export const WEB_VOICE_DESTINATIONS: Record<VoiceScreenDestination, WebDestinati
   home: { href: "/overview", label: "home" },
   chat: { href: "/chat", label: "chat" },
   stories: { href: "/stories", label: "your stories" },
+  bookmarks: { href: "/stories?filter=bookmarked", label: "your bookmarked stories" },
+  people: { href: "/chat?people=1", label: "your people" },
   new_story: { modal: "create-memory", label: "a new story" },
   quick_note: { modal: "quick-capture", label: "a quick note" },
   explore_prompts: { href: "/explore", label: "explore prompts" },

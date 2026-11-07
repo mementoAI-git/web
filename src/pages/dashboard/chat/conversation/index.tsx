@@ -205,6 +205,8 @@ function ConversationSession({ id, type = "memory", reflectionEntry }: { id: str
     setStreamModelLabel(undefined);
     // Refetch enrichment stats after each AI response to update delta + milestone
     void mutate(endpoint.userStats).catch(() => undefined);
+    // The reply may have remembered or forgotten something.
+    void mutate(endpoint.personaObservations).catch(() => undefined);
   }, [streamModelLabel, speakReply]);
 
   const sendChatMessage = useCallback(

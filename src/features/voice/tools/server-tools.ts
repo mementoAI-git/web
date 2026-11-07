@@ -29,7 +29,7 @@ export function serverToolNames(tools: unknown): string[] {
   return tools.filter((name): name is string => typeof name === "string" && !NOT_SERVER.has(name));
 }
 
-const REFRESHABLE = ["profile", "memories", "capsules", "beneficiaries"] as const;
+const REFRESHABLE = ["profile", "memories", "capsules", "beneficiaries", "observations"] as const;
 export type VoiceRefreshable = (typeof REFRESHABLE)[number];
 
 export type VoiceToolEffect =

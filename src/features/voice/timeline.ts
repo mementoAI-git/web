@@ -19,6 +19,9 @@ function savedCallBounds(rows: Row[], liveSince: number | null) {
   let openRun: string | null = null;
   rows.forEach((row, index) => {
     if (row.kind !== "message") return;
+    // These belong to this page's live calls. Counting them would end an earlier
+    // saved call after the newest message, while the current call is still running.
+    if (liveSince !== null && time(row.created_at) >= liveSince - CLOCK_SKEW_MS) return;
     const { voice_session_id: sessionId, is_voice: isVoice } = row.message;
     // Older voice messages have no call id, so an unbroken run counts as one call.
     if (!sessionId && isVoice) openRun ??= `run-${row.id}`;
@@ -27,7 +30,7 @@ function savedCallBounds(rows: Row[], liveSince: number | null) {
     if (!key) return;
     const call = calls.get(key);
     if (call) call.last = index;
-    else if (liveSince === null || time(row.created_at) < liveSince - CLOCK_SKEW_MS) calls.set(key, { first: index, last: index });
+    else calls.set(key, { first: index, last: index });
   });
   return calls;
 }

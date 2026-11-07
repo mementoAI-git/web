@@ -85,11 +85,24 @@ export default function InsightsPage() {
 
   const {
     observations: all,
+    loaded,
     generating,
     isLoading,
     error,
     mutate,
+    remove,
   } = useObservations();
+  // Memento can forget a note while it is open, so its page closes with it.
+  useEffect(() => {
+    if (!loaded) return;
+    const ids = new Set(all.map((item) => item.id));
+    setHistory((current) => {
+      const kept = current.filter(
+        (view) => view.kind !== "observation" || ids.has(view.item.id),
+      );
+      return kept.length === current.length ? current : kept;
+    });
+  }, [all, loaded]);
   const retry = useRequestRecovery(
     "insights-persona",
     error,
@@ -131,6 +144,7 @@ export default function InsightsPage() {
         items={items}
         onOpen={(item) => openView({ kind: "observation", item })}
         onChanged={() => mutate()}
+        onForget={remove}
         empty={
           <div className="insights-empty">
             <Archive className="size-8 text-icon-neutral-weak" aria-hidden />

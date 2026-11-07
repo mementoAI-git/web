@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import useSWR from "swr";
 import { ChevronDown } from "lucide-react";
@@ -83,7 +83,12 @@ export function ChatSwitcher({ children }: { children?: ReactNode }) {
   const navigate = useNavigate();
   const params = new URLSearchParams(location.search);
   const selected = params.get("person");
-  const [open, setOpen] = useState(params.get("people") === "1");
+  const peopleRequested = params.get("people") === "1";
+  const [open, setOpen] = useState(peopleRequested);
+  // Voice "show my people" navigates here while chat may already be open.
+  useEffect(() => {
+    if (peopleRequested) setOpen(true);
+  }, [peopleRequested, location.key]);
   const [access, setAccess] = useState(false);
   const [blocked, setBlocked] = useState(false);
   const [section, setSection] = useState("people");

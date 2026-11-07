@@ -94,9 +94,9 @@ describe("Feedback", () => {
     expect(dialog).toHaveAccessibleDescription(
       "Share a bug, an idea, or something we could improve.",
     );
-    expect(
-      within(dialog).getByRole("combobox", { name: /feedback type/i }),
-    ).toBeInTheDocument();
+    const types = within(dialog).getByRole("group", { name: /feedback type/i });
+    expect(within(types).getAllByRole("radio")).toHaveLength(3);
+    expect(within(types).getByRole("radio", { name: "Bugs" })).toBeChecked();
     await user.type(
       within(dialog).getByRole("textbox", { name: /^message$/i }),
       "A useful suggestion",
@@ -118,11 +118,7 @@ describe("Feedback", () => {
       "aria-invalid",
       "true",
     );
-    screen.getByRole("combobox", { name: /feedback type/i }).focus();
-    await user.keyboard("{Enter}");
-    await user.click(
-      await screen.findByRole("option", { name: "Feature Request" }),
-    );
+    await user.click(screen.getByRole("radio", { name: "Feature requests" }));
     await user.type(
       screen.getByRole("textbox", { name: /^message$/i }),
       "Please add this feature",
@@ -201,6 +197,28 @@ describe("Feedback", () => {
     );
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+  });
+
+  it("keeps the feedback type as a dropdown on phones", async () => {
+    const width = window.innerWidth;
+    Object.defineProperty(window, "innerWidth", {
+      writable: true,
+      configurable: true,
+      value: 375,
+    });
+    try {
+      renderWithProviders(<Feedback data={{}} />, { auth: true });
+      expect(
+        await screen.findByRole("combobox", { name: /feedback type/i }),
+      ).toBeInTheDocument();
+      expect(screen.queryByRole("radio")).not.toBeInTheDocument();
+    } finally {
+      Object.defineProperty(window, "innerWidth", {
+        writable: true,
+        configurable: true,
+        value: width,
+      });
+    }
   });
 
   it("renders thumbnail grid, image preview, and remove control for screenshots", async () => {
