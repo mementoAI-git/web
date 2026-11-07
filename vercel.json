@@ -5,6 +5,10 @@
       "destination": "/api/profile/:token"
     },
     {
+      "source": "/post/:id",
+      "destination": "/api/post/:id"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

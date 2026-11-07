@@ -11,6 +11,8 @@ import type { IFile, ILinkMetadata } from "@/utility/interface";
 import { ChatMediaGroup } from "./chat-media-group";
 import { ChatLinkPreview } from "./chat-link-preview";
 import { buildConversationAssetIndex, extractSharedUrls, splitStackedMedia } from "./conversation-assets";
+import { ChatReplySources, ChatShareCard, MementoLinkChip } from "./chat-memory-links";
+import { parseMementoLink } from "./memento-links";
 
 type ChatAttachment = Pick<IFile, "url" | "name"> &
   Partial<Omit<IFile, "url" | "name">>;
@@ -175,7 +177,7 @@ export default function Bubble({
             <ChatLinkPreview link={metadataLink} />
           ) : text.trim() ? <span
             className={cn(
-              "block min-w-0 max-w-full break-words font-geist font-normal text-text-neutral-strong [&_pre]:max-w-full [&_pre]:overflow-x-auto [&_table]:block [&_table]:max-w-full [&_table]:overflow-x-auto",
+              "flex min-w-0 max-w-full flex-col gap-2 break-words font-geist font-normal text-text-neutral-strong [&_pre]:max-w-full [&_pre]:overflow-x-auto [&_table]:block [&_table]:max-w-full [&_table]:overflow-x-auto",
               compact
                 ? "text-[14px] leading-relaxed [&_p]:m-0 [&_p]:text-[14px] [&_p]:leading-relaxed"
                 : "text-base leading-6 sm:leading-7 [&_p]:m-0 [&_p]:text-inherit [&_p]:leading-[inherit]",
@@ -196,7 +198,18 @@ export default function Bubble({
                     {children}
                   </p>
                 ),
-                a: ({ href, children, ...props }) => (
+                ul: ({ children }) => <ul className="list-disc space-y-0.5 pl-5 marker:text-text-neutral-weak">{children}</ul>,
+                ol: ({ children }) => <ol className="list-decimal space-y-0.5 pl-5 marker:text-text-neutral-weak">{children}</ol>,
+                li: ({ children }) => <li className="pl-0.5 [&>p]:inline">{children}</li>,
+                h1: ({ children }) => <p className="font-semibold">{children}</p>,
+                h2: ({ children }) => <p className="font-semibold">{children}</p>,
+                h3: ({ children }) => <p className="font-semibold">{children}</p>,
+                blockquote: ({ children }) => <blockquote className="border-l-[3px] border-stroke-neutral-weak pl-3 text-text-neutral-weak">{children}</blockquote>,
+                a: ({ href, children, ...props }) => {
+                  const memento = parseMementoLink(href);
+                  if (memento?.kind === "share") return <ChatShareCard link={memento} compact={compact} />;
+                  if (memento) return <MementoLinkChip link={memento}>{children}</MementoLinkChip>;
+                  return (
                   <a
                     href={href}
                     target="_blank"
@@ -208,13 +221,15 @@ export default function Bubble({
                   >
                     {children}
                   </a>
-                ),
+                  );
+                },
               }}
             >
               {text || ""}
             </Markdown>
           </span> : null}
         </div> : null}
+        {!isUser && !compact ? <ChatReplySources text={text} /> : null}
         {metaVisible &&
           (timeLabel || canCopy || metaActions || (onReply && hasReplyableContent)) && (
             <div
