@@ -103,6 +103,22 @@ export default function InsightsPage() {
       return kept.length === current.length ? current : kept;
     });
   }, [all, loaded]);
+  // ?observation=<id> opens that observation (voice "show me…", chat links),
+  // once its list has loaded, on each navigation.
+  const requestedObservation = new URLSearchParams(location.search).get("observation");
+  useEffect(() => {
+    if (!loaded || !requestedObservation) return;
+    const found = all.find((entry) => entry.id === requestedObservation);
+    if (!found) return;
+    const item = toItem(found);
+    setSection(found.field === "key_preferences" ? "preferences" : "observations");
+    setHistory((current) =>
+      current.at(-1)?.kind === "observation" && (current.at(-1) as { item: ObservationItem }).item.id === item.id
+        ? current
+        : [...current, { kind: "observation", item }],
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loaded, requestedObservation, location.key]);
   const retry = useRequestRecovery(
     "insights-persona",
     error,

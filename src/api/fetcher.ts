@@ -1,6 +1,7 @@
 "use client";
 
 import Axios, { AxiosError, type AxiosRequestConfig } from "axios";
+import { CHAT_FEATURES_HEADER, createChatFrameReader } from "./chat-stream-frames";
 import type { IResponse, MutationFetcher } from "./interface";
 import { toast } from "sonner";
 import { isEmpty } from "@/utility";
@@ -214,8 +215,8 @@ export const fileUploadFetcher = async (url: string, { arg }: { arg: Record<stri
   }
 };
 
-export const streamlineFetcher = async (url: string, { arg }: { arg: Record<string, unknown> & { onChunk: (chunk: string) => void; onMeta?: (meta: { model?: string }) => void; signal?: AbortSignal } }) => {
-  const { onChunk, onMeta, signal, ...payload } = arg;
+export const streamlineFetcher = async (url: string, { arg }: { arg: Record<string, unknown> & { onChunk: (chunk: string) => void; onMeta?: (meta: { model?: string }) => void; onStatus?: (status: string) => void; signal?: AbortSignal } }) => {
+  const { onChunk, onMeta, onStatus, signal, ...payload } = arg;
   const auth = readAuthFromStorage();
 
   const response = await fetch(`${baseURL}${url}`, {
@@ -223,6 +224,7 @@ export const streamlineFetcher = async (url: string, { arg }: { arg: Record<stri
     headers: {
       "Content-Type": "application/json",
       ...getMementoClientHeaders(),
+      ...CHAT_FEATURES_HEADER,
       Authorization: `Bearer ${auth?.access_token}`,
     },
     signal,
@@ -236,13 +238,19 @@ export const streamlineFetcher = async (url: string, { arg }: { arg: Record<stri
   const reader = response.body?.getReader();
   if (!reader) throw new Error("No response received. Please try again.");
   const decoder = new TextDecoder("utf-8");
-  onMeta?.({ model: response.headers.get("x-ai-model") || undefined });
+  const headerModel = response.headers.get("x-ai-model");
+  if (headerModel) onMeta?.({ model: headerModel });
+  const readFrames = createChatFrameReader({ status: onStatus, model: (model) => onMeta?.({ model }) });
+  const emit = (text: string) => {
+    const reply = readFrames(text);
+    if (reply) onChunk(reply);
+  };
   try {
     while (true) {
       const { value, done } = await reader.read();
-      if (value !== undefined && value.byteLength > 0) onChunk(decoder.decode(value, { stream: true }));
+      if (value !== undefined && value.byteLength > 0) emit(decoder.decode(value, { stream: true }));
       if (done) {
-        onChunk(decoder.decode());
+        emit(decoder.decode());
         break;
       }
     }

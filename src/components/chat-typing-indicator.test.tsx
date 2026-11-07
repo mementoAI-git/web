@@ -20,7 +20,8 @@ describe("ChatTypingIndicator", () => {
     ).toHaveTextContent("Thinking…");
     const orb = container.querySelector("canvas");
     expect(orb).toHaveAttribute("aria-hidden", "true");
-    expect(orb).toHaveStyle({ width: "16px", height: "16px" });
+    // A 20px canvas shows a 16px ring; the -2px margin keeps a 16px footprint.
+    expect(orb).toHaveStyle({ width: "20px", height: "20px", margin: "-2px" });
     expect(screen.queryByRole("img")).not.toBeInTheDocument();
   });
 

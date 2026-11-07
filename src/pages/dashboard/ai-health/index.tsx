@@ -2,6 +2,15 @@ import useSWR from "swr";
 import endpoint from "@/api/endpoint";
 
 type OverviewResponse = {
+  /** Chat's lookups before replies: runs, failures and Gemini fallbacks. */
+  lookups?: {
+    runs: number;
+    errors: number;
+    gemini_fallbacks: number;
+    failed_tools: number;
+    avg_duration_ms: number | null;
+    tools: { tool: string; count: number }[];
+  };
   totals?: {
     events?: number;
     error_events?: number;
@@ -97,6 +106,7 @@ export default function AiHealthPage() {
 
   const totals = overviewData?.data?.totals;
   const providers = overviewData?.data?.provider_breakdown || [];
+  const lookups = overviewData?.data?.lookups;
   const tasks = overviewData?.data?.task_breakdown || [];
   const slo = overviewData?.data?.slo;
   const alerts = overviewData?.data?.alerts || [];
@@ -183,6 +193,28 @@ export default function AiHealthPage() {
               P95 latency max: <span className="font-semibold text-v3-text-strong">{formatMs(slo?.p95_latency_ms_max)}</span>
             </p>
           </div>
+        </section>
+
+        <section aria-labelledby="chat-lookups-heading" className="rounded-xl border border-v3-stroke-weak bg-white p-4">
+          <h2 id="chat-lookups-heading" className="text-sm font-semibold text-v3-text-strong">Chat lookups (24h)</h2>
+          <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-5">
+            {[
+              ["Runs", lookups?.runs ?? 0],
+              ["Choosing failed", lookups?.errors ?? 0],
+              ["Gemini fallbacks", lookups?.gemini_fallbacks ?? 0],
+              ["Tools that failed", lookups?.failed_tools ?? 0],
+              ["Average time", formatMs(lookups?.avg_duration_ms ?? undefined)],
+            ].map(([label, value]) => (
+              <p key={String(label)} className="text-xs text-v3-text-weak">
+                {label}: <span className="font-semibold text-v3-text-strong">{loadingOverview ? "--" : value}</span>
+              </p>
+            ))}
+          </div>
+          {lookups?.tools.length ? (
+            <p className="mt-3 text-xs text-v3-text-weak">
+              Most used: {lookups.tools.slice(0, 8).map((row) => `${row.tool} (${row.count})`).join(", ")}
+            </p>
+          ) : null}
         </section>
 
         <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">

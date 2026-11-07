@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 import { renderWithProviders } from "@/test/render";
 import { server } from "@/test/mocks/server";
 import Bubble from "./bubble";
+import { useModal } from "@/hooks/use-modal";
 import { collectReplySources, parseMementoLink, splitConfirmations } from "./memento-links";
 
 const API = "http://localhost:3000/api";
@@ -75,7 +76,7 @@ describe("Memento links in chat replies", () => {
     const reply = (kind = "memento-confirm") => `Want me to delete it?\n\n\`\`\`${kind}\n${JSON.stringify(card)}\n\`\`\``;
 
     it("takes cards out of the reply's words, and hides one still typing out", () => {
-      expect(splitConfirmations(reply())).toEqual({ text: "Want me to delete it?", cards: [{ ...card, confirmed: false }] });
+      expect(splitConfirmations(reply())).toEqual({ text: "Want me to delete it?", cards: [{ ...card, confirmed: false }], dones: [] });
       expect(splitConfirmations(reply("memento-confirmed")).cards[0].confirmed).toBe(true);
       expect(splitConfirmations('Sure.\n\n```memento-confirm\n{"tool":"del').text).toBe("Sure.");
       expect(splitConfirmations("```memento-confirm\nnot json\n```").cards).toEqual([]);
@@ -126,5 +127,44 @@ describe("Memento links in chat replies", () => {
       expect(screen.getByRole("status")).toHaveTextContent("Done.");
       expect(screen.queryByRole("button", { name: "Confirm" })).not.toBeInTheDocument();
     });
+  });
+});
+
+describe("story and link card art", () => {
+  it("falls back to the story's Dicebear art when it has no picture", async () => {
+    server.use(http.get(`${API}/memories/${LAGOS}`, () => HttpResponse.json({ data: { _id: LAGOS, title: "Trip to Lagos", attachments: [] } })));
+    const { container } = renderWithProviders(<Bubble role="ai" text={`Your first story was [Trip to Lagos](/stories/${LAGOS}).`} />, { auth: true });
+    await screen.findAllByText("Trip to Lagos");
+    const art = container.querySelector('nav[aria-label="Sources"] img');
+    expect(art).toHaveAttribute("src", `https://api.dicebear.com/10.x/disco/svg?seed=${LAGOS}`);
+  });
+
+  it("shows a shared link's preview image from its page", async () => {
+    server.use(http.get(`${API}/ai/link-preview`, ({ request }) => {
+      const url = new URL(request.url).searchParams.get("url");
+      return HttpResponse.json({ data: { url, domain: "0xgroot.xyz", title: "Groot's site", image: "https://0xgroot.xyz/og.png" } });
+    }));
+    const { container } = renderWithProviders(<Bubble role="user" text="Can you see this? https://0xgroot.xyz" />, { auth: true });
+    expect(await screen.findByRole("link", { name: "Open Groot's site" })).toHaveAttribute("href", "https://0xgroot.xyz");
+    expect(container.querySelector('img[src="https://0xgroot.xyz/og.png"]')).toBeInTheDocument();
+  });
+});
+
+describe("story cards under replies", () => {
+  function OpenModals() {
+    const { state } = useModal();
+    return <output data-testid="modals">{state.map((entry) => `${entry.name}:${(entry.props as { memoryId?: string } | null)?.memoryId}`).join(",")}</output>;
+  }
+
+  it("keeps the title as plain text when the card is shown underneath", () => {
+    renderWithProviders(<Bubble role="ai" text={`Here it is: [Trip to Lagos](/stories/${LAGOS})`} />, { auth: true });
+    expect(screen.getByText(/Here it is:/)).not.toContainElement(screen.queryByRole("link", { name: "Trip to Lagos" }));
+    expect(screen.getAllByRole("link")).toHaveLength(1);
+  });
+
+  it("opens the story over the chat instead of leaving it", async () => {
+    renderWithProviders(<><Bubble role="ai" text={`Here it is: [Trip to Lagos](/stories/${LAGOS})`} /><OpenModals /></>, { auth: true });
+    await userEvent.click(screen.getByRole("link", { name: "Open story: Trip to Lagos" }));
+    expect(screen.getByTestId("modals")).toHaveTextContent(`view-memory:${LAGOS}`);
   });
 });
