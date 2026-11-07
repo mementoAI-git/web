@@ -506,7 +506,7 @@ function ChatinputImpl({
                     else if (voiceCallTo) navigate(voiceCallTo);
                     else setInlineVoiceOpen(true);
                   }}
-                  className="flex size-9 md:size-10 shrink-0 cursor-pointer items-center justify-center rounded-full border border-stroke-neutral-weak bg-fill-overview-voice text-overview-voice transition-[transform,opacity] hover:opacity-90 active:scale-[0.97] disabled:cursor-default disabled:opacity-50"
+                  className="flex size-9 md:size-10 shrink-0 cursor-pointer items-center justify-center rounded-full border border-stroke-neutral-weak bg-white text-overview-voice dark:border-transparent transition-[transform,opacity] hover:opacity-90 active:scale-[0.97] disabled:cursor-default disabled:opacity-50"
                 >
                   <ChatDesignIcon name="phone" />
                 </button>

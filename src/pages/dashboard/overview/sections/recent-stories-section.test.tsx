@@ -109,6 +109,10 @@ describe("Recent stories", () => {
     renderSection();
     expect(await screen.findByText("No stories added yet")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Add story" })).toBeEnabled();
+    const seeAll = screen.getByText("See all");
+    expect(seeAll).toHaveAttribute("aria-disabled", "true");
+    expect(seeAll).toHaveClass("text-text-neutral-disabled");
+    expect(screen.queryByRole("link", { name: "See all" })).not.toBeInTheDocument();
     expect(screen.queryByRole("list")).not.toBeInTheDocument();
   });
 
