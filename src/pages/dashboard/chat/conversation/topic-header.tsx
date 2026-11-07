@@ -32,7 +32,7 @@ function TopicIcon({ src }: { src: string }) {
 }
 
 export default function TopicHeader({ memory }: { memory: IMemory }) {
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(true);
   const navigate = useNavigate();
   const { id } = useParams();
   const { data: promptDetails } = useSWR(
@@ -132,7 +132,7 @@ export default function TopicHeader({ memory }: { memory: IMemory }) {
         id="topic-question-card"
         aria-label="Topic question"
         className={cn(
-          "sky-card rounded-3xl border border-stroke-neutral-weak bg-fill-neutral-weaker",
+          "sky-card rounded-[12px] border border-stroke-neutral-weak bg-fill-neutral-weaker sm:rounded-3xl",
           collapsed
             ? "grid grid-cols-[40px_minmax(0,1fr)_auto] items-center gap-3 p-[15px]"
             : "flex flex-col gap-6 p-[15px] sm:p-[23px]",

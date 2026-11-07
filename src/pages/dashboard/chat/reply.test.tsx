@@ -76,7 +76,7 @@ it("uses the standard chat composer on the reply route and sends its restored dr
   expect(input).toHaveValue("");
   expect(localStorage.getItem(draftKey)).toBeNull();
   expect(
-    screen.getByRole("button", { name: "Record voice clip" }),
+    screen.getByRole("button", { name: "Dictate a message" }),
   ).toBeInTheDocument();
   expect(
     screen.getByRole("button", { name: "Voice call" }),
