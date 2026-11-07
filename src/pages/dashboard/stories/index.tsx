@@ -9,6 +9,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import useSWR from "swr";
 import { toast } from "sonner";
 import useSWRInfinite from "swr/infinite";
+import { useLocation } from "react-router-dom";
 import { StatCard } from "../component/stat-card";
 
 import totalMemoriesBg from "@/assets/icon/total-memories.svg";
@@ -68,12 +69,20 @@ export default function StoriesPage() {
   const [mode, setMode] = useState(
     localStorage.getItem(storageKeys.listmode) || "list",
   );
+  const location = useLocation();
   const [filter, setFilter] = useState("all");
   const changeFilter = useCallback((next: string) => {
     if (next === filter) return;
     setPage(1);
     setFilter(next);
   }, [filter]);
+  // ?filter=bookmarked opens the Bookmarked tab (voice "show my bookmarks"),
+  // also when the page is already open, so it follows each navigation.
+  useEffect(() => {
+    if (new URLSearchParams(location.search).get("filter") !== "bookmarked") return;
+    setPage(1);
+    setFilter("bookmarked");
+  }, [location.key, location.search]);
   const [canPromoteActionsToNav, setCanPromoteActionsToNav] = useState(() =>
     typeof window !== "undefined" ? window.innerWidth >= 1280 : true,
   );

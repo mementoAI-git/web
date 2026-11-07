@@ -260,6 +260,11 @@ describe("StoriesPage", () => {
     expect(document.querySelector('[data-slot="stories-results"]')).toHaveAttribute("aria-busy", "false");
   });
 
+  it("opens the Bookmarked tab from ?filter=bookmarked, as voice links to it", () => {
+    renderWithProviders(<StoriesPage />, { route: "/stories?filter=bookmarked", auth: true });
+    expect(screen.getByRole("tab", { name: "Bookmarked 3" })).toHaveAttribute("aria-selected", "true");
+  });
+
   it("uses 16px horizontal padding for the memories workspace", () => {
     const { container } = renderWithProviders(<StoriesPage />, {
       route: "/stories",
