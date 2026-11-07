@@ -2343,3 +2343,76 @@ body {
   }
   .story-viewer-media > div:first-child { padding-bottom: 0; }
 }
+
+/*
+ * Story overlay open / close, after the transitions.dev modal: scale up from
+ * 0.96 with a fade, a quicker close, the same smooth-out ease both ways.
+ * Keyframes rather than transitions because the dialog mounts already open;
+ * Radix keeps it mounted until the close animation ends. Unlayered so it
+ * replaces the journal's page-entry animation inside the overlay.
+ */
+:root {
+  --modal-open-dur: 250ms;
+  --modal-close-dur: 150ms;
+  --modal-scale: 0.96;
+  --modal-scale-close: 0.96;
+  --modal-ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.story-overlay-content[data-state="open"] {
+  transform-origin: center;
+  animation: story-overlay-open var(--modal-open-dur) var(--modal-ease) both;
+  will-change: transform, opacity;
+}
+
+.story-overlay-content[data-state="closed"] {
+  pointer-events: none;
+  animation: story-overlay-close var(--modal-close-dur) var(--modal-ease) both;
+}
+
+.story-overlay-backdrop[data-state="open"] {
+  animation: story-overlay-fade-in var(--modal-open-dur) var(--modal-ease) both;
+}
+
+.story-overlay-backdrop[data-state="closed"] {
+  animation: story-overlay-fade-out var(--modal-close-dur) var(--modal-ease) both;
+}
+
+@keyframes story-overlay-open {
+  from {
+    opacity: 0;
+    transform: scale(var(--modal-scale));
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes story-overlay-close {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(var(--modal-scale-close));
+  }
+}
+
+@keyframes story-overlay-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes story-overlay-fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .story-overlay-content,
+  .story-overlay-backdrop {
+    animation: none !important;
+  }
+}

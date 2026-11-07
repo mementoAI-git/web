@@ -6,6 +6,7 @@ import paperGrain from "@/assets/image/story-paper-grain.svg";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { cn } from "@/utility";
 import { useModal } from "@/hooks/use-modal";
+import { useModalClosing } from "../modal-presence";
 import { useTheme } from "@/contexts/theme";
 import { AlbumCover } from "./album-cover";
 
@@ -32,6 +33,8 @@ export function StoryJournalShell({
 }: StoryJournalShellProps) {
   const { resolvedTheme } = useTheme();
   const { state } = useModal();
+  // Closed from the modal stack: close the dialog so it plays its close animation.
+  const closing = useModalClosing();
   // Only step back for a modal on top. Insights can wait underneath the viewer.
   // Share's dialog already layers above this one, and stepping back would remount the story.
   const hasStackedModal =
@@ -80,13 +83,13 @@ export function StoryJournalShell({
       );
     }
     return (
-      <Dialog open modal={!hasStackedModal} onOpenChange={(open) => { if (!open && !hasStackedModal) onClose?.(); }}>
+      <Dialog open={!closing} modal={!hasStackedModal} onOpenChange={(open) => { if (!open && !hasStackedModal && !closing) onClose?.(); }}>
         <DialogContent
           data-testid="desktop-journal-shell"
           data-story-presentation={presentation}
           showCloseButton={false}
-          overlayClassName={cn("bg-overlay-backdrop", hasStackedModal ? "z-[90]" : "z-[105]")}
-          className={cn("add-story-journal block p-0", presentation === "overlay-c" ? "album-c-shell" : "h-[min(820px,calc(100dvh-48px))] w-[calc(100vw-48px)] max-w-[1120px] overflow-hidden rounded-3xl border border-stroke-neutral-weak bg-bg-neutral shadow-2xl sm:max-w-[1120px]", hasStackedModal ? "z-[95]" : "z-[110]")}
+          overlayClassName={cn("story-overlay-backdrop bg-overlay-backdrop", hasStackedModal ? "z-[90]" : "z-[105]")}
+          className={cn("story-overlay-content add-story-journal block p-0", presentation === "overlay-c" ? "album-c-shell" : "h-[min(820px,calc(100dvh-48px))] w-[calc(100vw-48px)] max-w-[1120px] overflow-hidden rounded-3xl border border-stroke-neutral-weak bg-bg-neutral shadow-2xl sm:max-w-[1120px]", hasStackedModal ? "z-[95]" : "z-[110]")}
           onClick={(event) => event.stopPropagation()}
           onKeyDown={onKeyDown}
           onInteractOutside={(event) => { if (hasStackedModal) event.preventDefault(); }}

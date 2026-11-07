@@ -641,3 +641,9 @@ it("shows only memory sources on an enrichment field and can start a reflection"
   expect(location.dataset.state).toContain("everyday life");
 });
 
+
+it("opens the observation named in ?observation=, as voice and chat links do", () => {
+  setup({ route: { pathname: "/insights", search: "?observation=note-1" } });
+  expect(screen.getByText("Memories behind this note")).toBeVisible();
+  expect(screen.getByText("Autonomy shows up in your decisions.")).toBeVisible();
+});
