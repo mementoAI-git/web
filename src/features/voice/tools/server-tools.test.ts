@@ -22,6 +22,13 @@ describe("serverToolNames", () => {
 });
 
 describe("parseVoiceToolEffects", () => {
+  it("keeps the open-one-insight effect", () => {
+    expect(parseVoiceToolEffects([{ type: "open", destination: "insights" }, { type: "open_insight", id: "64b7f0c2a1b2c3d4e5f60aaa" }, { type: "open_insight", id: "../x" }])).toEqual([
+      { type: "open", destination: "insights" },
+      { type: "open_insight", id: "64b7f0c2a1b2c3d4e5f60aaa" },
+    ]);
+  });
+
   it("keeps only effects this build understands", () => {
     expect(parseVoiceToolEffects([
       { type: "refresh", what: "memories" },

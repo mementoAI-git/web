@@ -156,7 +156,8 @@ export function ChatMediaGroup({ attachments, sharedAt }: ChatMediaGroupProps) {
     visual.length === 1 ? "single" : visual.length <= MAX_STACKED_VISUALS ? "stack" : "grid";
 
   return (
-    <div className="space-y-2" data-testid="chat-media-group">
+    // `isolate` keeps tile z-indexes local so the stack scrolls under the composer.
+    <div className="isolate space-y-2" data-testid="chat-media-group">
       {visual.length ? (
         <div
           className={cn(

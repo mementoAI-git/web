@@ -94,6 +94,8 @@ export default {
 
   // ai
   aiPrompt: "/ai/prompt",
+  /** GET ?url= title, site, OG image and icon for a link shown in chat. */
+  linkPreview: "/ai/link-preview",
   aiVoices: "/ai/voices",
   aiVoicePreview: "/ai/voice-preview",
   spokenReply: "/ai/spoken-reply",
@@ -105,6 +107,7 @@ export default {
   /** POST /ai/voice/tools/:name runs a server-side voice tool. */
   voiceTools: "/ai/voice/tools",
   chatActions: "/ai/chat/actions",
+  chatUndo: "/ai/chat/undo",
   voiceMemorySearch: "/ai/voice/memory-search",
   generateTags: "/ai/generate-tags",
   generateStoryTitle: "/ai/generate-story-title",

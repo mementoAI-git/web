@@ -35,7 +35,8 @@ export type VoiceRefreshable = (typeof REFRESHABLE)[number];
 export type VoiceToolEffect =
   | { type: "refresh"; what: VoiceRefreshable }
   | { type: "open"; destination: VoiceScreenDestination }
-  | { type: "open_story"; id: string };
+  | { type: "open_story"; id: string }
+  | { type: "open_insight"; id: string };
 
 const OBJECT_ID = /^[0-9a-fA-F]{24}$/;
 
@@ -49,14 +50,14 @@ export function parseVoiceToolEffects(raw: unknown): VoiceToolEffect[] {
       effects.push({ type: "refresh", what: effect.what as VoiceRefreshable });
     } else if (effect.type === "open" && resolveWebDestination(effect.destination)) {
       effects.push({ type: "open", destination: effect.destination as VoiceScreenDestination });
-    } else if (effect.type === "open_story" && typeof effect.id === "string" && OBJECT_ID.test(effect.id)) {
-      effects.push({ type: "open_story", id: effect.id });
+    } else if ((effect.type === "open_story" || effect.type === "open_insight") && typeof effect.id === "string" && OBJECT_ID.test(effect.id)) {
+      effects.push({ type: effect.type, id: effect.id });
     }
   }
   return effects;
 }
 
-const navigates = (effect: VoiceToolEffect) => effect.type === "open" || effect.type === "open_story";
+const navigates = (effect: VoiceToolEffect) => effect.type === "open" || effect.type === "open_story" || effect.type === "open_insight";
 
 export function createServerToolHandlers(
   names: readonly string[],

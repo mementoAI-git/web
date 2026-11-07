@@ -37,6 +37,7 @@ import CreateCapsule from "./capsule/create";
 import { DeleteCapsule } from "./capsule/delete";
 import { PauseCapsule } from "./capsule/pause";
 import { useState, useEffect } from "react";
+import { EXIT_ANIMATED_MODALS, ModalClosingContext, modalCloseMs } from "./modal-presence";
 // import { DatePickerFilter } from "../Memories/MemoriesFilter";
 import ShareMemory from "./memory/share-memory";
 import SelectBeneficiary from "./select-beneficiary";
@@ -132,8 +133,33 @@ function isConnectionInvite(modal: { name: string; props?: unknown }) {
   );
 }
 
+type ModalEntry = { name: string; props?: unknown };
+
 function ModalStack({ isMobile }: { isMobile: boolean }) {
   const { state, close } = useModal();
+
+  // A closed story stays mounted for its close animation. Worked out during
+  // render (not in an effect) so the same instance keeps rendering, never a remount.
+  const [seenState, setSeenState] = useState(state);
+  const [leaving, setLeaving] = useState<{ entry: ModalEntry; index: number } | null>(null);
+  if (seenState !== state) {
+    setSeenState(state);
+    const index = isMobile
+      ? -1
+      : seenState.findIndex(
+          (modal) => EXIT_ANIMATED_MODALS.includes(modal.name) && !state.some((next) => next.name === modal.name),
+        );
+    if (index >= 0) setLeaving({ entry: seenState[index], index });
+    else if (leaving && state.some((next) => next.name === leaving.entry.name)) setLeaving(null);
+  }
+  useEffect(() => {
+    if (!leaving) return;
+    const timer = window.setTimeout(() => setLeaving(null), modalCloseMs() + 50);
+    return () => window.clearTimeout(timer);
+  }, [leaving]);
+  const stack: ModalEntry[] = leaving
+    ? [...state.slice(0, leaving.index), leaving.entry, ...state.slice(leaving.index)]
+    : state;
 
   // ESC key dismissal: always closes the topmost modal
   useEffect(() => {
@@ -155,11 +181,11 @@ function ModalStack({ isMobile }: { isMobile: boolean }) {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [state, close]);
 
-  if (isEmpty(state)) {
+  if (isEmpty(stack)) {
     return null;
   }
 
-  const topModal = state[0];
+  const topModal = stack[0];
   if (topModal.name === "conversation-files") return null;
   if (topModal.name === "search-memory") return null;
   // Feedback owns its shadcn portal, backdrop, focus trap, and dismissal.
@@ -185,7 +211,7 @@ function ModalStack({ isMobile }: { isMobile: boolean }) {
   if (topModal.name === "setup2fa") return <Setup2FA data={topModal.props as { qrcode: string; secret: string }} />;
   // Share opens from inside a story, so it floats beside the stack and the story stays mounted beneath it.
   const shareOnTop = topModal.name === "share-memory";
-  const layers = shareOnTop ? state.slice(1) : state;
+  const layers = shareOnTop ? stack.slice(1) : stack;
   const isTopFullscreenModal =
     FULL_SCREEN_MODALS.includes(topModal.name) && !isMobile;
 
@@ -211,14 +237,15 @@ function ModalStack({ isMobile }: { isMobile: boolean }) {
           !isRightPanel &&
           !isFullscreen;
         const isTop = modal.name === topModal.name;
-        const stackIndex = state.length - 1 - i;
+        const isLeaving = leaving?.entry === modal;
+        const stackIndex = stack.length - 1 - i;
         const hasModalsBehind = i > 0;
         const needsOverlay = !isRightPanel && !isFullscreen && hasModalsBehind;
 
         return (
           <div
             key={`${modal.name}-${i}`}
-            className={`absolute ${isFullscreen ? "inset-0" : "inset-1.5"} flex ${
+            className={`absolute ${isFullscreen ? "inset-0" : "inset-1.5"} ${isLeaving ? "pointer-events-none" : ""} flex ${
               isRightPanel
                 ? "flex-row justify-start items-start"
                 : isFullscreen
@@ -229,7 +256,7 @@ function ModalStack({ isMobile }: { isMobile: boolean }) {
             }`}
             style={{ zIndex: isTop ? 10 : stackIndex + 1 }}
             // Voice screen control reaches only the open modal, not the page behind it.
-            data-voice-dialog={isTop ? VOICE_MODAL_NAMES[modal.name] ?? modal.name.replace(/-/g, " ") : undefined}
+            data-voice-dialog={isTop && !isLeaving ? VOICE_MODAL_NAMES[modal.name] ?? modal.name.replace(/-/g, " ") : undefined}
             onClick={
               !isRightPanel && !isFullscreen
                 ? (e) => {
@@ -264,7 +291,9 @@ function ModalStack({ isMobile }: { isMobile: boolean }) {
                   </span>
                 </button>
               )}
-            <ModalComponent data={modal.props || {}} isMobile={isMobile} />
+            <ModalClosingContext.Provider value={isLeaving}>
+              <ModalComponent data={modal.props || {}} isMobile={isMobile} />
+            </ModalClosingContext.Provider>
           </div>
         );
       })}

@@ -19,6 +19,7 @@ type StreamPayload = {
   memory: string;
   signal: AbortSignal;
   onChunk: (chunk: string) => void;
+  onStatus?: (status: string) => void;
 };
 
 interface DashboardChatSidebarProps {
@@ -28,6 +29,7 @@ interface DashboardChatSidebarProps {
 export function DashboardChatSidebar({ onClose }: DashboardChatSidebarProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [memoryId, setMemoryId] = useState<string | null>(null);
+  const [replyStatus, setReplyStatus] = useState<string>();
   const [aiMessage, setAiMessage] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
   const abortCtrlRef = useRef<AbortController | null>(null);
@@ -88,12 +90,14 @@ export function DashboardChatSidebar({ onClose }: DashboardChatSidebarProps) {
 
       if (memoryId) {
         abortCtrlRef.current = new AbortController();
+        setReplyStatus(undefined);
         await sendMessage({
           text,
           attachments: [],
           memory: memoryId,
           signal: abortCtrlRef.current.signal,
           onChunk: handleChunkArrival,
+          onStatus: setReplyStatus,
         });
       } else {
         const result = await startConversation({ text, attachments: [] });
@@ -140,7 +144,7 @@ export function DashboardChatSidebar({ onClose }: DashboardChatSidebarProps) {
           {messages.map((m, i) => (
             <Bubble key={i} text={m.text} role={m.role} compact />
           ))}
-          {isTyping && isEmpty(aiMessage) && <Typing />}
+          {isTyping && isEmpty(aiMessage) && <Typing status={replyStatus} />}
           {aiMessage && <Bubble role="ai" text={aiMessage} compact />}
         </div>
       </div>

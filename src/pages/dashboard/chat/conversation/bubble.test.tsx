@@ -301,8 +301,21 @@ describe("Bubble", () => {
     expect(screen.getAllByRole("link")).toHaveLength(1);
   });
 
-  it("renders metadata-free URLs as normal links", () => {
-    render(<Bubble role="user" text="Visit https://example.com for details" />);
-    expect(screen.getByRole("link", { name: "https://example.com" })).toHaveClass("underline");
+  it("moves pasted URLs out of the text into a card above the bubble", () => {
+    const { container } = render(
+      <Bubble role="user" text="Yo, can you see this link? https://www.example.com/posts/abc/" />,
+    );
+    const link = screen.getByRole("link", { name: "Open example.com" });
+    expect(link).toHaveAttribute("href", "https://www.example.com/posts/abc/");
+    expect(screen.getByText("example.com/posts/abc")).toBeInTheDocument();
+    expect(screen.getByText("Yo, can you see this link?")).toBeInTheDocument();
+    expect(container.textContent).not.toContain("https://");
+    // The card comes before the message text, like other media.
+    expect(link.compareDocumentPosition(screen.getByText("Yo, can you see this link?")) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("keeps labeled markdown links as text links", () => {
+    render(<Bubble role="ai" text="Read [the guide](https://example.com/guide)" />);
+    expect(screen.getByRole("link", { name: "the guide" })).toHaveClass("underline");
   });
 });

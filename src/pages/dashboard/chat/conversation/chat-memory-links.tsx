@@ -1,6 +1,7 @@
 import { isAxiosError } from "axios";
 import { BookOpen, Check, ExternalLink, MessageCircle, X } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { useState, type MouseEvent, type ReactNode } from "react";
+import { useModal } from "@/hooks/use-modal";
 import { Link } from "react-router-dom";
 import useSWR, { mutate } from "swr";
 import { post } from "@/api/mutations";
@@ -26,8 +27,8 @@ export function MementoLinkChip({ link, children }: { link: Extract<MementoLink,
   );
 }
 
-/** The open icon on story cards. */
-function OpenIcon() {
+/** The open icon on story and link cards. */
+export function OpenIcon() {
   return (
     <svg viewBox="0 0 16 16" fill="none" aria-hidden className="size-4 shrink-0">
       <path
@@ -39,6 +40,11 @@ function OpenIcon() {
       />
     </svg>
   );
+}
+
+/** Stories without a picture get the same Dicebear art as the rest of the app. */
+function storyFallbackArt(id: string) {
+  return `https://api.dicebear.com/10.x/disco/svg?seed=${encodeURIComponent(id)}`;
 }
 
 function thumbnailOf(memory?: Partial<IMemory>) {
@@ -56,19 +62,40 @@ function thumbnailOf(memory?: Partial<IMemory>) {
 export function ChatStoryCard({ source }: { source: { kind: "story" | "conversation"; id: string; to: string; label: string } }) {
   const { data } = useSWR<IResponse<IMemory>>(source.kind === "story" ? `${endpoint.memories}/${source.id}` : null);
   const memory = data?.data;
-  const thumbnail = thumbnailOf(memory);
+  const fallback = source.kind === "story" ? storyFallbackArt(source.id) : null;
+  const [thumbFailed, setThumbFailed] = useState(false);
+  const thumbnail = (!thumbFailed && thumbnailOf(memory)) || fallback;
   const title = memory?.title?.trim() || source.label;
   const date = memory?.created_at && dayjs(memory.created_at).isValid() ? dayjs(memory.created_at).format("MMM D, YYYY") : null;
   const kind = source.kind === "story" ? "Story" : "Conversation";
   const Icon = source.kind === "story" ? BookOpen : MessageCircle;
+  const { push } = useModal();
+  // Stories open over the chat so the host can close them and keep talking.
+  // Modified clicks still follow the link (new tab, etc.).
+  const openOverChat = (event: MouseEvent<HTMLAnchorElement>) => {
+    if (source.kind !== "story" || !push) return;
+    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    event.preventDefault();
+    push("view-memory", { memoryId: source.id });
+  };
   return (
     <Link
       to={source.to}
+      onClick={openOverChat}
       aria-label={`Open ${kind.toLowerCase()}: ${title}`}
-      className="flex h-14 w-[236px] max-w-full items-center gap-3 rounded-[12px] bg-fill-neutral-weaker p-2 pr-3 font-geist text-text-neutral-strong no-underline transition-colors hover:bg-fill-neutral-weak focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stroke-brand-strong"
+      className="flex h-14 w-[460px] max-w-full items-center gap-3 rounded-[12px] bg-fill-neutral-weaker p-2 pr-3 font-geist text-text-neutral-strong no-underline transition-colors hover:bg-fill-neutral-weak focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stroke-brand-strong"
     >
       <span className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-[6px] bg-fill-neutral-weaker">
-        {thumbnail ? <img src={thumbnail} alt="" className="size-full object-cover" /> : <Icon className="size-4 text-icon-neutral-weak" aria-hidden />}
+        {thumbnail ? (
+          <img
+            src={thumbnail}
+            alt=""
+            onError={() => setThumbFailed(true)}
+            className="size-full object-cover"
+          />
+        ) : (
+          <Icon className="size-4 text-icon-neutral-weak" aria-hidden />
+        )}
       </span>
       <span className="flex min-w-0 flex-1 flex-col">
         <span className="truncate text-sm font-medium leading-5">{title}</span>
@@ -194,6 +221,11 @@ export function ChatConfirmCard({ card }: { card: ChatConfirmation }) {
       className="flex w-full max-w-[380px] flex-col gap-2 rounded-[12px] border border-stroke-neutral-weak bg-fill-neutral-weaker p-3 font-geist"
     >
       <p className="text-sm leading-5 text-text-neutral-strong">{card.text}</p>
+      {card.tool === "edit_story" && card.args.mode === "replace" && typeof card.args.text === "string" ? (
+        <blockquote aria-label="The new text" className="max-h-48 overflow-y-auto whitespace-pre-wrap border-l-[3px] border-stroke-neutral-weak pl-3 text-sm leading-5 text-text-neutral-weak">
+          {card.args.text}
+        </blockquote>
+      ) : null}
       {settled ? (
         <p role="status" className={cn("flex items-center gap-1.5 text-sm leading-5", state.kind === "failed" ? "text-text-error-strong" : "text-text-neutral-weak")}>
           {state.kind === "done" ? <Check className="size-4 shrink-0" aria-hidden /> : state.kind === "cancelled" ? <X className="size-4 shrink-0" aria-hidden /> : null}

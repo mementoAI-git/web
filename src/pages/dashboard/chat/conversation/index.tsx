@@ -53,6 +53,7 @@ type StreamlinePayload = {
   signal: AbortSignal;
   onChunk: (chunk: string) => void;
   onMeta?: (meta: { model?: string }) => void;
+  onStatus?: (status: string) => void;
 };
 
 export default function Conversation(props: { id: string; type?: "memory" | "prompt" | "reflection"; reflectionEntry?: ReflectionEntry }) {
@@ -98,6 +99,8 @@ function ConversationSession({ id, type = "memory", reflectionEntry }: { id: str
   const [isSidebarOpen, setIsSidebarOpen] = useState(false) // Sidebar closed by default
   const [replyQuote, setReplyQuote] = useState<ChatReplyQuote | null>(null)
   const [streamDone, setStreamDone] = useState(false);
+  /** What Memento says it is doing before the reply starts. */
+  const [replyStatus, setReplyStatus] = useState<string>();
   const speechStreamText = useRef("");
 
   const {
@@ -259,6 +262,7 @@ function ConversationSession({ id, type = "memory", reflectionEntry }: { id: str
           abortCtrl.current = controller;
           setStreamDone(false);
           setStreamModelLabel(undefined);
+          setReplyStatus(undefined);
 
           await sendMessage({
             text: apiText,
@@ -267,6 +271,7 @@ function ConversationSession({ id, type = "memory", reflectionEntry }: { id: str
             signal: controller.signal,
             onChunk: (chunk) => { if (mounted.current && !controller.signal.aborted) handleChuckArrival(chunk); },
             onMeta: ({ model }) => { if (mounted.current && !controller.signal.aborted) setStreamModelLabel(model); },
+            onStatus: (status) => { if (mounted.current && !controller.signal.aborted) setReplyStatus(status); },
           })
           if (posthog.__loaded) {
             posthog.capture("chat_message_sent", {
@@ -551,7 +556,7 @@ function ConversationSession({ id, type = "memory", reflectionEntry }: { id: str
             }}
           >
             {(isTyping && isEmpty(aiMessage)) ?
-              <Typing /> :
+              <Typing status={replyStatus} /> :
               aiMessage.trim() ?
                 <TypingBubble
                   topic={isTopic}

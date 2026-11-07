@@ -9,10 +9,12 @@ import { toast } from "sonner";
 import { snippetReplyText } from "@/utility/chat-reply-prompt";
 import type { IFile, ILinkMetadata } from "@/utility/interface";
 import { ChatMediaGroup } from "./chat-media-group";
-import { ChatLinkPreview } from "./chat-link-preview";
-import { buildConversationAssetIndex, extractSharedUrls, splitStackedMedia } from "./conversation-assets";
+import { ChatLinkCard } from "./chat-link-preview";
+import { pullSharedLinks } from "./chat-link-utils";
+import { buildConversationAssetIndex, splitStackedMedia } from "./conversation-assets";
 import { ChatConfirmCard, ChatReplySources, ChatShareCard, MementoLinkChip } from "./chat-memory-links";
 import { parseMementoLink, splitConfirmations } from "./memento-links";
+import { ChatDoneCard } from "./chat-action-cards";
 
 type ChatAttachment = Pick<IFile, "url" | "name"> &
   Partial<Omit<IFile, "url" | "name">>;
@@ -77,11 +79,12 @@ export default function Bubble({
 
   const isUser = role === "user"
   // Memento's confirmation cards are shown as buttons, not as text.
-  const { text, cards } = useMemo(
-    () => (isUser ? { text: rawText, cards: [] } : splitConfirmations(rawText)),
+  const { text, cards, dones } = useMemo(
+    () => (isUser ? { text: rawText, cards: [], dones: [] } : splitConfirmations(rawText)),
     [isUser, rawText],
   );
   const metaVisible = showMessageMeta ?? !compact;
+  const showSourceCards = !isUser && !compact;
   const timeLabel = metaVisible ? formatMessageTime(createdAt) : null;
   const canCopy = metaVisible && Boolean(text?.trim());
   const hasReplyableContent = Boolean(text?.trim() || !isEmpty(attatchments));
@@ -109,25 +112,18 @@ export default function Bubble({
     () => buildConversationAssetIndex([{ text, link_metadata: linkMetadata }]).links,
     [linkMetadata, text],
   );
-  const extractedUrls = useMemo(() => extractSharedUrls(text), [text]);
-  const metadataLink = messageLinks.find((link) =>
-    Boolean(link.title || link.domain || link.favicon),
-  );
-  const useMetadataPreview = Boolean(
-    metadataLink &&
-      extractedUrls.length === 1 &&
-      text.trim() === extractedUrls[0],
-  );
-
+  // Pasted URLs sit above the bubble as cards, like other media.
+  const { body, urls: sharedUrls } = useMemo(() => pullSharedLinks(text), [text]);
   const { stacked: stackedMedia, inline: inlineAttachments } = useMemo(
     () => splitStackedMedia(attatchments ?? []),
     [attatchments],
   );
+  const hasTopMedia = Boolean(stackedMedia.length || sharedUrls.length);
   const showSurface =
-    !stackedMedia.length ||
-    Boolean(text.trim() || replyQuote?.text?.trim() || inlineAttachments.length);
+    !hasTopMedia ||
+    Boolean(body.trim() || replyQuote?.text?.trim() || inlineAttachments.length || cards.length || dones.length);
 
-  if (!isUser && !text.trim() && !cards.length && isEmpty(attatchments) && !is_voice) return null;
+  if (!isUser && !text.trim() && !cards.length && !dones.length && isEmpty(attatchments) && !is_voice) return null;
 
   return (
     <div
@@ -146,8 +142,13 @@ export default function Bubble({
         )}
       >
         {stackedMedia.length ? (
-          <div className={cn(showSurface && "mb-1.5")}>
+          <div className={cn((showSurface || sharedUrls.length) && "mb-1.5")}>
             <ChatMediaGroup attachments={stackedMedia} sharedAt={createdAt} />
+          </div>
+        ) : null}
+        {sharedUrls.length ? (
+          <div className={cn("flex w-full min-w-0 flex-col gap-1.5", isUser && "items-end", showSurface && "mb-1.5")}>
+            {sharedUrls.map((url) => <ChatLinkCard key={url} href={url} links={messageLinks} />)}
           </div>
         ) : null}
         {showSurface ? <div
@@ -155,15 +156,15 @@ export default function Bubble({
             "w-fit max-w-full",
             !hostChatDeepDive && "sky-card",
             !isUser && "chat-reply-surface",
-            topic ? (isUser ? "rounded-md bg-fill-neutral-weak px-[5px] py-1" : "p-0") : "rounded-[16px] px-3 py-2",
-            !topic && (isUser && !compact ? "bg-fill-chat-user" : "bg-fill-neutral-weak"),
+            topic && !isUser ? "p-0" : "rounded-[16px] px-3 py-2",
+            (!topic || isUser) && (isUser && !compact ? "bg-fill-chat-user" : "bg-fill-neutral-weak"),
             !isUser &&
               hostChatDeepDive &&
               "border-l-[3px] border-stroke-brand-strong pl-3",
           )}
         >
           {isUser && replyQuote?.text?.trim() ? (
-            <div className={cn("mb-1 rounded-r-[3px] bg-fill-neutral-weak pl-1", topic ? "border-l-2 border-stroke-info-strong" : "border-l-[3px] border-stroke-brand-strong")}>
+            <div className="mb-1 rounded-r-[3px] border-l-[3px] border-stroke-brand-strong bg-fill-neutral-weak pl-1">
               <p className="sr-only">
                 Replying to{" "}
                 {replyQuote.role === "user" ? "your message" : "Memento"}
@@ -174,13 +175,11 @@ export default function Bubble({
             </div>
           ) : null}
           {inlineAttachments.length ? (
-            <div className={cn(text.trim() && "mb-1.5")}>
+            <div className={cn(body.trim() && "mb-1.5")}>
               <ChatMediaGroup attachments={inlineAttachments} sharedAt={createdAt} />
             </div>
           ) : null}
-          {useMetadataPreview && metadataLink ? (
-            <ChatLinkPreview link={metadataLink} />
-          ) : text.trim() ? <span
+          {body.trim() ? <span
             className={cn(
               "flex min-w-0 max-w-full flex-col gap-2 break-words font-geist font-normal text-text-neutral-strong [&_pre]:max-w-full [&_pre]:overflow-x-auto [&_table]:block [&_table]:max-w-full [&_table]:overflow-x-auto",
               compact
@@ -213,6 +212,8 @@ export default function Bubble({
                 a: ({ href, children, ...props }) => {
                   const memento = parseMementoLink(href);
                   if (memento?.kind === "share") return <ChatShareCard link={memento} compact={compact} />;
+                  // Replies show linked memories as cards underneath, so the title stays plain text.
+                  if (memento && showSourceCards) return <>{children}</>;
                   if (memento) return <MementoLinkChip link={memento}>{children}</MementoLinkChip>;
                   return (
                   <a
@@ -230,16 +231,21 @@ export default function Bubble({
                 },
               }}
             >
-              {text || ""}
+              {body}
             </Markdown>
           </span> : null}
-          {cards.length ? (
+          {dones.length ? (
             <div className={cn("flex flex-col gap-2", text.trim() && "mt-2")}>
+              {dones.map((done, index) => <ChatDoneCard key={done.action ?? `${done.tool}:${index}`} done={done} />)}
+            </div>
+          ) : null}
+          {cards.length ? (
+            <div className={cn("flex flex-col gap-2", body.trim() && "mt-2")}>
               {cards.map((card) => <ChatConfirmCard key={String(card.args.confirmation ?? card.text)} card={card} />)}
             </div>
           ) : null}
         </div> : null}
-        {!isUser && !compact ? <ChatReplySources text={text} /> : null}
+        {showSourceCards ? <ChatReplySources text={text} /> : null}
         {metaVisible &&
           (timeLabel || canCopy || metaActions || (onReply && hasReplyableContent)) && (
             <div

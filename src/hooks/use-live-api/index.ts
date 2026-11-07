@@ -761,6 +761,8 @@ export function useLiveAPI({
             } else if (effect.type === "open") {
               const target = resolveWebDestination(effect.destination);
               if (target) showWebDestination(target, { navigate, openModal });
+            } else if (effect.type === "open_insight") {
+              navigate(`/insights?observation=${effect.id}`);
             } else {
               navigate(`/stories/${effect.id}`);
             }
