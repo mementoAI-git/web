@@ -33,4 +33,15 @@ describe("mergeVoiceTimeline", () => {
     ], [live("started", 10), live("ended", 12)]);
     expect(shape(rows)).toEqual(["started", "earlier", "ended", "started", "said", "ended"]);
   });
+
+  it("does not show a running call as ended when the chat already ends in an earlier call", () => {
+    const rows = mergeVoiceTimeline([
+      message("old-1", 0, { is_voice: true }),
+      message("old-2", 1, { is_voice: true }),
+    ], [
+      { kind: "started", id: "started", memoryId: "m", created_at: "2026-11-06T10:10:00.000Z" },
+      { kind: "message", id: "live-said", memoryId: "m", created_at: "2026-11-06T10:11:00.000Z", message: message("said", 11, { is_voice: true }) },
+    ]);
+    expect(shape(rows)).toEqual(["started", "old-1", "old-2", "ended", "started", "said"]);
+  });
 });

@@ -15,7 +15,7 @@ import {
   CardDescription,
   CardHeader,
 } from "@/components/ui/card";
-import { Field, FieldLabel } from "@/components/ui/field";
+import { Field } from "@/components/ui/field";
 import { InputGroup, InputGroupInput } from "@/components/ui/input-group";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -56,6 +56,14 @@ export function InviteFriends() {
   const [copied, setCopied] = useState(false);
   const [copying, setCopying] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const copyRef = useRef<HTMLButtonElement>(null);
+  const canCopy = Boolean(data) && !error;
+  // Copy starts disabled while the link loads; hand it focus once it's ready, unless the user moved on.
+  useEffect(() => {
+    if (!canCopy) return;
+    const active = document.activeElement;
+    if (active?.getAttribute("role") === "dialog") copyRef.current?.focus();
+  }, [canCopy]);
   useEffect(() => {
     if (!copied) return;
     const timer = setTimeout(() => setCopied(false), 2000);
@@ -80,6 +88,7 @@ export function InviteFriends() {
       title="Invite friends"
       description="Bring your people along."
       onClose={() => close("invite-friends")}
+      initialFocusRef={copyRef}
     >
       <div className="flex items-center gap-2 rounded-2xl border border-stroke-neutral-weak bg-fill-neutral-weaker px-3 py-2">
         <span
@@ -89,9 +98,6 @@ export function InviteFriends() {
           🔗
         </span>
         <Field className="min-w-0 flex-1 gap-0">
-          <FieldLabel className="text-xs" htmlFor="friend-invite-link">
-            Your invite link
-          </FieldLabel>
           {isLoading || !user?._id ? (
             <Skeleton className="h-6 w-full" aria-label="Loading invite link" />
           ) : (
@@ -99,6 +105,7 @@ export function InviteFriends() {
               <InputGroupInput
                 ref={inputRef}
                 id="friend-invite-link"
+                aria-label="Your invite link"
                 readOnly
                 className="h-6 min-w-0 px-0 text-xs text-text-neutral-weak"
                 value={error ? "" : (data?.invite_url ?? "")}
@@ -109,6 +116,7 @@ export function InviteFriends() {
           )}
         </Field>
         <Button
+          ref={copyRef}
           size="sm"
           className="min-w-[72px] shrink-0 px-2.5 text-xs active:scale-[0.97] motion-reduce:transform-none"
           disabled={!data || !!error || copying}

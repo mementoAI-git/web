@@ -299,6 +299,7 @@
   --stroke-success-weak: var(--green-200);
   --stroke-warning-strong: var(--amber-1000);
   --stroke-error-strong: var(--red-1000);
+  --stroke-error-weak: var(--red-200);
 
   /* Fill/Background Colors */
   --fill-neutral-strong: var(--brown-1000);
@@ -876,6 +877,7 @@
   --color-stroke-success-weak: var(--stroke-success-weak);
   --color-stroke-warning-strong: var(--stroke-warning-strong);
   --color-stroke-error-strong: var(--stroke-error-strong);
+  --color-stroke-error-weak: var(--stroke-error-weak);
 
   /* Semantic Color Tokens - Fill/Background */
   --color-fill-neutral-strong: var(--fill-neutral-strong);

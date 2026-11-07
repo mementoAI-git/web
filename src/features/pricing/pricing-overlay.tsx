@@ -279,7 +279,7 @@ export function PricingOverlay({
                 }}
               />
               <div className="insights-scroll">
-                <main className="page-motion insights-main container">
+                <main className="page-motion insights-main">
                   <DialogHeader className="page-rise page-rise--heading items-center gap-3 text-center">
                     <DialogTitle className="font-garamond text-3xl font-medium leading-tight text-text-neutral-strong sm:text-4xl">
                       {canViewPricing

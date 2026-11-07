@@ -105,3 +105,12 @@ it('marks connection voice history and ends its call on returning to My Memento'
  await user.click(screen.getByText('My context'));
  await waitFor(()=>expect(screen.queryByRole('region',{name:'Persistent call'})).not.toBeInTheDocument());
 });
+
+it("floats above every overlay from document.body, and stays usable under an open dialog", async () => {
+  const user = userEvent.setup();
+  render(<MemoryRouter initialEntries={["/chat/m1"]}><VoiceSessionProvider><Pages /></VoiceSessionProvider></MemoryRouter>);
+  await user.click(screen.getByText("Start"));
+  const host = screen.getByTestId("floating-voice-host");
+  expect(host.parentElement).toBe(document.body);
+  expect(host).toHaveClass("z-[100000]", "pointer-events-auto");
+});

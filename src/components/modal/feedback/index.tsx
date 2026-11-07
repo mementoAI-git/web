@@ -12,6 +12,8 @@ import {
   useEffect,
   useId,
   type ChangeEvent,
+  type CSSProperties,
+  type ReactNode,
 } from "react";
 import endpoint from "@/api/endpoint";
 import { isEmpty } from "@/utility";
@@ -22,11 +24,11 @@ import { mutate } from "swr";
 import { useStore } from "@/hooks/use-store";
 import * as yup from "yup";
 import useFetcher from "@/hooks/use-fetcher";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { Check, Paperclip, X } from "lucide-react";
 import {
-  FormDialog,
   FormDialogField,
   FormDialogFooter,
   FormDialogInput,
@@ -34,6 +36,19 @@ import {
   FormDialogSelectTrigger,
   FormDialogTextarea,
 } from "@/components/modal/form-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { useLocation } from "react-router-dom";
+import { isSkyCardPage } from "@/pages/dashboard/component/sky-card-page";
+import { DashboardHeader } from "@/pages/dashboard/component/dashboard-header";
+import { DashboardOverlayFrame } from "@/pages/dashboard/component/dashboard-overlay-frame";
+import "@/components/motion/page-motion.css";
+import "@/components/modal/memory-insights/insights.css";
 import {
   Select,
   SelectGroup,
@@ -50,12 +65,11 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
+// Values are the API's feedback types; only the labels are ours.
 const FEEDBACK_OPTIONS = [
-  { label: "Bug", value: "Bug" },
-  { label: "Feature Request", value: "Feature Request" },
-  { label: "UI/UX Issue", value: "UI/UX Issue" },
-  { label: "General Feedback", value: "General Feedback" },
-  { label: "Other", value: "Other" },
+  { label: "Bugs", value: "Bug" },
+  { label: "Feature requests", value: "Feature Request" },
+  { label: "General feedback", value: "General Feedback" },
 ];
 
 const schema = yup.object().shape({
@@ -74,7 +88,7 @@ export interface FeedbackModalData {
 
 interface IContentProps {
   data: FeedbackModalData;
-  onClose: () => void;
+  onClose: () => boolean;
 }
 
 const Content = forwardRef<
@@ -87,6 +101,7 @@ const Content = forwardRef<
   const emailFieldId = `${fieldId}-email`;
   const screenshotsFieldId = `${fieldId}-screenshots`;
   const { payload } = data;
+  const isMobile = useIsMobile();
   const { user } = useStore();
   const { close } = useModal();
 
@@ -303,38 +318,74 @@ const Content = forwardRef<
   );
 
   return (
-    <FormDialog
-      title="Send feedback"
-      description="Share a bug, an idea, or something we could improve."
-      onClose={onClose}
-      busy={isMutating}
-    >
-      <form onSubmit={handleSubmit} className="flex flex-col gap-5" noValidate>
-        <fieldset disabled={isMutating} className="flex min-w-0 flex-col gap-5">
-          <FormDialogField label="Feedback type" htmlFor={typeFieldId} error={errors.type}>
-            <Select
-              name="type"
-              value={values.type}
-              onValueChange={(value) => handleValue("type", value)}
-            >
-              <FormDialogSelectTrigger
-                id={typeFieldId}
-                aria-invalid={Boolean(errors.type)}
-                aria-describedby={errors.type ? `${typeFieldId}-error` : undefined}
+    <FeedbackPage onClose={onClose} busy={isMutating}>
+      <form
+        onSubmit={handleSubmit}
+        className="page-rise flex flex-col gap-10"
+        style={{ "--page-rise-index": 1 } as CSSProperties}
+        noValidate
+      >
+        <fieldset disabled={isMutating} className="flex min-w-0 flex-col gap-10">
+          {isMobile ? (
+            <FormDialogField label="Feedback type" htmlFor={typeFieldId} error={errors.type}>
+              <Select
+                name="type"
+                value={values.type}
+                onValueChange={(value) => handleValue("type", value)}
               >
-                <SelectValue />
-              </FormDialogSelectTrigger>
-              <FormDialogSelectContent>
-                <SelectGroup>
-                  {FEEDBACK_OPTIONS.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
+                <FormDialogSelectTrigger
+                  id={typeFieldId}
+                  aria-invalid={Boolean(errors.type)}
+                  aria-describedby={errors.type ? `${typeFieldId}-error` : undefined}
+                >
+                  <SelectValue />
+                </FormDialogSelectTrigger>
+                <FormDialogSelectContent>
+                  <SelectGroup>
+                    {FEEDBACK_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </FormDialogSelectContent>
+              </Select>
+            </FormDialogField>
+          ) : (
+            // Wider screens pick the type from pills, like the Insights tabs.
+            <fieldset className="flex min-w-0 flex-col gap-2">
+              <legend className="sr-only">
+                Feedback type
+              </legend>
+              <div className="flex flex-wrap gap-3">
+                {FEEDBACK_OPTIONS.map((option) => {
+                  const checked = values.type === option.value;
+                  return (
+                    <label
+                      key={option.value}
+                      data-active={checked ? "" : undefined}
+                      className="insights-tab inline-flex cursor-pointer items-center text-sm font-medium has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-stroke-neutral-strong has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-50"
+                    >
+                      <input
+                        type="radio"
+                        name="type"
+                        value={option.value}
+                        checked={checked}
+                        onChange={() => handleValue("type", option.value)}
+                        className="sr-only"
+                      />
                       {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
-              </FormDialogSelectContent>
-            </Select>
-          </FormDialogField>
+                    </label>
+                  );
+                })}
+              </div>
+              {errors.type ? (
+                <span role="alert" className="text-xs text-text-error-strong">
+                  {errors.type}
+                </span>
+              ) : null}
+            </fieldset>
+          )}
           <FormDialogField label="Message" htmlFor={messageFieldId} error={errors.message}>
             <FormDialogTextarea
               id={messageFieldId}
@@ -342,7 +393,7 @@ const Content = forwardRef<
               value={values.message}
               onChange={handleChange}
               placeholder="What happened, or what would you like to see?"
-              className="min-h-32 max-h-64"
+              className="min-h-32 max-h-64 rounded-2xl"
               aria-invalid={Boolean(errors.message)}
               aria-describedby={errors.message ? `${messageFieldId}-error` : undefined}
               required
@@ -363,7 +414,7 @@ const Content = forwardRef<
               />
             </FormDialogField>
           )}
-          <FormDialogField label="Screenshots (optional)" htmlFor={screenshotsFieldId}>
+          <div className="flex flex-col gap-3">
             <input
               id={screenshotsFieldId}
               ref={fileInputRef}
@@ -374,20 +425,25 @@ const Content = forwardRef<
               className="sr-only"
               tabIndex={-1}
             />
-            <div className="flex flex-wrap items-center gap-3">
-              <Button
-                type="button"
-                variant="outline"
-                className="border-stroke-neutral-weak bg-transparent text-text-neutral-strong"
-                onClick={() => fileInputRef.current?.click()}
-              >
-                <Paperclip data-icon="inline-start" />
+            <button
+              type="button"
+              aria-describedby={`${screenshotsFieldId}-hint`}
+              className="flex w-full flex-col items-center justify-center gap-1 rounded-2xl border border-dashed border-stroke-neutral-weak bg-[color-mix(in_srgb,var(--insights-card)_50%,transparent)] px-6 py-4 text-center transition-colors hover:bg-[var(--insights-card)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stroke-neutral-strong disabled:cursor-not-allowed disabled:opacity-50"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <span className="flex items-center gap-2 text-base font-semibold text-text-neutral-strong">
+                <Paperclip className="size-4" aria-hidden />
                 Add screenshots
-              </Button>
-              <span className="text-sm text-text-neutral-weak">
+              </span>
+              {/* Read as the button's description, not part of its name. */}
+              <span
+                id={`${screenshotsFieldId}-hint`}
+                aria-hidden
+                className="text-sm text-text-neutral-weaker"
+              >
                 Or paste an image from your clipboard.
               </span>
-            </div>
+            </button>
             {files.length > 0 && (
               <div className="mt-1 grid grid-cols-2 gap-3 sm:grid-cols-3">
                 {files.map((file) => (
@@ -442,7 +498,7 @@ const Content = forwardRef<
                 ))}
               </div>
             )}
-          </FormDialogField>
+          </div>
         </fieldset>
         <FormDialogFooter
           submitLabel="Send feedback"
@@ -452,11 +508,93 @@ const Content = forwardRef<
           onDismiss={onClose}
         />
       </form>
-    </FormDialog>
+    </FeedbackPage>
   );
 });
 
 Content.displayName = "Content";
+
+// Matches PageHeading, which can't take the dialog title's id.
+const pageHeadingClass =
+  "min-w-0 font-garamond text-[28px] font-normal leading-tight text-text-neutral-strong sm:text-[32px] [&_em]:text-text-neutral-weaker";
+
+/** Full-screen like the plan page, laid out as the Insights column: heading, then the form. */
+function FeedbackPage({
+  onClose,
+  busy,
+  children,
+}: {
+  onClose: () => boolean | void;
+  busy: boolean;
+  children: ReactNode;
+}) {
+  const { pathname, key: locationKey } = useLocation();
+  const { open: openModal } = useModal();
+  const returnFocusRef = useRef(document.activeElement as HTMLElement | null);
+
+  // The frame's sidebar can navigate, and the new page would stay hidden behind this.
+  const openedAtLocation = useRef(locationKey);
+  useEffect(() => {
+    if (locationKey === openedAtLocation.current) return;
+    openedAtLocation.current = locationKey;
+    onClose();
+  }, [locationKey, onClose]);
+
+  return (
+    <Dialog
+      open
+      onOpenChange={(open) => {
+        if (!open && !busy) onClose();
+      }}
+    >
+      <DialogContent
+        data-sky-card-page={isSkyCardPage(pathname) ? "" : undefined}
+        showCloseButton={false}
+        className="insights-overlay"
+        overlayClassName="insights-overlay-backdrop z-[100]"
+        onCloseAutoFocus={(event) => {
+          event.preventDefault();
+          if (returnFocusRef.current?.isConnected) returnFocusRef.current.focus();
+        }}
+      >
+        <TooltipProvider>
+          <DashboardOverlayFrame>
+            <DashboardHeader
+              overlay={{
+                // The Overview header's title style.
+                title: (
+                  <p className="min-w-0 truncate font-inter text-base font-semibold text-foreground">
+                    Feedback
+                  </p>
+                ),
+                searchLabel: "Search memories",
+                closeLabel: "Close",
+                onSearch: () => {
+                  // Search opens beneath this page, so leave it first.
+                  if (onClose()) openModal?.("search-memory");
+                },
+                onClose,
+              }}
+            />
+            <div className="insights-scroll">
+              <main className="page-motion insights-main">
+                <div className="page-rise page-rise--heading flex flex-col gap-2">
+                  <DialogTitle className={pageHeadingClass}>
+                    Send <em>feedback</em>
+                  </DialogTitle>
+                  <DialogDescription className="text-base text-text-neutral-weak">
+                    Share a bug, an idea, or something we could improve.
+                  </DialogDescription>
+                </div>
+                {children}
+              </main>
+            </div>
+          </DashboardOverlayFrame>
+        </TooltipProvider>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 export function Feedback({ data }: { data: FeedbackModalData }) {
   const { close, registerCloseGuard } = useModal();
@@ -482,7 +620,9 @@ export function Feedback({ data }: { data: FeedbackModalData }) {
   );
 
   const requestClose = () => {
-    if (handleClose()) close("create-feedback");
+    if (!handleClose()) return false;
+    close("create-feedback");
+    return true;
   };
 
   const handleConfirmClose = async () => {

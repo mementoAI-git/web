@@ -31,6 +31,7 @@ export default function RecentStoriesSection() {
   );
   const stories = (data?.data?.docs ?? []).slice(0, 5);
   const { open } = useModal();
+  const noStories = !isLoading && !error && stories.length === 0;
 
   return (
     <section
@@ -44,13 +45,23 @@ export default function RecentStoriesSection() {
         >
           Recent <i className="text-text-neutral-weaker">stories</i>
         </TypographyH2>
-        <Button
-          variant="link"
-          asChild
-          className="min-h-11 px-0 font-inter text-sm font-medium text-text-brand-strong motion-reduce:transform-none motion-reduce:transition-none"
-        >
-          <Link to="/stories">See all</Link>
-        </Button>
+        {/* Nothing to see until there's a story, so the link sits disabled. */}
+        {noStories ? (
+          <span
+            aria-disabled="true"
+            className="flex min-h-11 cursor-not-allowed items-center font-inter text-sm font-medium text-text-neutral-disabled"
+          >
+            See all
+          </span>
+        ) : (
+          <Button
+            variant="link"
+            asChild
+            className="min-h-11 px-0 font-inter text-sm font-medium text-text-brand-strong motion-reduce:transform-none motion-reduce:transition-none"
+          >
+            <Link to="/stories">See all</Link>
+          </Button>
+        )}
       </header>
       {isLoading ? (
         <div
@@ -83,10 +94,15 @@ export default function RecentStoriesSection() {
       ) : stories.length ? (
         <ul className="divide-y divide-stroke-neutral-weaker">
           {stories.map((story) => (
-            <li key={story._id}>
+            <li
+              key={story._id}
+              // Hide the dividers either side of the highlighted row so it reads as one pill.
+              className="transition-colors hover:border-transparent has-[a:focus-visible]:border-transparent [&:has(+li:hover)]:border-transparent [&:has(+li_a:focus-visible)]:border-transparent motion-reduce:transition-none"
+            >
+              {/* -mx-3 px-3: room inside the highlight, content still aligned with the heading. */}
               <Link
                 to={storyDestination(story)}
-                className="flex min-h-11 items-center gap-3 rounded-xl py-3 outline-none transition-colors hover:bg-fill-neutral-weaker focus-visible:ring-2 focus-visible:ring-stroke-brand-strong motion-reduce:transition-none"
+                className="-mx-3 flex min-h-11 items-center gap-3 rounded-xl px-3 py-3 outline-none transition-colors hover:bg-fill-neutral-weaker focus-visible:ring-2 focus-visible:ring-stroke-brand-strong motion-reduce:transition-none"
               >
                 <StoryListThumbnail memory={story} />
                 <div className="min-w-0 flex-1">
@@ -114,7 +130,8 @@ export default function RecentStoriesSection() {
           <Button
             type="button"
             size="lg"
-            className="rounded-[64px]"
+            variant="outline"
+            className="rounded-[64px] border-stroke-neutral-weak bg-transparent text-text-neutral-strong"
             onClick={() => open?.("create-memory")}
           >
             <Plus className="size-5 shrink-0" aria-hidden /> Add story

@@ -1,3 +1,5 @@
+import { cn } from "@/lib/utils";
+import { VOICE_OVERLAY_LAYER, VOICE_SURFACE_LAYER } from "./voice-layers";
 import endSessionArtwork from "@/assets/icon/voice-end-session.svg";
 import { Button } from "@/components/ui/button";
 import { FormDialogContent } from "@/components/modal/form-dialog";
@@ -29,8 +31,9 @@ export function EndSessionDialog({
       onOpenChange={(nextOpen) => !ending && onOpenChange(nextOpen)}
     >
       <FormDialogContent
-        overlayClassName="z-[210] backdrop-blur-none"
-        className="z-[220] flex h-[346px] flex-col gap-6 border border-stroke-neutral-weak bg-bg-raised shadow-2xl ring-0"
+        data-voice-ignore=""
+        overlayClassName={cn(VOICE_OVERLAY_LAYER, "backdrop-blur-none")}
+        className={cn(VOICE_SURFACE_LAYER, "flex h-[346px] flex-col gap-6 border border-stroke-neutral-weak bg-bg-raised shadow-2xl ring-0")}
       >
         <DialogHeader className="flex-1 items-center justify-center gap-6 py-0 text-center">
           <div
