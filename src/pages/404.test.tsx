@@ -23,12 +23,15 @@ describe("NotFoundPage", () => {
 
     expect(screen.getByRole("img", { name: /not found/i })).toBeInTheDocument();
     expect(screen.getByText("Error 404")).toBeInTheDocument();
-    expect(screen.getByText(/sorry, we couldn't find that page/i)).toBeInTheDocument();
     expect(
-      screen.getByText(/the page you are looking for doesn't exist or has been moved/i),
+      screen.getByRole("heading", { name: /sorry, we couldn’t find that page/i }),
     ).toBeInTheDocument();
+    expect(
+      screen.getByText(/the page you are looking for doesn’t exist or has been moved/i),
+    ).toHaveClass("font-rounded");
+    expect(screen.getByTestId("error-state-panel")).toHaveClass("backdrop-blur-xl");
 
-    expect(screen.getByRole("button", { name: /go back/i })).toHaveClass("btn-outline-v3");
+    expect(screen.getByRole("button", { name: /go back/i })).toHaveAttribute("data-variant", "outline");
     expect(screen.getByRole("button", { name: /overview/i })).toBeInTheDocument();
   });
 
