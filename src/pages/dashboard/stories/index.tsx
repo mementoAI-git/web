@@ -1,9 +1,9 @@
 import { MEMORY_CHANGED_EVENT } from "@/api/memory-lifecycle";
 import { MotionHeading } from "@/components/motion/text-reveal";
 import { useTextReveal } from "@/components/motion/use-text-reveal";
+import "@/components/modal/memory-insights/insights.css";
 import "./stories-motion.css";
 import endpoint from "@/api/endpoint";
-import { useNavigate } from "react-router-dom";
 import { useModal } from "@/hooks/use-modal";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import useSWR from "swr";
@@ -39,8 +39,6 @@ import { formatStorageSummary } from "@/features/pricing/storage-display";
 
 const columns = [
   { label: "topic" },
-  { label: "Date created" },
-  { label: "Tags", className: "min-w-32" },
   { label: "" },
 ];
 
@@ -80,7 +78,6 @@ export default function StoriesPage() {
     typeof window !== "undefined" ? window.innerWidth >= 1280 : true,
   );
   const { open } = useModal();
-  const navigate = useNavigate();
   const { summary, usage, isProOrAbove } = useSubscription();
   const { setShowStoriesActions } = useDashboardHeaderActions();
 
@@ -250,7 +247,6 @@ export default function StoriesPage() {
 
             <div>
               <StoriesActionButtons
-                onViewInsights={() => navigate("/insights")}
                 onCreateMemory={() => open("create-memory")}
                 onQuickCapture={() => open("quick-capture")}
               />
@@ -347,7 +343,7 @@ export default function StoriesPage() {
                     <Table
                       className="stories-table"
                       data={data?.data}
-                      columns={columns.map((column, index) => index === 1 && filter === "deleted" ? { ...column, label: "Date deleted" } : column)}
+                      columns={columns}
                       loading={listLoading && !hasResults}
                       loadingRow={<TableRowSekeleton />}
                       onChangePage={setPage}

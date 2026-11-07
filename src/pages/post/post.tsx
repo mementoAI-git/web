@@ -2,8 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { StoryJournalShell } from "@/components/modal/memory/story-journal-shell";
 import {
-  StoryMobileContent,
-  StoryMobileTitle,
+  StoryMobileReader,
   StoryReaderColumn,
   StoryReaderContent,
   StoryReaderFrame,
@@ -44,18 +43,13 @@ export default function Post({ memory }: { memory: IPublicMemory }) {
   return (
     <>
       {isMobile ? (
-        <article className="mx-auto flex w-full max-w-[758px] flex-col gap-2 px-5 py-6">
-          <div className="space-y-3 border-b border-stroke-neutral-weaker pb-2">
-            <div className="flex items-center justify-between gap-2">
-              {meta}
-              {detailsButton}
-            </div>
-            <StoryMobileTitle title={memory.title} />
-          </div>
-          <div className="pb-6">
-            <StoryMobileContent files={memory.attachments} body={memory.body} readOnly />
-          </div>
-        </article>
+        <StoryMobileReader
+          title={memory.title}
+          createdAt={memory.created_at}
+          body={memory.body}
+          files={memory.attachments}
+          readOnly
+        />
       ) : (
         <StoryJournalShell presentation="page">
           <StoryReaderFrame meta={meta} actions={detailsButton}>

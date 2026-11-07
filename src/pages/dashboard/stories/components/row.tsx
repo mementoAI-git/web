@@ -32,40 +32,30 @@ export default function StoriesTableRow({ memory }: { memory: IMemory }) {
 
   return (
     <tr>
-      <td onClick={handleClick}>
+      <td className="w-full" onClick={handleClick}>
         <div className="flex cursor-pointer items-center gap-3">
           <StoryListThumbnail memory={memory} />
-          <span className="max-w-75 truncate font-inter text-sm font-medium whitespace-nowrap text-v3-text-strong">
-            {" "}
-            {rowTitle}
-          </span>
-          <QuickCaptureProcessingBadge memory={memory} />
-        </div>
-      </td>
-      <td className="text-sm whitespace-nowrap text-v3-text-weak">
-        {memory.status === "deleted" ? (
-          <DeletedMemoryStatus memory={memory} showDeletedAt />
-        ) : (
-          dayjs(memory.created_at).format("MMM DD, YYYY")
-        )}
-      </td>
-      <td>
-        <div className="flex items-center gap-1">
-          {memory.tags.slice(0, 3).map((tag, i) => (
-            <span
-              key={i}
-              className="stories-table-tag whitespace-nowrap truncate-ellipsis"
-            >
-              {tag}
-            </span>
-          ))}
-          {memory.tags.length > 3 && (
-            <span className="stories-table-tag">+{memory.tags.length - 3}</span>
-          )}
+          <div className="min-w-0">
+            <div className="flex items-center gap-3">
+              <span className="max-w-75 truncate font-inter text-sm font-medium whitespace-nowrap text-v3-text-strong">
+                {rowTitle}
+              </span>
+              <QuickCaptureProcessingBadge memory={memory} />
+            </div>
+            {memory.status === "deleted" ? (
+              <div className="mt-0.5">
+                <DeletedMemoryStatus memory={memory} showDeletedAt inline />
+              </div>
+            ) : (
+              <p className="mt-0.5 font-inter text-xs leading-relaxed whitespace-nowrap text-text-neutral-weak">
+                {dayjs(memory.created_at).format("MMM DD, YYYY")}
+              </p>
+            )}
+          </div>
         </div>
       </td>
       <td className="w-fit">
-        <MemoryItemActions memory={memory} />
+        <MemoryItemActions memory={memory} trigger="horizontal" />
       </td>
     </tr>
   );

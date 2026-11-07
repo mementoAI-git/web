@@ -9,6 +9,8 @@ import Modal from "@/components/modal";
 import endpoint from "@/api/endpoint";
 import { useStore } from "@/hooks/use-store";
 import { isEmpty } from "@/utility";
+import { StoryMobilePaper } from "@/components/modal/memory/story-reader";
+import { useStoryMobileViewport } from "@/components/modal/memory/story-reader-utils";
 import Loading from "./loading";
 import Post from "./post";
 import type { IResponse } from "@/api/interface";
@@ -16,6 +18,7 @@ import type { IPublicMemory } from "@/utility/interface";
 
 export function PostPage() {
   const { auth, hydrated } = useStore();
+  const isMobile = useStoryMobileViewport();
   const { id = "" } = useParams();
   const signedIn = hydrated && !isEmpty(auth?.access_token);
   const {
@@ -56,9 +59,10 @@ export function PostPage() {
   const loading = publicLoading || privateLoading || (notPublic && !hydrated);
 
   return (
-    <div className="flex min-h-dvh w-screen flex-col bg-background sm:h-dvh sm:min-h-[640px]">
+    <div className="relative isolate flex h-dvh w-screen flex-col overflow-hidden bg-background lg:min-h-[640px] lg:overflow-visible">
+      {isMobile ? <StoryMobilePaper /> : null}
       <header className="w-full shrink-0 border-b border-stroke-neutral-weaker">
-        <div className="mx-auto flex w-full max-w-[1440px] items-center justify-between px-4 py-3 sm:px-8 lg:px-20">
+        <div className="mx-auto flex w-full max-w-[758px] items-center justify-between px-4 py-3 lg:max-w-[1440px] lg:px-20">
           <Logo className="text-text-neutral-strong" />
           {!hydrated ? (
             <div className="h-10 min-w-38 rounded-lg bg-fill-neutral-weaker" />
@@ -72,11 +76,11 @@ export function PostPage() {
           )}
         </div>
       </header>
-      <main className="flex min-h-0 w-full flex-1 flex-col sm:p-6">
+      <main className="flex min-h-0 w-full flex-1 flex-col lg:p-6">
         {loading ? (
           <Loading />
         ) : memory ? (
-          <div className="mx-auto min-h-0 w-full max-w-[1120px] flex-1 sm:max-h-[820px]">
+          <div className="mx-auto min-h-0 w-full max-w-[1120px] flex-1 lg:max-h-[820px]">
             <Post memory={memory} />
           </div>
         ) : temporaryError ? (

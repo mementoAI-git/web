@@ -126,4 +126,25 @@ describe("public post page", () => {
     expect(screen.getByRole("button", { name: "Download file" })).toBeVisible();
     expect(screen.queryByRole("button", { name: "Delete file" })).not.toBeInTheDocument();
   });
+
+  it("uses the mobile story layout on tablets and the album from laptop width", async () => {
+    server.use(http.get(`${API}/memories/public/memory-1`, () => HttpResponse.json({
+      success: true,
+      data: { _id: "memory-1", title: "Sized story", body: "<p>Words.</p>", tags: [], attachments: [], created_at: "2026-08-29T10:00:00.000Z" },
+    })));
+    const width = window.innerWidth;
+    try {
+      window.innerWidth = 1023;
+      const tablet = renderWithProviders(<Routes><Route path="/post/:id" element={<PostPage />} /></Routes>, { route: "/post/memory-1" });
+      expect(await screen.findByRole("heading", { name: "Sized story" })).toBeVisible();
+      expect(screen.queryByTestId("desktop-journal-shell")).not.toBeInTheDocument();
+      expect(screen.getByTestId("mobile-album-artwork")).toBeInTheDocument();
+      tablet.unmount();
+      window.innerWidth = 1024;
+      renderWithProviders(<Routes><Route path="/post/:id" element={<PostPage />} /></Routes>, { route: "/post/memory-1" });
+      expect(await screen.findByTestId("desktop-journal-shell")).toBeInTheDocument();
+    } finally {
+      window.innerWidth = width;
+    }
+  });
 });

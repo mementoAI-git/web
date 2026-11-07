@@ -1,7 +1,14 @@
 import type { ReactNode } from "react";
+import dayjs from "dayjs";
+import { CalendarDays } from "lucide-react";
 import calendarIcon from "@/assets/icon/uim_calendar.svg";
 import FileGallery from "@/components/file-gallery";
-import { TypographyH1, TypographyMuted } from "@/components/ui/typography";
+import albumArtwork from "@/assets/image/HD Album story bg memento.webp";
+import darkAlbumArtwork from "@/assets/image/HD Album story bg memento dark.webp";
+import paperGrain from "@/assets/image/story-paper-grain.svg";
+import { useTheme } from "@/contexts/theme";
+import "./create/mobile-composer.css";
+import { StoryMobileMedia } from "./story-mobile-media";
 import { cn } from "@/utility";
 import type { IFile } from "@/utility/interface";
 import {
@@ -24,17 +31,7 @@ export function StoryReaderFrame({
 }) {
   return (
     <div className="relative grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)] gap-5 py-6 pl-[max(225px,22%,min(254px,calc((100dvh-48px)*0.31)))] pr-6 xl:gap-8 xl:py-8 xl:pr-8">
-      <header
-        aria-label="Story navigation"
-        className="flex min-w-0 flex-wrap items-center justify-between gap-3 pl-4"
-      >
-        {meta}
-        {actions ? (
-          <div className="ml-auto flex min-w-0 flex-wrap items-center justify-end gap-2 xl:gap-3">
-            {actions}
-          </div>
-        ) : null}
-      </header>
+      <StoryReaderHeader meta={meta} actions={actions} />
       <div
         className={cn(
           "story-viewer-layout grid min-h-0 gap-5 xl:gap-7",
@@ -46,6 +43,28 @@ export function StoryReaderFrame({
         {children}
       </div>
     </div>
+  );
+}
+
+function StoryReaderHeader({
+  meta,
+  actions,
+}: {
+  meta?: ReactNode;
+  actions?: ReactNode;
+}) {
+  return (
+    <header
+      aria-label="Story navigation"
+      className="flex min-w-0 flex-wrap items-center justify-between gap-3 pl-4"
+    >
+      {meta}
+      {actions ? (
+        <div className="ml-auto flex min-w-0 flex-wrap items-center justify-end gap-2 xl:gap-3">
+          {actions}
+        </div>
+      ) : null}
+    </header>
   );
 }
 
@@ -134,34 +153,65 @@ export function StoryReaderMedia({
   );
 }
 
-export function StoryMobileTitle({ title }: { title?: string }) {
+/** The mobile composer's page: the album's blank paper, clear of the leather and rings. */
+export function StoryMobilePaper() {
+  const { resolvedTheme } = useTheme();
   return (
-    <TypographyH1 className="font-garamond text-xl font-medium leading-tight text-text-neutral-strong sm:text-2xl md:text-3xl lg:text-[40px] lg:leading-[48px]">
-      {title}
-    </TypographyH1>
+    <>
+      <img
+        data-testid="mobile-album-artwork"
+        src={resolvedTheme === "dark" ? darkAlbumArtwork : albumArtwork}
+        alt=""
+        aria-hidden="true"
+        className="story-composer-paper"
+      />
+      {resolvedTheme === "light" ? (
+        <img
+          src={paperGrain}
+          alt=""
+          aria-hidden="true"
+          className="story-composer-paper opacity-10"
+        />
+      ) : null}
+    </>
   );
 }
 
-export function StoryMobileContent({
-  files,
+/** The mobile app's story layout: title, date, attachments, then the story. */
+export function StoryMobileReader({
+  title,
+  createdAt,
   body,
+  files,
   readOnly,
 }: {
-  files?: IFile[];
+  title?: string;
+  createdAt?: string;
   body?: string;
+  files?: IFile[];
   readOnly?: boolean;
 }) {
   return (
-    <>
-      {files && files.length > 0 ? (
-        <FileGallery files={files} readOnly={readOnly} />
-      ) : null}
-      <div className="tiptap-editor">
-        <TypographyMuted
-          className="tiptap-editor mt-4 font-inter text-sm leading-relaxed text-text-neutral-weak sm:mt-6 sm:text-base"
-          dangerouslySetInnerHTML={{ __html: storyBodyHtml(body) }}
-        />
+    <div className="hide-scrollbar min-h-0 w-full flex-1 overflow-y-auto overscroll-contain">
+      <div className="mx-auto w-full max-w-[720px] pb-24">
+        <h1 className="px-4 pb-3.5 pt-3 font-garamond text-[28px] font-normal leading-[34px] text-text-neutral-strong">
+          {title || "Untitled Memory"}
+        </h1>
+        {createdAt ? (
+          <p className="flex items-center gap-[5px] px-4 pb-3.5 font-inter text-[13px] leading-[19px] text-text-neutral-weak">
+            <CalendarDays className="size-3.5 text-text-info-strong" strokeWidth={1.8} aria-hidden />
+            {dayjs(createdAt).format("ddd, MMM D")}
+          </p>
+        ) : null}
+        <StoryMobileMedia section="media" files={files} title={title} readOnly={readOnly} />
+        {body ? (
+          <div
+            className="story-mobile-body px-4 pt-3"
+            dangerouslySetInnerHTML={{ __html: storyBodyHtml(body) }}
+          />
+        ) : null}
+        <StoryMobileMedia section="documents" files={files} title={title} readOnly={readOnly} />
       </div>
-    </>
+    </div>
   );
 }

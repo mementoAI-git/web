@@ -29,7 +29,6 @@ import { PlaySolidIcon, WaveIcon } from "@/components/icons";
 import recordBanner from "@/assets/icon/record-banner.png";
 import {
   getCardSeed,
-  getTextCardSurfaceClass,
   hasAtLeastRenderedBodyLines,
   pickBySeed,
 } from "./grid-helpers";
@@ -38,6 +37,8 @@ const DEFAULT_VIEWPORT_WIDTH = 1280;
 const MEDIA_CARD_ASPECTS = ["aspect-[4/5]", "aspect-[5/6]", "aspect-[3/4]", "aspect-square"] as const;
 const TEXT_BODY_CLAMPS = ["line-clamp-[5]", "line-clamp-[7]", "line-clamp-[9]"] as const;
 const TEXT_CARD_MIN_HEIGHTS = ["min-h-[206px]", "min-h-[232px]", "min-h-[264px]"] as const;
+// A phone-width 3:4 card holds seven lines under a two-line title.
+const MOBILE_TEXT_BODY_CLAMPS = ["line-clamp-[5]", "line-clamp-[6]", "line-clamp-[7]"] as const;
 
 function getStoryKey(memory: IMemory, index: number) {
   return memory._id || `${memory.createdAt || "story"}-${index}`;
@@ -59,7 +60,7 @@ function getMasonryConfig(width: number) {
   if (width >= 640) {
     return { columns: 2, gutter: 20 };
   }
-  return { columns: 1, gutter: 16 };
+  return { columns: 2, gutter: 12 };
 }
 
 function getStoryCardTitle(memory: IMemory): string {
@@ -103,9 +104,9 @@ function StoriesGridItem({
   const audioMedia = memory.attachments[audioMediaIndex];
   const storyTitle = getStoryCardTitle(memory);
   const cardSeed = getCardSeed(memory, storyTitle);
-  const textCardSurfaceClass = getTextCardSurfaceClass(memory, storyTitle);
   const mediaAspectClass = pickBySeed(MEDIA_CARD_ASPECTS, cardSeed);
-  const textBodyClampClass = pickBySeed(TEXT_BODY_CLAMPS, cardSeed);
+  const cardRadiusClass = isMobile ? "rounded-2xl" : "rounded-[20px]";
+  const textBodyClampClass = pickBySeed(isMobile ? MOBILE_TEXT_BODY_CLAMPS : TEXT_BODY_CLAMPS, cardSeed);
   const textCardMinHeightClass = pickBySeed(TEXT_CARD_MIN_HEIGHTS, cardSeed);
 
   useLayoutEffect(() => {
@@ -137,7 +138,8 @@ function StoriesGridItem({
       return (
         <div
           className={cn(
-            "relative w-full overflow-hidden rounded-[20px] border border-v3-stroke-weak bg-v3-fill-weaker shadow-sm transition-[filter] duration-150 motion-reduce:transition-none group-hover/card:brightness-[0.97]",
+            "relative w-full overflow-hidden border border-v3-stroke-weak bg-v3-fill-weaker shadow-sm transition-[filter] duration-150 motion-reduce:transition-none group-hover/card:brightness-[0.97]",
+            cardRadiusClass,
             mediaAspectClass,
           )}
         >
@@ -168,7 +170,8 @@ function StoriesGridItem({
       return (
         <div
           className={cn(
-            "relative flex w-full items-center justify-center overflow-hidden rounded-[20px] border border-v3-stroke-weak bg-v3-fill-strong shadow-sm transition-[filter] duration-150 motion-reduce:transition-none group-hover/card:brightness-[0.97]",
+            "relative flex w-full items-center justify-center overflow-hidden border border-v3-stroke-weak bg-v3-fill-strong shadow-sm transition-[filter] duration-150 motion-reduce:transition-none group-hover/card:brightness-[0.97]",
+            cardRadiusClass,
             mediaAspectClass,
           )}
         >
@@ -184,7 +187,7 @@ function StoriesGridItem({
             alt=""
             loading="lazy"
           />
-          <div className="relative z-10 flex flex-col items-center gap-3 rounded-[20px] border border-white/20 bg-white/10 p-5 backdrop-blur-md">
+          <div className={cn("relative z-10 flex flex-col items-center gap-3 border border-white/20 bg-white/10 p-5 backdrop-blur-md", cardRadiusClass)}>
             <WaveIcon className="h-auto w-16 text-white opacity-80" />
             <span className="font-inter text-sm font-semibold tracking-widest text-white">
               {audioMedia.duration ?
@@ -200,14 +203,16 @@ function StoriesGridItem({
       <div
         data-slot="story-text-card"
         className={cn(
-          "relative flex w-full flex-col gap-3 overflow-hidden rounded-[20px] border border-stroke-neutral-weaker p-5 shadow-sm transition-[filter] duration-150 motion-reduce:transition-none group-hover/card:brightness-[0.97]",
+          "relative flex w-full flex-col overflow-hidden border border-stroke-neutral-weaker shadow-sm transition-[filter] duration-150 motion-reduce:transition-none group-hover/card:brightness-[0.97]",
           "backdrop-blur-md",
-          textCardSurfaceClass,
+          cardRadiusClass,
+          "bg-fill-neutral-weak",
+          isMobile ? "gap-2 p-3.5" : "gap-3 p-5",
           isTallTextCard ? "aspect-[3/4]" : textCardMinHeightClass,
         )}
       >
         <div className="flex flex-wrap items-center gap-2">
-          <h4 className="line-clamp-2 font-inter text-base font-semibold leading-snug text-v3-text-strong">
+          <h4 className={cn("line-clamp-2 font-inter font-semibold leading-snug text-v3-text-strong", isMobile ? "text-sm" : "text-base")}>
             {storyTitle}
           </h4>
           <QuickCaptureProcessingBadge memory={memory} variant="inline" />
@@ -217,7 +222,8 @@ function StoriesGridItem({
           ref={textBodyRef}
           data-slot="story-text-body"
           className={cn(
-            "font-inter text-sm leading-relaxed text-v3-text-weak [&_a]:underline",
+            "font-inter leading-relaxed text-v3-text-weak [&_a]:underline",
+            isMobile ? "text-xs" : "text-sm",
             textBodyClampClass,
           )}
           dangerouslySetInnerHTML={{
@@ -237,16 +243,16 @@ function StoriesGridItem({
     >
       <Link
         to={storyDestination(memory)}
-        className="block rounded-[20px] outline-none focus-visible:ring-2 focus-visible:ring-stroke-neutral-strong"
+        className={cn("block outline-none focus-visible:ring-2 focus-visible:ring-stroke-neutral-strong", cardRadiusClass)}
         onClick={handleClick}
         aria-disabled={memory.status === "deleted" || undefined}
         aria-label={`Open story: ${storyTitle}`}
       >
-        <div className="relative overflow-hidden rounded-[20px]">
+        <div className={cn("relative overflow-hidden", cardRadiusClass)}>
           {renderContent()}
           <div
             data-slot="story-hover-overlay"
-            className="pointer-events-none absolute inset-0 rounded-[20px] bg-black/20 opacity-0 transition-opacity duration-150 motion-reduce:transition-none group-hover/card:opacity-100"
+            className={cn("pointer-events-none absolute inset-0 bg-black/20 opacity-0 transition-opacity duration-150 motion-reduce:transition-none group-hover/card:opacity-100", cardRadiusClass)}
             aria-hidden
           />
         </div>
@@ -254,7 +260,7 @@ function StoriesGridItem({
 
       <div
         data-slot="story-card-caption"
-        className="mt-2 flex items-center gap-8 px-0.5"
+        className={cn("mt-2 flex items-center px-0.5", isMobile ? "gap-1" : "gap-8")}
       >
         <p className="min-w-0 flex-1 truncate text-left font-inter text-xs font-medium leading-snug text-v3-text-strong sm:text-[13px]">
           {storyTitle}

@@ -2,17 +2,17 @@ import { useEffect, useState } from "react";
 import DOMPurify from "isomorphic-dompurify";
 import { ensureLinksOpenInNewTab } from "@/utility";
 
-/** Below this width stories use the phone layout instead of the album. */
-const STORY_MOBILE_WIDTH = 640;
+/** Matches Tailwind's `lg`: phones and tablets read stories on the album's paper. */
+const STORY_ALBUM_MIN_WIDTH = 1024;
 
 export function useStoryMobileViewport() {
   const [isMobile, setIsMobile] = useState(
-    () => window.innerWidth < STORY_MOBILE_WIDTH,
+    () => window.innerWidth < STORY_ALBUM_MIN_WIDTH,
   );
 
   useEffect(() => {
     const updateViewport = () =>
-      setIsMobile(window.innerWidth < STORY_MOBILE_WIDTH);
+      setIsMobile(window.innerWidth < STORY_ALBUM_MIN_WIDTH);
     window.addEventListener("resize", updateViewport);
     return () => window.removeEventListener("resize", updateViewport);
   }, []);
@@ -35,6 +35,11 @@ export function storyBodyHtml(body?: string) {
   return ensureLinksOpenInNewTab(
     DOMPurify.sanitize(ensureHtmlFormat(body || "")),
   );
+}
+
+export function storyPlainText(body?: string) {
+  const page = new DOMParser().parseFromString(storyBodyHtml(body), "text/html");
+  return page.body.textContent?.trim() ?? "";
 }
 
 export function storyReadingMinutes(body?: string) {

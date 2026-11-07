@@ -2,7 +2,8 @@ import { useRef, useState } from "react";
 import { useModal } from "@/hooks/use-modal";
 import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "sonner";
-import { deleteMemory, restoreMemory, MEMORY_UNDO_DURATION, memoryActionError } from "@/api/memory-lifecycle";
+import { deleteMemory, memoryActionError } from "@/api/memory-lifecycle";
+import { moveMemoryToDeleted } from "./move-memory-to-deleted";
 import { DeletePromptModal } from "../delete-prompt-modal";
 
 interface DeleteMemoryProps {
@@ -22,30 +23,13 @@ export function DeleteMemory({ data: { memory } }: DeleteMemoryProps) {
     pending.current = true;
     setSubmitting(true);
     try {
-      await deleteMemory(memory._id, permanently);
+      if (permanently) await deleteMemory(memory._id, true);
+      else await moveMemoryToDeleted(memory._id);
       if (location.pathname.includes(memory._id)) navigate("/stories");
       close("delete-memory");
       if (permanently) {
         toast.dismiss(`memory-deleted:${memory._id}`);
         toast.success("Memory permanently deleted");
-      } else {
-        let undoing = false;
-        toast.success("Memory moved to Deleted", {
-          id: `memory-deleted:${memory._id}`,
-          duration: MEMORY_UNDO_DURATION,
-          description: "You can restore it for 30 days.",
-          action: {
-            label: "Undo",
-            onClick: () => {
-              if (undoing) return;
-              undoing = true;
-              void restoreMemory(memory._id).then(
-                () => toast.success("Memory restored"),
-                (error) => toast.error(memoryActionError(error, "Couldn't undo deletion. Restore it from Deleted.")),
-              ).finally(() => { undoing = false; });
-            },
-          },
-        });
       }
     } catch (error) {
       toast.error(memoryActionError(error, "Couldn't delete this memory. Please try again."));

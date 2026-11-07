@@ -5,7 +5,7 @@ import type { IFile, IMemory } from "@/utility/interface";
 import StoriesTableRow from "./row";
 
 vi.mock("./dropdown", () => ({
-  MemoryItemActions: () => <button>Story actions</button>,
+  MemoryItemActions: ({ trigger }: { trigger?: string }) => <button data-trigger={trigger}>Story actions</button>,
 }));
 vi.mock("@/hooks/use-modal", () => ({ useModal: () => ({ open: vi.fn() }) }));
 const file = (overrides: Partial<IFile>): IFile => ({
@@ -72,6 +72,18 @@ describe("story table thumbnails", () => {
     expect(screen.getByText("Oct 15, 2026")).toBeInTheDocument();
     expect(screen.queryByText("Jan 01, 2020")).not.toBeInTheDocument();
     expect(container.querySelector('time[datetime="2099-11-14T12:00:00Z"]')).toHaveTextContent("Permanently deletes in");
+    expect(screen.getByText("Oct 15, 2026").parentElement).toHaveClass("flex", "whitespace-nowrap");
+  });
+  it("keeps the date under the title in the same cell", () => {
+    const memory = { _id: "story-1", title: "My story", tags: [], attachments: [], created_at: "2026-10-07T12:00:00Z" } as unknown as IMemory;
+    render(<MemoryRouter><table><tbody><StoriesTableRow memory={memory} /></tbody></table></MemoryRouter>);
+    expect(screen.getByText("Oct 07, 2026").closest("td")).toBe(screen.getByText("My story").closest("td"));
+    expect(screen.getByRole("button", { name: "Story actions" })).toHaveAttribute("data-trigger", "horizontal");
+  });
+  it("doesn't show a story's tags", () => {
+    const memory = { _id: "story-1", title: "My story", tags: ["Music"], attachments: [], created_at: "2026-10-07" } as unknown as IMemory;
+    render(<MemoryRouter><table><tbody><StoriesTableRow memory={memory} /></tbody></table></MemoryRouter>);
+    expect(screen.queryByText("Music")).not.toBeInTheDocument();
   });
 
 });

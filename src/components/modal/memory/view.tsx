@@ -53,6 +53,7 @@ import {
   StoryReaderMedia,
   StoryReaderMeta,
 } from "./story-reader";
+import { useStoryMobileViewport } from "./story-reader-utils";
 
 interface ViewMemoryProps {
   data: { memoryId?: string; memory?: IMemory };
@@ -106,6 +107,15 @@ export function ViewMemory({ data, isMobile }: ViewMemoryProps) {
   const remoteMemory = (fetched?.data as IMemory | undefined) ?? data.memory;
   const memory = localMemory ?? remoteMemory;
   const isEditing = mode === "edit";
+  const isMobileViewport = useStoryMobileViewport();
+  // Rotating a tablet must not throw away a story that's being edited.
+  const showsMobilePage = isMobileViewport && !isEditing;
+
+  useEffect(() => {
+    if (!showsMobilePage || !memoryId) return;
+    close?.("view-memory", { force: true });
+    navigate(`/stories/${memoryId}`);
+  }, [close, memoryId, navigate, showsMobilePage]);
 
   useEffect(() => {
     if (remoteMemory && mode === "view" && !hasLocalSaveRef.current) {
@@ -380,7 +390,7 @@ export function ViewMemory({ data, isMobile }: ViewMemoryProps) {
     ...addedFiles,
   ];
 
-  if (isMobile) return null;
+  if (isMobile || showsMobilePage) return null;
 
   const loading = !memory && isLoading;
   const readerActions = (
