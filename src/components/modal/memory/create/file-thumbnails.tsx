@@ -374,8 +374,9 @@ export function FileThumbnails({
         {displayFiles.map((file) => {
           const mimeType = resolveUploadMimeType(file);
           const isImage = mimeType.startsWith("image/");
-          const isVideo = mimeType.startsWith("video/");
-          const isAudio = mimeType.startsWith("audio/");
+          const isVoiceNote = Boolean(voiceNoteLabel(file.file?.name || file.uploadedFile?.name));
+          const isVideo = mimeType.startsWith("video/") && !isVoiceNote;
+          const isAudio = mimeType.startsWith("audio/") || isVoiceNote;
           const isDocument = getUploadDisplayKind(mimeType) === "document";
           if (isAudio) {
             const uploaded = file.uploadedFile;
@@ -386,6 +387,7 @@ export function FileThumbnails({
                 <VoiceNoteTile
                   id={uploaded?._id || file.id}
                   src={uploaded?.url || file.base64 || ""}
+                  localFile={file.file}
                   duration={file.duration ?? uploaded?.duration}
                   label={label}
                   onRemove={() => onRemove(file.id)}

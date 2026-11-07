@@ -194,6 +194,8 @@ export default function VoicePlayer({
       return;
     }
     element.playbackRate = speed;
+    // Playing from the very end would finish instantly and need a second tap.
+    if (total && element.currentTime >= total - 0.05) seekTo(0);
     void element.play().catch(() => {
       toast.error("Couldn’t play this recording. Try again.");
     });
@@ -214,8 +216,10 @@ export default function VoicePlayer({
         }}
         src={src}
         preload="auto"
-        crossOrigin="anonymous"
-        onError={onError}
+        onError={(event) => {
+          onError?.(event);
+          toast.error("Couldn’t load this recording. Try again.");
+        }}
         onPlay={() => setPlaying(true)}
         onPause={() => setPlaying(false)}
         onLoadedMetadata={(event) => {

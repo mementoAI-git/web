@@ -1,5 +1,6 @@
 import { fireEvent, screen } from "@testing-library/react";
 import { beforeEach, expect, it, vi } from "vitest";
+import { toast } from "sonner";
 import { renderWithProviders } from "@/test";
 import { VoiceNoteTile } from "./voice-note-tile";
 
@@ -52,4 +53,27 @@ it("opens the viewer from the tile and removes from the corner", () => {
 it("adds no buttons when a parent control already opens the clip", () => {
   renderWithProviders(tile({ interactive: false, onOpen: vi.fn() }));
   expect(screen.queryByRole("button")).not.toBeInTheDocument();
+});
+
+it("says so instead of silently doing nothing when there's nothing to play", () => {
+  const error = vi.spyOn(toast, "error");
+  renderWithProviders(tile({ src: "" }));
+  fireEvent.click(screen.getByRole("button", { name: "Play voice note" }));
+  expect(play).not.toHaveBeenCalled();
+  expect(error).toHaveBeenCalledWith("This recording isn’t ready to play yet.");
+});
+
+it("plays the local recording while it has no uploaded link", () => {
+  URL.createObjectURL = vi.fn(() => "blob:local");
+  URL.revokeObjectURL = vi.fn();
+  renderWithProviders(tile({ src: "", localFile: new File(["a"], "a.webm", { type: "audio/webm" }) }));
+  fireEvent.click(screen.getByRole("button", { name: "Play voice note" }));
+  expect(play).toHaveBeenCalledOnce();
+});
+
+it("offers a retry when the upload failed", () => {
+  const onRetry = vi.fn();
+  renderWithProviders(tile({ onRetry }));
+  fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+  expect(onRetry).toHaveBeenCalledOnce();
 });

@@ -82,19 +82,18 @@ it("offers the Add Story upload options and opens the document picker", async ()
   expect(screen.queryByRole("menu")).not.toBeInTheDocument();
 });
 
-it("hides the avatar while typing and restores it when cleared", () => {
+it("shows no avatar and enables Publish only once there is text", () => {
   renderWithProviders(<QuickCapture />);
-  expect(screen.getByTestId("quick-story-avatar")).toBeInTheDocument();
+  expect(screen.queryByAltText("Your avatar")).not.toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Publish" })).toBeDisabled();
   fireEvent.change(screen.getByRole("textbox", { name: "Story" }), {
     target: { value: "A memory" },
   });
-  expect(screen.queryByTestId("quick-story-avatar")).not.toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Publish" })).toBeEnabled();
   fireEvent.change(screen.getByRole("textbox", { name: "Story" }), {
     target: { value: "" },
   });
-  expect(screen.getByTestId("quick-story-avatar")).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Publish" })).toBeDisabled();
 });
 it.each(["everyone", "group"])(
   "publishes %s access through the existing story endpoint",

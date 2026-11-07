@@ -9,6 +9,12 @@ import { renderWithProviders } from "@/test";
 import { server } from "@/test/mocks/server";
 import { http, HttpResponse } from "msw";
 import type { IOnUploadPayload } from "@/utility/interface";
+import {
+  MEMORY_ACCEPT_AUDIO,
+  MEMORY_ACCEPT_DOCUMENTS,
+  MEMORY_ACCEPT_IMAGES,
+  MEMORY_ACCEPT_VIDEOS,
+} from "@/utility/constant";
 import albumArtwork from "@/assets/image/HD Album story bg memento.webp";
 import referenceAlbum from "@/assets/image/story-overlay-c-tall-album.webp";
 import darkAlbumArtwork from "@/assets/image/HD Album story bg memento dark.webp";
@@ -602,6 +608,26 @@ describe("CreateMemory", () => {
       expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
       expect(screen.queryByRole("dialog", { name: "Add Story" })).not.toBeInTheDocument();
       expect(JSON.parse(localStorage.getItem("create-memory-drafts") ?? "[]")[0].title).toBe("Keep me");
+    });
+
+    it("opens one system picker for every attachment type, with no menu first", async () => {
+      const click = vi.spyOn(HTMLInputElement.prototype, "click").mockImplementation(() => undefined);
+      const user = setup();
+      await user.click(screen.getByRole("button", { name: "Add attachment" }));
+      expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+      expect(click).toHaveBeenCalledTimes(1);
+      const picker = click.mock.contexts[0] as HTMLInputElement;
+      expect(picker.multiple).toBe(true);
+      const accepted = picker.accept.split(",");
+      for (const list of [
+        MEMORY_ACCEPT_IMAGES,
+        MEMORY_ACCEPT_VIDEOS,
+        MEMORY_ACCEPT_AUDIO,
+        MEMORY_ACCEPT_DOCUMENTS,
+      ]) {
+        expect(accepted).toEqual(expect.arrayContaining(list.split(",")));
+      }
+      click.mockRestore();
     });
 
     it("uses the album paper for the writer's background", () => {

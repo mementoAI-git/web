@@ -18,6 +18,23 @@ function formatClipTime(totalSeconds: number) {
   return `${Math.floor(safe / 60)}:${String(safe % 60).padStart(2, "0")}`;
 }
 
+const PLAY_FAILED = "Couldn’t play this recording. Try again.";
+
+/** Plays what's on this device when there is one, so a clip works before and despite its upload. */
+function useLocalFileUrl(file?: File | null) {
+  const [url, setUrl] = useState("");
+  useEffect(() => {
+    if (!file) {
+      setUrl("");
+      return;
+    }
+    const next = URL.createObjectURL(file);
+    setUrl(next);
+    return () => URL.revokeObjectURL(next);
+  }, [file]);
+  return url;
+}
+
 function useClipPlayback(src: string, onFailed?: () => void) {
   const clip = useRef<HTMLAudioElement | null>(null);
   const frame = useRef(0);
@@ -37,7 +54,10 @@ function useClipPlayback(src: string, onFailed?: () => void) {
   }, [src]);
 
   const toggle = () => {
-    if (!src) return;
+    if (!src) {
+      toast.error("This recording isn’t ready to play yet.");
+      return;
+    }
     if (clip.current && !clip.current.paused) {
       clip.current.pause();
       return;
@@ -45,6 +65,25 @@ function useClipPlayback(src: string, onFailed?: () => void) {
     const element = clip.current ?? new Audio(src);
     if (!clip.current) {
       clip.current = element;
+      let retried = false;
+      // Some browsers won't stream a link they could still play once fully downloaded.
+      const recover = async () => {
+        if (!retried && !src.startsWith("blob:") && !src.startsWith("data:")) {
+          retried = true;
+          try {
+            const response = await fetch(src);
+            if (response.ok) {
+              element.src = URL.createObjectURL(await response.blob());
+              await element.play();
+              return;
+            }
+          } catch {
+            /* Reported below. */
+          }
+        }
+        onFailed?.();
+        toast.error(PLAY_FAILED);
+      };
       element.addEventListener("play", () => {
         setPlaying(true);
         const tick = () => {
@@ -61,12 +100,19 @@ function useClipPlayback(src: string, onFailed?: () => void) {
         element.currentTime = 0;
         setPosition(0);
       });
-      element.addEventListener("error", () => onFailed?.());
+      element.addEventListener("error", () => void recover());
     }
     if (activeClip && activeClip !== element) activeClip.pause();
     activeClip = element;
-    void element.play().catch(() => {
-      toast.error("Couldn’t play this recording. Try again.");
+    void element.play().catch((cause: unknown) => {
+      // The element's error event handles sources it can't load; this is everything else.
+      if (!element.error) {
+        toast.error(
+          cause instanceof DOMException && cause.name === "NotAllowedError"
+            ? "Your browser blocked playback. Tap play again."
+            : PLAY_FAILED,
+        );
+      }
     });
   };
   return { playing, position, toggle };
@@ -75,18 +121,27 @@ function useClipPlayback(src: string, onFailed?: () => void) {
 export function VoiceNoteTile({
   id,
   src,
+  localFile,
   duration,
   label,
   compact = false,
   interactive = true,
   onOpen,
   onRemove,
+  onRetry,
+  uploadProgress,
   onError,
   className,
 }: {
   id: string;
   src: string;
+  /** The recording itself, while it's still on this device. */
+  localFile?: File | null;
   duration?: number;
+  /** Set when the upload failed, to offer another try. */
+  onRetry?: () => void;
+  /** Percent uploaded, while that's still going on. */
+  uploadProgress?: number;
   /** What the clip is called, for screen readers. */
   label: string;
   compact?: boolean;
@@ -97,8 +152,10 @@ export function VoiceNoteTile({
   onError?: () => void;
   className?: string;
 }) {
-  const shape = useAudioPeaks(id, src);
-  const { playing, position, toggle } = useClipPlayback(src, onError);
+  const localUrl = useLocalFileUrl(localFile);
+  const playable = localUrl || src;
+  const shape = useAudioPeaks(id, playable);
+  const { playing, position, toggle } = useClipPlayback(playable, onError);
   const barCount = compact ? 18 : 28;
   const bars = shape
     ? resamplePeaks(shape.peaks, barCount)
@@ -170,12 +227,37 @@ export function VoiceNoteTile({
             key={index}
             className={cn(
               "w-[3px] rounded-full bg-fill-brand-strong transition-opacity duration-100",
-              (index + 0.5) / bars.length <= played ? "opacity-100" : "opacity-40",
+              (index + 0.5) / bars.length <= played ? "opacity-100" : "opacity-55",
             )}
             style={{ height: `${Math.max(6, level * 100)}%` }}
           />
         ))}
       </div>
+      {uploadProgress !== undefined && uploadProgress < 100 ? (
+        <div
+          role="progressbar"
+          aria-label="Uploading voice note"
+          aria-valuenow={Math.round(uploadProgress)}
+          className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-1 bg-fill-neutral-weaker"
+        >
+          <div className="h-full bg-fill-brand-strong transition-[width]" style={{ width: `${Math.max(4, uploadProgress)}%` }} />
+        </div>
+      ) : null}
+      {onRetry ? (
+        <div className="relative z-10 flex items-center justify-between gap-2 font-inter text-xs text-text-neutral-weak">
+          <span role="alert">Didn’t upload</span>
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              onRetry();
+            }}
+            className="cursor-pointer font-semibold text-text-brand-strong underline-offset-2 hover:underline"
+          >
+            Retry
+          </button>
+        </div>
+      ) : null}
       {onRemove ? (
         <button
           type="button"

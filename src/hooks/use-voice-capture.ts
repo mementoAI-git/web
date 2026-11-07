@@ -26,6 +26,27 @@ export function meterHeight(rms: number) {
   return Math.max(5, 3 + amplitude * 29);
 }
 
+/**
+ * MP4/AAC comes first because it plays everywhere, including Safari, iPhones and the
+ * mobile app. WebM recorded in Chrome may not play back on those.
+ */
+const RECORDING_FORMATS = [
+  "audio/mp4;codecs=mp4a.40.2",
+  "audio/mp4",
+  "audio/webm;codecs=opus",
+  "audio/webm",
+  "audio/ogg",
+];
+/** Speech doesn't need more, and it keeps long recordings inside the upload limit. */
+const RECORDING_BITRATE = 64000;
+/** Below this the mic is effectively sending nothing. */
+const SILENT_RMS = 0.0005;
+const SILENT_TICKS = 30;
+/** A format that fails this soon is broken here, and little enough has been said to redo it. */
+const FORMAT_RETRY_SECONDS = 2;
+/** Formats this browser claimed but couldn't record, so later recordings skip them. */
+const brokenFormats = new Set<string>();
+
 function audioExtension(mimeType: string) {
   if (mimeType.includes("webm")) return "webm";
   if (mimeType.includes("ogg")) return "ogg";
@@ -38,15 +59,18 @@ export function useVoiceCapture(options: VoiceCaptureOptions) {
   const [levels, setLevels] = useState<number[]>(Array(87).fill(5));
   const [error, setError] = useState("");
   const [canRetry, setCanRetry] = useState(false);
+  const [silent, setSilent] = useState(false);
   const speech = useRef<ReturnType<typeof createLiveDictation>>(null);
   const recorder = useRef<MediaRecorder | null>(null);
   const stream = useRef<MediaStream | null>(null);
   const audio = useRef<AudioContext | null>(null);
+  const meterSource = useRef<MediaStreamAudioSourceNode | null>(null);
   const timer = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
   const meter = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
   const request = useRef<AbortController | null>(null);
   const generation = useRef(0);
   const pending = useRef<Blob | null>(null);
+  const heard = useRef("");
   const elapsed = useRef(0);
   const latest = useRef(options);
   latest.current = options;
@@ -56,8 +80,11 @@ export function useVoiceCapture(options: VoiceCaptureOptions) {
     clearInterval(meter.current);
     stream.current?.getTracks().forEach((track) => track.stop());
     stream.current = null;
+    meterSource.current?.disconnect();
+    meterSource.current = null;
     void audio.current?.close().catch(() => {});
     audio.current = null;
+    setSilent(false);
   }
 
   function cancel() {
@@ -110,6 +137,14 @@ export function useVoiceCapture(options: VoiceCaptureOptions) {
       pending.current = null;
     } catch (cause) {
       if (attempt !== generation.current) return;
+      // The full audio couldn't be transcribed, but what the browser heard beats nothing.
+      const receiver = latest.current;
+      if (heard.current && receiver.mode === "text") {
+        receiver.onTranscript(heard.current);
+        heard.current = "";
+        pending.current = null;
+        return;
+      }
       setError(
         cause instanceof Error
           ? cause.message
@@ -129,6 +164,16 @@ export function useVoiceCapture(options: VoiceCaptureOptions) {
     const attempt = ++generation.current;
     setPhase("starting");
     setError("");
+    // Made here, before anything async, while the browser still counts this as the tap.
+    // Safari leaves a context created later suspended, which reads as permanent silence.
+    let meterContext: AudioContext | null = null;
+    try {
+      meterContext = new AudioContext();
+      void meterContext.resume().catch(() => {});
+      audio.current = meterContext;
+    } catch {
+      /* Recording doesn't depend on the waveform. */
+    }
     try {
       if (
         !navigator.mediaDevices?.getUserMedia ||
@@ -144,97 +189,140 @@ export function useVoiceCapture(options: VoiceCaptureOptions) {
         input.getTracks().forEach((track) => track.stop());
         return;
       }
+      // Permission can succeed with a track that's already dead, as in the iOS Simulator.
+      // Recording from it would only ever produce an empty file, so say so straight away.
+      const micTrack = input.getAudioTracks?.()[0];
+      if (micTrack?.readyState === "ended") {
+        input.getTracks().forEach((track) => track.stop());
+        throw new Error(
+          "Your microphone isn’t sending any audio. Check that it’s available and try again.",
+        );
+      }
       stream.current = input;
-      const mimeType = [
-        "audio/webm;codecs=opus",
-        "audio/webm",
-        "audio/mp4",
-        "audio/ogg",
-      ].find((type) => MediaRecorder.isTypeSupported(type));
       if (latest.current.mode === "text") {
         speech.current = createLiveDictation();
         await speech.current?.start();
         if (attempt !== generation.current) return;
       }
-      const rec = new MediaRecorder(input, mimeType ? { mimeType } : undefined);
-      recorder.current = rec;
-      const chunks: Blob[] = [];
-      rec.ondataavailable = (event) => {
-        if (event.data.size) chunks.push(event.data);
-      };
-      rec.onstop = async () => {
-        const recognition = speech.current;
-        const recognized = await recognition?.finish();
-        recognition?.cancel();
-        if (attempt !== generation.current) return;
-        if (speech.current === recognition) speech.current = null;
-        release();
-        recorder.current = null;
-        if (attempt !== generation.current) return;
-        if (recognized?.trim()) {
-          const receiver = latest.current;
-          if (receiver.mode === "text") receiver.onTranscript(recognized.trim());
-          pending.current = null;
-          setCanRetry(false);
-          setPhase("idle");
-          return;
-        }
-        const blob = new Blob(chunks, {
-          type: rec.mimeType || mimeType || "audio/webm",
+      const launch = (formats: string[]) => {
+        const [format, ...remaining] = formats;
+        const rec = new MediaRecorder(input, {
+          ...(format ? { mimeType: format } : {}),
+          audioBitsPerSecond: RECORDING_BITRATE,
         });
-        if (!blob.size) {
-          setPhase("idle");
-          setError("No audio was recorded. Try again.");
-          return;
-        }
-        const current = latest.current;
-        if (current.mode === "audio") {
-          setPhase("idle");
-          current.onAudio(
-            new File([blob], `recording-${Date.now()}.${audioExtension(blob.type)}`, {
-              type: blob.type.split(";")[0].trim(),
-            }),
-            elapsed.current,
-          );
-          return;
-        }
-        pending.current = blob;
-        void transcribe(attempt);
+        recorder.current = rec;
+        const chunks: Blob[] = [];
+        rec.ondataavailable = (event) => {
+          if (event.data.size) chunks.push(event.data);
+        };
+        rec.onstop = async () => {
+          const recognition = speech.current;
+          const recognized = await recognition?.finish();
+          heard.current = recognition?.heard().trim() ?? "";
+          recognition?.cancel();
+          if (attempt !== generation.current) return;
+          if (speech.current === recognition) speech.current = null;
+          release();
+          recorder.current = null;
+          if (attempt !== generation.current) return;
+          if (recognized?.trim()) {
+            const receiver = latest.current;
+            if (receiver.mode === "text") receiver.onTranscript(recognized.trim());
+            pending.current = null;
+            setCanRetry(false);
+            setPhase("idle");
+            return;
+          }
+          const blob = new Blob(chunks, {
+            type: rec.mimeType || format || "audio/webm",
+          });
+          if (!blob.size) {
+            setPhase("idle");
+            setError("No audio was recorded. Try again.");
+            return;
+          }
+          const current = latest.current;
+          if (current.mode === "audio") {
+            setPhase("idle");
+            current.onAudio(
+              new File([blob], `recording-${Date.now()}.${audioExtension(blob.type)}`, {
+                type: blob.type.split(";")[0].trim(),
+              }),
+              elapsed.current,
+            );
+            return;
+          }
+          pending.current = blob;
+          void transcribe(attempt);
+        };
+        rec.onerror = () => {
+          if (attempt !== generation.current) return;
+          if (format) brokenFormats.add(format);
+          // Browsers can claim a format, then fail as soon as it encodes. Moments in, nothing
+          // has been lost, so quietly carry on in the next one.
+          if (elapsed.current <= FORMAT_RETRY_SECONDS && remaining.length) {
+            rec.onstop = null;
+            rec.ondataavailable = null;
+            try {
+              if (rec.state !== "inactive") rec.stop();
+            } catch {
+              /* Already stopped by the failure. */
+            }
+            launch(remaining);
+            return;
+          }
+          // Later than that, keep whatever was captured rather than throwing it away.
+          if (chunks.length) {
+            setError("Recording stopped early. We kept what was captured.");
+            if (rec.state !== "inactive") rec.stop();
+            else void rec.onstop?.(new Event("stop"));
+            return;
+          }
+          cancel();
+          setError("Recording stopped unexpectedly. Please try again.");
+        };
+        rec.start(1000);
       };
-      rec.onerror = () => {
-        cancel();
-        setError("Recording stopped unexpectedly. Please try again.");
-      };
-      rec.start(1000);
+      launch(
+        RECORDING_FORMATS.filter(
+          (type) => MediaRecorder.isTypeSupported(type) && !brokenFormats.has(type),
+        ),
+      );
       elapsed.current = 0;
       setSeconds(0);
       setLevels(Array(87).fill(5));
       setPhase("recording");
       timer.current = setInterval(() => {
-        if (rec.state === "recording") {
+        if (recorder.current?.state === "recording") {
           elapsed.current += 1;
           setSeconds(elapsed.current);
         }
       }, 1000);
       // A real microphone meter; recording remains available without Web Audio.
       try {
-        const context = new AudioContext();
-        audio.current = context;
-        // Recording can start outside a tap, which leaves the context suspended and silent.
-        void context.resume().catch(() => {});
-        const analyser = context.createAnalyser();
-        analyser.fftSize = 1024;
-        context.createMediaStreamSource(input).connect(analyser);
-        const samples = new Float32Array(analyser.fftSize);
-        meter.current = setInterval(() => {
-          if (rec.state !== "recording") return;
-          analyser.getFloatTimeDomainData(samples);
-          const rms = Math.sqrt(
-            samples.reduce((sum, value) => sum + value * value, 0) /
-              samples.length,
-          );
-          setLevels((previous) => [...previous.slice(1), meterHeight(rms)]);
-        }, 100);
+        if (meterContext) {
+          const context = meterContext;
+          const analyser = context.createAnalyser();
+          analyser.fftSize = 1024;
+          // Held in a ref: an unreferenced source node can be garbage collected mid-recording.
+          meterSource.current = context.createMediaStreamSource(input);
+          meterSource.current.connect(analyser);
+          const samples = new Float32Array(analyser.fftSize);
+          const track = input.getAudioTracks()[0];
+          let quietTicks = 0;
+          meter.current = setInterval(() => {
+            if (recorder.current?.state !== "recording") return;
+            if (context.state === "suspended") void context.resume().catch(() => {});
+            analyser.getFloatTimeDomainData(samples);
+            const rms = Math.sqrt(
+              samples.reduce((sum, value) => sum + value * value, 0) /
+                samples.length,
+            );
+            quietTicks = rms < SILENT_RMS || track?.muted ? quietTicks + 1 : 0;
+            setSilent(quietTicks >= SILENT_TICKS);
+            setLevels((previous) => [...previous.slice(1), meterHeight(rms)]);
+          }, 100);
+        }
       } catch {
         /* Audio recording does not depend on waveform support. */
       }
@@ -298,6 +386,7 @@ export function useVoiceCapture(options: VoiceCaptureOptions) {
     levels,
     error,
     canRetry,
+    silent,
     start,
     stop,
     cancel,

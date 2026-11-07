@@ -226,7 +226,7 @@ it("falls back without hanging when recognition does not finish", async () => {
     Speech.latest.stop.mockImplementation(() => {});
     act(() => result.current.stop());
     await act(async () => {
-      await vi.advanceTimersByTimeAsync(701);
+      await vi.advanceTimersByTimeAsync(1501);
     });
     expect(transcribeAudio).toHaveBeenCalledOnce();
     expect(append).toHaveBeenCalledWith("A warm memory.");
@@ -310,4 +310,153 @@ it("moves the meter for ordinary speech levels instead of flattening them", () =
   expect(meterHeight(0.01)).toBeGreaterThan(10);
   expect(meterHeight(0.1)).toBeGreaterThan(meterHeight(0.01) + 8);
   expect(meterHeight(1)).toBe(32);
+});
+it("records in a format that plays everywhere when the browser offers it", async () => {
+  const requested: (MediaRecorderOptions | undefined)[] = [];
+  vi.stubGlobal(
+    "MediaRecorder",
+    Object.assign(
+      class extends Recorder {
+        constructor(_stream: unknown, options?: MediaRecorderOptions) {
+          super();
+          requested.push(options);
+        }
+      },
+      { isTypeSupported: (type: string) => /^audio\/(mp4|webm)/.test(type) },
+    ),
+  );
+  const { result } = renderHook(() => useVoiceCapture({ mode: "audio", onAudio: vi.fn() }));
+  await act(() => result.current.start());
+  expect(requested[0]?.mimeType).toBe("audio/mp4;codecs=mp4a.40.2");
+  act(() => result.current.cancel());
+});
+it("creates the audio context during the tap, before waiting on the microphone", async () => {
+  const order: string[] = [];
+  const realGetUserMedia = navigator.mediaDevices.getUserMedia;
+  vi.stubGlobal(
+    "AudioContext",
+    class {
+      state = "running";
+      constructor() {
+        order.push("context");
+      }
+      resume = () => Promise.resolve();
+      close = () => Promise.resolve();
+      createAnalyser = () => ({ fftSize: 0, getFloatTimeDomainData: vi.fn() });
+      createMediaStreamSource = () => ({ connect: vi.fn(), disconnect: vi.fn() });
+    },
+  );
+  Object.defineProperty(navigator, "mediaDevices", {
+    configurable: true,
+    value: {
+      getUserMedia: (constraints: MediaStreamConstraints) => {
+        order.push("microphone");
+        return realGetUserMedia(constraints);
+      },
+    },
+  });
+  const { result } = renderHook(() => useVoiceCapture({ mode: "audio", onAudio: vi.fn() }));
+  await act(() => result.current.start());
+  expect(order).toEqual(["context", "microphone"]);
+  act(() => result.current.cancel());
+});
+it("falls back to the next format when one fails right after starting", async () => {
+  const created: { format?: string; recorder: Recorder & { onerror?: () => void } }[] = [];
+  vi.stubGlobal(
+    "MediaRecorder",
+    Object.assign(
+      class extends Recorder {
+        constructor(_stream: unknown, options?: MediaRecorderOptions) {
+          super();
+          created.push({ format: options?.mimeType, recorder: this });
+        }
+      },
+      { isTypeSupported: (type: string) => /^audio\/(mp4|webm)/.test(type) },
+    ),
+  );
+  const onAudio = vi.fn();
+  const { result } = renderHook(() => useVoiceCapture({ mode: "audio", onAudio }));
+  await act(() => result.current.start());
+  const first = created.length - 1;
+  act(() => created[first].recorder.onerror?.());
+  expect(created.length).toBe(first + 2);
+  expect(created[first + 1].format).not.toBe(created[first].format);
+  expect(result.current.error).toBe("");
+  expect(result.current.phase).toBe("recording");
+  act(() => result.current.stop());
+  await waitFor(() => expect(onAudio).toHaveBeenCalledTimes(1));
+});
+it("keeps what was captured when recording fails later on", async () => {
+  const created: (Recorder & { onerror?: () => void })[] = [];
+  vi.stubGlobal(
+    "MediaRecorder",
+    Object.assign(
+      class extends Recorder {
+        constructor() {
+          super();
+          created.push(this);
+        }
+      },
+      { isTypeSupported: () => false },
+    ),
+  );
+  const onAudio = vi.fn();
+  const { result } = renderHook(() => useVoiceCapture({ mode: "audio", onAudio }));
+  await act(() => result.current.start());
+  const [recorder] = created;
+  act(() => recorder.ondataavailable?.({ data: new Blob(["audio"]) }));
+  act(() => recorder.onerror?.());
+  await waitFor(() => expect(onAudio).toHaveBeenCalledTimes(1));
+  expect(result.current.error).toBe("Recording stopped early. We kept what was captured.");
+});
+it("reports a dead microphone instead of pretending to record", async () => {
+  Object.defineProperty(navigator, "mediaDevices", {
+    configurable: true,
+    value: {
+      getUserMedia: vi.fn().mockResolvedValue({
+        getTracks: () => [{ stop: stopTrack }],
+        getAudioTracks: () => [{ readyState: "ended" }],
+      }),
+    },
+  });
+  const { result } = renderHook(() => useVoiceCapture({ mode: "audio", onAudio: vi.fn() }));
+  await act(() => result.current.start());
+  expect(result.current.phase).toBe("idle");
+  expect(result.current.error).toMatch(/isn’t sending any audio/);
+  expect(stopTrack).toHaveBeenCalled();
+});
+it("uses what the browser heard when server transcription fails", async () => {
+  class FailingRecognition {
+    lang = "";
+    continuous = false;
+    interimResults = false;
+    onresult: ((event: { results: { isFinal: boolean; 0: { transcript: string } }[] }) => void) | null = null;
+    onerror: ((event: { error: string }) => void) | null = null;
+    onend: (() => void) | null = null;
+    static latest: FailingRecognition;
+    constructor() {
+      FailingRecognition.latest = this;
+    }
+    start() {}
+    abort() {}
+    stop() {
+      // The recognizer breaks at the end, so its own result can't be trusted as complete.
+      this.onerror?.({ error: "network" });
+      this.onend?.();
+    }
+  }
+  vi.stubGlobal("SpeechRecognition", FailingRecognition);
+  vi.mocked(transcribeAudio).mockRejectedValueOnce(new Error("Transcription is temporarily busy."));
+  const append = vi.fn();
+  const { result } = renderHook(() => useVoiceCapture({ mode: "text", onTranscript: append }));
+  await act(() => result.current.start());
+  act(() =>
+    FailingRecognition.latest.onresult?.({
+      results: [{ isFinal: true, 0: { transcript: "What I said" } }],
+    }),
+  );
+  act(() => result.current.stop());
+  await waitFor(() => expect(append).toHaveBeenCalledWith("What I said"));
+  expect(transcribeAudio).toHaveBeenCalled();
+  expect(result.current.error).toBe("");
 });

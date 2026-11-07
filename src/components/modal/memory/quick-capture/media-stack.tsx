@@ -69,10 +69,12 @@ export function QuickCaptureMediaStack({
   files,
   voiceNoteIds,
   onRemove,
+  onRetry,
 }: {
   files: IOnUploadPayload[];
   voiceNoteIds: Record<string, true>;
   onRemove: (id: string) => void;
+  onRetry?: (file: IOnUploadPayload) => void;
 }) {
   const { push } = useModal();
   const [expanded, setExpanded] = useState(false);
@@ -188,6 +190,49 @@ export function QuickCaptureMediaStack({
         const src = mediaSrc(f);
         const dur = durationOf(f);
 
+        // First, so a recording stays playable from this device while it uploads or if it fails.
+        if (isVoice) {
+          const uploaded = f.uploadedFile;
+          return (
+            <VoiceNoteTile
+              key={f.id}
+              id={uploaded?._id || f.id}
+              src={src}
+              localFile={f.file}
+              duration={dur}
+              label={voiceNoteLabel(f.file?.name || uploaded?.name) ?? "Voice note"}
+              onRetry={f.uploadFailed && onRetry ? () => onRetry(f) : undefined}
+              uploadProgress={f.uploadFailed ? undefined : f.progress}
+              onRemove={() => onRemove(f.id)}
+              onOpen={uploaded?._id ? () => push?.("file-preview", { files: [{ ...uploaded, duration: dur }], readOnly: true }) : undefined}
+            />
+          );
+        }
+
+        if (f.uploadFailed) {
+          return (
+            <div
+              key={f.id}
+              role="alert"
+              className="flex items-center justify-between gap-3 rounded-xl border border-stroke-neutral-weaker px-3 py-3 font-inter text-xs text-text-neutral-weak"
+            >
+              <span className="min-w-0 truncate">
+                {displayFileName(f.file?.name) || "File"} didn’t upload
+              </span>
+              <span className="flex shrink-0 items-center gap-3">
+                {onRetry ? (
+                  <button type="button" onClick={() => onRetry(f)} className="cursor-pointer font-semibold text-text-brand-strong">
+                    Retry
+                  </button>
+                ) : null}
+                <button type="button" onClick={() => onRemove(f.id)} className="cursor-pointer font-semibold">
+                  Remove
+                </button>
+              </span>
+            </div>
+          );
+        }
+
         if (f.progress !== undefined && f.progress < 100) {
           return (
             <div
@@ -216,21 +261,6 @@ export function QuickCaptureMediaStack({
                 <VideoPlayer src={src} />
               </div>
             </div>
-          );
-        }
-
-        if (isVoice) {
-          const uploaded = f.uploadedFile;
-          return (
-            <VoiceNoteTile
-              key={f.id}
-              id={uploaded?._id || f.id}
-              src={src}
-              duration={dur}
-              label={voiceNoteLabel(f.file?.name || uploaded?.name) ?? "Voice note"}
-              onRemove={() => onRemove(f.id)}
-              onOpen={uploaded?._id ? () => push?.("file-preview", { files: [{ ...uploaded, duration: dur }], readOnly: true }) : undefined}
-            />
           );
         }
 

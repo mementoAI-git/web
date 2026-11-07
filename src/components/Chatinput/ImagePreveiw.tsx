@@ -28,6 +28,7 @@ export default function ImagePreview({ files, handleRemoveFile }: IImagePreviewP
               <VoiceNoteTile
                 id={file.id}
                 src={localSrc}
+                localFile={file.file}
                 duration={file.duration}
                 label={displayFileName(mappedFile.name) || "Voice note"}
                 compact

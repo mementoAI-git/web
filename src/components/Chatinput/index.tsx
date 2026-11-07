@@ -1,4 +1,4 @@
-import { AudioAttachmentRecorder } from "@/components/recorder/voice-recorder";
+import { DictationRecorder } from "@/components/recorder/voice-recorder";
 import { ChatDesignIcon } from "@/components/chat-design-icon";
 import { useVoiceSession } from "@/contexts/voice-session";
 import { buildPromptWithReplyQuote } from "@/utility/chat-reply-prompt";
@@ -444,9 +444,17 @@ function ChatinputImpl({
             onPaste={handlePaste}
           />
           {isQuickRecording ? (
-            <AudioAttachmentRecorder
+            // Chat can't read a recording right now, so speech goes in as text to send.
+            <DictationRecorder
               className="mb-0"
-              onFinish={(file) => void processFileForUpload(file)}
+              onTranscript={(spoken) => {
+                setText((current) =>
+                  current.trim()
+                    ? `${current}${/\s$/.test(current) ? "" : " "}${spoken}`
+                    : spoken,
+                );
+                requestAnimationFrame(() => textareaRef.current?.focus());
+              }}
               onClose={() => setIsQuickRecording(false)}
             />
           ) : null}
@@ -482,7 +490,7 @@ function ChatinputImpl({
                     "flex size-9 md:size-10 shrink-0 cursor-pointer items-center justify-center rounded-full border border-stroke-neutral-weak bg-fill-neutral-weak text-icon-neutral-strong transition-[transform,background-color,color] duration-150 hover:bg-fill-neutral-weak hover:text-text-neutral-strong active:scale-[0.97]",
                     topic && "bg-transparent",
                   )}
-                  aria-label="Record voice clip"
+                  aria-label="Dictate a message"
                 >
                   <ChatDesignIcon name="microphone" />
                 </button>

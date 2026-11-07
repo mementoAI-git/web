@@ -30,6 +30,7 @@ import type { IFile, IOnUploadPayload } from "@/utility/interface";
 import {
   VoiceRecorderControls,
   VoiceRecorderIcon as RecordingIcon,
+  VoiceRecorderSilenceHint,
   VoiceRecorderStatus,
 } from "@/components/recorder/voice-recorder";
 import microphoneLight from "@/assets/icon/overview-recording/microphone-light.svg";
@@ -144,7 +145,7 @@ export function OverviewCaptureCard({
   }
 
   const { canUse } = useFeatureFlags();
-  const { files, handleUpload, handleDeleteFile, setFiles } = useFileUpload();
+  const { files, handleUpload, retryUpload, handleDeleteFile, setFiles } = useFileUpload({ retainFailures: true });
   const voiceStorageKey = userId ? `memento-overview-voice:${userId}` : null;
   const voiceRestored = useRef(false);
   useEffect(() => {
@@ -381,12 +382,14 @@ export function OverviewCaptureCard({
               data-open="true"
             />
           ) : null}
+          {isRecording ? <VoiceRecorderSilenceHint silent={recording.silent} /> : null}
         </div>
         {files.length > 0 && (
           <div data-capture-actions className="pb-4">
             <QuickCaptureMediaStack
               files={files}
               voiceNoteIds={voiceNoteIds}
+              onRetry={retryUpload}
               onRemove={(id) => {
                 const file = files.find((item) => item.id === id);
                 if (file?.uploadedFile) void handleDeleteFile(file).catch(() => undefined);

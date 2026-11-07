@@ -1,9 +1,7 @@
 "use client";
 
-import { UserAvatar } from "@/components/user-avatar";
 import { reportFetcherError } from "@/api/report-fetcher-error";
 
-import { getProfileAvatarUrl } from "@/utility/profile-avatar";
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -20,7 +18,7 @@ import emojiData from "@emoji-mart/data";
 import { useModal } from "@/hooks/use-modal";
 import { useDismissOnOutsidePress } from "@/hooks/use-dismiss-on-outside-press";
 import { useStore } from "@/hooks/use-store";
-import { VoiceRecorderControls } from "@/components/recorder/voice-recorder";
+import { VoiceRecorderControls, VoiceRecorderSilenceHint } from "@/components/recorder/voice-recorder";
 import { useVoiceCapture } from "@/hooks/use-voice-capture";
 import { useFeatureFlags } from "@/contexts/feature-flags";
 import { useTheme } from "@/contexts/theme";
@@ -125,7 +123,7 @@ export function QuickCapture(props: { isMobile?: boolean; data?: unknown }) {
 
   const [note, setNote] = useState("");
   const [voiceNoteIds, setVoiceNoteIds] = useState<Record<string, true>>({});
-  const { files, handleUpload, handleDeleteFile, setFiles } = useFileUpload();
+  const { files, handleUpload, retryUpload, handleDeleteFile, setFiles } = useFileUpload({ retainFailures: true });
   const [selectedBeneficiaryIds, setSelectedBeneficiaryIds] = useState<
     string[]
   >([]);
@@ -784,7 +782,6 @@ export function QuickCapture(props: { isMobile?: boolean; data?: unknown }) {
     close("quick-capture");
   };
 
-  const avatarUrl = getProfileAvatarUrl(user);
 
 
   const draftKeys = scanQuickCaptureDraftKeys(user?.email);
@@ -1045,37 +1042,26 @@ export function QuickCapture(props: { isMobile?: boolean; data?: unknown }) {
 
   const scrollBody = (
     <div className="hide-scrollbar min-h-0 overflow-y-auto">
-      <div
-        className={cn(
-          "flex items-start gap-2",
-          !files.length && "min-h-[122px]",
-        )}
-      >
-        {!note && !isMobile && (
-          <div data-testid="quick-story-avatar" className="shrink-0">
-            <UserAvatar alt="Your avatar" src={avatarUrl} userId={user?._id} email={user?.email} name={[user?.first_name, user?.last_name].filter(Boolean).join(" ")} size="lg" />
-          </div>
-        )}
-        <div className="min-w-0 flex-1">
-          {pinnedPrompt}
-          <textarea
-            ref={textareaRef}
-            readOnly={isMutating || recordingUi}
-            id="qc-note"
-            aria-label="Story"
-            value={plainTextFromQuickCaptureNote(note)}
-            onChange={(e) => setNote(e.target.value.slice(0, NOTE_CHAR_MAX))}
-            placeholder="What's on your mind?"
-            rows={isMobile ? 4 : 2}
-            className="w-full resize-none border-0 bg-transparent text-base leading-6 text-text-neutral-strong outline-none placeholder:text-text-neutral-weaker focus:ring-0"
-          />
-        </div>
+      <div className={cn(!files.length && "min-h-[122px]")}>
+        {pinnedPrompt}
+        <textarea
+          ref={textareaRef}
+          readOnly={isMutating || recordingUi}
+          id="qc-note"
+          aria-label="Story"
+          value={plainTextFromQuickCaptureNote(note)}
+          onChange={(e) => setNote(e.target.value.slice(0, NOTE_CHAR_MAX))}
+          placeholder="What's on your mind?"
+          rows={isMobile ? 4 : 2}
+          className="w-full resize-none border-0 bg-transparent text-base leading-6 text-text-neutral-strong outline-none placeholder:text-text-neutral-weaker focus:ring-0"
+        />
       </div>
       {files.length > 0 && (
         <div className="mt-6">
           <QuickCaptureMediaStack
             files={files}
             voiceNoteIds={voiceNoteIds}
+            onRetry={retryUpload}
             onRemove={handleRemoveFile}
           />
         </div>
@@ -1084,6 +1070,7 @@ export function QuickCapture(props: { isMobile?: boolean; data?: unknown }) {
   );
   const recorderRow = (
     <div className="flex flex-col gap-2">
+      <VoiceRecorderSilenceHint silent={recording.silent} />
       <VoiceRecorderControls
         phase={recording.phase}
         levels={recording.levels}

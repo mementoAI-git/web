@@ -21,7 +21,7 @@ describe("Chatinput", () => {
       screen.getByRole("button", { name: /voice call/i }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /record voice clip/i }),
+      screen.getByRole("button", { name: /dictate a message/i }),
     ).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /^send$/i })).toBeNull();
 

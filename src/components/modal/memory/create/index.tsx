@@ -1700,47 +1700,16 @@ function CreateMemoryBase({
             data-testid="mobile-formatting-toolbar"
             className="hide-scrollbar flex shrink-0 items-center gap-0.5 overflow-x-auto border-t border-stroke-neutral-weaker px-3 py-1.5 pb-[max(0.375rem,env(safe-area-inset-bottom))]"
           >
-            <DropdownMenu modal={false}>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  aria-label="Add attachment"
-                  className="size-9 shrink-0 rounded-[10px] bg-fill-tab-active text-text-tab-active hover:bg-fill-tab-active hover:text-text-tab-active"
-                >
-                  <Plus className="size-5" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                align="start"
-                side="top"
-                className="z-[220]"
-              >
-                <DropdownMenuGroup>
-                  <DropdownMenuItem onSelect={() => fileInputImageRef.current?.click()}>
-                    <ImageIcon aria-hidden /> Photo
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onSelect={() => fileInputVideoRef.current?.click()}>
-                    <Video aria-hidden /> Video
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onSelect={() => fileInputAudioRef.current?.click()}>
-                    <Mic aria-hidden /> Audio file
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onSelect={() => fileInputDocsRef.current?.click()}>
-                    <FileText aria-hidden /> Document
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onSelect={() => {
-                      setVideoRecordedFile(null);
-                      setShowVideoRecorder(true);
-                    }}
-                  >
-                    <Video aria-hidden /> Record video
-                  </DropdownMenuItem>
-                </DropdownMenuGroup>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              aria-label="Add attachment"
+              onClick={() => fileInputAllRef.current?.click()}
+              className="size-9 shrink-0 rounded-[10px] bg-fill-tab-active text-text-tab-active hover:bg-fill-tab-active hover:text-text-tab-active"
+            >
+              <Plus className="size-5" />
+            </Button>
             <Button
               type="button"
               variant="ghost"
