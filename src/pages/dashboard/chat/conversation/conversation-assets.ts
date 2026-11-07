@@ -1,3 +1,4 @@
+import { voiceNoteLabel } from "@/utility/file-label";
 import type { IFile, ILinkMetadata, IMessage } from "@/utility/interface";
 
 export type ChatAttachment = Pick<IFile, "url" | "name"> &
@@ -58,9 +59,11 @@ function extension(name: string) {
 export function classifyConversationFile(file: Pick<IFile, "name" | "type">): ConversationFileAsset["kind"] {
   const type = file.type?.toLowerCase() ?? "";
   const ext = extension(file.name);
+  // WebM is also an audio container, and voice notes can be stored as video/webm.
+  if (type.startsWith("audio/") || voiceNoteLabel(file.name)) return "audio";
   if (type.startsWith("image/") || imageExtensions.has(ext)) return "image";
   if (type.startsWith("video/") || videoExtensions.has(ext)) return "video";
-  if (type.startsWith("audio/") || audioExtensions.has(ext)) return "audio";
+  if (audioExtensions.has(ext)) return "audio";
   return "document";
 }
 

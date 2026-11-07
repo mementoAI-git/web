@@ -25,9 +25,11 @@ export function FormDialogContent({
   busy = false,
   className,
   overlayClassName,
+  headerClassName,
   children,
   ...props
 }: Omit<ComponentProps<typeof DialogContent>, "title"> & {
+  headerClassName?: string;
   title?: string;
   /** Read by screen readers only; the layout has no visible subtitle. */
   description?: string;
@@ -56,7 +58,7 @@ export function FormDialogContent({
       {...props}
     >
       {title ? (
-        <div className="mb-6 flex items-center justify-between gap-3">
+        <div className={cn("mb-6 flex items-center justify-between gap-3", headerClassName)}>
           <DialogTitle className="font-rounded text-2xl font-semibold text-text-neutral-strong">
             {title}
           </DialogTitle>
