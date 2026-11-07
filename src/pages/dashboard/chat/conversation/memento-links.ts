@@ -47,3 +47,34 @@ export function collectReplySources(text = ""): { kind: "story" | "conversation"
   }
   return sources;
 }
+
+/** An action Memento is waiting for the host to confirm, shown as buttons. */
+export type ChatConfirmation = {
+  tool: string;
+  memory: string;
+  args: Record<string, unknown>;
+  text: string;
+  /** Already confirmed: shown as done. */
+  confirmed: boolean;
+};
+
+const CARD = /\n*```memento-(confirm|confirmed)\n([^\n]*)\n```/g;
+const UNFINISHED_CARD = /\n*```memento-confirm[\s\S]*$/;
+
+/** Takes Memento's confirmation cards out of a reply, leaving its words. */
+export function splitConfirmations(text = ""): { text: string; cards: ChatConfirmation[] } {
+  const cards: ChatConfirmation[] = [];
+  const rest = text.replace(CARD, (_, kind: string, json: string) => {
+    try {
+      const card = JSON.parse(json) as Partial<ChatConfirmation>;
+      if (typeof card.tool === "string" && typeof card.memory === "string" && card.args && typeof card.text === "string") {
+        cards.push({ tool: card.tool, memory: card.memory, args: card.args, text: card.text, confirmed: kind === "confirmed" });
+      }
+    } catch {
+      // Not a card Memento wrote; drop it rather than show raw JSON.
+    }
+    return "";
+  });
+  // While the reply is still typing out, a card may be half there.
+  return { text: rest.replace(UNFINISHED_CARD, "").trimEnd(), cards };
+}

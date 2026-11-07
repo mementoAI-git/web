@@ -11,8 +11,8 @@ import type { IFile, ILinkMetadata } from "@/utility/interface";
 import { ChatMediaGroup } from "./chat-media-group";
 import { ChatLinkPreview } from "./chat-link-preview";
 import { buildConversationAssetIndex, extractSharedUrls, splitStackedMedia } from "./conversation-assets";
-import { ChatReplySources, ChatShareCard, MementoLinkChip } from "./chat-memory-links";
-import { parseMementoLink } from "./memento-links";
+import { ChatConfirmCard, ChatReplySources, ChatShareCard, MementoLinkChip } from "./chat-memory-links";
+import { parseMementoLink, splitConfirmations } from "./memento-links";
 
 type ChatAttachment = Pick<IFile, "url" | "name"> &
   Partial<Omit<IFile, "url" | "name">>;
@@ -60,7 +60,7 @@ export default function Bubble({
   role = "user",
   attatchments = [],
   duration = 0,
-  text = "",
+  text: rawText = "",
   is_voice = false,
   compact = false,
   topic = false,
@@ -76,6 +76,11 @@ export default function Bubble({
 }: IBubbleProps) {
 
   const isUser = role === "user"
+  // Memento's confirmation cards are shown as buttons, not as text.
+  const { text, cards } = useMemo(
+    () => (isUser ? { text: rawText, cards: [] } : splitConfirmations(rawText)),
+    [isUser, rawText],
+  );
   const metaVisible = showMessageMeta ?? !compact;
   const timeLabel = metaVisible ? formatMessageTime(createdAt) : null;
   const canCopy = metaVisible && Boolean(text?.trim());
@@ -122,7 +127,7 @@ export default function Bubble({
     !stackedMedia.length ||
     Boolean(text.trim() || replyQuote?.text?.trim() || inlineAttachments.length);
 
-  if (!isUser && !text.trim() && isEmpty(attatchments) && !is_voice) return null;
+  if (!isUser && !text.trim() && !cards.length && isEmpty(attatchments) && !is_voice) return null;
 
   return (
     <div
@@ -228,6 +233,11 @@ export default function Bubble({
               {text || ""}
             </Markdown>
           </span> : null}
+          {cards.length ? (
+            <div className={cn("flex flex-col gap-2", text.trim() && "mt-2")}>
+              {cards.map((card) => <ChatConfirmCard key={String(card.args.confirmation ?? card.text)} card={card} />)}
+            </div>
+          ) : null}
         </div> : null}
         {!isUser && !compact ? <ChatReplySources text={text} /> : null}
         {metaVisible &&
