@@ -16,6 +16,8 @@ interface TableProps<T> {
   emptyRow?: React.ReactNode;
   className?: string;
   headerClassName?: string;
+  /** Hide Previous/Next when the caller loads more rows on scroll. */
+  showPagination?: boolean;
   renderRow: (item: T, index: number) => React.ReactNode;
 }
 
@@ -37,6 +39,7 @@ export default function Table<T>({
   loading = false,
   className = "",
   headerClassName = "",
+  showPagination = true,
 }: TableProps<T>) {
   const handleNext = () => {
     if (!data?.hasNextPage || !onChangePage) return;
@@ -73,7 +76,7 @@ export default function Table<T>({
           </tbody>
         </table>
       </div>
-      <div className="flex w-full flex-row items-center justify-between gap-2 border-t border-v3-stroke-weak bg-white px-3 py-3 font-inter text-xs text-v3-text-weak sm:gap-0 sm:px-6 sm:text-sm">
+      {showPagination && <div className="flex w-full flex-row items-center justify-between gap-2 border-t border-v3-stroke-weak bg-white px-3 py-3 font-inter text-xs text-v3-text-weak sm:gap-0 sm:px-6 sm:text-sm">
         <button
           type="button"
           disabled={!data?.hasPrevPage}
@@ -93,7 +96,7 @@ export default function Table<T>({
         >
           Next
         </button>
-      </div>
+      </div>}
     </div>
   );
 }

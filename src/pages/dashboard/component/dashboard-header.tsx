@@ -30,7 +30,7 @@ const defaultHeaderTitle: Record<string, string> = {
   memories: "my memories",
   stories: "my stories",
   chat: "Chat",
-  explore: "explore",
+  explore: "topics",
   overview: "overview",
   insights: "insights",
   settings: "settings",

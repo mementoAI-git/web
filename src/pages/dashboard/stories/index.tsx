@@ -23,6 +23,7 @@ import StoriesHeader, { StoriesFilters } from "./components/header";
 import StoriesGrid from "./components/grid";
 import { TableRowSekeleton } from "./components/skeleton";
 import { StoriesMobileList } from "./components/list-mobile";
+import { StoriesLoadMore } from "./components/load-more";
 import StoriesTableRow from "./components/row";
 import type { IMemory, IPagination } from "@/utility/interface";
 import {
@@ -37,6 +38,9 @@ import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription, EmptyCont
 import { Bookmark, Plus, Trash2 } from "lucide-react";
 import { useSubscription } from "@/contexts/subscription";
 import { formatStorageSummary } from "@/features/pricing/storage-display";
+
+/** Stories load 25 at a time; nearing the end loads the next 25. Same on mobile. */
+const STORIES_PAGE_SIZE = 25;
 
 const columns = [
   { label: "topic" },
@@ -65,7 +69,6 @@ const StoriesEmptyState = ({ filter, onViewAll }: { filter: string; onViewAll: (
 };
 
 export default function StoriesPage() {
-  const [page, setPage] = useState(1);
   const [mode, setMode] = useState(
     localStorage.getItem(storageKeys.listmode) || "list",
   );
@@ -73,14 +76,12 @@ export default function StoriesPage() {
   const [filter, setFilter] = useState("all");
   const changeFilter = useCallback((next: string) => {
     if (next === filter) return;
-    setPage(1);
     setFilter(next);
   }, [filter]);
   // ?filter=bookmarked opens the Bookmarked tab (voice "show my bookmarks"),
   // also when the page is already open, so it follows each navigation.
   useEffect(() => {
     if (new URLSearchParams(location.search).get("filter") !== "bookmarked") return;
-    setPage(1);
     setFilter("bookmarked");
   }, [location.key, location.search]);
   const [canPromoteActionsToNav, setCanPromoteActionsToNav] = useState(() =>
@@ -115,35 +116,28 @@ export default function StoriesPage() {
     [userStatsData?.data?.quick_capture_pending_count],
   );
 
-  const { data, isLoading, error: listError, mutate: refreshList } = useSWR(
-    mode === "list" ? `${endpoint.stories}?page=${page}${filterQuery}` : null,
-    {
-      refreshInterval: hasQuickPending ? 4000 : 0,
-    },
-  );
-
-  const getGridPageKey = useCallback(
+  // Grid and list share one query: 25 stories, then the next 25 as the
+  // reader nears the end, until every story is loaded. No pagination.
+  const getStoriesPageKey = useCallback(
     (
       pageIndex: number,
       previousPageData: { data?: IPagination<IMemory> } | null,
     ) => {
-      if (mode !== "grid") return null;
       if (previousPageData && !previousPageData.data?.hasNextPage) return null;
-
-      return `${endpoint.stories}?page=${pageIndex + 1}${filterQuery}`;
+      return `${endpoint.stories}?page=${pageIndex + 1}&limit=${STORIES_PAGE_SIZE}${filterQuery}`;
     },
-    [filterQuery, mode],
+    [filterQuery],
   );
 
   const {
-    data: gridPages,
-    isLoading: isGridLoading,
-    error: gridError,
-    size: gridPageCount,
-    setSize: setGridPageCount,
-    mutate: refreshGrid,
+    data: storyPages,
+    isLoading,
+    error: storiesError,
+    size: storyPageCount,
+    setSize: setStoryPageCount,
+    mutate: refreshStories,
   } = useSWRInfinite(
-    getGridPageKey,
+    getStoriesPageKey,
     paginatedResponseFetcher<IMemory>,
     {
       refreshInterval: hasQuickPending ? 4000 : 0,
@@ -154,41 +148,30 @@ export default function StoriesPage() {
   );
 
   useEffect(() => {
-    const refresh = () => { void refreshGrid?.().catch(() => undefined); };
+    const refresh = () => { void refreshStories?.().catch(() => undefined); };
     window.addEventListener(MEMORY_CHANGED_EVENT, refresh);
     return () => window.removeEventListener(MEMORY_CHANGED_EVENT, refresh);
-  }, [refreshGrid]);
+  }, [refreshStories]);
 
-  const gridData = useMemo(() => {
-    const lastPage = gridPages?.[gridPages.length - 1]?.data;
+  const storiesData = useMemo(() => {
+    const lastPage = storyPages?.[storyPages.length - 1]?.data;
     if (!lastPage) return undefined;
 
     return {
       ...lastPage,
-      docs: gridPages.flatMap((gridPage) => gridPage.data?.docs ?? []),
+      docs: storyPages.flatMap((storyPage) => storyPage.data?.docs ?? []),
     };
-  }, [gridPages]);
-  const isGridLoadingMore = Boolean(
-    isGridLoading ||
-      (gridPageCount > 0 && gridPages && !gridPages[gridPageCount - 1]),
+  }, [storyPages]);
+  const isLoadingMore = Boolean(
+    isLoading ||
+      (storyPageCount > 0 && storyPages && !storyPages[storyPageCount - 1]),
   );
-  const gridHasMore = Boolean(gridData?.hasNextPage);
-  const loadMoreGridStories = useCallback(() => {
-    if (gridError) return;
-    void setGridPageCount((currentSize) => currentSize + 1).catch(() => undefined);
-  }, [gridError, setGridPageCount]);
+  const hasMore = Boolean(storiesData?.hasNextPage);
+  const loadMoreStories = useCallback(() => {
+    if (storiesError) return;
+    void setStoryPageCount((currentSize) => currentSize + 1).catch(() => undefined);
+  }, [storiesError, setStoryPageCount]);
   const { data: stats } = useSWR(endpoint.memoriesStats);
-
-  const pagination = data?.data as IPagination<IMemory> | undefined;
-  const lastPage = typeof pagination?.totalPages === "number" && Number.isFinite(pagination.totalPages)
-    ? Math.max(1, pagination.totalPages) : page;
-  const recoveryPage = mode === "list" && !listError && !isLoading && pagination && page > 1
-    ? page > lastPage ? lastPage : pagination.docs?.length === 0 ? page - 1 : null
-    : null;
-  useEffect(() => {
-    if (recoveryPage !== null) setPage(recoveryPage);
-  }, [recoveryPage]);
-  const listLoading = isLoading || recoveryPage !== null;
 
   useEffect(() => {
     if (
@@ -219,11 +202,11 @@ export default function StoriesPage() {
   useEffect(() => () => setShowStoriesActions(false), [setShowStoriesActions]);
 
   const resultsRef = useRef<HTMLDivElement>(null);
-  const requestFailed = Boolean(mode === "grid" ? gridError : listError);
+  const requestFailed = Boolean(storiesError);
   const retryStories = useCallback(() => {
-    void (mode === "grid" ? refreshGrid() : refreshList()).catch(() => undefined);
-  }, [mode, refreshGrid, refreshList]);
-  const requestScope = `${mode}:${filter}:${mode === "list" ? page : "pages"}`;
+    void refreshStories().catch(() => undefined);
+  }, [refreshStories]);
+  const requestScope = `${mode}:${filter}`;
   useEffect(() => {
     if (!requestFailed) return;
     const id = toast.error("Stories couldn’t be loaded. Try again.", {
@@ -232,10 +215,11 @@ export default function StoriesPage() {
     });
     return () => { toast.dismiss(id); };
   }, [requestFailed, requestScope, retryStories]);
-  const hasResults = mode === "grid" ? Boolean(gridData?.docs.length) : Boolean(pagination?.docs?.length);
-  const resultsLoading = !requestFailed && !hasResults && (mode === "grid" ? isGridLoading : listLoading);
+  const hasResults = Boolean(storiesData?.docs.length);
+  const resultsLoading = !requestFailed && !hasResults && isLoading;
+  const isEmptyResult = !isLoading && storiesData?.docs.length === 0;
   const emptyState = <StoriesEmptyState filter={filter} onViewAll={() => changeFilter("all")} />;
-  useTextReveal(resultsRef, `${mode}:${filter}:${page}:${resultsLoading}`);
+  useTextReveal(resultsRef, `${mode}:${filter}:${resultsLoading}`);
 
   return (
     <div className="stories-motion page-viewport hide-scrollbar mx-auto w-full max-w-[1900px]! overflow-hidden">
@@ -324,45 +308,46 @@ export default function StoriesPage() {
                 <div className="stories-list-surface flex min-h-48 items-center justify-center rounded-xl border border-stroke-neutral-weak p-6">
                   <Button variant="outline" onClick={retryStories}>Retry loading stories</Button>
                 </div>
+              ) : isEmptyResult ? (
+                emptyState
               ) : mode === "grid" ? (
-                !isGridLoading && gridData?.docs.length === 0 ? (
-                  emptyState
-                ) : (
-                  <StoriesGrid
-                    data={gridData}
-                    hasMore={gridHasMore && !requestFailed}
-                    isLoadingMore={isGridLoadingMore && !requestFailed}
-                    onLoadMore={loadMoreGridStories}
+                <StoriesGrid
+                  data={storiesData}
+                  hasMore={hasMore && !requestFailed}
+                  isLoadingMore={isLoadingMore && !requestFailed}
+                  onLoadMore={loadMoreStories}
+                  onRetry={requestFailed ? retryStories : undefined}
+                />
+              ) : <>
+                <div className="sm:hidden">
+                  <StoriesMobileList
+                    data={storiesData}
+                    loading={resultsLoading}
+                    emptyState={emptyState}
+                  />
+                </div>
+                <div className="hidden sm:block w-full overflow-x-auto">
+                  <Table
+                    className="stories-table"
+                    data={storiesData as IPagination<IMemory>}
+                    columns={columns}
+                    loading={resultsLoading}
+                    loadingRow={<TableRowSekeleton />}
+                    showPagination={false}
+                    renderRow={(r) => (
+                      <StoriesTableRow key={(r as IMemory)._id} memory={r as IMemory} />
+                    )}
+                  />
+                </div>
+                {hasResults && (
+                  <StoriesLoadMore
+                    hasMore={hasMore && !requestFailed}
+                    isLoadingMore={isLoadingMore && !requestFailed}
+                    onLoadMore={loadMoreStories}
                     onRetry={requestFailed ? retryStories : undefined}
                   />
-                )
-              ) : (
-                !listLoading && data?.data?.docs?.length === 0 ? (
-                  emptyState
-                ) : <>
-                  <div className="sm:hidden">
-                    <StoriesMobileList
-                      data={data?.data}
-                      loading={listLoading && !hasResults}
-                      onChangePage={setPage}
-                      emptyState={emptyState}
-                    />
-                  </div>
-                  <div className="hidden sm:block w-full overflow-x-auto">
-                    <Table
-                      className="stories-table"
-                      data={data?.data}
-                      columns={columns}
-                      loading={listLoading && !hasResults}
-                      loadingRow={<TableRowSekeleton />}
-                      onChangePage={setPage}
-                      renderRow={(r, i) => (
-                        <StoriesTableRow key={i} memory={r as IMemory} />
-                      )}
-                    />
-                  </div>
-                </>
-              )}
+                )}
+              </>}
             </div>
           </div>
         </div>

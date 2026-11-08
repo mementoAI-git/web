@@ -14,8 +14,8 @@ export function webScreenName(pathname: string, search: string): string {
   if (path.startsWith("/stories/")) return "a story";
   if (path === "/chat" || path === "/chat/new") return "Chat";
   if (path.startsWith("/chat/")) return "a conversation";
-  if (path === "/explore" || path === "/explore/categories") return "Explore prompts";
-  if (path.startsWith("/explore/categories/")) return "an Explore category";
+  if (path === "/explore" || path === "/explore/categories") return "Topics";
+  if (path.startsWith("/explore/categories/")) return "a topic category";
   if (path === "/pricing") return "Plans";
   if (path === "/people") return "People";
   const settings = path.match(/^\/settings\/([^/]+)/);

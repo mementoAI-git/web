@@ -7,6 +7,15 @@ import { renderWithProviders, server } from "@/test";
 import SettingsPage from "@/pages/dashboard/settings";
 import { authService } from "@/utility/auth-service";
 
+import { vi } from "vitest";
+
+// Radix's checkbox (delete flow) measures itself; jsdom has no ResizeObserver.
+vi.stubGlobal("ResizeObserver", class {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+});
+
 function show() {
   renderWithProviders(<Routes><Route path="/settings/:tab" element={<SettingsPage />} /><Route path="/login" element={<p>Login destination</p>} /></Routes>, { auth: true, route: "/settings/privacy" });
 }
@@ -31,15 +40,19 @@ it("keeps a rejected deletion open, guards pending dismissal and clears auth onl
   }));
   show();
   await userEvent.click(screen.getByRole("button", { name: "Delete account", exact: true }));
-  await userEvent.dblClick(screen.getByRole("button", { name: "I understand, delete" }));
+  await userEvent.click(await screen.findByRole("button", { name: "Start deletion process" }));
+  const confirmButton = screen.getByRole("button", { name: "Log out and delete account" });
+  expect(confirmButton).toBeDisabled();
+  await userEvent.type(screen.getByLabelText(/to confirm this action/), "DELETE");
+  await userEvent.dblClick(confirmButton);
   await waitFor(() => expect(calls).toBe(1));
   await userEvent.keyboard("{Escape}");
   expect(screen.getByRole("dialog")).toBeInTheDocument();
   finish();
-  await screen.findByRole("button", { name: "I understand, delete" });
+  await screen.findByRole("button", { name: "Log out and delete account" });
   expect(authService.getAuthData()).not.toBeNull();
   failed = false;
-  await userEvent.click(screen.getByRole("button", { name: "I understand, delete" }));
+  await userEvent.click(screen.getByRole("button", { name: "Log out and delete account" }));
   await screen.findByText("Login destination");
   expect(authService.getAuthData()).toBeNull();
 });

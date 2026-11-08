@@ -116,11 +116,11 @@ describe("DashboardHeader", () => {
 
   it("uses the overview navigation on nested Explore routes and keeps the page title", () => {
     const { container } = renderDashboardHeader(
-      <DashboardHeaderWithTitle title="Explore topics" />,
+      <DashboardHeaderWithTitle title="Topics" />,
       { route: "/explore/categories/growing-up" },
     );
 
-    expect(screen.getByText("Explore topics")).toBeInTheDocument();
+    expect(screen.getByText("Topics")).toBeInTheDocument();
     expect(container.querySelector(".dashboard-header-surface")).toHaveClass("sm:h-[76px]");
     expect(container.querySelector(".dashboard-header-surface")).not.toHaveClass("border-b");
     expect(screen.getByRole("button", { name: "Open search" })).toHaveClass("size-10", "rounded-full");

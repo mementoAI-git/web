@@ -133,6 +133,7 @@ function setup({
               data: {
                 enrichment_score: 80,
                 reflections_count: 12,
+                streak_count: 3,
                 category_scores: [
                   {
                     key: "identity_self",
@@ -154,6 +155,12 @@ function setup({
               },
             },
             [endpoint.memoriesStats]: { data: { stories_count: 24 } },
+            [endpoint.capsuleStats]: {
+              data: { scheduled_count: 0, delivered_count: 0 },
+            },
+            [`${endpoint.beneficiaries}?page=1&limit=100`]: {
+              data: { docs: [{ _id: "b1" }], totalDocs: 1 },
+            },
             [endpoint.insights]: { data: insights },
             [`${endpoint.insightSources}?insight=insight-1`]: {
               data: {
@@ -646,4 +653,17 @@ it("opens the observation named in ?observation=, as voice and chat links do", (
   setup({ route: { pathname: "/insights", search: "?observation=note-1" } });
   expect(screen.getByText("Memories behind this note")).toBeVisible();
   expect(screen.getByText("Autonomy shows up in your decisions.")).toBeVisible();
+});
+
+it("shows the current streak and which milestones are reached", async () => {
+  const user = userEvent.setup();
+  setup();
+  await user.click(tab("Milestones & streaks"));
+  const streak = screen.getByRole("region", { name: "Current streak" });
+  expect(within(streak).getByText("3 days")).toBeVisible();
+  expect(screen.getByText("3 of 5 reached")).toBeVisible();
+  const milestones = within(screen.getByRole("list", { name: "Milestones" }));
+  expect(milestones.getAllByRole("listitem")).toHaveLength(5);
+  expect(milestones.getByText("3 / 7 days")).toBeVisible();
+  expect(milestones.getByText("0 / 1 capsule")).toBeVisible();
 });

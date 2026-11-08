@@ -62,6 +62,8 @@ describe("webScreenName", () => {
     expect(webScreenName("/chat/abc/voice", "")).toBe("a conversation");
     expect(webScreenName("/settings/billing", "")).toBe("Settings: Billing");
     expect(webScreenName("/settings/general", "?view=about")).toBe("Insights");
+    expect(webScreenName("/explore", "")).toBe("Topics");
+    expect(webScreenName("/explore/categories/who-i-am", "")).toBe("a topic category");
     expect(webScreenName("/somewhere/else", "")).toBe("a page in Memento");
   });
 });
