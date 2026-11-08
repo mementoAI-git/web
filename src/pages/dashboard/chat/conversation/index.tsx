@@ -454,7 +454,7 @@ function ConversationSession({ id, type = "memory", reflectionEntry }: { id: str
     if (isHostChat) {
       setHeaderTitle(null);
     } else {
-      setHeaderTitle(isTopic ? "Topic" : memory?.title || "New conversation");
+      setHeaderTitle(isTopic ? "Reflection" : memory?.title || "New conversation");
     }
     return () => {
       setHeaderTitle(null);

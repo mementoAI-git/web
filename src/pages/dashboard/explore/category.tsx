@@ -41,8 +41,8 @@ export default function ExploreCategoryPage() {
     return (
       <div className="container py-12 space-y-4">
         <h1 className="font-garamond text-3xl text-text-neutral-strong">{category.title}</h1>
-        {error ? <Button variant="outline" onClick={retry}>Retry loading categories</Button> : <p role="status" className="text-text-neutral-weak">Questions are temporarily unavailable while Explore is being updated. Please try again shortly.</p>}
-        <Link className="inline-flex min-h-11 items-center text-text-brand-strong underline" to="/explore">Back to Explore</Link>
+        {error ? <Button variant="outline" onClick={retry}>Retry loading categories</Button> : <p role="status" className="text-text-neutral-weak">Questions are temporarily unavailable while Topics is being updated. Please try again shortly.</p>}
+        <Link className="inline-flex min-h-11 items-center text-text-brand-strong underline" to="/explore">Back to Topics</Link>
       </div>
     );
   }

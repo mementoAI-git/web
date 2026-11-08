@@ -104,7 +104,7 @@ describe("ExplorePage", () => {
         screen.getByRole("button", { name: "Reflect on Just for you" }),
       ).toBeInTheDocument();
       expect(
-        screen.getByRole("heading", { name: "Explore categories" }),
+        screen.getByRole("heading", { name: "Categories" }),
       ).toBeVisible();
     } finally {
       catalogState.prompts = [];

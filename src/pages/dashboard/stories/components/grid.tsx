@@ -1,5 +1,4 @@
 import { storyDestination } from "@/lib/story-destination";
-import { Button } from "@/components/ui/button";
 import { DeletedMemoryStatus } from "./deleted-memory-status";
 import DOMPurify from "isomorphic-dompurify";
 import { DoubleHeartIcon } from "@/components/icons";
@@ -19,9 +18,8 @@ import {
 import { useModal } from "@/hooks/use-modal";
 import { cn } from "@/lib/utils";
 import { QuickCaptureProcessingBadge } from "@/components/memory/quick-capture-processing-badge";
-import useIntersectionObserver from "@/hooks/use-intersection-observer";
+import { StoriesLoadMore } from "./load-more";
 import Spinner from "@/components/spinner";
-import { TypographyMuted } from "@/components/ui/typography";
 import VideoThumbnail from "@/components/video-thumbnail";
 import { classifyConversationFile } from "@/pages/dashboard/chat/conversation/conversation-assets";
 
@@ -298,17 +296,6 @@ export default function StoriesGrid({
   const stories = useMemo(() => data?.docs ?? [], [data?.docs]);
   const { columns: columnsCount, gutter } = getMasonryConfig(viewportWidth);
   const isMobile = viewportWidth < 640;
-  const loadMoreRef = useRef<HTMLDivElement | null>(null);
-  const isLoadMoreVisible = useIntersectionObserver(loadMoreRef, {
-    rootMargin: "400px 0px",
-  });
-
-  useEffect(() => {
-    if (isLoadMoreVisible && hasMore && !isLoadingMore) {
-      onLoadMore?.();
-    }
-  }, [hasMore, isLoadMoreVisible, isLoadingMore, onLoadMore]);
-
   useEffect(() => {
     const check = () => setViewportWidth(window.innerWidth);
     window.addEventListener("resize", check);
@@ -440,24 +427,13 @@ export default function StoriesGrid({
         </div>
       )}
 
-      <div
-        ref={loadMoreRef}
-        data-slot="stories-grid-load-more"
-        className="flex min-h-10 w-full items-center justify-center py-2"
-        aria-live="polite"
-      >
-        {onRetry ? (
-          <Button variant="outline" onClick={onRetry}>Retry loading stories</Button>
-        ) : isLoadingMore ? (
-          <Spinner loading />
-        ) : hasMore ? (
-          <span className="sr-only">Loading more items when visible</span>
-        ) : (
-          <TypographyMuted className="text-sm text-text-neutral-weaker">
-            End of items
-          </TypographyMuted>
-        )}
-      </div>
+      <StoriesLoadMore
+        slot="stories-grid-load-more"
+        hasMore={hasMore}
+        isLoadingMore={isLoadingMore}
+        onLoadMore={onLoadMore}
+        onRetry={onRetry}
+      />
     </div>
   );
 }

@@ -26,7 +26,7 @@ export const WEB_VOICE_DESTINATIONS: Record<VoiceScreenDestination, WebDestinati
   people: { href: "/chat?people=1", label: "your people" },
   new_story: { modal: "create-memory", label: "a new story" },
   quick_note: { modal: "quick-capture", label: "a quick note" },
-  explore_prompts: { href: "/explore", label: "explore prompts" },
+  explore_prompts: { href: "/explore", label: "topics" },
   insights: { href: "/settings/general?view=about", label: "your insights" },
   account: { href: "/settings/general", label: "your account" },
   settings: { href: "/settings/general", label: "settings" },

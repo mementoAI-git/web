@@ -15,7 +15,7 @@ export const topNavigations = [
   { icon: globeIcon, title: "Overview", link: "/overview" },
   { emoji: "💬", title: "Chat", link: "/chat" },
   { icon: cardFileBoxIcon, title: "My Stories", link: "/stories" },
-  { emoji: "🧭", title: "Explore topics", link: "/explore" },
+  { emoji: "🧭", title: "Topics", link: "/explore" },
 ];
 
 export const bottomNavigations = [

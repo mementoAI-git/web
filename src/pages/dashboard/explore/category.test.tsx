@@ -43,7 +43,7 @@ describe("ExploreCategoryPage", () => {
       );
       expect(screen.getByRole("heading", { name: "Who I Am" })).toBeVisible();
       expect(screen.getByRole("status")).toHaveTextContent("Questions are temporarily unavailable");
-      expect(screen.getByRole("link", { name: "Back to Explore" })).toHaveAttribute("href", "/explore");
+      expect(screen.getByRole("link", { name: "Back to Topics" })).toHaveAttribute("href", "/explore");
     } finally {
       catalogState.legacy = false;
     }

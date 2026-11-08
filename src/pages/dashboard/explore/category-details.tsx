@@ -108,7 +108,7 @@ export default function CategoryDetails({ category }: CategoryDetailsProps) {
   );
 
   useEffect(() => {
-    setHeaderTitle("Explore topics");
+    setHeaderTitle("Topics");
     return () => {
       setHeaderTitle(null);
     };

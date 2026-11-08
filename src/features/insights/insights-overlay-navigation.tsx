@@ -6,6 +6,7 @@ const sections = [
   { value: "insights", label: "Insights" },
   { value: "preferences", label: "Preferences" },
   { value: "enrichment", label: "Enrichment fields" },
+  { value: "milestones", label: "Milestones & streaks" },
 ] as const;
 export type InsightsSection = (typeof sections)[number]["value"];
 

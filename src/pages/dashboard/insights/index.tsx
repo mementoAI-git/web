@@ -29,6 +29,7 @@ import {
 } from "@/features/insights/insights-overlay-navigation";
 import { InsightsPanel } from "@/features/insights/insights-panel";
 import { MemoryStatistics } from "@/features/insights/memory-statistics";
+import { MilestonesPanel } from "@/features/insights/milestones-panel";
 import {
   ObservationList,
   type ObservationItem,
@@ -270,6 +271,7 @@ export default function InsightsPage() {
                           }
                         />
                       ),
+                      milestones: <MilestonesPanel />,
                     }}
                   />
                 </div>

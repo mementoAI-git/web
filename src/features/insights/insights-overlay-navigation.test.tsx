@@ -18,12 +18,13 @@ function Harness() {
         insights: "Fresh insights",
         preferences: "My preferences",
         enrichment: "My fields",
+        milestones: "My milestones",
       }}
     />
   );
 }
 
-it("offers the four sections in order and supports keyboard navigation", async () => {
+it("offers the five sections in order and supports keyboard navigation", async () => {
   const user = userEvent.setup();
   render(<Harness />);
   expect(screen.getByRole("tablist")).toHaveAttribute(
@@ -35,6 +36,7 @@ it("offers the four sections in order and supports keyboard navigation", async (
     "Insights",
     "Preferences",
     "Enrichment fields",
+    "Milestones & streaks",
   ]);
   const observations = screen.getByRole("tab", { name: "Observations" });
   expect(observations).toHaveAttribute("aria-selected", "true");
