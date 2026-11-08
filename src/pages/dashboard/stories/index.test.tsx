@@ -28,16 +28,22 @@ const state = vi.hoisted(() => ({
 
 vi.mock("sonner", () => ({ toast: { error: state.toastError, dismiss: vi.fn() } }));
 
-vi.mock("swr/infinite", () => ({
-  default: () => ({
+vi.mock("swr/infinite", async () => {
+  const React = await import("react");
+  return { default: function useMockSWRInfinite(getKey: (index: number, previous: null) => string | null) {
+    const [, refresh] = React.useReducer((value) => value + 1, 0);
+    state.refresh = refresh;
+    const key = getKey(0, null);
+    if (key) state.keys.push(key);
+    return {
     data: state.missingData ? undefined : [{ data: { docs: state.docs, page: 1, totalPages: 1, hasNextPage: state.gridHasNext } }],
     error: state.error,
     isLoading: state.loading,
     size: state.gridSize,
     setSize: vi.fn(),
     mutate: state.refreshGrid,
-  }),
-}));
+  }; } };
+});
 
 vi.mock("@/hooks/use-intersection-observer", () => ({ default: () => false }));
 
@@ -110,7 +116,7 @@ describe("StoriesPage", () => {
     expect(screen.queryByText("Internal server error")).not.toBeInTheDocument();
     expect(document.querySelector('[data-slot="stories-results"]')).toHaveAttribute("aria-busy", "false");
     await user.click(screen.getByRole("button", { name: "Retry loading stories" }));
-    expect(mode === "grid" ? state.refreshGrid : state.retry).toHaveBeenCalled();
+    expect(state.refreshGrid).toHaveBeenCalled();
   });
 
   it("keeps cached stories visible and toasts once per failure episode", async () => {
@@ -125,7 +131,7 @@ describe("StoriesPage", () => {
     expect(state.toastError).toHaveBeenCalledTimes(1);
     const options = state.toastError.mock.calls[0][1];
     await act(() => options.action.onClick());
-    expect(state.retry).toHaveBeenCalled();
+    expect(state.refreshGrid).toHaveBeenCalled();
     state.error = undefined;
     state.docs = [];
     act(() => state.refresh());
@@ -148,15 +154,17 @@ describe("StoriesPage", () => {
     expect(state.toastError).toHaveBeenCalledTimes(1);
   });
 
-  it("resets list pagination when changing filters", async () => {
+  it("loads 25 stories at a time in list view without pagination controls", async () => {
     state.docs = [{ _id: "story-1", title: "My story", tags: [], attachments: [], created_at: "2026-10-07" }];
-    state.totalPages = 3;
+    state.gridHasNext = true;
     const user = userEvent.setup();
-    renderWithProviders(<StoriesPage />, { route: "/stories", auth: true });
-    await user.click(screen.getAllByRole("button", { name: "Next" })[0]);
-    expect(state.keys.at(-1)).toContain("page=2");
+    const { container } = renderWithProviders(<StoriesPage />, { route: "/stories", auth: true });
+    expect(state.keys.at(-1)).toContain("page=1&limit=25");
+    expect(screen.queryByRole("button", { name: "Next" })).not.toBeInTheDocument();
+    expect(screen.queryByText(/Page 1 of/)).not.toBeInTheDocument();
+    expect(container.querySelector('[data-slot="stories-load-more"]')).toBeInTheDocument();
     await user.click(screen.getByRole("tab", { name: "Bookmarked 3" }));
-    expect(state.keys.at(-1)).toContain("page=1&bookmarked=true");
+    expect(state.keys.at(-1)).toContain("page=1&limit=25&bookmarked=true");
   });
 
   it("uses a bookmarked empty state with a way back to all stories", async () => {
@@ -168,20 +176,6 @@ describe("StoriesPage", () => {
     expect(within(empty).queryByRole("button", { name: "Add memory" })).not.toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "View all stories" }));
     expect(screen.getByRole("tab", { name: "All 12" })).toHaveAttribute("aria-selected", "true");
-  });
-
-  it("recovers to the last available page when the current page becomes empty", async () => {
-    state.docs = [{ _id: "story-1", title: "My story", tags: [], attachments: [], created_at: "2026-10-07" }];
-    state.totalPages = 3;
-    const user = userEvent.setup();
-    renderWithProviders(<StoriesPage />, { route: "/stories", auth: true });
-    await user.click(screen.getAllByRole("button", { name: "Next" })[0]);
-    await user.click(screen.getAllByRole("button", { name: "Next" })[0]);
-    expect(state.keys.at(-1)).toContain("page=3");
-    state.emptyPage = 3;
-    state.totalPages = 2;
-    act(() => state.refresh());
-    expect(state.keys.at(-1)).toContain("page=2");
   });
 
   it("uses deleted-specific guidance in grid view", async () => {
@@ -208,14 +202,14 @@ describe("StoriesPage", () => {
     expect(state.open).toHaveBeenCalledWith("create-memory");
   });
 
-  it("restores table headers and pagination when a filter returns memories", async () => {
+  it("restores table headers when a filter returns memories", async () => {
     const user = userEvent.setup();
     renderWithProviders(<StoriesPage />, { route: "/stories", auth: true });
     state.docs = [{ _id: "story-1", title: "My story", tags: [], attachments: [], created_at: "2026-10-07" }];
     await user.click(screen.getByRole("tab", { name: "Bookmarked 3" }));
     expect(screen.getByRole("table")).toBeInTheDocument();
     expect(screen.getByRole("columnheader", { name: /topic/i })).toBeInTheDocument();
-    expect(screen.getAllByRole("button", { name: "Next" }).length).toBeGreaterThan(0);
+    expect(screen.queryByRole("button", { name: "Next" })).not.toBeInTheDocument();
     expect(screen.queryByText("No stories yet")).not.toBeInTheDocument();
   });
 

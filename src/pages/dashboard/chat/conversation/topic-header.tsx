@@ -152,7 +152,7 @@ export default function TopicHeader({ memory }: { memory: IMemory }) {
               <Badge className="h-auto min-w-0 whitespace-normal rounded-sm border-0 bg-fill-brand-weak px-2 py-1 text-sm font-medium leading-6 text-text-brand-strong sm:text-base">
                 {category?.title ||
                   categoryValue ||
-                  (memory?.prompt_type ? "Daily reflection" : "Explore topics")}
+                  (memory?.prompt_type ? "Daily reflection" : "Topics")}
               </Badge>
               {actions}
             </div>

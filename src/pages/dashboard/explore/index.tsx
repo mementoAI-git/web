@@ -31,7 +31,7 @@ export default function ExplorePage() {
         <div className="space-y-6 py-6 md:py-12">
           <div className="flex w-full items-center justify-between">
             <TypographyH2 className="font-garamond text-[30px] leading-[32px] text-text-neutral-strong sm:text-[40px] sm:leading-[48px]">
-              Explore categories
+              Categories
             </TypographyH2>
             <Link
               to="/explore/categories"
@@ -44,7 +44,7 @@ export default function ExplorePage() {
           {error && <Button variant="outline" onClick={retry}>Retry loading categories</Button>}
           {!error && !categoriesLoading && usingBundledCatalog && (
             <p role="status" className="text-sm text-text-neutral-weak">
-              Questions are temporarily unavailable while Explore is being
+              Questions are temporarily unavailable while Topics is being
               updated.
             </p>
           )}

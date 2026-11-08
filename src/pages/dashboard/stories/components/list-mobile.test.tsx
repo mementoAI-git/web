@@ -16,7 +16,7 @@ const memory = {
 } as unknown as IMemory;
 
 describe("StoriesMobileList", () => {
-  it("shows only the title and date in a 16px card with a 32px icon", () => {
+  it("shows only the title and date in a weak-fill card with the identicon thumbnail", () => {
     const { container } = renderWithProviders(
       <StoriesMobileList data={{ docs: [memory] } as never} />,
       { route: "/stories", auth: true },
@@ -27,7 +27,11 @@ describe("StoriesMobileList", () => {
     for (const hidden of ["Music", "Learning", "+1", "An AI summary", "The body text"]) {
       expect(screen.queryByText(hidden)).not.toBeInTheDocument();
     }
-    expect(container.querySelector("article")).toHaveClass("rounded-2xl");
-    expect(container.querySelector("article .size-8")).toBeInTheDocument();
+    expect(container.querySelector("article")).toHaveClass("rounded-2xl", "bg-fill-neutral-weak");
+    expect(container.querySelector("article img")).toHaveAttribute(
+      "src",
+      "https://api.dicebear.com/10.x/disco/svg?seed=story-1",
+    );
+    expect(screen.queryByRole("button", { name: "Next" })).not.toBeInTheDocument();
   });
 });

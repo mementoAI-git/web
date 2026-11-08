@@ -1,11 +1,8 @@
 import { storyDestination } from "@/lib/story-destination";
 import { DeletedMemoryStatus } from "./deleted-memory-status";
-import ImageThumbnail from "@/components/image-thumbnail";
 import { QuickCaptureProcessingBadge } from "@/components/memory/quick-capture-processing-badge";
-import { Button } from "@/components/ui/button";
-import { DocsClipIcon } from "@/components/icons";
 import { MemoryItemActions } from "./dropdown";
-import { isEmpty } from "@/utility";
+import { StoryListThumbnail } from "./list-thumbnail";
 import type { IMemory, IPagination } from "@/utility/interface";
 import dayjs from "dayjs";
 import { useNavigate } from "react-router-dom";
@@ -23,7 +20,7 @@ function MobileStoryCard({ memory }: { memory: IMemory }) {
 
   return (
     <article
-      className="rounded-2xl border border-v3-stroke-weak bg-bg-neutral-solid p-4 shadow-sm transition-colors active:bg-v3-fill-weaker/50"
+      className="rounded-2xl border border-v3-stroke-weak bg-fill-neutral-weak p-4 transition-colors active:bg-fill-neutral-weaker"
       onClick={() => { if (memory.status !== "deleted") navigate(storyDestination(memory)); }}
       role="button"
       tabIndex={0}
@@ -35,15 +32,7 @@ function MobileStoryCard({ memory }: { memory: IMemory }) {
       }}
     >
       <div className="flex items-center gap-3">
-        <div className="flex size-8 shrink-0 items-center justify-center">
-          {isEmpty(memory.attachments) ? (
-            <div className="flex size-8 items-center justify-center rounded-lg bg-v3-fill-weaker">
-              <DocsClipIcon width={16} className="text-v3-text-weaker" />
-            </div>
-          ) : (
-            <ImageThumbnail images={memory.attachments.slice(0, 1)} size={32} />
-          )}
-        </div>
+        <StoryListThumbnail memory={memory} />
 
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
@@ -70,16 +59,14 @@ function MobileStoryCard({ memory }: { memory: IMemory }) {
 }
 
 type StoriesMobileListProps = {
-  data?: IPagination<IMemory>;
+  data?: Pick<IPagination<IMemory>, "docs">;
   loading?: boolean;
-  onChangePage?: (page: number) => void;
   emptyState?: React.ReactNode;
 };
 
 export function StoriesMobileList({
   data,
   loading = false,
-  onChangePage,
   emptyState,
 }: StoriesMobileListProps) {
   const docs = data?.docs ?? [];
@@ -100,32 +87,6 @@ export function StoriesMobileList({
         ) : (
           docs.map((memory) => <MobileStoryCard key={memory._id} memory={memory} />)
         )}
-      </div>
-
-      <div className="flex items-center justify-between gap-3 rounded-[18px] border border-v3-stroke-weak bg-bg-neutral-solid px-4 py-3 shadow-sm">
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          disabled={!data?.hasPrevPage}
-          onClick={() => data?.hasPrevPage && onChangePage?.(data.prevPage)}
-          className="rounded-[10px] border-v3-stroke-weak bg-bg-neutral-solid px-3 text-xs font-semibold text-v3-text-strong hover:bg-v3-fill-weaker"
-        >
-          Previous
-        </Button>
-        <span className="font-inter text-xs font-medium text-v3-text-strong">
-          Page {data?.page || 0} of {data?.totalPages || 1}
-        </span>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          disabled={!data?.hasNextPage}
-          onClick={() => data?.hasNextPage && onChangePage?.(data.nextPage)}
-          className="rounded-[10px] border-v3-stroke-weak bg-bg-neutral-solid px-3 text-xs font-semibold text-v3-text-strong hover:bg-v3-fill-weaker"
-        >
-          Next
-        </Button>
       </div>
     </div>
   );
