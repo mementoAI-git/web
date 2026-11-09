@@ -655,15 +655,19 @@ it("opens the observation named in ?observation=, as voice and chat links do", (
   expect(screen.getByText("Autonomy shows up in your decisions.")).toBeVisible();
 });
 
-it("shows the current streak and which milestones are reached", async () => {
+it("lists milestones with what's next first, as on mobile", async () => {
   const user = userEvent.setup();
   setup();
-  await user.click(tab("Milestones & streaks"));
-  const streak = screen.getByRole("region", { name: "Current streak" });
-  expect(within(streak).getByText("3 days")).toBeVisible();
-  expect(screen.getByText("3 of 5 reached")).toBeVisible();
-  const milestones = within(screen.getByRole("list", { name: "Milestones" }));
-  expect(milestones.getAllByRole("listitem")).toHaveLength(5);
-  expect(milestones.getByText("3 / 7 days")).toBeVisible();
-  expect(milestones.getByText("0 / 1 capsule")).toBeVisible();
+  await user.click(tab("Milestones"));
+  expect(screen.queryByRole("region", { name: "Current streak" })).not.toBeInTheDocument();
+  const items = within(screen.getByRole("list", { name: "Milestones" })).getAllByRole("listitem");
+  expect(items).toHaveLength(9);
+  expect(items[0]).toHaveTextContent("Reflective Habit");
+  expect(items[0]).toHaveTextContent("3 / 7 days");
+  expect(items[1]).toHaveTextContent("3 / 30 days");
+  expect(items[2]).toHaveTextContent("First Story");
+  expect(items[2]).toHaveTextContent("Unlocked");
+  expect(items[8]).toHaveTextContent("Future Messenger");
+  expect(items[8]).toHaveTextContent("Coming soon");
+  expect(items[8]).toHaveAttribute("aria-disabled", "true");
 });

@@ -36,7 +36,7 @@ it("offers the five sections in order and supports keyboard navigation", async (
     "Insights",
     "Preferences",
     "Enrichment fields",
-    "Milestones & streaks",
+    "Milestones",
   ]);
   const observations = screen.getByRole("tab", { name: "Observations" });
   expect(observations).toHaveAttribute("aria-selected", "true");

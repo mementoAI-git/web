@@ -16,7 +16,7 @@ const sections = [
   { to: "/settings/billing", label: "Billing", Icon: CreditCard },
 ];
 
-const rowClass = "settings-row h-[60px] w-full px-4 text-left text-sm font-medium text-text-neutral-strong";
+const rowClass = "settings-card settings-row h-[60px] w-full px-5 text-left text-sm font-medium text-text-neutral-strong";
 
 export function SettingsHub() {
   const navigate = useNavigate();
@@ -43,7 +43,7 @@ export function SettingsHub() {
       <div className="flex flex-col gap-4">
         <nav
           aria-label="Settings sections"
-          className="page-rise page-stagger settings-card flex flex-col gap-1 p-4"
+          className="page-rise page-stagger settings-grouped-list"
           style={{ "--page-rise-index": 3, "--page-stagger-start": 4 } as CSSProperties}
         >
           {sections
@@ -58,7 +58,7 @@ export function SettingsHub() {
               </Link>
             ))}
         </nav>
-        <div className="page-rise settings-card px-4 py-3" style={{ "--page-rise-index": 9 } as CSSProperties}>
+        <div className="page-rise settings-grouped-list" style={{ "--page-rise-index": 9 } as CSSProperties}>
           <button
             type="button"
             className={rowClass}

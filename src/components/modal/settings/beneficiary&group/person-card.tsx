@@ -23,7 +23,7 @@ export function PersonCard({
 }) {
   const label = name || email;
   return (
-    <article className="settings-card flex items-start gap-4 p-4 sm:p-6">
+    <article className="settings-card flex items-center gap-4 p-4">
       <UserAvatar
         alt={label}
         src={user?.picture_url}
@@ -31,13 +31,13 @@ export function PersonCard({
         email={email}
         userId={user?._id}
         size="lg"
-        className="!size-14 shrink-0 !rounded-full"
+        className="!size-10 shrink-0 !rounded-full"
       />
-      <div className="min-w-0 flex-1 self-center">
-        <h3 className="truncate text-xl font-bold text-text-neutral-strong">
+      <div className="min-w-0 flex-1">
+        <h3 className="truncate text-base font-medium text-text-neutral-strong">
           {label}
         </h3>
-        <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-sm text-text-neutral-weak">
+        <p className="flex flex-wrap items-center gap-x-2 text-sm text-text-neutral-weak">
           {details.filter(Boolean).map((detail, index) => (
             <span key={detail} className="inline-flex items-center gap-2">
               {index > 0 ? (

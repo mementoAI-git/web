@@ -6,7 +6,7 @@ const sections = [
   { value: "insights", label: "Insights" },
   { value: "preferences", label: "Preferences" },
   { value: "enrichment", label: "Enrichment fields" },
-  { value: "milestones", label: "Milestones & streaks" },
+  { value: "milestones", label: "Milestones" },
 ] as const;
 export type InsightsSection = (typeof sections)[number]["value"];
 
@@ -25,7 +25,7 @@ export function InsightsOverlayNavigation({
       onValueChange={(next) => onValueChange(next as InsightsSection)}
       className="min-w-0 flex-col gap-6"
     >
-      <div className="overflow-x-auto pb-1">
+      <div className="insights-tabs-scroll overflow-x-auto">
         <TabsList
           aria-label="Insights sections"
           aria-orientation="horizontal"
