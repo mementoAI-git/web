@@ -18,9 +18,9 @@ export default function Beneficiary() {
     <div className="flex flex-col gap-4">
       {error ? <Button variant="outline" className="self-start" onClick={retry} disabled={isValidating}>Retry loading beneficiaries</Button> : null}
       {isLoading && !data ? (
-        <div role="status" aria-label="Loading beneficiaries" className="flex flex-col gap-4">
+        <div role="status" aria-label="Loading beneficiaries" className="settings-grouped-list">
           {[0, 1].map((k) => (
-            <div key={k} className="settings-card h-[88px] motion-safe:animate-pulse" aria-hidden />
+            <div key={k} className="settings-card h-[72px] motion-safe:animate-pulse" aria-hidden />
           ))}
         </div>
       ) : !data && error ? null : docs.length === 0 ? (
@@ -31,7 +31,7 @@ export default function Beneficiary() {
           </p>
         </div>
       ) : (
-        <ul className="flex flex-col gap-4">
+        <ul className="settings-grouped-list">
           {docs.map((person) => (
             <li key={person._id}>
               <BeneficiaryCard beneficiary={person} />

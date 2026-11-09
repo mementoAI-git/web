@@ -157,7 +157,7 @@ export function GroupDetailPage({ groupId }: { groupId: string }) {
               <p className="mt-1 text-sm text-text-neutral-weak">Add people from your connections.</p>
             </div>
           ) : (
-            <ul className="flex flex-col gap-4">
+            <ul className="settings-grouped-list">
               {members.map((member) => (
                 <li key={member.id}>
                   <PersonCard

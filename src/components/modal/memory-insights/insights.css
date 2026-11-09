@@ -143,6 +143,12 @@
 .insights-stat > * {
   position: relative;
 }
+.insights-tabs-scroll {
+  scrollbar-width: none;
+}
+.insights-tabs-scroll::-webkit-scrollbar {
+  display: none;
+}
 .insights-tabs {
   height: auto !important;
   justify-content: flex-start;
@@ -301,22 +307,6 @@
   text-align: left;
   outline: none;
 }
-.insights-streak {
-  align-items: center;
-  gap: 16px;
-  padding: 20px 24px;
-}
-.insights-streak-icon {
-  display: flex;
-  width: 40px;
-  height: 40px;
-  flex: none;
-  align-items: center;
-  justify-content: center;
-  border-radius: 999px;
-  background: var(--fill-brand-weak);
-  color: var(--icon-brand-strong);
-}
 .insights-milestone {
   align-items: flex-start;
   gap: 16px;
@@ -343,6 +333,9 @@
   padding: 4px 10px;
   background: var(--fill-neutral-weak);
   color: var(--text-neutral-weak);
+}
+.insights-milestone[data-unavailable] {
+  opacity: 0.5;
 }
 .insights-milestone[data-achieved] .insights-milestone-progress {
   background: var(--fill-success-weak);
@@ -529,8 +522,7 @@
   .insights-tab {
     padding: 0 18px;
   }
-  .insights-insight,
-  .insights-streak {
+  .insights-insight {
     padding: 16px;
   }
   .insights-table-head {

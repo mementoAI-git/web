@@ -154,26 +154,26 @@ export default function GroupManagement({
           ))}
         </div>
       ) : (
-      <ul className="flex flex-col gap-4">
+      <ul className="settings-grouped-list">
         {docs.map((group) => {
           const count = group.members?.length ?? 0;
           return (
             <li key={group._id}>
               <Link
                 to={`/settings/beneficiary?group=${group._id}`}
-                className="settings-card settings-row items-start p-4 sm:p-6"
+                className="settings-card settings-row p-4"
               >
-                <span className="flex min-w-0 items-start gap-4">
+                <span className="flex min-w-0 items-center gap-4">
                   <span
                     aria-hidden
-                    className="size-6 shrink-0 rounded-md"
+                    className="size-10 shrink-0 rounded-full"
                     style={{ backgroundColor: groupColorVar(group.color) }}
                   />
                   <span className="min-w-0">
-                    <span className="block truncate text-xl font-bold text-text-neutral-strong">
+                    <span className="block truncate text-base font-medium text-text-neutral-strong">
                       {group.name || "Untitled group"}
                     </span>
-                    <span className="mt-0.5 flex flex-wrap items-center gap-x-2 text-sm text-text-neutral-weak">
+                    <span className="flex flex-wrap items-center gap-x-2 text-sm text-text-neutral-weak">
                       {group.created_at ? (
                         <>
                           Created {dayjs(group.created_at).format("MMM D, YYYY")}
