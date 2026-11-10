@@ -13,6 +13,7 @@ import { useModal } from "@/hooks/use-modal";
 import useCopy from "@/hooks/use-copy";
 import { getSocialShareLinks } from "@/utility";
 import type { IMemory } from "@/utility/interface";
+import { usePublicShareGate } from "@/features/sharing/use-public-share-gate";
 import { ShareStoryAudience } from "./share-story-audience";
 import facebook from "@/assets/image/Facebook.png";
 import twitter from "@/assets/image/twitter.png";
@@ -38,10 +39,19 @@ export default function ShareMemory({ data }: ShareMemoryProps) {
     ? `${window.location.origin}/${isConversation ? "chat" : "post"}/${memory._id}`
     : "";
 
+  // A story link only opens for others once the story is public, so stories
+  // go through the gate; conversation links are for the owner alone.
+  const gate = usePublicShareGate(isConversation ? "" : memory?._id ?? "", {
+    initial: isConversation ? undefined : memory,
+    onCopy: handleCopy,
+  });
+  const copyLink = isConversation ? handleCopy : gate.copy;
+
   const socialPlatforms = getSocialShareLinks({
     shareUrl: link,
     shareText: memory?.title ?? "Check out this story",
-    onCopy: handleCopy,
+    onCopy: copyLink,
+    onOpen: isConversation ? undefined : gate.open,
     images: { facebook, linkedin, twitter, instagram },
   });
 
@@ -74,7 +84,7 @@ export default function ShareMemory({ data }: ShareMemoryProps) {
               variant="ghost"
               aria-label={copied ? "Link copied" : "Copy share link"}
               className="absolute inset-y-1.5 right-1.5 h-auto gap-1 rounded-md border-l border-stroke-neutral-weak px-3 text-sm font-medium text-text-brand-strong hover:text-text-brand-strong"
-              onClick={() => handleCopy(link, "Link copied successfully")}
+              onClick={() => copyLink(link, "Link copied successfully")}
             >
               {copied ? <CircleCheckIcon width={16} /> : <CopyIcon width={16} />}
               {copied ? "Copied" : "Copy"}
@@ -103,11 +113,13 @@ export default function ShareMemory({ data }: ShareMemoryProps) {
           ))}
         </div>
 
+        {gate.dialog}
+
         <FormDialogFooter
           submitLabel={copied ? "Copied" : "Copy link"}
           busyLabel="Copying…"
           onDismiss={handleClose}
-          onSubmit={() => handleCopy(link, "Link copied successfully")}
+          onSubmit={() => copyLink(link, "Link copied successfully")}
         />
       </div>
     </FormDialog>
