@@ -265,6 +265,29 @@ describe("StoriesGrid", () => {
     ).not.toHaveClass("aspect-[3/4]");
   });
 
+  it("shows a recorded conversation as a recording, not its transcript, and opens it as one", () => {
+    const call = {
+      ...memory,
+      title: "Conversation with Memento · Nov 11, 2026",
+      body: "<p><strong>Memento</strong> Hi there</p><p><strong>You</strong> Hello</p>",
+      attachments: [{ _id: "call-1", name: "voice_call_1762870000000.m4a", type: "audio/m4a", url: "/call.m4a", duration: 754, size: 100 }],
+    };
+    renderWithProviders(<StoriesGrid data={{ ...pagination(false), docs: [call] }} />, { route: "/stories", auth: true });
+    expect(screen.getByRole("link", { name: `Open recording: ${call.title}, 00:12:34` })).toBeInTheDocument();
+    expect(screen.queryByText("Hi there")).not.toBeInTheDocument();
+  });
+
+  it("shows a voice note with written words as a story, as on mobile", () => {
+    const note = {
+      ...memory,
+      body: "<p>What I said at the beach</p>",
+      attachments: [{ _id: "note-1", name: "recording-1762870000000.webm", type: "audio/webm", url: "/note.webm", duration: 12, size: 100 }],
+    };
+    renderWithProviders(<StoriesGrid data={{ ...pagination(false), docs: [note] }} />, { route: "/stories", auth: true });
+    expect(screen.getByRole("link", { name: `Open story: ${memory.title}` })).toBeInTheDocument();
+    expect(screen.getByText("What I said at the beach")).toBeInTheDocument();
+  });
+
   it("gives every card without a thumbnail the neutral fill", () => {
     const { container } = renderWithProviders(
       <StoriesGrid data={pagination(false)} />,

@@ -24,6 +24,8 @@ import { classifyConversationFile } from "@/pages/dashboard/chat/conversation/co
 
 import { PlaySolidIcon } from "@/components/icons";
 import { RecordingCard } from "./recording-card";
+import { formatRecordingClock } from "./recording-clock";
+import { isVoiceConversationName } from "@/utility/file-label";
 import {
   getCardSeed,
   hasAtLeastRenderedBodyLines,
@@ -76,20 +78,9 @@ function StoriesGridItem({
   isMobile: boolean;
   onMeasure?: (node: HTMLElement | null) => void;
 }) {
-  const { open } = useModal();
+  const { open, push } = useModal();
   const textBodyRef = useRef<HTMLDivElement | null>(null);
   const [isTallTextCard, setIsTallTextCard] = useState(false);
-
-  const handleClick = useCallback(
-    (e: React.MouseEvent) => {
-      if (memory.status === "deleted") { e.preventDefault(); return; }
-      if (!isMobile && !memory.prompt_type) {
-        e.preventDefault();
-        open("view-memory", { memoryId: memory._id });
-      }
-    },
-    [isMobile, open, memory._id, memory.status, memory.prompt_type],
-  );
 
   const bannerMediaIndex = memory.attachments.findIndex(
     (a) => ["image", "video"].includes(classifyConversationFile(a)),
@@ -99,6 +90,31 @@ function StoriesGridItem({
     classifyConversationFile(a) === "audio",
   );
   const audioMedia = memory.attachments[audioMediaIndex];
+  const bodyText = useMemo(
+    () => (memory.body ?? "").replace(/<[^>]+>/g, " ").replace(/&nbsp;/gi, " ").trim(),
+    [memory.body],
+  );
+  // As on mobile: a recording shows as the recording card, and so does a recorded
+  // conversation, whose body is its transcript. Clicking it opens the audio player.
+  const recordingMedia = !bannerMedia && audioMedia && (!bodyText || isVoiceConversationName(audioMedia.name))
+    ? audioMedia
+    : undefined;
+
+  const handleClick = useCallback(
+    (e: React.MouseEvent) => {
+      if (memory.status === "deleted") { e.preventDefault(); return; }
+      if (recordingMedia) {
+        e.preventDefault();
+        push?.("file-preview", { files: [recordingMedia] });
+        return;
+      }
+      if (!isMobile && !memory.prompt_type) {
+        e.preventDefault();
+        open("view-memory", { memoryId: memory._id });
+      }
+    },
+    [isMobile, open, push, recordingMedia, memory._id, memory.status, memory.prompt_type],
+  );
   const storyTitle = getStoryCardTitle(memory);
   const cardSeed = getCardSeed(memory, storyTitle);
   const mediaAspectClass = pickBySeed(MEDIA_CARD_ASPECTS, cardSeed);
@@ -108,7 +124,7 @@ function StoriesGridItem({
 
   useLayoutEffect(() => {
     const body = textBodyRef.current;
-    if (!body || bannerMedia || audioMedia) return;
+    if (!body || bannerMedia || recordingMedia) return;
 
     const measure = () => {
       setIsTallTextCard(hasAtLeastRenderedBodyLines(body));
@@ -120,7 +136,7 @@ function StoriesGridItem({
     const observer = new ResizeObserver(measure);
     observer.observe(body);
     return () => observer.disconnect();
-  }, [audioMedia, bannerMedia, memory.body]);
+  }, [recordingMedia, bannerMedia, memory.body]);
 
   const renderMediaCounter = (activeIndex: number) =>
     memory.attachments.length > 1 ? (
@@ -163,9 +179,10 @@ function StoriesGridItem({
       );
     }
 
-    if (audioMedia) {
+    if (recordingMedia) {
       return (
-        <RecordingCard duration={audioMedia.duration}>
+        // Same seeded height and corners as the other cards, as on mobile.
+        <RecordingCard duration={recordingMedia.duration} className={cn(cardRadiusClass, mediaAspectClass, "border-0")}>
           <QuickCaptureProcessingBadge
             memory={memory}
             variant="overlay"
@@ -223,7 +240,9 @@ function StoriesGridItem({
         className={cn("block outline-none focus-visible:ring-2 focus-visible:ring-stroke-neutral-strong", cardRadiusClass)}
         onClick={handleClick}
         aria-disabled={memory.status === "deleted" || undefined}
-        aria-label={`Open story: ${storyTitle}`}
+        aria-label={recordingMedia
+          ? `Open recording: ${storyTitle}, ${formatRecordingClock(recordingMedia.duration)}`
+          : `Open story: ${storyTitle}`}
       >
         <div className={cn("relative overflow-hidden", cardRadiusClass)}>
           {renderContent()}
