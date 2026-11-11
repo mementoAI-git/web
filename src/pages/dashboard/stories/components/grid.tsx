@@ -5,7 +5,6 @@ import { DoubleHeartIcon } from "@/components/icons";
 import { ensureLinksOpenInNewTab } from "@/utility";
 import { MemoryItemActions } from "./dropdown";
 import type { IMemory, IPagination } from "@/utility/interface";
-import dayjs from "dayjs";
 import { Link } from "react-router-dom";
 import {
   useCallback,
@@ -23,8 +22,8 @@ import Spinner from "@/components/spinner";
 import VideoThumbnail from "@/components/video-thumbnail";
 import { classifyConversationFile } from "@/pages/dashboard/chat/conversation/conversation-assets";
 
-import { PlaySolidIcon, WaveIcon } from "@/components/icons";
-import recordBanner from "@/assets/icon/record-banner.png";
+import { PlaySolidIcon } from "@/components/icons";
+import { RecordingCard } from "./recording-card";
 import {
   getCardSeed,
   hasAtLeastRenderedBodyLines,
@@ -166,34 +165,14 @@ function StoriesGridItem({
 
     if (audioMedia) {
       return (
-        <div
-          className={cn(
-            "relative flex w-full items-center justify-center overflow-hidden border border-v3-stroke-weak bg-v3-fill-strong shadow-sm transition-[filter] duration-150 motion-reduce:transition-none group-hover/card:brightness-[0.97]",
-            cardRadiusClass,
-            mediaAspectClass,
-          )}
-        >
+        <RecordingCard duration={audioMedia.duration}>
           <QuickCaptureProcessingBadge
             memory={memory}
             variant="overlay"
             className={memory.attachments.length > 1 ? "top-12" : undefined}
           />
           {renderMediaCounter(audioMediaIndex)}
-          <img
-            src={recordBanner}
-            className="absolute inset-0 h-full w-full object-cover opacity-90"
-            alt=""
-            loading="lazy"
-          />
-          <div className={cn("relative z-10 flex flex-col items-center gap-3 border border-white/20 bg-white/10 p-5 backdrop-blur-md", cardRadiusClass)}>
-            <WaveIcon className="h-auto w-16 text-white opacity-80" />
-            <span className="font-inter text-sm font-semibold tracking-widest text-white">
-              {audioMedia.duration ?
-                dayjs().startOf("day").add(audioMedia.duration, "second").format("HH:mm:ss") :
-                "00:00:00"}
-            </span>
-          </div>
-        </div>
+        </RecordingCard>
       );
     }
 
