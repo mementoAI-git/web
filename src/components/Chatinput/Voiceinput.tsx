@@ -13,6 +13,7 @@ import { VoiceBeam } from "voice-glow";
 import { useAiPlaybackLevel } from "@/hooks/use-ai-playback-level";
 import { useTheme } from "@/contexts/theme";
 import { EndSessionDialog } from "./end-session-dialog";
+import { RecordConversationsSetting } from "./record-conversations-setting";
 
 import {
   AudioLines,
@@ -260,6 +261,8 @@ type VoiceSettingsProps = {
   isSaving: boolean;
   onDismiss: () => void;
   onSave: (voice: VoiceModeVoice, language: VoiceLanguageCode) => Promise<void>;
+  /** Only the host's own calls are recorded, not calls with a connection's Memento. */
+  showRecording?: boolean;
 };
 
 function VoiceSettings({
@@ -270,6 +273,7 @@ function VoiceSettings({
   isSaving,
   onDismiss,
   onSave,
+  showRecording = false,
   sheet = false,
 }: VoiceSettingsProps & {
   /** Names the surrounding dialog; the anchored popover uses a plain heading. */
@@ -341,6 +345,7 @@ function VoiceSettings({
           })}
         </div>
       </div>
+      {showRecording ? <RecordConversationsSetting /> : null}
       </div>
 
       <div className="grid shrink-0 grid-cols-2 gap-2 border-t border-stroke-neutral-weak px-5 py-4">
@@ -410,6 +415,17 @@ function VoiceSettingsSurface({
   );
 }
 
+/** The conversation is being recorded and will be saved to Stories, as mobile's "Rec". */
+function RecordingBadge({ className }: { className?: string }) {
+  return (
+    <span className={cn("flex shrink-0 items-center gap-1.5 text-text-error-strong", className)}>
+      <span aria-hidden className="size-2 shrink-0 animate-pulse rounded-full bg-fill-error-strong motion-reduce:animate-none" />
+      <span aria-hidden>Rec</span>
+      <span className="sr-only">, recording to Stories</span>
+    </span>
+  );
+}
+
 export default function Voiceinput({ onCancel, connectionPersonId, memoryId, history = [], autoStart = false, onAutoStartConsumed, inline = false, variant = "composer", onSessionChange, persistent = false, onRuntime, onMessages }: VoiceinputProps) {
   const { user } = useStore();
   const [languageCode, setLanguageCode] = useState<VoiceLanguageCode>("en-US");
@@ -440,6 +456,7 @@ export default function Voiceinput({ onCancel, connectionPersonId, memoryId, his
     restartSession,
     setInputMuted,
     isRecording,
+    isRecordingCall,
     reconnecting,
     thinking,
     error,
@@ -677,6 +694,7 @@ export default function Voiceinput({ onCancel, connectionPersonId, memoryId, his
   if (interrupted) return null;
 
   const settingsProps: VoiceSettingsProps = {
+    showRecording: !connectionPersonId,
     voices,
     initialVoice: selectedVoice,
     initialLanguage: languageCode,
@@ -731,7 +749,7 @@ export default function Voiceinput({ onCancel, connectionPersonId, memoryId, his
                     <span aria-label="Call duration" className="font-geist text-lg font-bold tabular-nums">{formatVoiceSessionTime(recordingTime)}</span>
                     {settings}
                   </div>
-                  <p role="status" className="flex items-center gap-2 font-geist text-sm text-text-neutral-weak"><span aria-hidden className={cn("size-2 shrink-0 rounded-full", muted ? "bg-fill-error-strong" : "bg-fill-success-strong")} />{callStatus}</p>
+                  <p role="status" className="flex items-center gap-2 font-geist text-sm text-text-neutral-weak"><span aria-hidden className={cn("size-2 shrink-0 rounded-full", muted ? "bg-fill-error-strong" : "bg-fill-success-strong")} />{callStatus}{isRecordingCall && <RecordingBadge />}</p>
                 </div>
               </div>
               {controls}
@@ -744,7 +762,7 @@ export default function Voiceinput({ onCancel, connectionPersonId, memoryId, his
             <div className="flex items-start justify-between gap-3">
               <div className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-1">
                 <span aria-label="Call duration" className="font-garamond text-[30px] leading-[34px] tabular-nums">{formatVoiceSessionTime(recordingTime)}</span>
-                <p role="status" className="flex items-center gap-2 font-geist text-sm text-text-neutral-weak"><span aria-hidden className={cn("size-2 shrink-0 rounded-full", muted ? "bg-fill-error-strong" : sessionActive ? "bg-fill-success-strong" : "bg-fill-neutral-strong")} />{callStatus}</p>
+                <p role="status" className="flex items-center gap-2 font-geist text-sm text-text-neutral-weak"><span aria-hidden className={cn("size-2 shrink-0 rounded-full", muted ? "bg-fill-error-strong" : sessionActive ? "bg-fill-success-strong" : "bg-fill-neutral-strong")} />{callStatus}{isRecordingCall && <RecordingBadge />}</p>
               </div>
               {settings}
             </div>
@@ -754,7 +772,7 @@ export default function Voiceinput({ onCancel, connectionPersonId, memoryId, his
               <VoiceArtwork voice={selectedVoice} className="size-12" />
               <div className="flex flex-col gap-1">
                 <p className="font-inter text-sm font-semibold">{isStartingCall ? "Connecting…" : sessionActive ? "Let’s talk" : "Voice conversation"}</p>
-                <p role="status" className="font-inter text-xs text-text-neutral-weak">{callStatus} · {formatVoiceSessionTime(recordingTime)}</p>
+                <p role="status" className="flex items-center gap-1 font-inter text-xs text-text-neutral-weak">{callStatus} · {formatVoiceSessionTime(recordingTime)}{isRecordingCall && <RecordingBadge />}</p>
               </div>
             </div>
             {controls}
@@ -817,6 +835,7 @@ export default function Voiceinput({ onCancel, connectionPersonId, memoryId, his
                     <span className={cn("mr-2 inline-block size-2 rounded-full", muted ? "bg-fill-error-strong" : "bg-fill-success-strong")} aria-hidden />
               ) : null}
               {statusText}
+              {isRecordingCall && <RecordingBadge className="ml-2 inline-flex" />}
             </p>
           </div>
 

@@ -49,6 +49,10 @@ import { createSystemContext, isEmpty } from "@/utility";
 import useFetcher from "../use-fetcher";
 import endpoint from "@/api/endpoint";
 import { useStore } from "@/hooks/use-store";
+import { BrowserCallRecorder } from "@/features/voice/recording/browser-recorder";
+import { RecordingTranscript, speechSpansFromActivity } from "@/features/voice/recording/call-recording";
+import { readRecordConversations } from "@/features/voice/recording/preference";
+import { drainCallRecordings, finishCallRecording } from "@/features/voice/recording/store";
 import {
   captureGeminiLiveGeneration,
   createGeminiLiveSessionId,
@@ -198,6 +202,10 @@ export function useLiveAPI({
   /** When Memento's current reply became audible. */
   const replyAudibleAtRef = useRef<number | null>(null);
   const saveQueue = useRef<Promise<unknown>>(Promise.resolve());
+  // The conversation being recorded to Stories ("Record conversations"), and its transcript timing.
+  const callRecordingRef = useRef<{ recorder: BrowserCallRecorder; transcript: RecordingTranscript; sessionId: string } | null>(null);
+  const [isRecordingCall, setIsRecordingCall] = useState(false);
+  const userIdRef = useRef<string | undefined>(undefined);
   const transcriptText = useRef({ user: "", ai: "" })
 
   const turnTimerRef = useRef({
@@ -207,6 +215,7 @@ export function useLiveAPI({
   });
 
   const context = useMemo(() => createSystemContext(user), [user]);
+  userIdRef.current = user?._id;
 
   const { trigger: fetchEphemeralToken } = useFetcher(endpoint.ephemeralToken, "get")
   const { trigger: addMessageToMemory } = useFetcher(endpoint.addMessageToMemory, "post")
@@ -311,6 +320,55 @@ export function useLiveAPI({
     return () => { cancelled = true; window.clearInterval(timer); };
   }, [connectionPersonId, connected, validateConnectionVoice]);
 
+  /**
+   * Records the host's own calls (not a connection's) when "Record conversations"
+   * is on, as on mobile. Muting sends silence, so it is recorded as silence.
+   */
+  const startCallRecording = useCallback((stream: MediaStream) => {
+    if (connectionPersonId || callRecordingRef.current) return;
+    const userId = userIdRef.current;
+    const output = outputAudioContextRef.current;
+    if (!userId || !output || !outputNode || !readRecordConversations(userId) || !BrowserCallRecorder.isSupported()) return;
+    const recorder = new BrowserCallRecorder(output, outputNode);
+    if (!recorder.start(stream)) return;
+    callRecordingRef.current = { recorder, transcript: new RecordingTranscript(() => recorder.elapsedMs), sessionId: uuidv4() };
+    setIsRecordingCall(true);
+  }, [connectionPersonId, outputNode]);
+
+  /** Ends the recording and saves it as a story; a call where nothing was said is dropped. */
+  const finishCallRecordingNow = useCallback(() => {
+    const current = callRecordingRef.current;
+    callRecordingRef.current = null;
+    setIsRecordingCall(false);
+    if (!current) return;
+    const userId = userIdRef.current;
+    void current.recorder.stop().then(recording => {
+      if (!recording || !userId) return;
+      const segments = current.transcript.segments(recording.durationMs);
+      if (!segments.length) return;
+      return finishCallRecording({
+        userId,
+        sessionId: current.sessionId,
+        recording: { ...recording, segments, speech: speechSpansFromActivity(recording.activity) },
+      });
+    }).catch(error => console.error("[voice] the conversation recording could not be saved", error));
+  }, []);
+  const finishCallRecordingRef = useRef(finishCallRecordingNow);
+  finishCallRecordingRef.current = finishCallRecordingNow;
+
+  // Recordings an earlier call left in this browser (offline, or the tab closed while sending).
+  useEffect(() => {
+    const userId = user?._id;
+    if (!userId) return;
+    const drain = () => {
+      if (callRecordingRef.current) return;
+      void drainCallRecordings(userId).catch(error => console.warn("[voice] saved recordings could not be sent yet", error));
+    };
+    drain();
+    window.addEventListener("online", drain);
+    return () => window.removeEventListener("online", drain);
+  }, [user?._id]);
+
   // Start audio recording
   const startRecording = useCallback(async () => {
     if (isRecordingRef.current) return true;
@@ -382,6 +440,7 @@ export function useLiveAPI({
 
       source.connect(scriptProcessor);
       scriptProcessor.connect(inputAudioContext.destination);
+      startCallRecording(stream);
       setIsRecording(true);
       setStatus('🔴 Recording... Capturing PCM chunks.');
       return true;
@@ -392,7 +451,7 @@ export function useLiveAPI({
       setIsRecording(false);
       return false;
     }
-  }, [inputNode, isAiSpeaking]);
+  }, [inputNode, isAiSpeaking, startCallRecording]);
 
   // Start turn duration tracking
   const startTurnTimer = useCallback(() => {
@@ -453,6 +512,7 @@ export function useLiveAPI({
       firstResponseAtRef.current = Date.now();
     }
     transcriptText.current[role] += text;
+    callRecordingRef.current?.transcript.heard(role, text);
     startTurnTimer();
   }, [startAiTurn, startTurnTimer]);
 
@@ -463,6 +523,7 @@ export function useLiveAPI({
     const turnStartedAt = turnStartedAtRef.current;
     const firstResponseAt = firstResponseAtRef.current;
     transcriptText.current = { user: "", ai: "" };
+    callRecordingRef.current?.transcript.endTurn();
     turnStartedAtRef.current = null;
     firstResponseAtRef.current = null;
     stopTurnTimer();
@@ -522,6 +583,8 @@ export function useLiveAPI({
     sourceNodeRef.current?.disconnect();
     scriptProcessorNodeRef.current = undefined;
     sourceNodeRef.current = undefined;
+    // Before the mic track stops, so the recording ends where the call did.
+    finishCallRecordingNow();
 
     mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
     mediaStreamRef.current = undefined;
@@ -533,7 +596,7 @@ export function useLiveAPI({
     isConnectingRef.current = false;
 
     setStatus('Recording stopped. Click Start to begin again.');
-  }, [stopTurnTimer]);
+  }, [finishCallRecordingNow, stopTurnTimer]);
 
   const setInputMuted = useCallback((muted: boolean) => {
     mediaStreamRef.current?.getAudioTracks().forEach((track) => {
@@ -1051,6 +1114,8 @@ export function useLiveAPI({
       hasConnectedRef.current = false;
       isConnectingRef.current = false;
       outputCtx.onstatechange = null;
+      // Leaving mid-call still saves what was said.
+      finishCallRecordingRef.current();
       mediaStreamRef.current?.getTracks().forEach(track => track.stop());
       mediaStreamRef.current = null;
       scriptProcessorNodeRef.current?.disconnect();
@@ -1105,6 +1170,8 @@ export function useLiveAPI({
     stopRecording,
     setInputMuted,
     isRecording,
+    /** This call is being recorded and will be saved to Stories. */
+    isRecordingCall,
     error,
     inputNode,
     outputNode

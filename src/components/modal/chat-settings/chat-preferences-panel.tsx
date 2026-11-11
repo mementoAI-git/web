@@ -6,6 +6,7 @@ import { Switch } from "@/components/ui/switch";
 import { useOptionalConversationChrome } from "@/contexts/conversation-chrome";
 import BackgroundMusic from "./background-music";
 import Voices from "./voices";
+import { RecordConversationsSetting } from "@/components/Chatinput/record-conversations-setting";
 import { EnrichmentSummary } from "./enrichment-summary";
 import { chatSettingsCard } from "./chat-settings-card";
 import type { ConversationFilesRequest } from "@/pages/dashboard/chat/conversation/conversation-assets";
@@ -67,6 +68,7 @@ export function ChatPreferencesPanel({
         <h2 className="font-geist text-base font-semibold leading-6 text-text-neutral-strong">AI Voice</h2>
         <div data-testid="ai-voice-card" className={cn("flex flex-col gap-3", chatSettingsCard)}>
           <SpokenRepliesSetting />
+          <RecordConversationsSetting />
           <Voices />
         </div>
       </section>

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { displayFileName, voiceNoteLabel } from "./file-label";
+import { displayFileName, isVoiceConversationName, recordedAtFromName, voiceNoteLabel } from "./file-label";
 
 describe("voiceNoteLabel", () => {
   const timestamp = new Date(new Date().getFullYear(), 10, 6, 14, 32).getTime();
@@ -26,7 +26,23 @@ describe("voiceNoteLabel", () => {
     expect(voiceNoteLabel("recording-12_261106143012.webm")).toBe("Voice note");
   });
 
-  it.each(["song.mp3", "recording-final.webm", "my recording-123.webm", "", null, undefined])(
+  it.each([
+    `voice_${timestamp}.m4a`,
+    `voice_${timestamp}_261106143012.m4a`,
+  ])("labels the mobile app's voice note %s", (name) => {
+    expect(voiceNoteLabel(name)).toMatch(/^Voice note · (Nov|11)/);
+    expect(recordedAtFromName(name)).toBe(timestamp);
+  });
+
+  it("labels recorded voice conversations from either app", () => {
+    expect(voiceNoteLabel(`voice_call_${timestamp}.m4a`)).toMatch(/^Voice conversation · /);
+    expect(voiceNoteLabel(`voice_call_${timestamp}_261106143012.webm`)).toMatch(/^Voice conversation · /);
+    expect(isVoiceConversationName(`voice_call_${timestamp}.m4a`)).toBe(true);
+    expect(isVoiceConversationName(`voice_${timestamp}.m4a`)).toBe(false);
+    expect(voiceNoteLabel("voice_note.m4a")).toBe("Voice note");
+  });
+
+  it.each(["voice_memo_final.m4a", "voice-over.mp3", "song.mp3", "recording-final.webm", "my recording-123.webm", "", null, undefined])(
     "leaves %s alone",
     (name) => expect(voiceNoteLabel(name)).toBeNull(),
   );

@@ -14,6 +14,7 @@ const liveApi = vi.hoisted(() => ({
   connected: false,
   error: null as string | null,
   isRecording: false,
+  isRecordingCall: false,
   reconnecting: false,
   thinking: false,
   connect: vi.fn().mockResolvedValue(undefined),
@@ -115,6 +116,7 @@ describe("Voiceinput", () => {
     liveApi.error = null;
     vi.spyOn(toast, "error").mockClear();
     liveApi.isRecording = false;
+    liveApi.isRecordingCall = false;
     liveApi.reconnecting = false;
     liveApi.thinking = false;
     liveApi.connect.mockClear();
@@ -162,6 +164,16 @@ describe("Voiceinput", () => {
     expect(screen.getByRole("status")).toHaveTextContent("Reconnecting…");
     expect(onCancel).not.toHaveBeenCalled();
     expect(toast.error).not.toHaveBeenCalled();
+  });
+
+  it("shows Rec while the conversation is being recorded to Stories", () => {
+    liveApi.connected = true;
+    liveApi.isRecording = true;
+    render(<ThemeProvider><Voiceinput inline variant="overview" onCancel={vi.fn()} /></ThemeProvider>);
+    expect(screen.getByRole("status")).not.toHaveTextContent("Rec");
+    liveApi.isRecordingCall = true;
+    render(<ThemeProvider><Voiceinput inline variant="floating" onCancel={vi.fn()} /></ThemeProvider>);
+    expect(screen.getAllByRole("status").at(-1)).toHaveTextContent(/Listening\s*Rec, recording to Stories/);
   });
 
   it("says Thinking while Memento works on a reply the host is waiting for", () => {
