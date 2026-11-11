@@ -23,6 +23,10 @@ import type { BillingAccount } from "@/features/pricing/types";
 import { cn } from "@/utility";
 import { useRequestRecovery } from "@/hooks/use-request-recovery";
 
+/** After checkout returns, how often and how long to look for the paid plan. */
+const CHECKOUT_POLL_MS = 2000;
+const CHECKOUT_POLL_LIMIT_MS = 30000;
+
 const sectionClass =
   "settings-card p-4 sm:p-6";
 const actionClass =
@@ -81,6 +85,7 @@ export default function Billing() {
     returnHandled.current = true;
     if (result === "success") {
       refresh();
+      setAwaitingPayment(true);
       void refreshAccount().catch(() => undefined);
       toast.info("Checkout returned. Your plan will update when payment is confirmed.", {
         action: { label: "Refresh", onClick: refresh },
@@ -91,6 +96,31 @@ export default function Billing() {
     params.delete("checkout");
     navigate({ pathname: location.pathname, search: params.toString(), hash: location.hash }, { replace: true });
   }, [location, navigate, refresh, refreshAccount]);
+  // Polar confirms payment by webhook, usually just after the redirect back,
+  // so keep checking for a while until the plan changes to a paid one.
+  const [awaitingPayment, setAwaitingPayment] = useState(false);
+  const tierAtReturn = useRef<string | null | undefined>(undefined);
+  const currentTier = summary?.tier;
+  useEffect(() => {
+    if (!awaitingPayment || currentTier === undefined) return;
+    if (tierAtReturn.current === undefined) {
+      tierAtReturn.current = currentTier;
+      return;
+    }
+    if ((currentTier === "pro" || currentTier === "legacy") && currentTier !== tierAtReturn.current) {
+      setAwaitingPayment(false);
+      toast.success(currentTier === "legacy" ? "Payment confirmed. Welcome to Legacy." : "Payment confirmed. Welcome to Pro.");
+    }
+  }, [awaitingPayment, currentTier]);
+  useEffect(() => {
+    if (!awaitingPayment) return;
+    const poll = window.setInterval(refresh, CHECKOUT_POLL_MS);
+    const giveUp = window.setTimeout(() => setAwaitingPayment(false), CHECKOUT_POLL_LIMIT_MS);
+    return () => {
+      window.clearInterval(poll);
+      window.clearTimeout(giveUp);
+    };
+  }, [awaitingPayment, refresh]);
   const promoPending = useRef(false);
   const portalPending = useRef(false);
   const hasCustomer = account.data?.has_customer === true;
