@@ -6,7 +6,7 @@ import endpoint from "@/api/endpoint";
 import { post } from "@/api/mutations";
 import {
   SKIP_SECONDS,
-  alignTurnsToSpeech,
+  alignSegmentsToSpeech,
   clampSkip,
   computeTimelineBlocks,
   findActiveIndex,
@@ -351,13 +351,14 @@ export default function TranscriptAudioPlayer({
     () => fetchTranscription(fileId!),
     { revalidateOnFocus: false, revalidateIfStale: false, revalidateOnReconnect: false, errorRetryCount: 1 },
   );
-  const segments = useMemo(() => transcription.data?.segments ?? [], [transcription.data]);
   // Recorded conversations know when someone was audible; turns and words follow that.
   const recordedSpeech = useMemo(() => transcription.data?.speech ?? [], [transcription.data]);
-  const turns = useMemo(
-    () => alignTurnsToSpeech(mergeTranscriptTurns(segments), recordedSpeech),
-    [segments, recordedSpeech],
+  // Recorded calls note each turn when its text arrived; snap them to the speech actually heard.
+  const segments = useMemo(
+    () => alignSegmentsToSpeech(transcription.data?.segments ?? [], recordedSpeech),
+    [transcription.data, recordedSpeech],
   );
+  const turns = useMemo(() => mergeTranscriptTurns(segments), [segments]);
   const multiSpeaker = useMemo(() => hasSpeakers(segments), [segments]);
   // Recorded conversations know when someone was audible; otherwise the transcript stands in.
   const speech = useMemo(

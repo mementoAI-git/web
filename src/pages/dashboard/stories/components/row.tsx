@@ -2,7 +2,7 @@ import { storyDestination } from "@/lib/story-destination";
 import { DeletedMemoryStatus } from "./deleted-memory-status";
 import { StoryListThumbnail } from "./list-thumbnail";
 import { MemoryItemActions } from "./dropdown";
-import dayjs from "dayjs";
+import { StoryRowMeta } from "./story-row-meta";
 import { useNavigate } from "react-router-dom";
 import type { IMemory } from "@/utility/interface";
 import { useModal } from "@/hooks/use-modal";
@@ -47,9 +47,7 @@ export default function StoriesTableRow({ memory }: { memory: IMemory }) {
                 <DeletedMemoryStatus memory={memory} showDeletedAt inline />
               </div>
             ) : (
-              <p className="mt-0.5 font-inter text-xs leading-relaxed whitespace-nowrap text-text-neutral-weak">
-                {dayjs(memory.created_at).format("MMM DD, YYYY")}
-              </p>
+              <StoryRowMeta memory={memory} className="mt-0.5 font-inter text-xs leading-relaxed text-text-neutral-weak" />
             )}
           </div>
         </div>

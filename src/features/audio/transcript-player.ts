@@ -168,8 +168,8 @@ export function spokenCharCount(turn: TranscriptTurn, time: number, speech?: rea
     const fraction = Math.min(1, Math.max(0, partProgress(part, time, speech)));
     const words = part.text.split(/(\s+)/);
     const wordCount = words.filter((w) => w && !/^\s+$/.test(w)).length;
-    // A word lights up once it is about half said.
-    let reveal = Math.round(wordCount * fraction);
+    // Light the word being spoken, not the last one finished, so the highlight never trails.
+    let reveal = fraction > 0 ? Math.ceil(wordCount * fraction) : 0;
     for (const piece of words) {
       if (reveal <= 0) break;
       count += piece.length;
@@ -180,38 +180,98 @@ export function spokenCharCount(turn: TranscriptTurn, time: number, speech?: rea
   return Math.min(turn.text.length, count);
 }
 
-/** How far a turn's start may move to meet the speech that begins it. */
-const SPEECH_SNAP_SECONDS = 1.5;
+/** How far a turn's start may move to reach the speech it belongs to, in seconds. */
+const ALIGN_WINDOW_S = 6;
+/** Cost of leaving a turn where it was noted rather than snapping it to speech. */
+const ALIGN_SKIP_COST = 4;
+/** Moving a start the "wrong" way for its speaker costs this much more. */
+const ALIGN_AGAINST_COST = 3;
 
 /**
- * Turn starts come from when live transcription first showed the words, which
- * can be a little before or after the voice. Each turn starts where the nearest
- * stretch of speech begins, if one begins close by, so the highlight and
- * click-to-play land on the first word. Starts never move past each other.
+ * A recorded call notes each turn when its text first arrived, which is not when
+ * it was heard: the user's words are transcribed after they start speaking, and
+ * Memento's text arrives before its queued audio plays. Each segment is snapped
+ * to the start of a stretch of speech in the recording (in order, the cheapest
+ * way overall), and ends when its speech does, not at the next segment, so
+ * silence between turns is never part of one. Mirrors mobile's
+ * `alignSegmentsToSpeech` (src/features/audio/transcript-player.ts).
  */
-export function alignTurnsToSpeech(turns: readonly TranscriptTurn[], speech: readonly SpeechSpanSeconds[]): TranscriptTurn[] {
-  if (!speech.length) return [...turns];
-  let previous = -Infinity;
-  return turns.map((turn, index) => {
-    const nextStart = turns[index + 1]?.start ?? Infinity;
-    let best: number | null = null;
-    for (const span of speech) {
-      if (span.start > turn.start + SPEECH_SNAP_SECONDS) break;
-      if (span.start < turn.start - SPEECH_SNAP_SECONDS) continue;
-      if (span.start <= previous || span.start >= nextStart) continue;
-      if (best === null || Math.abs(span.start - turn.start) < Math.abs(best - turn.start)) best = span.start;
+export function alignSegmentsToSpeech(
+  segments: readonly TranscriptSegment[],
+  speech: readonly SpeechSpanSeconds[],
+): TranscriptSegment[] {
+  const spans = speech.filter((span) => span.end > span.start).slice().sort((a, b) => a.start - b.start);
+  if (!segments.length || !spans.length) return segments.slice();
+
+  // How much snapping segment `t` to the onset of span `k` costs.
+  const snapCost = (t: number, k: number) => {
+    const shift = spans[k].start - segments[t].start;
+    if (Math.abs(shift) > ALIGN_WINDOW_S) return Infinity;
+    // The user is heard before their text arrives; Memento after.
+    const expected = segments[t].speaker === "user" ? shift <= 0 : shift >= 0;
+    return Math.abs(shift) * (expected ? 1 : ALIGN_AGAINST_COST);
+  };
+
+  // cost[g]: cheapest so far with the last snapped onset before span g (g = 0: none yet).
+  const S = spans.length;
+  let cost = new Array<number>(S + 1).fill(Infinity);
+  cost[0] = 0;
+  const choices: Int32Array[] = []; // per segment: the onset picked (-1 skip) for each end state
+  const parents: Int32Array[] = [];
+  for (let t = 0; t < segments.length; t += 1) {
+    const next = new Array<number>(S + 1).fill(Infinity);
+    const choice = new Int32Array(S + 1).fill(-1);
+    const parent = new Int32Array(S + 1).fill(-1);
+    // Leave this one unsnapped: the state carries over.
+    for (let g = 0; g <= S; g += 1) {
+      if (cost[g] + ALIGN_SKIP_COST < next[g]) {
+        next[g] = cost[g] + ALIGN_SKIP_COST;
+        choice[g] = -1;
+        parent[g] = g;
+      }
     }
-    const start = best ?? Math.max(turn.start, previous);
-    previous = start;
-    if (start === turn.start) return turn;
-    const shift = start - turn.start;
-    return {
-      ...turn,
-      start,
-      // The first part moves with the turn; the rest keep their own times.
-      parts: turn.parts.map((part, partIndex) =>
-        partIndex === 0 ? { ...part, start: Math.min(part.end, part.start + shift) } : part),
-    };
+    // Snap to onset k, after the last snapped one: needs the best state g <= k.
+    let best = Infinity;
+    let bestG = -1;
+    for (let k = 0; k < S; k += 1) {
+      if (cost[k] < best) { best = cost[k]; bestG = k; }
+      const total = best + snapCost(t, k);
+      if (total < next[k + 1]) {
+        next[k + 1] = total;
+        choice[k + 1] = k;
+        parent[k + 1] = bestG;
+      }
+    }
+    choices.push(choice);
+    parents.push(parent);
+    cost = next;
+  }
+
+  let state = 0;
+  for (let g = 1; g <= S; g += 1) if (cost[g] < cost[state]) state = g;
+  const snapped = new Array<number>(segments.length);
+  for (let t = segments.length - 1; t >= 0; t -= 1) {
+    snapped[t] = choices[t][state];
+    state = parents[t][state];
+  }
+
+  const starts: number[] = [];
+  segments.forEach((segment, t) => {
+    const start = snapped[t] >= 0 ? spans[snapped[t]].start : segment.start;
+    starts.push(Math.max(start, t > 0 ? starts[t - 1] : 0));
+  });
+  const lastSpeech = spans[S - 1].end;
+  return segments.map((segment, t) => {
+    const start = starts[t];
+    const limit = t + 1 < starts.length ? starts[t + 1] : Math.max(lastSpeech, segment.end);
+    // Where the last speech before the next segment stops.
+    let end = start;
+    for (const span of spans) {
+      if (span.start >= limit) break;
+      if (span.end > start) end = Math.min(span.end, limit);
+    }
+    if (end <= start) end = Math.min(Math.max(segment.end, start), limit);
+    return { ...segment, start, end };
   });
 }
 
