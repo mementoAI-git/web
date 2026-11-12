@@ -9,6 +9,7 @@ import endpoint from "@/api/endpoint";
 import useFetcher from "@/hooks/use-fetcher";
 import { useStore } from "@/hooks/use-store";
 import { clearCache } from "@/utility";
+import { authRedirect } from "@/utility/auth-redirect";
 import AuthLayout from "../components/layout";
 import { extractSession, normalizeApiError } from "@/api/contract-adapter";
 
@@ -36,6 +37,14 @@ export default function OAuthCallbackPage() {
     started.current = true;
     trigger({ code, referral_code: getReferralCode() })
       .then(async (result) => {
+        // Accounts with two-factor authentication still need their code, as at login.
+        const pending = result?.data as { requires_2fa?: boolean; two_fa_token?: string } | undefined;
+        if (pending?.requires_2fa && pending.two_fa_token) {
+          clearReferral();
+          const params = new URLSearchParams({ token: pending.two_fa_token, redirect: authRedirect(null) });
+          navigate(`/two-factor?${params.toString()}`);
+          return;
+        }
         const session = extractSession(result);
         if (result?.success === false || !session)
           throw new Error("Authentication session is missing");

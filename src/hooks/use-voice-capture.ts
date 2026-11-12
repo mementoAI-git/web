@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { transcribeAudio } from "@/api/fetcher";
 import { createLiveDictation } from "@/lib/live-dictation";
+import { RECORDING_FORMATS } from "@/features/media/recording-formats";
 
 export type VoiceCapturePhase =
   | "idle"
@@ -26,17 +27,6 @@ export function meterHeight(rms: number) {
   return Math.max(5, 3 + amplitude * 29);
 }
 
-/**
- * MP4/AAC comes first because it plays everywhere, including Safari, iPhones and the
- * mobile app. WebM recorded in Chrome may not play back on those.
- */
-const RECORDING_FORMATS = [
-  "audio/mp4;codecs=mp4a.40.2",
-  "audio/mp4",
-  "audio/webm;codecs=opus",
-  "audio/webm",
-  "audio/ogg",
-];
 /** Speech doesn't need more, and it keeps long recordings inside the upload limit. */
 const RECORDING_BITRATE = 64000;
 /** Below this the mic is effectively sending nothing. */

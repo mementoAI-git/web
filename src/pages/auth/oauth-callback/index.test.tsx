@@ -17,6 +17,14 @@ describe("OAuth invite attribution", () => {
   expect(trigger).toHaveBeenCalledExactlyOnceWith({code:"google-code",referral_code:"a".repeat(32)});
   expect(getReferralCode()).toBeUndefined();
  });
+ it("sends accounts with two-factor authentication to the code step", async () => {
+  trigger.mockResolvedValue({success:true,data:{requires_2fa:true,two_fa_token:"pending-2fa"}});
+  renderWithProviders(<OAuthCallbackPage />);
+  await waitFor(() => expect(navigate).toHaveBeenCalledWith(expect.stringMatching(/^\/two-factor\?/)));
+  const target = new URLSearchParams(navigate.mock.calls[0][0].split("?")[1]);
+  expect(target.get("token")).toBe("pending-2fa");
+  expect(screen.queryByText("Sign in failed")).not.toBeInTheDocument();
+ });
  it("keeps the referral when authorization fails", async () => {
   trigger.mockRejectedValue(new Error("Provider unavailable"));
   renderWithProviders(<OAuthCallbackPage />);

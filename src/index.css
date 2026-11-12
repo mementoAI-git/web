@@ -1920,6 +1920,8 @@ body {
   --text-onboarding-about: var(--purple-1000);
   --fill-onboarding-about: var(--purple-50);
   --stroke-onboarding-about: var(--purple-200);
+  /* Audio player timeline: where someone was speaking, as on mobile. */
+  --fill-speech: var(--purple-1000);
 }
 .dark {
   --purple-1000: #d2b2ff;
@@ -1930,6 +1932,7 @@ body {
   --color-text-onboarding-about: var(--text-onboarding-about);
   --color-fill-onboarding-about: var(--fill-onboarding-about);
   --color-stroke-onboarding-about: var(--stroke-onboarding-about);
+  --color-fill-speech: var(--fill-speech);
 }
 
 /* Keep the onboarding composition proportional to its 1440 × 1000 Figma frame.

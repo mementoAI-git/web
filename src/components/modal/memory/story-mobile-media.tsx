@@ -8,19 +8,21 @@ import { displayFileName } from "@/utility/file-label";
 import type { IFile } from "@/utility/interface";
 
 const MAX_MOSAIC_IMAGES = 5;
-const FALLBACK_BARS = [8, 16, 24, 20, 12, 22, 14, 24, 18, 8, 16, 24];
 
 function formatDuration(seconds: number) {
   return `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, "0")}`;
 }
 
-function voiceBars(seed: string) {
+const ROW_BAR_COUNT = 36;
+
+/** A steady waveform per file, so a recording always draws the same. */
+function rowBars(seed: string) {
   let hash = 0;
   for (let i = 0; i < seed.length; i += 1) {
     hash = (hash * 31 + seed.charCodeAt(i)) | 0;
   }
-  return Array.from({ length: 16 }, (_, i) =>
-    Math.min(28, 4 + Math.round((Math.sin((Math.abs(hash) + i * 997) * 0.013) * 0.5 + 0.5) * 20)),
+  return Array.from({ length: ROW_BAR_COUNT }, (_, i) =>
+    8 + Math.round((Math.sin((Math.abs(hash) + i * 997) * 0.013) * 0.5 + 0.5) * 22),
   );
 }
 
@@ -59,7 +61,11 @@ function MosaicTile({
   );
 }
 
-function AudioCard({
+/**
+ * The story page's audio row, as on mobile: title, a small play button, a
+ * waveform and the length. Clicking anywhere opens the audio player.
+ */
+function AudioRow({
   file,
   title,
   onOpen,
@@ -69,58 +75,31 @@ function AudioCard({
   onOpen: () => void;
 }) {
   const duration = Number(file.duration ?? 0);
-  const name = title?.trim() || displayFileName(file.name) || "Audio";
-  const isVoice = /^voice[_-]/i.test(file.name ?? "");
-  const artwork = file.thumbnail;
-
-  if (artwork) {
-    return (
-      <button
-        type="button"
-        aria-label={`Play ${name}`}
-        onClick={onOpen}
-        className="relative block h-[120px] w-full overflow-hidden rounded-2xl"
-      >
-        <img src={artwork} alt="" className="size-full object-cover" />
-        <span className="story-media-scrim absolute inset-x-0 bottom-0 flex items-center gap-2 px-3.5 py-2.5 text-left font-inter text-[11px] leading-4">
-          <span className="min-w-0 flex-1 truncate">{name}</span>
-          {duration > 0 ? <span className="story-media-weak">{formatDuration(duration)}</span> : null}
-        </span>
-      </button>
-    );
-  }
-
-  const bars = isVoice ? voiceBars(file._id || file.name || "") : FALLBACK_BARS;
+  const storyTitle = title?.trim() && title !== "Untitled Memory" ? title.trim() : null;
+  const name = storyTitle || displayFileName(file.name) || "Audio";
+  const length = duration > 0 ? formatDuration(duration) : null;
+  const bars = rowBars(file._id || file.name || "");
   return (
     <button
       type="button"
-      aria-label={`Play ${name}`}
+      aria-label={`Play ${name}${length ? `, ${length}` : ""}`}
       onClick={onOpen}
-      className={cn(
-        "flex aspect-square w-[calc(50%-4px)] max-w-[340px] flex-col items-center justify-center gap-3 rounded-[20px] p-4",
-        isVoice ? "story-media-surface" : "bg-fill-neutral-weak text-text-neutral-strong",
-      )}
+      className="flex w-full cursor-pointer flex-col gap-3 rounded-[20px] bg-fill-neutral-weak p-4 text-left transition-[filter] duration-150 hover:brightness-[0.97] motion-reduce:transition-none"
     >
-      <span className="flex h-8 items-end gap-0.5" aria-hidden>
-        {bars.map((height, index) => (
-          <span
-            key={index}
-            className="w-[3px] rounded-[2px] bg-fill-brand-strong"
-            style={{ height, opacity: isVoice ? 0.8 : 1 }}
-          />
-        ))}
-      </span>
-      <span className="line-clamp-2 text-center font-inter text-[11px] leading-4">{name}</span>
-      {duration > 0 ? (
-        <span
-          className={cn(
-            "rounded-full px-2.5 py-[3px] font-inter text-[11px] leading-4",
-            isVoice ? "story-media-pill story-media-weak" : "bg-fill-neutral-weaker text-text-neutral-weak",
-          )}
-        >
-          {formatDuration(duration)}
+      <span className="truncate font-inter text-sm font-semibold leading-5 text-text-neutral-strong">{name}</span>
+      <span className="flex items-center gap-3">
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-fill-tab-active text-text-tab-active">
+          <Play aria-hidden fill="currentColor" stroke="none" className="size-3.5 translate-x-px" />
         </span>
-      ) : null}
+        <span aria-hidden className="flex h-[30px] min-w-0 flex-1 items-center justify-between">
+          {bars.map((height, index) => (
+            <span key={index} className="w-[2.5px] rounded-full bg-fill-brand-strong" style={{ height }} />
+          ))}
+        </span>
+        {length ? (
+          <span className="shrink-0 font-inter text-[13px] tabular-nums text-text-neutral-weak">{length}</span>
+        ) : null}
+      </span>
     </button>
   );
 }
@@ -223,7 +202,7 @@ export function StoryMobileMedia({
         {audio.length ? (
           <div className="mb-2 flex flex-col gap-2 px-4">
             {audio.map((file, index) => (
-              <AudioCard key={file._id || index} file={file} title={title} onOpen={() => open(file)} />
+              <AudioRow key={file._id || index} file={file} title={title} onOpen={() => open(file)} />
             ))}
           </div>
         ) : null}

@@ -1,0 +1,18 @@
+/* A soft shadow keeps the playhead visible where it crosses speech. */
+.transcript-playhead {
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.35);
+}
+
+/* The transcript fades out at its edges, over any background (plain or sky). */
+.transcript-fade {
+  mask-image: linear-gradient(to bottom, transparent 0, #000 12%, #000 88%, transparent 100%);
+}
+
+/*
+ * Light sky's weak fill is translucent white, which vanishes on the player's
+ * solid card; a quiet neutral tint keeps the track and skip buttons visible,
+ * as pricing does for its billing toggle.
+ */
+.light-sky .transcript-quiet-fill {
+  background-color: color-mix(in srgb, var(--fill-neutral-strong) 8%, transparent);
+}

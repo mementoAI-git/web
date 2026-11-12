@@ -199,7 +199,7 @@ export function StoryMobileReader({
         </h1>
         {createdAt ? (
           <p className="flex items-center gap-[5px] px-4 pb-3.5 font-inter text-[13px] leading-[19px] text-text-neutral-weak">
-            <CalendarDays className="size-3.5 text-text-info-strong" strokeWidth={1.8} aria-hidden />
+            <CalendarDays className="size-3.5 text-icon-brand-strong" strokeWidth={1.8} aria-hidden />
             {dayjs(createdAt).format("ddd, MMM D")}
           </p>
         ) : null}
