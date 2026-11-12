@@ -4,7 +4,7 @@ import { QuickCaptureProcessingBadge } from "@/components/memory/quick-capture-p
 import { MemoryItemActions } from "./dropdown";
 import { StoryListThumbnail } from "./list-thumbnail";
 import type { IMemory, IPagination } from "@/utility/interface";
-import dayjs from "dayjs";
+import { StoryRowMeta } from "./story-row-meta";
 import { useNavigate } from "react-router-dom";
 
 function getStoryRowTitle(memory: IMemory): string {
@@ -35,15 +35,13 @@ function MobileStoryCard({ memory }: { memory: IMemory }) {
         <StoryListThumbnail memory={memory} />
 
         <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <h3 className="line-clamp-2 font-inter text-[15px] font-semibold leading-snug text-v3-text-strong">
+          <div className="flex min-w-0 items-center gap-2">
+            <h3 className="min-w-0 truncate font-inter text-[15px] font-semibold leading-snug text-v3-text-strong">
               {rowTitle}
             </h3>
             <QuickCaptureProcessingBadge memory={memory} />
           </div>
-          {memory.status === "deleted" ? <div className="mt-1"><DeletedMemoryStatus memory={memory} showDeletedAt /></div> : <p className="mt-1 font-inter text-[11px] uppercase tracking-[0.12em] text-v3-text-weaker">
-            {dayjs(memory.created_at).format("MMM DD, YYYY")}
-          </p>}
+          {memory.status === "deleted" ? <div className="mt-1"><DeletedMemoryStatus memory={memory} showDeletedAt /></div> : <StoryRowMeta memory={memory} className="mt-1 font-inter text-[11px] uppercase tracking-[0.12em] text-v3-text-weaker" />}
         </div>
 
         <div

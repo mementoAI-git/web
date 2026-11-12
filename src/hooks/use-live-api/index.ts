@@ -49,6 +49,7 @@ import { createSystemContext, isEmpty } from "@/utility";
 import useFetcher from "../use-fetcher";
 import endpoint from "@/api/endpoint";
 import { useStore } from "@/hooks/use-store";
+import { toast } from "sonner";
 import { BrowserCallRecorder } from "@/features/voice/recording/browser-recorder";
 import { RecordingTranscript, speechSpansFromActivity } from "@/features/voice/recording/call-recording";
 import { readRecordConversations } from "@/features/voice/recording/preference";
@@ -350,8 +351,16 @@ export function useLiveAPI({
         userId,
         sessionId: current.sessionId,
         recording: { ...recording, segments, speech: speechSpansFromActivity(recording.activity) },
+      }).then(result => {
+        // As on mobile: reassure the person their conversation is kept once it is safe.
+        toast.success(result === "sent"
+          ? "Your conversation recording is saved to Stories"
+          : "Your conversation recording is saved and will appear in Stories shortly");
       });
-    }).catch(error => console.error("[voice] the conversation recording could not be saved", error));
+    }).catch(error => {
+      console.error("[voice] the conversation recording could not be saved", error);
+      toast.error("We couldn’t save this conversation’s recording");
+    });
   }, []);
   const finishCallRecordingRef = useRef(finishCallRecordingNow);
   finishCallRecordingRef.current = finishCallRecordingNow;
