@@ -15,6 +15,14 @@ import {
 import { mutate } from "swr";
 import { get, post } from "@/api/mutations";
 import { voiceToolsEnabled, voiceTokenParams } from "@/features/voice/tools/capabilities";
+import {
+  CALL_ENDING_SOON_PROMPT,
+  CALL_TIME_UP_MESSAGE,
+  CALL_TIME_UP_PROMPT,
+  callLimitSchedule,
+  isCallTimeUp,
+  parseVoiceCallTime,
+} from "@/features/voice/call-limit";
 import { createCallActionHandlers, resolveWebDestination, showWebDestination, type CallControls } from "@/features/voice/tools/call-actions";
 import { VoiceToolRelay } from "@/features/voice/tools/relay";
 import { DomScreen } from "@/features/voice/screen/dom-screen";
@@ -179,6 +187,11 @@ export function useLiveAPI({
   const socketSeqRef = useRef(0);
   const socketOpenRef = useRef(false);
   const resumeHandleRef = useRef<string | null>(null);
+  /** The call's time-limit ticket, sent back on reconnect; null when calls are not limited. */
+  const callTicketRef = useRef<string | null>(null);
+  const callLimitTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+  /** Set when the server refused to reconnect because the call's time was up. */
+  const callTimeUpRef = useRef(false);
   const reconnectingRef = useRef(false);
   const [reconnecting, setReconnecting] = useState(false);
   const callSetupRef = useRef<{ overrides: LiveSessionOverrides; wantsTools: boolean }>({ overrides: {}, wantsTools: false });
@@ -295,6 +308,41 @@ export function useLiveAPI({
     toolControlsRef.current?.endCall();
     pending.then?.();
   }, []);
+
+  const clearCallLimit = useCallback(() => {
+    callLimitTimersRef.current.forEach(clearTimeout);
+    callLimitTimersRef.current = [];
+  }, []);
+
+  /**
+   * Arms the call's time limit, when the server sets one: a spoken heads-up
+   * near the end, then a goodbye after which the call ends. Called again on
+   * each reconnect with the server's fresh count.
+   */
+  const scheduleCallLimit = useCallback((token: unknown) => {
+    clearCallLimit();
+    const callTime = parseVoiceCallTime(token);
+    if (!callTime) return;
+    callTicketRef.current = callTime.ticket;
+    const ask = (text: string) => {
+      void sessionPromiseRef.current
+        ?.then(session => session.sendClientContent({ turns: [{ role: "user", parts: [{ text }] }], turnComplete: true }))
+        .catch(error => console.warn("[voice] call time notice failed", error));
+    };
+    const { warnInMs, endInMs } = callLimitSchedule(callTime.secondsLeft);
+    if (warnInMs !== null) callLimitTimersRef.current.push(setTimeout(() => ask(CALL_ENDING_SOON_PROMPT), warnInMs));
+    callLimitTimersRef.current.push(setTimeout(() => {
+      if (!hasConnectedRef.current) return;
+      ask(CALL_TIME_UP_PROMPT);
+      if (!toolControlsRef.current) {
+        endLostCallRef.current?.(CALL_TIME_UP_MESSAGE);
+        return;
+      }
+      // Ends after the goodbye plays, as for end_call.
+      if (pendingEndRef.current) clearTimeout(pendingEndRef.current.timer);
+      pendingEndRef.current = { heardGoodbye: false, timer: setTimeout(() => void finishPendingEnd(), GOODBYE_LIMIT_MS) };
+    }, endInMs));
+  }, [clearCallLimit, finishPendingEnd]);
 
   const validateConnectionVoice = useCallback(async () => {
     if (!connectionPersonId) return;
@@ -899,6 +947,9 @@ export function useLiveAPI({
       }).catch(() => {});
       const [session] = await Promise.all([pendingSession, socket.setupReady]);
       if (!isCurrent() || !hasConnectedRef.current) return false;
+      // The call is up: arm its time limit, if the server set one.
+      callTimeUpRef.current = false;
+      scheduleCallLimit(liveToken);
       if (!connectionPersonId && !isEmpty(turns)) {
         session.sendClientContent({
           turns: turns.map(({ role, text }) => ({
@@ -988,6 +1039,7 @@ export function useLiveAPI({
             memoryId: memoryIdRef.current,
             tools: callSetupRef.current.wantsTools,
             resumeHandle: resumeHandleRef.current,
+            callTicket: callTicketRef.current,
           }));
           if (!isCurrent()) return "ended";
           const liveToken = result?.data as LiveToken | undefined;
@@ -1003,12 +1055,19 @@ export function useLiveAPI({
           sessionPromiseRef.current = socket.sessionPromise;
           socketOpenRef.current = true;
           void previous?.then(session => session.close()).catch(() => {});
+          // The server's count is the clock: restart the timers from it.
+          scheduleCallLimit(liveToken);
           // A turn cut off by the swap may never complete; keep what was said.
           flushTranscript("interrupted");
           console.info("[voice] reconnected", { reason, tries });
           return "reconnected";
         } catch (error) {
           void pending?.then(session => session.close()).catch(() => {});
+          if (isCallTimeUp(error)) {
+            // Retrying cannot help: the call's time is up.
+            callTimeUpRef.current = true;
+            return "failed";
+          }
           console.warn("[voice] reconnect attempt failed", { reason, tries, error });
         }
       }
@@ -1016,7 +1075,7 @@ export function useLiveAPI({
       reconnectingRef.current = false;
       setReconnecting(false);
     }
-  }, [fetchEphemeralToken, flushTranscript, openSocket]);
+  }, [fetchEphemeralToken, flushTranscript, openSocket, scheduleCallLimit]);
   reconnectRef.current = reconnect;
 
   /** The active connection closed: carry the call over if Gemini gave a handle, else end it. */
@@ -1025,7 +1084,7 @@ export function useLiveAPI({
     if (hasConnectedRef.current && resumeHandleRef.current) {
       const result = await reconnect("connection-lost");
       if (result === "reconnected" || result === "in-progress" || result === "ended") return;
-      message = VOICE_CONNECTION_LOST;
+      message = callTimeUpRef.current ? CALL_TIME_UP_MESSAGE : VOICE_CONNECTION_LOST;
     }
     endLostCall(message);
   }, [endLostCall, reconnect]);
@@ -1043,6 +1102,8 @@ export function useLiveAPI({
 
   const disconnect = useCallback(() => {
     ++connectionAttempt.current;
+    clearCallLimit();
+    callTicketRef.current = null;
     stopVoiceTools();
     stopTurnTaking();
     cancelSetup.current?.();
@@ -1055,7 +1116,7 @@ export function useLiveAPI({
     sessionPromiseRef.current?.then((session) => session.close()).catch(console.error);
     sessionPromiseRef.current = null;
     // Don't close audio contexts here - they're managed by the cleanup
-  }, [stopTurnTaking, stopVoiceTools]);
+  }, [clearCallLimit, stopTurnTaking, stopVoiceTools]);
 
   const restartSession = useCallback(async (overrides: LiveSessionOverrides = {}) => {
     setInputMuted(true);

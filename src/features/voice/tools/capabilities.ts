@@ -25,6 +25,7 @@ export function voiceTokenParams({
   tools,
   timeZone = browserTimeZone(),
   resumeHandle,
+  callTicket,
 }: {
   memoryId?: string | null;
   tools: boolean;
@@ -32,10 +33,13 @@ export function voiceTokenParams({
   timeZone?: string | null;
   /** Gemini's handle for the call, to carry on the same conversation on a new connection. */
   resumeHandle?: string | null;
+  /** When calls have a time limit: the ticket from the call's first token. */
+  callTicket?: string | null;
 }): Record<string, string> {
   const params: Record<string, string> = {};
   if (memoryId) params.memory_id = memoryId;
   if (resumeHandle) params.resume_handle = resumeHandle;
+  if (callTicket) params.call_ticket = callTicket;
   if (tools) params.capabilities = WEB_VOICE_CAPABILITIES.join(",");
   // The host's own date and weekday, for "next Friday" and "this morning".
   if (timeZone) params.timezone = timeZone;
