@@ -207,6 +207,26 @@ it("handles checkout return without claiming a completed payment", async () => {
   expect(success).not.toHaveBeenCalled();
 });
 
+it("keeps checking after checkout until the payment unlocks Pro", async () => {
+  // Polar's webhook usually lands after the redirect back, so the first
+  // check still says Free.
+  let calls = 0;
+  server.use(
+    http.get(`${base}/subscription`, () => {
+      calls += 1;
+      return HttpResponse.json({
+        success: true,
+        data: { tier: calls >= 3 ? "pro" : "free", status: "active", usage: {} },
+      });
+    }),
+  );
+  const success = vi.spyOn(toast, "success");
+  renderWithProviders(<Billing />, { auth: true, route: "/settings/billing?checkout=success" });
+
+  await waitFor(() => expect(success).toHaveBeenCalledWith("Payment confirmed. Welcome to Pro."), { timeout: 8000 });
+  expect(calls).toBeGreaterThanOrEqual(3);
+}, 15000);
+
 it("reports cancelled checkout without claiming plan changes", async () => {
   const info = vi.spyOn(toast, "info");
   renderWithProviders(<Billing />, { auth: true, route: "/settings/billing?checkout=cancelled" });
