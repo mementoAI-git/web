@@ -1,6 +1,10 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { http, HttpResponse } from "msw";
 import { vi } from "vitest";
+import { SWRConfig } from "swr";
+import { fetcher } from "@/api/fetcher";
+import { server } from "@/test";
 import { PublishSuccessView } from "./publish-success-view";
 import { SharePost } from "./share-post";
 
@@ -9,6 +13,17 @@ vi.mock("@/hooks/use-copy", () => ({ default: () => [false, copy] }));
 vi.mock("@/hooks/use-modal", () => ({ useModal: () => ({ open, close }) }));
 
 beforeEach(() => vi.clearAllMocks());
+
+const API = "http://localhost:3000/api";
+const serveStory = (visibility: "everyone" | "private") =>
+  server.use(
+    http.get(`${API}/memories/story-1`, () =>
+      HttpResponse.json({ success: true, data: { _id: "story-1", title: "T", status: "save", visibility } }),
+    ),
+  );
+// Real data fetching for the share gate, with a fresh cache per test.
+const renderWithData = (ui: React.ReactElement) =>
+  render(<SWRConfig value={{ fetcher, provider: () => new Map(), dedupingInterval: 0 }}>{ui}</SWRConfig>);
 
 it("shares the saved conversation link with conversation-specific copy", async () => {
   render(<SharePost data={{ id: "conversation-1", kind: "conversation" }} />);
@@ -20,17 +35,32 @@ it("shares the saved conversation link with conversation-specific copy", async (
 });
 
 it("uses the mobile publish-success view and opens another story", async () => {
-  render(<SharePost data={{ id: "story-1" }} />);
+  serveStory("everyone");
+  renderWithData(<SharePost data={{ id: "story-1" }} />);
   expect(screen.getByRole("heading", { name: "Story published successfully" })).toBeInTheDocument();
   expect(screen.getByText("Share this story with friends")).toBeInTheDocument();
   const user = userEvent.setup();
+  // A public story copies straight away once it has loaded.
+  await new Promise((resolve) => setTimeout(resolve, 50));
   await user.click(screen.getByRole("button", { name: "Copy story link" }));
   expect(await navigator.clipboard.readText()).toBe(`${window.location.origin}/post/story-1`);
-  expect(screen.getByText("Copied")).toBeInTheDocument();
+  expect(await screen.findByText("Copied")).toBeInTheDocument();
   expect(screen.getByRole("link", { name: "Share on X" })).toHaveAttribute("href", `https://x.com/intent/tweet?url=${encodeURIComponent(`${window.location.origin}/post/story-1`)}`);
   await user.click(screen.getByRole("button", { name: "Add another story" }));
   expect(close).toHaveBeenCalledWith("share-post");
   expect(open).toHaveBeenCalledWith("create-memory");
+});
+
+it("asks before sharing a new private story's link", async () => {
+  serveStory("private");
+  const popup = vi.spyOn(window, "open").mockImplementation(() => null);
+  renderWithData(<SharePost data={{ id: "story-1" }} />);
+  const user = userEvent.setup();
+  await new Promise((resolve) => setTimeout(resolve, 50));
+  await user.click(screen.getByRole("link", { name: "Share on X" }));
+  expect(await screen.findByRole("alertdialog", { name: "Make this story public?" })).toBeVisible();
+  expect(popup).not.toHaveBeenCalled();
+  popup.mockRestore();
 });
 
 it("shows the link without a notice about who can open it", () => {

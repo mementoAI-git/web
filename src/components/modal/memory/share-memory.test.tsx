@@ -21,7 +21,8 @@ vi.mock("./view", () => ({
   },
 }));
 
-const story = { _id: "story-1", title: "A story", type: "story" } as unknown as IMemory;
+// Public, so its link copies straight away; private stories ask first (below).
+const story = { _id: "story-1", title: "A story", type: "story", status: "save", visibility: "everyone" } as unknown as IMemory;
 
 let modal: ReturnType<typeof useModal>;
 function ModalHarness() {
@@ -49,6 +50,24 @@ it("copies the link from the button beside it", async () => {
   await user.click(screen.getByRole("button", { name: "Copy share link" }));
   expect(await navigator.clipboard.readText()).toBe(`${window.location.origin}/post/story-1`);
   expect(await screen.findByRole("button", { name: "Link copied" })).toHaveTextContent("Copied");
+});
+
+it("asks before copying the link of a private story", async () => {
+  const user = userEvent.setup();
+  render(<ShareMemory data={{ memory: { ...story, visibility: "private" } as IMemory }} />);
+  await navigator.clipboard.writeText("before");
+  await user.click(screen.getByRole("button", { name: "Copy link" }));
+  expect(await screen.findByRole("alertdialog", { name: "Make this story public?" })).toBeVisible();
+  expect(await navigator.clipboard.readText()).toBe("before");
+});
+
+it("asks before sharing a private story on social media", async () => {
+  const user = userEvent.setup();
+  const open = vi.spyOn(window, "open").mockImplementation(() => null);
+  render(<ShareMemory data={{ memory: { ...story, visibility: "private" } as IMemory }} />);
+  await user.click(screen.getByRole("button", { name: "Share on LinkedIn" }));
+  expect(await screen.findByRole("alertdialog", { name: "Make this story public?" })).toBeVisible();
+  expect(open).not.toHaveBeenCalled();
 });
 
 it("links conversations to chat", () => {
