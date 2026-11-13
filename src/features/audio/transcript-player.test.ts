@@ -8,7 +8,7 @@ import {
   fractionFromX,
   hasSpeakers,
   isVoiceRecording,
-  alignTurnsToSpeech,
+  alignSegmentsToSpeech,
   mergeTranscriptTurns,
   parseFileTranscription,
   resolveTimelineDuration,
@@ -205,7 +205,7 @@ describe('spokenCharCount', () => {
     expect(firstTurn.text.slice(0, spokenCharCount(firstTurn, 0))).toBe('');
     expect(firstTurn.text.slice(0, spokenCharCount(firstTurn, 2))).toBe('Hi');
     expect(firstTurn.text.slice(0, spokenCharCount(firstTurn, 4))).toBe('Hi there. ');
-    // A word lights up once it is about half said.
+    // A word lights as it starts.
     expect(firstTurn.text.slice(0, spokenCharCount(firstTurn, 5.5))).toBe('Hi there. How are');
   });
 
@@ -219,19 +219,23 @@ describe('spokenCharCount', () => {
   });
 });
 
-describe('alignTurnsToSpeech', () => {
-  const turns = mergeTranscriptTurns(conversation); // starts 0, 7.5, 12
+describe('alignSegmentsToSpeech', () => {
+  // Memento speaks 0.5–4s, the user 6–9s, Memento again 10.2–14s.
+  const speech = [{ start: 0.5, end: 4 }, { start: 6, end: 9 }, { start: 10.2, end: 14 }];
 
-  it('moves each turn to the speech that begins it, within reach', () => {
-    const aligned = alignTurnsToSpeech(turns, [{ start: 0.6, end: 3 }, { start: 8.4, end: 11 }, { start: 15, end: 18 }]);
-    expect(aligned.map((turn) => turn.start)).toEqual([0.6, 8.4, 12]);
-    expect(aligned[0].parts[0].start).toBe(0.6);
-    expect(aligned[0].parts[1].start).toBe(4);
+  it('snaps late user text back and early Memento text forward to the speech heard', () => {
+    const aligned = alignSegmentsToSpeech([
+      { start: 0, end: 7.5, text: 'Hello there', speaker: 'ai' },
+      { start: 7.5, end: 9.6, text: 'Hi Memento', speaker: 'user' }, // transcribed 1.5s late
+      { start: 9.6, end: 20, text: 'Lovely to hear', speaker: 'ai' }, // text before its audio
+    ], speech);
+    expect(aligned.map((segment) => [segment.start, segment.end])).toEqual([[0.5, 4], [6, 9], [10.2, 14]]);
   });
 
-  it('never moves a turn past its neighbours and keeps turns without speech data', () => {
-    expect(alignTurnsToSpeech(turns, [])).toEqual(turns);
-    const aligned = alignTurnsToSpeech(turns, [{ start: 11.9, end: 13 }]);
-    expect(aligned.map((turn) => turn.start)).toEqual([0, 7.5, 11.9]);
+  it('keeps turns in order and leaves them be without speech to snap to', () => {
+    const segments = [{ start: 1, end: 2, text: 'A', speaker: 'ai' as const }, { start: 2, end: 3, text: 'B', speaker: 'user' as const }];
+    expect(alignSegmentsToSpeech(segments, [])).toEqual(segments);
+    const far = alignSegmentsToSpeech(segments, [{ start: 40, end: 45 }]);
+    expect(far.map((segment) => segment.start)).toEqual([1, 2]);
   });
 });
