@@ -7,6 +7,7 @@ import {
   USER_TRANSCRIPT_LAG_MS,
 } from "./call-recording";
 import {
+  audioOmittedReason,
   buildRecordingSaveBody,
   CallRecordingOutbox,
   RECORDING_OUTBOX_MAX_AGE_MS,
@@ -139,20 +140,91 @@ describe("call recording outbox", () => {
     expect(uploads).toBe(1);
   });
 
-  it("drops recordings that are too old", async () => {
+  it("keeps the transcript of a recording too old to retry, then drops it", async () => {
     let now = 0;
     const outbox = new CallRecordingOutbox(memoryStorage(), () => now);
     await outbox.add(entry);
     now = RECORDING_OUTBOX_MAX_AGE_MS + 1;
     let uploads = 0;
-    await outbox.drain({ upload: async () => { uploads += 1; return "f"; }, save: async () => {} });
+    const saved: unknown[] = [];
+    await outbox.drain({ upload: async () => { uploads += 1; return "f"; }, save: async (s) => { saved.push(s); } });
     expect(uploads).toBe(0);
+    expect(saved).toEqual([expect.objectContaining({ audioOmitted: "upload_failed" })]);
     expect(await outbox.entries()).toEqual([]);
+  });
+
+  it("drops an old recording with nothing said, without saving", async () => {
+    let now = 0;
+    const outbox = new CallRecordingOutbox(memoryStorage(), () => now);
+    await outbox.add({ ...entry, segments: [] });
+    now = RECORDING_OUTBOX_MAX_AGE_MS + 1;
+    let saves = 0;
+    await outbox.drain({ upload: async () => "f", save: async () => { saves += 1; } });
+    expect(saves).toBe(0);
+    expect(await outbox.entries()).toEqual([]);
+  });
+
+  it("saves just the transcript when the audio is too large to upload", async () => {
+    const outbox = new CallRecordingOutbox(memoryStorage());
+    await outbox.add(entry);
+    const calls: string[] = [];
+    const sent = await outbox.drain({
+      upload: async () => { calls.push("upload"); throw { httpStatus: 413, code: "payload_too_large" }; },
+      save: async (s) => { calls.push(`save:${s.fileId ?? s.audioOmitted}`); },
+    });
+    expect(sent).toBe(1);
+    expect(calls).toEqual(["upload", "save:too_large"]);
+    expect(await outbox.entries()).toEqual([]);
+  });
+
+  it("saves just the transcript when storage is full", async () => {
+    const outbox = new CallRecordingOutbox(memoryStorage());
+    await outbox.add(entry);
+    const saved: string[] = [];
+    await outbox.drain({
+      upload: async () => { throw { httpStatus: 403, code: "storage_quota_exceeded" }; },
+      save: async (s) => { saved.push(String(s.audioOmitted)); },
+    });
+    expect(saved).toEqual(["storage_full"]);
+  });
+
+  it("keeps retrying the upload after a passing failure", async () => {
+    const outbox = new CallRecordingOutbox(memoryStorage());
+    await outbox.add(entry);
+    let saves = 0;
+    const sent = await outbox.drain({ upload: async () => { throw { httpStatus: 503 }; }, save: async () => { saves += 1; } });
+    expect(sent).toBe(0);
+    expect(saves).toBe(0);
+    expect(await outbox.entries()).toHaveLength(1);
+  });
+
+  it("once the audio is given up on, a retry saves the transcript without uploading again", async () => {
+    const outbox = new CallRecordingOutbox(memoryStorage());
+    await outbox.add(entry);
+    let uploads = 0;
+    await outbox.drain({ upload: async () => { uploads += 1; throw { httpStatus: 413 }; }, save: async () => { throw new Error("offline"); } });
+    expect((await outbox.entries())[0].audioOmitted).toBe("too_large");
+    const sent = await outbox.drain({ upload: async () => { uploads += 1; return "f"; }, save: async () => {} });
+    expect(sent).toBe(1);
+    expect(uploads).toBe(1);
+  });
+
+  it("tells final upload failures from passing ones", () => {
+    expect(audioOmittedReason({ httpStatus: 413 })).toBe("too_large");
+    expect(audioOmittedReason({ code: "payload_too_large" })).toBe("too_large");
+    expect(audioOmittedReason({ httpStatus: 403, code: "storage_quota_exceeded" })).toBe("storage_full");
+    expect(audioOmittedReason({ httpStatus: 503 })).toBeNull();
+    expect(audioOmittedReason(new Error("Network Error"))).toBeNull();
   });
 
   it("builds the save request", () => {
     expect(recordingSavePath("a b")).toBe("/ai/voice/calls/a%20b/recording");
     expect(buildRecordingSaveBody({ ...entry, fileId: "f1" })).toEqual({ file_id: "f1", duration_seconds: 62, segments: entry.segments });
     expect(buildRecordingSaveBody({ ...entry, speech: [{ start: 0, end: 1 }], fileId: "f1" }).speech).toEqual([{ start: 0, end: 1 }]);
+    expect(buildRecordingSaveBody({ ...entry, audioOmitted: "storage_full" })).toEqual({
+      audio_omitted: "storage_full",
+      duration_seconds: 62,
+      segments: entry.segments,
+    });
   });
 });

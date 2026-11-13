@@ -74,12 +74,14 @@ export interface GetSocialShareLinksParams {
   images: Record<SocialPlatformKey, string>;
   /** If provided, only these platforms are returned. Default: all. */
   platforms?: SocialPlatformKey[] | readonly SocialPlatformKey[];
+  /** Opens a platform's share page. Default: a centred popup. */
+  onOpen?: (url: string) => void;
 }
 
 export const getSocialShareLinks = (
   params: GetSocialShareLinksParams
 ): SocialShareLinkItem[] => {
-  const { shareUrl, shareText, onCopy, images, platforms } = params;
+  const { shareUrl, shareText, onCopy, images, platforms, onOpen = openSharePopup } = params;
   const selected = platforms ?? ALL_SOCIAL_PLATFORMS;
 
   const config: Record<
@@ -89,7 +91,7 @@ export const getSocialShareLinks = (
     facebook: {
       name: "Facebook",
       onClick: () => {
-        openSharePopup(
+        onOpen(
           `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`
         );
       },
@@ -97,14 +99,14 @@ export const getSocialShareLinks = (
     linkedin: {
       name: "LinkedIn",
       onClick: () =>
-        openSharePopup(
+        onOpen(
           `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`
         ),
     },
     twitter: {
       name: "Twitter",
       onClick: () =>
-        openSharePopup(
+        onOpen(
           `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`
         ),
     },

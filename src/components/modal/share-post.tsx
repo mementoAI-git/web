@@ -159,7 +159,7 @@ export function SharePost({ data, isMobile = false }: SharePostProps) {
   const handleClose = () => close("share-post");
 
   const content = data.kind === "conversation" ? <div className={isMobile ? "pb-6" : "p-5"}><SharePostContent data={data} /></div> : (
-    <PublishSuccessView publishedUrl={`${window.location.origin}/post/${data.id}`} sheet={isMobile} onDismiss={handleClose} onAddAnother={() => {
+    <PublishSuccessView publishedUrl={`${window.location.origin}/post/${data.id}`} memoryId={data.id} sheet={isMobile} onDismiss={handleClose} onAddAnother={() => {
       handleClose();
       open?.("create-memory");
     }} />

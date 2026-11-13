@@ -88,7 +88,7 @@ async function upload(entry: RecordingOutboxEntry): Promise<string> {
   return file._id;
 }
 
-async function save(entry: RecordingOutboxEntry & { fileId: string }) {
+async function save(entry: RecordingOutboxEntry) {
   await post(recordingSavePath(entry.sessionId), buildRecordingSaveBody(entry), { skipErrorHandling: true });
   void mutate((key) => typeof key === "string" && key.startsWith(endpoint.memories));
 }

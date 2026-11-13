@@ -20,8 +20,31 @@ export type RecordingOutboxEntry = {
   speech?: SpeechSpan[];
   /** Set once the audio is uploaded. */
   fileId?: string;
+  /** Set once the audio is given up on; only the transcript is saved. */
+  audioOmitted?: AudioOmittedReason;
   savedAt: number;
 };
+
+/** Why a call's audio could not be kept (the API's audio_omitted values). */
+export type AudioOmittedReason = "too_large" | "storage_full" | "upload_failed";
+
+/**
+ * An upload failure that will never succeed on retry: the file is over the
+ * upload limit, or the member's storage is full. Anything else (no network,
+ * a server hiccup) is worth retrying, so it returns null. Mirrors mobile.
+ */
+export function audioOmittedReason(error: unknown): AudioOmittedReason | null {
+  const failure = error as { httpStatus?: number; status?: number; code?: string } | null;
+  const status = failure?.httpStatus ?? failure?.status;
+  if (status === 413 || failure?.code === "payload_too_large") return "too_large";
+  if (failure?.code === "storage_quota_exceeded") return "storage_full";
+  return null;
+}
+
+/** Whether a transcript has anything worth saving on its own. */
+function hasWords(entry: Pick<RecordingOutboxEntry, "segments">) {
+  return entry.segments.some((segment) => segment.text.trim().length > 0);
+}
 
 /** One account's saved recordings. */
 export type RecordingOutboxStorage = {
@@ -33,8 +56,8 @@ export type RecordingOutboxStorage = {
 export type RecordingOutboxDeps = {
   /** Uploads the audio, resolving the stored file id. */
   upload(entry: RecordingOutboxEntry): Promise<string>;
-  /** Saves the recording as a story for the call. */
-  save(entry: RecordingOutboxEntry & { fileId: string }): Promise<void>;
+  /** Saves the call as a story: with its audio (fileId) or its transcript alone (audioOmitted). */
+  save(entry: RecordingOutboxEntry): Promise<void>;
 };
 
 /** Recordings older than this are dropped, as on mobile. */
@@ -45,10 +68,10 @@ export function recordingSavePath(sessionId: string) {
 }
 
 export function buildRecordingSaveBody(
-  entry: Pick<RecordingOutboxEntry, "durationSeconds" | "segments" | "speech"> & { fileId: string },
+  entry: Pick<RecordingOutboxEntry, "durationSeconds" | "segments" | "speech" | "fileId" | "audioOmitted">,
 ) {
   return {
-    file_id: entry.fileId,
+    ...(entry.fileId ? { file_id: entry.fileId } : { audio_omitted: entry.audioOmitted }),
     duration_seconds: Math.max(0, Math.round(entry.durationSeconds)),
     segments: entry.segments,
     ...(entry.speech?.length ? { speech: entry.speech } : {}),
@@ -93,13 +116,36 @@ export class CallRecordingOutbox {
     try {
       for (const entry of await this.entries()) {
         if (this.now() - entry.savedAt > RECORDING_OUTBOX_MAX_AGE_MS) {
+          // Out of retries: keep the conversation itself if anything was said.
+          if (entry.fileId || hasWords(entry)) {
+            await deps
+              .save(entry.fileId ? { ...entry, audioOmitted: undefined } : { ...entry, audioOmitted: entry.audioOmitted ?? "upload_failed" })
+              .catch(() => undefined);
+          }
           await this.remove(entry.sessionId);
           continue;
         }
         try {
-          const fileId = entry.fileId ?? (await deps.upload(entry));
-          if (!entry.fileId) await this.run(() => this.storage.put({ ...entry, fileId }));
-          await deps.save({ ...entry, fileId });
+          let toSave: RecordingOutboxEntry = entry;
+          if (!entry.fileId && !entry.audioOmitted) {
+            try {
+              const fileId = await deps.upload(entry);
+              toSave = { ...entry, fileId };
+              await this.run(() => this.storage.put(toSave));
+            } catch (error) {
+              // A final failure (too large, storage full) would fail forever:
+              // keep the transcript instead. Anything else is retried later.
+              const reason = audioOmittedReason(error);
+              if (!reason) throw error;
+              if (!hasWords(entry)) {
+                await this.remove(entry.sessionId);
+                continue;
+              }
+              toSave = { ...entry, audioOmitted: reason };
+              await this.run(() => this.storage.put(toSave));
+            }
+          }
+          await deps.save(toSave);
           await this.remove(entry.sessionId);
           sent += 1;
         } catch {
