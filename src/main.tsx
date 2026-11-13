@@ -1,4 +1,5 @@
 import { captureReferral } from "@/features/referrals/attribution";
+import { captureWebsiteReflection } from "@/features/website-reflection/handoff";
 import "@/lib/posthog";
 import { PostHogIdentity } from "@/components/posthog-identity";
 import "../instrument";
@@ -50,6 +51,7 @@ const sentryHandler = {
 initializeTheme();
 
 captureReferral();
+captureWebsiteReflection();
 
 createRoot(document.getElementById("root")!, sentryHandler).render(
   <StrictMode>
