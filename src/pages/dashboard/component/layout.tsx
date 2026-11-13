@@ -4,6 +4,7 @@ import { cn } from "@/utility";
 import { Outlet, useLocation, useMatch, useNavigate } from "react-router-dom";
 import AuthCheck from "@/components/layouts/auth-check";
 import OnboardingGuard from "@/components/layouts/onboarding-guard";
+import { WebsiteReflectionSync } from "@/features/website-reflection/sync-component";
 import { OnboardingNudgeBanner } from "@/features/onboarding-groot";
 import { SecurityNudgeBanner } from "@/components/security-nudge-banner";
 import { TrialBanner } from "@/components/trial-banner";
@@ -83,6 +84,7 @@ export default function DashboardLayout() {
 
   return (
     <AuthCheck>
+      <WebsiteReflectionSync />
       <OnboardingGuard>
         <VoiceSessionProvider>
         <div data-sky-card-page={isSkyCardPage(location.pathname) ? "" : undefined} className="bg-background w-full h-full flex flex-col md:flex-row overflow-hidden hide-scrollbar dynamic-height pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
