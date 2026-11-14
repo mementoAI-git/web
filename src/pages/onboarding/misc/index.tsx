@@ -28,16 +28,26 @@ export default function MiscPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const isRevisit = searchParams.get("mode") === "revisit";
-  const [loadingSaved, setLoadingSaved] = useState(isRevisit);
+  const savedAbout = user?.context?.self_description ?? "";
+  const nickname = user?.nickname || user?.first_name || "there";
+  const [draft, setDraft] = useOnboardingDraft(user?._id ?? "anonymous");
+  // Returning after a skip with nothing in this tab: fill in the answers
+  // the API kept when they skipped. Decided once, so typing doesn't flip it.
+  const [resumeSkipped] = useState(
+    () =>
+      user?.onboarding_status === "skipped" &&
+      !draft.reasons.length &&
+      !draft.about.trim() &&
+      !draft.areas.length,
+  );
+  const loadSaved = isRevisit || resumeSkipped;
+  const [loadingSaved, setLoadingSaved] = useState(loadSaved);
   const [loadFailed, setLoadFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const [dictating, setDictating] = useState(false);
   const loadedFor = useRef<string | null>(null);
-  const savedAbout = user?.context?.self_description ?? "";
-  const nickname = user?.nickname || user?.first_name || "there";
-  const [draft, setDraft] = useOnboardingDraft(user?._id ?? "anonymous");
   useEffect(() => {
-    if (!isRevisit || !user?._id || loadedFor.current === user._id) return;
+    if (!loadSaved || !user?._id || loadedFor.current === user._id) return;
     setLoadingSaved(true);
     setLoadFailed(false);
     let cancelled = false;
@@ -67,7 +77,7 @@ export default function MiscPage() {
             : fallbackReason
               ? [fallbackReason]
               : value.reasons,
-          about: savedAbout || value.about,
+          about: details.persona.self_description || savedAbout || value.about,
           areas: migrateLegacyPriorityList(
             details.persona.current_priority,
           ).slice(0, 3),
@@ -78,7 +88,7 @@ export default function MiscPage() {
     return () => {
       cancelled = true;
     };
-  }, [isRevisit, user?._id, savedAbout, setDraft, attempt]);
+  }, [loadSaved, user?._id, savedAbout, setDraft, attempt]);
   const headingRef = useRef<HTMLDivElement>(null);
   const previousStep = useRef(draft.step);
   useEffect(() => {
