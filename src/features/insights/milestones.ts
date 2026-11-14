@@ -1,7 +1,7 @@
 /** Ported from mobile `src/features/insights/milestone-celebrations.ts`; keep the two in step. */
 
 /** The account figures milestones are measured against. */
-export type MilestoneMetric = "stories" | "reflections" | "streak" | "enrichment" | "beneficiaries" | "capsules";
+export type MilestoneMetric = "onboarding" | "stories" | "reflections" | "streak" | "enrichment" | "beneficiaries" | "capsules";
 
 export interface Milestone {
   id: string;
@@ -14,6 +14,8 @@ export interface Milestone {
   progress?: number;
   /** False while the feature behind it is unavailable: shown dimmed, not counted. */
   available: boolean;
+  /** Where to go to reach it, offered while it is not yet reached. */
+  href?: string;
 }
 
 /** Time capsules are paused for now, so Future Messenger can’t be reached. */
@@ -31,6 +33,7 @@ interface MilestoneDefinition {
   /** Count label for multi-step goals; one-step goals read "Not yet" until reached. */
   unit?: (target: number) => string;
   available?: boolean;
+  href?: string;
 }
 
 /**
@@ -38,6 +41,7 @@ interface MilestoneDefinition {
  * metric in `MilestoneStatsInput` (see mobile docs/milestones-plan.md).
  */
 export const MILESTONE_CATALOGUE: readonly MilestoneDefinition[] = [
+  { id: "onboarding", title: "Complete onboarding", description: "Told Memento about yourself so it can shape your prompts.", metric: "onboarding", target: 1, href: "/onboarding" },
   { id: "first-story", title: "First Story", description: "Saved your first story to your archive.", metric: "stories", target: 1 },
   { id: "stories-ten", title: "Archive Keeper", description: "Saved 10 stories from your life.", metric: "stories", target: 10, unit: (target) => `${target} stories` },
   { id: "stories-twenty", title: "Storyteller", description: "Saved 20 stories from your life.", metric: "stories", target: 20, unit: (target) => `${target} stories` },
@@ -50,6 +54,7 @@ export const MILESTONE_CATALOGUE: readonly MilestoneDefinition[] = [
 ];
 
 export interface MilestoneStatsInput {
+  onboardingComplete?: boolean;
   memoryCount?: number;
   reflectionCount?: number;
   streakDays?: number;
@@ -60,6 +65,7 @@ export interface MilestoneStatsInput {
 
 function metricValue(stats: MilestoneStatsInput, metric: MilestoneMetric): number {
   const values: Record<MilestoneMetric, number | undefined> = {
+    onboarding: stats.onboardingComplete ? 1 : 0,
     stories: stats.memoryCount,
     reflections: stats.reflectionCount,
     streak: stats.streakDays,
@@ -87,25 +93,30 @@ export function calculateMilestones(stats: MilestoneStatsInput): Milestone[] {
         ? "Coming soon"
         : achieved
           ? "Unlocked"
-          : counted
+          : definition.href
+            ? "Start"
+            : counted
             ? `${Math.min(current, definition.target)} / ${definition.unit!(definition.target)}`
             : "Not yet",
       progress: counted ? Math.min(1, current / definition.target) : undefined,
+      href: available && !achieved ? definition.href : undefined,
     };
   });
 }
 
 /**
- * What’s next first: unreached milestones, closest to done first (catalogue
- * order breaks ties), then those reached, then those unavailable.
+ * What’s next first: unreached milestones with an action to take, then other
+ * unreached ones, closest to done first (catalogue order breaks ties), then
+ * those reached, then those unavailable.
  */
 export function orderMilestones(milestones: Milestone[]): Milestone[] {
-  const rank = (milestone: Milestone) => (!milestone.available ? 2 : milestone.achieved ? 1 : 0);
+  const rank = (milestone: Milestone) =>
+    !milestone.available ? 3 : milestone.achieved ? 2 : milestone.href ? 0 : 1;
   return milestones
     .map((milestone, index) => ({ milestone, index }))
     .sort((a, b) =>
       rank(a.milestone) - rank(b.milestone)
-      || (rank(a.milestone) === 0 ? (b.milestone.progress ?? 0) - (a.milestone.progress ?? 0) : 0)
+      || (rank(a.milestone) === 1 ? (b.milestone.progress ?? 0) - (a.milestone.progress ?? 0) : 0)
       || a.index - b.index)
     .map(({ milestone }) => milestone);
 }

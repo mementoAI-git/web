@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useFeatureFlags } from "@/contexts/feature-flags";
 import { PlanSummaryCard } from "@/features/insights/plan-summary-card";
+import { OnboardingReminderCard } from "@/features/onboarding-groot/components/OnboardingReminderCard";
 import { useLogout } from "@/hooks/use-logout";
 import { PageHeading } from "@/pages/dashboard/component/page-heading";
 import { SettingsProfileHeader } from "./settings-profile-header";
@@ -39,6 +40,7 @@ export function SettingsHub() {
       <div className="page-stagger flex flex-col gap-4" style={{ "--page-stagger-start": 1 } as CSSProperties}>
         <SettingsProfileHeader />
         <PlanSummaryCard onNavigate={(href) => navigate(href)} />
+        <OnboardingReminderCard />
       </div>
       <div className="flex flex-col gap-4">
         <nav

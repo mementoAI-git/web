@@ -1,9 +1,11 @@
 import { Check } from "lucide-react";
+import { Link } from "react-router-dom";
 import useSWR from "swr";
 import endpoint from "@/api/endpoint";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { useStore } from "@/hooks/use-store";
+import { isOnboardingComplete } from "@/features/onboarding-groot/onboarding-status";
 import type { UserStatsData } from "@/features/enrichment/enrichment-api.types";
 import {
   calculateMilestones,
@@ -43,6 +45,7 @@ export function MilestonesPanel() {
   const data = stats.data?.data;
   const milestones = orderMilestones(
     calculateMilestones({
+      onboardingComplete: isOnboardingComplete(user),
       memoryCount:
         Number(
           memories.data?.data?.stories_count ??
@@ -72,7 +75,14 @@ export function MilestonesPanel() {
           </span>
           <div className="min-w-0 flex-1">
             <p className="font-inter text-base font-medium text-text-neutral-strong">
-              {milestone.title}
+              {milestone.href ? (
+                // Stretches over the whole card in CSS.
+                <Link to={milestone.href} className="insights-milestone-open">
+                  {milestone.title}
+                </Link>
+              ) : (
+                milestone.title
+              )}
             </p>
             <p className="mt-1 font-inter text-sm text-text-neutral-weak">
               {milestone.description}

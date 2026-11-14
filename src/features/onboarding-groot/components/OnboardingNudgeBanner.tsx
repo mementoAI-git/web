@@ -2,6 +2,7 @@ import { StripBanner } from "@/components/strip-banner-frame";
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useStore } from "@/hooks/use-store";
+import { isOnboardingComplete } from "../onboarding-status";
 
 export function OnboardingNudgeBanner() {
   const navigate = useNavigate();
@@ -17,8 +18,7 @@ export function OnboardingNudgeBanner() {
   }
   if (dismissed) return null;
 
-  const complete =
-    user?.onboarding_status === "completed" || user?.onboarded === true;
+  const complete = isOnboardingComplete(user);
   const skipped = user?.onboarding_status === "skipped";
   if (complete || !skipped) return null;
 

@@ -661,13 +661,16 @@ it("lists milestones with what's next first, as on mobile", async () => {
   await user.click(tab("Milestones"));
   expect(screen.queryByRole("region", { name: "Current streak" })).not.toBeInTheDocument();
   const items = within(screen.getByRole("list", { name: "Milestones" })).getAllByRole("listitem");
-  expect(items).toHaveLength(9);
-  expect(items[0]).toHaveTextContent("Reflective Habit");
-  expect(items[0]).toHaveTextContent("3 / 7 days");
-  expect(items[1]).toHaveTextContent("3 / 30 days");
-  expect(items[2]).toHaveTextContent("First Story");
-  expect(items[2]).toHaveTextContent("Unlocked");
-  expect(items[8]).toHaveTextContent("Future Messenger");
-  expect(items[8]).toHaveTextContent("Coming soon");
-  expect(items[8]).toHaveAttribute("aria-disabled", "true");
+  expect(items).toHaveLength(10);
+  // Onboarding isn't finished, so it leads as the next thing to do.
+  expect(within(items[0]).getByRole("link", { name: "Complete onboarding" })).toHaveAttribute("href", "/onboarding");
+  expect(items[1]).toHaveTextContent("Reflective Habit");
+  expect(items[1]).toHaveTextContent("3 / 7 days");
+  expect(items[2]).toHaveTextContent("3 / 30 days");
+  expect(items[3]).toHaveTextContent("First Story");
+  expect(items[3]).toHaveTextContent("Unlocked");
+  expect(within(items[3]).queryByRole("link")).not.toBeInTheDocument();
+  expect(items[9]).toHaveTextContent("Future Messenger");
+  expect(items[9]).toHaveTextContent("Coming soon");
+  expect(items[9]).toHaveAttribute("aria-disabled", "true");
 });
