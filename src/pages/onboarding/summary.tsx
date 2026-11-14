@@ -2,7 +2,6 @@ import { ABOUT_LIMIT } from "./limits";
 import { reportFetcherError } from "@/api/report-fetcher-error";
 import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { mutate } from "swr";
 import endpoint from "@/api/endpoint";
 import useFetcher from "@/hooks/use-fetcher";
 import { useStore } from "@/hooks/use-store";
@@ -22,9 +21,11 @@ import {
 } from "./components/onboarding-card";
 import { LifeAreaChip } from "./components/life-area-chip";
 import posthog from "@/lib/posthog";
+import { useFinishOnboarding } from "./use-finish-onboarding";
 
 export default function OnboardingSummaryPage() {
-  const { user, setUser } = useStore();
+  const { user } = useStore();
+  const finishOnboarding = useFinishOnboarding();
   const navigate = useNavigate();
   const userId = user?._id ?? "anonymous";
   const [draft, setDraft] = useOnboardingDraft(userId);
@@ -68,10 +69,8 @@ export default function OnboardingSummaryPage() {
           motivation_type: selectedReasons[0]?.motivation ?? "explorer",
         });
       }
-      if (user)
-        setUser?.({ ...user, onboarded: true, onboarding_status: "completed" });
+      finishOnboarding("completed");
       clearOnboardingDraft(userId);
-      void mutate(endpoint.profile).catch(() => undefined);
       navigate("/overview");
     } catch (error) {
       reportFetcherError(error, "We couldn’t save your onboarding. Please try again.");

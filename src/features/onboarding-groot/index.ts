@@ -5,6 +5,8 @@ export * from "./components/SelectionCard";
 export * from "./components/OnboardingShell";
 export * from "./components/StepTransition";
 export * from "./components/OnboardingNudgeBanner";
+export * from "./components/OnboardingReminderCard";
+export * from "./onboarding-status";
 export * from "./components/IdentityStep1";
 export * from "./components/IdentityStep2";
 export * from "./components/IdentityStep3";

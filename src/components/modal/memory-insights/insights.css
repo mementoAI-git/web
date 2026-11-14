@@ -312,6 +312,28 @@
   gap: 16px;
   padding: 20px 16px;
 }
+.insights-milestone:has(.insights-milestone-open) {
+  position: relative;
+  transition: background-color 150ms ease-out;
+}
+.insights-milestone:has(.insights-milestone-open:focus-visible) {
+  outline: 2px solid var(--stroke-neutral-strong);
+  outline-offset: 2px;
+}
+.insights-milestone-open {
+  outline: none;
+}
+.insights-milestone-open::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+}
+@media (hover: hover) {
+  .insights-milestone:has(.insights-milestone-open):hover {
+    background: color-mix(in srgb, var(--text-neutral-strong) 6%, var(--insights-card));
+  }
+}
 .insights-milestone-mark {
   display: flex;
   width: 24px;

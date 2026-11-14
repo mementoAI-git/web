@@ -38,6 +38,8 @@ export interface OnboardingDetailsUser {
 
 export interface OnboardingDetailsPersona {
   join_reasons: string[];
+  /** The introduction saved at completion, or when onboarding was skipped. */
+  self_description?: string;
   audience: string[];
   /** Known keys or legacy onboarding keys; may include comma-separated entries in one string */
   current_priority: string[];
