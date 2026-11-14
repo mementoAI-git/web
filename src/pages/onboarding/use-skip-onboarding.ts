@@ -4,9 +4,11 @@ import { postFetcher } from "@/api/fetcher";
 import { reportFetcherError } from "@/api/report-fetcher-error";
 import endpoint from "@/api/endpoint";
 import { useStore } from "@/hooks/use-store";
+import { useFinishOnboarding } from "./use-finish-onboarding";
 
 export function useSkipOnboarding() {
-  const { user, setUser } = useStore();
+  const { user } = useStore();
+  const finishOnboarding = useFinishOnboarding();
   const navigate = useNavigate();
   const pending = useRef(false);
   const active = useRef(true);
@@ -21,7 +23,7 @@ export function useSkipOnboarding() {
       if (!active.current) return;
       if (!result?.success) throw new Error(result?.message || "Couldn’t skip onboarding. Please retry.");
       const status = result.data && typeof result.data === "object" && "onboarding_status" in result.data ? result.data.onboarding_status : undefined;
-      if (user) setUser?.({ ...user, onboarding_status: status === "completed" || user.onboarding_status === "completed" ? "completed" : "skipped" });
+      finishOnboarding(status === "completed" || user?.onboarding_status === "completed" ? "completed" : "skipped");
       navigate("/overview");
     } catch (error) {
       if (!active.current) return;
