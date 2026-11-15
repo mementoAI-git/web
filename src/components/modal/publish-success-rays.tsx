@@ -12,7 +12,9 @@ export function PublishSuccessRays() {
   return <svg className="absolute inset-x-0 top-0 w-full" viewBox="0 0 393 745" aria-hidden="true">
     <defs><linearGradient id={id} x1="196.499" y1="-262.438" x2="196.499" y2="744.826" gradientUnits="userSpaceOnUse">
       <stop className="[stop-color:#c9eff9] dark:[stop-color:#24282a]" />
-      <stop offset="0.615829" stopColor="var(--bg-neutral)" />
+      {/* Fade to transparent, not to the page colour: sky themes have a see-through
+          page, so a page-coloured tail showed as pale stripes over the sky (as mobile). */}
+      <stop offset="0.615829" className="[stop-color:#c9eff9] dark:[stop-color:#24282a]" stopOpacity={0} />
     </linearGradient></defs>
     {PATHS.map((d, i) => <path key={i} d={d} fill={`url(#${id})`} />)}
   </svg>;
