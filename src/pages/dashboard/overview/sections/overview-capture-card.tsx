@@ -299,8 +299,10 @@ export function OverviewCaptureCard({
     const resize = () => {
       input.style.height = "0px";
       const contentHeight = input.scrollHeight;
-      input.style.height = `${Math.min(9 * 34, Math.max(34, contentHeight))}px`;
-      input.style.overflowY = contentHeight > 9 * 34 ? "auto" : "hidden";
+      // One line minimum, nine lines before it scrolls; the line height is smaller on phones.
+      const line = parseFloat(getComputedStyle(input).lineHeight) || 34;
+      input.style.height = `${Math.min(9 * line, Math.max(line, contentHeight))}px`;
+      input.style.overflowY = contentHeight > 9 * line ? "auto" : "hidden";
     };
     resize();
     if (typeof ResizeObserver === "undefined") return;
@@ -371,7 +373,7 @@ export function OverviewCaptureCard({
                 onChange={(event) => updateText(event.target.value)}
                 rows={1}
                 readOnly={showRecording || busy || saving}
-                className="relative min-h-[34px] w-full resize-none bg-transparent font-garamond text-[24px] leading-[34px] text-text-neutral-strong outline-none placeholder:text-text-neutral-strong"
+                className="overview-capture-input relative min-h-[28px] w-full resize-none bg-transparent font-garamond text-[20px] leading-[28px] sm:min-h-[34px] sm:text-[24px] sm:leading-[34px] text-text-neutral-strong outline-none placeholder:text-text-neutral-strong"
               />
           )}
           {showRecording ? (
