@@ -59,7 +59,7 @@ export default function DashboardLayout() {
 
   useEffect(() => () => setChatOpen(false), [setChatOpen]);
 
-  // The mobile menu covers the page, so going anywhere has to reveal it.
+  // The mobile menu sits over the page, so going anywhere has to reveal it.
   useEffect(() => setSidebarOpen(false), [location.pathname]);
 
   useLayoutEffect(() => {
@@ -108,7 +108,7 @@ export default function DashboardLayout() {
                   : "-translate-x-full md:translate-x-0",
                 "fixed md:relative inset-y-0 left-0 z-50 md:z-auto",
                 "navigation-sidebar",
-                "w-full shrink-0",
+                "w-[80%] shrink-0 overflow-hidden rounded-r-[12px] md:rounded-none",
                 "md:w-[252px]",
                 mainSidebarCollapsed &&
                   "md:!w-0 md:!min-w-0 md:overflow-hidden md:opacity-0",
@@ -131,7 +131,9 @@ export default function DashboardLayout() {
                   />
                 ) : null}
                 {!isSettingsRoute && !isMobileStoryRoute ? (
-                  <div className="shrink-0">
+                  // One banner at a time, in priority order: the first that
+                  // renders shows; the next appears once it is dismissed or done.
+                  <div className="shrink-0 [&>*:not(:first-child)]:hidden">
                     <OnboardingNudgeBanner />
                     <TrialBanner />
                     <SecurityNudgeBanner />
