@@ -12,6 +12,7 @@ import {
   inspirationOptions,
   lifeAreaOptions,
   reasonOptions,
+  savedReasonValues,
 } from "../flow-options";
 import { useOnboardingDraft } from "../use-onboarding-draft";
 import {
@@ -61,14 +62,8 @@ export default function MiscPage() {
       }
       loadedFor.current = user._id;
       if (details) {
-        const knownReasons = reasonOptions
-          .filter((option) =>
-            details.persona.join_reasons.includes(option.value),
-          )
-          .map((option) => option.value);
-        const fallbackReason = reasonOptions.find(
-          (option) => option.value === details.persona.motivation,
-        )?.value;
+        const knownReasons = savedReasonValues(details.persona.join_reasons);
+        const fallbackReason = savedReasonValues([details.persona.motivation])[0];
         setDraft((value) => ({
           ...value,
           step: 1,
