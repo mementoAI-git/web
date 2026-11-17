@@ -40,7 +40,7 @@ const features = [
 export default function WelcomePage() {
   const { skip, busy } = useSkipOnboarding();
   return (
-    <OnboardingCard>
+    <OnboardingCard className="rounded-none border-0 p-0">
       <div className="flex flex-col gap-3">
         <img
           src={assets["19031-31954/imgIconMOrange"]}
