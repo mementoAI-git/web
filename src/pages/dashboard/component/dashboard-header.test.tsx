@@ -98,7 +98,8 @@ describe("DashboardHeader", () => {
     expect(themeButton.querySelector("img")).toBeNull();
     expect(toolsButton.querySelector("img")).toBeNull();
     await user.click(themeButton);
-    await user.click(screen.getByRole("menuitemradio", { name: "Dark", exact: true }));
+    // Dark is the default, so switch to a light theme.
+    await user.click(screen.getByRole("menuitemradio", { name: "Light sky", exact: true }));
     expect(toolsButton.querySelector("svg path")?.getAttribute("fill")).not.toBe(originalToolsFill);
     expect(themeButton).toHaveClass("size-10", "rounded-full");
   });
