@@ -93,9 +93,9 @@ export default function WelcomeSection() {
         <img
           src={useBrightWelcomeIcon ? brightButtonIcon : moonfaceIcon}
           alt=""
-          className="size-9 shrink-0 sm:size-[44px]"
+          className="size-10 shrink-0 sm:size-[44px]"
         />
-        <TypographyH1 className="t-stagger-line min-w-0 font-garamond text-[34px] font-normal leading-[1.2] tracking-normal text-text-neutral-strong sm:text-[48px] lg:text-[48px]">
+        <TypographyH1 className="t-stagger-line min-w-0 font-garamond text-[34px] font-normal leading-[40px] sm:leading-[1.2] tracking-normal text-text-neutral-strong sm:text-[48px] lg:text-[48px]">
           {greeting}
           {(user?.nickname || user?.first_name || user?.last_name) && (
             <i className="text-text-neutral-weak">
