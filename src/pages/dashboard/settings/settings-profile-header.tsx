@@ -69,11 +69,12 @@ export function SettingsProfileHeader() {
 
   return (
     <header className="settings-card flex w-full flex-wrap items-center gap-4 p-4">
-      <div className="flex min-w-0 flex-1 basis-full items-center gap-4 sm:basis-auto">
+      <div className="flex min-w-0 flex-1 basis-full items-center gap-3 sm:basis-auto sm:gap-4">
         <label
           htmlFor={AVATAR_INPUT_ID}
           className={cn(
-            "relative block size-16 shrink-0 cursor-pointer overflow-hidden rounded-full",
+            // 40px on phones, 64px from sm up.
+            "relative block size-10 shrink-0 cursor-pointer overflow-hidden rounded-full sm:size-16",
             "focus-within:ring-2 focus-within:ring-stroke-neutral-strong focus-within:ring-offset-2",
           )}
           title="Change profile photo"

@@ -12,17 +12,23 @@ export function OnboardingReminderCard() {
   const { user } = useStore();
   if (!user || isOnboardingComplete(user)) return null;
   return (
-    <section aria-label="Finish onboarding" className="insights-card insights-plan">
+    <section aria-label="Finish onboarding" className="insights-card insights-plan insights-onboarding">
       <div className="min-w-0 flex-1">
-        <h3 className="insights-plan-title font-inter text-base font-semibold text-text-neutral-strong">
+        <h3 className="insights-plan-title font-inter text-[15px] font-semibold leading-5 text-text-neutral-strong">
           Finish setting up Memento
         </h3>
-        <p className="insights-plan-body mt-1 max-w-sm font-inter text-xs text-text-neutral-weak sm:text-sm">
-          Tell Memento a little about yourself so your prompts and conversations fit you. It only takes a few minutes.
+        <p className="insights-plan-body mt-0.5 font-inter text-[13px] leading-[18px] text-text-neutral-weak">
+          A few quick questions so Memento fits you.
         </p>
       </div>
-      <Button size="sm" variant="ghost" className="insights-plan-action" onClick={() => navigate("/onboarding")}>
-        Complete onboarding
+      <Button
+        size="sm"
+        variant="ghost"
+        className="insights-plan-action"
+        aria-label="Complete onboarding"
+        onClick={() => navigate("/onboarding")}
+      >
+        Start
       </Button>
     </section>
   );

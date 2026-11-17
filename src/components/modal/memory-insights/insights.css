@@ -415,6 +415,12 @@
 .insights-plan-action:hover {
   background: color-mix(in srgb, var(--text-neutral-strong) 24%, transparent) !important;
 }
+/* Onboarding reminder: one compact row, short copy, small button. */
+.insights-onboarding {
+  align-items: center;
+  gap: 12px;
+  padding: 12px 12px 12px 16px;
+}
 .insights-table {
   overflow: hidden;
   border: 1px solid var(--stroke-neutral-weak);
