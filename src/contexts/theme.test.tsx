@@ -77,9 +77,8 @@ afterEach(() => {
 });
 
 describe("application theme", () => {
-  it.each([null, "light"])("uses light sky for a missing or hidden Light preference (%s)", (stored) => {
-    if (stored === null) localStorage.removeItem(THEME_STORAGE_KEY);
-    else localStorage.setItem(THEME_STORAGE_KEY, stored);
+  it("keeps a stored Light preference on light sky", () => {
+    localStorage.setItem(THEME_STORAGE_KEY, "light");
     const media = installMatchMedia(true);
     expect(initializeTheme()).toBe("light");
     renderTheme();
@@ -90,6 +89,19 @@ describe("application theme", () => {
     act(() => media.setDark(true));
     expect(document.documentElement).toHaveClass("light-sky");
     expect(document.documentElement).not.toHaveClass("dark");
+  });
+
+  it("defaults to dark when no theme has been chosen", () => {
+    localStorage.removeItem(THEME_STORAGE_KEY);
+    const media = installMatchMedia(false);
+    expect(initializeTheme()).toBe("dark");
+    renderTheme();
+    expect(screen.getByTestId("theme")).toHaveTextContent("dark");
+    expect(document.documentElement).toHaveClass("dark");
+    expect(document.documentElement).not.toHaveClass("light-sky", "deep-sky", "daylight");
+    act(() => media.setDark(true));
+    act(() => media.setDark(false));
+    expect(document.documentElement).toHaveClass("dark");
   });
 
   it("restores light sky before mount even when the OS is dark", () => {
@@ -182,25 +194,25 @@ describe("application theme", () => {
     expect(document.documentElement.style.colorScheme).toBe("dark");
   });
 
-  it("uses light sky for an invalid stored preference", () => {
+  it("uses dark for an invalid stored preference", () => {
     localStorage.setItem(THEME_STORAGE_KEY, "midnight");
-    installMatchMedia(true);
+    installMatchMedia(false);
     renderTheme();
 
-    expect(screen.getByTestId("theme")).toHaveTextContent("light-sky");
-    expect(screen.getByTestId("resolved-theme")).toHaveTextContent("light");
-    expect(document.documentElement).toHaveClass("light-sky");
+    expect(screen.getByTestId("theme")).toHaveTextContent("dark");
+    expect(screen.getByTestId("resolved-theme")).toHaveTextContent("dark");
+    expect(document.documentElement).toHaveClass("dark");
   });
 
-  it("falls back to light when matchMedia and storage are unavailable", () => {
+  it("falls back to dark when matchMedia and storage are unavailable", () => {
     vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => {
       throw new Error("Storage unavailable");
     });
     renderTheme();
 
-    expect(screen.getByTestId("theme")).toHaveTextContent("light-sky");
-    expect(screen.getByTestId("resolved-theme")).toHaveTextContent("light");
-    expect(document.documentElement).not.toHaveClass("dark");
+    expect(screen.getByTestId("theme")).toHaveTextContent("dark");
+    expect(screen.getByTestId("resolved-theme")).toHaveTextContent("dark");
+    expect(document.documentElement).toHaveClass("dark");
   });
 
   it("keeps a new selection in memory when storage rejects writes", () => {

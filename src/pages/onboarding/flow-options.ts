@@ -12,7 +12,7 @@ export const reasonOptions: {
 }[] = [
   {
     value: "memory_preservation",
-    label: "Preserve memories i don’t want to lose",
+    label: "Preserve memories I don’t want to lose",
     icon: assets["19031-32042/imgEmojionePalmTree"],
     motivation: "memory_preservation",
     summary: "preserve memories I don’t want to lose",
