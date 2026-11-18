@@ -76,6 +76,15 @@ jobs:
         run: pnpm build
         env:
           VITE_API_BASE_URL: ${{ secrets.PROD_VITE_API_BASE_URL }}
+          VITE_POSTHOG_KEY: ${{ secrets.VITE_POSTHOG_KEY }}
+          VITE_POSTHOG_HOST: ${{ secrets.VITE_POSTHOG_HOST }}
+          VITE_POSTHOG_ENVIRONMENT: production
+
+      - name: Check analytics is built in
+        run: |
+          if ! grep -rqs "phc_" dist/assets; then
+            echo "::warning::PostHog key is missing from the build. Set the VITE_POSTHOG_KEY and VITE_POSTHOG_HOST repository secrets."
+          fi
 
       - name: Verify build output
         run: |

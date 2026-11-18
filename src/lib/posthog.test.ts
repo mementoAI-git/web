@@ -1,11 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const sdk = vi.hoisted(() => ({ init: vi.fn() }));
+const sdk = vi.hoisted(() => ({ init: vi.fn(), register: vi.fn() }));
 vi.mock("posthog-js", () => ({ default: sdk }));
 
 beforeEach(() => {
   vi.resetModules();
   sdk.init.mockClear();
+  sdk.register.mockClear();
   vi.stubEnv("MODE", "production");
   vi.stubEnv("VITE_POSTHOG_KEY", "phc_test_project");
   vi.stubEnv("VITE_POSTHOG_HOST", "https://us.i.posthog.com");
@@ -25,6 +26,23 @@ describe("PostHog initialization", () => {
         disable_session_recording: true,
       }),
     );
+  });
+
+  it("tags every event with the deployed environment and platform", async () => {
+    vi.stubEnv("VITE_POSTHOG_ENVIRONMENT", "staging");
+    await import("./posthog");
+    expect(sdk.register).toHaveBeenCalledWith({
+      environment: "staging",
+      platform: "web",
+    });
+  });
+
+  it("treats builds without a named environment as development", async () => {
+    await import("./posthog");
+    expect(sdk.register).toHaveBeenCalledWith({
+      environment: "development",
+      platform: "web",
+    });
   });
 
   it.each(["VITE_POSTHOG_KEY", "VITE_POSTHOG_HOST"])(

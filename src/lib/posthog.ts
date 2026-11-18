@@ -2,6 +2,10 @@ import posthog from "posthog-js";
 
 const posthogKey = import.meta.env.VITE_POSTHOG_KEY;
 const posthogHost = import.meta.env.VITE_POSTHOG_HOST;
+// Deployed builds all run in Vite's "production" mode, so the deploy workflow
+// names the real environment. Dashboards filter on this to keep staging out.
+const analyticsEnvironment =
+  import.meta.env.VITE_POSTHOG_ENVIRONMENT || "development";
 const hasPostHogKey = Boolean(
   posthogKey && posthogKey !== "your_posthog_project_token",
 );
@@ -45,7 +49,7 @@ if (hasPostHogKey && hasPostHogHost && import.meta.env.MODE !== "test") {
     capture_pageview: "history_change",
     logs: {
       serviceName: "memento-web",
-      environment: import.meta.env.MODE,
+      environment: analyticsEnvironment,
     },
     // Product analytics without recording private journals, chats, or media.
     mask_all_text: true,
@@ -66,6 +70,7 @@ if (hasPostHogKey && hasPostHogHost && import.meta.env.MODE !== "test") {
     },
     defaults: "2026-08-30",
   });
+  posthog.register({ environment: analyticsEnvironment, platform: "web" });
 }
 
 export default posthog;
