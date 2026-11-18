@@ -1,10 +1,12 @@
-import { useNavigate } from "react-router-dom";
 import errorImage from "@/assets/image/error.png";
 import { ErrorState } from "@/components/error-state";
 
+/**
+ * Also the Sentry fallback, which renders outside the router, so it uses the
+ * browser's history and a full load instead of router navigation. A full load
+ * also clears whatever state crashed.
+ */
 export default function ErrorPage() {
-  const navigate = useNavigate();
-
   return (
     <ErrorState
       image={errorImage}
@@ -16,9 +18,9 @@ export default function ErrorPage() {
         </>
       }
       description="We have been automatically notified of this issue and will resolve it."
-      primaryLabel="Homepage"
-      onBack={() => navigate(-1)}
-      onPrimary={() => navigate("/")}
+      primaryLabel="Overview"
+      onBack={() => window.history.back()}
+      onPrimary={() => window.location.assign("/overview")}
     />
   );
 }
