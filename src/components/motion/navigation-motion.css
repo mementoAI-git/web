@@ -15,7 +15,7 @@
 }
 
 /*
- * Transitions.dev panel reveal, sliding across the full width. The travel is long
+ * Transitions.dev panel reveal, sliding across 80% of the width. The travel is long
  * enough to read as a full open without the recipe's cross-blur.
  * Pages are see-through, so the mobile sidebar needs its own surface.
  */

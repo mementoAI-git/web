@@ -1,6 +1,6 @@
-import { StripBanner } from "./strip-banner-frame";
+import { StripBanner, StripBannerAction } from "./strip-banner-frame";
 import { useCallback, useMemo, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
 
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,10 @@ const DISMISS_KEY = "memento_trial_banner_dismissed";
 
 export function TrialBanner() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const pricingState = {
+    returnTo: location.pathname + location.search + location.hash,
+  };
   const { status, trialEndsAt, isLoading } = useSubscription();
   const [dismissed, setDismissed] = useState(() => {
     try {
@@ -49,21 +53,27 @@ export function TrialBanner() {
   if (!show) return null;
 
   return (
-    <StripBanner className="flex flex-col gap-2 px-3 py-2 sm:flex-row sm:items-center sm:justify-between">
+    <StripBanner
+      onActivate={() => navigate("/pricing", { state: pricingState })}
+      className="flex flex-col gap-2 px-3 py-2 sm:flex-row sm:items-center sm:justify-between"
+    >
       <p className="font-inter text-sm">
         {message}{" "}
         <Link
           to="/pricing"
-          state={{
-            returnTo: location.pathname + location.search + location.hash,
-          }}
+          state={pricingState}
           className="font-semibold underline underline-offset-2 hover:opacity-90"
         >
           Upgrade now
         </Link>
         <span aria-hidden> →</span>
       </p>
-      <div className="flex shrink-0 gap-2">
+      <div className="flex shrink-0 items-center gap-2">
+        <StripBannerAction
+          onClick={() => navigate("/pricing", { state: pricingState })}
+        >
+          Upgrade
+        </StripBannerAction>
         <Button
           type="button"
           variant="ghost"

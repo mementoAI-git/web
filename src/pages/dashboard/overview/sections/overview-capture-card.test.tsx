@@ -68,7 +68,7 @@ beforeEach(() => {
     data: { _id: "voice-1", name: "voice.webm", url: "https://x/voice.webm", size: 5, type: "audio/webm" },
   } as never);
 });
-it("uses the recording shell while the microphone starts and preserves the draft on cancel", async () => {
+it("records in a floating window and preserves the draft on cancel", async () => {
   let refresh: () => void;
   function Harness() {
     const [, update] = useReducer((value: number) => value + 1, 0);
@@ -84,14 +84,14 @@ it("uses the recording shell while the microphone starts and preserves the draft
     phase = "starting";
     refresh();
   });
+  const recorder = screen.getByRole("dialog", { name: "New recording" });
+  expect(recorder.parentElement).toBe(document.body);
+  expect(screen.getByTestId("overview-capture-card")).not.toContainElement(recorder);
   expect(screen.getByRole("status")).toHaveTextContent("Preparing microphone…");
   expect(screen.getByRole("textbox")).toHaveValue("My draft");
-  expect(
-    screen.queryByRole("button", { name: "Use as story" }),
-  ).not.toBeInTheDocument();
-  const stop = screen.getByRole("button", {
-    name: "Stop recording",
-  });
+  expect(screen.getByRole("button", { name: "Use as story" })).toBeDisabled();
+  expect(screen.getByRole("button", { name: "Record more" })).toBeDisabled();
+  const stop = screen.getByRole("button", { name: "Done" });
   const pause = screen.getByRole("button", { name: "Pause recording" });
   expect(stop).toBeDisabled();
   expect(pause).toBeDisabled();
@@ -101,16 +101,14 @@ it("uses the recording shell while the microphone starts and preserves the draft
     phase = "recording";
     refresh();
   });
-  expect(
-    screen.getByRole("button", { name: "Stop recording" }),
-  ).toBe(stop);
+  expect(screen.getByRole("button", { name: "Done" })).toBe(stop);
   expect(screen.getByRole("button", { name: "Cancel recording" })).toBe(
     cancelButton,
   );
   expect(screen.getByRole("textbox")).toHaveValue("My draft");
   expect(stop).toBeEnabled();
   expect(pause).toBeEnabled();
-  expect(pause.querySelector("svg")).toHaveClass("lucide-pause");
+  expect(pause.querySelector("svg")).not.toHaveClass("lucide-play");
   act(() => {
     phase = "paused";
     refresh();
@@ -124,6 +122,7 @@ it("uses the recording shell while the microphone starts and preserves the draft
     phase = "idle";
     refresh();
   });
+  expect(screen.queryByRole("dialog", { name: "New recording" })).not.toBeInTheDocument();
   expect(screen.getByRole("textbox")).toHaveValue("My draft");
 });
 it("prefills the story with every line, escapes markup and preserves the draft after closing", async () => {

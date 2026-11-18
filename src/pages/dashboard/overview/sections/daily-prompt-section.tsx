@@ -25,7 +25,7 @@ import { TypographyH2, TypographyMuted } from "@/components/ui/typography";
 
 function DailyPromptSkeleton() {
   return (
-    <div className="sky-card flex h-[267px] overflow-hidden w-[min(78vw,320px)] shrink-0 flex-col max-lg:snap-start lg:w-auto lg:min-w-0 lg:shrink justify-between gap-10 rounded-3xl border border-stroke-neutral-weak bg-fill-neutral-weaker p-[23px]">
+    <div className="sky-card flex h-[230px] overflow-hidden w-[min(78vw,320px)] shrink-0 flex-col max-lg:snap-start lg:w-auto lg:min-w-0 lg:shrink justify-between gap-6 rounded-3xl border border-stroke-neutral-weak bg-fill-neutral-weaker p-[23px]">
       <div className="flex flex-col gap-3">
         <Skeleton className="h-6 w-full" />
         <Skeleton className="h-6 w-full" />
@@ -182,10 +182,10 @@ export default function DailyPromptSection() {
                   key={`${row.slot_kind}-${row.reflection_day_key}-${index}`}
                   aria-label={promptLabel(row, index)}
                   style={{ transitionDelay: `calc(var(--stagger-stagger) * ${position})` }}
-                  className="t-stagger-line relative sky-card flex h-[267px] overflow-hidden w-[min(78vw,320px)] shrink-0 flex-col max-lg:snap-start lg:w-auto lg:min-w-0 lg:shrink justify-between gap-10 rounded-3xl border border-stroke-neutral-weak bg-fill-neutral-weaker p-[23px] transition-colors hover:bg-fill-neutral-weak"
+                  className="t-stagger-line relative sky-card flex h-[230px] overflow-hidden w-[min(78vw,320px)] shrink-0 flex-col max-lg:snap-start lg:w-auto lg:min-w-0 lg:shrink justify-between gap-6 rounded-3xl border border-stroke-neutral-weak bg-fill-neutral-weaker p-[23px] transition-colors hover:bg-fill-neutral-weak"
                 >
                   {/* Fixed card height: long prompts clamp to 4 lines; the full text is on the reflection page. */}
-                  <p className="line-clamp-4 min-h-0 font-garamond text-[24px] font-normal leading-[31px] text-text-neutral-strong">
+                  <p className="line-clamp-4 min-h-0 font-garamond text-[20px] font-normal leading-[27px] text-text-neutral-strong">
                     <button
                       type="button"
                       aria-label={`Reflect on ${promptLabel(row, index)}`}

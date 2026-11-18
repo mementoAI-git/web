@@ -56,7 +56,7 @@ export default function BrowseTopics() {
   };
 
   return (
-    <div className="flex w-full min-w-0 flex-col gap-6 pb-11">
+    <div className="flex w-full min-w-0 flex-col gap-6">
       <div className="flex items-center justify-between gap-4">
         <TypographyH2 className="min-w-0 font-garamond text-[28px] font-normal leading-tight text-text-neutral-strong sm:text-[32px] lg:text-[32px]">
           Explore more <i className="text-text-neutral-weaker">topics</i>

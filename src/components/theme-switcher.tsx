@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { CloudMoon, Monitor, Moon, Sun } from "lucide-react";
+import { CloudMoon, Moon, Sun } from "lucide-react";
 import { useTheme } from "@/contexts/theme";
 import type { ThemePreference } from "@/lib/theme";
 import { Button } from "@/components/ui/button";
@@ -11,13 +11,7 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
-const themes = [
-  { value: "light-sky", label: "Light sky", Icon: Sun },
-  { value: "dark", label: "Dark", Icon: Moon },
-  { value: "deep-sky", label: "Deep sky", Icon: CloudMoon },
-  { value: "system", label: "System", Icon: Monitor },
-] as const;
+import { themeOptions } from "@/components/theme-options";
 
 /** The theme choices, for use inside a dropdown menu. */
 export function ThemeMenuItems({ keepOpen = false }: { keepOpen?: boolean } = {}) {
@@ -26,7 +20,7 @@ export function ThemeMenuItems({ keepOpen = false }: { keepOpen?: boolean } = {}
     <>
       <DropdownMenuLabel>Appearance</DropdownMenuLabel>
       <DropdownMenuRadioGroup value={theme} onValueChange={(value) => setTheme(value as ThemePreference)}>
-        {themes.map(({ value, label, Icon }) => (
+        {themeOptions.map(({ value, label, Icon }) => (
           <DropdownMenuRadioItem
             key={value}
             value={value}
@@ -57,7 +51,7 @@ export function ThemeSwitcher({ className, contentClassName, lightIcon, darkIcon
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        {renderTrigger ? renderTrigger(themes.find(({ value }) => value === theme)?.label ?? "System") : (
+        {renderTrigger ? renderTrigger(themeOptions.find(({ value }) => value === theme)?.label ?? "System") : (
           <Button className={className} type="button" variant="ghost" size="icon-lg" aria-label="Choose theme" title="Choose theme">
             {icon}
           </Button>

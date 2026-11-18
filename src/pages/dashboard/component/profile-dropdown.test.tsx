@@ -78,15 +78,22 @@ describe("ProfileDropdown", () => {
     expect(screen.queryByRole("menuitem", { name: "Theme" })).not.toBeInTheDocument();
   });
 
-  it("offers theme choices in the account menu on phones and keeps it open", async () => {
+  it("opens the account menu as a bottom sheet on phones and keeps it open on theme change", async () => {
     const originalWidth = window.innerWidth;
     Object.defineProperty(window, "innerWidth", { configurable: true, value: 390 });
     try {
       const user = userEvent.setup();
       renderWithProviders(<ProfileDropdown />, { auth: true });
       await user.click(screen.getByRole("button", { name: /user/i }));
-      await user.click(await screen.findByRole("menuitemradio", { name: "Deep sky" }));
-      expect(screen.getByRole("menuitemradio", { name: "Deep sky" })).toHaveAttribute("aria-checked", "true");
+      const sheet = await screen.findByRole("dialog", { name: "Account" });
+      expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+      await user.click(within(sheet).getByRole("radio", { name: "Deep sky" }));
+      expect(within(sheet).getByRole("radio", { name: "Deep sky" })).toHaveAttribute("aria-checked", "true");
+      expect(sheet.querySelector('a[href="https://tally.so/r/kdb0Jj"]')).toBeTruthy();
+
+      await user.click(within(sheet).getByRole("button", { name: "Settings" }));
+      expect(mockNavigate).toHaveBeenCalledWith("/settings");
+      expect(screen.queryByRole("dialog", { name: "Account" })).not.toBeInTheDocument();
     } finally {
       Object.defineProperty(window, "innerWidth", { configurable: true, value: originalWidth });
     }

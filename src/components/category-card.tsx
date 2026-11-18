@@ -99,8 +99,10 @@ export default function CategoryCard({
         {title && <h5 className="font-semibold text-2xl">{title}</h5>}
         <span
           className={cn(
-            "line-clamp-3 text-[16px] font-normal sm:text-[18px]",
-            variant === "overview" ? "font-garamond leading-6 text-text-neutral-strong" : "font-georgia text-text-neutral-weak",
+            "line-clamp-3 font-normal",
+            variant === "overview"
+              ? "font-garamond text-[20px] leading-7 text-text-neutral-strong"
+              : "font-georgia text-[16px] text-text-neutral-weak sm:text-[18px]",
           )}
         >
           {subtitle}

@@ -279,7 +279,7 @@ describe("DashboardHeader", () => {
   });
 });
 
-it("uses a home icon for the collapsed sidebar and preserves its toggle action", async () => {
+it("uses a menu icon for the collapsed sidebar and preserves its toggle action", async () => {
   const toggle = vi.fn();
   const user = userEvent.setup();
   renderDashboardHeader(<DashboardHeader mainSidebarCollapsed onMainSidebarToggle={toggle} />);
@@ -287,7 +287,7 @@ it("uses a home icon for the collapsed sidebar and preserves its toggle action",
   expect(button).toHaveAttribute("aria-expanded", "false");
   expect(button).toHaveClass("sidebar-reopen-button");
   expect(button.querySelector(".t-icon-swap")).toHaveAttribute("data-state", "a");
-  expect(button.querySelector('[data-icon="a"] svg')).toHaveClass("lucide-house");
+  expect(button.querySelector('[data-icon="a"] svg')).toHaveClass("lucide-menu");
   await user.click(button);
   expect(toggle).toHaveBeenCalledOnce();
 });

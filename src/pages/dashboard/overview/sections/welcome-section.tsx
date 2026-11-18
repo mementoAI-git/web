@@ -89,13 +89,13 @@ export default function WelcomeSection() {
   }, [quickPending, mutateUserStats]);
   return (
     <section className="overview-motion flex w-full flex-col gap-6">
-      <MotionHeading className="flex min-w-0 items-center gap-2.5">
+      <MotionHeading className="flex min-w-0 items-center gap-3">
         <img
           src={useBrightWelcomeIcon ? brightButtonIcon : moonfaceIcon}
           alt=""
-          className="size-8 shrink-0 sm:size-[38px]"
+          className="size-[34px] shrink-0 sm:size-[44px]"
         />
-        <TypographyH1 className="t-stagger-line min-w-0 font-garamond text-[28px] font-normal leading-[1.2] tracking-normal text-text-neutral-strong sm:text-[40px] lg:text-[40px]">
+        <TypographyH1 className="t-stagger-line min-w-0 font-garamond text-[28px] font-normal leading-[34px] sm:leading-[1.2] tracking-normal text-text-neutral-strong sm:text-[48px] lg:text-[48px]">
           {greeting}
           {(user?.nickname || user?.first_name || user?.last_name) && (
             <i className="text-text-neutral-weak">

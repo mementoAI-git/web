@@ -8,7 +8,7 @@ import zapIcon from "@/assets/icon/zap.svg";
 import {
   ChevronLeft,
   PanelLeft,
-  House,
+  Menu,
   SlidersHorizontal,
   X,
 } from "lucide-react";
@@ -131,7 +131,7 @@ function OverlaySidebarToggle() {
         sidebar?.expanded && "md:hidden",
       )}
     >
-      <House className="size-5" strokeWidth={1.75} aria-hidden />
+      <Menu className="size-5" strokeWidth={1.75} aria-hidden />
     </button>
   );
 }
@@ -326,7 +326,7 @@ function DashboardPageHeader({
               aria-hidden
             >
               <span className="t-icon" data-icon="a">
-                <House className="size-5" strokeWidth={1.75} />
+                <Menu className="size-5" strokeWidth={1.75} />
               </span>
               <span className="t-icon" data-icon="b">
                 <PanelLeft className="size-5" strokeWidth={1.75} />
