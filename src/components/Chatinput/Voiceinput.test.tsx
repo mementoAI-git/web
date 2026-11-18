@@ -147,7 +147,7 @@ describe("Voiceinput", () => {
     liveApi.isRecording = false;
     liveApi.error = error;
     act(() => refresh());
-    expect(await screen.findByRole("button", { name: "Add story" })).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: "Write" })).toBeInTheDocument();
     expect(screen.getByPlaceholderText("What’s on your mind today?")).toBeInTheDocument();
     expect(screen.queryByText("Connection interrupted")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Try again" })).not.toBeInTheDocument();
