@@ -11,10 +11,11 @@ export const FREE_FEATURES = [
   "Core chat and memories",
   "Memory insights",
   "Standard uploads and storage (200 MB)",
+  "Voice mode (90 minutes a month)",
 ];
 export const PRO_FEATURES = [
   "Everything in Free",
-  "Voice mode conversations",
+  "Unlimited voice mode conversations",
   "Supermemory integration",
   "Bigger storage (10 GB)",
 ];

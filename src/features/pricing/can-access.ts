@@ -8,7 +8,8 @@ export function canAccessFeature(
 ): boolean {
   if (!summary) return false;
   if (PAID_TIERS.includes(summary.tier)) return true;
-  // Free members get monthly voice minutes; the API refuses once they are used.
-  if (feature === "voice_mode" && (summary.usage?.voice_seconds_left ?? 0) > 0) return true;
+  // Free members get monthly voice minutes; only a known zero blocks them
+  // (an API that does not report minutes still refuses once they are used).
+  if (feature === "voice_mode" && summary.usage?.voice_seconds_left !== 0) return true;
   return summary.features?.includes(feature) ?? false;
 }
