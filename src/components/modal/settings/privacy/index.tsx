@@ -5,6 +5,7 @@ import DeleteAccount from "./delete-account";
 import LogoutAccount from "./logout-account";
 import { createPortal } from "react-dom";
 import { cn } from "@/utility";
+import { PRIVACY_URL, TERMS_URL } from "@/utility/legal-links";
 
 export default function Privacy() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -17,8 +18,8 @@ export default function Privacy() {
     <div className="page-stagger flex w-full flex-col gap-6 sm:gap-8">
       <p className="font-inter text-sm text-v3-text-weak text-pretty">
         Memento AI believes in transparent data practices. Learn how your information is protected when using our products, and visit our
-        <span className="font-semibold text-v3-brand-strong underline"> Privacy Policy</span> and
-        <span className="font-semibold text-v3-brand-strong underline"> Terms</span> pages for more details.
+        {" "}<a href={PRIVACY_URL} target="_blank" rel="noopener noreferrer" className="font-semibold text-v3-brand-strong underline">Privacy Policy</a> and
+        {" "}<a href={TERMS_URL} target="_blank" rel="noopener noreferrer" className="font-semibold text-v3-brand-strong underline">Terms</a> pages for more details.
       </p>
 
       {/* Protection Info Card */}
