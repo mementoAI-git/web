@@ -71,9 +71,17 @@ export const SUPPORTED_FILE_TYPES = [
   "audio/speex",
 ] as const;
 
-/** Image-only picker (photos). */
-export const MEMORY_ACCEPT_IMAGES =
-  "image/png,image/jpeg,image/jpg,image/heic,image/webp,image/gif,.jpg,.jpeg,.png,.heic,.webp,.gif";
+/**
+ * Image-only picker (photos). Kept to "image/*": when the list names HEIC
+ * next to JPEG and PNG, iOS Safari converts every selected photo before
+ * handing them over, so picking many photos left the picker's Done button
+ * looking dead. Unsupported types are still refused after selection
+ * (SUPPORTED_FILE_TYPES).
+ */
+export const MEMORY_ACCEPT_IMAGES = "image/*";
+
+const isImageAccept = (type: string) =>
+  type.startsWith("image/") || /^\.(jpe?g|png|heic|heif|webp|gif)$/i.test(type);
 
 /** Video picker — matches supported story video types. */
 export const MEMORY_ACCEPT_VIDEOS =
@@ -90,13 +98,12 @@ export const MEMORY_ACCEPT_DOCUMENTS =
 /** Every memory attachment type: the mobile picker has to cover all four lists above in one sheet. */
 export const MEMORY_ATTACHMENT_ACCEPT = [
   ...new Set([
-    ...SUPPORTED_FILE_TYPES,
+    // Photos as "image/*" only, for the same reason as MEMORY_ACCEPT_IMAGES.
+    MEMORY_ACCEPT_IMAGES,
     ...[
-      MEMORY_ACCEPT_IMAGES,
-      MEMORY_ACCEPT_VIDEOS,
-      MEMORY_ACCEPT_AUDIO,
-      MEMORY_ACCEPT_DOCUMENTS,
-    ].flatMap((types) => types.split(",")),
+      ...SUPPORTED_FILE_TYPES,
+      ...[MEMORY_ACCEPT_VIDEOS, MEMORY_ACCEPT_AUDIO, MEMORY_ACCEPT_DOCUMENTS].flatMap((types) => types.split(",")),
+    ].filter((type) => !isImageAccept(type)),
   ]),
 ].join(",");
 
