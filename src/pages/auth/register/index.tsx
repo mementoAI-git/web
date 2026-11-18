@@ -15,6 +15,7 @@ import * as yup from "yup";
 import AuthEntryLayout from "../components/entry-layout";
 import AuthSocials from "../components/auth-social";
 import posthog from "@/lib/posthog";
+import { PRIVACY_URL, TERMS_URL } from "@/utility/legal-links";
 
 const schema = yup.object().shape({
   first_name: yup.string().required("First name is required").trim(),
@@ -86,13 +87,14 @@ export default function RegisterPage() {
       legal={
         <p>
           By creating an account, you agree to our{" "}
-          <span className="font-semibold text-text-brand-strong underline">
+          <a href={TERMS_URL} target="_blank" rel="noopener noreferrer" className="font-semibold text-text-brand-strong underline">
             Terms of Use
-          </span>{" "}
+          </a>{" "}
           and{" "}
-          <span className="font-semibold text-text-brand-strong underline">
-            Privacy Policy.
-          </span>
+          <a href={PRIVACY_URL} target="_blank" rel="noopener noreferrer" className="font-semibold text-text-brand-strong underline">
+            Privacy Policy
+          </a>
+          .
         </p>
       }
     >

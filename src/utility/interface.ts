@@ -171,6 +171,8 @@ export interface IPublicMemory {
   attachments: IFile[];
   tags: string[];
   created_at: string;
+  /** The author's id. The public contract omits it; the signed-in route includes it. */
+  user?: string | { _id?: string };
 }
 
 export interface IPagination<T> {
