@@ -13,11 +13,12 @@ import { StoryMobilePaper } from "@/components/modal/memory/story-reader";
 import { useStoryMobileViewport } from "@/components/modal/memory/story-reader-utils";
 import Loading from "./loading";
 import Post from "./post";
+import { ReportStoryLink } from "./report-story-link";
 import type { IResponse } from "@/api/interface";
-import type { IPublicMemory } from "@/utility/interface";
+import type { IPublicMemory, IUser } from "@/utility/interface";
 
 export function PostPage() {
-  const { auth, hydrated } = useStore();
+  const { auth, hydrated, user } = useStore();
   const isMobile = useStoryMobileViewport();
   const { id = "" } = useParams();
   const signedIn = hydrated && !isEmpty(auth?.access_token);
@@ -57,6 +58,15 @@ export function PostPage() {
   const memory = notPublic ? privateData?.data : publicData?.data;
   const loginPath = `/login?redirect=${encodeURIComponent(`/post/${id}`)}`;
   const loading = publicLoading || privateLoading || (notPublic && !hydrated);
+  // Authors don't need to report their own story. The public payload has no author,
+  // so the link stays for everyone unless the page knows the viewer wrote it.
+  const authorId = typeof memory?.user === "string" ? memory.user : memory?.user?._id;
+  const { data: profile } = useSWR<IResponse<IUser>>(
+    signedIn && authorId && !user?._id ? endpoint.profile : null,
+    { shouldRetryOnError: false },
+  );
+  const viewerId = user?._id ?? profile?.data?._id;
+  const viewerIsAuthor = Boolean(authorId && viewerId && authorId === viewerId);
 
   return (
     <div className="relative isolate flex h-dvh w-screen flex-col overflow-hidden bg-background lg:min-h-[640px] lg:overflow-visible">
@@ -80,9 +90,16 @@ export function PostPage() {
         {loading ? (
           <Loading />
         ) : memory ? (
-          <div className="mx-auto min-h-0 w-full max-w-[1120px] flex-1 lg:max-h-[820px]">
-            <Post memory={memory} />
-          </div>
+          <>
+            <div className="mx-auto min-h-0 w-full max-w-[1120px] flex-1 lg:max-h-[820px]">
+              <Post memory={memory} />
+            </div>
+            {viewerIsAuthor ? null : (
+              <div className="flex shrink-0 justify-center px-4 py-2 lg:pb-0">
+                <ReportStoryLink storyId={memory._id || id} />
+              </div>
+            )}
+          </>
         ) : temporaryError ? (
           <div className="mx-auto p-4">
             <Button variant="outline" onClick={retry}>Retry loading story</Button>
