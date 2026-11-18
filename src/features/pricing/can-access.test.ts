@@ -41,5 +41,7 @@ describe("canAccessFeature", () => {
     expect(canAccessFeature(withMinutes, "voice_mode")).toBe(true);
     expect(canAccessFeature(withMinutes, "supermemory")).toBe(false);
     expect(canAccessFeature(usedUp, "voice_mode")).toBe(false);
+    // An API that does not report minutes: let them try; the server decides.
+    expect(canAccessFeature(DEFAULT_FREE_SUMMARY, "voice_mode")).toBe(true);
   });
 });

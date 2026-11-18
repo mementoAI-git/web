@@ -72,7 +72,8 @@ const FEATURE_ICONS: Record<string, LucideIcon> = {
   "Core chat and memories": MessageCircle,
   "Memory insights": Lightbulb,
   "Standard uploads and storage (200 MB)": HardDrive,
-  "Voice mode conversations": AudioLines,
+  "Voice mode (90 minutes a month)": AudioLines,
+  "Unlimited voice mode conversations": AudioLines,
   "Supermemory integration": Brain,
   "Bigger storage (10 GB)": HardDrive,
 };
