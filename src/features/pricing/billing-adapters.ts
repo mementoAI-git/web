@@ -23,6 +23,9 @@ function parseUsage(raw: unknown): SubscriptionUsage | undefined {
     "timed_message_count",
     "time_capsule_count",
     "memory_integration_count",
+    "voice_seconds_limit",
+    "voice_seconds_used",
+    "voice_seconds_left",
   ] as const;
 
   for (const key of numericKeys) {
@@ -30,6 +33,8 @@ function parseUsage(raw: unknown): SubscriptionUsage | undefined {
   }
   if (typeof source.over_limit === "boolean")
     usage.over_limit = source.over_limit;
+  if (typeof source.voice_allowance_resets_at === "string")
+    usage.voice_allowance_resets_at = source.voice_allowance_resets_at;
   return Object.keys(usage).length ? usage : undefined;
 }
 
