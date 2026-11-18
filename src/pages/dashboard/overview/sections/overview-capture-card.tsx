@@ -329,7 +329,10 @@ export function OverviewCaptureCard({
   const cardState = hasDraft ? "draft" : "default";
   const dark = resolvedTheme === "dark";
   const roundButton =
-    "size-10 shrink-0 rounded-full border-stroke-neutral-strong bg-transparent p-[9px] text-icon-neutral-weak";
+    "size-10 shrink-0 rounded-full border-stroke-neutral-strong bg-transparent p-[9px] text-icon-neutral-weak max-[374px]:size-9 max-[374px]:p-2";
+  // Under 375px wide the buttons and the microphone stop fitting on one row,
+  // so everything gets a little tighter instead of the microphone dropping a line.
+  const compactPill = "max-[374px]:gap-1.5 max-[374px]:px-3";
   return (
     <div
       className="overview-capture-resize t-resize"
@@ -348,7 +351,7 @@ export function OverviewCaptureCard({
           textareaRef.current?.focus();
         }}
         data-state={cardState}
-        className={`overview-capture-card overview-motion sky-card relative isolate flex min-h-[178px] flex-col justify-between overflow-hidden rounded-3xl border border-stroke-neutral-weaker bg-bg-neutral ${hasDraft ? "p-[23px]" : "p-6"} gap-0`}
+        className={`overview-capture-card overview-motion sky-card relative isolate flex min-h-[178px] flex-col justify-between overflow-hidden rounded-3xl border border-stroke-neutral-weaker bg-bg-neutral ${hasDraft ? "p-[23px]" : "p-6 max-[374px]:p-4"} gap-0`}
         data-testid="overview-capture-card"
       >
         <div
@@ -397,9 +400,9 @@ export function OverviewCaptureCard({
             key={hasDraft ? "draft-controls" : "default-controls"}
             data-capture-actions
             data-open="true"
-            className="t-panel-slide relative flex flex-wrap items-start justify-between gap-4"
+            className="t-panel-slide relative flex items-start justify-between gap-4 max-[374px]:gap-2"
           >
-            <div className="flex flex-wrap items-center gap-3">
+            <div className="flex min-w-0 flex-wrap items-center gap-3 max-[374px]:gap-2">
               {hasDraft ? (
                 <>
                   <Button
@@ -463,7 +466,7 @@ export function OverviewCaptureCard({
                     size="lg"
                     disabled={busy}
                     onClick={() => open?.("create-memory")}
-                    className="rounded-[64px]"
+                    className={`rounded-[64px] ${compactPill}`}
                   >
                     <Plus className="size-5 shrink-0" aria-hidden /> Add story
                   </Button>
@@ -471,14 +474,14 @@ export function OverviewCaptureCard({
                     key="voice-conversation"
                     disabled={busy}
                     onClick={onVoiceConversation}
-                    className="h-10 gap-2 rounded-[64px] border border-stroke-neutral-weak bg-white px-4 font-geist text-sm font-semibold text-overview-voice [background-image:none] hover:bg-white/90 dark:border-transparent"
+                    className={`h-10 gap-2 rounded-[64px] border border-stroke-neutral-weak bg-white px-4 font-geist text-sm font-semibold text-overview-voice [background-image:none] hover:bg-white/90 dark:border-transparent ${compactPill}`}
                   >
                     <OverviewDesignIcon name="phone" /> Talk
                   </Button>
                 </>
               )}
             </div>
-            <div className="ml-auto flex items-center gap-2">
+            <div className="ml-auto flex shrink-0 items-center gap-2">
               {hasDraft && (
                 <Button
                   variant="ghost"
