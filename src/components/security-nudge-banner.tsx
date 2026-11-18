@@ -1,4 +1,4 @@
-import { StripBanner } from "./strip-banner-frame";
+import { StripBanner, StripBannerAction } from "./strip-banner-frame";
 /**
  * SecurityNudgeBanner — shown periodically to users who have neither
  * a passkey nor 2FA enabled. Dismissable for 14 days.
@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Shield, X } from "lucide-react";
 import { useStore } from "@/hooks/use-store";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/utility";
 
 const STORAGE_KEY = "memento:security:nudge:dismissed_at";
@@ -43,12 +44,19 @@ export function SecurityNudgeBanner() {
     setVisible(false);
   }
 
+  function openSecuritySettings() {
+    navigate("/settings/security");
+    dismiss();
+  }
+
   if (!visible) return null;
 
   return (
     <StripBanner
+      onActivate={openSecuritySettings}
       className={cn(
-        "flex items-center justify-between gap-3 px-4 py-3",
+        // Phones: one compact row with a pill, like the onboarding banner.
+        "flex items-center justify-between gap-3 py-2 pr-2 pl-4 md:px-4 md:py-3",
         "font-inter text-sm",
         "motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-top-2 motion-safe:duration-300",
       )}
@@ -59,28 +67,43 @@ export function SecurityNudgeBanner() {
           className="shrink-0 text-icon-neutral-weak"
           strokeWidth={1.5}
         />
-        <span>
-          Secure your account — set up a{" "}
-          <button
-            type="button"
-            className="rounded-sm font-semibold underline underline-offset-2 hover:text-text-neutral-weak focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stroke-neutral-strong"
-            onClick={() => {
-              navigate("/settings/security");
-              dismiss();
-            }}
-          >
-            passkey or 2FA
-          </button>
+        <span className="max-md:font-medium">
+          Secure your account
+          <span className="max-md:hidden">
+            {" "}
+            — set up a{" "}
+            <button
+              type="button"
+              className="rounded-sm font-semibold underline underline-offset-2 hover:text-text-neutral-weak focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stroke-neutral-strong"
+              onClick={openSecuritySettings}
+            >
+              passkey or 2FA
+            </button>
+          </span>
         </span>
       </div>
-      <button
-        type="button"
-        onClick={dismiss}
-        aria-label="Dismiss security reminder"
-        className="relative shrink-0 rounded-full p-1 text-icon-neutral-weak after:absolute after:-inset-2.5 transition-colors hover:bg-fill-neutral-weak hover:text-icon-neutral-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stroke-neutral-strong motion-reduce:transition-none"
-      >
-        <X size={14} strokeWidth={1.5} />
-      </button>
+      <div className="flex shrink-0 items-center gap-1 md:gap-2">
+        <Button
+          type="button"
+          size="xs"
+          variant="secondary"
+          className="rounded-full px-3 md:hidden"
+          onClick={openSecuritySettings}
+        >
+          Set up
+        </Button>
+        <StripBannerAction onClick={openSecuritySettings}>
+          Set up
+        </StripBannerAction>
+        <button
+          type="button"
+          onClick={dismiss}
+          aria-label="Dismiss security reminder"
+          className="relative shrink-0 rounded-full p-1.5 text-icon-neutral-weak after:absolute after:-inset-2 transition-colors hover:bg-fill-neutral-weak hover:text-icon-neutral-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stroke-neutral-strong motion-reduce:transition-none"
+        >
+          <X className="size-4" strokeWidth={1.5} />
+        </button>
+      </div>
     </StripBanner>
   );
 }

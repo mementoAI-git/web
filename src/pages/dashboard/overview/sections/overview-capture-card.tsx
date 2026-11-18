@@ -27,12 +27,8 @@ import { useVoiceCapture } from "@/hooks/use-voice-capture";
 import { useFeatureFlags } from "@/contexts/feature-flags";
 import { QuickCaptureMediaStack } from "@/components/modal/memory/quick-capture/media-stack";
 import type { IFile, IOnUploadPayload } from "@/utility/interface";
-import {
-  VoiceRecorderControls,
-  VoiceRecorderIcon as RecordingIcon,
-  VoiceRecorderSilenceHint,
-  VoiceRecorderStatus,
-} from "@/components/recorder/voice-recorder";
+import { VoiceRecorderIcon as RecordingIcon } from "@/components/recorder/voice-recorder";
+import { FloatingVoiceRecorder } from "@/components/recorder/floating-voice-recorder";
 import microphoneLight from "@/assets/icon/overview-recording/microphone-light.svg";
 import microphoneDark from "@/assets/icon/overview-recording/microphone-dark.svg";
 import trash from "@/assets/icon/overview-recording/trash.svg";
@@ -291,7 +287,8 @@ export function OverviewCaptureCard({
   const hasText = Boolean(text.trim());
   const hasDraft = hasText || files.length > 0;
   const showRecording = isStarting || isRecording || isSavingRecording;
-  const busy = isStarting || isSavingRecording;
+  // The recorder floats in its own window; the card waits for what it hands back.
+  const busy = showRecording;
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   useLayoutEffect(() => {
     const input = textareaRef.current;
@@ -299,8 +296,10 @@ export function OverviewCaptureCard({
     const resize = () => {
       input.style.height = "0px";
       const contentHeight = input.scrollHeight;
-      input.style.height = `${Math.min(9 * 34, Math.max(34, contentHeight))}px`;
-      input.style.overflowY = contentHeight > 9 * 34 ? "auto" : "hidden";
+      // One line minimum, nine lines before it scrolls; the line height is smaller on phones.
+      const line = parseFloat(getComputedStyle(input).lineHeight) || 34;
+      input.style.height = `${Math.min(9 * line, Math.max(line, contentHeight))}px`;
+      input.style.overflowY = contentHeight > 9 * line ? "auto" : "hidden";
     };
     resize();
     if (typeof ResizeObserver === "undefined") return;
@@ -327,11 +326,7 @@ export function OverviewCaptureCard({
     return () => observer.disconnect();
   }, [text, showRecording, files.length, recording.phase]);
   const canEdit = !showRecording && !busy && !saving;
-  const cardState = showRecording
-    ? recording.phase
-    : hasDraft
-      ? "draft"
-      : "default";
+  const cardState = hasDraft ? "draft" : "default";
   const dark = resolvedTheme === "dark";
   const roundButton =
     "size-10 shrink-0 rounded-full border-stroke-neutral-strong bg-transparent p-[9px] text-icon-neutral-weak";
@@ -358,10 +353,9 @@ export function OverviewCaptureCard({
       >
         <div
           data-testid="capture-writing-area"
-          className={`relative flex-1 ${canEdit ? "cursor-text" : ""} ${hasDraft && !showRecording ? "pb-[45px]" : "pb-8"}`}
+          className={`relative flex-1 ${canEdit ? "cursor-text" : ""} ${hasDraft ? "pb-[45px]" : "pb-8"}`}
         >
-          {(hasText || !showRecording) && (
-              <textarea
+          <textarea
                 ref={textareaRef}
                 aria-label="Your thoughts"
                 placeholder={editorFocused ? "" : "What’s on your mind today?"}
@@ -371,18 +365,8 @@ export function OverviewCaptureCard({
                 onChange={(event) => updateText(event.target.value)}
                 rows={1}
                 readOnly={showRecording || busy || saving}
-                className="relative min-h-[34px] w-full resize-none bg-transparent font-garamond text-[24px] leading-[34px] text-text-neutral-strong outline-none placeholder:text-text-neutral-strong"
+                className="overview-capture-input relative min-h-[28px] w-full resize-none bg-transparent font-garamond text-[20px] leading-[28px] sm:min-h-[34px] sm:text-[24px] sm:leading-[34px] text-text-neutral-strong outline-none placeholder:text-text-neutral-strong"
               />
-          )}
-          {showRecording ? (
-            <VoiceRecorderStatus
-              phase={recording.phase}
-              seconds={recording.seconds}
-              className="t-panel-slide"
-              data-open="true"
-            />
-          ) : null}
-          {isRecording ? <VoiceRecorderSilenceHint silent={recording.silent} /> : null}
         </div>
         {files.length > 0 && (
           <div data-capture-actions className="pb-4">
@@ -399,19 +383,17 @@ export function OverviewCaptureCard({
           </div>
         )}
         {showRecording ? (
-          <VoiceRecorderControls
-            key="recording-controls"
-            data-capture-actions
-            data-open="true"
-            className="t-panel-slide"
+          <FloatingVoiceRecorder
             phase={recording.phase}
+            seconds={recording.seconds}
             levels={recording.levels}
+            silent={recording.silent}
             onCancel={recording.cancel}
-            onStop={recording.stop}
+            onDone={recording.stop}
             onTogglePause={recording.togglePause}
           />
-        ) : (
-          <div
+        ) : null}
+        <div
             key={hasDraft ? "draft-controls" : "default-controls"}
             data-capture-actions
             data-open="true"
@@ -538,14 +520,8 @@ export function OverviewCaptureCard({
                   }
                 />
               </Button>
-              {busy && (
-                <Button variant="ghost" onClick={recording.cancel}>
-                  Cancel
-                </Button>
-              )}
             </div>
           </div>
-        )}
         <AlertDialog open={clearOpen} onOpenChange={setClearOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>

@@ -8,12 +8,13 @@ export function isThemePreference(value: unknown): value is ThemePreference {
   return value === "light" || value === "dark" || value === "deep-sky" || value === "light-sky" || value === "system";
 }
 
+/** Dark is the default until someone picks a theme. */
 export function readThemePreference(): ThemePreference {
   try {
     const stored = window.localStorage.getItem(THEME_STORAGE_KEY);
-    return stored === "light" ? "light-sky" : isThemePreference(stored) ? stored : "light-sky";
+    return stored === "light" ? "light-sky" : isThemePreference(stored) ? stored : "dark";
   } catch {
-    return "light-sky";
+    return "dark";
   }
 }
 

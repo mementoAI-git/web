@@ -1,4 +1,7 @@
-import type { ComponentProps, ReactNode } from "react";
+import { useContext, type ComponentProps, type ReactNode } from "react";
+import { createPortal } from "react-dom";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { OnboardingHeaderSlot } from "./onboarding-header-slot";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -11,7 +14,7 @@ export function OnboardingButton({
     <Button
       variant={variant}
       className={cn(
-        "h-12 rounded-lg px-[27px] font-geist text-base font-bold leading-6 shadow-sm",
+        "h-12 rounded-full px-[27px] font-geist text-base font-bold leading-6 shadow-sm",
         variant === "default"
           ? "min-w-32 border-stroke-brand-strong bg-fill-brand-strong [background-image:var(--gradient-overview-story)] text-text-inverse-strong"
           : "min-w-[97px] border-stroke-neutral-weak bg-bg-neutral text-text-neutral-strong hover:bg-fill-neutral-weaker",
@@ -32,7 +35,8 @@ export function OnboardingCard({
   return (
     <section
       className={cn(
-        "flex w-full max-w-[560px] flex-col gap-6 rounded-[32px] border border-stroke-neutral-weak bg-bg-neutral p-[23px] text-text-neutral-strong",
+        // Phones show the content flat on the page; desktop keeps the card.
+        "flex w-full max-w-[560px] flex-col gap-6 rounded-[32px] border border-stroke-neutral-weak bg-bg-neutral p-[23px] text-text-neutral-strong max-md:rounded-none max-md:border-0 max-md:p-0",
         className,
       )}
     >
@@ -99,9 +103,15 @@ export function OnboardingQuestionFrame({
   step: number;
   children: ReactNode;
 }) {
+  const headerSlot = useContext(OnboardingHeaderSlot);
+  const inHeader = useIsMobile() && headerSlot !== null;
   return (
     <div className="flex w-full flex-col items-center gap-12">
-      <OnboardingProgress step={step} />
+      {inHeader ? (
+        createPortal(<OnboardingProgress step={step} />, headerSlot)
+      ) : (
+        <OnboardingProgress step={step} />
+      )}
       {children}
     </div>
   );

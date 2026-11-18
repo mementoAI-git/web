@@ -67,7 +67,7 @@ describe("OnboardingNudgeBanner", () => {
     const user = userEvent.setup();
     mockedUser = { onboarding_status: "skipped" };
     renderWithProviders(<OnboardingNudgeBanner />, { route: "/overview", auth: true });
-    await user.click(screen.getByText(/continue setup/i));
+    await user.click(screen.getByRole("button", { name: "Continue" }));
     expect(mockNavigate).toHaveBeenCalledWith("/onboarding");
   });
 
@@ -75,7 +75,7 @@ describe("OnboardingNudgeBanner", () => {
     const user = userEvent.setup();
     mockedUser = { onboarding_status: "skipped", nickname: "Alex" };
     renderWithProviders(<OnboardingNudgeBanner />, { route: "/overview", auth: true });
-    await user.click(screen.getByText(/continue setup/i));
+    await user.click(screen.getByRole("button", { name: "Continue" }));
     expect(mockNavigate).toHaveBeenCalledWith("/onboarding");
   });
 
@@ -86,4 +86,16 @@ describe("OnboardingNudgeBanner", () => {
     await user.click(screen.getByLabelText(/dismiss/i));
     expect(screen.queryByText(/finish setting up your memento/i)).not.toBeInTheDocument();
   });
+
+  it("opens onboarding from the desktop button or a click on the banner", async () => {
+    const user = userEvent.setup();
+    mockedUser = { onboarding_status: "skipped" };
+    renderWithProviders(<OnboardingNudgeBanner />, { route: "/overview" });
+
+    await user.click(screen.getByRole("button", { name: "Continue setup" }));
+    await user.click(screen.getByText(/finish setting up/i));
+    expect(mockNavigate).toHaveBeenNthCalledWith(1, "/onboarding");
+    expect(mockNavigate).toHaveBeenNthCalledWith(2, "/onboarding");
+  });
 });
+

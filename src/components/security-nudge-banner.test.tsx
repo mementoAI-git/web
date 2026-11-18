@@ -119,4 +119,26 @@ describe("SecurityNudgeBanner", () => {
     expect(mockNavigate).toHaveBeenCalledWith("/settings/security");
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
   });
+
+  it("clicking the banner opens security settings and dismisses", async () => {
+    const user = userEvent.setup();
+    mockedUser = { two_factor: { enabled: false }, passkeys: [] };
+    renderWithProviders(<SecurityNudgeBanner />, { auth: true });
+
+    await user.click(screen.getByText(/secure your account/i));
+
+    expect(mockNavigate).toHaveBeenCalledWith("/settings/security");
+    expect(localStorage.getItem(STORAGE_KEY)).not.toBeNull();
+  });
+
+  it("dismissing does not open security settings", async () => {
+    const user = userEvent.setup();
+    mockedUser = { two_factor: { enabled: false }, passkeys: [] };
+    renderWithProviders(<SecurityNudgeBanner />, { auth: true });
+
+    await user.click(screen.getByLabelText(/dismiss security reminder/i));
+
+    expect(mockNavigate).not.toHaveBeenCalled();
+  });
 });
+

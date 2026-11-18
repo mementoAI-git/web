@@ -12,7 +12,7 @@ export const reasonOptions: {
 }[] = [
   {
     value: "memory_preservation",
-    label: "Preserve memories i don’t want to lose",
+    label: "Preserve memories I don’t want to lose",
     icon: assets["19031-32042/imgEmojionePalmTree"],
     motivation: "memory_preservation",
     summary: "preserve memories I don’t want to lose",
@@ -54,6 +54,30 @@ export const reasonOptions: {
     summary: "explore Memento and discover what feels right for me",
   },
 ];
+
+/** IDs the mobile app saved before it matched `reasonOptions`. */
+const legacyReasonIds: Record<string, string> = {
+  preserve_memories: "memory_preservation",
+  self_reflection: "self_understanding",
+  organize_thoughts: "personal_space",
+  legacy_for_loved_ones: "emotional_depth",
+  exploring: "explorer",
+};
+
+/**
+ * Saved reasons as known `reasonOptions` values, in option order. Reads the
+ * IDs older mobile builds saved, so answers given on mobile restore here.
+ */
+export function savedReasonValues(values: readonly unknown[]): string[] {
+  const saved = new Set(
+    values.map((value) =>
+      typeof value === "string" ? (legacyReasonIds[value] ?? value) : null,
+    ),
+  );
+  return reasonOptions
+    .map((option) => option.value)
+    .filter((value) => saved.has(value));
+}
 
 export const lifeAreaOptions: {
   value: EnrichmentCategory;

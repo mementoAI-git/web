@@ -517,6 +517,7 @@ describe("CreateMemory", () => {
   });
 
   it("defaults to overlay B without changing the mobile sheet", () => {
+    localStorage.setItem("memento:theme", "light");
     const container = document.createElement("div");
     document.body.appendChild(container);
     const { rerender } = renderWithProviders(<CreateMemory data={{}} isMobile={false} />, {

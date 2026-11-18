@@ -98,7 +98,8 @@ describe("DashboardHeader", () => {
     expect(themeButton.querySelector("img")).toBeNull();
     expect(toolsButton.querySelector("img")).toBeNull();
     await user.click(themeButton);
-    await user.click(screen.getByRole("menuitemradio", { name: "Dark", exact: true }));
+    // Dark is the default, so switch to a light theme.
+    await user.click(screen.getByRole("menuitemradio", { name: "Light sky", exact: true }));
     expect(toolsButton.querySelector("svg path")?.getAttribute("fill")).not.toBe(originalToolsFill);
     expect(themeButton).toHaveClass("size-10", "rounded-full");
   });
@@ -278,7 +279,7 @@ describe("DashboardHeader", () => {
   });
 });
 
-it("uses a home icon for the collapsed sidebar and preserves its toggle action", async () => {
+it("uses a menu icon for the collapsed sidebar and preserves its toggle action", async () => {
   const toggle = vi.fn();
   const user = userEvent.setup();
   renderDashboardHeader(<DashboardHeader mainSidebarCollapsed onMainSidebarToggle={toggle} />);
@@ -286,7 +287,7 @@ it("uses a home icon for the collapsed sidebar and preserves its toggle action",
   expect(button).toHaveAttribute("aria-expanded", "false");
   expect(button).toHaveClass("sidebar-reopen-button");
   expect(button.querySelector(".t-icon-swap")).toHaveAttribute("data-state", "a");
-  expect(button.querySelector('[data-icon="a"] svg')).toHaveClass("lucide-house");
+  expect(button.querySelector('[data-icon="a"] svg')).toHaveClass("lucide-menu");
   await user.click(button);
   expect(toggle).toHaveBeenCalledOnce();
 });

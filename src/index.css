@@ -1927,6 +1927,12 @@ body {
 .auth-entry-socials > div { gap: 20px; }
 .auth-entry-form [data-variant="outline"] svg { width: 20px; height: 20px; }
 .auth-entry-form input[autocomplete$="-password"] { padding-right: 44px; }
+/*
+ * Browsers paint autofilled fields light yellow in every theme, so the dark-theme
+ * eye icon disappears. Use a fixed dark colour while that highlight shows.
+ */
+input:-webkit-autofill + button { color: rgba(5, 17, 34, 0.6); }
+input:autofill + button { color: rgba(5, 17, 34, 0.6); }
 
 /* Onboarding summary accent — the purple palette documented in COLOR_INVENTORY. */
 :root {
@@ -2301,9 +2307,10 @@ body {
       opacity: 0.35;
     }
 
-    /* iOS zooms the whole page when a smaller field takes focus. */
+    /* iOS zooms the whole page when a smaller field takes focus. Fields already
+       set to 16px or larger opt out so they keep their own size. */
     input:not([type="checkbox"], [type="radio"], [type="range"]),
-    textarea:not(.story-composer-title),
+    textarea:not(.story-composer-title, .overview-capture-input),
     select {
       font-size: 16px !important;
     }

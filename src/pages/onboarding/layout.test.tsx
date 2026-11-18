@@ -11,7 +11,7 @@ vi.mock("@/components/layouts/auth-check", () => ({
 }));
 
 describe("OnboardLayout", () => {
-  it("centres the wordmark with no header skip on welcome", () => {
+  it("hides the header wordmark and skip on welcome", () => {
     renderWithProviders(
       <Routes>
         <Route path="/onboarding" element={<OnboardLayout />}>
@@ -20,7 +20,10 @@ describe("OnboardLayout", () => {
       </Routes>,
       { route: "/onboarding/welcome", auth: true },
     );
-    expect(screen.getByRole("link", { name: "Memento." })).toBeInTheDocument();
+    expect(screen.queryByRole("banner")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "Memento." }),
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: "Skip" }),
     ).not.toBeInTheDocument();
@@ -52,7 +55,7 @@ it("starts each route at the top instead of carrying over the previous screen's 
     </Routes>,
     { route: "/onboarding/welcome", auth: true },
   );
-  const shell = screen.getByRole("banner").parentElement!;
+  const shell = screen.getByRole("main").parentElement!;
   shell.scrollTop = 400;
   await userEvent.click(screen.getByRole("link", { name: "Continue" }));
   expect(await screen.findByRole("heading", { name: "Your name" })).toBeVisible();
