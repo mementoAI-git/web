@@ -1,7 +1,7 @@
 import { reportFetcherError } from "@/api/report-fetcher-error";
 import "../overview-motion.css";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { Plus } from "lucide-react";
+import { SquarePen } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import useSWRMutation from "swr/mutation";
@@ -461,22 +461,22 @@ export function OverviewCaptureCard({
               ) : (
                 <>
                   <Button
-                    key="add-story"
-                    type="button"
-                    size="lg"
-                    disabled={busy}
-                    onClick={() => open?.("create-memory")}
-                    className={`rounded-[64px] ${compactPill}`}
-                  >
-                    <Plus className="size-5 shrink-0" aria-hidden /> Add story
-                  </Button>
-                  <Button
                     key="voice-conversation"
                     disabled={busy}
                     onClick={onVoiceConversation}
                     className={`h-10 gap-2 rounded-[64px] border border-stroke-neutral-weak bg-white px-4 font-geist text-sm font-semibold text-overview-voice [background-image:none] hover:bg-white/90 dark:border-transparent ${compactPill}`}
                   >
                     <OverviewDesignIcon name="phone" /> Talk
+                  </Button>
+                  <Button
+                    key="write-story"
+                    type="button"
+                    size="lg"
+                    disabled={busy}
+                    onClick={() => open?.("create-memory")}
+                    className={`rounded-[64px] ${compactPill}`}
+                  >
+                    <SquarePen className="size-5 shrink-0" aria-hidden /> Write
                   </Button>
                 </>
               )}
