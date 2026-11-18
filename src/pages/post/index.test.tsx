@@ -2,7 +2,7 @@ import { fireEvent, screen, waitFor } from "@testing-library/react";
 import { http, HttpResponse } from "msw";
 import { Route, Routes } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
-import { renderWithProviders, server } from "@/test";
+import { mockUser, renderWithProviders, server } from "@/test";
 import { PostPage } from "./index";
 
 vi.mock("focus-trap-react", () => ({ default: ({ children }: { children: React.ReactNode }) => children }));
@@ -146,5 +146,51 @@ describe("public post page", () => {
     } finally {
       window.innerWidth = width;
     }
+  });
+  it("lets a signed-out visitor report a public story by email", async () => {
+    server.use(http.get(`${API}/memories/public/memory-1`, () => HttpResponse.json({
+      success: true,
+      data: { _id: "memory-1", title: "Reportable story", body: "<p>Words.</p>", tags: [], attachments: [], created_at: "2026-08-29T10:00:00.000Z" },
+    })));
+    renderWithProviders(<Routes><Route path="/post/:id" element={<PostPage />} /></Routes>, { route: "/post/memory-1" });
+    const report = await screen.findByRole("link", { name: "Report this story" });
+    const href = report.getAttribute("href") ?? "";
+    expect(href.startsWith("mailto:support@mymemento.io?")).toBe(true);
+    const params = new URLSearchParams(href.slice(href.indexOf("?") + 1));
+    expect(params.get("subject")).toBe("Report story memory-1");
+    expect(params.get("body")).toContain(window.location.href);
+    expect(params.get("body")).toContain("Please describe what’s wrong with this story");
+  });
+
+  it("shows the report link to a signed-in reader who isn't the author", async () => {
+    server.use(
+      http.get(`${API}/memories/public/memory-1`, () => HttpResponse.json({}, { status: 404 })),
+      http.get(`${API}/memories/memory-1`, () => HttpResponse.json({
+        success: true,
+        data: { _id: "memory-1", user: "someone-else", title: "A friend's story", body: "<p>Hi.</p>", attachments: [], tags: [], created_at: "2026-08-29T10:00:00.000Z" },
+      })),
+    );
+    renderWithProviders(<Routes><Route path="/post/:id" element={<PostPage />} /></Routes>, { route: "/post/memory-1", auth: true });
+    expect(await screen.findByRole("heading", { name: "A friend's story" }, { timeout: 10000 })).toBeVisible();
+    expect(await screen.findByRole("link", { name: "Report this story" })).toBeVisible();
+  });
+
+  it("hides the report link from the story's author", async () => {
+    const profile = vi.fn();
+    server.use(
+      http.get(`${API}/memories/public/memory-1`, () => HttpResponse.json({}, { status: 404 })),
+      http.get(`${API}/memories/memory-1`, () => HttpResponse.json({
+        success: true,
+        data: { _id: "memory-1", user: mockUser._id, title: "My own story", body: "<p>Mine.</p>", attachments: [], tags: [], created_at: "2026-08-29T10:00:00.000Z" },
+      })),
+      http.get(`${API}/users/profile`, () => {
+        profile();
+        return HttpResponse.json({ success: true, data: mockUser });
+      }),
+    );
+    renderWithProviders(<Routes><Route path="/post/:id" element={<PostPage />} /></Routes>, { route: "/post/memory-1", auth: true });
+    expect(await screen.findByRole("heading", { name: "My own story" }, { timeout: 10000 })).toBeVisible();
+    await waitFor(() => expect(profile).toHaveBeenCalled());
+    await waitFor(() => expect(screen.queryByRole("link", { name: "Report this story" })).not.toBeInTheDocument());
   });
 });
