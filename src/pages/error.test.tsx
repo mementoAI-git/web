@@ -1,21 +1,22 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { renderWithProviders } from "@/test";
 import ErrorPage from "./error";
 
-const mockNavigate = vi.fn();
-vi.mock("react-router-dom", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("react-router-dom")>();
-  return {
-    ...actual,
-    useNavigate: () => mockNavigate,
-  };
-});
 
 describe("ErrorPage", () => {
+  const back = vi.fn();
+  const assign = vi.fn();
   beforeEach(() => {
-    mockNavigate.mockClear();
+    back.mockClear();
+    assign.mockClear();
+    vi.spyOn(window.history, "back").mockImplementation(back);
+    vi.stubGlobal("location", { ...window.location, assign });
+  });
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
   });
 
   it("renders illustration, copy, and actions", () => {
@@ -32,17 +33,18 @@ describe("ErrorPage", () => {
     expect(screen.getByTestId("error-state-panel")).toHaveClass("backdrop-blur-xl");
 
     expect(screen.getByRole("button", { name: /go back/i })).toHaveAttribute("data-variant", "outline");
-    expect(screen.getByRole("button", { name: /homepage/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^overview$/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /homepage/i })).not.toBeInTheDocument();
   });
 
-  it("navigates back and to home when actions are used", async () => {
+  it("goes back to the previous screen, or to the overview", async () => {
     const user = userEvent.setup();
     renderWithProviders(<ErrorPage />, { route: "/error", auth: false });
 
     await user.click(screen.getByRole("button", { name: /go back/i }));
-    expect(mockNavigate).toHaveBeenCalledWith(-1);
+    expect(back).toHaveBeenCalledTimes(1);
 
-    await user.click(screen.getByRole("button", { name: /homepage/i }));
-    expect(mockNavigate).toHaveBeenCalledWith("/");
+    await user.click(screen.getByRole("button", { name: /^overview$/i }));
+    expect(assign).toHaveBeenCalledWith("/overview");
   });
 });

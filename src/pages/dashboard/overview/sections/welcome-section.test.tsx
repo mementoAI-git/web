@@ -50,7 +50,7 @@ describe("WelcomeSection", () => {
     const voice = await screen.findByRole("region", { name: "Inline voice" });
     expect(container.contains(voice)).toBe(true);
     expect(screen.queryByPlaceholderText("What’s on your mind today?")).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Add story" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Write" })).not.toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "End call" }));
     expect(screen.getByRole("button", { name: "Talk" })).toBeInTheDocument();
     expect(screen.getByPlaceholderText("What’s on your mind today?")).toBeInTheDocument();
@@ -61,9 +61,11 @@ describe("WelcomeSection", () => {
     expect(
       screen.getByRole("button", { name: "Talk" }),
     ).toBeInTheDocument();
+    const talk = screen.getByRole("button", { name: "Talk" });
+    const write = screen.getByRole("button", { name: /^write$/i });
     expect(
-      screen.getByRole("button", { name: /^add story$/i }),
-    ).toBeInTheDocument();
+      talk.compareDocumentPosition(write) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
     expect(
       screen.queryByRole("button", { name: /quick add/i }),
     ).not.toBeInTheDocument();
@@ -85,7 +87,7 @@ describe("WelcomeSection", () => {
       </>,
       { route: "/overview", auth: true },
     );
-    await user.click(screen.getByRole("button", { name: /^add story$/i }));
+    await user.click(screen.getByRole("button", { name: /^write$/i }));
     expect(screen.getByTestId("modal-state")).toHaveTextContent(
       "create-memory",
     );
