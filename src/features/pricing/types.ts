@@ -27,6 +27,12 @@ export interface SubscriptionUsage {
   timed_message_count?: number;
   time_capsule_count?: number;
   memory_integration_count?: number;
+  /** Free plan only: monthly voice mode seconds. Absent (null) on paid plans, which have no limit. */
+  voice_seconds_limit?: number;
+  voice_seconds_used?: number;
+  voice_seconds_left?: number;
+  /** ISO 8601 start of next month, when the free voice minutes reset. */
+  voice_allowance_resets_at?: string;
 }
 
 /** Align `feature` strings with backend 402 payloads (PRD §3.3). */

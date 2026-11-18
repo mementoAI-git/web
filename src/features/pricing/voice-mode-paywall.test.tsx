@@ -26,7 +26,7 @@ describe("VoiceModePaywall", () => {
     );
 
     expect(
-      screen.getByRole("heading", { name: /voice mode is a pro feature/i }),
+      screen.getByRole("heading", { name: /used this month’s free voice minutes/i }),
     ).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: /let me think about it/i }));
@@ -34,7 +34,7 @@ describe("VoiceModePaywall", () => {
 
     rerender(<VoiceModePaywall conversationId="conv-1" />);
     expect(
-      screen.getByRole("heading", { name: /voice mode is a pro feature/i }),
+      screen.getByRole("heading", { name: /used this month’s free voice minutes/i }),
     ).toBeInTheDocument();
   });
 });

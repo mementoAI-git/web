@@ -16,11 +16,12 @@ import { mutate } from "swr";
 import { get, post } from "@/api/mutations";
 import { voiceToolsEnabled, voiceTokenParams } from "@/features/voice/tools/capabilities";
 import {
-  CALL_ENDING_SOON_PROMPT,
   CALL_TIME_UP_MESSAGE,
-  CALL_TIME_UP_PROMPT,
+  FREE_MINUTES_UP_MESSAGE,
+  callLimitWording,
   callLimitSchedule,
   isCallTimeUp,
+  isFreeVoiceMinutesUp,
   parseVoiceCallTime,
 } from "@/features/voice/call-limit";
 import { createCallActionHandlers, resolveWebDestination, showWebDestination, type CallControls } from "@/features/voice/tools/call-actions";
@@ -192,7 +193,8 @@ export function useLiveAPI({
   const callTicketRef = useRef<string | null>(null);
   const callLimitTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   /** Set when the server refused to reconnect because the call's time was up. */
-  const callTimeUpRef = useRef(false);
+  /** Set when a reconnect is refused because time is up: what to tell them as the call ends. */
+  const callTimeUpRef = useRef<string | null>(null);
   const reconnectingRef = useRef(false);
   const [reconnecting, setReconnecting] = useState(false);
   const callSetupRef = useRef<{ overrides: LiveSessionOverrides; wantsTools: boolean }>({ overrides: {}, wantsTools: false });
@@ -330,13 +332,14 @@ export function useLiveAPI({
         ?.then(session => session.sendClientContent({ turns: [{ role: "user", parts: [{ text }] }], turnComplete: true }))
         .catch(error => console.warn("[voice] call time notice failed", error));
     };
+    const wording = callLimitWording(callTime.reason);
     const { warnInMs, endInMs } = callLimitSchedule(callTime.secondsLeft);
-    if (warnInMs !== null) callLimitTimersRef.current.push(setTimeout(() => ask(CALL_ENDING_SOON_PROMPT), warnInMs));
+    if (warnInMs !== null) callLimitTimersRef.current.push(setTimeout(() => ask(wording.endingSoon), warnInMs));
     callLimitTimersRef.current.push(setTimeout(() => {
       if (!hasConnectedRef.current) return;
-      ask(CALL_TIME_UP_PROMPT);
+      ask(wording.timeUp);
       if (!toolControlsRef.current) {
-        endLostCallRef.current?.(CALL_TIME_UP_MESSAGE);
+        endLostCallRef.current?.(wording.message);
         return;
       }
       // Ends after the goodbye plays, as for end_call.
@@ -957,7 +960,7 @@ export function useLiveAPI({
       const [session] = await Promise.all([pendingSession, socket.setupReady]);
       if (!isCurrent() || !hasConnectedRef.current) return false;
       // The call is up: arm its time limit, if the server set one.
-      callTimeUpRef.current = false;
+      callTimeUpRef.current = null;
       scheduleCallLimit(liveToken);
       if (!connectionPersonId && !isEmpty(turns)) {
         session.sendClientContent({
@@ -1021,6 +1024,8 @@ export function useLiveAPI({
     hasConnectedRef.current = false;
     socketOpenRef.current = false;
     resumeHandleRef.current = null;
+    // Free plans: the call used some of the month's voice minutes.
+    void mutate(endpoint.billingSubscription).catch(() => undefined);
   }, [stopRecording, stopTurnTaking, stopVoiceTools]);
   endLostCallRef.current = endLostCall;
 
@@ -1072,9 +1077,9 @@ export function useLiveAPI({
           return "reconnected";
         } catch (error) {
           void pending?.then(session => session.close()).catch(() => {});
-          if (isCallTimeUp(error)) {
-            // Retrying cannot help: the call's time is up.
-            callTimeUpRef.current = true;
+          if (isCallTimeUp(error) || isFreeVoiceMinutesUp(error)) {
+            // Retrying cannot help: the call's time, or the month's free minutes, are up.
+            callTimeUpRef.current = isCallTimeUp(error) ? CALL_TIME_UP_MESSAGE : FREE_MINUTES_UP_MESSAGE;
             return "failed";
           }
           console.warn("[voice] reconnect attempt failed", { reason, tries, error });
@@ -1093,7 +1098,7 @@ export function useLiveAPI({
     if (hasConnectedRef.current && resumeHandleRef.current) {
       const result = await reconnect("connection-lost");
       if (result === "reconnected" || result === "in-progress" || result === "ended") return;
-      message = callTimeUpRef.current ? CALL_TIME_UP_MESSAGE : VOICE_CONNECTION_LOST;
+      message = callTimeUpRef.current ?? VOICE_CONNECTION_LOST;
     }
     endLostCall(message);
   }, [endLostCall, reconnect]);
@@ -1124,6 +1129,8 @@ export function useLiveAPI({
     resumeHandleRef.current = null;
     sessionPromiseRef.current?.then((session) => session.close()).catch(console.error);
     sessionPromiseRef.current = null;
+    // Free plans: the call used some of the month's voice minutes.
+    void mutate(endpoint.billingSubscription).catch(() => undefined);
     // Don't close audio contexts here - they're managed by the cleanup
   }, [clearCallLimit, stopTurnTaking, stopVoiceTools]);
 

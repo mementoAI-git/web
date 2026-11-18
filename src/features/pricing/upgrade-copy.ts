@@ -10,9 +10,9 @@ export const UPGRADE_COPY: Record<
       "Upgrade for advanced features, more storage, voice chat, and better memory context.",
   },
   voice_mode: {
-    title: "Voice mode is a Pro feature",
+    title: "You’ve used this month’s free voice minutes",
     description:
-      "Upgrade to talk with Memento hands-free. Pro and Legacy include voice conversations.",
+      "Free includes 90 minutes of voice mode each month. Upgrade to Pro to keep talking with Memento without a limit.",
   },
   supermemory: {
     title: "Supermemory is a Pro feature",
