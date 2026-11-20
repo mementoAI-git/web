@@ -5,7 +5,8 @@
 
 /* The transcript fades out at its edges, over any background (plain or sky). */
 .transcript-fade {
-  mask-image: linear-gradient(to bottom, transparent 0, #000 12%, #000 88%, transparent 100%);
+  /* A short fade at the top, inside the card's padding, so the first line reads in full. */
+  mask-image: linear-gradient(to bottom, transparent 0, #000 20px, #000 calc(100% - 64px), transparent 100%);
 }
 
 /*
@@ -15,4 +16,14 @@
  */
 .light-sky .transcript-quiet-fill {
   background-color: color-mix(in srgb, var(--fill-neutral-strong) 8%, transparent);
+}
+
+/*
+ * The member's transcript lines read in the brand colour, which washes out on
+ * light sky's pale blue. There they take a deep sky ink instead: dark enough to
+ * read, and a different shade from Memento's near-black lines. The word being
+ * spoken keeps its brand-colour highlight.
+ */
+.light-sky .transcript-you {
+  color: #23406e;
 }

@@ -180,12 +180,14 @@ export function StoryMobilePaper() {
 /** The mobile app's story layout: title, date, attachments, then the story. */
 export function StoryMobileReader({
   title,
+  storyId,
   createdAt,
   body,
   files,
   readOnly,
 }: {
   title?: string;
+  storyId?: string;
   createdAt?: string;
   body?: string;
   files?: IFile[];
@@ -203,7 +205,7 @@ export function StoryMobileReader({
             {dayjs(createdAt).format("ddd, MMM D")}
           </p>
         ) : null}
-        <StoryMobileMedia section="media" files={files} title={title} readOnly={readOnly} />
+        <StoryMobileMedia section="media" files={files} title={title} storyId={storyId} readOnly={readOnly} />
         {body ? (
           <div
             className="story-mobile-body px-4 pt-3"
