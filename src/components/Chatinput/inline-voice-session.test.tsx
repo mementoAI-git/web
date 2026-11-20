@@ -41,7 +41,7 @@ describe("InlineVoiceSession", () => {
     subscription.pro = false;
     subscription.secondsLeft = 45 * 60;
     render(<InlineVoiceSession onEnd={vi.fn()} />);
-    expect(screen.getByRole("dialog")).toHaveTextContent("You have 45 of your 90 free minutes left this month.");
+    expect(screen.getByRole("dialog")).toHaveTextContent("You have 45 minutes of voice mode left this month. Free includes 90 minutes a month.");
     expect(screen.queryByTestId("voice-session")).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Continue" }));
     expect(screen.getByTestId("voice-session")).toBeInTheDocument();
