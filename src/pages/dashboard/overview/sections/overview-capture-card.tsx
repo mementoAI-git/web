@@ -141,7 +141,10 @@ export function OverviewCaptureCard({
   }
 
   const { canUse } = useFeatureFlags();
-  const { files, handleUpload, retryUpload, handleDeleteFile, setFiles } = useFileUpload({ retainFailures: true });
+  const { files: allFiles, handleUpload, retryUpload, handleDeleteFile, setFiles } = useFileUpload({ retainFailures: true });
+  // Recordings save themselves; they only join the card if their upload or save fails.
+  const [autoSaving, setAutoSaving] = useState<string[]>([]);
+  const files = allFiles.filter((file) => !autoSaving.includes(file.id));
   const voiceStorageKey = userId ? `memento-overview-voice:${userId}` : null;
   const voiceRestored = useRef(false);
   useEffect(() => {
@@ -153,7 +156,7 @@ export function OverviewCaptureCard({
   }, []);
   useEffect(() => {
     if (!voiceStorageKey || !voiceRestored.current) return;
-    const uploaded: SavedVoiceNote[] = files.flatMap((file) =>
+    const uploaded: SavedVoiceNote[] = allFiles.flatMap((file) =>
       file.uploadedFile
         ? [{ file: file.uploadedFile, durationSec: file.duration }]
         : [],
@@ -165,7 +168,7 @@ export function OverviewCaptureCard({
     } catch {
       setStorageError(true);
     }
-  }, [files, voiceStorageKey]);
+  }, [allFiles, voiceStorageKey]);
   useEffect(() => {
     const onHandedOff = (event: Event) => {
       const detail = (event as CustomEvent<{
@@ -202,14 +205,48 @@ export function OverviewCaptureCard({
         toast.error("That recording is too large. The limit is 15MB.");
         return;
       }
-      void handleUpload({
-        id: crypto.randomUUID(),
-        file,
-        progress: 0,
-        duration,
-      });
+      void saveRecording(file, duration);
     },
   });
+  /** Saves a finished recording as a private story the AI names from its transcript, like mobile. */
+  async function saveRecording(file: File, duration: number) {
+    const id = crypto.randomUUID();
+    const toastId = `overview-recording-save:${id}`;
+    setAutoSaving((current) => [...current, id]);
+    toast.loading("Saving your recording…", { id: toastId });
+    const keepOnCard = () =>
+      setAutoSaving((current) => current.filter((item) => item !== id));
+    const uploaded = await handleUpload({ id, file, progress: 0, duration });
+    if (!uploaded) {
+      // The upload reports its own error; the card offers a retry.
+      toast.dismiss(toastId);
+      keepOnCard();
+      return;
+    }
+    try {
+      const result = await saveThought({
+        attachments: [uploaded._id],
+        visibility: "private",
+        auto_title: true,
+      });
+      if (!result?.success) throw new Error(result?.message);
+      setFiles((current) => current.filter((item) => item.id !== id));
+      keepOnCard();
+      toast.success("Recording saved. We’ll name it once it’s transcribed.", {
+        id: toastId,
+      });
+      void mutate(
+        (key) => typeof key === "string" && key.startsWith(endpoint.stories),
+      ).catch(() => undefined);
+      void mutate(endpoint.userStats).catch(() => undefined);
+    } catch {
+      keepOnCard();
+      toast.error(
+        "Couldn’t save your recording. It’s kept on this card, so you can save it from there.",
+        { id: toastId },
+      );
+    }
+  }
   const reportedRecordingError = useRef("");
   const recordingToastId = `overview-recording-error:${userId ?? "guest"}`;
   useEffect(() => {
@@ -251,6 +288,7 @@ export function OverviewCaptureCard({
         ...(submittedAttachments.length
           ? { attachments: submittedAttachments }
           : {}),
+        ...(!submitted.trim() ? { auto_title: true } : {}),
         visibility: "private",
       });
       if (!result?.success) {
