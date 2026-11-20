@@ -1,6 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { PlusIcon } from "@/components/icons";
-import { Zap } from "lucide-react";
+import { SquarePen, Zap } from "lucide-react";
 
 type StoriesActionButtonsProps = {
   onCreateMemory: () => void;
@@ -28,8 +27,8 @@ export function StoriesActionButtons({
           onClick={onCreateMemory}
           className="h-full rounded-full bg-v3-brand-strong px-4 font-inter text-sm font-medium text-white hover:bg-v3-brand-strong/90"
         >
-          <PlusIcon className="size-4 shrink-0 text-white" />
-          <span className="whitespace-nowrap">Add memory</span>
+          <SquarePen className="size-4 shrink-0 text-white" aria-hidden />
+          <span className="whitespace-nowrap">Write</span>
         </Button>
       </div>
     );
@@ -41,8 +40,8 @@ export function StoriesActionButtons({
         onClick={onCreateMemory}
         className="flex h-11 items-center justify-center gap-2 rounded-[16px] bg-v3-brand-strong px-4 font-inter text-sm font-semibold text-white hover:opacity-90 sm:h-12 sm:rounded-full sm:px-5"
       >
-        <PlusIcon className="size-4 shrink-0" />
-        <span className="whitespace-nowrap">Add memory</span>
+        <SquarePen className="size-4 shrink-0" aria-hidden />
+        <span className="whitespace-nowrap">Write</span>
       </Button>
       <Button
         variant="outline"

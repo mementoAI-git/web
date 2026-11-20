@@ -32,7 +32,7 @@ function renderSection() {
 }
 
 describe("Recent stories", () => {
-  it("requests the five newest saved stories and caps the list at five", async () => {
+  it("requests the three newest saved stories and caps the list at three", async () => {
     let query: URLSearchParams | undefined;
     server.use(
       http.get("*/memories", ({ request }) => {
@@ -46,11 +46,18 @@ describe("Recent stories", () => {
     expect(
       await screen.findByRole("link", { name: /^Story 0/ }),
     ).toHaveAttribute("href", "/stories/story-0");
-    expect(screen.getAllByRole("listitem")).toHaveLength(5);
-    expect(screen.queryByText("Story 5")).not.toBeInTheDocument();
-    expect(query?.get("limit")).toBe("5");
+    expect(screen.getAllByRole("listitem")).toHaveLength(3);
+    expect(screen.queryByText("Story 3")).not.toBeInTheDocument();
+    expect(query?.get("limit")).toBe("3");
     expect(query?.get("sort")).toBe("-created_at");
     expect(query?.get("page")).toBe("1");
+    // Each story is a filled card strip drawn with theme tokens, so it follows every theme.
+    expect(screen.getByRole("link", { name: /^Story 0/ })).toHaveClass(
+      "sky-card",
+      "rounded-2xl",
+      "border-stroke-neutral-weak",
+      "bg-fill-neutral-weak",
+    );
     expect(
       screen.getByRole("heading", { name: /recent stories/i }),
     ).toBeInTheDocument();

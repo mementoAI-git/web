@@ -46,31 +46,12 @@
   .stories-motion .animate-spin { animation: none !important; }
 }
 
-/* Theme surfaces are scoped to the table list; grid cards keep their artwork. */
-.stories-table,
+/* Theme surface for list states; grid cards keep their artwork. */
 .stories-list-surface {
   background-color: var(--insights-card);
 }
-.stories-table {
-  display: flex;
-  flex-direction: column;
-  min-height: 750px;
-}
-.stories-table > div:first-child {
-  flex: 1;
-}
-/* Title and menu fit narrow widths, so the shared table's minimum isn't needed. */
-.stories-table table {
-  min-width: 0;
-}
 .stories-empty-surface {
   min-height: 240px;
-}
-.stories-table > div:last-child {
-  background-color: transparent;
-}
-.stories-table > div:last-child button {
-  background-color: var(--fill-neutral-weaker);
 }
 /* Mask scrolling content through the entire search rail, keeping controls crisp. */
 .stories-search-surface {
@@ -86,25 +67,4 @@
   -webkit-backdrop-filter: blur(20px);
   backdrop-filter: blur(20px);
   mask-image: linear-gradient(to bottom, black calc(100% - 12px), transparent);
-}
-.stories-table tbody tr {
-  border-color: var(--stroke-neutral-weak);
-  transition: background-color 150ms ease-out;
-}
-.stories-table tbody tr:hover {
-  background-color: color-mix(in srgb, var(--text-neutral-strong) 6%, transparent);
-}
-.stories-table tbody td:last-child button {
-  border: 1px solid transparent;
-}
-.stories-table tbody td:last-child button:hover,
-.stories-table tbody td:last-child button[aria-expanded="true"] {
-  border-color: var(--stroke-neutral-weak);
-  background-color: var(--fill-neutral-weak);
-}
-.stories-table > div:last-child button:hover:not(:disabled) {
-  background-color: var(--fill-neutral-weak);
-}
-@media (prefers-reduced-motion: reduce) {
-  .stories-table tbody tr { transition: none; }
 }

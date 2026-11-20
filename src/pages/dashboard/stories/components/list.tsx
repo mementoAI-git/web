@@ -6,6 +6,7 @@ import { StoryListThumbnail } from "./list-thumbnail";
 import type { IMemory, IPagination } from "@/utility/interface";
 import { StoryRowMeta } from "./story-row-meta";
 import { useNavigate } from "react-router-dom";
+import { useModal } from "@/hooks/use-modal";
 
 function getStoryRowTitle(memory: IMemory): string {
   if (memory.prompt_type && memory.prompt_text?.trim()) {
@@ -14,20 +15,27 @@ function getStoryRowTitle(memory: IMemory): string {
   return memory.title;
 }
 
-function MobileStoryCard({ memory }: { memory: IMemory }) {
+/** One story as a card strip: phones open the story page, wider screens the story viewer. */
+function StoryCard({ memory }: { memory: IMemory }) {
   const navigate = useNavigate();
+  const { open } = useModal();
   const rowTitle = getStoryRowTitle(memory);
+  const openStory = () => {
+    if (memory.status === "deleted") return;
+    if (window.innerWidth < 640 || memory.prompt_type) navigate(storyDestination(memory));
+    else open?.("view-memory", { memoryId: memory._id });
+  };
 
   return (
     <article
-      className="rounded-2xl border border-v3-stroke-weak bg-fill-neutral-weak p-4 transition-colors active:bg-fill-neutral-weaker"
-      onClick={() => { if (memory.status !== "deleted") navigate(storyDestination(memory)); }}
+      className="cursor-pointer rounded-2xl border border-v3-stroke-weak bg-fill-neutral-weak p-4 transition-colors hover:bg-fill-neutral-weaker focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stroke-neutral-strong active:bg-fill-neutral-weaker motion-reduce:transition-none"
+      onClick={openStory}
       role="button"
       tabIndex={0}
       onKeyDown={(event) => {
         if (event.key === "Enter" || event.key === " ") {
           event.preventDefault();
-          if (memory.status !== "deleted") navigate(storyDestination(memory));
+          openStory();
         }
       }}
     >
@@ -56,17 +64,17 @@ function MobileStoryCard({ memory }: { memory: IMemory }) {
   );
 }
 
-type StoriesMobileListProps = {
+type StoriesListProps = {
   data?: Pick<IPagination<IMemory>, "docs">;
   loading?: boolean;
   emptyState?: React.ReactNode;
 };
 
-export function StoriesMobileList({
+export function StoriesList({
   data,
   loading = false,
   emptyState,
-}: StoriesMobileListProps) {
+}: StoriesListProps) {
   const docs = data?.docs ?? [];
   const showEmpty = !loading && docs.length === 0;
 
@@ -83,7 +91,7 @@ export function StoriesMobileList({
         ) : showEmpty ? (
           emptyState
         ) : (
-          docs.map((memory) => <MobileStoryCard key={memory._id} memory={memory} />)
+          docs.map((memory) => <StoryCard key={memory._id} memory={memory} />)
         )}
       </div>
     </div>

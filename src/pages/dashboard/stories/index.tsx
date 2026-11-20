@@ -17,14 +17,11 @@ import mediaFilesBg from "@/assets/icon/media-files.svg";
 import favouritesCardBg from "@/assets/icon/favourites-card.svg";
 import storageCardBg from "@/assets/icon/storage-card.svg";
 
-import Table from "@/components/table";
 import { storageKeys } from "@/utility/constant";
 import StoriesHeader, { StoriesFilters } from "./components/header";
 import StoriesGrid from "./components/grid";
-import { TableRowSekeleton } from "./components/skeleton";
-import { StoriesMobileList } from "./components/list-mobile";
+import { StoriesList } from "./components/list";
 import { StoriesLoadMore } from "./components/load-more";
-import StoriesTableRow from "./components/row";
 import type { IMemory, IPagination } from "@/utility/interface";
 import {
   TypographyH1,
@@ -35,17 +32,12 @@ import { StoriesActionButtons } from "./components/stories-action-buttons";
 import { paginatedResponseFetcher } from "@/api/domain-fetchers";
 import { Button } from "@/components/ui/button";
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from "@/components/ui/empty";
-import { Bookmark, Plus, Trash2 } from "lucide-react";
+import { Bookmark, SquarePen, Trash2 } from "lucide-react";
 import { useSubscription } from "@/contexts/subscription";
 import { formatStorageSummary } from "@/features/pricing/storage-display";
 
 /** Stories load 25 at a time; nearing the end loads the next 25. Same on mobile. */
 const STORIES_PAGE_SIZE = 25;
-
-const columns = [
-  { label: "topic" },
-  { label: "" },
-];
 
 const StoriesEmptyState = ({ filter, onViewAll }: { filter: string; onViewAll: () => void }) => {
   const { open } = useModal();
@@ -60,8 +52,8 @@ const StoriesEmptyState = ({ filter, onViewAll }: { filter: string; onViewAll: (
       </EmptyHeader>
       <EmptyContent>
         <Button size="lg" onClick={() => isAll ? open("create-memory") : onViewAll()}>
-          {isAll && <Plus data-icon="inline-start" aria-hidden="true" />}
-          {isAll ? "Add memory" : "View all stories"}
+          {isAll && <SquarePen data-icon="inline-start" aria-hidden="true" />}
+          {isAll ? "Write" : "View all stories"}
         </Button>
       </EmptyContent>
     </Empty>
@@ -319,26 +311,11 @@ export default function StoriesPage() {
                   onRetry={requestFailed ? retryStories : undefined}
                 />
               ) : <>
-                <div className="sm:hidden">
-                  <StoriesMobileList
-                    data={storiesData}
-                    loading={resultsLoading}
-                    emptyState={emptyState}
-                  />
-                </div>
-                <div className="hidden sm:block w-full overflow-x-auto">
-                  <Table
-                    className="stories-table"
-                    data={storiesData as IPagination<IMemory>}
-                    columns={columns}
-                    loading={resultsLoading}
-                    loadingRow={<TableRowSekeleton />}
-                    showPagination={false}
-                    renderRow={(r) => (
-                      <StoriesTableRow key={(r as IMemory)._id} memory={r as IMemory} />
-                    )}
-                  />
-                </div>
+                <StoriesList
+                  data={storiesData}
+                  loading={resultsLoading}
+                  emptyState={emptyState}
+                />
                 {hasResults && (
                   <StoriesLoadMore
                     hasMore={hasMore && !requestFailed}

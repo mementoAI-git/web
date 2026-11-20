@@ -27,9 +27,9 @@ function formatStoryDate(date: string) {
 export default function RecentStoriesSection() {
   // The memories endpoint returns saved stories newest first, excluding drafts and deleted stories.
   const { data, isLoading, error, mutate } = useSWR<StoriesResponse>(
-    `${endpoint.memories}?page=1&limit=5&sort=-created_at`,
+    `${endpoint.memories}?page=1&limit=3&sort=-created_at`,
   );
-  const stories = (data?.data?.docs ?? []).slice(0, 5);
+  const stories = (data?.data?.docs ?? []).slice(0, 3);
   const { open } = useModal();
   const noStories = !isLoading && !error && stories.length === 0;
 
@@ -67,10 +67,10 @@ export default function RecentStoriesSection() {
         <div
           aria-label="Loading recent stories"
           role="status"
-          className="divide-y divide-stroke-neutral-weaker"
+          className="flex flex-col gap-3"
         >
-          {Array.from({ length: 5 }, (_, i) => (
-            <div key={i} className="flex items-center gap-3 py-3">
+          {Array.from({ length: 3 }, (_, i) => (
+            <div key={i} className="sky-card flex items-center gap-3 rounded-2xl border border-stroke-neutral-weak bg-fill-neutral-weak p-4">
               <Skeleton className="size-10 shrink-0 rounded-lg motion-reduce:animate-none" />
               <div className="flex-1 space-y-2">
                 <Skeleton className="h-4 w-3/4 motion-reduce:animate-none" />
@@ -92,17 +92,13 @@ export default function RecentStoriesSection() {
           </Button>
         </div>
       ) : stories.length ? (
-        <ul className="divide-y divide-stroke-neutral-weaker">
+        <ul className="flex flex-col gap-3">
           {stories.map((story) => (
-            <li
-              key={story._id}
-              // Hide the dividers either side of the highlighted row so it reads as one pill.
-              className="transition-colors hover:border-transparent has-[a:focus-visible]:border-transparent [&:has(+li:hover)]:border-transparent [&:has(+li_a:focus-visible)]:border-transparent motion-reduce:transition-none"
-            >
-              {/* -mx-3 px-3: room inside the highlight, content still aligned with the heading. */}
+            <li key={story._id}>
+              {/* The same filled card strip as the My Stories list. */}
               <Link
                 to={storyDestination(story)}
-                className="-mx-3 flex min-h-11 items-center gap-3 rounded-xl px-3 py-3 outline-none transition-colors hover:bg-fill-neutral-weaker focus-visible:ring-2 focus-visible:ring-stroke-brand-strong motion-reduce:transition-none"
+                className="sky-card flex min-h-11 items-center gap-3 rounded-2xl border border-stroke-neutral-weak bg-fill-neutral-weak p-4 outline-none transition-colors hover:bg-fill-neutral-weaker focus-visible:ring-2 focus-visible:ring-stroke-brand-strong motion-reduce:transition-none"
               >
                 <StoryListThumbnail memory={story} />
                 <div className="min-w-0 flex-1">
