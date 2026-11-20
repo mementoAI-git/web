@@ -16,6 +16,9 @@ export function describeFreeVoiceMinutes(secondsLeft: number | null): string {
   if (secondsLeft === null) {
     return `Free includes ${FREE_VOICE_MINUTES} minutes of voice mode each month.`;
   }
-  const minutes = Math.max(1, Math.floor(secondsLeft / 60));
-  return `You have ${minutes} of your ${FREE_VOICE_MINUTES} free minutes left this month.`;
+  // Say "minutes left" outright: "5 of your 90" read as five lots of 90.
+  const minutes = Math.floor(secondsLeft / 60);
+  const left =
+    minutes < 1 ? "less than a minute" : `${minutes} ${minutes === 1 ? "minute" : "minutes"}`;
+  return `You have ${left} of voice mode left this month. Free includes ${FREE_VOICE_MINUTES} minutes a month.`;
 }

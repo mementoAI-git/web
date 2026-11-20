@@ -106,6 +106,8 @@ export default {
   ephemeralToken: "/ai/ephemeral-token",
   /** POST /ai/voice/tools/:name runs a server-side voice tool. */
   voiceTools: "/ai/voice/tools",
+  /** POST /ai/voice/usage: a live call's check-in, so voice minutes count only time in use. */
+  voiceUsage: "/ai/voice/usage",
   chatActions: "/ai/chat/actions",
   chatUndo: "/ai/chat/undo",
   voiceMemorySearch: "/ai/voice/memory-search",
