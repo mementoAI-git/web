@@ -7,6 +7,7 @@ import { useStore } from "@/hooks/use-store";
 import { useFinishOnboarding } from "./use-finish-onboarding";
 import { reasonOptions } from "./flow-options";
 import { clearOnboardingDraft, readOnboardingDraft } from "./use-onboarding-draft";
+import { trackOnboardingSkipped } from "./onboarding-analytics";
 
 export function useSkipOnboarding() {
   const { user } = useStore();
@@ -37,6 +38,7 @@ export function useSkipOnboarding() {
       const status = result.data && typeof result.data === "object" && "onboarding_status" in result.data ? result.data.onboarding_status : undefined;
       // The API holds the answers now; a return starts from the beginning with them filled in.
       if (user?._id) clearOnboardingDraft(user._id);
+      trackOnboardingSkipped();
       finishOnboarding(status === "completed" || user?.onboarding_status === "completed" ? "completed" : "skipped");
       navigate("/overview");
     } catch (error) {
