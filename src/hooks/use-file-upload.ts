@@ -3,7 +3,7 @@ import { toast } from "sonner";
 import endpoint from "@/api/endpoint";
 import { deleteFetcher, fileUploadFetcher } from "@/api/fetcher";
 import { concatStrings } from "@/utility";
-import type { IOnUploadPayload } from "@/utility/interface";
+import type { IFile, IOnUploadPayload } from "@/utility/interface";
 
 export default function useFileUpload({ retainFailures = false }: { retainFailures?: boolean } = {}) {
   const [files, setFiles] = useState<IOnUploadPayload[]>([]);
@@ -14,7 +14,8 @@ export default function useFileUpload({ retainFailures = false }: { retainFailur
     return () => { mounted.current = false; };
   }, []);
 
-  const handleUpload = async (file: IOnUploadPayload, retry = false) => {
+  /** Resolves with the uploaded file, or undefined when the upload didn't finish. */
+  const handleUpload = async (file: IOnUploadPayload, retry = false): Promise<IFile | undefined> => {
     // FileReader callbacks can finish after preview has been switched off and
     // this screen remounted. They must not upload into the normal account.
     if (!mounted.current) return;
@@ -61,6 +62,7 @@ export default function useFileUpload({ retainFailures = false }: { retainFailur
             f.id === file.id ? { ...f, uploadedFile, progress: 100, ...(retainFailures ? { uploadFailed: false } : {}) } : f,
           ),
         );
+        return uploadedFile;
       }
     } catch {
       if (mounted.current) toast.error(retainFailures ? "Couldn’t upload the file. Retry when you’re connected." : "Couldn’t upload the file. Try again.");

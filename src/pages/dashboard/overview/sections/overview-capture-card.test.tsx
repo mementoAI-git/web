@@ -341,34 +341,61 @@ it("does not focus the draft by clicking recording space while recording", async
   expect(screen.getByRole("textbox")).toHaveValue("Existing draft");
 });
 const recordedFile = () => new File(["audio"], "voice.webm", { type: "audio/webm" });
+/** A recording whose automatic save failed, so it's kept on the card. */
 async function recordVoiceNote() {
+  vi.mocked(postFetcher).mockResolvedValueOnce({ success: false, message: "Offline" });
   act(() => finishRecording(recordedFile(), 12));
   await waitFor(() =>
     expect(screen.getByRole("button", { name: "Save now" })).toBeEnabled(),
   );
 }
-it("keeps the recording as audio and saves a voice-only note with no text", async () => {
-  const user = userEvent.setup();
+it("saves a finished recording to stories straight away, for the AI to name, like mobile", async () => {
   vi.mocked(postFetcher).mockResolvedValue({
     success: true,
     data: { _id: "saved" },
-    message: "Saved",
+    message: "Quick note saved",
   });
   renderWithProviders(<OverviewCaptureCard userId="a" onVoiceConversation={vi.fn()} />);
-  await recordVoiceNote();
+  fireEvent.change(screen.getByRole("textbox"), { target: { value: "Unrelated draft" } });
+  act(() => finishRecording(recordedFile(), 12));
+  await waitFor(() =>
+    expect(toast.success).toHaveBeenCalledWith(
+      "Recording saved. We’ll name it once it’s transcribed.",
+      expect.anything(),
+    ),
+  );
   expect(fileUploadFetcher).toHaveBeenCalledWith(
     endpoint.upload,
     expect.objectContaining({
       arg: expect.objectContaining({ file: expect.any(File), duration: 12 }),
     }),
   );
-  expect(screen.getByRole("textbox")).toHaveValue("");
-  expect(screen.queryByRole("button", { name: "Discuss" })).not.toBeInTheDocument();
-  await user.click(screen.getByRole("button", { name: "Save now" }));
   expect(postFetcher).toHaveBeenCalledWith(
     endpoint.memoriesQuickCapture,
     expect.objectContaining({
-      arg: { attachments: ["voice-1"], visibility: "private" },
+      arg: { attachments: ["voice-1"], visibility: "private", auto_title: true },
+    }),
+  );
+  // It never joins the card, and the typed draft is left alone.
+  expect(screen.queryByRole("button", { name: "Remove attachment" })).not.toBeInTheDocument();
+  expect(screen.getByRole("textbox")).toHaveValue("Unrelated draft");
+  expect(localStorage.getItem("memento-overview-voice:a")).toBeNull();
+});
+it("keeps a recording on the card when saving fails, and still names it when saved from there", async () => {
+  const user = userEvent.setup();
+  renderWithProviders(<OverviewCaptureCard userId="a" onVoiceConversation={vi.fn()} />);
+  await recordVoiceNote();
+  expect(toast.error).toHaveBeenCalledWith(
+    "Couldn’t save your recording. It’s kept on this card, so you can save it from there.",
+    expect.anything(),
+  );
+  expect(localStorage.getItem("memento-overview-voice:a")).not.toBeNull();
+  vi.mocked(postFetcher).mockResolvedValueOnce({ success: true, data: { _id: "saved" }, message: "Quick note saved" });
+  await user.click(screen.getByRole("button", { name: "Save now" }));
+  expect(postFetcher).toHaveBeenLastCalledWith(
+    endpoint.memoriesQuickCapture,
+    expect.objectContaining({
+      arg: { attachments: ["voice-1"], auto_title: true, visibility: "private" },
     }),
   );
   await waitFor(() =>
