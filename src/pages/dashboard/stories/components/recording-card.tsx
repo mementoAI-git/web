@@ -9,7 +9,7 @@ const BAR_PITCH = 5.79;
 const WAVE_HEIGHT = 32;
 const WAVE_WIDTH = BAR_PITCH * (RECORDING_WAVEFORM.length - 1) + BAR_WIDTH;
 
-/** Recording story card, matching mobile: weak fill, two faint rings, brand waveform, time in a chip. */
+/** Recording story card: weak fill, two faint rings, a white waveform (dark on light sky, where white fades), time in a chip. */
 export function RecordingCard({ duration, className, children }: {
   duration?: number;
   className?: string;
@@ -36,7 +36,7 @@ export function RecordingCard({ duration, className, children }: {
       {children}
       <svg
         aria-hidden
-        className="relative text-v3-brand-strong"
+        className="relative text-icon-inverse-strong [.light-sky_&]:text-icon-neutral-strong"
         width={WAVE_WIDTH}
         height={WAVE_HEIGHT}
         viewBox={`0 0 ${WAVE_WIDTH} ${WAVE_HEIGHT}`}
