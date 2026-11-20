@@ -105,7 +105,7 @@ function StoriesGridItem({
       if (memory.status === "deleted") { e.preventDefault(); return; }
       if (recordingMedia) {
         e.preventDefault();
-        push?.("file-preview", { files: [recordingMedia] });
+        push?.("file-preview", { files: [recordingMedia], title: memory.title, storyId: memory._id });
         return;
       }
       if (!isMobile && !memory.prompt_type) {
@@ -113,7 +113,7 @@ function StoriesGridItem({
         open("view-memory", { memoryId: memory._id });
       }
     },
-    [isMobile, open, push, recordingMedia, memory._id, memory.status, memory.prompt_type],
+    [isMobile, open, push, recordingMedia, memory._id, memory.status, memory.prompt_type, memory.title],
   );
   const storyTitle = getStoryCardTitle(memory);
   const cardSeed = getCardSeed(memory, storyTitle);

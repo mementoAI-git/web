@@ -39,7 +39,42 @@ describe("TranscriptAudioPlayer", () => {
     expect(screen.getByText("You")).toBeInTheDocument();
     expect(post).toHaveBeenCalledWith("/ai/transcribe-audio", { file_id: "f1" }, expect.anything());
     expect(screen.getAllByTestId("speech-block")).toHaveLength(2);
+    // Speech in the theme's strong ink, not purple; what hasn't played yet is dimmed.
+    expect(screen.getAllByTestId("speech-block")[0]).toHaveClass("bg-text-neutral-strong");
+    expect(screen.getAllByTestId("speech-block")[0].parentElement).toHaveClass("opacity-35");
     expect(screen.getByText("-00:10")).toBeInTheDocument();
+  });
+
+  it("reads the member's words in the brand colour and Memento's in the strong text colour", async () => {
+    renderPlayer();
+    const you = await screen.findByRole("button", { name: /^You, / });
+    const memento = screen.getByRole("button", { name: /^Memento, / });
+    expect(you.querySelector(".font-geist")).toHaveClass("text-text-brand-strong", "transcript-you");
+    expect(memento.querySelector(".font-geist")).toHaveClass("text-text-neutral-strong");
+  });
+
+  it("highlights the word being spoken and dims what's still to come", async () => {
+    const audio = renderPlayer();
+    // Into the member's turn ("Hi there, it was good."), speech from 4.2s to 9s.
+    fireEvent.click(await screen.findByRole("button", { name: /^You, 00:04\./ }));
+    audio.currentTime = 6;
+    fireEvent.click(screen.getByRole("button", { name: "Forward 5 seconds" }));
+    fireEvent.click(screen.getByRole("button", { name: "Back 5 seconds" }));
+    const word = await screen.findByTestId("spoken-word");
+    expect(word).toHaveClass("bg-fill-brand-strong", "text-text-inverse-strong");
+    expect(word.textContent).not.toMatch(/\s/);
+    expect(word.nextElementSibling).toHaveClass("opacity-45");
+  });
+
+  it("lays the heading beside the player, above the transcript", async () => {
+    renderWithProviders(
+      <TranscriptAudioPlayer src="blob:call" fileId="f1" name="voice_call_1.m4a" duration={10} heading={<h1>Bike day</h1>} />,
+    );
+    const player = screen.getByTestId("transcript-audio-player");
+    expect(screen.getByRole("heading", { name: "Bike day" }).parentElement).toHaveClass("[grid-area:heading]");
+    expect(screen.getByRole("region", { name: "Player" })).toHaveClass("[grid-area:player]");
+    expect((await screen.findByTestId("audio-transcript")).parentElement).toHaveClass("[grid-area:transcript]");
+    expect(player.className).toContain("lg:[grid-template-areas:'player_heading'_'player_transcript']");
   });
 
   it("plays from a turn when it is clicked", async () => {

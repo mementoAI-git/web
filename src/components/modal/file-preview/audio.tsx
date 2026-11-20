@@ -4,9 +4,15 @@ import type { FilePreviewItem } from "./index";
 import { useSignedMediaAccess } from "@/features/media/signed-media-access";
 import { voiceNoteLabel } from "@/utility/file-label";
 
-export interface AudioPreviewProps extends FilePreviewItem { isActive: boolean }
+export interface AudioPreviewProps extends FilePreviewItem {
+  isActive: boolean;
+  /** The page heading (title, date, actions), placed beside the player. */
+  heading?: React.ReactNode;
+  /** The story's identicon, shown when there's no artwork. */
+  identicon?: string;
+}
 
-export default function AudioPreview({ isActive, ...props }: AudioPreviewProps) {
+export default function AudioPreview({ isActive, heading, identicon, ...props }: AudioPreviewProps) {
   const { src, onError } = useSignedMediaAccess(props);
   const audioRef = useRef<HTMLAudioElement>(null);
   useEffect(() => { if (!isActive) audioRef.current?.pause(); }, [isActive]);
@@ -23,6 +29,8 @@ export default function AudioPreview({ isActive, ...props }: AudioPreviewProps) 
       duration={props.duration}
       isActive={isActive}
       audioRef={audioRef}
+      heading={heading}
+      identicon={identicon}
     />
   );
 }

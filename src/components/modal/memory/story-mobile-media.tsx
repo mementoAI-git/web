@@ -133,11 +133,14 @@ export function StoryMobileMedia({
   section,
   files = [],
   title,
+  storyId,
   readOnly,
 }: {
   section: "media" | "documents";
   files?: IFile[];
   title?: string;
+  /** Seeds a recording's identicon in the player, matching the story's thumbnail. */
+  storyId?: string;
   readOnly?: boolean;
 }) {
   const { push } = useModal();
@@ -149,7 +152,7 @@ export function StoryMobileMedia({
   const documents = byKind("document");
   const ordered = [...images, ...videos, ...audio, ...documents];
   const open = (file: IFile) =>
-    push?.("file-preview", { files: ordered, startIndex: ordered.indexOf(file), readOnly });
+    push?.("file-preview", { files: ordered, startIndex: ordered.indexOf(file), readOnly, title, storyId });
 
   const shown = images.slice(0, MAX_MOSAIC_IMAGES);
   const extra = images.length - shown.length;

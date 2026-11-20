@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useMemo, useRef, useState, type Ref } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState, type ReactNode, type Ref } from "react";
 import useSWR from "swr";
 import { toast } from "sonner";
 import { Captions, CaptionsOff, Mic, Music, Pause, Play, RotateCcw, RotateCw } from "lucide-react";
@@ -25,16 +25,17 @@ import {
   type TranscriptTurn,
 } from "@/features/audio/transcript-player";
 import { isVoiceConversationName } from "@/utility/file-label";
+import { cn } from "@/utility";
 import "./transcript-player.css";
 
 /**
- * The audio player in the file preview, matching the mobile app's
- * TranscriptAudioPlayer (top to bottom):
- *  - the transcript, streaming word by word with playback and following the
- *    active turn (artwork or a voice visual when there is none)
- *  - a timeline where speech shows in purple, with a playhead; click or drag to seek
- *  - elapsed `mm:ss` and remaining `-mm:ss`
- *  - speed, back 5s, play/pause, forward 5s, transcript on/off
+ * The audio player page in the file preview, laid out like a recorded call:
+ *  - the player card: artwork or a voice visual; a timeline where speech shows
+ *    in purple, with a playhead (click or drag to seek); elapsed `mm:ss` and
+ *    remaining `-mm:ss`; speed, back 5s, play/pause, forward 5s, transcript on/off
+ *  - beside it (below on phones): the page heading (title, date, actions), then
+ *    the transcript, with a speaker column, the member's words in the brand
+ *    colour, and the word being spoken highlighted as the voice plays
  */
 
 const PLAYBACK_SPEEDS = [1, 1.25, 1.5] as const;
@@ -55,6 +56,17 @@ async function fetchTranscription(fileId: string): Promise<FileTranscription> {
 
 type TurnState = "past" | "active" | "future";
 
+/** Where the word being spoken starts and ends, given how many characters have been spoken. */
+function currentWord(text: string, spoken: number): [number, number] | null {
+  if (spoken <= 0) return null;
+  const at = Math.min(spoken, text.length) - 1;
+  let start = at;
+  while (start > 0 && !/\s/.test(text[start - 1])) start -= 1;
+  let end = at + 1;
+  while (end < text.length && !/\s/.test(text[end])) end += 1;
+  return /\s/.test(text[at]) ? null : [start, end];
+}
+
 const TranscriptTurnRow = memo(function TranscriptTurnRow({
   turn,
   state,
@@ -72,6 +84,11 @@ const TranscriptTurnRow = memo(function TranscriptTurnRow({
   rowRef: (element: HTMLButtonElement | null) => void;
 }) {
   const label = showSpeaker ? speakerLabel(turn.speaker) : null;
+  // The member's words read in the brand colour; Memento's in the strong text colour.
+  // (Light sky swaps the orange for a dark ink; see transcript-player.css.)
+  const tone = showSpeaker && turn.speaker === "user" ? "transcript-you text-text-brand-strong" : "text-text-neutral-strong";
+  const word = state === "active" ? currentWord(turn.text, spoken) : null;
+  const upcoming = "opacity-45";
   return (
     <button
       ref={rowRef}
@@ -80,20 +97,34 @@ const TranscriptTurnRow = memo(function TranscriptTurnRow({
       aria-label={`${label ? `${label}, ` : ""}${formatClock(turn.start)}. ${turn.text}`}
       aria-description="Plays from here"
       aria-current={state === "active" ? "true" : undefined}
-      className="flex w-full cursor-pointer flex-col gap-1.5 rounded-xl text-left outline-none focus-visible:ring-2 focus-visible:ring-stroke-neutral-strong"
+      data-speaker={turn.speaker ?? undefined}
+      className={cn(
+        "grid w-full cursor-pointer gap-x-4 gap-y-1 rounded-xl text-left outline-none focus-visible:ring-2 focus-visible:ring-stroke-neutral-strong",
+        label ? "grid-cols-[76px_minmax(0,1fr)]" : "grid-cols-1",
+      )}
     >
-      <span className="flex items-center gap-2 font-geist text-sm font-normal text-text-neutral-weak" aria-hidden>
+      <span className="flex flex-col gap-0.5 pt-1 font-mono text-xs uppercase tracking-[0.08em] text-text-neutral-weak" aria-hidden>
         {label ? <span>{label}</span> : null}
-        <span className="tabular-nums">{formatClock(turn.start)}</span>
+        <span className="tabular-nums text-text-neutral-weaker">{formatClock(turn.start)}</span>
       </span>
-      <span aria-hidden className="font-geist text-lg leading-7">
+      <span aria-hidden className={cn("font-geist text-lg leading-8", tone)}>
         {state === "active" ? (
-          <>
-            <span className="text-text-neutral-strong">{turn.text.slice(0, spoken)}</span>
-            <span className="text-text-neutral-weak">{turn.text.slice(spoken)}</span>
-          </>
+          word ? (
+            <>
+              <span>{turn.text.slice(0, word[0])}</span>
+              <span data-testid="spoken-word" className="rounded-[4px] bg-fill-brand-strong text-text-inverse-strong shadow-[0_0_0_2px_var(--fill-brand-strong)] [box-decoration-break:clone]">
+                {turn.text.slice(word[0], word[1])}
+              </span>
+              <span className={upcoming}>{turn.text.slice(word[1])}</span>
+            </>
+          ) : (
+            <>
+              <span>{turn.text.slice(0, spoken)}</span>
+              <span className={upcoming}>{turn.text.slice(spoken)}</span>
+            </>
+          )
         ) : (
-          <span className={state === "past" ? "text-text-neutral-weak" : "text-text-neutral-weaker"}>{turn.text}</span>
+          <span className={state === "future" ? upcoming : undefined}>{turn.text}</span>
         )}
       </span>
     </button>
@@ -175,9 +206,9 @@ function TranscriptView({
       onKeyDown={(event) => {
         if (["ArrowUp", "ArrowDown", "PageUp", "PageDown", "Home", "End", " "].includes(event.key)) markManualScroll();
       }}
-      className="transcript-fade hide-scrollbar relative min-h-0 flex-1 overflow-y-auto overscroll-contain"
+      className="transcript-fade hide-scrollbar relative min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 sm:px-6"
     >
-      <div className="flex flex-col gap-6 pb-[120px] pt-10">
+      <div className="flex flex-col gap-5 pb-[120px] pt-7">
         {turns.map((turn, index) => (
           <TranscriptTurnRow
             key={turn.id}
@@ -195,18 +226,21 @@ function TranscriptView({
 }
 
 /** Music and untranscribed audio: artwork, or a mic or note on a tile. */
-function AudioVisual({ artwork, voice, title }: { artwork?: string | null; voice: boolean; title: string }) {
+function AudioVisual({ artwork, identicon, voice, title }: { artwork?: string | null; identicon?: string; voice: boolean; title?: string }) {
   const Icon = voice ? Mic : Music;
   return (
     <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-4">
       {artwork ? (
         <img src={artwork} alt="" className="size-[220px] rounded-3xl bg-fill-neutral-weak object-cover" />
+      ) : identicon ? (
+        // The story's identicon, as on its thumbnail in My Stories.
+        <img data-testid="audio-identicon" src={identicon} alt="" className="size-40 rounded-[32px] object-cover" referrerPolicy="no-referrer" />
       ) : (
         <span className="transcript-quiet-fill flex size-40 items-center justify-center rounded-[32px] bg-fill-neutral-weak text-icon-brand-strong">
           <Icon className="size-11" strokeWidth={1.6} aria-hidden />
         </span>
       )}
-      <p className="line-clamp-2 text-center font-geist text-lg text-text-neutral-strong">{title}</p>
+      {title ? <p className="line-clamp-2 text-center font-geist text-lg text-text-neutral-strong">{title}</p> : null}
     </div>
   );
 }
@@ -272,13 +306,24 @@ function Timeline({
     >
       <span aria-hidden className="transcript-quiet-fill relative h-3.5 w-full overflow-hidden rounded-full bg-fill-neutral-weak">
         {speech.length ? (
-          blocks.map((block) => (
+          // Speech in the theme's strong ink (white on dark, near-black on light sky):
+          // full strength where it has played, dimmed where it hasn't yet.
+          [false, true].map((played) => (
             <span
-              key={block.key}
-              data-testid="speech-block"
-              className="absolute inset-y-0 bg-fill-speech"
-              style={{ left: `${block.left * 100}%`, width: `${block.width * 100}%` }}
-            />
+              key={played ? "played" : "ahead"}
+              aria-hidden
+              className={cn("absolute inset-0", played ? "" : "opacity-35")}
+              style={played ? { clipPath: `inset(0 ${(1 - progress) * 100}% 0 0)` } : undefined}
+            >
+              {blocks.map((block) => (
+                <span
+                  key={block.key}
+                  data-testid={played ? undefined : "speech-block"}
+                  className="absolute inset-y-0 bg-text-neutral-strong"
+                  style={{ left: `${block.left * 100}%`, width: `${block.width * 100}%` }}
+                />
+              ))}
+            </span>
           ))
         ) : (
           <span data-testid="timeline-progress" className="absolute inset-y-0 left-0 bg-fill-tab-active" style={{ width: `${progress * 100}%` }} />
@@ -286,7 +331,7 @@ function Timeline({
       </span>
       <span
         aria-hidden
-        className="transcript-playhead pointer-events-none absolute top-1/2 h-7 w-[3px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-fill-tab-active"
+        className="transcript-playhead pointer-events-none absolute top-1/2 h-7 w-[3px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-text-neutral-strong"
         style={{ left: `${progress * 100}%` }}
       />
     </div>
@@ -323,6 +368,10 @@ export type TranscriptAudioPlayerProps = {
   isActive?: boolean;
   audioRef?: Ref<HTMLAudioElement>;
   onError?: React.ReactEventHandler<HTMLAudioElement>;
+  /** The page heading (title, date, actions): beside the player, above the transcript. */
+  heading?: ReactNode;
+  /** The story's identicon, shown when there's no artwork. */
+  identicon?: string;
 };
 
 export default function TranscriptAudioPlayer({
@@ -335,6 +384,8 @@ export default function TranscriptAudioPlayer({
   isActive = true,
   audioRef,
   onError,
+  heading,
+  identicon,
 }: TranscriptAudioPlayerProps) {
   const media = useRef<HTMLAudioElement | null>(null);
   const [playing, setPlaying] = useState(false);
@@ -420,24 +471,32 @@ export default function TranscriptAudioPlayer({
     ? isVoiceConversationName(name) ? "Voice conversation" : "Voice note"
     : name?.replace(/\.[^.]+$/, "").replace(/_\d{12,}$/, "").replace(/_/g, " ") || "Audio";
 
-  let body;
+  let transcriptBody: ReactNode = null;
   if (showTranscript && transcription.isLoading) {
-    body = (
+    transcriptBody = (
       <div role="status" className="flex min-h-0 flex-1 flex-col items-center justify-center gap-4">
         <span aria-hidden className="size-6 animate-spin rounded-full border-2 border-stroke-neutral-weak border-t-icon-brand-strong motion-reduce:animate-none" />
         <span className="font-geist text-sm text-text-neutral-weak">Transcribing…</span>
       </div>
     );
   } else if (showTranscript && turns.length) {
-    body = <TranscriptView turns={turns} speech={recordedSpeech} currentTime={currentTime} showSpeakers={multiSpeaker} onSeek={seekTo} />;
-  } else {
-    body = <AudioVisual artwork={voice ? null : thumbnail} voice={voice} title={title} />;
+    transcriptBody = <TranscriptView turns={turns} speech={recordedSpeech} currentTime={currentTime} showSpeakers={multiSpeaker} onSeek={seekTo} />;
+  } else if (showTranscript && fileId && !transcription.isLoading) {
+    transcriptBody = (
+      <p className="flex flex-1 items-center justify-center p-6 text-center font-geist text-sm text-text-neutral-weak">
+        No transcript for this recording.
+      </p>
+    );
   }
 
   return (
     <div
       data-testid="transcript-audio-player"
-      className="flex h-[min(720px,calc(100dvh-160px))] w-full max-w-[560px] flex-col gap-5 overflow-hidden rounded-3xl border border-stroke-neutral-weak bg-bg-neutral-solid px-6 pb-6 pt-2 text-text-neutral-strong shadow-2xl"
+      className={cn(
+        "grid w-full gap-5 text-text-neutral-strong lg:gap-x-8",
+        "[grid-template-areas:'heading'_'player'_'transcript'] lg:[grid-template-areas:'player_heading'_'player_transcript']",
+        "lg:h-[min(520px,calc(100dvh-180px))] lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:grid-rows-[auto_minmax(0,1fr)]",
+      )}
     >
       <audio
         ref={(element) => {
@@ -471,7 +530,16 @@ export default function TranscriptAudioPlayer({
         }}
       />
 
-      {body}
+      {heading ? <div className="min-w-0 [grid-area:heading]">{heading}</div> : null}
+
+      <section
+        aria-label="Player"
+        className="transcript-quiet-fill flex flex-col gap-5 rounded-3xl border border-stroke-neutral-weak bg-fill-neutral-weaker p-5 [grid-area:player] sm:p-6 lg:min-h-0"
+      >
+        {/* On phones the transcript follows the player, so its visual gives way to it. */}
+        <div className={cn("flex min-h-0 flex-1 flex-col", transcriptBody && "max-lg:hidden")}>
+          <AudioVisual artwork={voice ? null : thumbnail} identicon={identicon} voice={voice} title={heading ? undefined : title} />
+        </div>
 
       <div className="flex shrink-0 flex-col gap-0.5">
         <Timeline speech={speech} duration={duration} currentTime={currentTime} onScrub={setScrubTime} onSeek={seekTo} />
@@ -522,6 +590,13 @@ export default function TranscriptAudioPlayer({
           <span aria-hidden className="h-11 min-w-12" />
         )}
       </div>
+      </section>
+
+      {transcriptBody ? (
+        <div className="flex min-h-[320px] flex-col overflow-hidden rounded-3xl border border-stroke-neutral-weak bg-fill-neutral-weaker [grid-area:transcript] lg:min-h-0">
+          {transcriptBody}
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -1274,7 +1274,12 @@ describe("CreateMemory", () => {
     expect(firstRow.querySelector(".drafts-menu-thumbnail img")).toHaveAttribute("src", "https://api.dicebear.com/10.x/disco/svg?seed=first");
     expect(firstRow.querySelector(".drafts-menu-date")).not.toHaveTextContent(/:00/);
     expect(screen.queryByText("Body preview stays in the editor")).not.toBeInTheDocument();
-    await user.click(firstRow.querySelector<HTMLButtonElement>(".drafts-menu-delete")!);
+    // Deleting is an X icon button, not a word.
+    const deleteButton = firstRow.querySelector<HTMLButtonElement>(".drafts-menu-delete")!;
+    expect(deleteButton).toHaveAccessibleName("Delete draft");
+    expect(deleteButton).not.toHaveTextContent("Delete");
+    expect(deleteButton.querySelector("svg.lucide-x")).toBeInTheDocument();
+    await user.click(deleteButton);
     expect(screen.queryByRole("button", { name: /First story/ })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Second story/ })).toBeInTheDocument();
     expect(JSON.parse(localStorage.getItem("create-memory-drafts") ?? "[]").map((draft: { id: string }) => draft.id)).toEqual(["second"]);
@@ -1322,7 +1327,7 @@ describe("CreateMemory", () => {
     await user.tab();
     expect(screen.getByRole("button", { name: /Keyboard draft/ })).toHaveFocus();
     await user.tab();
-    expect(screen.getByRole("button", { name: "Delete" })).toHaveFocus();
+    expect(screen.getByRole("button", { name: "Delete draft" })).toHaveFocus();
   });
 
   it("opens an empty drafts panel and returns focus on Escape", async () => {
@@ -1397,7 +1402,7 @@ describe("CreateMemory", () => {
     const user = userEvent.setup();
     expect(screen.getByRole("status")).toHaveTextContent("Draft saved");
     await user.click(screen.getByRole("button", { name: "Drafts" }));
-    await user.click(screen.getByRole("button", { name: "Delete" }));
+    await user.click(screen.getByRole("button", { name: "Delete draft" }));
 
     expect(screen.getByRole("status")).toHaveTextContent("Not saved");
     expect(JSON.parse(localStorage.getItem("create-memory-drafts") ?? "[]")).toEqual([]);

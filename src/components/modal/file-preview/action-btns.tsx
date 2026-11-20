@@ -8,8 +8,24 @@ import Spinner from "@/components/spinner";
 import { Download, Trash2, X } from "lucide-react";
 import DeleteMemoryAttachment from "./delete-attachment";
 import type { FilePreviewItemBase } from "./index";
+import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
-export default function ActionBtn(props: FilePreviewItemBase) {
+/**
+ * The viewer's file actions. "viewer": icon buttons beside the viewer's close.
+ * "page": labelled Download and Delete for a full page (it has its own close),
+ * confirming in a dialog that sits above the page.
+ */
+export default function ActionBtn({ variant = "viewer", ...props }: FilePreviewItemBase & { variant?: "viewer" | "page" }) {
   const { close } = useModal();
   const [downloading, setDownloading] = useState(false);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
@@ -54,6 +70,57 @@ export default function ActionBtn(props: FilePreviewItemBase) {
       setShowDeleteConfirmation(false);
     }
   };
+
+  if (variant === "page") {
+    const canDelete = Boolean(props._id && !props.readOnly);
+    return (
+      <div className="flex flex-wrap items-center gap-3">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={handleDownload}
+          disabled={downloading}
+          aria-busy={downloading}
+          className="transcript-quiet-fill h-11 gap-2 rounded-full border-transparent bg-fill-neutral-weak px-5 font-geist text-sm font-semibold text-text-neutral-strong hover:bg-fill-neutral-weaker"
+        >
+          {downloading ? <Spinner loading className="!m-0 !text-text-neutral-weaker" /> : <Download className="size-4" aria-hidden />}
+          Download
+        </Button>
+        {canDelete ? (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setShowDeleteConfirmation(true)}
+            className="transcript-quiet-fill h-11 gap-2 rounded-full border-transparent bg-fill-neutral-weak px-5 font-geist text-sm font-semibold text-text-error-strong hover:bg-fill-error-weak"
+          >
+            <Trash2 className="size-4" aria-hidden />
+            Delete
+          </Button>
+        ) : null}
+        <AlertDialog open={showDeleteConfirmation} onOpenChange={(open) => !isMutating && setShowDeleteConfirmation(open)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete this recording?</AlertDialogTitle>
+              <AlertDialogDescription>It’s removed from the story for good. This can’t be undone.</AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={isMutating}>Keep it</AlertDialogCancel>
+              <AlertDialogAction
+                variant="destructive"
+                disabled={isMutating}
+                onClick={(event) => {
+                  event.preventDefault();
+                  void handleDelete();
+                }}
+              >
+                {isMutating ? "Deleting…" : "Delete"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
+    );
+  }
 
   return (
     <div className="flex items-center justify-end gap-1 sm:gap-3">
