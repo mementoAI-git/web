@@ -19,14 +19,14 @@ describe("StoriesActionButtons", () => {
     expect(quickAdd).not.toHaveClass("bg-white");
   });
 
-  it("offers only Add memory and Quick add on the page", () => {
+  it("offers only Write and Quick add on the page", () => {
     renderWithProviders(
       <StoriesActionButtons onCreateMemory={vi.fn()} onQuickCapture={vi.fn()} />,
       { route: "/stories", auth: true },
     );
 
     expect(screen.getAllByRole("button").map((button) => button.textContent)).toEqual([
-      "Add memory",
+      "Write",
       "Quick add",
     ]);
   });
