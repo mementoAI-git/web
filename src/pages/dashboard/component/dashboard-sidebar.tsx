@@ -109,6 +109,7 @@ export function DashboardSideBar({
               <SidebarMenu>
                 <SideBarItem
                   icon={linkIcon}
+                  deepenOnSky
                   title="Invite friends"
                   onClick={() => open("invite-friends")}
                 />

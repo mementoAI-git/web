@@ -10,7 +10,8 @@ vi.mock("@/hooks/use-modal", async (original) => ({
   useModal: () => ({ close, open: vi.fn() }),
 }));
 vi.mock("@/hooks/use-fetcher", () => ({ default: () => ({ trigger: vi.fn(), isMutating: false }) }));
-vi.mock("@/features/media/signed-media-access", () => ({ useSignedMediaAccess: (file: { url: string }) => ({ src: file.url, onError: vi.fn() }) }));
+const refreshLink = vi.hoisted(() => vi.fn(async () => ({ url: "/fresh-call.m4a" })));
+vi.mock("@/features/media/signed-media-access", () => ({ useSignedMediaAccess: (file: { url: string }) => ({ src: file.url, onError: refreshLink }) }));
 
 const call = { _id: "call", name: "voice_call_1795000000000.m4a", type: "audio/mp4", url: "/call.m4a", size: 10, duration: 115 };
 
@@ -42,5 +43,25 @@ describe("FilePreview recordings", () => {
     renderWithProviders(<FilePreview data={{ files: [call], readOnly: true }} />, { route: "/stories", auth: true });
     expect(await screen.findByRole("dialog", { name: "Voice conversation" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Delete" })).not.toBeInTheDocument();
+  });
+
+  it("downloads with a fresh link when the saved one has expired", async () => {
+    const fetchMock = vi.fn(async (url: string) => url === "/fresh-call.m4a"
+      ? { ok: true, status: 200, blob: async () => new Blob(["audio"]) }
+      : { ok: false, status: 403 });
+    vi.stubGlobal("fetch", fetchMock);
+    URL.createObjectURL = vi.fn(() => "blob:call");
+    URL.revokeObjectURL = vi.fn();
+    const clicked = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
+    try {
+      renderWithProviders(<FilePreview data={{ files: [call] }} />, { route: "/stories", auth: true });
+      await userEvent.click(await screen.findByRole("button", { name: "Download" }));
+      await vi.waitFor(() => expect(clicked).toHaveBeenCalled());
+      expect(fetchMock.mock.calls.map(([url]) => url)).toEqual(["/call.m4a", "/fresh-call.m4a"]);
+      expect(refreshLink).toHaveBeenCalled();
+    } finally {
+      clicked.mockRestore();
+      vi.unstubAllGlobals();
+    }
   });
 });
