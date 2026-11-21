@@ -10,6 +10,7 @@ import { reportFetcherError } from "@/api/report-fetcher-error";
 import { mutate } from "swr";
 import { Input } from "@/components/ui/input";
 import { onboardingAssets as assets } from "../assets";
+import { useTrackOnboardingStep } from "../onboarding-analytics";
 import {
   OnboardingActions,
   OnboardingButton,
@@ -18,6 +19,7 @@ import {
 } from "../components/onboarding-card";
 
 export default function NicknamePage() {
+  useTrackOnboardingStep("nickname");
   const navigate = useNavigate();
   const { user, setUser } = useStore();
   const pending = useRef(false);

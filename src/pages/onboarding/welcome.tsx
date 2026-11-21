@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { useSkipOnboarding } from "./use-skip-onboarding";
+import { useTrackOnboardingStep } from "./onboarding-analytics";
 import { onboardingAssets as assets } from "./assets";
 import {
   OnboardingActions,
@@ -38,6 +39,7 @@ const features = [
 ];
 
 export default function WelcomePage() {
+  useTrackOnboardingStep("welcome");
   const { skip, busy } = useSkipOnboarding();
   return (
     <OnboardingCard className="rounded-none border-0 p-0">

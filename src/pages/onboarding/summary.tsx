@@ -22,8 +22,10 @@ import {
 import { LifeAreaChip } from "./components/life-area-chip";
 import posthog from "@/lib/posthog";
 import { useFinishOnboarding } from "./use-finish-onboarding";
+import { resetOnboardingTracking, useTrackOnboardingStep } from "./onboarding-analytics";
 
 export default function OnboardingSummaryPage() {
+  useTrackOnboardingStep("summary");
   const { user } = useStore();
   const finishOnboarding = useFinishOnboarding();
   const navigate = useNavigate();
@@ -69,6 +71,7 @@ export default function OnboardingSummaryPage() {
           motivation_type: selectedReasons[0]?.motivation ?? "explorer",
         });
       }
+      resetOnboardingTracking();
       finishOnboarding("completed");
       clearOnboardingDraft(userId);
       navigate("/overview");
