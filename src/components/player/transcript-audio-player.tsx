@@ -345,9 +345,9 @@ function SkipButton({ direction, onClick }: { direction: "back" | "forward"; onC
       type="button"
       onClick={onClick}
       aria-label={direction === "back" ? `Back ${SKIP_SECONDS} seconds` : `Forward ${SKIP_SECONDS} seconds`}
-      className="transcript-quiet-fill relative flex size-16 cursor-pointer items-center justify-center rounded-full bg-fill-neutral-weak text-icon-neutral-strong outline-none transition-[transform,opacity] duration-150 hover:opacity-80 focus-visible:ring-2 focus-visible:ring-stroke-neutral-strong active:scale-95 motion-reduce:active:scale-100"
+      className="transcript-quiet-fill relative flex size-12 cursor-pointer items-center justify-center rounded-full bg-fill-neutral-weak sm:size-16 text-icon-neutral-strong outline-none transition-[transform,opacity] duration-150 hover:opacity-80 focus-visible:ring-2 focus-visible:ring-stroke-neutral-strong active:scale-95 motion-reduce:active:scale-100"
     >
-      <Icon className="size-[30px]" strokeWidth={1.8} aria-hidden />
+      <Icon className="size-[26px] sm:size-[30px]" strokeWidth={1.8} aria-hidden />
       {/* The rotate icons open at the top; this sits the number in the ring. */}
       <span aria-hidden className="absolute mt-0.5 font-geist text-[10px] font-semibold text-text-neutral-strong">{SKIP_SECONDS}</span>
     </button>
@@ -554,7 +554,7 @@ export default function TranscriptAudioPlayer({
           type="button"
           onClick={cycleSpeed}
           aria-label={`Playback speed ${speed}x`}
-          className="flex h-11 min-w-12 cursor-pointer items-center justify-center rounded-full font-geist text-sm font-semibold tabular-nums text-text-neutral-strong outline-none transition-colors hover:bg-fill-neutral-weak focus-visible:ring-2 focus-visible:ring-stroke-neutral-strong"
+          className="flex h-11 min-w-11 cursor-pointer items-center justify-center rounded-full font-geist sm:min-w-12 text-sm font-semibold tabular-nums text-text-neutral-strong outline-none transition-colors hover:bg-fill-neutral-weak focus-visible:ring-2 focus-visible:ring-stroke-neutral-strong"
         >
           {speed}x
         </button>
@@ -563,12 +563,12 @@ export default function TranscriptAudioPlayer({
           type="button"
           onClick={togglePlay}
           aria-label={playing ? "Pause" : "Play"}
-          className="flex size-20 cursor-pointer items-center justify-center rounded-full bg-fill-tab-active text-text-tab-active outline-none transition-transform duration-150 focus-visible:ring-2 focus-visible:ring-stroke-neutral-strong focus-visible:ring-offset-2 focus-visible:ring-offset-bg-neutral-solid active:scale-95 motion-reduce:active:scale-100"
+          className="flex size-16 cursor-pointer items-center justify-center rounded-full bg-fill-tab-active sm:size-20 text-text-tab-active outline-none transition-transform duration-150 focus-visible:ring-2 focus-visible:ring-stroke-neutral-strong focus-visible:ring-offset-2 focus-visible:ring-offset-bg-neutral-solid active:scale-95 motion-reduce:active:scale-100"
         >
           {playing ? (
             <Pause aria-hidden fill="currentColor" stroke="none" className="size-[30px]" />
           ) : (
-            <Play aria-hidden fill="currentColor" stroke="none" className="size-[30px] translate-x-[3px]" />
+            <Play aria-hidden fill="currentColor" stroke="none" className="size-[30px] translate-x-px" />
           )}
         </button>
         <SkipButton direction="forward" onClick={() => seekTo(currentTime + SKIP_SECONDS)} />
@@ -579,7 +579,7 @@ export default function TranscriptAudioPlayer({
             aria-checked={showTranscript}
             aria-label="Transcript"
             onClick={() => setShowTranscript((shown) => !shown)}
-            className="flex h-11 min-w-12 cursor-pointer items-center justify-center rounded-full outline-none transition-colors hover:bg-fill-neutral-weak focus-visible:ring-2 focus-visible:ring-stroke-neutral-strong"
+            className="flex h-11 min-w-11 cursor-pointer items-center justify-center rounded-full outline-none sm:min-w-12 transition-colors hover:bg-fill-neutral-weak focus-visible:ring-2 focus-visible:ring-stroke-neutral-strong"
           >
             {showTranscript
               ? <Captions className="size-6 text-icon-neutral-strong" strokeWidth={1.8} aria-hidden />
@@ -587,13 +587,14 @@ export default function TranscriptAudioPlayer({
           </button>
         ) : (
           // Balances the speed button so play stays centred.
-          <span aria-hidden className="h-11 min-w-12" />
+          <span aria-hidden className="h-11 min-w-11 sm:min-w-12" />
         )}
       </div>
       </section>
 
       {transcriptBody ? (
-        <div className="flex min-h-[320px] flex-col overflow-hidden rounded-3xl border border-stroke-neutral-weak bg-fill-neutral-weaker [grid-area:transcript] lg:min-h-0">
+        // On phones the transcript scrolls in its own box, so following along keeps the turn in view.
+        <div className="flex min-h-[320px] flex-col overflow-hidden rounded-3xl border border-stroke-neutral-weak bg-fill-neutral-weaker [grid-area:transcript] max-lg:max-h-[70dvh] lg:min-h-0">
           {transcriptBody}
         </div>
       ) : null}
