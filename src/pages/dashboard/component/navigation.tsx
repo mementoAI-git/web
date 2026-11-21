@@ -19,5 +19,5 @@ export const topNavigations = [
 ];
 
 export const bottomNavigations = [
-  { icon: gearIcon, title: "Settings", link: "/settings" },
+  { icon: gearIcon, title: "Settings", link: "/settings", deepenOnSky: true },
 ];

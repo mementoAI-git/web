@@ -569,9 +569,10 @@
 
 /* Daytime companion: translucent white surfaces over a pale, warm-horizon sky. */
 .light-sky {
-  --sky-canvas: #b3c4dc;
-  --sky-midpoint: #94b2d6;
-  --sky-horizon: #d9d6d1;
+  /* A touch darker, with a deeper blue overhead and the warm horizon kept. */
+  --sky-canvas: #9aafcf;
+  --sky-midpoint: #7896c2;
+  --sky-horizon: #d3cec7;
   --sky-surface: rgba(255, 255, 255, 0.68);
   --background: transparent;
   --color-background: transparent;
@@ -704,12 +705,17 @@
 .light-sky .deep-sky-backdrop::before,
 .light-sky .deep-sky-backdrop::after {
   filter: brightness(0) invert(1);
-  opacity: 0.85;
+  opacity: 0.75;
   animation-duration: 35s;
 }
 
+/* Pale cyan sidebar icons (gear, link) wash into the light sky; deepen them there. */
+.light-sky .sky-deepen-icon {
+  filter: brightness(0.62) saturate(1.35);
+}
+
 .light-sky .deep-sky-backdrop::after {
-  opacity: 0.38;
+  opacity: 0.32;
   animation-duration: 47.5s;
 }
 

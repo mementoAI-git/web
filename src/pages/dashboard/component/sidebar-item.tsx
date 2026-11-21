@@ -10,6 +10,8 @@ interface SideBarItemProps {
   emoji?: string;
   title: string;
   tone?: "neutral" | "brand";
+  /** Darkens a pale image icon on the light sky, where it washes out. */
+  deepenOnSky?: boolean;
   link?: string;
   active?: boolean;
   onClick?: () => void;
@@ -24,6 +26,7 @@ export default function SideBarItem({
   emoji,
   title,
   tone = "neutral",
+  deepenOnSky = false,
 }: SideBarItemProps) {
   const navigate = useNavigate();
 
@@ -62,7 +65,7 @@ export default function SideBarItem({
               src={icon}
               alt=""
               aria-hidden
-              className="shrink-0 object-contain"
+              className={cn("shrink-0 object-contain", deepenOnSky && "sky-deepen-icon")}
             />
           ) : Icon ? (
             <Icon
