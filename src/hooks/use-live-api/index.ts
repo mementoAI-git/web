@@ -57,7 +57,7 @@ import { GEMINI_CONFIG } from "./config";
 import { createSystemContext, isEmpty } from "@/utility";
 import useFetcher from "../use-fetcher";
 import endpoint from "@/api/endpoint";
-import { callTicketFrom, sendVoiceUsageCheckIn, VOICE_USAGE_CHECK_IN_MS, VoiceQuietClock } from "@/features/voice/usage";
+import { callTicketFrom, sendVoiceUsageCheckIn, VOICE_USAGE_CHECK_IN_MS, VoiceQuietClock, voiceUsageKey } from "@/features/voice/usage";
 import { useStore } from "@/hooks/use-store";
 import { toast } from "sonner";
 import { BrowserCallRecorder } from "@/features/voice/recording/browser-recorder";
@@ -1061,7 +1061,8 @@ export function useLiveAPI({
     socketOpenRef.current = false;
     resumeHandleRef.current = null;
     // Free plans: the call used some of the month's voice minutes.
-    void finishVoiceUsage().then(() => mutate(endpoint.billingSubscription)).catch(() => undefined);
+    // The Milestones voice minutes cards refresh too.
+    void finishVoiceUsage().then(() => Promise.all([mutate(endpoint.billingSubscription), mutate(voiceUsageKey())])).catch(() => undefined);
   }, [finishVoiceUsage, stopRecording, stopTurnTaking, stopVoiceTools]);
   endLostCallRef.current = endLostCall;
 
@@ -1166,7 +1167,8 @@ export function useLiveAPI({
     sessionPromiseRef.current?.then((session) => session.close()).catch(console.error);
     sessionPromiseRef.current = null;
     // Free plans: the call used some of the month's voice minutes.
-    void finishVoiceUsage().then(() => mutate(endpoint.billingSubscription)).catch(() => undefined);
+    // The Milestones voice minutes cards refresh too.
+    void finishVoiceUsage().then(() => Promise.all([mutate(endpoint.billingSubscription), mutate(voiceUsageKey())])).catch(() => undefined);
     // Don't close audio contexts here - they're managed by the cleanup
   }, [clearCallLimit, finishVoiceUsage, stopTurnTaking, stopVoiceTools]);
 

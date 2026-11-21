@@ -65,3 +65,55 @@ export async function sendVoiceUsageCheckIn(callTicket: string, quietSeconds: nu
     ...(timezone ? { timezone } : {}),
   });
 }
+
+/** The SWR key for this month's and all-time voice minutes, in the member's time zone. */
+export function voiceUsageKey(): string {
+  const zone = deviceTimeZone();
+  return zone ? `${endpoint.voiceUsage}?timezone=${encodeURIComponent(zone)}` : endpoint.voiceUsage;
+}
+
+/** This month's and all-time voice minutes (GET /ai/voice/usage). */
+export interface VoiceUsage {
+  month: string;
+  monthSeconds: number;
+  allTimeSeconds: number;
+  /** When "this month" starts over (midnight on the 1st, local time). */
+  monthResetsAt: Date | null;
+  /** Free plan only: the monthly allowance and what is left. Null on paid plans. */
+  freeLimitSeconds: number | null;
+  freeLeftSeconds: number | null;
+}
+
+const seconds = (value: unknown) => (typeof value === "number" && Number.isFinite(value) ? Math.max(0, value) : null);
+
+/** Reads `data` of GET /ai/voice/usage. */
+export function parseVoiceUsage(data: unknown): VoiceUsage | null {
+  if (!data || typeof data !== "object") return null;
+  const value = data as Record<string, unknown>;
+  const monthSeconds = seconds(value.month_seconds);
+  const allTimeSeconds = seconds(value.all_time_seconds);
+  if (monthSeconds === null || allTimeSeconds === null) return null;
+  const resets = typeof value.month_resets_at === "string" ? new Date(value.month_resets_at) : null;
+  return {
+    month: typeof value.month === "string" ? value.month : "",
+    monthSeconds,
+    allTimeSeconds,
+    monthResetsAt: resets && !Number.isNaN(resets.getTime()) ? resets : null,
+    freeLimitSeconds: seconds(value.free_seconds_limit),
+    freeLeftSeconds: seconds(value.free_seconds_left),
+  };
+}
+
+/** Whole minutes, rounded down so the count never runs ahead of the allowance. */
+export function voiceMinutes(totalSeconds: number): number {
+  return Math.floor(Math.max(0, totalSeconds) / 60);
+}
+
+/** "45 min", or "3 h 5 min" from an hour up. */
+export function formatVoiceMinutes(totalSeconds: number): string {
+  const minutes = voiceMinutes(totalSeconds);
+  if (minutes < 60) return `${minutes} min`;
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+  return rest ? `${hours} h ${rest} min` : `${hours} h`;
+}
