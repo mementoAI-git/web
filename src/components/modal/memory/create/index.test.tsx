@@ -932,8 +932,8 @@ describe("CreateMemory", () => {
 
     expect(screen.getByText("Who can see this story?")).toHaveClass("text-text-neutral-strong");
     expect(
-      screen.getByText("Stories are visible to all beneficiaries by default. Choose", { exact: false }),
-    ).toHaveTextContent("Stories are visible to all beneficiaries by default. Choose Private to hide them.");
+      screen.getByText("Stories are visible to all connections by default. Choose", { exact: false }),
+    ).toHaveTextContent("Stories are visible to all connections by default. Choose Private to hide them.");
     expect(screen.getByText("Private", { selector: "span" })).toHaveClass("text-text-error-strong");
     expect(screen.getByTestId("story-visibility-icon")).toHaveAttribute("src", privateIcon);
     expect(screen.getByLabelText("Who can see this story?")).toHaveClass("bg-fill-neutral-weak");

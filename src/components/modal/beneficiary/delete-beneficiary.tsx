@@ -35,14 +35,14 @@ export function DeleteBeneficiary({ data }: DeleteBeneficiaryProps) {
   return (
     <DeletePromptModal
       onClose={() => close?.("delete-beneficiary")}
-      title={isConnection ? "Cancel invitation" : "Remove beneficiary"}
+      title={isConnection ? "Cancel invitation" : "Remove connection"}
       description={
         <>
           <p>This action cannot be undone.</p>
           <p className="mt-3">
             {isConnection
               ? "Cancel this pending invitation? This person will no longer be able to accept it."
-              : "Are you sure you want to remove this beneficiary? They will lose access to your Memento."}
+              : "Are you sure you want to remove this connection? They will lose access to your Memento."}
           </p>
         </>
       }

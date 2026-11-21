@@ -49,7 +49,7 @@ export const MILESTONE_CATALOGUE: readonly MilestoneDefinition[] = [
   { id: "streak-seven", title: "Reflective Habit", description: "Kept a 7-day reflection streak.", metric: "streak", target: 7, unit: (target) => `${target} days` },
   { id: "streak-thirty", title: "Monthly Rhythm", description: "Kept a 30-day reflection streak.", metric: "streak", target: 30, unit: (target) => `${target} days` },
   { id: "enrichment-strong", title: "Well Known", description: "Your enrichment score reached Strong.", metric: "enrichment", target: STRONG_ENRICHMENT_SCORE },
-  { id: "legacy-contact", title: "Trusted Circle", description: "Named a legacy contact or beneficiary.", metric: "beneficiaries", target: 1 },
+  { id: "legacy-contact", title: "Trusted Circle", description: "Added your first connection.", metric: "beneficiaries", target: 1 },
   { id: "time-capsule", title: "Future Messenger", description: "Scheduled your first time capsule.", metric: "capsules", target: 1, available: TIME_CAPSULES_AVAILABLE },
 ];
 

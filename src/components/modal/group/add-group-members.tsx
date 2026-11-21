@@ -104,7 +104,7 @@ export function AddGroupMembers({ data: groupId }: AddGroupMembersProps) {
           ) : error ? (
             <li className="py-4 text-center">
               <Button variant="outline" onClick={retry}>
-                Retry loading beneficiaries
+                Retry loading connections
               </Button>
             </li>
           ) : people.length === 0 ? (

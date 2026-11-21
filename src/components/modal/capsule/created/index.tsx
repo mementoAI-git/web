@@ -126,7 +126,7 @@ export default function CreateCapsule({ data = null }: CreateCapsuleProps) {
               <div className="mb-2 flex items-center justify-between text-xs">
                 <span className="font-inter font-normal text-v3-text-weak">To (recipients):</span>
                 <span className="cursor-pointer" onClick={() => setShowBeneficiaryList(true)}>
-                  Beneficiary list
+                  Connection list
                 </span>
               </div>
             }

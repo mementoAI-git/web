@@ -85,10 +85,10 @@ export function UpdateBeneficiary({
       <div className="mb-5 flex items-start justify-between gap-3">
         <div className="flex flex-col gap-0.5">
           <h2 className="font-inter text-sm font-semibold text-v3-text-strong">
-            Edit beneficiary
+            Edit connection
           </h2>
           <p className="font-inter text-sm text-v3-text-weak">
-            Update details for this beneficiary.
+            Update details for this connection.
           </p>
         </div>
         <button
