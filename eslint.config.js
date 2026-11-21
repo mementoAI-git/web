@@ -7,7 +7,7 @@ import tseslint from 'typescript-eslint'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist', 'storybook-static', '.worktrees/**']),
+  globalIgnores(['dist', 'storybook-static', '.worktrees/**', 'experiments/eve-chat-sandbox/**']),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [
