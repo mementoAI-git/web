@@ -6,6 +6,8 @@ import { useModal } from "@/hooks/use-modal";
 import { mutate } from "swr";
 import Spinner from "@/components/spinner";
 import { Download, Trash2, X } from "lucide-react";
+import { toast } from "sonner";
+import { useSignedMediaAccess } from "@/features/media/signed-media-access";
 import DeleteMemoryAttachment from "./delete-attachment";
 import type { FilePreviewItemBase } from "./index";
 import { Button } from "@/components/ui/button";
@@ -35,11 +37,20 @@ export default function ActionBtn({ variant = "viewer", ...props }: FilePreviewI
     "delete",
   );
 
+  // File links are signed and expire; download from the current link, and get a
+  // fresh one if the server turns the old one down.
+  const { src, onError: refreshLink } = useSignedMediaAccess(props);
+
   const handleDownload = async () => {
     try {
       setDownloading(true);
-      const response = await fetch(props.url, { mode: "cors" });
-      if (!response.ok) throw new Error("Network response was not ok");
+      const get = (url: string) => fetch(url, { mode: "cors" }).catch(() => null);
+      let response = await get(src);
+      if (!response?.ok) {
+        const fresh = await refreshLink();
+        if (fresh.url && fresh.url !== src) response = await get(fresh.url);
+      }
+      if (!response?.ok) throw new Error(`Download failed (${response?.status ?? "network error"})`);
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
@@ -51,6 +62,7 @@ export default function ActionBtn({ variant = "viewer", ...props }: FilePreviewI
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error("Failed to download file", error);
+      toast.error("Couldn’t download this file. Please try again.");
     } finally {
       setDownloading(false);
     }
@@ -66,6 +78,7 @@ export default function ActionBtn({ variant = "viewer", ...props }: FilePreviewI
       props.onDelete(props._id);
     } catch (error) {
       console.error("Failed to delete file", error);
+      toast.error("Couldn’t delete this file. Please try again.");
     } finally {
       setShowDeleteConfirmation(false);
     }
@@ -98,7 +111,8 @@ export default function ActionBtn({ variant = "viewer", ...props }: FilePreviewI
           </Button>
         ) : null}
         <AlertDialog open={showDeleteConfirmation} onOpenChange={(open) => !isMutating && setShowDeleteConfirmation(open)}>
-          <AlertDialogContent>
+          {/* The page sits at z-110, so confirm above it. */}
+          <AlertDialogContent className="z-[130]" overlayClassName="z-[125]">
             <AlertDialogHeader>
               <AlertDialogTitle>Delete this recording?</AlertDialogTitle>
               <AlertDialogDescription>It’s removed from the story for good. This can’t be undone.</AlertDialogDescription>
