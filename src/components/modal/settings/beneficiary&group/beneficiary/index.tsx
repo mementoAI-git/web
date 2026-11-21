@@ -10,15 +10,15 @@ export type { IBeneficiaryWithGroups } from "./beneficiary-types";
 
 export default function Beneficiary() {
   const { data, isLoading, error, mutate, isValidating } = useSWR<{ data?: IPagination<IBeneficiaryWithGroups> }>(SETTINGS_BENEFICIARIES_SWR_KEY, { shouldRetryOnError: false });
-  const retry = useRequestRecovery("settings-beneficiaries", error, mutate, "We couldn’t load your beneficiaries. Please try again.");
+  const retry = useRequestRecovery("settings-beneficiaries", error, mutate, "We couldn’t load your connections. Please try again.");
 
   const docs = data?.data?.docs ?? [];
 
   return (
     <div className="flex flex-col gap-4">
-      {error ? <Button variant="outline" className="self-start" onClick={retry} disabled={isValidating}>Retry loading beneficiaries</Button> : null}
+      {error ? <Button variant="outline" className="self-start" onClick={retry} disabled={isValidating}>Retry loading connections</Button> : null}
       {isLoading && !data ? (
-        <div role="status" aria-label="Loading beneficiaries" className="settings-grouped-list">
+        <div role="status" aria-label="Loading connections" className="settings-grouped-list">
           {[0, 1].map((k) => (
             <div key={k} className="settings-card h-[72px] motion-safe:animate-pulse" aria-hidden />
           ))}

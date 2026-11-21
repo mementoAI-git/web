@@ -38,7 +38,7 @@ const features = [
     bg: "#FFF3BB",
   },
   {
-    title: "Beneficiaries",
+    title: "Connections",
     subtitle:
       "Choose who can access your stories now and in the future. You’re in control of what’s shared and with whom. ",
     icon: welcomeIcon5,

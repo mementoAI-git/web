@@ -2,7 +2,7 @@
 const SETTINGS_TABS: Record<string, string> = {
   general: "Settings: Personal info",
   security: "Settings: Security",
-  beneficiary: "Settings: Beneficiaries",
+  beneficiary: "Settings: People & Groups",
   privacy: "Settings: Privacy",
   billing: "Settings: Billing",
 };

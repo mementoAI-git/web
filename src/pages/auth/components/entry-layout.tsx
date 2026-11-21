@@ -25,7 +25,7 @@ const features = [
   { image: journal, label: "Journal and read insights", slot: "journal" },
   {
     image: beneficiaries,
-    label: "Invite beneficiaries",
+    label: "Invite connections",
     slot: "beneficiaries",
   },
   { image: chat, label: "AI Chat", slot: "chat" },

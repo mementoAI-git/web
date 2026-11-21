@@ -23,7 +23,7 @@ describe("existing invitation flow", () => {
       renderWithProviders(<AddBeneficiary data={{ mode }} />, { auth: true });
       expect(
         screen.getByRole("heading", {
-          name: mode !== "beneficiary" ? "Invite person" : "Invite beneficiary",
+          name: mode !== "beneficiary" ? "Invite person" : "Invite a connection",
         }),
       ).toBeInTheDocument();
       await userEvent.type(screen.getByLabelText(mode !== "beneficiary" ? "Email address" : "Email"), "ada@example.com");

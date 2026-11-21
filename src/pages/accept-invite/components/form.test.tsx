@@ -24,8 +24,8 @@ describe("invitation acceptance copy", () => {
         expect(
           screen.getByText(/keep memories together in a private shared space/i),
         ).toBeInTheDocument();
-        expect(screen.queryByText(/as a beneficiary/i)).not.toBeInTheDocument();
-      } else expect(screen.getByText(/as a beneficiary/i)).toBeInTheDocument();
+        expect(screen.queryByText(/as a connection on their profile/i)).not.toBeInTheDocument();
+      } else expect(screen.getByText(/as a connection on their profile/i)).toBeInTheDocument();
     },
   );
 });

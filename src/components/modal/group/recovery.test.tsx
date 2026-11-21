@@ -35,7 +35,7 @@ it("retries a failed beneficiary picker and keeps selections across pages", asyn
   );
   renderWithProviders(<AddGroupMembers data="family" />);
   const retry = await screen.findByRole("button", {
-    name: "Retry loading beneficiaries",
+    name: "Retry loading connections",
   });
   expect(
     screen.queryByText("No beneficiaries to add."),

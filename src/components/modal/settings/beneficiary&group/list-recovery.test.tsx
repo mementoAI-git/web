@@ -18,7 +18,7 @@ function RefreshGroups() {
 
 describe("settings list recovery", () => {
   it.each([
-    { label: "beneficiaries", path: "/beneficiaries", Component: Beneficiary, emptyText: "No people yet" },
+    { label: "connections", path: "/beneficiaries", Component: Beneficiary, emptyText: "No people yet" },
     { label: "groups", path: "/groups", Component: Groups, emptyText: "No groups yet" },
   ])("does not mistake failed $label for an empty list and retries", async ({ label, path, Component, emptyText }) => {
     let fail = true;

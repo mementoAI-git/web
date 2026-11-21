@@ -184,7 +184,7 @@ export function AccessField({
             Who can see this story?
           </Label>
           <p className="mt-1.5 font-inter text-xs leading-relaxed text-text-neutral-weaker">
-            Stories are visible to all beneficiaries by default. Choose{" "}
+            Stories are visible to all connections by default. Choose{" "}
             <span className="font-semibold text-text-error-strong">Private</span> to hide them.
           </p>
         </div>
@@ -352,7 +352,7 @@ export function AccessField({
                 })}
                 {filteredBeneficiaries.length === 0 ? (
                   <p className="font-geist text-xs text-text-neutral-weaker">
-                    {searchLower ? "No matching beneficiaries" : "No beneficiaries yet"}
+                    {searchLower ? "No matching connections" : "No connections yet"}
                   </p>
                 ) : null}
               </div>
@@ -574,7 +574,7 @@ export function AccessField({
               {filteredOptions.length === 0 ? (
                 <p className="w-full py-1 font-inter text-sm text-text-neutral-weaker">
                   {allOptions.length === 0
-                    ? "No groups or beneficiaries yet. Create a group to get started."
+                    ? "No groups or connections yet. Create a group to get started."
                     : "No matches"}
                 </p>
               ) : (

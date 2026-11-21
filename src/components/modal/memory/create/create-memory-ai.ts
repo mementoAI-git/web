@@ -561,7 +561,7 @@ function getToneLabel(tone: RewriteStoryDraftTone) {
     case "storyteller":
       return "Storyteller";
     case "beneficiaries":
-      return "Letter to Beneficiaries";
+      return "Letter to Loved Ones";
     case "raw":
       return "Raw & Unfiltered";
   }
