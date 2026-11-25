@@ -1,0 +1,18 @@
+node_modules
+.env*
+.eve
+.vercel
+.next
+.output
+.nitro
+dist
+.DS_Store
+*.tsbuildinfo
+
+.sandbox-data
+.env.local
+
+artifacts
+
+# Keep the independent lockfile despite the product repository’s lockfile ignore.
+!pnpm-lock.yaml
