@@ -13,6 +13,7 @@ import {
   countSentCapsules,
   orderMilestones,
 } from "./milestones";
+import { VoiceMinutesCards } from "./voice-minutes-cards";
 
 /** Same key as the memory forms, so the list is shared rather than fetched twice. */
 const BENEFICIARIES_KEY = `${endpoint.beneficiaries}?page=1&limit=100`;
@@ -61,6 +62,9 @@ export function MilestonesPanel() {
   );
 
   return (
+    <div className="insights-list">
+      {/* Voice mode minutes: this month (resets on the 1st) and all time. */}
+      <VoiceMinutesCards />
     <ul className="insights-list" aria-label="Milestones">
       {milestones.map((milestone) => (
         <li
@@ -94,5 +98,6 @@ export function MilestonesPanel() {
         </li>
       ))}
     </ul>
+    </div>
   );
 }

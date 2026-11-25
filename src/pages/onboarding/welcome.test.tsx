@@ -28,7 +28,7 @@ describe("WelcomePage", () => {
       screen.getByRole("heading", { name: /remember and reflect/i }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("heading", { name: /converse with your digital twin/i }),
+      screen.getByRole("heading", { name: /converse with your memento/i }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole("heading", {
@@ -39,7 +39,7 @@ describe("WelcomePage", () => {
     const images = screen.getAllByRole("img");
     expect(images).toHaveLength(3);
     expect(images[0]).toHaveAttribute("alt", "Remember and reflect");
-    expect(images[1]).toHaveAttribute("alt", "Converse with your digital twin");
+    expect(images[1]).toHaveAttribute("alt", "Converse with your Memento");
     expect(images[2]).toHaveAttribute(
       "alt",
       "Share your stories with loved ones",

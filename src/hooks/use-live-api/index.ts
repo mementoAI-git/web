@@ -57,6 +57,7 @@ import { GEMINI_CONFIG } from "./config";
 import { createSystemContext, isEmpty } from "@/utility";
 import useFetcher from "../use-fetcher";
 import endpoint from "@/api/endpoint";
+import { callTicketFrom, sendVoiceUsageCheckIn, VOICE_USAGE_CHECK_IN_MS, VoiceQuietClock, voiceUsageKey } from "@/features/voice/usage";
 import { useStore } from "@/hooks/use-store";
 import { toast } from "sonner";
 import { BrowserCallRecorder } from "@/features/voice/recording/browser-recorder";
@@ -191,6 +192,18 @@ export function useLiveAPI({
   const resumeHandleRef = useRef<string | null>(null);
   /** The call's time-limit ticket, sent back on reconnect; null when calls are not limited. */
   const callTicketRef = useRef<string | null>(null);
+  /** The call's ticket for voice minutes check-ins (every call has one, limited or not). */
+  const usageTicketRef = useRef<string | null>(null);
+  /** Long silences in the call, which voice minutes don't count. */
+  const quietClockRef = useRef<VoiceQuietClock | null>(null);
+  /** The call is over: a last check-in records its full length, less its long silences. */
+  const finishVoiceUsage = useCallback((): Promise<void> => {
+    const ticket = usageTicketRef.current;
+    const quiet = quietClockRef.current;
+    usageTicketRef.current = null;
+    quietClockRef.current = null;
+    return ticket && quiet ? sendVoiceUsageCheckIn(ticket, quiet.quietSeconds()) : Promise.resolve();
+  }, []);
   const callLimitTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   /** Set when the server refused to reconnect because the call's time was up. */
   /** Set when a reconnect is refused because time is up: what to tell them as the call ends. */
@@ -744,6 +757,13 @@ export function useLiveAPI({
             thinkingRef.current.reset();
             replyAudibleAtRef.current = null;
           }
+          if (
+            parts?.some(part => part.inlineData?.data) ||
+            message.serverContent?.inputTranscription?.text ||
+            message.serverContent?.outputTranscription?.text
+          ) {
+            quietClockRef.current?.activity();
+          }
           if (parts?.some(part => part.inlineData?.data)) {
             if (!isAiSpeaking()) replyAudibleAtRef.current = Date.now();
             thinkingRef.current.reset();
@@ -962,6 +982,10 @@ export function useLiveAPI({
       // The call is up: arm its time limit, if the server set one.
       callTimeUpRef.current = null;
       scheduleCallLimit(liveToken);
+      // Voice minutes count from now, not from when the token was fetched.
+      usageTicketRef.current = callTicketFrom(liveToken);
+      quietClockRef.current = new VoiceQuietClock();
+      if (usageTicketRef.current) void sendVoiceUsageCheckIn(usageTicketRef.current, 0);
       if (!connectionPersonId && !isEmpty(turns)) {
         session.sendClientContent({
           turns: turns.map(({ role, text }) => ({
@@ -1000,6 +1024,18 @@ export function useLiveAPI({
     connectionPersonId,
   ]);
 
+  // While connected, check in once a minute so voice minutes add up even if the call
+  // ends without a goodbye (tab closed, lost connection).
+  useEffect(() => {
+    if (!connected) return;
+    const id = setInterval(() => {
+      const ticket = usageTicketRef.current;
+      const quiet = quietClockRef.current;
+      if (ticket && quiet) void sendVoiceUsageCheckIn(ticket, quiet.quietSeconds());
+    }, VOICE_USAGE_CHECK_IN_MS);
+    return () => clearInterval(id);
+  }, [connected]);
+
   // "Thinking…": checked a few times a second, since it turns on when the host goes quiet.
   useEffect(() => {
     if (!connected) return;
@@ -1025,8 +1061,9 @@ export function useLiveAPI({
     socketOpenRef.current = false;
     resumeHandleRef.current = null;
     // Free plans: the call used some of the month's voice minutes.
-    void mutate(endpoint.billingSubscription).catch(() => undefined);
-  }, [stopRecording, stopTurnTaking, stopVoiceTools]);
+    // The Milestones voice minutes cards refresh too.
+    void finishVoiceUsage().then(() => Promise.all([mutate(endpoint.billingSubscription), mutate(voiceUsageKey())])).catch(() => undefined);
+  }, [finishVoiceUsage, stopRecording, stopTurnTaking, stopVoiceTools]);
   endLostCallRef.current = endLostCall;
 
   /** Carries the call over to a new connection with Gemini's resume handle; the host keeps talking. */
@@ -1130,9 +1167,10 @@ export function useLiveAPI({
     sessionPromiseRef.current?.then((session) => session.close()).catch(console.error);
     sessionPromiseRef.current = null;
     // Free plans: the call used some of the month's voice minutes.
-    void mutate(endpoint.billingSubscription).catch(() => undefined);
+    // The Milestones voice minutes cards refresh too.
+    void finishVoiceUsage().then(() => Promise.all([mutate(endpoint.billingSubscription), mutate(voiceUsageKey())])).catch(() => undefined);
     // Don't close audio contexts here - they're managed by the cleanup
-  }, [clearCallLimit, stopTurnTaking, stopVoiceTools]);
+  }, [clearCallLimit, finishVoiceUsage, stopTurnTaking, stopVoiceTools]);
 
   const restartSession = useCallback(async (overrides: LiveSessionOverrides = {}) => {
     setInputMuted(true);

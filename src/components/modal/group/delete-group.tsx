@@ -41,7 +41,7 @@ export function DeleteGroup({ data: id }: DeleteGroupProps) {
         <>
           <p>This action cannot be undone.</p>
           <p className="mt-3">
-            Are you sure you want to delete this group? Beneficiaries will not
+            Are you sure you want to delete this group? Connections will not
             be removed from your account.
           </p>
         </>

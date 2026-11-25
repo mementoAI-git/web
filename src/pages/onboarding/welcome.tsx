@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { useSkipOnboarding } from "./use-skip-onboarding";
+import { useTrackOnboardingStep } from "./onboarding-analytics";
 import { onboardingAssets as assets } from "./assets";
 import {
   OnboardingActions,
@@ -19,9 +20,9 @@ const features = [
     textClass: "",
   },
   {
-    title: "Converse with your digital twin",
+    title: "Converse with your Memento",
     description:
-      "Talk to your AI twin, shaped by your stories and values. It learns from you, grows with you, and speaks in your voice.",
+      "Talk to your Memento, shaped by your stories and values. It learns from you, grows with you, and speaks in your voice.",
     image: assets["19031-31954/imgImage6344716"],
     imageClass:
       "absolute left-[-19.27%] top-[-17.5%] h-[136.89%] w-[136.89%] max-w-none",
@@ -38,6 +39,7 @@ const features = [
 ];
 
 export default function WelcomePage() {
+  useTrackOnboardingStep("welcome");
   const { skip, busy } = useSkipOnboarding();
   return (
     <OnboardingCard className="rounded-none border-0 p-0">

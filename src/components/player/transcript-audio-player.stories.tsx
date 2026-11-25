@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { useLayoutEffect, type ReactNode } from "react";
+import { useLayoutEffect, useMemo, type ReactNode } from "react";
 import { SWRConfig, unstable_serialize } from "swr";
 import { ModalProvider } from "@/hooks/use-modal";
 import { StoryMobileMedia } from "@/components/modal/memory/story-mobile-media";
@@ -7,6 +7,12 @@ import { parseFileTranscription } from "@/features/audio/transcript-player";
 import type { IFile } from "@/utility/interface";
 import TranscriptAudioPlayer from "./transcript-audio-player";
 import { RecordingCard } from "@/pages/dashboard/stories/components/recording-card";
+import { MemoryRouter } from "react-router-dom";
+import { StoreProvider } from "@/hooks/use-store";
+import { ChatProvider } from "@/hooks/use-chat";
+import { SubscriptionProvider } from "@/contexts/subscription";
+import { ThemeProvider } from "@/contexts/theme";
+import FilePreview from "@/components/modal/file-preview";
 
 type ThemeName = "light-sky" | "daylight" | "dark" | "deep-sky";
 
@@ -127,5 +133,37 @@ export const StoriesGridCard: Story = {
         <RecordingCard duration={62} className="aspect-square rounded-[20px] border-0" />
       </div>
     </Themed>
+  ),
+};
+
+function RecordingPageDemo() {
+  const data = useMemo(
+    () => ({ title: "Visiting grandmother in Lagos", files: [{ ...RECORDING, url: sampleAudio(), duration: 12 }] }),
+    [],
+  );
+  return <FilePreview data={data} />;
+}
+
+/** A recorded conversation opened from a story: the full page, player beside transcript. */
+export const RecordingPage: Story = {
+  args: { theme: "dark" },
+  render: ({ theme }) => (
+    <ThemeProvider>
+      <Themed theme={theme}>
+        <StoreProvider>
+          <ModalProvider>
+            <ChatProvider>
+              <WithTranscript>
+                <SubscriptionProvider>
+                  <MemoryRouter initialEntries={["/stories"]}>
+                    <RecordingPageDemo />
+                  </MemoryRouter>
+                </SubscriptionProvider>
+              </WithTranscript>
+            </ChatProvider>
+          </ModalProvider>
+        </StoreProvider>
+      </Themed>
+    </ThemeProvider>
   ),
 };

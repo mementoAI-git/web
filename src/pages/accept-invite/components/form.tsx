@@ -80,7 +80,7 @@ export default function AcceptInviteForm({ data }: { data: IBeneficiary }) {
           ) : (
             <>
               Your contact, <span className="capitalize">{name}</span>, invited
-              you to join Memento as a beneficiary on their profile.{" "}
+              you to join Memento as a connection on their profile.{" "}
               <span className="cursor-pointer font-medium text-primary underline underline-offset-4">
                 What does this mean?
               </span>

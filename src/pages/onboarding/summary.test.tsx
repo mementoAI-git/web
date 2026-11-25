@@ -79,7 +79,10 @@ describe("onboarding summary", () => {
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     expect(navigate).not.toHaveBeenCalled();
     expect(setUser).not.toHaveBeenCalled();
-    expect(posthog.capture).not.toHaveBeenCalled();
+    expect(posthog.capture).not.toHaveBeenCalledWith(
+      "onboarding_completed",
+      expect.anything(),
+    );
     expect(
       sessionStorage.getItem("memento:onboarding-flow:user-123"),
     ).not.toBeNull();

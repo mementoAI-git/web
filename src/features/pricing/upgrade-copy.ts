@@ -37,7 +37,7 @@ export const UPGRADE_COPY: Record<
   beneficiaries: {
     title: "Add more people with Pro",
     description:
-      "Free includes up to 2 beneficiaries. Upgrade for unlimited beneficiaries.",
+      "Free includes up to 2 connections. Upgrade for unlimited connections.",
   },
   timed_messages: {
     title: "More timed messages with Pro",

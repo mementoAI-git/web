@@ -1,19 +1,3 @@
-export function TableRowSekeleton() {
-  return [1, 2, 3].map(i => (
-    <tr key={i} className="animate-pulse">
-      <td>
-        <div className="flex w-75 cursor-pointer items-center gap-2 px-4 py-3">
-          <div className="h-10 w-[46.87px] bg-v3-fill-weaker rounded" />
-          <div className="w-full space-y-2">
-            <div className="h-3 w-full bg-v3-fill-weaker rounded" />
-            <div className="h-3 w-full max-w-18 bg-v3-fill-weaker rounded" />
-          </div>
-        </div>
-      </td>
-    </tr>
-  ))
-}
-
 export function DetailsSideBarSkeleton() {
   return (
     <div className="size-full animate-pulse space-y-3 bg-white p-6">

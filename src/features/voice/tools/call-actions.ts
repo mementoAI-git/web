@@ -10,7 +10,7 @@ export const CALL_ACTION_TOOLS = [END_CALL_TOOL, SET_MICROPHONE_TOOL, OPEN_SCREE
 export const VOICE_SCREEN_DESTINATIONS = [
   "home", "chat", "stories", "bookmarks", "people", "new_story", "quick_note", "explore_prompts",
   "insights", "account", "settings", "profile", "plan_and_billing", "upgrade", "privacy",
-  "beneficiaries", "feedback", "activity", "two_factor",
+  "beneficiaries", "connections", "feedback", "activity", "two_factor",
 ] as const;
 
 export type VoiceScreenDestination = (typeof VOICE_SCREEN_DESTINATIONS)[number];
@@ -34,7 +34,9 @@ export const WEB_VOICE_DESTINATIONS: Record<VoiceScreenDestination, WebDestinati
   plan_and_billing: { href: "/settings/billing", label: "plan and billing" },
   upgrade: { href: "/pricing", label: "plans" },
   privacy: { href: "/settings/privacy", label: "privacy settings" },
-  beneficiaries: { href: "/settings/beneficiary", label: "beneficiaries" },
+  // "beneficiaries" is the name the API still sends; "connections" is its replacement.
+  beneficiaries: { href: "/settings/beneficiary", label: "people and groups" },
+  connections: { href: "/settings/beneficiary", label: "people and groups" },
   feedback: { modal: "create-feedback", label: "feedback" },
   activity: { modal: "recent-activities", label: "your activity" },
   two_factor: { href: "/settings/security", label: "two-factor settings" },

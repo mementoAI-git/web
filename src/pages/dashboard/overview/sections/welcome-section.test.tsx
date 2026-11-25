@@ -117,7 +117,7 @@ describe("WelcomeSection", () => {
     renderWithProviders(<WelcomeSection />, { route: "/overview", auth: true });
 
     expect(screen.queryByText("All Memories")).not.toBeInTheDocument();
-    expect(screen.queryByText("Beneficiaries")).not.toBeInTheDocument();
+    expect(screen.queryByText("Connections")).not.toBeInTheDocument();
     expect(screen.queryByText("Time Capsules")).not.toBeInTheDocument();
     expect(screen.queryByText("Streak Count")).not.toBeInTheDocument();
   });

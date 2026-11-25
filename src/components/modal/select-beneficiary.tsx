@@ -32,14 +32,14 @@ export default function SelectBeneficiary({ value = [], onAddRecipient, handleCl
     <div className="modal-container">
       <ModalCloseBtn onClick={handleClose} />
       <div className="space-y-6">
-        <h4 className="modal-title">Select beneficiaries</h4>
+        <h4 className="modal-title">Select connections</h4>
         <small className="font-inter text-sm text-text-neutral-weak">
-          You can select multiple beneficiaries to add as recipients.
+          You can select multiple connections to add as recipients.
         </small>
 
         <ul className="mt-6 space-y-4">
           {!isLoading && isEmpty(data?.data) ? (
-            <span>You have no Beneficiary</span>
+            <span>You have no connections yet</span>
           ) : (
             data?.data?.docs?.map((beneficiary: IBeneficiary, index: number) => (
               <li

@@ -1008,8 +1008,8 @@ function CreateMemoryBase({
           <span className="drafts-menu-date">{metadata}</span>
         </span>
       </Button>
-      <Button type="button" onClick={onDelete} variant="ghost" className="drafts-menu-delete" title="Delete draft">
-        Delete
+      <Button type="button" onClick={onDelete} variant="ghost" size="icon" className="drafts-menu-delete" aria-label="Delete draft" title="Delete draft">
+        <X aria-hidden="true" />
       </Button>
     </div>
   );

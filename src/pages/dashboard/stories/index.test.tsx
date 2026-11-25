@@ -173,7 +173,7 @@ describe("StoriesPage", () => {
     await user.click(screen.getByRole("tab", { name: "Bookmarked 3" }));
     expect(screen.getByRole("heading", { name: "No bookmarked stories" })).toBeVisible();
     const empty = screen.getByRole("heading", { name: "No bookmarked stories" }).closest('[data-slot="empty"]') as HTMLElement;
-    expect(within(empty).queryByRole("button", { name: "Add memory" })).not.toBeInTheDocument();
+    expect(within(empty).queryByRole("button", { name: "Write" })).not.toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "View all stories" }));
     expect(screen.getByRole("tab", { name: "All 12" })).toHaveAttribute("aria-selected", "true");
   });
@@ -198,17 +198,17 @@ describe("StoriesPage", () => {
     expect(screen.queryByRole("columnheader")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Next" })).not.toBeInTheDocument();
     expect(screen.queryByText(/Page 1 of/)).not.toBeInTheDocument();
-    await user.click(within(empty).getByRole("button", { name: "Add memory" }));
+    await user.click(within(empty).getByRole("button", { name: "Write" }));
     expect(state.open).toHaveBeenCalledWith("create-memory");
   });
 
-  it("restores table headers when a filter returns memories", async () => {
+  it("shows stories as card strips, not a table, when a filter returns memories", async () => {
     const user = userEvent.setup();
     renderWithProviders(<StoriesPage />, { route: "/stories", auth: true });
     state.docs = [{ _id: "story-1", title: "My story", tags: [], attachments: [], created_at: "2026-10-07" }];
     await user.click(screen.getByRole("tab", { name: "Bookmarked 3" }));
-    expect(screen.getByRole("table")).toBeInTheDocument();
-    expect(screen.getByRole("columnheader", { name: /topic/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "My story" }).closest("article")).toBeInTheDocument();
+    expect(screen.queryByRole("table")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Next" })).not.toBeInTheDocument();
     expect(screen.queryByText("No stories yet")).not.toBeInTheDocument();
   });
@@ -220,7 +220,7 @@ describe("StoriesPage", () => {
     const empty = container.querySelector('[data-slot="empty"]') as HTMLElement;
     expect(empty).toHaveClass("stories-list-surface", "stories-empty-surface");
     expect(within(empty).getByText("🍄")).toBeVisible();
-    await user.click(within(empty).getByRole("button", { name: "Add memory" }));
+    await user.click(within(empty).getByRole("button", { name: "Write" }));
     expect(state.open).toHaveBeenCalledWith("create-memory");
 
     state.docs = [{ _id: "story-1", title: "My story", body: "A first memory", tags: [], attachments: [], created_at: "2026-10-07" }];
@@ -232,8 +232,8 @@ describe("StoriesPage", () => {
 
   it("keeps loading placeholders rather than prematurely showing the empty state", () => {
     state.loading = true;
-    renderWithProviders(<StoriesPage />, { route: "/stories", auth: true });
-    expect(screen.getByRole("table")).toBeInTheDocument();
+    const { container } = renderWithProviders(<StoriesPage />, { route: "/stories", auth: true });
+    expect(container.querySelectorAll('[data-slot="stories-results"] .animate-pulse')).toHaveLength(3);
     expect(screen.queryByText("No stories yet")).not.toBeInTheDocument();
   });
 

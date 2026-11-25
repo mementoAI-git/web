@@ -15,6 +15,7 @@ import {
   savedReasonValues,
 } from "../flow-options";
 import { useOnboardingDraft } from "../use-onboarding-draft";
+import { questionStep, useTrackOnboardingStep } from "../onboarding-analytics";
 import {
   OnboardingActions,
   OnboardingButton,
@@ -32,6 +33,7 @@ export default function MiscPage() {
   const savedAbout = user?.context?.self_description ?? "";
   const nickname = user?.nickname || user?.first_name || "there";
   const [draft, setDraft] = useOnboardingDraft(user?._id ?? "anonymous");
+  useTrackOnboardingStep(isRevisit ? null : questionStep(draft.step));
   // Returning after a skip with nothing in this tab: fill in the answers
   // the API kept when they skipped. Decided once, so typing doesn't flip it.
   const [resumeSkipped] = useState(

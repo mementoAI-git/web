@@ -45,6 +45,7 @@ export default function Post({ memory }: { memory: IPublicMemory }) {
       {isMobile ? (
         <StoryMobileReader
           title={memory.title}
+          storyId={memory._id}
           createdAt={memory.created_at}
           body={memory.body}
           files={memory.attachments}
