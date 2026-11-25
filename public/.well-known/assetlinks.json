@@ -8,6 +8,7 @@
       "namespace": "android_app",
       "package_name": "io.mymemento.app",
       "sha256_cert_fingerprints": [
+        "EA:FD:B0:96:8B:9F:41:CB:0F:88:81:B9:9D:92:80:90:02:47:7E:D4:74:6A:0C:3B:BD:23:8E:9B:D4:03:5D:0D",
         "09:DD:30:08:E2:B0:F4:FC:26:43:FF:E7:49:76:65:2B:5A:E2:57:C0:41:9A:90:B4:9D:71:C6:25:4B:87:72:D7",
         "92:3C:CF:3F:F8:C6:83:3F:E1:44:BD:5E:BB:50:C5:E3:A2:8E:93:89:1B:E2:DD:AD:2B:79:92:86:79:C7:17:94"
       ]
